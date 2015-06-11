@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="230.0" prefWidth="340.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.TestViewController">
+   <children>
+      <Button fx:id="startButton" layoutX="14.0" layoutY="23.0" mnemonicParsing="false" onAction="#handleStart" text="Start" />
+      <Button fx:id="cancelButton" layoutX="268.0" layoutY="23.0" mnemonicParsing="false" onAction="#handleCancel" text="Cancel" />
+      <Label fx:id="textLabel" layoutX="142.0" layoutY="28.0" text="Waiting..." />
+      <BorderPane fx:id="bPane" layoutX="14.0" layoutY="62.0" prefHeight="160.0" prefWidth="314.0" />
+   </children>
+</AnchorPane>

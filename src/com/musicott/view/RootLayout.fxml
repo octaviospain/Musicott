@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<BorderPane minHeight="750.0" minWidth="1200.0" prefHeight="750.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.RootLayoutController">
+   <top>
+      <VBox BorderPane.alignment="CENTER">
+         <children>
+            <MenuBar minHeight="30.0" prefHeight="30.0">
+              <menus>
+                <Menu fx:id="menuFile" mnemonicParsing="false" text="File">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Open" />
+                        <MenuItem fx:id="menuOpenImport" mnemonicParsing="false" onAction="#doImportCollection" text="Import collection" />
+                        <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Close" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Edit">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Delete" />
+                        <MenuItem mnemonicParsing="false" text="Fix ID3 tags" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="About">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="About" />
+                  </items>
+                </Menu>
+              </menus>
+            </MenuBar>
+            <HBox alignment="CENTER_LEFT" minHeight="50.0" minWidth="-Infinity" prefHeight="50.0">
+               <children>
+                  <Button fx:id="prevButton" mnemonicParsing="false" text="Prev">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button fx:id="playButton" mnemonicParsing="false" text="Play">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button fx:id="nextButton" mnemonicParsing="false" text="Next">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </Button>
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </top>
+   <center>
+      <GridPane>
+         <children>
+         	<TableView fx:id="trackTable" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+              <columns>
+                  <TableColumn fx:id="artistCol" prefWidth="75.0" text="Artist" />
+                  <TableColumn fx:id="nameCol" prefWidth="75.0" text="Name" />
+                  <TableColumn fx:id="albumCol" prefWidth="75.0" text="Album" />
+                  <TableColumn fx:id="genreCol" prefWidth="75.0" text="Genre" />
+                  <TableColumn fx:id="labelCol" prefWidth="75.0" text="Label" />
+                  <TableColumn fx:id="bpmCol" prefWidth="75.0" text="BPM" />
+                  <TableColumn fx:id="totalTimeCol" prefWidth="75.0" text="Duration" />
+                  <TableColumn fx:id="yearCol" prefWidth="72.0" text="Year" />
+                  <TableColumn fx:id="sizeCol" prefWidth="78.0" text="Size" />
+                  <TableColumn fx:id="trackNumberCol" prefWidth="75.0" text="Track Num" />
+                  <TableColumn fx:id="discNumberCol" prefWidth="75.0" text="Disc Num" />
+                  <TableColumn fx:id="albumArtistCol" prefWidth="75.0" text="Album Artist" />
+                  <TableColumn fx:id="commentsCol" prefWidth="75.0" text="Comments" />
+                  <TableColumn fx:id="bitRateCol" prefWidth="75.0" text="BitRate" />
+                  <TableColumn fx:id="m4aCol" prefWidth="75.0" text="M4A" />
+                  <TableColumn fx:id="flacCol" prefWidth="75.0" text="FLAC" />
+                  <TableColumn fx:id="wavCol" prefWidth="75.0" text="WAV" />
+                  <TableColumn fx:id="coverCol" prefWidth="75.0" text="Cover" />
+                  <TableColumn fx:id="inDiskCol" prefWidth="75.0" text="In Disk" />
+                  <TableColumn fx:id="playCountCol" prefWidth="75.0" text="Plays" />
+                  <TableColumn fx:id="dateModifiedCol" prefWidth="75.0" text="Modified" />
+                  <TableColumn fx:id="dateAddedCol" prefWidth="75.0" text="Added" />
+              </columns>
+            </TableView>
+         </children>
+         <columnConstraints>
+            <ColumnConstraints />
+         </columnConstraints>
+         <rowConstraints>
+            <RowConstraints />
+         </rowConstraints>
+      </GridPane>
+   </center>
+</BorderPane>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="80.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.ImportCollectionController">
+   <children>
+      <ProgressBar fx:id="pBar" layoutX="13.0" layoutY="40.0" prefHeight="20.0" prefWidth="474.0" progress="0.0" />
+      <Label fx:id="counterLabel" alignment="CENTER" contentDisplay="CENTER" layoutX="180.0" layoutY="14.0" prefHeight="16.0" prefWidth="140.0" textAlignment="CENTER" wrapText="true" />
+   </children>
+</AnchorPane>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+<AnchorPane minHeight="200.0" minWidth="300.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.ImportCollectionController">
+   <children>
+      <Button fx:id="openButton" defaultButton="true" layoutX="119.0" layoutY="160.0" mnemonicParsing="false" onAction="#doOpen" text="Open..." />
+      <Button fx:id="cancelButton" cancelButton="true" layoutX="217.0" layoutY="160.0" mnemonicParsing="false" onAction="#doCancel" text="Cancel" />
+      <Label fx:id="infoLabel" layoutX="23.0" layoutY="74.0" prefWidth="254.0" text="Choose the folder of your music collection. Musicott will scan all the files in the subsequent folders." wrapText="true" />
+      <Label fx:id="alsoAddLabel" layoutX="24.0" layoutY="25.0" text="Also add:" />
+      <CheckBox fx:id="cbM4a" layoutX="104.0" layoutY="24.0" mnemonicParsing="false" selected="false" text="m4a" />
+      <CheckBox fx:id="cbFlac" layoutX="235.0" layoutY="24.0" mnemonicParsing="false" selected="false" text="flac" />
+      <CheckBox fx:id="cbWav" layoutX="173.0" layoutY="24.0" mnemonicParsing="false" prefHeight="18.0" prefWidth="50.0" selected="false" text="wav" />
+      <Label fx:id="folderLabel" alignment="CENTER_RIGHT" contentDisplay="RIGHT" layoutX="115.0" layoutY="132.0" prefHeight="16.0" prefWidth="167.0" textAlignment="RIGHT" wrapText="true" />
+      <Button fx:id="importButton" disable="true" layoutX="21.0" layoutY="160.0" mnemonicParsing="false" onAction="#doImport" text="Import" />
+   </children>
+</AnchorPane>
