@@ -1,11 +1,2 @@
-*.class
-*.jar
-*.war
-*.ear
-hs_err_pid*
-bin/
-target/
-*~
-.metadata
-.DS_Store
-._*
+/bin/
+/target/
