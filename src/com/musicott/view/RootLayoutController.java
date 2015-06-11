@@ -103,7 +103,6 @@ public class RootLayoutController {
 		inDiskCol.setCellValueFactory(cellData -> cellData.getValue().getIsInDisk());
 		
 		tracks = trackTable.getItems();
-
 	}	
 	
 	public void addTracks(List<Track> tracks) {

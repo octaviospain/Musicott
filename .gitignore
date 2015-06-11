@@ -1,2 +1,9 @@
 /bin/
 /target/
+.metadata
+.DS_Store
+._*
+*~
+.project
+.classpath
+.settings/
