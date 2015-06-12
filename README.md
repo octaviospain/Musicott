@@ -1,5 +1,5 @@
 # Musicott
-AJavaFX application for import and organize music files.
+A JavaFX application for import and organize music files.
 Testing with [TestFx](https://github.com/TestFX/TestFX "TestFx")
 ID3 mp3 tag parser with [mp3agic](https://github.com/mpatric/mp3agic "mp3agic")
 
