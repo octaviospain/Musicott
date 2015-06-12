@@ -52,53 +52,59 @@ public class ImportTask extends Task<List<Track>>{
 	@Override
 	protected void cancelled() {
 		super.cancelled();
-		updateMessage("");
+		updateMessage("Canceled");
 	}
 	
 	private void scanFolder(File folder) {
 		File[] files = folder.listFiles();
 		for(File file:files)
-			if(file.isDirectory())
-				scanFolder(file);
-			else {
-				if(file.getName().substring(file.getName().length()-3).equals("mp3")) {
-					list.add(Mp3Parser.parseMp3File(file));
-					updateProgress(++currentFiles, numFiles);
-				}
-				else
-					if(m4a && file.getName().substring(file.getName().length()-3).equals("m4a")){
-						//TODO M4aParser
+			if(isCancelled())
+				break;
+			else
+				if(file.isDirectory())
+					scanFolder(file);
+				else {
+					if(file.getName().substring(file.getName().length()-3).equals("mp3")) {
+						list.add(Mp3Parser.parseMp3File(file));
 						updateProgress(++currentFiles, numFiles);
 					}
 					else
-						if(wav && file.getName().substring(file.getName().length()-3).equals("wav")) {
-							//TODO WavParser
+						if(m4a && file.getName().substring(file.getName().length()-3).equals("m4a")){
+							//TODO M4aParser
 							updateProgress(++currentFiles, numFiles);
 						}
 						else
-							if(flac && file.getName().substring(file.getName().length()-4).equals("flac")){
-								//TODO FlacParser
+							if(wav && file.getName().substring(file.getName().length()-3).equals("wav")) {
+								//TODO WavParser
 								updateProgress(++currentFiles, numFiles);
 							}
-			}
+							else
+								if(flac && file.getName().substring(file.getName().length()-4).equals("flac")){
+									//TODO FlacParser
+									updateProgress(++currentFiles, numFiles);
+								}
+				}
 	}
 	
 	private void countFiles(File folder) {
 		File[] files = folder.listFiles();
 		for(File file:files)
-			if(file.isDirectory())
-				countFiles(file);
+			if(isCancelled())
+				break;
 			else
-				if(file.getName().substring(file.getName().length()-3).equals("mp3"))
-					numFiles++;
+				if(file.isDirectory())
+					countFiles(file);
 				else
-					if(m4a && file.getName().substring(file.getName().length()-3).equals("m4a"))
+					if(file.getName().substring(file.getName().length()-3).equals("mp3"))
 						numFiles++;
 					else
-						if(wav && file.getName().substring(file.getName().length()-3).equals("wav"))
+						if(m4a && file.getName().substring(file.getName().length()-3).equals("m4a"))
 							numFiles++;
 						else
-							if(flac && file.getName().substring(file.getName().length()-4).equals("flac"))
-								numFiles++;		
+							if(wav && file.getName().substring(file.getName().length()-3).equals("wav"))
+								numFiles++;
+							else
+								if(flac && file.getName().substring(file.getName().length()-4).equals("flac"))
+									numFiles++;		
 	}
 }

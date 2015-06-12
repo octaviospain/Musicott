@@ -1,8 +1,10 @@
 package com.musicott.view;
 
+import com.musicott.SceneManager;
 import com.musicott.task.ImportTask;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.BorderPane;
 
@@ -12,6 +14,8 @@ public class ProgressImportController {
 	private BorderPane pane;
 	@FXML
 	private ProgressBar pBar;
+	@FXML
+	private Button cancelButton;
 	private ImportTask importTask;
 	
 	public ProgressImportController() {
@@ -28,6 +32,11 @@ public class ProgressImportController {
 		Thread t = new Thread(importTask);
 		t.setDaemon(true);
 		t.start();
+	}
+	
+	public void cancelTask() {
+		importTask.cancel();
+		SceneManager.getInstance().closeImportScene();
 	}
 	
 	public void setTask(ImportTask task) {

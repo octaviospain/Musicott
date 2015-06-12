@@ -1,9 +1,11 @@
 package com.musicott.view;
 
+import java.io.File;
 import java.util.List;
 
 import com.musicott.SceneManager;
 import com.musicott.model.Track;
+import com.musicott.task.OpenTask;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -13,13 +15,18 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Stage;
 
 public class RootLayoutController {
 	
 	@FXML
 	private Menu menuFile;
 	@FXML
-	private MenuItem menuOpenImport;
+	private MenuItem menuItemImport;
+	@FXML
+	private MenuItem  menuItemOpen;
 	@FXML
 	private Button playButton;
 	@FXML
@@ -75,6 +82,8 @@ public class RootLayoutController {
 
 	private ObservableList<Track> tracks;
 	
+	private Stage rootStage;
+	
  	public RootLayoutController() {
 	}
 	
@@ -108,6 +117,23 @@ public class RootLayoutController {
 	public void addTracks(List<Track> tracks) {
 		if(tracks != null && tracks.size()!=0) 
 			trackTable.getItems().addAll(tracks);
+	}
+	
+	public void setStage(Stage stage) {
+		rootStage = stage;
+	}
+	
+	@FXML
+	private void doOpen() {
+		FileChooser chooser = new FileChooser();
+		chooser.setTitle("Open file(s)...");
+		chooser.getExtensionFilters().addAll(
+				new ExtensionFilter("Audio Files","*.mp3")); //TODO m4a flac & wav when implemented
+		List<File> files = chooser.showOpenMultipleDialog(rootStage);
+		OpenTask task = new OpenTask(files);
+		Thread t = new Thread(task);
+		t.setDaemon(true);
+		t.start();
 	}
 	
 	@FXML

@@ -11,6 +11,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class SceneManager {
@@ -67,6 +68,8 @@ public class SceneManager {
 			importController.setStage(importStage);
 			
 			Scene importMainScene = new Scene(importLayout);
+			importStage.initModality(Modality.APPLICATION_MODAL);
+			importStage.initOwner(importMainScene.getWindow());
 			importStage.setScene(importMainScene);
 			importStage.setResizable(false);
 			importStage.showAndWait();
@@ -77,8 +80,8 @@ public class SceneManager {
 	}
 	
 	public void closeImportScene() {
-		progressStage.close();
 		importStage.close();
+		progressStage.close();
 	}
 	
 	public void showImportProgressScene(ImportTask	task) {
@@ -92,6 +95,8 @@ public class SceneManager {
 			progressImportController.runTask();
 			
 			Scene progressScene = new Scene(progressLayout);
+			progressStage.initModality(Modality.APPLICATION_MODAL);
+			progressStage.initOwner(progressScene.getWindow());
 			progressStage.setScene(progressScene);
 			progressStage.setResizable(false);
 			progressStage.showAndWait();
@@ -108,6 +113,7 @@ public class SceneManager {
 			rootLoader.setLocation(MainApp.class.getResource("view/RootLayout.fxml"));
 			rootLayout = (BorderPane) rootLoader.load();
 			rootController = rootLoader.getController();
+			rootController.setStage(rootStage);
 			
 			mainScene = new Scene(rootLayout);
 			rootStage.setMinWidth(1200);

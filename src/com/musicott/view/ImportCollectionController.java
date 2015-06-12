@@ -70,7 +70,6 @@ public class ImportCollectionController {
 	
 	@FXML
 	private void doCancel() {
-		Stage stage = (Stage) cancelButton.getScene().getWindow();
-	    stage.close();
+		importStage.close();
 	}
 }
