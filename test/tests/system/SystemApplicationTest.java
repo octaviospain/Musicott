@@ -9,9 +9,8 @@ import org.junit.Test;
 import org.testfx.framework.junit.ApplicationTest;
 import org.testfx.util.WaitForAsyncUtils;
 import org.testfx.matcher.base.NodeMatchers;
-import org.testfx.api.FxAssert;
 
-import org.loadui.testfx.controls.impl.EnabledMatcher;
+import static org.testfx.api.FxAssert.verifyThat;
 
 import com.musicott.MainApp;
 
@@ -36,7 +35,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	@Test
 	public void testImportCollection() {
 		clickOn("#menuFile");
-		clickOn("#menuOpenImport");
+		clickOn("#menuItemImport");
 		testImportView();		
 		clickOn("#openButton");
 		press(KeyCode.ENTER);
@@ -45,26 +44,25 @@ public class SystemApplicationTest extends ApplicationTest {
 	}
 	
 	public void testImportView() {
-		FxAssert.verifyThat("#alsoAddLabel", NodeMatchers.hasText("Also add:"));
-		FxAssert.verifyThat("#infoLabel", NodeMatchers.hasText("Choose the folder of your music collection. Musicott will scan all the files in the subsequent folders."));
-		FxAssert.verifyThat("#folderLabel", NodeMatchers.hasText(""));
-		FxAssert.verifyThat("#openButton", NodeMatchers.isVisible());
-		FxAssert.verifyThat("#openButton", NodeMatchers.hasText("Open..."));
-		FxAssert.verifyThat("#cancelButton", NodeMatchers.isVisible());
-		FxAssert.verifyThat("#cancelButton", NodeMatchers.hasText("Cancel"));
-		FxAssert.verifyThat("#importButton", NodeMatchers.isVisible());
-		FxAssert.verifyThat("#importButton", NodeMatchers.hasText("Import"));
-		FxAssert.verifyThat("#importButton", NodeMatchers.isDisabled());
-		FxAssert.verifyThat("#cbM4a", NodeMatchers.isVisible());
-		FxAssert.verifyThat("#cbM4a", NodeMatchers.isEnabled());
-		FxAssert.verifyThat("#cbFlac", NodeMatchers.isVisible());
-		FxAssert.verifyThat("#cbFlac", NodeMatchers.isEnabled());
-		FxAssert.verifyThat("#cbWav", NodeMatchers.isVisible());
-		FxAssert.verifyThat("#cbWav", NodeMatchers.isEnabled());
+		verifyThat("#alsoAddLabel", NodeMatchers.hasText("Also add:"));
+		verifyThat("#infoLabel", NodeMatchers.hasText("Choose the folder of your music collection. Musicott will scan all the files in the subsequent folders."));
+		verifyThat("#folderLabel", NodeMatchers.hasText(""));
+		verifyThat("#openButton", NodeMatchers.isVisible());
+		verifyThat("#openButton", NodeMatchers.hasText("Open..."));
+		verifyThat("#cancelButton", NodeMatchers.isVisible());
+		verifyThat("#cancelButton", NodeMatchers.hasText("Cancel"));
+		verifyThat("#importButton", NodeMatchers.isVisible());
+		verifyThat("#importButton", NodeMatchers.hasText("Import"));
+		verifyThat("#importButton", NodeMatchers.isDisabled());
+		verifyThat("#cbM4a", NodeMatchers.isVisible());
+		verifyThat("#cbM4a", NodeMatchers.isEnabled());
+		verifyThat("#cbFlac", NodeMatchers.isVisible());
+		verifyThat("#cbFlac", NodeMatchers.isEnabled());
+		verifyThat("#cbWav", NodeMatchers.isVisible());
+		verifyThat("#cbWav", NodeMatchers.isEnabled());
 	}
 	
 	public void testImportProgressView() {
-		FxAssert.verifyThat("#counterLabel", NodeMatchers.isVisible());
-		FxAssert.verifyThat("#pBar", NodeMatchers.isVisible());
+		verifyThat("#pBar", NodeMatchers.isVisible());
 	}
 }

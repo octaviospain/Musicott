@@ -1,5 +1,7 @@
 /bin/
 /target/
+/build/
+/deploy/
 .metadata
 .DS_Store
 ._*

@@ -24,6 +24,7 @@ public class ProgressImportController {
 	@FXML
 	private void initialize() {
 		pBar = new ProgressBar();
+		pBar.setId("pBar");
 		pBar.setPrefSize(470.0, 20.0);
 		pane.setCenter(pBar);
 	}

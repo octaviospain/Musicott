@@ -10,3 +10,6 @@ ID3 mp3 tag parser with [mp3agic](https://github.com/mpatric/mp3agic "mp3agic")
 ### To be implemented
 * Fix ID3 tags from mp3
 * Play mp3 files
+
+## Downloads
+* [Mac OS X dmg](https://dl.dropboxusercontent.com/u/3596661/Musicott-0.0.1.dmg) (72'4 Mb)
