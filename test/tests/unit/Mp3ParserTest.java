@@ -34,7 +34,7 @@ public class Mp3ParserTest {
 	
 	@Test
 	public void trackNoId3TagTest() throws Exception {
-		File file = noId3File("/Users/Octavio/testeable.mp3");
+		File file = noId3File("/Users/Octavio/Test/testeable.mp3");
 		
 		// Expected track creation with no ID3 tag
 		Track t = new Track();
@@ -53,7 +53,7 @@ public class Mp3ParserTest {
 	
 	@Test
 	public void trackId3v1TagTest() throws Exception {
-		File file = id3v1TagFile("/Users/Octavio/testeable.mp3");
+		File file = id3v1TagFile("/Users/Octavio/Test/testeable.mp3");
 		
 		// Expected track creation with no ID3 tag
 		Track track = new Track();
@@ -80,7 +80,7 @@ public class Mp3ParserTest {
 	
 	@Test
 	public void trackId3v2TagTest() throws Exception {
-		File file = id3v2TagFile("/Users/Octavio/testeable.mp3");
+		File file = id3v2TagFile("/Users/Octavio/Test/testeable.mp3");
 		
 		// Expected track creation with no ID3 tag
 		Track track = new Track();
@@ -100,7 +100,7 @@ public class Mp3ParserTest {
 		track.getGenre().set("Techno");
 		track.getTrackNumber().set(3);
 		track.getYear().set(2011);
-		track.getTotalTime().set(new Mp3File("/Users/Octavio/testeable.mp3").getId3v2Tag().getLength());
+		track.getTotalTime().set(new Mp3File("/Users/Octavio/Test/testeable.mp3").getId3v2Tag().getLength());
 
 		PowerMockito.spy(Mp3Parser.class);
 		Track expectedTrack = Mp3Parser.parseMp3File(file);
@@ -126,9 +126,9 @@ public class Mp3ParserTest {
 		tag.setGrouping("Drumcode");
 		tag.setYear("2011");
 		mp3.setId3v2Tag(tag);
-		mp3.save("/Users/Octavio/testeable_.mp3");
+		mp3.save("/Users/Octavio/Test/testeable_.mp3");
 		
-		File file2 = new File("/Users/Octavio/testeable_.mp3");
+		File file2 = new File("/Users/Octavio/Test/testeable_.mp3");
 		assertTrue(file.delete());
 		assertTrue(file2.renameTo(file));
 		return file;
@@ -148,9 +148,9 @@ public class Mp3ParserTest {
 		tag.setTrack("3");
 		tag.setYear("2011");
 		mp3.setId3v1Tag(tag);
-		mp3.save("/Users/Octavio/testeable_.mp3");
+		mp3.save("/Users/Octavio/Test/testeable_.mp3");
 		
-		File file2 = new File("/Users/Octavio/testeable_.mp3");
+		File file2 = new File("/Users/Octavio/Test/testeable_.mp3");
 		assertTrue(file.delete());
 		assertTrue(file2.renameTo(file));
 		return file;
@@ -162,9 +162,9 @@ public class Mp3ParserTest {
 		mp3.removeId3v2Tag();
 		mp3.removeId3v1Tag();
 		mp3.removeCustomTag();
-		mp3.save("/Users/Octavio/testeable_.mp3");
+		mp3.save("/Users/Octavio/Test/testeable_.mp3");
 		
-		File file2 = new File("/Users/Octavio/testeable_.mp3");
+		File file2 = new File("/Users/Octavio/Test/testeable_.mp3");
 		assertTrue(file.delete());
 		assertTrue(file2.renameTo(file));
 		return file;

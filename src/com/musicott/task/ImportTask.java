@@ -1,13 +1,18 @@
 package com.musicott.task;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 
+import com.mpatric.mp3agic.InvalidDataException;
+import com.mpatric.mp3agic.UnsupportedTagException;
 import com.musicott.SceneManager;
+import com.musicott.error.ErrorHandler;
+import com.musicott.error.ParseException;
 import com.musicott.model.Track;
 import com.musicott.task.parser.Mp3Parser;
 
@@ -64,25 +69,30 @@ public class ImportTask extends Task<List<Track>>{
 				if(file.isDirectory())
 					scanFolder(file);
 				else {
-					if(file.getName().substring(file.getName().length()-3).equals("mp3")) {
-						list.add(Mp3Parser.parseMp3File(file));
-						updateProgress(++currentFiles, numFiles);
-					}
-					else
-						if(m4a && file.getName().substring(file.getName().length()-3).equals("m4a")){
-							//TODO M4aParser
+					try {
+						if(file.getName().substring(file.getName().length()-3).equals("mp3")) {
 							updateProgress(++currentFiles, numFiles);
+							list.add(Mp3Parser.parseMp3File(file));
 						}
 						else
-							if(wav && file.getName().substring(file.getName().length()-3).equals("wav")) {
-								//TODO WavParser
+							if(m4a && file.getName().substring(file.getName().length()-3).equals("m4a")) {
 								updateProgress(++currentFiles, numFiles);
+								//TODO M4aParser
 							}
 							else
-								if(flac && file.getName().substring(file.getName().length()-4).equals("flac")){
-									//TODO FlacParser
+								if(wav && file.getName().substring(file.getName().length()-3).equals("wav")) {
 									updateProgress(++currentFiles, numFiles);
+									//TODO WavParser
 								}
+								else
+									if(flac && file.getName().substring(file.getName().length()-4).equals("flac")) {
+										updateProgress(++currentFiles, numFiles);
+										//TODO FlacParser
+									}
+					} catch (Exception e) {
+						ParseException pe = new ParseException("Parsing Error", e, file);
+						ErrorHandler.getInstance().addParseException(pe);
+					}
 				}
 	}
 	

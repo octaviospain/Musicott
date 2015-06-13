@@ -2,11 +2,14 @@ package com.musicott;
 
 import java.io.IOException;
 
-import com.musicott.task.ImportTask;
+import com.musicott.error.ErrorHandler;
+import com.musicott.view.ErrorDialogController;
 import com.musicott.view.ImportCollectionController;
 import com.musicott.view.ProgressImportController;
 import com.musicott.view.RootLayoutController;
+import com.musicott.error.Error;
 
+import javafx.concurrent.Task;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
@@ -80,11 +83,13 @@ public class SceneManager {
 	}
 	
 	public void closeImportScene() {
-		importStage.close();
+		showErrorDialog(Error.IMPORT_ERROR);
+		if(importStage != null && importStage.isShowing())
+			importStage.close();
 		progressStage.close();
 	}
 	
-	public void showImportProgressScene(ImportTask	task) {
+	public void showImportProgressScene(Task<?> task) {
 		try {
 			progressStage = new Stage();
 			FXMLLoader loader = new FXMLLoader();
@@ -107,6 +112,13 @@ public class SceneManager {
 		}
 	}
 	
+	private void showErrorDialog(Error type) {
+		if(ErrorHandler.getInstance().hasErrors()) {
+			ErrorDialogController edc = new ErrorDialogController(type);
+			edc.showDialog();
+		}
+	}
+	
 	private void initPrimaryStage() {
 		try {
 			FXMLLoader rootLoader = new FXMLLoader();
@@ -119,7 +131,7 @@ public class SceneManager {
 			rootStage.setMinWidth(1200);
 			rootStage.setMinHeight(770);
 			rootStage.setScene(mainScene);
-			rootStage.show();	
+			rootStage.show();
 		} catch (IOException e) {
 			//TODO Show error dialog and crashes
 			e.printStackTrace();

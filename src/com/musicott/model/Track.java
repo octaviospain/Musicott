@@ -34,9 +34,6 @@ public class Track {
 	private IntegerProperty discNumber;
 	private IntegerProperty BPM;
 	
-	private BooleanProperty hasM4aVersion;
-	private BooleanProperty hasFlacVersion;
-	private BooleanProperty hasWavVersion;
 	private BooleanProperty hasCover;
 	private BooleanProperty isInDisk;
 	
@@ -45,41 +42,25 @@ public class Track {
 	
     public Track() {
     	trackID = -1;
-    	name = new SimpleStringProperty();
-    	name.set("");
-    	artist = new SimpleStringProperty();
-    	artist.set("");
-    	album = new SimpleStringProperty();
-    	album.set("");
-    	genre = new SimpleStringProperty();
-    	genre.set("");
-    	comments = new SimpleStringProperty();
-    	comments.set("");
-    	albumArtist = new SimpleStringProperty();
-    	albumArtist.set("");
-    	label = new SimpleStringProperty();
-    	label.set("");
-    	size = new SimpleIntegerProperty();
-    	size.set(-1);
-    	totalTime = new SimpleIntegerProperty();
-    	totalTime.set(-1);
-    	trackNumber = new SimpleIntegerProperty();
-    	trackNumber.set(-1);
-    	year = new SimpleIntegerProperty();
-    	year.set(-1);
-    	bitRate = new SimpleIntegerProperty();
-    	bitRate.set(-1);
-    	playCount = new SimpleIntegerProperty();
-    	playCount.set(0);
-    	discNumber = new SimpleIntegerProperty();
-    	discNumber.set(-1);
-    	BPM = new SimpleIntegerProperty();
-    	BPM.set(-1);
-    	hasM4aVersion = new SimpleBooleanProperty();
-    	hasFlacVersion = new SimpleBooleanProperty();
-    	hasWavVersion = new SimpleBooleanProperty();
-    	hasCover = new SimpleBooleanProperty();
-    	isInDisk = new SimpleBooleanProperty();
+    	fileFolder = "";
+    	fileName = "";
+    	name = new SimpleStringProperty("");
+    	artist = new SimpleStringProperty("");
+    	album = new SimpleStringProperty("");
+    	genre = new SimpleStringProperty("");
+    	comments = new SimpleStringProperty("");
+    	albumArtist = new SimpleStringProperty("");
+    	label = new SimpleStringProperty("");
+    	size = new SimpleIntegerProperty(-1);
+    	totalTime = new SimpleIntegerProperty(-1);
+    	trackNumber = new SimpleIntegerProperty(-1);
+    	year = new SimpleIntegerProperty(-1);
+    	bitRate = new SimpleIntegerProperty(-1);
+    	playCount = new SimpleIntegerProperty(0);
+    	discNumber = new SimpleIntegerProperty(-1);
+    	BPM = new SimpleIntegerProperty(-1);
+    	hasCover = new SimpleBooleanProperty(false);
+    	isInDisk = new SimpleBooleanProperty(false);
     	dateModified = new SimpleObjectProperty<LocalDate>(LocalDate.now());
     	dateAdded = new SimpleObjectProperty<LocalDate>(LocalDate.now());
     }
@@ -226,30 +207,6 @@ public class Track {
 
 	public void setBPM(IntegerProperty bPM) {
 		BPM = bPM;
-	}
-
-	public BooleanProperty getHasM4aVersion() {
-		return hasM4aVersion;
-	}
-
-	public void setHasM4aVersion(BooleanProperty hasM4aVersion) {
-		this.hasM4aVersion = hasM4aVersion;
-	}
-
-	public BooleanProperty getHasFlacVersion() {
-		return hasFlacVersion;
-	}
-
-	public void setHasFlacVersion(BooleanProperty hasFlacVersion) {
-		this.hasFlacVersion = hasFlacVersion;
-	}
-
-	public BooleanProperty getHasWavVersion() {
-		return hasWavVersion;
-	}
-
-	public void setHasWavVersion(BooleanProperty hasWavVersion) {
-		this.hasWavVersion = hasWavVersion;
 	}
 
 	public BooleanProperty getHasCover() {

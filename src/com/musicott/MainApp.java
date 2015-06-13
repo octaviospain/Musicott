@@ -11,7 +11,7 @@ public class MainApp extends Application {
 	}
 	
 	@Override
-	public void start(Stage primaryStage) {
+	public void start(Stage primaryStage) {		
 		Stage mainStage = primaryStage;
 		mainStage.setTitle("Musicott");
 		mainStage.getIcons().add(new Image("file:resources/images/musicotticon.png"));		

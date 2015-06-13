@@ -70,12 +70,6 @@ public class RootLayoutController {
 	@FXML
 	private TableColumn<Track,Number> bpmCol;
 	@FXML
-	private TableColumn<Track,Boolean> m4aCol;
-	@FXML
-	private TableColumn<Track,Boolean> flacCol;
-	@FXML
-	private TableColumn<Track,Boolean> wavCol;
-	@FXML
 	private TableColumn<Track,Boolean> coverCol;
 	@FXML
 	private TableColumn<Track,Boolean> inDiskCol;
@@ -105,9 +99,6 @@ public class RootLayoutController {
 		playCountCol.setCellValueFactory(cellData -> cellData.getValue().getPlayCount());
 		discNumberCol.setCellValueFactory(cellData -> cellData.getValue().getDiscNumber());
 		bpmCol.setCellValueFactory(cellData -> cellData.getValue().getBPM());
-		m4aCol.setCellValueFactory(cellData -> cellData.getValue().getHasFlacVersion());
-		flacCol.setCellValueFactory(cellData -> cellData.getValue().getHasFlacVersion());
-		wavCol.setCellValueFactory(cellData -> cellData.getValue().getHasWavVersion());
 		coverCol.setCellValueFactory(cellData -> cellData.getValue().getHasCover());
 		inDiskCol.setCellValueFactory(cellData -> cellData.getValue().getIsInDisk());
 		
@@ -131,6 +122,7 @@ public class RootLayoutController {
 				new ExtensionFilter("Audio Files","*.mp3")); //TODO m4a flac & wav when implemented
 		List<File> files = chooser.showOpenMultipleDialog(rootStage);
 		OpenTask task = new OpenTask(files);
+		SceneManager.getInstance().showImportProgressScene(task);
 		Thread t = new Thread(task);
 		t.setDaemon(true);
 		t.start();

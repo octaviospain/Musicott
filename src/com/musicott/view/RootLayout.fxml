@@ -73,9 +73,6 @@
                   <TableColumn fx:id="albumArtistCol" prefWidth="75.0" text="Album Artist" />
                   <TableColumn fx:id="commentsCol" prefWidth="75.0" text="Comments" />
                   <TableColumn fx:id="bitRateCol" prefWidth="75.0" text="BitRate" />
-                  <TableColumn fx:id="m4aCol" prefWidth="75.0" text="M4A" />
-                  <TableColumn fx:id="flacCol" prefWidth="75.0" text="FLAC" />
-                  <TableColumn fx:id="wavCol" prefWidth="75.0" text="WAV" />
                   <TableColumn fx:id="coverCol" prefWidth="75.0" text="Cover" />
                   <TableColumn fx:id="inDiskCol" prefWidth="75.0" text="In Disk" />
                   <TableColumn fx:id="playCountCol" prefWidth="75.0" text="Plays" />
