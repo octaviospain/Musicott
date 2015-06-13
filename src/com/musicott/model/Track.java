@@ -46,20 +46,35 @@ public class Track {
     public Track() {
     	trackID = -1;
     	name = new SimpleStringProperty();
+    	name.set("");
     	artist = new SimpleStringProperty();
+    	artist.set("");
     	album = new SimpleStringProperty();
+    	album.set("");
     	genre = new SimpleStringProperty();
+    	genre.set("");
     	comments = new SimpleStringProperty();
+    	comments.set("");
     	albumArtist = new SimpleStringProperty();
+    	albumArtist.set("");
     	label = new SimpleStringProperty();
+    	label.set("");
     	size = new SimpleIntegerProperty();
+    	size.set(-1);
     	totalTime = new SimpleIntegerProperty();
+    	totalTime.set(-1);
     	trackNumber = new SimpleIntegerProperty();
+    	trackNumber.set(-1);
     	year = new SimpleIntegerProperty();
+    	year.set(-1);
     	bitRate = new SimpleIntegerProperty();
+    	bitRate.set(-1);
     	playCount = new SimpleIntegerProperty();
+    	playCount.set(0);
     	discNumber = new SimpleIntegerProperty();
+    	discNumber.set(-1);
     	BPM = new SimpleIntegerProperty();
+    	BPM.set(-1);
     	hasM4aVersion = new SimpleBooleanProperty();
     	hasFlacVersion = new SimpleBooleanProperty();
     	hasWavVersion = new SimpleBooleanProperty();
@@ -270,7 +285,48 @@ public class Track {
 	}
 
 	@Override
+	public int hashCode() {
+		int hash=71;
+		hash = 73*hash+fileName.hashCode();
+		hash = 73*hash+fileFolder.hashCode();
+		hash = 73*hash+size.get();
+		hash = 73*hash+name.get().hashCode();
+		hash = 73*hash+artist.get().hashCode();
+		hash = 73*hash+album.get().hashCode();
+		hash = 73*hash+comments.get().hashCode();
+		hash = 73*hash+genre.get().hashCode();
+		hash = 73*hash+trackNumber.get();
+		hash = 73*hash+year.get();
+		hash = 73*hash+albumArtist.get().hashCode();
+		hash = 73*hash+BPM.get();
+		hash = 73*hash+label.get().hashCode();
+		hash = 73*hash+totalTime.get();
+		return hash;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+		if((o instanceof Track && ((Track) o).getFileName().equalsIgnoreCase(this.fileName)) &&
+			o instanceof Track && ((Track) o).getFileFolder().equalsIgnoreCase(this.fileFolder) && 
+			o instanceof Track && ((Track) o).getSize().get() == this.size.get() &&
+			o instanceof Track && ((Track) o).getName().get().equalsIgnoreCase(this.name.get()) &&
+			o instanceof Track && ((Track) o).getArtist().get().equalsIgnoreCase(this.artist.get()) &&
+			o instanceof Track && ((Track) o).getAlbum().get().equalsIgnoreCase(this.album.get()) &&
+			o instanceof Track && ((Track) o).getComments().get().equalsIgnoreCase(this.comments.get()) &&
+			o instanceof Track && ((Track) o).getGenre().get().equalsIgnoreCase(this.genre.get()) &&
+			o instanceof Track && ((Track) o).getTrackNumber().get() == this.trackNumber.get() &&
+			o instanceof Track && ((Track) o).getYear().get() == this.year.get() &&
+			o instanceof Track && ((Track) o).getAlbumArtist().get().equalsIgnoreCase(this.albumArtist.get()) &&
+			o instanceof Track && ((Track) o).getBPM().get() == this.BPM.get() &&
+			o instanceof Track && ((Track) o).getLabel().get().equalsIgnoreCase(this.label.get()) &&
+			o instanceof Track && ((Track) o).getTotalTime().get() == this.totalTime.get())
+				equals = true;
+		return equals;
+	}
+	
+	@Override
     public String toString(){
-    	return name+"/"+artist+" / "+genre+" / "+album+"("+year+")";
+    	return name.get()+" "+artist.get()+" "+genre.get()+" "+album.get()+"("+year.get()+") "+BPM.get()+" "+label.get()+" "+totalTime.get();
     }
 }
