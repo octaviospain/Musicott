@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<BorderPane minHeight="750.0" minWidth="1200.0" prefHeight="750.0" prefWidth="1200.0" stylesheets="@../../../css/rootstyle.css" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.RootLayoutController">
+<BorderPane minHeight="750.0" minWidth="1200.0" prefHeight="750.0" prefWidth="1200.0" stylesheets="@../../../css/rootstyle.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.RootLayoutController">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
@@ -15,19 +16,22 @@
                 <Menu fx:id="menuFile" mnemonicParsing="false" text="File">
                   <items>
                     <MenuItem fx:id="menuItemOpen" mnemonicParsing="false" onAction="#doOpen" text="Open File(s)..." />
-                        <MenuItem fx:id="menuItemImport" mnemonicParsing="false" onAction="#doImportCollection" text="Import collection" />
-                        <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Close" />
+                    <MenuItem fx:id="menuItemImport" mnemonicParsing="false" onAction="#doImportCollection" text="Import collection" />
+                    <SeparatorMenuItem mnemonicParsing="false" />
+                    <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Close" />
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Edit">
                   <items>
-                    <MenuItem mnemonicParsing="false" text="Delete" />
+                    <MenuItem mnemonicParsing="false" text="Edit" />
+                        <MenuItem mnemonicParsing="false" text="Delete" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem mnemonicParsing="false" text="Fix ID3 tags" />
                   </items>
                 </Menu>
-                <Menu mnemonicParsing="false" text="About">
+                <Menu fx:id="menuAbout" mnemonicParsing="false" text="About">
                   <items>
-                    <MenuItem mnemonicParsing="false" text="About" />
+                    <MenuItem fx:id="menuItemAbout" mnemonicParsing="false" onAction="#doAbout" text="About" />
                   </items>
                 </Menu>
               </menus>

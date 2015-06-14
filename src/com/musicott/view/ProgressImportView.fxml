@@ -10,7 +10,7 @@
    <children>
       <BorderPane fx:id="pane" prefHeight="51.0" prefWidth="500.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <bottom>
-            <Button mnemonicParsing="false" onAction="#cancelTask" text="Cancel" BorderPane.alignment="CENTER">
+            <Button fx:id="cancelTaskButton" mnemonicParsing="false" onAction="#cancelTask" text="Cancel" BorderPane.alignment="CENTER">
                <BorderPane.margin>
                   <Insets bottom="10.0" top="5.0" />
                </BorderPane.margin>

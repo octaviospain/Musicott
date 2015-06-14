@@ -10,12 +10,16 @@ import com.musicott.task.OpenTask;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
@@ -28,6 +32,10 @@ public class RootLayoutController {
 	private MenuItem menuItemImport;
 	@FXML
 	private MenuItem  menuItemOpen;
+	@FXML
+	private Menu menuAbout;
+	@FXML
+	private MenuItem menuItemAbout;
 	@FXML
 	private ToggleButton playButton;
 	@FXML
@@ -122,16 +130,30 @@ public class RootLayoutController {
 		chooser.getExtensionFilters().addAll(
 				new ExtensionFilter("Audio Files","*.mp3")); //TODO m4a flac & wav when implemented
 		List<File> files = chooser.showOpenMultipleDialog(rootStage);
-		OpenTask task = new OpenTask(files);
-		SceneManager.getInstance().showImportProgressScene(task);
-		Thread t = new Thread(task);
-		t.setDaemon(true);
-		t.start();
+		if(files != null) {
+			OpenTask task = new OpenTask(files);
+			SceneManager.getInstance().showImportProgressScene(task);
+			Thread t = new Thread(task);
+			t.setDaemon(true);
+			t.start();
+		}
 	}
 	
 	@FXML
 	private void doImportCollection() {
 		SceneManager.getInstance().openImportScene();
+	}
+	
+	@FXML
+	private void doAbout() {
+		Alert alert = new Alert(AlertType.INFORMATION);
+		alert.setTitle("About Musicott");
+		alert.setHeaderText("Musicott");
+		alert.setContentText("Musicott is an application for import and organize music files.");
+		ImageView iv = new ImageView();
+		iv.setImage(new Image("file:resources/images/musicotticon.png"));
+		alert.setGraphic(iv);
+		alert.showAndWait();
 	}
 	
 	@FXML

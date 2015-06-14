@@ -15,7 +15,7 @@ public class ProgressImportController {
 	@FXML
 	private ProgressBar pBar;
 	@FXML
-	private Button cancelButton;
+	private Button cancelTaskButton;
 	private Task<?> importTask;
 	
 	public ProgressImportController() {
