@@ -1,0 +1,19 @@
+.toggle-button#playButton {
+	-fx-graphic: url('../icons/play-button-icon.png');
+	-fx-background-color: transparent;
+}
+
+.toggle-button:selected#playButton {	
+	-fx-graphic: url('../icons/pause-button-icon.png');
+	-fx-background-color: transparent;
+}
+
+#prevButton {
+	-fx-graphic: url('../icons/prev-button-icon.png');
+	-fx-background-color: transparent;
+}
+
+#nextButton {
+	-fx-graphic: url('../icons/next-button-icon.png');
+	-fx-background-color: transparent;
+}

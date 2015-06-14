@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<BorderPane minHeight="750.0" minWidth="1200.0" prefHeight="750.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.RootLayoutController">
+<BorderPane minHeight="750.0" minWidth="1200.0" prefHeight="750.0" prefWidth="1200.0" stylesheets="@../../../css/rootstyle.css" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.RootLayoutController">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
@@ -34,19 +34,15 @@
             </MenuBar>
             <HBox alignment="CENTER_LEFT" minHeight="50.0" minWidth="-Infinity" prefHeight="50.0">
                <children>
-                  <Button fx:id="prevButton" mnemonicParsing="false" text="Prev">
+                  <Button fx:id="prevButton" mnemonicParsing="false">
                      <HBox.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                        <Insets bottom="5.0" left="5.0" top="5.0" />
                      </HBox.margin>
                   </Button>
-                  <Button fx:id="playButton" mnemonicParsing="false" text="Play">
+                  <ToggleButton fx:id="playButton" mnemonicParsing="false" />
+                  <Button fx:id="nextButton" mnemonicParsing="false">
                      <HBox.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </HBox.margin>
-                  </Button>
-                  <Button fx:id="nextButton" mnemonicParsing="false" text="Next">
-                     <HBox.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                        <Insets bottom="5.0" right="5.0" top="5.0" />
                      </HBox.margin>
                   </Button>
                </children>

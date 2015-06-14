@@ -15,6 +15,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.ToggleButton;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
@@ -28,7 +29,7 @@ public class RootLayoutController {
 	@FXML
 	private MenuItem  menuItemOpen;
 	@FXML
-	private Button playButton;
+	private ToggleButton playButton;
 	@FXML
 	private Button prevButton;
 	@FXML
