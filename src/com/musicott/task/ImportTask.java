@@ -56,6 +56,10 @@ public class ImportTask extends Task<List<Track>>{
 	protected List<Track> call() throws Exception {
 		countFiles(folder);
 		scanFolder(folder);
+		if(!isCancelled()) {
+			Platform.runLater(() -> {SceneManager.getInstance().getProgressImportController().setIndeterminate();});
+			SceneManager.getInstance().getRootController().addTracks(list);
+		}
 		return list;
 	}
 	
@@ -69,8 +73,7 @@ public class ImportTask extends Task<List<Track>>{
 	protected void succeeded() {
 		super.succeeded();
 		updateMessage("Import Succeeded");
-		Platform.runLater(() -> {SceneManager.getInstance().getRootController().addTracks(list);
-								 SceneManager.getInstance().closeImportScene();});
+		SceneManager.getInstance().closeImportScene();
 	}
 	
 	@Override

@@ -6,6 +6,8 @@ A JavaFX application for import, organize and use music files.
 
 ## Features for now
 * Import mp3 files from within a folder
+* Delete rows in the table
+* Edit single or multiple rows
 
 ### To be implemented
 * Fix ID3 tags from mp3

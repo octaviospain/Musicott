@@ -66,4 +66,8 @@ public class ProgressImportController {
 		importTask = task;
 		pBar.progressProperty().bind(importTask.progressProperty());
 	}
+	
+	public void setIndeterminate() {
+		initialize();
+	}
 }

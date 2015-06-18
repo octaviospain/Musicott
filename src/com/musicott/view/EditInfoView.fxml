@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="560.0" prefWidth="630.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.EditController">
+   <children>
+      <BorderPane layoutX="215.0" layoutY="182.0" prefHeight="540.0" prefWidth="630.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <bottom>
+            <HBox alignment="CENTER_RIGHT" minHeight="-Infinity" prefHeight="70.0">
+               <children>
+                  <Button fx:id="cancelEditButton" alignment="CENTER" cancelButton="true" contentDisplay="CENTER" mnemonicParsing="false" onAction="#doCancel" prefHeight="26.0" prefWidth="100.0" text="Cancel" />
+                  <Button fx:id="okEditButton" alignment="CENTER" contentDisplay="CENTER" defaultButton="true" mnemonicParsing="false" onAction="#doOK" prefHeight="26.0" prefWidth="100.0" text="OK" textAlignment="CENTER">
+                     <HBox.margin>
+                        <Insets left="15.0" right="15.0" />
+                     </HBox.margin>
+                  </Button>
+               </children>
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin>
+            </HBox>
+         </bottom>
+         <center>
+            <GridPane alignment="CENTER" BorderPane.alignment="BOTTOM_RIGHT">
+              <columnConstraints>
+                <ColumnConstraints hgrow="NEVER" maxWidth="170.0" minWidth="170.0" prefWidth="170.0" />
+                <ColumnConstraints hgrow="ALWAYS" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints fillHeight="false" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints fillHeight="false" minHeight="7.0" prefHeight="64.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="57.0" minHeight="0.0" prefHeight="0.0" vgrow="NEVER" />
+              </rowConstraints>
+               <children>
+                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Name" textAlignment="RIGHT" GridPane.halignment="RIGHT">
+                     <GridPane.margin>
+                        <Insets right="7.0" />
+                     </GridPane.margin>
+                  </Label>
+                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Artist" textAlignment="RIGHT" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
+                     <GridPane.margin>
+                        <Insets right="7.0" />
+                     </GridPane.margin>
+                  </Label>
+                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Album" textAlignment="RIGHT" GridPane.halignment="RIGHT" GridPane.rowIndex="2">
+                     <GridPane.margin>
+                        <Insets right="7.0" />
+                     </GridPane.margin>
+                  </Label>
+                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Album Artist" textAlignment="RIGHT" GridPane.halignment="RIGHT" GridPane.rowIndex="3">
+                     <GridPane.margin>
+                        <Insets right="7.0" />
+                     </GridPane.margin>
+                  </Label>
+                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Genre" textAlignment="RIGHT" GridPane.halignment="RIGHT" GridPane.rowIndex="4">
+                     <GridPane.margin>
+                        <Insets right="7.0" />
+                     </GridPane.margin>
+                  </Label>
+                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Label" textAlignment="RIGHT" GridPane.halignment="RIGHT" GridPane.rowIndex="5">
+                     <GridPane.margin>
+                        <Insets right="7.0" />
+                     </GridPane.margin>
+                  </Label>
+                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Year" textAlignment="RIGHT" GridPane.halignment="RIGHT" GridPane.rowIndex="6">
+                     <GridPane.margin>
+                        <Insets right="7.0" />
+                     </GridPane.margin>
+                  </Label>
+                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="BPM" textAlignment="RIGHT" GridPane.halignment="RIGHT" GridPane.rowIndex="7">
+                     <GridPane.margin>
+                        <Insets right="7.0" />
+                     </GridPane.margin>
+                  </Label>
+                  <TextField fx:id="name" maxHeight="-Infinity" prefHeight="26.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="artist" maxHeight="-Infinity" prefHeight="26.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="1" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="album" maxHeight="-Infinity" prefHeight="26.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="2" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="albumArtist" maxHeight="-Infinity" prefHeight="26.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="3" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="genre" maxHeight="-Infinity" prefHeight="26.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="4" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="label" maxHeight="-Infinity" maxWidth="150.0" prefHeight="26.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Track Num" textAlignment="RIGHT" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets right="225.0" />
+                     </GridPane.margin>
+                  </Label>
+                  <TextField fx:id="year" alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="50.0" prefHeight="26.0" prefWidth="50.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="6" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="bpm" alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="50.0" prefHeight="26.0" prefWidth="50.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="7" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="trackNum" maxHeight="-Infinity" maxWidth="35.0" prefHeight="26.0" prefWidth="35.0" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets right="180.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Disc Num" textAlignment="RIGHT" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets right="100.0" />
+                     </GridPane.margin>
+                  </Label>
+                  <TextField fx:id="discNum" maxHeight="-Infinity" maxWidth="35.0" prefHeight="26.0" prefWidth="35.0" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets right="55.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Comments" textAlignment="RIGHT" GridPane.halignment="RIGHT" GridPane.rowIndex="8" GridPane.valignment="TOP">
+                     <GridPane.margin>
+                        <Insets right="7.0" top="7.0" />
+                     </GridPane.margin>
+                  </Label>
+                  <TextArea fx:id="comments" prefHeight="200.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="8">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextArea>
+               </children>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+            </GridPane>
+         </center>
+         <top>
+            <GridPane prefHeight="150.0" prefWidth="630.0" BorderPane.alignment="CENTER">
+              <columnConstraints>
+                <ColumnConstraints fillWidth="false" hgrow="NEVER" maxWidth="170.0" minWidth="170.0" prefWidth="170.0" />
+                <ColumnConstraints hgrow="ALWAYS" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints maxHeight="170.0" minHeight="170.0" prefHeight="170.0" vgrow="SOMETIMES" />
+              </rowConstraints>
+               <children>
+                  <ImageView fx:id="coverImage" fitHeight="133.0" fitWidth="133.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.hgrow="NEVER" GridPane.valignment="CENTER" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets />
+                     </GridPane.margin>
+                  </ImageView>
+                  <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1">
+                     <children>
+                        <Label fx:id="titleName">
+                           <VBox.margin>
+                              <Insets bottom="7.0" left="7.0" top="40.0" />
+                           </VBox.margin>
+                           <font>
+                              <Font size="20.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="titleArtist">
+                           <VBox.margin>
+                              <Insets bottom="7.0" left="7.0" />
+                           </VBox.margin>
+                        </Label>
+                        <Label fx:id="titleAlbum">
+                           <VBox.margin>
+                              <Insets left="7.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+               </children>
+            </GridPane>
+         </top>
+      </BorderPane>
+   </children>
+</AnchorPane>

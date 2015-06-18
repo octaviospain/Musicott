@@ -20,19 +20,21 @@ package com.musicott.view;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 
 import com.musicott.SceneManager;
 import com.musicott.model.Track;
 import com.musicott.task.OpenTask;
 
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
@@ -54,6 +56,12 @@ public class RootLayoutController {
 	private MenuItem menuItemImport;
 	@FXML
 	private MenuItem  menuItemOpen;
+	@FXML
+	private Menu menuEdit;
+	@FXML
+	private MenuItem menuItemDelete;
+	@FXML
+	private MenuItem menuItemEdit; 
 	@FXML
 	private Menu menuAbout;
 	@FXML
@@ -106,6 +114,7 @@ public class RootLayoutController {
 	private TableColumn<Track,Boolean> inDiskCol;
 
 	private ObservableList<Track> tracks;
+	private ObservableList<Track> selection;
 	
 	private Stage rootStage;
 	
@@ -132,8 +141,10 @@ public class RootLayoutController {
 		bpmCol.setCellValueFactory(cellData -> cellData.getValue().getBPM());
 		coverCol.setCellValueFactory(cellData -> cellData.getValue().getHasCover());
 		inDiskCol.setCellValueFactory(cellData -> cellData.getValue().getIsInDisk());
-		
 		tracks = trackTable.getItems();
+		selection = trackTable.getSelectionModel().getSelectedItems();
+		trackTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+		trackTable.getSelectionModel().selectedIndexProperty().addListener(((observable, oldValue, newValue) -> selection = trackTable.getSelectionModel().getSelectedItems()));
 	}	
 	
 	public void addTracks(List<Track> tracks) {
@@ -143,6 +154,31 @@ public class RootLayoutController {
 	
 	public void setStage(Stage stage) {
 		rootStage = stage;
+	}
+	
+	@FXML
+	private void doDelete() {
+		if(selection != null && selection.size() !=0)
+			tracks.removeAll(selection);
+	}
+	
+	@FXML
+	private void doEdit() {
+		if(selection != null & selection.size() !=0) {
+			if(selection.size() > 1) {
+				Alert alert = new Alert(AlertType.CONFIRMATION);
+				alert.setTitle("");
+				alert.setHeaderText("");
+				alert.setContentText("Are you sure you want to edit multiple files?");
+				Optional<ButtonType> result = alert.showAndWait();
+				if (result.get() == ButtonType.OK)
+					SceneManager.getInstance().openEditScene(selection);
+				else
+					alert.close();
+			}
+			else
+				SceneManager.getInstance().openEditScene(selection);
+		}
 	}
 	
 	@FXML
@@ -171,7 +207,7 @@ public class RootLayoutController {
 		Alert alert = new Alert(AlertType.INFORMATION);
 		alert.setTitle("About Musicott");
 		alert.setHeaderText("Musicott");
-		alert.setContentText("Musicott is an application for import and organize music files.");
+		alert.setContentText("Version 0.1.0\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
 		ImageView iv = new ImageView();
 		iv.setImage(new Image("file:resources/images/musicotticon.png"));
 		alert.setGraphic(iv);

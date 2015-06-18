@@ -21,12 +21,15 @@ package com.musicott;
 import java.io.IOException;
 
 import com.musicott.error.ErrorHandler;
+import com.musicott.view.EditController;
 import com.musicott.view.ErrorDialogController;
 import com.musicott.view.ImportCollectionController;
 import com.musicott.view.ProgressImportController;
 import com.musicott.view.RootLayoutController;
 import com.musicott.error.Error;
+import com.musicott.model.Track;
 
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -44,10 +47,10 @@ public class SceneManager {
 	private Stage rootStage;
 	private Stage importStage;
 	private Stage progressStage;
+	private Stage editStage;
 	private Scene mainScene;
 
-	private BorderPane rootLayout;
-	private AnchorPane importLayout;
+	private EditController editController;
 	private RootLayoutController rootController;
 	private ImportCollectionController importController;
 	private ProgressImportController progressImportController;
@@ -81,14 +84,39 @@ public class SceneManager {
 		return progressImportController;
 	}
 	
+	public void openEditScene(ObservableList<Track> selection) {
+		try {
+			editStage = new Stage();
+			editStage.setTitle("Edit");
+			
+			FXMLLoader loader = new FXMLLoader();
+			loader.setLocation(SceneManager.class.getResource("view/EditInfoView.fxml"));
+			AnchorPane editLayout = (AnchorPane) loader.load();
+			editController = loader.getController();
+			editController.setStage(editStage);
+			editController.setSelection(selection);
+			
+			Scene editScene = new Scene(editLayout);
+			editStage.initModality(Modality.APPLICATION_MODAL);
+			editStage.initOwner(editScene.getWindow());
+			editStage.setScene(editScene);
+			editStage.setResizable(false);
+			editStage.showAndWait();
+		} catch (IOException e) {
+			//TODO Show error dialog and closes edit scene
+			e.printStackTrace();
+		}
+	}
+	
 	public void openImportScene() {
 		try {
 			importStage = new Stage();
 			importStage.setTitle("Import");
 			
 			FXMLLoader loader = new FXMLLoader();
-			loader.setLocation(MainApp.class.getResource("view/ImportCollectionMainView.fxml"));
-			importLayout = (AnchorPane) loader.load();
+			loader.setLocation(MainApp.class.getResource("view/ImportCollectionView.fxml"));
+
+			AnchorPane importLayout = (AnchorPane) loader.load();
 			importController = loader.getController();
 			importController.setStage(importStage);
 			
@@ -105,10 +133,10 @@ public class SceneManager {
 	}
 	
 	public void closeImportScene() {
-		showErrorDialog(Error.IMPORT_ERROR);
 		if(importStage != null && importStage.isShowing())
 			importStage.close();
 		progressStage.close();
+		showErrorDialog(Error.IMPORT_ERROR);
 	}
 	
 	public void showImportProgressScene(Task<?> task) {
@@ -145,13 +173,13 @@ public class SceneManager {
 		try {
 			FXMLLoader rootLoader = new FXMLLoader();
 			rootLoader.setLocation(MainApp.class.getResource("view/RootLayout.fxml"));
-			rootLayout = (BorderPane) rootLoader.load();
+			BorderPane rootLayout = (BorderPane) rootLoader.load();
 			rootController = rootLoader.getController();
 			rootController.setStage(rootStage);
 			
 			mainScene = new Scene(rootLayout);
 			rootStage.setMinWidth(1200);
-			rootStage.setMinHeight(770);
+			rootStage.setMinHeight(775);
 			rootStage.setScene(mainScene);
 			rootStage.show();
 		} catch (IOException e) {

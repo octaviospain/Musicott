@@ -26,8 +26,6 @@ import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
-import com.musicott.error.ErrorHandler;
-import com.musicott.error.ParseException;
 import com.musicott.model.Track;
 
 /**

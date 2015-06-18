@@ -19,10 +19,12 @@
 package com.musicott.model;
 
 import java.time.LocalDate;
+import java.util.Iterator;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -73,14 +75,14 @@ public class Track {
     	comments = new SimpleStringProperty("");
     	albumArtist = new SimpleStringProperty("");
     	label = new SimpleStringProperty("");
-    	size = new SimpleIntegerProperty(-1);
-    	totalTime = new SimpleIntegerProperty(-1);
-    	trackNumber = new SimpleIntegerProperty(-1);
-    	year = new SimpleIntegerProperty(-1);
-    	bitRate = new SimpleIntegerProperty(-1);
-    	playCount = new SimpleIntegerProperty(0);
-    	discNumber = new SimpleIntegerProperty(-1);
-    	BPM = new SimpleIntegerProperty(-1);
+    	size = new SimpleIntegerProperty();
+    	totalTime = new SimpleIntegerProperty();
+    	trackNumber = new SimpleIntegerProperty();
+    	year = new SimpleIntegerProperty();
+    	bitRate = new SimpleIntegerProperty();
+    	playCount = new SimpleIntegerProperty();
+    	discNumber = new SimpleIntegerProperty();
+    	BPM = new SimpleIntegerProperty();
     	hasCover = new SimpleBooleanProperty(false);
     	isInDisk = new SimpleBooleanProperty(false);
     	dateModified = new SimpleObjectProperty<LocalDate>(LocalDate.now());
@@ -308,4 +310,46 @@ public class Track {
     public String toString(){
     	return name.get()+" "+artist.get()+" "+genre.get()+" "+album.get()+"("+year.get()+") "+BPM.get()+" "+label.get()+" "+totalTime.get();
     }
+
+	public Iterator<Property<?>> editFieldsIterator() {
+		return new EditFieldIterator();
+	}
+
+	public class EditFieldIterator implements Iterator<Property<?>> {
+
+		private Property<?>[] fields;
+		private int index;
+		
+		public EditFieldIterator() {
+			index = 0;
+			fields = new  Property<?>[] {
+					name,
+					artist,
+					album,
+					albumArtist,
+					genre,
+					label,
+					year,
+					BPM,
+					trackNumber,
+					discNumber,
+					comments,
+			};
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return fields.length < index ? true : false;
+		}
+
+		@Override
+		public Property<?> next() {
+			return fields[index++];
+		}
+		
+		public Property<?> get(int i) {
+			index = i+1;
+			return fields[i];
+		}
+	}
 }
