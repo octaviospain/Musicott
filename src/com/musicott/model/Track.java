@@ -60,6 +60,7 @@ public class Track {
 	
 	private BooleanProperty hasCover;
 	private BooleanProperty isInDisk;
+	private BooleanProperty isCompilation;
 	
 	private ObjectProperty<LocalDate> dateModified;
 	private ObjectProperty<LocalDate> dateAdded;
@@ -77,14 +78,15 @@ public class Track {
     	label = new SimpleStringProperty("");
     	size = new SimpleIntegerProperty();
     	totalTime = new SimpleIntegerProperty();
-    	trackNumber = new SimpleIntegerProperty();
-    	year = new SimpleIntegerProperty();
+    	trackNumber = new SimpleIntegerProperty(0);
+    	year = new SimpleIntegerProperty(0);
     	bitRate = new SimpleIntegerProperty();
     	playCount = new SimpleIntegerProperty();
-    	discNumber = new SimpleIntegerProperty();
-    	BPM = new SimpleIntegerProperty();
+    	discNumber = new SimpleIntegerProperty(0);
+    	BPM = new SimpleIntegerProperty(-1);
     	hasCover = new SimpleBooleanProperty(false);
     	isInDisk = new SimpleBooleanProperty(false);
+    	isCompilation = new SimpleBooleanProperty(false);
     	dateModified = new SimpleObjectProperty<LocalDate>(LocalDate.now());
     	dateAdded = new SimpleObjectProperty<LocalDate>(LocalDate.now());
     }
@@ -248,7 +250,15 @@ public class Track {
 	public void setIsInDisk(BooleanProperty isInDisk) {
 		this.isInDisk = isInDisk;
 	}
-
+	
+	public BooleanProperty getIsCompilation() {
+		return this.isCompilation;
+	}
+	
+	public void setIsCompilation(BooleanProperty isCompilation) {
+		this.isCompilation = isCompilation;
+	}
+	
 	public ObjectProperty<LocalDate> getDateModified() {
 		return dateModified;
 	}

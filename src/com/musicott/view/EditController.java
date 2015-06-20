@@ -31,6 +31,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -74,6 +75,8 @@ public class EditController {
 	private Label titleAlbum;
 	@FXML
 	private ImageView coverImage;
+	@FXML
+	private CheckBox isCompilationCheckBox;
 	@FXML
 	private Button cancelEditButton;
 	@FXML
@@ -122,11 +125,16 @@ public class EditController {
 			t.getAlbumArtist().set(albumArtist.textProperty().getValue());
 			t.getGenre().set(genre.textProperty().getValue());
 			t.getLabel().set(label.textProperty().getValue());
-			t.getYear().set(Integer.parseInt(year.textProperty().getValue()));
-			t.getBPM().set(Integer.parseInt(bpm.textProperty().getValue()));
-			t.getTrackNumber().set(Integer.parseInt(trackNum.textProperty().getValue()));
-			t.getDiscNumber().set(Integer.parseInt(discNum.textProperty().getValue()));
+			if(!year.textProperty().getValue().equals(""))
+				t.getYear().set(Integer.parseInt(year.textProperty().getValue()));
+			if(!bpm.textProperty().getValue().equals(""))
+				t.getBPM().set(Integer.parseInt(bpm.textProperty().getValue()));
+			if(!trackNum.textFormatterProperty().getValue().equals(""))
+				t.getTrackNumber().set(Integer.parseInt(trackNum.textProperty().getValue()));
+			if(!discNum.textProperty().getValue().equals(""))
+				t.getDiscNumber().set(Integer.parseInt(discNum.textProperty().getValue()));
 			t.getComments().set(comments.textProperty().getValue());
+			t.getIsCompilation().set(isCompilationCheckBox.isSelected());
 			//TODO set image
 			}
 			catch(NumberFormatException e) {
@@ -137,28 +145,29 @@ public class EditController {
 			for(int i=0; i<trackSelection.size() ;i++) {
 				Track t = trackSelection.get(i);
 				try {
-					if(!name.textProperty().getValue().equalsIgnoreCase("-"))
+					if(!name.textProperty().getValue().equals("-"))
 						t.getName().set(name.textProperty().getValue());
-					if(!artist.textProperty().getValue().equalsIgnoreCase("-"))
+					if(!artist.textProperty().getValue().equals("-"))
 						t.getArtist().set(artist.textProperty().getValue());
-					if(!album.textProperty().getValue().equalsIgnoreCase("-"))
+					if(!album.textProperty().getValue().equals("-"))
 						t.getAlbum().set(album.textProperty().getValue());
-					if(!albumArtist.textProperty().getValue().equalsIgnoreCase("-"))
+					if(!albumArtist.textProperty().getValue().equals("-"))
 						t.getAlbumArtist().set(albumArtist.textProperty().getValue());
-					if(!genre.textProperty().getValue().equalsIgnoreCase("-"))
+					if(!genre.textProperty().getValue().equals("-"))
 						t.getGenre().set(genre.textProperty().getValue());
-					if(!label.textProperty().getValue().equalsIgnoreCase("-"))
+					if(!label.textProperty().getValue().equals("-"))
 						t.getLabel().set(label.textProperty().getValue());
-					if(!year.textProperty().getValue().equalsIgnoreCase("-"))
+					if(!year.textProperty().getValue().equals("-") || year.textProperty().getValue().equals(""))
 						t.getYear().set(Integer.parseInt(year.textProperty().getValue()));
-					if(!bpm.textProperty().getValue().equalsIgnoreCase("-"))
+					if(!bpm.textProperty().getValue().equals("-") || bpm.textProperty().getValue().equals(""))
 						t.getBPM().set(Integer.parseInt(bpm.textProperty().getValue()));
-					if(!trackNum.textProperty().getValue().equalsIgnoreCase("-"))
+					if(!trackNum.textProperty().getValue().equals("-") || trackNum.textProperty().getValue().equals(""))
 						t.getTrackNumber().set(Integer.parseInt(trackNum.textProperty().getValue()));
-					if(!discNum.textProperty().getValue().equalsIgnoreCase("-"))
+					if(!discNum.textProperty().getValue().equals("-") || discNum.textProperty().getValue().equals(""))
 						t.getDiscNumber().set(Integer.parseInt(discNum.textProperty().getValue()));
-					if(!comments.textProperty().getValue().equalsIgnoreCase("-"))
+					if(!comments.textProperty().getValue().equals("-"))
 						t.getComments().set(comments.textProperty().getValue());
+					t.getIsCompilation().set(isCompilationCheckBox.isSelected());
 					//TODO set image
 				} catch (NumberFormatException e) {
 					// TODO show error dialog and closes or fix for non accept integer inputs
@@ -182,14 +191,27 @@ public class EditController {
 			albumArtist.textProperty().setValue(track.getAlbumArtist().get());
 			genre.textProperty().setValue(track.getGenre().get());
 			label.textProperty().setValue(track.getLabel().get());
-			year.textProperty().setValue(track.getYear()+"");
-			bpm.textProperty().setValue(track.getBPM().get()+"");
-			trackNum.textProperty().setValue(track.getTrackNumber().get()+"");
-			discNum.textProperty().setValue(track.getDiscNumber().get()+"");
+			if(track.getYear().get() == 0)
+				year.textProperty().setValue("");
+			else
+				year.textProperty().setValue(track.getYear().get()+"");
+			if(track.getBPM().get() == -1)
+				bpm.textProperty().setValue("");
+			else
+				bpm.textProperty().setValue(track.getBPM().get()+"");
+			if(track.getTrackNumber().get() == 0)
+				trackNum.textProperty().setValue("");
+			else
+				trackNum.textProperty().setValue(track.getTrackNumber().get()+"");
+			if(track.getDiscNumber().get() == 0)
+				discNum.textProperty().setValue("");
+			else
+				discNum.textProperty().setValue(track.getDiscNumber().get()+"");
 			comments.textProperty().setValue(track.getComments().get());
 			titleName.setText(track.getName().get());
 			titleArtist.setText(track.getArtist().get());
 			titleAlbum.setText(track.getAlbum().get());
+			isCompilationCheckBox.setSelected(track.getIsCompilation().get());
 		//	coverImage.setImage(); //TODO
 		}
 		else {
@@ -204,7 +226,7 @@ public class EditController {
 					ta.textProperty().setValue((matchCommonString(listOfSameFields)));
 				}
 				else
-					if(i<6) {							// string fields
+					if(i<6) {								// string fields
 						for(Track t: trackSelection) {
 							StringProperty sp = (StringProperty) ((EditFieldIterator) t.editFieldsIterator()).get(i);
 							listOfSameFields.add(sp.get());
@@ -218,15 +240,19 @@ public class EditController {
 						TextField tf = (TextField) fieldMap.get(i);
 						tf.textProperty().setValue((matchCommonString(listOfSameFields)));
 					}
-					else {								// integer fields
+					else {									// integer fields
 						TextField tf = (TextField) fieldMap.get(i);
 						for(Track t: trackSelection) {
 							IntegerProperty sp = (IntegerProperty) ((EditFieldIterator) t.editFieldsIterator()).get(i);
-							listOfSameFields.add(""+sp.get());
+							if(sp.get() == 0 || sp.get() == -1)
+								listOfSameFields.add("");
+							else
+								listOfSameFields.add(""+sp.get());
 						}
 						tf.textProperty().setValue((matchCommonString(listOfSameFields)));
 					}
 			}
+			isCompilationCheckBox.setIndeterminate(true);
 			//TODO set default image or common cover image
 		}
 	}

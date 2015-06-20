@@ -24,19 +24,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Label;
+import javafx.scene.control.CheckBox;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.testfx.framework.junit.ApplicationTest;
 import org.testfx.util.WaitForAsyncUtils;
@@ -50,7 +49,6 @@ import static org.loadui.testfx.Assertions.assertNodeExists;
 import static org.testfx.matcher.base.NodeMatchers.*;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.lessThan;
 
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.UnsupportedTagException;
@@ -66,14 +64,13 @@ public class SystemApplicationTest extends ApplicationTest {
 
 	private Application frame;
 	private Stage stage;
-	private String mp3FilePath = "/Users/octavio/Music/iTunes/iTunes Media/Music/Mike Oldfield/Tubular Bells II/01 Sentinel.mp3";
+	private String mp3FilePath = "/Users/octavio/Music/iTunes/iTunes Media/Music/Abstraxion/Break Of Lights/01 White Rain (feat. Chloe).mp3";
 	
 	@Override
 	public void start(Stage stage) throws Exception {
 		frame = new MainApp();
 		this.stage = stage;
 		frame.start(this.stage);
-		WaitForAsyncUtils.waitForFxEvents();
 	}
 	
 	@After
@@ -81,16 +78,172 @@ public class SystemApplicationTest extends ApplicationTest {
 		TableView<Track> tv = find("#trackTable");
 		tv.getItems().clear();
 	}
+
+	@Test
+	public void editTrackTest() {
+		clickOn("#menuFile");
+		clickOn("#menuItemOpen");
+		press(KeyCode.DIGIT0);		// Because the Filechooser is not moveable with testFX, I set the correct folder
+		press(KeyCode.ENTER);		// previously selecting it in a normal execution, and the filechooser opens there
+		TableView<Track> tv = find("#trackTable");
+		while(tv.getItems() == null || tv.getItems().size() == 0);
+		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
+		clickOn("#trackTable");
+		push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN));
+		clickOn("#menuEdit");
+		clickOn("#menuItemEdit");
+		verifyThat("#name", isEnabled());
+		verifyThat("#name", isVisible());
+		clickOn("#name").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Throwback (Borderline Remix)");
+		assertEquals(((TextField) find("#name")).getText(), "Throwback (Borderline Remix)");
+		verifyThat("#artist", isEnabled());
+		verifyThat("#artist", isVisible());
+		clickOn("#artist").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Psidream & Pacific");
+		assertEquals(((TextField) find("#artist")).getText(), "Psidream & Pacific");
+		verifyThat("#album", isEnabled());
+		verifyThat("#album", isVisible());
+		clickOn("#album").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Transformation");
+		assertEquals(((TextField) find("#album")).getText(), "Transformation");
+		verifyThat("#albumArtist", isEnabled());
+		verifyThat("#albumArtist", isVisible());
+		clickOn("#albumArtist").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Album Artist");
+		assertEquals(((TextField) find("#albumArtist")).getText(), "Album Artist");
+		verifyThat("#genre", isEnabled());
+		verifyThat("#genre", isVisible());
+		clickOn("#genre").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Drum & Bass");
+		assertEquals(((TextField) find("#genre")).getText(), "Drum & Bass");
+		verifyThat("#label", isEnabled());
+		verifyThat("#label", isVisible());
+		clickOn("#label").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Critical Recordings");
+		verifyThat("#year", isEnabled());
+		verifyThat("#year", isVisible());
+		clickOn("#year").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("2005");
+		assertEquals(((TextField) find("#label")).getText(), "Critical Recordings");
+		verifyThat("#bpm", isEnabled());
+		verifyThat("#bpm", isVisible());
+		clickOn("#bpm").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("175");
+		assertEquals(((TextField) find("#bpm")).getText(), "175");
+		verifyThat("#comments", isEnabled());
+		verifyThat("#comments", isVisible());
+		clickOn("#comments").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Very nice drop");
+		assertEquals(((TextArea) find("#comments")).getText(), "Very nice drop");
+		verifyThat("#trackNum", isEnabled());
+		verifyThat("#trackNum", isVisible());
+		clickOn("#trackNum").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("3");
+		assertEquals(((TextField) find("#trackNum")).getText(), "3");
+		verifyThat("#discNum", isEnabled());
+		verifyThat("#discNum", isVisible());
+		clickOn("#discNum").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("1");
+		assertEquals(((TextField) find("#discNum")).getText(), "1");
+		verifyThat("#isCompilationCheckBox", isEnabled());
+		verifyThat("#isCompilationCheckBox", isVisible());
+		clickOn("#isCompilationCheckBox");
+		assertTrue(((CheckBox) find("#isCompilationCheckBox")).isSelected());
+		clickOn("#okEditButton");
+		assertEquals(tv.getItems().get(0).getName().get(), "Throwback (Borderline Remix)");
+		assertEquals(tv.getItems().get(0).getArtist().get(), "Psidream & Pacific");
+		assertEquals(tv.getItems().get(0).getAlbum().get(), "Transformation");
+		assertEquals(tv.getItems().get(0).getAlbumArtist().get(), "Album Artist");
+		assertEquals(tv.getItems().get(0).getGenre().get(), "Drum & Bass");
+		assertEquals(tv.getItems().get(0).getLabel().get(), "Critical Recordings");
+		assertEquals(tv.getItems().get(0).getBPM().get(), Integer.parseInt("175"));
+		assertEquals(tv.getItems().get(0).getYear().get(), Integer.parseInt("2005"));
+		assertEquals(tv.getItems().get(0).getComments().get(), "Very nice drop");
+		assertEquals(tv.getItems().get(0).getTrackNumber().get(), Integer.parseInt("3"));
+		assertEquals(tv.getItems().get(0).getDiscNumber().get(), Integer.parseInt("1"));
+	}
 	
 	@Test
-	public void correctFieldsEditViewSeveraTracks_FildsInCommon() throws UnsupportedTagException, InvalidDataException, IOException, InterruptedException {
+	public void editSeveralTracksTest() throws InterruptedException {
+		clickOn("#menuFile");
+		clickOn("#menuItemImport");
+		checkImportView();
+		clickOn("#openButton");
+		press(KeyCode.ENTER);
+		clickOn("#importButton");
+		verifyThat("#pBar", isVisible());
+		ProgressBar pBar = find("#pBar");
+		while(pBar.progressProperty().get()<1.0);
+		TableView<Track> tv = find("#trackTable");
+		while(tv.getItems() == null || tv.getItems().size() == 0);
+		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
+		clickOn("#trackTable");
+		push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN));
+		clickOn("#menuEdit");
+		clickOn("#menuItemEdit");
+		assertNodeExists(".dialog");
+		Thread.sleep(700);
+		press(KeyCode.SPACE); 			// Alert dialog closes
+		release(KeyCode.SPACE);
+		clickOn("#name").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Throwback (Borderline Remix)");
+		assertEquals(((TextField) find("#name")).getText(), "Throwback (Borderline Remix)");
+		verifyThat("#artist", isEnabled());
+		verifyThat("#artist", isVisible());
+		clickOn("#artist").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Psidream & Pacific");
+		assertEquals(((TextField) find("#artist")).getText(), "Psidream & Pacific");
+		verifyThat("#album", isEnabled());
+		verifyThat("#album", isVisible());
+		clickOn("#album").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Transformation");
+		assertEquals(((TextField) find("#album")).getText(), "Transformation");
+		verifyThat("#albumArtist", isEnabled());
+		verifyThat("#albumArtist", isVisible());
+		clickOn("#albumArtist").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Album Artist");
+		assertEquals(((TextField) find("#albumArtist")).getText(), "Album Artist");
+		verifyThat("#genre", isEnabled());
+		verifyThat("#genre", isVisible());
+		clickOn("#genre").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Drum & Bass");
+		assertEquals(((TextField) find("#genre")).getText(), "Drum & Bass");
+		verifyThat("#label", isEnabled());
+		verifyThat("#label", isVisible());
+		clickOn("#label").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Critical Recordings");
+		assertEquals(((TextField) find("#label")).getText(), "Critical Recordings");
+		verifyThat("#bpm", isEnabled());
+		verifyThat("#bpm", isVisible());
+		clickOn("#bpm").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("175");
+		assertEquals(((TextField) find("#bpm")).getText(), "175");
+		verifyThat("#comments", isEnabled());
+		verifyThat("#comments", isVisible());
+		clickOn("#comments").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("Very nice drop");
+		assertEquals(((TextArea) find("#comments")).getText(), "Very nice drop");
+		verifyThat("#trackNum", isEnabled());
+		verifyThat("#trackNum", isVisible());
+		clickOn("#trackNum").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("3");
+		assertEquals(((TextField) find("#trackNum")).getText(), "3");
+		verifyThat("#discNum", isEnabled());
+		verifyThat("#discNum", isVisible());
+		clickOn("#discNum").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("1");
+		assertEquals(((TextField) find("#discNum")).getText(), "1");
+		verifyThat("#isCompilationCheckBox", isEnabled());
+		verifyThat("#isCompilationCheckBox", isVisible());
+		clickOn("#isCompilationCheckBox");
+		assertTrue(((CheckBox) find("#isCompilationCheckBox")).isSelected());
+		clickOn("#okEditButton");
+		
+		for(int i=0; i<tv.getItems().size() ;i++) {
+			assertEquals(tv.getItems().get(i).getName().get(), "Throwback (Borderline Remix)");
+			assertEquals(tv.getItems().get(i).getArtist().get(), "Psidream & Pacific");
+			assertEquals(tv.getItems().get(i).getAlbum().get(), "Transformation");
+			assertEquals(tv.getItems().get(i).getAlbumArtist().get(), "Album Artist");
+			assertEquals(tv.getItems().get(i).getGenre().get(), "Drum & Bass");
+			assertEquals(tv.getItems().get(i).getLabel().get(), "Critical Recordings");
+			assertEquals(tv.getItems().get(i).getBPM().get(), Integer.parseInt("175"));
+			assertEquals(tv.getItems().get(i).getYear().get(), Integer.parseInt("2005"));
+			assertEquals(tv.getItems().get(i).getComments().get(), "Very nice drop");
+			assertEquals(tv.getItems().get(i).getTrackNumber().get(), Integer.parseInt("3"));
+			assertEquals(tv.getItems().get(i).getDiscNumber().get(), Integer.parseInt("1"));
+			assertTrue(tv.getItems().get(i).getIsCompilation().get());
+		}
+	}
+	
+	@Test
+	public void showCorrectFieldsEditViewSeveraTracks_FildsInCommonTest() throws UnsupportedTagException, InvalidDataException, IOException, InterruptedException {
 		List<Track> list = new ArrayList<Track>();
 		for(File f:new File(mp3FilePath).getParentFile().listFiles())
 			if(f.getName().substring(f.getName().length()-3).equals("mp3"))
 				list.add(Mp3Parser.parseMp3File(f));
 		clickOn("#menuFile");
 		clickOn("#menuItemImport");		// Because the Filechooser is not selectable with testFX, I set the correct folder
-		checkImportView();				// previously selecting it in a normal executino, and the filechooser opens there
+		checkImportView();				// previously selecting it in a normal execution, and the filechooser opens there
 		clickOn("#openButton");
 		press(KeyCode.ENTER);
 		clickOn("#importButton");
@@ -155,16 +308,17 @@ public class SystemApplicationTest extends ApplicationTest {
 		for(Track t: list)
 			listOfSameFields.add(t.getComments().get());
 		assertEquals(((TextArea) find("#comments")).getText(), matchCommonString(listOfSameFields));
+		assertTrue(((CheckBox) find("#isCompilationCheckBox")).isIndeterminate());
 		clickOn("#cancelEditButton");
 	}
 	
 	@Test
-	public void correctFieldsEditViewOneTrack() throws UnsupportedTagException, InvalidDataException, IOException {
+	public void showCorrectFieldsEditViewOneTrackTest() throws UnsupportedTagException, InvalidDataException, IOException {
 		Track t = Mp3Parser.parseMp3File(new File(mp3FilePath));
 		clickOn("#menuFile");
 		clickOn("#menuItemOpen");
 		press(KeyCode.DIGIT0);		// Because the Filechooser is not moveable with testFX, I set the correct folder
-		press(KeyCode.ENTER);		// previously selecting it in a normal executino, and the filechooser opens there
+		press(KeyCode.ENTER);		// previously selecting it in a normal execution, and the filechooser opens there
 		TableView<Track> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
@@ -202,6 +356,9 @@ public class SystemApplicationTest extends ApplicationTest {
 		assertEquals(((TextField) find("#discNum")).getText(), String.valueOf(t.getDiscNumber().get()));
 		verifyThat("#discNum", isEnabled());
 		verifyThat("#discNum", isVisible());
+		assertEquals(((CheckBox) find("#isCompilationCheckBox")).isSelected(), t.getIsCompilation().get());
+		verifyThat("#isCompilationCheckBox", isEnabled());
+		verifyThat("#isCompilationCheckBox", isVisible());
 		assertEquals(((Label) find("#titleName")).getText(), t.getName().get());
 		verifyThat("#titleName", isEnabled());
 		verifyThat("#titleName", isVisible());
@@ -224,7 +381,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	 * Commented the final assert and the expected for get a passed test
 	 */
 	@Test//(expected=AssertionError.class) 	
-	public void testAbout() {
+	public void aboutViewTest() {
 		clickOn("#menuAbout");
 		clickOn("#menuItemAbout");
 		assertNodeExists(".dialog");
@@ -233,7 +390,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	}
 	
 	@Test	
-	public void testDelete() throws InterruptedException {
+	public void deleteTrackTest() throws InterruptedException {
 		clickOn("#menuFile");
 		clickOn("#menuItemImport");
 		checkImportView();		
@@ -259,7 +416,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	 * Commented to get a passed test
 	 */
 	@Test
-	public void testOpen() {
+	public void openFileTest() {
 		clickOn("#menuFile");
 		clickOn("#menuItemOpen");
 		press(KeyCode.DIGIT0);		// Because the Filechooser is not selectable with testFX, I set the correct folder
@@ -277,7 +434,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	 * Commented second verify to get a passed test
 	 */
 	@Test // 
-	public void testCancelOpen() {
+	public void cancelOpenFileTest() {
 		clickOn("#menuFile");
 		clickOn("#menuItemOpen");
 		press(KeyCode.DIGIT0);		// Because the Filechooser is not selectable with testFX, I set the correct folder
@@ -288,7 +445,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	}
 	
 	@Test
-	public void testImportCollection() {
+	public void importCollectionTest() {
 		clickOn("#menuFile");
 		clickOn("#menuItemImport");
 		checkImportView();		
@@ -304,7 +461,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	}
 	
 	@Test
-	public void testCancelImportCollecion() {
+	public void cancelImportCollecionTest() {
 		clickOn("#menuFile");
 		clickOn("#menuItemImport");
 		checkImportView();		

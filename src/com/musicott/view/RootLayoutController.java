@@ -19,6 +19,8 @@
 package com.musicott.view;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,9 +37,11 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
@@ -89,9 +93,9 @@ public class RootLayoutController {
 	@FXML
 	private TableColumn<Track,String> labelCol;
 	@FXML
-	private TableColumn<Track,String> dateModifiedCol;
+	private TableColumn<Track,LocalDate> dateModifiedCol;
 	@FXML
-	private TableColumn<Track,String> dateAddedCol;
+	private TableColumn<Track,LocalDate> dateAddedCol;
 	@FXML
 	private TableColumn<Track,Number> sizeCol;
 	@FXML
@@ -130,8 +134,8 @@ public class RootLayoutController {
 		commentsCol.setCellValueFactory(cellData -> cellData.getValue().getComments());
 		albumArtistCol.setCellValueFactory(cellData -> cellData.getValue().getAlbumArtist());
 		labelCol.setCellValueFactory(cellData -> cellData.getValue().getLabel());
-		dateModifiedCol.setCellValueFactory(cellData -> cellData.getValue().getDateModified().asString());
-		dateAddedCol.setCellValueFactory(cellData -> cellData.getValue().getDateAdded().asString());
+		dateModifiedCol.setCellValueFactory(cellData -> cellData.getValue().getDateModified());
+		dateAddedCol.setCellValueFactory(cellData -> cellData.getValue().getDateAdded());
 		sizeCol.setCellValueFactory(cellData -> cellData.getValue().getSize());
 		totalTimeCol.setCellValueFactory(cellData -> cellData.getValue().getTotalTime());
 		yearCol.setCellValueFactory(cellData -> cellData.getValue().getYear());
@@ -140,7 +144,144 @@ public class RootLayoutController {
 		discNumberCol.setCellValueFactory(cellData -> cellData.getValue().getDiscNumber());
 		bpmCol.setCellValueFactory(cellData -> cellData.getValue().getBPM());
 		coverCol.setCellValueFactory(cellData -> cellData.getValue().getHasCover());
+		coverCol.setCellFactory(CheckBoxTableCell.forTableColumn(coverCol));
 		inDiskCol.setCellValueFactory(cellData -> cellData.getValue().getIsInDisk());
+		inDiskCol.setCellFactory(CheckBoxTableCell.forTableColumn(inDiskCol));
+		bpmCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		bpmCol.setCellFactory(columns -> {
+			return new TableCell<Track, Number>() {
+				@Override
+				protected void updateItem(Number item, boolean empty) {
+					super.updateItem(item, empty);
+					if(empty || item == null)
+						setText("");
+					else
+						if(((int) item) == 0 || ((int) item) == -1)
+							setText("");
+						else
+							setText(""+item);
+				}
+			};
+		});
+		discNumberCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		discNumberCol.setCellFactory(columns -> {
+			return new TableCell<Track, Number>() {
+				@Override
+				protected void updateItem(Number item, boolean empty) {
+					super.updateItem(item, empty);
+					if(empty || item == null)
+						setText("");
+					else
+						if(((int) item) == 0)
+							setText("");
+						else
+							setText(""+item);
+				}
+			};
+		});
+		trackNumberCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		trackNumberCol.setCellFactory(columns -> {
+			return new TableCell<Track, Number>() {
+				@Override
+				protected void updateItem(Number item, boolean empty) {
+					super.updateItem(item, empty);
+					if(empty || item == null)
+						setText("");
+					else
+						if(((int) item) == 0)
+							setText("");
+						else
+							setText(""+item);
+				}
+			};
+		});
+		yearCol.setCellFactory(columns -> {
+			return new TableCell<Track, Number>() {
+				@Override
+				protected void updateItem(Number item, boolean empty) {
+					super.updateItem(item, empty);
+					if(empty || item == null)
+						setText("");
+					else
+						if(((int) item) == 0)
+							setText("");
+						else
+							setText(""+item);
+				}
+			};
+		});
+		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy");
+		dateModifiedCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		dateModifiedCol.setCellFactory(column -> {
+			return new TableCell<Track,LocalDate>() {
+				@Override
+				protected void updateItem(LocalDate item, boolean empty) {
+					super.updateItem(item, empty);
+					if(item == null)
+						setText("");
+					else
+						setText(dateFormatter.format(item));
+				}
+			}; 
+		});
+		dateAddedCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		dateAddedCol.setCellFactory(column -> {
+			return new TableCell<Track,LocalDate>() {
+				@Override
+				protected void updateItem(LocalDate item, boolean empty) {
+					super.updateItem(item, empty);
+					if(item == null)
+						setText("");
+					else
+						setText(dateFormatter.format(item));
+				}
+			}; 
+		});
+		sizeCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		sizeCol.setCellFactory(column -> {
+			return new TableCell<Track,Number>() {
+				@Override
+				protected void updateItem(Number item, boolean empty) {
+					super.updateItem(item, empty);
+					if(item == null)
+						setText("");	
+					else {
+						int kiloBytes = ((int) item)/1024;
+						if(kiloBytes < 1024)
+							setText(kiloBytes+" KB");
+						else {
+							int megaBytes = kiloBytes/1024;
+							String strKiloBytes = ""+kiloBytes%1024;
+							setText(megaBytes+","+(strKiloBytes.length()>1 ? strKiloBytes.substring(0, 1) : strKiloBytes)+" MB");
+						}
+					}
+				}
+			};
+		});
+		totalTimeCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		totalTimeCol.setCellFactory(column -> {
+			return new TableCell<Track, Number>() {
+				@Override
+				protected void updateItem(Number item, boolean empty) {
+					super.updateItem(item, empty);
+					if(item == null)
+						setText("");
+					else {
+						int seconds = (int) item;
+						if(seconds<1)
+							setText("-");
+						else
+							if(seconds<60) {
+								setText("0:"+(seconds<10 ? "0"+seconds : seconds));
+							}
+							else
+								setText(seconds/60+":"+(seconds%60<10 ? "0"+seconds%60 : seconds%60));
+					}
+				}
+			};
+		});
+		playCountCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		bitRateCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
 		tracks = trackTable.getItems();
 		selection = trackTable.getSelectionModel().getSelectedItems();
 		trackTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);

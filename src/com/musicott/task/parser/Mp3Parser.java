@@ -45,7 +45,8 @@ public class Mp3Parser {
 		checkCover(mp3Track);
 		mp3Track.getIsInDisk().set(true);
 		mp3Track.getSize().set((int) (file.length()));
-		
+		mp3Track.getBitRate().set(mp3File.getBitrate());
+		mp3Track.getTotalTime().set((int)mp3File.getLengthInSeconds());
 		if(mp3File.hasId3v2Tag())
 			readId3v2Tag(mp3Track, mp3File);
 		else
@@ -74,17 +75,15 @@ public class Mp3Parser {
 		track.getGenre().set(tag.getGenreDescription());
 		if(tag.getGrouping() != null)
 			track.getLabel().set(tag.getGrouping());
-		track.getTotalTime().set(tag.getLength());
+		track.getIsCompilation().set(tag.isCompilation());
 		try {
 			track.getTrackNumber().set(Integer.valueOf(tag.getTrack()));
 			track.getYear().set(Integer.valueOf(tag.getYear()));
+			track.getDiscNumber().set(Integer.valueOf(tag.getPartOfSet()));
 		} catch (NumberFormatException e) {
-			track.getTrackNumber().set(-1);
-			track.getYear().set(-1);
+			
 		}
-
 		//TODO Think what to do with trackId here
-		//TODO Missing set DiscNumber in mp3agic Mp3File -- not in Track
 	}
 	
 	private static void readId3v1Tag(Track track, Mp3File file) {
@@ -103,8 +102,7 @@ public class Mp3Parser {
 			track.getTrackNumber().set(Integer.valueOf(tag.getTrack()));
 			track.getYear().set(Integer.valueOf(tag.getYear()));
 		} catch (NumberFormatException e) {
-			track.getTrackNumber().set(-1);
-			track.getYear().set(-1);
+			
 		}
 	}
 	

@@ -154,6 +154,11 @@
                         <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
                      </GridPane.margin>
                   </TextArea>
+                  <CheckBox fx:id="isCompilationCheckBox" mnemonicParsing="false" text="Part of a compilation" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="6">
+                     <GridPane.margin>
+                        <Insets left="75.0" />
+                     </GridPane.margin>
+                  </CheckBox>
                </children>
                <opaqueInsets>
                   <Insets />
