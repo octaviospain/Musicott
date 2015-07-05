@@ -53,7 +53,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.UnsupportedTagException;
 import com.musicott.MainApp;
-import com.musicott.model.Track;
+import com.musicott.model.ObservableTrack;
 import com.musicott.task.parser.Mp3Parser;
 
 /**
@@ -75,7 +75,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	
 	@After
 	public void closeUp() {
-		TableView<Track> tv = find("#trackTable");
+		TableView<ObservableTrack> tv = find("#trackTable");
 		tv.getItems().clear();
 	}
 
@@ -85,7 +85,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		clickOn("#menuItemOpen");
 		press(KeyCode.DIGIT0);		// Because the Filechooser is not moveable with testFX, I set the correct folder
 		press(KeyCode.ENTER);		// previously selecting it in a normal execution, and the filechooser opens there
-		TableView<Track> tv = find("#trackTable");
+		TableView<ObservableTrack> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 		clickOn("#trackTable");
@@ -164,7 +164,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		verifyThat("#pBar", isVisible());
 		ProgressBar pBar = find("#pBar");
 		while(pBar.progressProperty().get()<1.0);
-		TableView<Track> tv = find("#trackTable");
+		TableView<ObservableTrack> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 		clickOn("#trackTable");
@@ -237,7 +237,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	
 	@Test
 	public void showCorrectFieldsEditViewSeveraTracks_FildsInCommonTest() throws UnsupportedTagException, InvalidDataException, IOException, InterruptedException {
-		List<Track> list = new ArrayList<Track>();
+		List<ObservableTrack> list = new ArrayList<ObservableTrack>();
 		for(File f:new File(mp3FilePath).getParentFile().listFiles())
 			if(f.getName().substring(f.getName().length()-3).equals("mp3"))
 				list.add(Mp3Parser.parseMp3File(f));
@@ -250,7 +250,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		verifyThat("#pBar", isVisible());
 		ProgressBar pBar = find("#pBar");
 		while(pBar.progressProperty().get()<1.0);
-		TableView<Track> tv = find("#trackTable");
+		TableView<ObservableTrack> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), equalTo(list.size()));
 		clickOn("#trackTable");
@@ -262,50 +262,50 @@ public class SystemApplicationTest extends ApplicationTest {
 		press(KeyCode.SPACE); 			// Alert dialog closes
 		release(KeyCode.SPACE);
 		List<String> listOfSameFields = new ArrayList<String>();
-		for(Track t: list)
+		for(ObservableTrack t: list)
 			listOfSameFields.add(t.getName().get());
 		assertEquals(((TextField) find("#name")).getText(), matchCommonString(listOfSameFields));
 		assertEquals(((Label) find("#titleName")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(Track t: list)
+		for(ObservableTrack t: list)
 			listOfSameFields.add(t.getArtist().get());
 		assertEquals(((TextField) find("#artist")).getText(), matchCommonString(listOfSameFields));
 		assertEquals(((Label) find("#titleArtist")).getText(), matchCommonString(listOfSameFields));		
 		listOfSameFields = new ArrayList<String>();
-		for(Track t: list)
+		for(ObservableTrack t: list)
 			listOfSameFields.add(t.getAlbum().get());
 		assertEquals(((TextField) find("#album")).getText(), matchCommonString(listOfSameFields));
 		assertEquals(((Label) find("#titleAlbum")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(Track t: list)
+		for(ObservableTrack t: list)
 			listOfSameFields.add(t.getAlbumArtist().get());
 		assertEquals(((TextField) find("#albumArtist")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(Track t: list)
+		for(ObservableTrack t: list)
 			listOfSameFields.add(t.getGenre().get());
 		assertEquals(((TextField) find("#genre")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(Track t: list)
+		for(ObservableTrack t: list)
 			listOfSameFields.add(t.getLabel().get());
 		assertEquals(((TextField) find("#label")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(Track t: list)
+		for(ObservableTrack t: list)
 			listOfSameFields.add(t.getYear().get()+"");
 		assertEquals(((TextField) find("#year")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(Track t: list)
+		for(ObservableTrack t: list)
 			listOfSameFields.add(t.getBPM().get()+"");
 		assertEquals(((TextField) find("#bpm")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(Track t: list)
+		for(ObservableTrack t: list)
 			listOfSameFields.add(t.getTrackNumber().get()+"");
 		assertEquals(((TextField) find("#trackNum")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(Track t: list)
+		for(ObservableTrack t: list)
 			listOfSameFields.add(t.getDiscNumber().get()+"");
 		assertEquals(((TextField) find("#discNum")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(Track t: list)
+		for(ObservableTrack t: list)
 			listOfSameFields.add(t.getComments().get());
 		assertEquals(((TextArea) find("#comments")).getText(), matchCommonString(listOfSameFields));
 		assertTrue(((CheckBox) find("#isCompilationCheckBox")).isIndeterminate());
@@ -314,12 +314,12 @@ public class SystemApplicationTest extends ApplicationTest {
 	
 	@Test
 	public void showCorrectFieldsEditViewOneTrackTest() throws UnsupportedTagException, InvalidDataException, IOException {
-		Track t = Mp3Parser.parseMp3File(new File(mp3FilePath));
+		ObservableTrack t = Mp3Parser.parseMp3File(new File(mp3FilePath));
 		clickOn("#menuFile");
 		clickOn("#menuItemOpen");
 		press(KeyCode.DIGIT0);		// Because the Filechooser is not moveable with testFX, I set the correct folder
 		press(KeyCode.ENTER);		// previously selecting it in a normal execution, and the filechooser opens there
-		TableView<Track> tv = find("#trackTable");
+		TableView<ObservableTrack> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 		clickOn("#trackTable");
@@ -400,7 +400,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		verifyThat("#pBar", isVisible());
 		ProgressBar pBar = find("#pBar");
 		while(pBar.progressProperty().get()<1.0);
-		TableView<Track> tv = find("#trackTable");
+		TableView<ObservableTrack> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 		WaitForAsyncUtils.waitForFxEvents();
@@ -424,7 +424,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	//	verifyThat("#pBar", isVisible());
 	//	ProgressBar pBar = find("#pBar");
 	//	while(pBar.progressProperty().get()<1.0);
-		TableView<Track> tv = find("#trackTable");
+		TableView<ObservableTrack> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 	}
@@ -455,7 +455,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		verifyThat("#pBar", isVisible());
 		ProgressBar pBar = find("#pBar");
 		while(pBar.progressProperty().get()<1.0);
-		TableView<Track> tv = find("#trackTable");
+		TableView<ObservableTrack> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 	}

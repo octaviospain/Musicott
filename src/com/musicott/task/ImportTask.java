@@ -28,22 +28,23 @@ import javafx.concurrent.Task;
 import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ParseException;
-import com.musicott.model.Track;
+import com.musicott.model.ObservableTrack;
+import com.musicott.task.parser.FlacParser;
 import com.musicott.task.parser.Mp3Parser;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class ImportTask extends Task<List<Track>>{
+public class ImportTask extends Task<List<ObservableTrack>>{
 
-	private List<Track> list;
+	private List<ObservableTrack> list;
 	boolean m4a, wav, flac;
 	private int numFiles, currentFiles;
 	private File folder;
 	
 	public ImportTask(File folder, boolean importM4a, boolean importWav, boolean importFlac) {
-		list = new ArrayList<Track>();
+		list = new ArrayList<ObservableTrack>();
 		this.folder = folder;
 		numFiles = 0;
 		currentFiles = 0;
@@ -53,7 +54,7 @@ public class ImportTask extends Task<List<Track>>{
 	}
 	
 	@Override
-	protected List<Track> call() throws Exception {
+	protected List<ObservableTrack> call() throws Exception {
 		countFiles(folder);
 		scanFolder(folder);
 		if(!isCancelled()) {
@@ -109,7 +110,7 @@ public class ImportTask extends Task<List<Track>>{
 								else
 									if(flac && file.getName().substring(file.getName().length()-4).equals("flac")) {
 										updateProgress(++currentFiles, numFiles);
-										//TODO FlacParser
+										list.add(FlacParser.parseFlacFile(file));
 									}
 					} catch (Exception e) {
 						ParseException pe = new ParseException("Parsing Error", e, file);

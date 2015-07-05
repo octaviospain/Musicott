@@ -21,13 +21,13 @@ package com.musicott;
 import java.io.IOException;
 
 import com.musicott.error.ErrorHandler;
+import com.musicott.task.LoadLibraryTask;
 import com.musicott.view.EditController;
 import com.musicott.view.ErrorDialogController;
 import com.musicott.view.ImportCollectionController;
 import com.musicott.view.ProgressImportController;
 import com.musicott.view.RootLayoutController;
-import com.musicott.error.Error;
-import com.musicott.model.Track;
+import com.musicott.model.ObservableTrack;
 
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -84,7 +84,7 @@ public class SceneManager {
 		return progressImportController;
 	}
 	
-	public void openEditScene(ObservableList<Track> selection) {
+	public void openEditScene(ObservableList<ObservableTrack> selection) {
 		try {
 			editStage = new Stage();
 			editStage.setTitle("Edit");
@@ -133,19 +133,25 @@ public class SceneManager {
 	}
 	
 	public void closeImportScene() {
+		if(ErrorHandler.getInstance().hasErrors()) {
+			ErrorDialogController edc = new ErrorDialogController(progressStage.getScene());
+			edc.showDialog();
+			ErrorHandler.getInstance().reset();
+		}
+		progressStage.close();
 		if(importStage != null && importStage.isShowing())
 			importStage.close();
-		progressStage.close();
-		showErrorDialog(Error.IMPORT_ERROR);
 	}
 	
-	public void showImportProgressScene(Task<?> task) {
+	public void showImportProgressScene(Task<?> task, boolean hideCancelButton) {
 		try {
 			progressStage = new Stage();
 			FXMLLoader loader = new FXMLLoader();
 			loader.setLocation(MainApp.class.getResource("view/ProgressImportView.fxml"));
 			AnchorPane progressLayout =  (AnchorPane) loader.load();
 			progressImportController = loader.getController();
+			if(hideCancelButton)
+				progressImportController.hideCancelButton();
 			progressImportController.setTask(task);
 			progressImportController.runTask();
 			
@@ -162,13 +168,6 @@ public class SceneManager {
 		}
 	}
 	
-	private void showErrorDialog(Error type) {
-		if(ErrorHandler.getInstance().hasErrors()) {
-			ErrorDialogController edc = new ErrorDialogController(type);
-			edc.showDialog();
-		}
-	}
-	
 	private void initPrimaryStage() {
 		try {
 			FXMLLoader rootLoader = new FXMLLoader();
@@ -176,6 +175,9 @@ public class SceneManager {
 			BorderPane rootLayout = (BorderPane) rootLoader.load();
 			rootController = rootLoader.getController();
 			rootController.setStage(rootStage);
+
+			LoadLibraryTask task = new LoadLibraryTask();
+			showImportProgressScene(task, true);
 			
 			mainScene = new Scene(rootLayout);
 			rootStage.setMinWidth(1200);

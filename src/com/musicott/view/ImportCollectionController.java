@@ -76,7 +76,7 @@ public class ImportCollectionController {
 	@FXML
 	private void doImport() {
 		ImportTask task = new ImportTask(folder,cbM4a.isSelected(),cbWav.isSelected(),cbFlac.isSelected());
-		SceneManager.getInstance().showImportProgressScene(task);
+		SceneManager.getInstance().showImportProgressScene(task, false);
 	}
 	
 	@FXML

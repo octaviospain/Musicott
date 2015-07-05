@@ -16,13 +16,49 @@
  *
  */
 
-package com.musicott.error;
+package com.musicott.model;
+
+import java.util.List;
 
 /**
  * @author Octavio Calleya
  *
  */
-public enum Error {
-	IMPORT_ERROR,
-	FATAL_ERROR
+public class MusicLibrary {
+
+	private static MusicLibrary instance;
+	private List<ObservableTrack> tracks;
+	
+	private MusicLibrary() {
+	}
+	
+	public static MusicLibrary getInstance() {
+		if(instance == null)
+			instance = new MusicLibrary();
+		return instance;
+	}
+	
+	public void setTracks(List<ObservableTrack> tracks) {
+		this.tracks = tracks;
+	}
+	
+	public List<ObservableTrack> getTracks() {
+		return this.tracks;
+	}
+	
+	public int hashCode() {
+		int hash = 71;
+		hash = 73*tracks.hashCode();
+		return hash;
+	}
+	
+	public boolean equals(Object o) {
+		boolean res;
+		if(o instanceof MusicLibrary &&
+		   ((MusicLibrary)o).getTracks().equals(tracks))
+			res = true;
+		else
+			res = false;
+		return res;
+	}
 }

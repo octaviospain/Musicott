@@ -26,7 +26,7 @@ import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
-import com.musicott.model.Track;
+import com.musicott.model.ObservableTrack;
 
 /**
  * @author Octavio Calleya
@@ -36,9 +36,9 @@ public class Mp3Parser {
 	
 	private static File file;
 
-	public static Track parseMp3File(final File fileToParse) throws UnsupportedTagException, InvalidDataException, IOException {
+	public static ObservableTrack parseMp3File(final File fileToParse) throws UnsupportedTagException, InvalidDataException, IOException {
 		file = fileToParse;
-		Track mp3Track = new Track();
+		ObservableTrack mp3Track = new ObservableTrack();
 		Mp3File mp3File = new Mp3File(file);
 		mp3Track.setFileFolder(new File(file.getParent()).getAbsolutePath());
 		mp3Track.setFileName(file.getName());
@@ -58,7 +58,7 @@ public class Mp3Parser {
 		return mp3Track;
 	}
 	
-	private static void readId3v2Tag(Track track, Mp3File file) {
+	private static void readId3v2Tag(ObservableTrack track, Mp3File file) {
 		ID3v2 tag = file.getId3v2Tag();
 		if(tag.getTitle() != null)
 			track.getName().set((tag.getTitle()));
@@ -86,7 +86,7 @@ public class Mp3Parser {
 		//TODO Think what to do with trackId here
 	}
 	
-	private static void readId3v1Tag(Track track, Mp3File file) {
+	private static void readId3v1Tag(ObservableTrack track, Mp3File file) {
 		ID3v1 tag = file.getId3v1Tag();
 		if(tag.getTitle() != null)
 			track.getName().set(tag.getTitle());
@@ -106,7 +106,7 @@ public class Mp3Parser {
 		}
 	}
 	
-	private static void checkCover(Track track) {
+	private static void checkCover(ObservableTrack track) {
 		if(new File(file.getParentFile().getAbsolutePath()+"/cover.jpg").exists())
 			track.getHasCover().set(true);
 		else

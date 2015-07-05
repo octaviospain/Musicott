@@ -35,7 +35,7 @@ import com.mpatric.mp3agic.ID3v24Tag;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
-import com.musicott.model.Track;
+import com.musicott.model.ObservableTrack;
 import com.musicott.task.parser.Mp3Parser;
 
 import static org.junit.Assert.*;
@@ -58,11 +58,11 @@ public class Mp3ParserTest {
 	}
 	
 	@Test
-	public void trackNoId3TagTest() throws Exception {
+	public void mp3NoId3TagTest() throws Exception {
 		File file = noId3File("/Users/Octavio/Test/testeable.mp3");
 		
 		// Expected track creation with no ID3 tag
-		Track t = new Track();
+		ObservableTrack t = new ObservableTrack();
 		t.setFileFolder(new File(file.getParent()).getAbsolutePath());
 		t.setFileName(file.getName());
 		t.getIsInDisk().set(true);
@@ -70,18 +70,18 @@ public class Mp3ParserTest {
 		t.getName().set(file.getName());
 
 		PowerMockito.spy(Mp3Parser.class);
-		Track expectedTrack = Mp3Parser.parseMp3File(file);
+		ObservableTrack expectedTrack = Mp3Parser.parseMp3File(file);
 		
 		verifyPrivate(Mp3Parser.class, times(1)).invoke("checkCover", t);
 		assertEquals(expectedTrack, t);
 	}
 	
 	@Test
-	public void trackId3v1TagTest() throws Exception {
+	public void mp3Id3v1TagTest() throws Exception {
 		File file = id3v1TagFile("/Users/Octavio/Test/testeable.mp3");
 		
 		// Expected track creation with no ID3 tag
-		Track track = new Track();
+		ObservableTrack track = new ObservableTrack();
 		track.setFileFolder(new File(file.getParent()).getAbsolutePath());
 		track.setFileName(file.getName());
 		track.getIsInDisk().set(true);
@@ -97,18 +97,18 @@ public class Mp3ParserTest {
 		track.getYear().set(2011);
 
 		PowerMockito.spy(Mp3Parser.class);
-		Track expectedTrack = Mp3Parser.parseMp3File(file);
+		ObservableTrack expectedTrack = Mp3Parser.parseMp3File(file);
 		
 		verifyPrivate(Mp3Parser.class, times(1)).invoke("checkCover", track);
 		assertEquals(expectedTrack, track);
 	}
 	
 	@Test
-	public void trackId3v2TagTest() throws Exception {
+	public void mp3Id3v2TagTest() throws Exception {
 		File file = id3v2TagFile("/Users/Octavio/Test/testeable.mp3");
 		
 		// Expected track creation with no ID3 tag
-		Track track = new Track();
+		ObservableTrack track = new ObservableTrack();
 		track.setFileFolder(new File(file.getParent()).getAbsolutePath());
 		track.setFileName(file.getName());
 		track.getIsInDisk().set(true);
@@ -128,7 +128,7 @@ public class Mp3ParserTest {
 		track.getTotalTime().set(new Mp3File("/Users/Octavio/Test/testeable.mp3").getId3v2Tag().getLength());
 
 		PowerMockito.spy(Mp3Parser.class);
-		Track expectedTrack = Mp3Parser.parseMp3File(file);
+		ObservableTrack expectedTrack = Mp3Parser.parseMp3File(file);
 		
 		verifyPrivate(Mp3Parser.class, times(1)).invoke("checkCover", track);
 		assertEquals(expectedTrack, track);

@@ -1,4 +1,6 @@
 /bin/
+/resources/tracks.json
+/lib/
 /target/
 /build/
 /deploy/

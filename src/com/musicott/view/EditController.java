@@ -23,8 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.musicott.model.Track;
-import com.musicott.model.Track.EditFieldIterator;
+import com.musicott.model.ObservableTrack;
+import com.musicott.model.ObservableTrack.EditFieldIterator;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.StringProperty;
@@ -84,7 +84,7 @@ public class EditController {
 	
 	private Map<Integer,TextInputControl> fieldMap;
 	private Stage editStage;
-	private ObservableList<Track> trackSelection;
+	private ObservableList<ObservableTrack> trackSelection;
 	
 	public EditController() {
 	}
@@ -109,7 +109,7 @@ public class EditController {
 		editStage = stage;
 	}
 	
-	public void setSelection(ObservableList<Track> selection) {
+	public void setSelection(ObservableList<ObservableTrack> selection) {
 		trackSelection = selection;
 		setFields();
 	}
@@ -117,7 +117,7 @@ public class EditController {
 	@FXML
 	private void doOK() {
 		if(trackSelection.size() == 1) {
-			Track t = trackSelection.get(0);
+			ObservableTrack t = trackSelection.get(0);
 			try {
 			t.getName().set(name.textProperty().getValue());
 			t.getArtist().set(artist.textProperty().getValue());
@@ -129,7 +129,7 @@ public class EditController {
 				t.getYear().set(Integer.parseInt(year.textProperty().getValue()));
 			if(!bpm.textProperty().getValue().equals(""))
 				t.getBPM().set(Integer.parseInt(bpm.textProperty().getValue()));
-			if(!trackNum.textFormatterProperty().getValue().equals(""))
+			if(!trackNum.textProperty().getValue().equals(""))
 				t.getTrackNumber().set(Integer.parseInt(trackNum.textProperty().getValue()));
 			if(!discNum.textProperty().getValue().equals(""))
 				t.getDiscNumber().set(Integer.parseInt(discNum.textProperty().getValue()));
@@ -143,7 +143,7 @@ public class EditController {
 		}
 		else {
 			for(int i=0; i<trackSelection.size() ;i++) {
-				Track t = trackSelection.get(i);
+				ObservableTrack t = trackSelection.get(i);
 				try {
 					if(!name.textProperty().getValue().equals("-"))
 						t.getName().set(name.textProperty().getValue());
@@ -184,7 +184,7 @@ public class EditController {
 	
 	private void setFields() {
 		if(trackSelection.size() == 1) {
-			Track track = trackSelection.get(0);
+			ObservableTrack track = trackSelection.get(0);
 			name.textProperty().setValue(track.getName().get());
 			artist.textProperty().setValue(track.getArtist().get());
 			album.textProperty().setValue(track.getAlbum().get());
@@ -219,7 +219,7 @@ public class EditController {
 				List<String> listOfSameFields = new ArrayList<String>();
 				if(i == fieldMap.size()-1) { 				// comments case
 					TextArea ta = (TextArea) fieldMap.get(i);
-					for(Track t: trackSelection) {
+					for(ObservableTrack t: trackSelection) {
 						StringProperty sp = (StringProperty) ((EditFieldIterator) t.editFieldsIterator()).get(i);
 						listOfSameFields.add(sp.get());
 					}
@@ -227,7 +227,7 @@ public class EditController {
 				}
 				else
 					if(i<6) {								// string fields
-						for(Track t: trackSelection) {
+						for(ObservableTrack t: trackSelection) {
 							StringProperty sp = (StringProperty) ((EditFieldIterator) t.editFieldsIterator()).get(i);
 							listOfSameFields.add(sp.get());
 						}
@@ -242,7 +242,7 @@ public class EditController {
 					}
 					else {									// integer fields
 						TextField tf = (TextField) fieldMap.get(i);
-						for(Track t: trackSelection) {
+						for(ObservableTrack t: trackSelection) {
 							IntegerProperty sp = (IntegerProperty) ((EditFieldIterator) t.editFieldsIterator()).get(i);
 							if(sp.get() == 0 || sp.get() == -1)
 								listOfSameFields.add("");

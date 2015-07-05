@@ -39,6 +39,10 @@ public class ErrorHandler {
 		return instance;
 	}
 	
+	public void reset() {
+		pExcs.clear();
+	}
+	
 	public void addParseException(ParseException e) {
 		if(pExcs == null)
 			pExcs = new ArrayList<ParseException>();

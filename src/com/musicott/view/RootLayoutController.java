@@ -25,8 +25,10 @@ import java.util.List;
 import java.util.Optional;
 
 import com.musicott.SceneManager;
-import com.musicott.model.Track;
+import com.musicott.model.MusicLibrary;
+import com.musicott.model.ObservableTrack;
 import com.musicott.task.OpenTask;
+import com.musicott.task.SaveLibraryTask;
 
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -77,50 +79,52 @@ public class RootLayoutController {
 	@FXML
 	private Button nextButton;
 	@FXML
-	private TableView<Track> trackTable;
+	private TableView<ObservableTrack> trackTable;
 	@FXML
-	private TableColumn<Track,String> nameCol;
+	private TableColumn<ObservableTrack,String> nameCol;
 	@FXML
-	private TableColumn<Track,String> artistCol;
+	private TableColumn<ObservableTrack,String> artistCol;
 	@FXML
-	private TableColumn<Track,String> albumCol;
+	private TableColumn<ObservableTrack,String> albumCol;
 	@FXML
-	private TableColumn<Track,String> genreCol;
+	private TableColumn<ObservableTrack,String> genreCol;
 	@FXML
-	private TableColumn<Track,String> commentsCol;
+	private TableColumn<ObservableTrack,String> commentsCol;
 	@FXML
-	private TableColumn<Track,String> albumArtistCol;
+	private TableColumn<ObservableTrack,String> albumArtistCol;
 	@FXML
-	private TableColumn<Track,String> labelCol;
+	private TableColumn<ObservableTrack,String> labelCol;
 	@FXML
-	private TableColumn<Track,LocalDate> dateModifiedCol;
+	private TableColumn<ObservableTrack,LocalDate> dateModifiedCol;
 	@FXML
-	private TableColumn<Track,LocalDate> dateAddedCol;
+	private TableColumn<ObservableTrack,LocalDate> dateAddedCol;
 	@FXML
-	private TableColumn<Track,Number> sizeCol;
+	private TableColumn<ObservableTrack,Number> sizeCol;
 	@FXML
-	private TableColumn<Track,Number> totalTimeCol;
+	private TableColumn<ObservableTrack,Number> totalTimeCol;
 	@FXML
-	private TableColumn<Track,Number> trackNumberCol;
+	private TableColumn<ObservableTrack,Number> trackNumberCol;
 	@FXML
-	private TableColumn<Track,Number> yearCol;
+	private TableColumn<ObservableTrack,Number> yearCol;
 	@FXML
-	private TableColumn<Track,Number> bitRateCol;
+	private TableColumn<ObservableTrack,Number> bitRateCol;
 	@FXML
-	private TableColumn<Track,Number> playCountCol;
+	private TableColumn<ObservableTrack,Number> playCountCol;
 	@FXML
-	private TableColumn<Track,Number> discNumberCol;
+	private TableColumn<ObservableTrack,Number> discNumberCol;
 	@FXML
-	private TableColumn<Track,Number> bpmCol;
+	private TableColumn<ObservableTrack,Number> bpmCol;
 	@FXML
-	private TableColumn<Track,Boolean> coverCol;
+	private TableColumn<ObservableTrack,Boolean> coverCol;
 	@FXML
-	private TableColumn<Track,Boolean> inDiskCol;
+	private TableColumn<ObservableTrack,Boolean> inDiskCol;
 
-	private ObservableList<Track> tracks;
-	private ObservableList<Track> selection;
+	private ObservableList<ObservableTrack> tracks;
+	private ObservableList<ObservableTrack> selection;
 	
 	private Stage rootStage;
+	
+	private SceneManager sc;
 	
  	public RootLayoutController() {
 	}
@@ -142,14 +146,15 @@ public class RootLayoutController {
 		bitRateCol.setCellValueFactory(cellData -> cellData.getValue().getBitRate());
 		playCountCol.setCellValueFactory(cellData -> cellData.getValue().getPlayCount());
 		discNumberCol.setCellValueFactory(cellData -> cellData.getValue().getDiscNumber());
+		trackNumberCol.setCellValueFactory(cellData -> cellData.getValue().getTrackNumber());
 		bpmCol.setCellValueFactory(cellData -> cellData.getValue().getBPM());
 		coverCol.setCellValueFactory(cellData -> cellData.getValue().getHasCover());
 		coverCol.setCellFactory(CheckBoxTableCell.forTableColumn(coverCol));
 		inDiskCol.setCellValueFactory(cellData -> cellData.getValue().getIsInDisk());
 		inDiskCol.setCellFactory(CheckBoxTableCell.forTableColumn(inDiskCol));
-		bpmCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		bpmCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		bpmCol.setCellFactory(columns -> {
-			return new TableCell<Track, Number>() {
+			return new TableCell<ObservableTrack, Number>() {
 				@Override
 				protected void updateItem(Number item, boolean empty) {
 					super.updateItem(item, empty);
@@ -163,9 +168,9 @@ public class RootLayoutController {
 				}
 			};
 		});
-		discNumberCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		discNumberCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		discNumberCol.setCellFactory(columns -> {
-			return new TableCell<Track, Number>() {
+			return new TableCell<ObservableTrack, Number>() {
 				@Override
 				protected void updateItem(Number item, boolean empty) {
 					super.updateItem(item, empty);
@@ -179,9 +184,9 @@ public class RootLayoutController {
 				}
 			};
 		});
-		trackNumberCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		trackNumberCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		trackNumberCol.setCellFactory(columns -> {
-			return new TableCell<Track, Number>() {
+			return new TableCell<ObservableTrack, Number>() {
 				@Override
 				protected void updateItem(Number item, boolean empty) {
 					super.updateItem(item, empty);
@@ -196,7 +201,7 @@ public class RootLayoutController {
 			};
 		});
 		yearCol.setCellFactory(columns -> {
-			return new TableCell<Track, Number>() {
+			return new TableCell<ObservableTrack, Number>() {
 				@Override
 				protected void updateItem(Number item, boolean empty) {
 					super.updateItem(item, empty);
@@ -211,9 +216,9 @@ public class RootLayoutController {
 			};
 		});
 		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy");
-		dateModifiedCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		dateModifiedCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		dateModifiedCol.setCellFactory(column -> {
-			return new TableCell<Track,LocalDate>() {
+			return new TableCell<ObservableTrack,LocalDate>() {
 				@Override
 				protected void updateItem(LocalDate item, boolean empty) {
 					super.updateItem(item, empty);
@@ -224,9 +229,9 @@ public class RootLayoutController {
 				}
 			}; 
 		});
-		dateAddedCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		dateAddedCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		dateAddedCol.setCellFactory(column -> {
-			return new TableCell<Track,LocalDate>() {
+			return new TableCell<ObservableTrack,LocalDate>() {
 				@Override
 				protected void updateItem(LocalDate item, boolean empty) {
 					super.updateItem(item, empty);
@@ -237,9 +242,9 @@ public class RootLayoutController {
 				}
 			}; 
 		});
-		sizeCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		sizeCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		sizeCol.setCellFactory(column -> {
-			return new TableCell<Track,Number>() {
+			return new TableCell<ObservableTrack,Number>() {
 				@Override
 				protected void updateItem(Number item, boolean empty) {
 					super.updateItem(item, empty);
@@ -258,9 +263,9 @@ public class RootLayoutController {
 				}
 			};
 		});
-		totalTimeCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		totalTimeCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		totalTimeCol.setCellFactory(column -> {
-			return new TableCell<Track, Number>() {
+			return new TableCell<ObservableTrack, Number>() {
 				@Override
 				protected void updateItem(Number item, boolean empty) {
 					super.updateItem(item, empty);
@@ -280,17 +285,20 @@ public class RootLayoutController {
 				}
 			};
 		});
-		playCountCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
-		bitRateCol.setStyle( "-fx-alignment: CENTER-RIGHT;");
+		playCountCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		bitRateCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		tracks = trackTable.getItems();
 		selection = trackTable.getSelectionModel().getSelectedItems();
 		trackTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		trackTable.getSelectionModel().selectedIndexProperty().addListener(((observable, oldValue, newValue) -> selection = trackTable.getSelectionModel().getSelectedItems()));
+		sc = SceneManager.getInstance();
 	}	
 	
-	public void addTracks(List<Track> tracks) {
-		if(tracks != null && tracks.size()!=0) 
-			trackTable.getItems().addAll(tracks);
+	public void addTracks(List<ObservableTrack> listTracks) {
+		if(listTracks != null && listTracks.size()!=0) {
+			trackTable.getItems().addAll(listTracks);
+			MusicLibrary.getInstance().setTracks(tracks);
+		}
 	}
 	
 	public void setStage(Stage stage) {
@@ -299,8 +307,17 @@ public class RootLayoutController {
 	
 	@FXML
 	private void doDelete() {
-		if(selection != null && selection.size() !=0)
-			tracks.removeAll(selection);
+		if(selection != null && selection.size() !=0) {
+			Alert alert = new Alert(AlertType.CONFIRMATION);
+			alert.setTitle("");
+			alert.setHeaderText("");
+			alert.setContentText("Delete this files from Musicott?");
+			Optional<ButtonType> result = alert.showAndWait();
+			if (result.get() == ButtonType.OK)
+				tracks.removeAll(selection);
+			else
+				alert.close();
+		}
 	}
 	
 	@FXML
@@ -313,12 +330,12 @@ public class RootLayoutController {
 				alert.setContentText("Are you sure you want to edit multiple files?");
 				Optional<ButtonType> result = alert.showAndWait();
 				if (result.get() == ButtonType.OK)
-					SceneManager.getInstance().openEditScene(selection);
+					sc.openEditScene(selection);
 				else
 					alert.close();
 			}
 			else
-				SceneManager.getInstance().openEditScene(selection);
+				sc.openEditScene(selection);
 		}
 	}
 	
@@ -327,11 +344,13 @@ public class RootLayoutController {
 		FileChooser chooser = new FileChooser();
 		chooser.setTitle("Open file(s)...");
 		chooser.getExtensionFilters().addAll(
-				new ExtensionFilter("Audio Files","*.mp3")); //TODO m4a flac & wav when implemented
+				new ExtensionFilter("All Supported (*.mp3, *.flac)","*.mp3", "*.flac"), //TODO m4a & wav when implemented
+				new ExtensionFilter("Mp3 Files", "*.mp3"),
+				new ExtensionFilter("Flac Files","*.flac"));
 		List<File> files = chooser.showOpenMultipleDialog(rootStage);
 		if(files != null) {
 			OpenTask task = new OpenTask(files);
-			SceneManager.getInstance().showImportProgressScene(task);
+			sc.showImportProgressScene(task,false);
 			Thread t = new Thread(task);
 			t.setDaemon(true);
 			t.start();
@@ -340,7 +359,7 @@ public class RootLayoutController {
 	
 	@FXML
 	private void doImportCollection() {
-		SceneManager.getInstance().openImportScene();
+		sc.openImportScene();
 	}
 	
 	@FXML
@@ -348,7 +367,7 @@ public class RootLayoutController {
 		Alert alert = new Alert(AlertType.INFORMATION);
 		alert.setTitle("About Musicott");
 		alert.setHeaderText("Musicott");
-		alert.setContentText("Version 0.1.0\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
+		alert.setContentText("Version 0.2.0\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
 		ImageView iv = new ImageView();
 		iv.setImage(new Image("file:resources/images/musicotticon.png"));
 		alert.setGraphic(iv);
@@ -357,6 +376,8 @@ public class RootLayoutController {
 	
 	@FXML
 	private void handleExit() {
+		SaveLibraryTask task = new SaveLibraryTask();
+		sc.showImportProgressScene(task,true);
 		System.exit(0);
 	}
 }

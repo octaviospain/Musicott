@@ -38,7 +38,7 @@ public class ProgressImportController {
 	private ProgressBar pBar;
 	@FXML
 	private Button cancelTaskButton;
-	private Task<?> importTask;
+	private Task<?> task;
 	
 	public ProgressImportController() {
 	}
@@ -51,20 +51,24 @@ public class ProgressImportController {
 		pane.setCenter(pBar);
 	}
 	
+	public void hideCancelButton() {
+		cancelTaskButton.setVisible(false);
+	}
+	
 	public void runTask() {
-		Thread t = new Thread(importTask);
+		Thread t = new Thread(task);
 		t.setDaemon(true);
 		t.start();
 	}
 	
 	public void cancelTask() {
-		importTask.cancel();
+		task.cancel();
 		SceneManager.getInstance().closeImportScene();
 	}
 	
 	public void setTask(Task<?> task) {
-		importTask = task;
-		pBar.progressProperty().bind(importTask.progressProperty());
+		this.task = task;
+		pBar.progressProperty().bind(this.task.progressProperty());
 	}
 	
 	public void setIndeterminate() {

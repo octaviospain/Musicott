@@ -19,17 +19,6 @@
 package com.musicott.model;
 
 import java.time.LocalDate;
-import java.util.Iterator;
-
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.Property;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 
 /**
  * @author Octavio Calleya
@@ -41,61 +30,61 @@ public class Track {
 	private String fileFolder;
 	private String fileName;
 	
-	private StringProperty name;
-	private StringProperty artist;
-	private StringProperty album;
-	private StringProperty genre;
-	private StringProperty comments;
-	private StringProperty albumArtist;
-	private StringProperty label;
+	private String name;
+	private String artist;
+	private String album;
+	private String genre;
+	private String comments;
+	private String albumArtist;
+	private String label;
 
-	private IntegerProperty size;
-	private IntegerProperty totalTime;
-	private IntegerProperty trackNumber;
-	private IntegerProperty year;
-	private IntegerProperty bitRate;
-	private IntegerProperty playCount;
-	private IntegerProperty discNumber;
-	private IntegerProperty BPM;
+	private int size;
+	private int totalTime;
+	private int trackNumber;
+	private int year;
+	private int bitRate;
+	private int playCount;
+	private int discNumber;
+	private int BPM;
 	
-	private BooleanProperty hasCover;
-	private BooleanProperty isInDisk;
-	private BooleanProperty isCompilation;
+	private boolean hasCover;
+	private boolean isInDisk;
+	private boolean isCompilation;
 	
-	private ObjectProperty<LocalDate> dateModified;
-	private ObjectProperty<LocalDate> dateAdded;
+	private LocalDate dateModified;
+	private LocalDate dateAdded;
 	
-    public Track() {
-    	trackID = -1;
-    	fileFolder = "";
-    	fileName = "";
-    	name = new SimpleStringProperty("");
-    	artist = new SimpleStringProperty("");
-    	album = new SimpleStringProperty("");
-    	genre = new SimpleStringProperty("");
-    	comments = new SimpleStringProperty("");
-    	albumArtist = new SimpleStringProperty("");
-    	label = new SimpleStringProperty("");
-    	size = new SimpleIntegerProperty();
-    	totalTime = new SimpleIntegerProperty();
-    	trackNumber = new SimpleIntegerProperty(0);
-    	year = new SimpleIntegerProperty(0);
-    	bitRate = new SimpleIntegerProperty();
-    	playCount = new SimpleIntegerProperty();
-    	discNumber = new SimpleIntegerProperty(0);
-    	BPM = new SimpleIntegerProperty(-1);
-    	hasCover = new SimpleBooleanProperty(false);
-    	isInDisk = new SimpleBooleanProperty(false);
-    	isCompilation = new SimpleBooleanProperty(false);
-    	dateModified = new SimpleObjectProperty<LocalDate>(LocalDate.now());
-    	dateAdded = new SimpleObjectProperty<LocalDate>(LocalDate.now());
-    }
-    
-    public int getTrackID() {
+	public Track () {
+		trackID = -1;
+		fileFolder = "";
+		fileName = "";
+		name = "";
+		artist = "";
+		album = "";
+		genre = "";
+		comments = "";
+		albumArtist = "";
+		label = "";
+		size = -1;
+		totalTime = -1;
+		trackNumber = 0;
+		year = 0;
+		bitRate = -1;
+		playCount = 0;
+		discNumber = 0;
+		BPM = -1;
+		hasCover = false;
+		isInDisk = false;
+		isCompilation = false;
+		dateModified = LocalDate.now();
+		dateAdded = LocalDate.now();
+	}
+
+	public int getTrackID() {
 		return trackID;
 	}
 
-    public void setTrackID(int trackID) {
+	public void setTrackID(int trackID) {
 		this.trackID = trackID;
 	}
 
@@ -115,164 +104,192 @@ public class Track {
 		this.fileName = fileName;
 	}
 
-	public StringProperty getName() {
+	public String getName() {
 		return name;
 	}
 
-	public void setName(StringProperty name) {
+	public void setName(String name) {
 		this.name = name;
 	}
 
-	public StringProperty getArtist() {
+	public String getArtist() {
 		return artist;
 	}
 
-	public void setArtist(StringProperty artist) {
+	public void setArtist(String artist) {
 		this.artist = artist;
 	}
 
-	public StringProperty getAlbum() {
+	public String getAlbum() {
 		return album;
 	}
 
-	public void setAlbum(StringProperty album) {
+	public void setAlbum(String album) {
 		this.album = album;
 	}
 
-	public StringProperty getGenre() {
+	public String getGenre() {
 		return genre;
 	}
 
-	public void setGenre(StringProperty genre) {
+	public void setGenre(String genre) {
 		this.genre = genre;
 	}
 
-	public StringProperty getComments() {
+	public String getComments() {
 		return comments;
 	}
 
-	public void setComments(StringProperty comments) {
+	public void setComments(String comments) {
 		this.comments = comments;
 	}
 
-	public StringProperty getAlbumArtist() {
+	public String getAlbumArtist() {
 		return albumArtist;
 	}
 
-	public void setAlbumArtist(StringProperty albumArtist) {
+	public void setAlbumArtist(String albumArtist) {
 		this.albumArtist = albumArtist;
 	}
 
-	public StringProperty getLabel() {
+	public String getLabel() {
 		return label;
 	}
 
-	public void setLabel(StringProperty label) {
+	public void setLabel(String label) {
 		this.label = label;
 	}
 
-	public IntegerProperty getSize() {
+	public int getSize() {
 		return size;
 	}
 
-	public void setSize(IntegerProperty size) {
+	public void setSize(int size) {
 		this.size = size;
 	}
 
-	public IntegerProperty getTotalTime() {
+	public int getTotalTime() {
 		return totalTime;
 	}
 
-	public void setTotalTime(IntegerProperty totalTime) {
+	public void setTotalTime(int totalTime) {
 		this.totalTime = totalTime;
 	}
 
-	public IntegerProperty getTrackNumber() {
+	public int getTrackNumber() {
 		return trackNumber;
 	}
 
-	public void setTrackNumber(IntegerProperty trackNumber) {
+	public void setTrackNumber(int trackNumber) {
 		this.trackNumber = trackNumber;
 	}
 
-	public IntegerProperty getYear() {
+	public int getYear() {
 		return year;
 	}
 
-	public void setYear(IntegerProperty year) {
+	public void setYear(int year) {
 		this.year = year;
 	}
 
-	public IntegerProperty getBitRate() {
+	public int getBitRate() {
 		return bitRate;
 	}
 
-	public void setBitRate(IntegerProperty bitRate) {
+	public void setBitRate(int bitRate) {
 		this.bitRate = bitRate;
 	}
 
-	public IntegerProperty getPlayCount() {
+	public int getPlayCount() {
 		return playCount;
 	}
 
-	public void setPlayCount(IntegerProperty playCount) {
+	public void setPlayCount(int playCount) {
 		this.playCount = playCount;
 	}
 
-	public IntegerProperty getDiscNumber() {
+	public int getDiscNumber() {
 		return discNumber;
 	}
 
-	public void setDiscNumber(IntegerProperty discNumber) {
+	public void setDiscNumber(int discNumber) {
 		this.discNumber = discNumber;
 	}
 
-	public IntegerProperty getBPM() {
+	public int getBPM() {
 		return BPM;
 	}
 
-	public void setBPM(IntegerProperty bPM) {
+	public void setBPM(int bPM) {
 		BPM = bPM;
 	}
 
-	public BooleanProperty getHasCover() {
+	public boolean isHasCover() {
 		return hasCover;
 	}
 
-	public void setHasCover(BooleanProperty hasCover) {
+	public void setHasCover(boolean hasCover) {
 		this.hasCover = hasCover;
 	}
 
-	public BooleanProperty getIsInDisk() {
+	public boolean isInDisk() {
 		return isInDisk;
 	}
 
-	public void setIsInDisk(BooleanProperty isInDisk) {
+	public void setInDisk(boolean isInDisk) {
 		this.isInDisk = isInDisk;
 	}
-	
-	public BooleanProperty getIsCompilation() {
-		return this.isCompilation;
+
+	public boolean isCompilation() {
+		return isCompilation;
 	}
-	
-	public void setIsCompilation(BooleanProperty isCompilation) {
+
+	public void setCompilation(boolean isCompilation) {
 		this.isCompilation = isCompilation;
 	}
-	
-	public ObjectProperty<LocalDate> getDateModified() {
+
+	public LocalDate getDateModified() {
 		return dateModified;
 	}
 
-	public void setDateModified(ObjectProperty<LocalDate> dateModified) {
+	public void setDateModified(LocalDate dateModified) {
 		this.dateModified = dateModified;
 	}
 
-	public ObjectProperty<LocalDate> getDateAdded() {
+	public LocalDate getDateAdded() {
 		return dateAdded;
 	}
 
-	public void setDateAdded(ObjectProperty<LocalDate> dateAdded) {
+	public void setDateAdded(LocalDate dateAdded) {
 		this.dateAdded = dateAdded;
+	}
+	
+	public static Track trackFromObservableTrack(ObservableTrack obsTrack) {
+		Track t = new Track();
+		t.trackID = obsTrack.getTrackID();
+		t.fileFolder = obsTrack.getFileFolder();
+		t.fileName = obsTrack.getFileName();
+		t.name = obsTrack.getName().get();
+		t.artist = obsTrack.getArtist().get();
+		t.album = obsTrack.getAlbum().get();
+		t.genre = obsTrack.getGenre().get();
+		t.comments = obsTrack.getComments().get();
+		t.albumArtist = obsTrack.getAlbumArtist().get();
+		t.label = obsTrack.getLabel().get();
+		t.size = obsTrack.getSize().get();
+		t.totalTime = obsTrack.getTotalTime().get();
+		t.trackNumber = obsTrack.getTrackNumber().get();
+		t.year = obsTrack.getYear().get();
+		t.bitRate = obsTrack.getBitRate().get();
+		t.playCount = obsTrack.getPlayCount().get();
+		t.discNumber = obsTrack.getDiscNumber().get();
+		t.BPM = obsTrack.getBPM().get();
+		t.hasCover = obsTrack.getHasCover().get();
+		t.isInDisk = obsTrack.getIsInDisk().get();
+		t.isCompilation = obsTrack.getIsCompilation().get();
+		t.dateModified = obsTrack.getDateModified().get();
+		t.dateAdded = obsTrack.getDateAdded().get();
+		return t;
 	}
 
 	@Override
@@ -280,18 +297,18 @@ public class Track {
 		int hash=71;
 		hash = 73*hash+fileName.hashCode();
 		hash = 73*hash+fileFolder.hashCode();
-		hash = 73*hash+size.get();
-		hash = 73*hash+name.get().hashCode();
-		hash = 73*hash+artist.get().hashCode();
-		hash = 73*hash+album.get().hashCode();
-		hash = 73*hash+comments.get().hashCode();
-		hash = 73*hash+genre.get().hashCode();
-		hash = 73*hash+trackNumber.get();
-		hash = 73*hash+year.get();
-		hash = 73*hash+albumArtist.get().hashCode();
-		hash = 73*hash+BPM.get();
-		hash = 73*hash+label.get().hashCode();
-		hash = 73*hash+totalTime.get();
+		hash = 73*hash+size;
+		hash = 73*hash+name.hashCode();
+		hash = 73*hash+artist.hashCode();
+		hash = 73*hash+album.hashCode();
+		hash = 73*hash+comments.hashCode();
+		hash = 73*hash+genre.hashCode();
+		hash = 73*hash+trackNumber;
+		hash = 73*hash+year;
+		hash = 73*hash+albumArtist.hashCode();
+		hash = 73*hash+BPM;
+		hash = 73*hash+label.hashCode();
+		hash = 73*hash+totalTime;
 		return hash;
 	}
 	
@@ -300,66 +317,24 @@ public class Track {
 		boolean equals = false;
 		if((o instanceof Track && ((Track) o).getFileName().equalsIgnoreCase(this.fileName)) &&
 			o instanceof Track && ((Track) o).getFileFolder().equalsIgnoreCase(this.fileFolder) && 
-			o instanceof Track && ((Track) o).getSize().get() == this.size.get() &&
-			o instanceof Track && ((Track) o).getName().get().equalsIgnoreCase(this.name.get()) &&
-			o instanceof Track && ((Track) o).getArtist().get().equalsIgnoreCase(this.artist.get()) &&
-			o instanceof Track && ((Track) o).getAlbum().get().equalsIgnoreCase(this.album.get()) &&
-			o instanceof Track && ((Track) o).getComments().get().equalsIgnoreCase(this.comments.get()) &&
-			o instanceof Track && ((Track) o).getGenre().get().equalsIgnoreCase(this.genre.get()) &&
-			o instanceof Track && ((Track) o).getTrackNumber().get() == this.trackNumber.get() &&
-			o instanceof Track && ((Track) o).getYear().get() == this.year.get() &&
-			o instanceof Track && ((Track) o).getAlbumArtist().get().equalsIgnoreCase(this.albumArtist.get()) &&
-			o instanceof Track && ((Track) o).getBPM().get() == this.BPM.get() &&
-			o instanceof Track && ((Track) o).getLabel().get().equalsIgnoreCase(this.label.get()) &&
-			o instanceof Track && ((Track) o).getTotalTime().get() == this.totalTime.get())
+			o instanceof Track && ((Track) o).getSize() == this.size &&
+			o instanceof Track && ((Track) o).getName().equalsIgnoreCase(this.name) &&
+			o instanceof Track && ((Track) o).getArtist().equalsIgnoreCase(this.artist) &&
+			o instanceof Track && ((Track) o).getAlbum().equalsIgnoreCase(this.album) &&
+			o instanceof Track && ((Track) o).getComments().equalsIgnoreCase(this.comments) &&
+			o instanceof Track && ((Track) o).getGenre().equalsIgnoreCase(this.genre) &&
+			o instanceof Track && ((Track) o).getTrackNumber() == this.trackNumber &&
+			o instanceof Track && ((Track) o).getYear() == this.year &&
+			o instanceof Track && ((Track) o).getAlbumArtist().equalsIgnoreCase(this.albumArtist) &&
+			o instanceof Track && ((Track) o).getBPM() == this.BPM &&
+			o instanceof Track && ((Track) o).getLabel().equalsIgnoreCase(this.label) &&
+			o instanceof Track && ((Track) o).getTotalTime() == this.totalTime)
 				equals = true;
 		return equals;
 	}
 	
 	@Override
     public String toString(){
-    	return name.get()+" "+artist.get()+" "+genre.get()+" "+album.get()+"("+year.get()+") "+BPM.get()+" "+label.get()+" "+totalTime.get();
+    	return name+" "+artist+" "+genre+" "+album+"("+year+") "+BPM+" "+label+" "+totalTime;
     }
-
-	public Iterator<Property<?>> editFieldsIterator() {
-		return new EditFieldIterator();
-	}
-
-	public class EditFieldIterator implements Iterator<Property<?>> {
-
-		private Property<?>[] fields;
-		private int index;
-		
-		public EditFieldIterator() {
-			index = 0;
-			fields = new  Property<?>[] {
-					name,
-					artist,
-					album,
-					albumArtist,
-					genre,
-					label,
-					year,
-					BPM,
-					trackNumber,
-					discNumber,
-					comments,
-			};
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return fields.length < index ? true : false;
-		}
-
-		@Override
-		public Property<?> next() {
-			return fields[index++];
-		}
-		
-		public Property<?> get(int i) {
-			index = i+1;
-			return fields[i];
-		}
-	}
 }
