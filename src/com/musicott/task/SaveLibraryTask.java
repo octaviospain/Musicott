@@ -22,14 +22,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javafx.concurrent.Task;
 
 import com.cedarsoftware.util.io.JsonWriter;
-import com.musicott.SceneManager;
 import com.musicott.model.MusicLibrary;
-import com.musicott.model.ObservableTrack;
 import com.musicott.model.Track;
 
 /**
@@ -38,27 +38,52 @@ import com.musicott.model.Track;
  */
 public class SaveLibraryTask extends Task<Void> {
 
-	private List<ObservableTrack> list;
-	private int numTracks, currentTracks;
+	private List<Track> trackList;
 	private File tracksFile;
+	private Map<String,Object> args;
 
 	public SaveLibraryTask() {
 		tracksFile = new File("./resources/tracks.json");
-		list = MusicLibrary.getInstance().getTracks();
-		numTracks = list.size();
-		currentTracks = 0;
+		trackList = MusicLibrary.getInstance().getTracks();
+		
+		args = new HashMap<String,Object>();
+		Map<Class,List<String>> fields = new HashMap<Class,List<String>>();
+		args.put(JsonWriter.FIELD_SPECIFIERS, fields);
+		
+		List<String> fieldNames = new ArrayList<String>();
+		fieldNames.add("trackID");
+		fieldNames.add("fileFolder");
+		fieldNames.add("fileName");
+		fieldNames.add("coverFileName");
+		fieldNames.add("name");
+		fieldNames.add("artist");
+		fieldNames.add("album");
+		fieldNames.add("genre");
+		fieldNames.add("comments");
+		fieldNames.add("albumArtist");
+		fieldNames.add("label");
+		fieldNames.add("size");
+		fieldNames.add("totalTime");
+		fieldNames.add("bitRate");
+		fieldNames.add("playCount");
+		fieldNames.add("trackNumber");
+		fieldNames.add("discNumber");
+		fieldNames.add("year");
+		fieldNames.add("bpm");
+		fieldNames.add("hasCover");
+		fieldNames.add("isInDisk");
+		fieldNames.add("isCompilation");
+		fieldNames.add("dateModified");
+		fieldNames.add("dateAdded");
+		
+		fields.put(Track.class,fieldNames);
 	}
 	
 	@Override
-	protected Void call() throws Exception {	
-		List<Track> trackList = new ArrayList<Track>();
-		for(ObservableTrack ot: list) {
-			updateProgress(++currentTracks,numTracks);
-			trackList.add(Track.trackFromObservableTrack(ot));
-		}
+	protected Void call() throws Exception {
 		try {
 			FileOutputStream fos = new FileOutputStream(tracksFile);				
-			JsonWriter jsw = new JsonWriter(fos);
+			JsonWriter jsw = new JsonWriter(fos, args);
 			jsw.write(trackList);
 			jsw.close();
 			fos.close();
@@ -67,11 +92,5 @@ public class SaveLibraryTask extends Task<Void> {
 			//TODO show error dialog and continue without save library
 		}
 		return null;
-	}
-	
-	@Override
-	protected void succeeded() {
-		super.succeeded();
-		SceneManager.getInstance().closeImportScene();
 	}
 }

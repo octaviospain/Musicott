@@ -30,7 +30,7 @@ import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.TagException;
 import org.jaudiotagger.tag.flac.FlacTag;
 
-import com.musicott.model.ObservableTrack;
+import com.musicott.model.Track;
 
 /**
  * @author Octavio Calleya
@@ -38,63 +38,63 @@ import com.musicott.model.ObservableTrack;
  */
 public class FlacParser {
 
-	private static ObservableTrack track;
+	private static Track track;
 	
-	public static ObservableTrack parseFlacFile(final File fileToParse) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException {
-		track = new ObservableTrack();
+	public static Track parseFlacFile(final File fileToParse) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException {
+		track = new Track();
 		AudioFile audioFile = AudioFileIO.read(fileToParse);
 		FlacTag tag = (FlacTag) audioFile.getTag();
 		track.setFileFolder(new File(fileToParse.getParent()).getAbsolutePath());
 		track.setFileName(fileToParse.getName());
-		track.getIsInDisk().set(true);
-		track.getSize().set((int) (fileToParse.length()));
-		track.getBitRate().set(Integer.parseInt(audioFile.getAudioHeader().getBitRate()));
-		track.getTotalTime().set(audioFile.getAudioHeader().getTrackLength());
+		track.setInDisk(true);
+		track.setSize((int) (fileToParse.length()));
+		track.setBitRate(Integer.parseInt(audioFile.getAudioHeader().getBitRate()));
+		track.setTotalTime(audioFile.getAudioHeader().getTrackLength());
 		//TODO check Image Cover
 		for(FieldKey t: FieldKey.values()) {
 			switch (t){
 			case TITLE:
-				track.getName().set(tag.getFirst(t));
+				track.getNameProperty().set(tag.getFirst(t));
 				break;
 			case ARTIST:
-				track.getArtist().set(tag.getFirst(t));
+				track.getArtistProperty().set(tag.getFirst(t));
 				break;
 			case ALBUM:
-				track.getAlbum().set(tag.getFirst(t));
+				track.getAlbumProperty().set(tag.getFirst(t));
 				break;
 			case ALBUM_ARTIST:
-				track.getAlbumArtist().set(tag.getFirst(t));
+				track.getAlbumArtistProperty().set(tag.getFirst(t));
 				break;
 			case BPM:
 				try {
-					track.getBPM().set(Integer.parseInt(tag.getFirst(t)));
+					track.getBpmProperty().set(Integer.parseInt(tag.getFirst(t)));
 				} catch (NumberFormatException e) {}
 				break;
 			case COMMENT:
-				track.getComments().set(tag.getFirst(t));
+				track.getCommentsProperty().set(tag.getFirst(t));
 				break;
 			case GENRE:
-				track.getGenre().set(tag.getFirst(t));
+				track.getGenreProperty().set(tag.getFirst(t));
 				break;
 			case GROUPING:
-				track.getLabel().set(tag.getFirst(t));
+				track.getLabelProperty().set(tag.getFirst(t));
 				break;
 			case IS_COMPILATION:
-				track.getIsCompilation().set(tag.getFirst(t).equals("true") ? Boolean.valueOf(tag.getFirst(t)) : false);
+				track.setCompilation(tag.getFirst(t).equals("true") ? Boolean.valueOf(tag.getFirst(t)) : false);
 				break;
 			case TRACK:
 				try {
-					track.getTrackNumber().set(Integer.parseInt(tag.getFirst(t)));
+					track.getTrackNumberProperty().set(Integer.parseInt(tag.getFirst(t)));
 				} catch (NumberFormatException e) {}
 				break;
 			case DISC_NO:
 				try {
-					track.getDiscNumber().set(Integer.parseInt(tag.getFirst(t)));
+					track.getDiscNumberProperty().set(Integer.parseInt(tag.getFirst(t)));
 				} catch (NumberFormatException e) {}
 				break;
 			case YEAR:
 				try {
-					track.getYear().set(Integer.parseInt(tag.getFirst(t)));
+					track.getYearProperty().set(Integer.parseInt(tag.getFirst(t)));
 				} catch (NumberFormatException e) {}
 				break;
 			}

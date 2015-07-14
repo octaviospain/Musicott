@@ -18,47 +18,33 @@
 
 package com.musicott.model;
 
-import java.util.List;
-
 /**
  * @author Octavio Calleya
  *
  */
-public class MusicLibrary {
-
-	private static MusicLibrary instance;
-	private List<Track> tracks;
-	
-	private MusicLibrary() {
-	}
-	
-	public static MusicLibrary getInstance() {
-		if(instance == null)
-			instance = new MusicLibrary();
-		return instance;
-	}
-	
-	public void setTracks(List<Track> tracks) {
-		this.tracks = tracks;
-	}
-	
-	public List<Track> getTracks() {
-		return this.tracks;
-	}
-	
-	public int hashCode() {
-		int hash = 71;
-		hash = 73*tracks.hashCode();
-		return hash;
-	}
-	
-	public boolean equals(Object o) {
-		boolean res;
-		if(o instanceof MusicLibrary &&
-		   ((MusicLibrary)o).getTracks().equals(tracks))
-			res = true;
-		else
-			res = false;
-		return res;
-	}
+public enum TrackField {
+	TRACK_ID,
+	FILE_FOLDER,
+	FILE_NAME,
+	COVER_FILE_NAME,
+	NAME,
+	ARTIST,
+	ALBUM,
+	GENRE,
+	COMMENTS,
+	ALBUM_ARTIST,
+	LABEL,
+	SIZE,
+	TOTAL_TIME,
+	TRACK_NUMBER,
+	YEAR,
+	BIT_RATE,
+	PLAY_COUNT,
+	DISC_NUMBER,
+	BPM,
+	HAS_COVER,
+	IS_IN_DISK,
+	IS_COMPILATION,
+	DATE_MODIFIED,
+	DATE_ADDED
 }

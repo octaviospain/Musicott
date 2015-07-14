@@ -35,7 +35,7 @@ import com.mpatric.mp3agic.ID3v24Tag;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
-import com.musicott.model.ObservableTrack;
+import com.musicott.model.Track;
 import com.musicott.task.parser.Mp3Parser;
 
 import static org.junit.Assert.*;
@@ -62,15 +62,16 @@ public class Mp3ParserTest {
 		File file = noId3File("/Users/Octavio/Test/testeable.mp3");
 		
 		// Expected track creation with no ID3 tag
-		ObservableTrack t = new ObservableTrack();
+		Track t = new Track();
 		t.setFileFolder(new File(file.getParent()).getAbsolutePath());
 		t.setFileName(file.getName());
-		t.getIsInDisk().set(true);
-		t.getSize().set((int) (file.length()));
-		t.getName().set(file.getName());
+		t.setInDisk(true);
+		t.setSize((int) (file.length()));
+		t.getNameProperty().set(file.getName());
+		t.setTotalTime((int)new Mp3File("/Users/Octavio/Test/testeable.mp3").getLengthInSeconds());
 
 		PowerMockito.spy(Mp3Parser.class);
-		ObservableTrack expectedTrack = Mp3Parser.parseMp3File(file);
+		Track expectedTrack = Mp3Parser.parseMp3File(file);
 		
 		verifyPrivate(Mp3Parser.class, times(1)).invoke("checkCover", t);
 		assertEquals(expectedTrack, t);
@@ -81,23 +82,24 @@ public class Mp3ParserTest {
 		File file = id3v1TagFile("/Users/Octavio/Test/testeable.mp3");
 		
 		// Expected track creation with no ID3 tag
-		ObservableTrack track = new ObservableTrack();
+		Track track = new Track();
 		track.setFileFolder(new File(file.getParent()).getAbsolutePath());
 		track.setFileName(file.getName());
-		track.getIsInDisk().set(true);
-		track.getSize().set((int) (file.length()));
+		track.setInDisk(true);
+		track.setSize((int) (file.length()));
 		
 		// Expected info with ID3v1 tag
-		track.getName().set("Skeksis (Original Mix)");
-		track.getArtist().set("Alan Fitzpatrick");
-		track.getAlbum().set("Skeksis");
-		track.getComments().set("Very good song! Nice drop");
-		track.getGenre().set("Techno");
-		track.getTrackNumber().set(3);
-		track.getYear().set(2011);
+		track.getNameProperty().set("Skeksis (Original Mix)");
+		track.getArtistProperty().set("Alan Fitzpatrick");
+		track.getAlbumProperty().set("Skeksis");
+		track.getCommentsProperty().set("Very good song! Nice drop");
+		track.getGenreProperty().set("Techno");
+		track.getTrackNumberProperty().set(3);
+		track.getYearProperty().set(2011);
+		track.setTotalTime((int)new Mp3File("/Users/Octavio/Test/testeable.mp3").getLengthInSeconds());
 
 		PowerMockito.spy(Mp3Parser.class);
-		ObservableTrack expectedTrack = Mp3Parser.parseMp3File(file);
+		Track expectedTrack = Mp3Parser.parseMp3File(file);
 		
 		verifyPrivate(Mp3Parser.class, times(1)).invoke("checkCover", track);
 		assertEquals(expectedTrack, track);
@@ -108,29 +110,29 @@ public class Mp3ParserTest {
 		File file = id3v2TagFile("/Users/Octavio/Test/testeable.mp3");
 		
 		// Expected track creation with no ID3 tag
-		ObservableTrack track = new ObservableTrack();
+		Track track = new Track();
 		track.setFileFolder(new File(file.getParent()).getAbsolutePath());
 		track.setFileName(file.getName());
-		track.getIsInDisk().set(true);
-		track.getSize().set((int) (file.length()));
+		track.setInDisk(true);
+		track.setSize((int) (file.length()));
 		
 		// Expected info with ID3v2 tag
-		track.getName().set("Skeksis (Original Mix)");
-		track.getArtist().set("Alan Fitzpatrick");
-		track.getAlbum().set("Skeksis");
-		track.getAlbumArtist().set("Alan Fitzpatrick");
-		track.getBPM().set(128);
-		track.getComments().set("Very good song! Nice drop");
-		track.getLabel().set("Drumcode");
-		track.getGenre().set("Techno");
-		track.getTrackNumber().set(3);
-		track.getYear().set(2011);
-		track.getTotalTime().set(new Mp3File("/Users/Octavio/Test/testeable.mp3").getId3v2Tag().getLength());
+		track.getNameProperty().set("Skeksis (Original Mix)");
+		track.getArtistProperty().set("Alan Fitzpatrick");
+		track.getAlbumProperty().set("Skeksis");
+		track.getAlbumArtistProperty().set("Alan Fitzpatrick");
+		track.getBpmProperty().set(128);
+		track.getCommentsProperty().set("Very good song! Nice drop");
+		track.getLabelProperty().set("Drumcode");
+		track.getGenreProperty().set("Techno");
+		track.getTrackNumberProperty().set(3);
+		track.getYearProperty().set(2011);
+		track.setTotalTime((int)new Mp3File("/Users/Octavio/Test/testeable.mp3").getLengthInSeconds());
 
 		PowerMockito.spy(Mp3Parser.class);
-		ObservableTrack expectedTrack = Mp3Parser.parseMp3File(file);
+		Track expectedTrack = Mp3Parser.parseMp3File(file);
 		
-		verifyPrivate(Mp3Parser.class, times(1)).invoke("checkCover", track);
+		verifyPrivate(Mp3Parser.class, times(1)).invoke("checkCover", expectedTrack);
 		assertEquals(expectedTrack, track);
 	}
 	

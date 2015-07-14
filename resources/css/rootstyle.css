@@ -1,4 +1,4 @@
-/*
+	/*
  * This file is part of Musicott software.
  *
  * Musicott software is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *
  */
 
- .toggle-button#playButton {
+.toggle-button#playButton {
 	-fx-graphic: url('../icons/play-button-icon.png');
 	-fx-background-color: transparent;
 }
@@ -34,4 +34,44 @@
 #nextButton {
 	-fx-graphic: url('../icons/next-button-icon.png');
 	-fx-background-color: transparent;
+}
+
+.toggle-button#playQueueButton {
+	-fx-graphic: url('../icons/playqueue-button-icon.png');
+	-fx-background-color: transparent;
+}
+
+.toggle-button:selected#playQueueButton {
+	-fx-graphic: url('../icons/playqueue-button-icon-green.png');
+	-fx-background-color: transparent;
+}
+
+#trackSlider .track {
+    -fx-background-color:null;
+	-fx-background-insets: 1 1 2 1;
+	-fx-background-radius: 2;	
+}
+
+#volumeSlider .track {
+    -fx-background-color:null;
+}
+
+#volumeProgressBar .bar {
+	-fx-background-color: rgb(223,223,223);
+	-fx-background-insets: 1 1 2 1;
+	-fx-background-radius: 2;	
+}
+
+#volumeProgressBar .track {
+	-fx-control-inner-background: black;
+}
+
+#trackProgressBar .bar {
+	-fx-background-color: forestgreen;
+	-fx-background-insets: 1 1 2 1;
+	-fx-background-radius: 2;
+}
+
+#trackProgressBar .track {
+	-fx-control-inner-background: black;
 }

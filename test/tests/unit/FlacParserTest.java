@@ -34,7 +34,7 @@ import org.jaudiotagger.tag.TagException;
 import org.jaudiotagger.tag.flac.FlacTag;
 import org.junit.Test;
 
-import com.musicott.model.ObservableTrack;
+import com.musicott.model.Track;
 import com.musicott.task.parser.FlacParser;
 
 /**
@@ -46,37 +46,37 @@ public class FlacParserTest {
 	@Test
 	public void flacTagTest() throws Exception {
 		File flacFile = tagFile("/users/octavio/test/testeable.flac");
-		ObservableTrack track = FlacParser.parseFlacFile(flacFile);
-		assertEquals(track.getName().get(),"Skeksis (Original Mix)");
-		assertEquals(track.getArtist().get(),"Adam Beyer");
-		assertEquals(track.getAlbum().get(),"Skeksis");
-		assertEquals(track.getAlbumArtist().get(),"Alan Fitzpatrick");
-		assertEquals(track.getComments().get(),"Good hit!");
-		assertEquals(track.getGenre().get(),"Techno");
-		assertEquals(track.getLabel().get(),"Drumcode");
-		assertTrue(!track.getIsCompilation().get());
-		assertEquals(track.getBPM().get(), 128);
-		assertEquals(track.getTrackNumber().get(), 9);
-		assertEquals(track.getDiscNumber().get(), 1);
-		assertEquals(track.getYear().get(), 2003);
+		Track track = FlacParser.parseFlacFile(flacFile);
+		assertEquals(track.getNameProperty().get(),"Skeksis (Original Mix)");
+		assertEquals(track.getArtistProperty().get(),"Adam Beyer");
+		assertEquals(track.getAlbumProperty().get(),"Skeksis");
+		assertEquals(track.getAlbumArtistProperty().get(),"Alan Fitzpatrick");
+		assertEquals(track.getCommentsProperty().get(),"Good hit!");
+		assertEquals(track.getGenreProperty().get(),"Techno");
+		assertEquals(track.getLabelProperty().get(),"Drumcode");
+		assertTrue(!track.getIsCompilation());
+		assertEquals(track.getBpmProperty().get(), 128);
+		assertEquals(track.getTrackNumberProperty().get(), 9);
+		assertEquals(track.getDiscNumberProperty().get(), 1);
+		assertEquals(track.getYearProperty().get(), 2003);
 	}
 	
 	@Test
 	public void flacNoTagTest() throws Exception {
 		File flacFile = noTagFile("/users/octavio/test/testeable.flac");
-		ObservableTrack track = FlacParser.parseFlacFile(flacFile);
-		assertEquals(track.getName().get(),"");
-		assertEquals(track.getArtist().get(),"");
-		assertEquals(track.getAlbum().get(),"");
-		assertEquals(track.getAlbumArtist().get(),"");
-		assertEquals(track.getComments().get(),"");
-		assertEquals(track.getGenre().get(),"");
-		assertEquals(track.getLabel().get(),"");
-		assertTrue(!track.getIsCompilation().get());
-		assertEquals(track.getBPM().get(), -1);
-		assertEquals(track.getTrackNumber().get(), 0);
-		assertEquals(track.getDiscNumber().get(), 0);
-		assertEquals(track.getYear().get(), 0);
+		Track track = FlacParser.parseFlacFile(flacFile);
+		assertEquals(track.getNameProperty().get(),"");
+		assertEquals(track.getArtistProperty().get(),"");
+		assertEquals(track.getAlbumProperty().get(),"");
+		assertEquals(track.getAlbumArtistProperty().get(),"");
+		assertEquals(track.getCommentsProperty().get(),"");
+		assertEquals(track.getGenreProperty().get(),"");
+		assertEquals(track.getLabelProperty().get(),"");
+		assertTrue(!track.getIsCompilation());
+		assertEquals(track.getBpmProperty().get(), -1);
+		assertEquals(track.getTrackNumberProperty().get(), 0);
+		assertEquals(track.getDiscNumberProperty().get(), 0);
+		assertEquals(track.getYearProperty().get(), 0);
 	}
 	
 	public File tagFile(String path) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException {

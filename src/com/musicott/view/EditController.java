@@ -23,10 +23,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.musicott.model.ObservableTrack;
-import com.musicott.model.ObservableTrack.EditFieldIterator;
+import com.musicott.SceneManager;
+import com.musicott.model.Track;
+import com.musicott.model.TrackField;
 
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.Property;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -36,6 +38,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
@@ -82,96 +85,87 @@ public class EditController {
 	@FXML
 	private Button okEditButton;
 	
-	private Map<Integer,TextInputControl> fieldMap;
+	private Map<TrackField,TextInputControl> fieldMap;
 	private Stage editStage;
-	private ObservableList<ObservableTrack> trackSelection;
+	private ObservableList<Track> trackSelection;
 	
 	public EditController() {
 	}
 	
 	@FXML
 	private void initialize() {
-		fieldMap = new HashMap<Integer,TextInputControl>();
-		fieldMap.put(0, name);
-		fieldMap.put(1, artist);
-		fieldMap.put(2, album);
-		fieldMap.put(3, albumArtist);
-		fieldMap.put(4, genre);
-		fieldMap.put(5, label);
-		fieldMap.put(6, year);
-		fieldMap.put(7, bpm);
-		fieldMap.put(8, trackNum);
-		fieldMap.put(9, discNum);
-		fieldMap.put(10, comments);
+		fieldMap = new HashMap<TrackField,TextInputControl>();
+		fieldMap.put(TrackField.NAME, name);
+		fieldMap.put(TrackField.ARTIST, artist);
+		fieldMap.put(TrackField.ALBUM, album);
+		fieldMap.put(TrackField.GENRE, genre);
+		fieldMap.put(TrackField.COMMENTS, comments);
+		fieldMap.put(TrackField.ALBUM_ARTIST, albumArtist);
+		fieldMap.put(TrackField.LABEL, label);
+		fieldMap.put(TrackField.TRACK_NUMBER, trackNum);
+		fieldMap.put(TrackField.DISC_NUMBER, discNum);
+		fieldMap.put(TrackField.YEAR, year);
+		fieldMap.put(TrackField.BPM, bpm);
 	}
 	
 	public void setStage(Stage stage) {
 		editStage = stage;
 	}
 	
-	public void setSelection(ObservableList<ObservableTrack> selection) {
+	public void setSelection(ObservableList<Track> selection) {
 		trackSelection = selection;
 		setFields();
 	}
-	
+
 	@FXML
 	private void doOK() {
 		if(trackSelection.size() == 1) {
-			ObservableTrack t = trackSelection.get(0);
-			try {
-			t.getName().set(name.textProperty().getValue());
-			t.getArtist().set(artist.textProperty().getValue());
-			t.getAlbum().set(album.textProperty().getValue());
-			t.getAlbumArtist().set(albumArtist.textProperty().getValue());
-			t.getGenre().set(genre.textProperty().getValue());
-			t.getLabel().set(label.textProperty().getValue());
-			if(!year.textProperty().getValue().equals(""))
-				t.getYear().set(Integer.parseInt(year.textProperty().getValue()));
-			if(!bpm.textProperty().getValue().equals(""))
-				t.getBPM().set(Integer.parseInt(bpm.textProperty().getValue()));
-			if(!trackNum.textProperty().getValue().equals(""))
-				t.getTrackNumber().set(Integer.parseInt(trackNum.textProperty().getValue()));
-			if(!discNum.textProperty().getValue().equals(""))
-				t.getDiscNumber().set(Integer.parseInt(discNum.textProperty().getValue()));
-			t.getComments().set(comments.textProperty().getValue());
-			t.getIsCompilation().set(isCompilationCheckBox.isSelected());
+			Track t = trackSelection.get(0);
+			Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();
+			
+			for(TrackField field: fieldMap.keySet()) {
+				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
+					try {
+						IntegerProperty ip = (IntegerProperty) propertyMap.get(field);
+						ip.setValue(Integer.parseInt(fieldMap.get(field).textProperty().getValue()));
+					} catch(NumberFormatException e) {}
+				}
+				else {
+					StringProperty sp = (StringProperty) propertyMap.get(field);
+					sp.setValue(fieldMap.get(field).textProperty().getValue());
+				}
+			}
+			
 			//TODO set image
-			}
-			catch(NumberFormatException e) {
-				//TODO fix non integer values
-			}
+			//Changes in the elements of the list doesn't fire the ListChangeListener so save explicitly
+			SceneManager.getInstance().saveLibrary();
 		}
 		else {
 			for(int i=0; i<trackSelection.size() ;i++) {
-				ObservableTrack t = trackSelection.get(i);
-				try {
-					if(!name.textProperty().getValue().equals("-"))
-						t.getName().set(name.textProperty().getValue());
-					if(!artist.textProperty().getValue().equals("-"))
-						t.getArtist().set(artist.textProperty().getValue());
-					if(!album.textProperty().getValue().equals("-"))
-						t.getAlbum().set(album.textProperty().getValue());
-					if(!albumArtist.textProperty().getValue().equals("-"))
-						t.getAlbumArtist().set(albumArtist.textProperty().getValue());
-					if(!genre.textProperty().getValue().equals("-"))
-						t.getGenre().set(genre.textProperty().getValue());
-					if(!label.textProperty().getValue().equals("-"))
-						t.getLabel().set(label.textProperty().getValue());
-					if(!year.textProperty().getValue().equals("-") || year.textProperty().getValue().equals(""))
-						t.getYear().set(Integer.parseInt(year.textProperty().getValue()));
-					if(!bpm.textProperty().getValue().equals("-") || bpm.textProperty().getValue().equals(""))
-						t.getBPM().set(Integer.parseInt(bpm.textProperty().getValue()));
-					if(!trackNum.textProperty().getValue().equals("-") || trackNum.textProperty().getValue().equals(""))
-						t.getTrackNumber().set(Integer.parseInt(trackNum.textProperty().getValue()));
-					if(!discNum.textProperty().getValue().equals("-") || discNum.textProperty().getValue().equals(""))
-						t.getDiscNumber().set(Integer.parseInt(discNum.textProperty().getValue()));
-					if(!comments.textProperty().getValue().equals("-"))
-						t.getComments().set(comments.textProperty().getValue());
-					t.getIsCompilation().set(isCompilationCheckBox.isSelected());
-					//TODO set image
-				} catch (NumberFormatException e) {
-					// TODO show error dialog and closes or fix for non accept integer inputs
+				Track t = trackSelection.get(i);
+				Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();
+				
+				for(TrackField field: fieldMap.keySet()) {
+					if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
+						try {
+							IntegerProperty ip = (IntegerProperty) propertyMap.get(field);
+							if(!fieldMap.get(field).textProperty().getValue().equals("-") || !fieldMap.get(field).textProperty().getValue().equals(""))
+								ip.setValue(Integer.parseInt(fieldMap.get(field).textProperty().getValue()));
+						} catch(NumberFormatException e) {}
+					}
+					else {
+						StringProperty sp = (StringProperty) propertyMap.get(field);
+						if(!fieldMap.get(field).textProperty().getValue().equals("-"))
+							sp.setValue(fieldMap.get(field).textProperty().getValue());
+					}
 				}
+				
+				if(!isCompilationCheckBox.isIndeterminate())
+					t.setCompilation(isCompilationCheckBox.isSelected());
+				
+				//TODO set image
+				//Changes in the elements of the list doesn't fire the ListChangeListener so save explicitly
+				SceneManager.getInstance().saveLibrary();
 			}
 		}
 		editStage.close();
@@ -184,87 +178,101 @@ public class EditController {
 	
 	private void setFields() {
 		if(trackSelection.size() == 1) {
-			ObservableTrack track = trackSelection.get(0);
-			name.textProperty().setValue(track.getName().get());
-			artist.textProperty().setValue(track.getArtist().get());
-			album.textProperty().setValue(track.getAlbum().get());
-			albumArtist.textProperty().setValue(track.getAlbumArtist().get());
-			genre.textProperty().setValue(track.getGenre().get());
-			label.textProperty().setValue(track.getLabel().get());
-			if(track.getYear().get() == 0)
-				year.textProperty().setValue("");
+			Track track = trackSelection.get(0);
+			Map<TrackField, Property<?>> propertyMap = track.getPropertiesMap();
+			
+			for(TrackField field: fieldMap.keySet()) {
+				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
+					try {
+						IntegerProperty ip = (IntegerProperty) propertyMap.get(field);
+						if(ip.get() == 0 || ip.get() == -1)
+							fieldMap.get(field).textProperty().setValue("");
+						else
+							fieldMap.get(field).textProperty().setValue(ip.get()+"");
+					} catch(NumberFormatException e) {}
+				}
+				else {
+					StringProperty sp = (StringProperty) propertyMap.get(field);
+					fieldMap.get(field).textProperty().setValue(sp.get());
+				}
+			}
+			
+			titleName.textProperty().setValue(track.getName());
+			titleArtist.textProperty().setValue(track.getArtist());
+			titleAlbum.textProperty().setValue(track.getAlbum());
+			
+			if(track.getHasCover())
+				coverImage.setImage(new Image("file:"+track.getFileFolder()+"/"+track.getCoverFileName()));
 			else
-				year.textProperty().setValue(track.getYear().get()+"");
-			if(track.getBPM().get() == -1)
-				bpm.textProperty().setValue("");
-			else
-				bpm.textProperty().setValue(track.getBPM().get()+"");
-			if(track.getTrackNumber().get() == 0)
-				trackNum.textProperty().setValue("");
-			else
-				trackNum.textProperty().setValue(track.getTrackNumber().get()+"");
-			if(track.getDiscNumber().get() == 0)
-				discNum.textProperty().setValue("");
-			else
-				discNum.textProperty().setValue(track.getDiscNumber().get()+"");
-			comments.textProperty().setValue(track.getComments().get());
-			titleName.setText(track.getName().get());
-			titleArtist.setText(track.getArtist().get());
-			titleAlbum.setText(track.getAlbum().get());
-			isCompilationCheckBox.setSelected(track.getIsCompilation().get());
-		//	coverImage.setImage(); //TODO
+				coverImage.setImage(new Image("file:resources/images/default-cover-icon.png"));
 		}
 		else {
-			for(int i=0; i<fieldMap.size(); i++) {
-				List<String> listOfSameFields = new ArrayList<String>();
-				if(i == fieldMap.size()-1) { 				// comments case
-					TextArea ta = (TextArea) fieldMap.get(i);
-					for(ObservableTrack t: trackSelection) {
-						StringProperty sp = (StringProperty) ((EditFieldIterator) t.editFieldsIterator()).get(i);
-						listOfSameFields.add(sp.get());
+			List<String> listOfSameFields = new ArrayList<String>();
+			for(TrackField field: fieldMap.keySet()) {
+				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
+					for(Track t: trackSelection) {
+						Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();
+						IntegerProperty ip= (IntegerProperty) propertyMap.get(field);
+						if(ip.get() == 0 || ip.get() == -1)
+							listOfSameFields.add("");
+						else
+							listOfSameFields.add(""+ip.get());
 					}
-					ta.textProperty().setValue((matchCommonString(listOfSameFields)));
+					fieldMap.get(field).textProperty().setValue(matchCommonString(listOfSameFields));
 				}
-				else
-					if(i<6) {								// string fields
-						for(ObservableTrack t: trackSelection) {
-							StringProperty sp = (StringProperty) ((EditFieldIterator) t.editFieldsIterator()).get(i);
-							listOfSameFields.add(sp.get());
-						}
-						if(i == 0)
-							titleName.setText(matchCommonString(listOfSameFields));
-						if(i == 1)
-							titleArtist.setText(matchCommonString(listOfSameFields));
-						if(i == 2)
-							titleAlbum.setText(matchCommonString(listOfSameFields));
-						TextField tf = (TextField) fieldMap.get(i);
-						tf.textProperty().setValue((matchCommonString(listOfSameFields)));
+				else {
+					for(Track t: trackSelection) {
+						Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();
+						StringProperty ip= (StringProperty) propertyMap.get(field);
+						listOfSameFields.add(ip.get());
 					}
-					else {									// integer fields
-						TextField tf = (TextField) fieldMap.get(i);
-						for(ObservableTrack t: trackSelection) {
-							IntegerProperty sp = (IntegerProperty) ((EditFieldIterator) t.editFieldsIterator()).get(i);
-							if(sp.get() == 0 || sp.get() == -1)
-								listOfSameFields.add("");
-							else
-								listOfSameFields.add(""+sp.get());
-						}
-						tf.textProperty().setValue((matchCommonString(listOfSameFields)));
-					}
+					fieldMap.get(field).textProperty().setValue(matchCommonString(listOfSameFields));
+				}
+				listOfSameFields.clear();
 			}
-			isCompilationCheckBox.setIndeterminate(true);
-			//TODO set default image or common cover image
+		
+			// Check for the same cover image and compilation value
+			List<Boolean> listOfSameBools = new ArrayList<Boolean>();
+			
+			for(Track t: trackSelection) {
+				listOfSameFields.add(t.getFileFolder()+"/"+t.getCoverFileName());
+				listOfSameBools.add(t.getIsCompilation());
+			}
+			
+			if(!matchCommonString(listOfSameFields).equals("-"))
+				coverImage.setImage(new Image("file:"+trackSelection.get(0).getFileFolder()+"/"+trackSelection.get(0).getCoverFileName()));
+			else
+				coverImage.setImage(new Image("file:resources/images/default-cover-icon.png"));
+			
+			if(!matchCommonBool(listOfSameBools))
+				isCompilationCheckBox.setIndeterminate(true);
+			else
+				isCompilationCheckBox.setSelected(trackSelection.get(0).getIsCompilation());
+			
+			titleName.textProperty().setValue(name.textProperty().get());
+			titleArtist.textProperty().setValue(artist.textProperty().get());
+			titleAlbum.textProperty().setValue(album.textProperty().get());
 		}
+	}
+	
+	private boolean matchCommonBool(List<Boolean> list) {
+		boolean isCommon = true;
+		Boolean b = trackSelection.get(0).getIsCompilation();
+		for(Boolean bl: list)
+			if(!b.equals(bl)) {
+				isCommon = false;
+				break;
+			}
+		return isCommon;
 	}
 
 	private String matchCommonString (List<String> list) {
 		String s = list.get(0);
-		for(int i=0; i<list.size() ;i++) {
-			if(!s.equalsIgnoreCase(list.get(i))) {
+		for(String st: list)
+			if(!s.equalsIgnoreCase(st)) {
 					s = "-";
 					break;
 			}
-		}
 		return s;
 	}
 }

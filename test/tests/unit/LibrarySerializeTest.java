@@ -26,7 +26,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -39,7 +41,7 @@ import com.cedarsoftware.util.io.JsonWriter;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.UnsupportedTagException;
 import com.musicott.model.MusicLibrary;
-import com.musicott.model.ObservableTrack;
+import com.musicott.model.Track;
 import com.musicott.task.parser.Mp3Parser;
 
 /**
@@ -48,44 +50,54 @@ import com.musicott.task.parser.Mp3Parser;
  */
 public class LibrarySerializeTest {
 	
-	private final int MAX = 1;
-	File jsonTrackFolder = new File("./data/tracks/");
-	
-	@After
-	public void tearDown() {
-		File[] files = jsonTrackFolder.listFiles();
-		for(File f: files)
-			if(f.getName().substring(f.getName().length()-4).equals("json"))
-				f.delete();
-	}
-	
 	@Test
 	public void testTrackToJsonToTrack() throws Exception {
-		ObservableTrack t = Mp3Parser.parseMp3File(new File("/Users/octavio/Music/iTunes/iTunes Media/Music/MATRiXXMAN/Metaphysix_ II, Rhythm/02 Stop It (Percapella).mp3"));
-		File jsonFile = new File("./data/test.json");
+		Track t = Mp3Parser.parseMp3File(new File("/Users/octavio/Music/iTunes/iTunes Media/Music/MATRiXXMAN/Metaphysix_ II, Rhythm/02 Stop It (Percapella).mp3"));
+		File jsonFile = new File("./resources/test.json");
 		FileOutputStream fos = new FileOutputStream(jsonFile);
-		JsonWriter jsw = new JsonWriter(fos);
+		
+		Map<String,Object> args = new HashMap<String,Object>();
+		Map<Class,List<String>> fields = new HashMap<Class,List<String>>();
+		args.put(JsonWriter.FIELD_SPECIFIERS, fields);
+		
+		List<String> fieldNames = new ArrayList<String>();
+		fieldNames.add("trackID");
+		fieldNames.add("fileFolder");
+		fieldNames.add("fileName");
+		fieldNames.add("coverFileName");
+		fieldNames.add("name");
+		fieldNames.add("artist");
+		fieldNames.add("album");
+		fieldNames.add("genre");
+		fieldNames.add("comments");
+		fieldNames.add("albumArtist");
+		fieldNames.add("label");
+		fieldNames.add("size");
+		fieldNames.add("totalTime");
+		fieldNames.add("bitRate");
+		fieldNames.add("playCount");
+		fieldNames.add("trackNumber");
+		fieldNames.add("discNumber");
+		fieldNames.add("year");
+		fieldNames.add("bpm");
+		fieldNames.add("hasCover");
+		fieldNames.add("isInDisk");
+		fieldNames.add("isCompilation");
+		fieldNames.add("dateModified");
+		fieldNames.add("dateAdded");
+		
+		fields.put(Track.class,fieldNames);
+		
+		JsonWriter jsw = new JsonWriter(fos, args);
 		jsw.write(t);
 		jsw.close();
+		fos.close();
 		
 		FileInputStream fis = new FileInputStream(jsonFile);
 		JsonReader jsr = new JsonReader(fis);
-		ObservableTrack t2 = (ObservableTrack) jsr.readObject();
+		Track t2 = (Track) jsr.readObject();
 		jsr.close();
+		fis.close();
 		assertEquals(t,t2);
-	}
-	
-	private void scanFolder(File folder, List<ObservableTrack> list) throws UnsupportedTagException, InvalidDataException, IOException {
-		File[] files = folder.listFiles();
-		for(File file:files)
-			if(file.isDirectory())
-				scanFolder(file, list);
-			else
-				if(list.size() >= MAX)
-					break;
-				else
-					if(file.getName().substring(file.getName().length()-3).equals("mp3")) {
-						list.add(Mp3Parser.parseMp3File(file));
-					}
 	}
 }

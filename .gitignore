@@ -1,5 +1,4 @@
 /bin/
-/resources/tracks.json
 /lib/
 /target/
 /build/
@@ -12,3 +11,5 @@
 .classpath
 .settings/
 .md
+/resources/tracks.json
+/resources/test.json

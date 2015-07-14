@@ -27,7 +27,7 @@ import javafx.concurrent.Task;
 import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ParseException;
-import com.musicott.model.ObservableTrack;
+import com.musicott.model.Track;
 import com.musicott.task.parser.FlacParser;
 import com.musicott.task.parser.Mp3Parser;
 
@@ -35,18 +35,18 @@ import com.musicott.task.parser.Mp3Parser;
  * @author Octavio Calleya
  *
  */
-public class OpenTask extends Task<List<ObservableTrack>> {
+public class OpenTask extends Task<List<Track>> {
 
-	private List<ObservableTrack> list;
+	private List<Track> list;
 	private List<File> files;
 	
 	public OpenTask(List<File> files) {
 		this.files = files;
-		list = new ArrayList<ObservableTrack>();
+		list = new ArrayList<Track>();
 	}
 	
 	@Override
-	protected List<ObservableTrack> call() {
+	protected List<Track> call() {
 		int i = 0;
 		for(File file:files)
 			if(isCancelled())

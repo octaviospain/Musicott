@@ -20,16 +20,16 @@ package com.musicott.task;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
 
 import com.cedarsoftware.util.io.JsonReader;
 import com.musicott.SceneManager;
-import com.musicott.model.ObservableTrack;
 import com.musicott.model.Track;
+import com.musicott.util.ObservableListWrapperCreator;
 import com.musicott.view.RootLayoutController;
+import com.sun.javafx.collections.ObservableListWrapper;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 
 /**
@@ -38,31 +38,37 @@ import javafx.concurrent.Task;
  */
 public class LoadLibraryTask extends Task<Void>{
 	
-	private ObservableList<ObservableTrack> list;
-	private int numTracks, currentTracks;
-	private String dataPath = "./resources/";
+	private List<Track> list;
 	private File tracksFile;
 	private RootLayoutController rootLayoutController;
 
 	public LoadLibraryTask() {
-		currentTracks = 0;
-		tracksFile = new File(dataPath+"tracks.json");
-		list = FXCollections.observableArrayList();
+		tracksFile = new File("./resources/tracks.json");
 		rootLayoutController = SceneManager.getInstance().getRootController();
 	}
 	
 	@Override
-	protected Void call() throws Exception {
+	protected Void call() throws IOException {
 		if(tracksFile.exists()) {
 			FileInputStream fis = new FileInputStream(tracksFile);
 			JsonReader jsr = new JsonReader(fis);
-			List<Track> trackList = (List<Track>) jsr.readObject();
-			numTracks = trackList.size();
+			JsonReader.assignInstantiator(ObservableListWrapper.class, new ObservableListWrapperCreator());
+			list = (List<Track>) jsr.readObject();
 			jsr.close();
 			fis.close();
-			for(Track t: trackList) {
-				updateProgress(currentTracks++,numTracks);
-				list.add(ObservableTrack.observableTrackFromTrack(t));
+			
+			for(Track t: list) {
+				t.getNameProperty().setValue(t.getName());
+				t.getArtistProperty().setValue(t.getArtist());
+				t.getAlbumProperty().setValue(t.getAlbum());
+				t.getGenreProperty().setValue(t.getGenre());
+				t.getCommentsProperty().setValue(t.getComments());
+				t.getAlbumArtistProperty().setValue(t.getAlbumArtist());
+				t.getLabelProperty().setValue(t.getLabel());
+				t.getTrackNumberProperty().setValue(t.getTrackNumber());
+				t.getYearProperty().setValue(t.getYear());
+				t.getDiscNumberProperty().setValue(t.getDiscNumber());
+				t.getBpmProperty().setValue(t.getBpm());
 			}
 		}		
 		return null;
@@ -71,7 +77,7 @@ public class LoadLibraryTask extends Task<Void>{
 	@Override
 	protected void succeeded() {
 		super.succeeded();
-		rootLayoutController.addTracks(list);
-		SceneManager.getInstance().closeImportScene();
+		if(list != null)
+			rootLayoutController.addTracks(list);
 	}
 }

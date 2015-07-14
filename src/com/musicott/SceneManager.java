@@ -22,19 +22,23 @@ import java.io.IOException;
 
 import com.musicott.error.ErrorHandler;
 import com.musicott.task.LoadLibraryTask;
+import com.musicott.task.SaveLibraryTask;
 import com.musicott.view.EditController;
 import com.musicott.view.ErrorDialogController;
 import com.musicott.view.ImportCollectionController;
 import com.musicott.view.ProgressImportController;
 import com.musicott.view.RootLayoutController;
-import com.musicott.model.ObservableTrack;
+import com.musicott.model.Track;
 
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -71,6 +75,12 @@ public class SceneManager {
 		initPrimaryStage();
 	}
 
+	public void saveLibrary() {
+		SaveLibraryTask task = new SaveLibraryTask();
+		Thread t = new Thread(task, "SaveLibraryThread");
+		t.setDaemon(true);
+		t.run();
+	}
 	
 	public RootLayoutController getRootController() {
 		return rootController;
@@ -84,7 +94,7 @@ public class SceneManager {
 		return progressImportController;
 	}
 	
-	public void openEditScene(ObservableList<ObservableTrack> selection) {
+	public void openEditScene(ObservableList<Track> selection) {
 		try {
 			editStage = new Stage();
 			editStage.setTitle("Edit");
@@ -177,13 +187,21 @@ public class SceneManager {
 			rootController.setStage(rootStage);
 
 			LoadLibraryTask task = new LoadLibraryTask();
-			showImportProgressScene(task, true);
+			Thread t = new Thread(task,"LoadLibraryThread");
+			t.setDaemon(true);
+			t.start();
 			
 			mainScene = new Scene(rootLayout);
 			rootStage.setMinWidth(1200);
 			rootStage.setMinHeight(775);
 			rootStage.setScene(mainScene);
 			rootStage.show();
+			
+			// Set the thumb image of the track slider
+			StackPane thumb = (StackPane)rootLayout.lookup("#trackSlider").lookup(".thumb");
+			thumb.getChildren().clear();
+			thumb.getChildren().add(new ImageView(new Image("file:resources/icons/sliderthumb-icon.png")));
+			thumb.setPrefSize(5,5);
 		} catch (IOException e) {
 			//TODO Show error dialog and crashes
 			e.printStackTrace();

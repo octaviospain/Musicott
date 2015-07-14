@@ -16,49 +16,22 @@
  *
  */
 
-package com.musicott.model;
+package com.musicott.util;
 
-import java.util.List;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+import com.cedarsoftware.util.io.JsonReader.ClassFactory;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class MusicLibrary {
+public class ObservableListWrapperCreator implements ClassFactory {
 
-	private static MusicLibrary instance;
-	private List<Track> tracks;
-	
-	private MusicLibrary() {
-	}
-	
-	public static MusicLibrary getInstance() {
-		if(instance == null)
-			instance = new MusicLibrary();
-		return instance;
-	}
-	
-	public void setTracks(List<Track> tracks) {
-		this.tracks = tracks;
-	}
-	
-	public List<Track> getTracks() {
-		return this.tracks;
-	}
-	
-	public int hashCode() {
-		int hash = 71;
-		hash = 73*tracks.hashCode();
-		return hash;
-	}
-	
-	public boolean equals(Object o) {
-		boolean res;
-		if(o instanceof MusicLibrary &&
-		   ((MusicLibrary)o).getTracks().equals(tracks))
-			res = true;
-		else
-			res = false;
-		return res;
+	@Override
+	public Object newInstance(Class c) {
+		ObservableList ol = FXCollections.observableArrayList();
+		return ol;
 	}
 }

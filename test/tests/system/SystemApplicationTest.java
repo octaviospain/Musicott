@@ -53,7 +53,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.UnsupportedTagException;
 import com.musicott.MainApp;
-import com.musicott.model.ObservableTrack;
+import com.musicott.model.Track;
 import com.musicott.task.parser.Mp3Parser;
 
 /**
@@ -64,7 +64,7 @@ public class SystemApplicationTest extends ApplicationTest {
 
 	private Application frame;
 	private Stage stage;
-	private String mp3FilePath = "/Users/octavio/Music/iTunes/iTunes Media/Music/Abstraxion/Break Of Lights/01 White Rain (feat. Chloe).mp3";
+	private String mp3FilePath = "/Users/octavio/Music/iTunes/iTunes Media/Music/Metastaz/Encounters/08 The Chinese Man.mp3";
 	
 	@Override
 	public void start(Stage stage) throws Exception {
@@ -75,7 +75,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	
 	@After
 	public void closeUp() {
-		TableView<ObservableTrack> tv = find("#trackTable");
+		TableView<Track> tv = find("#trackTable");
 		tv.getItems().clear();
 	}
 
@@ -85,7 +85,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		clickOn("#menuItemOpen");
 		press(KeyCode.DIGIT0);		// Because the Filechooser is not moveable with testFX, I set the correct folder
 		press(KeyCode.ENTER);		// previously selecting it in a normal execution, and the filechooser opens there
-		TableView<ObservableTrack> tv = find("#trackTable");
+		TableView<Track> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 		clickOn("#trackTable");
@@ -140,17 +140,17 @@ public class SystemApplicationTest extends ApplicationTest {
 		clickOn("#isCompilationCheckBox");
 		assertTrue(((CheckBox) find("#isCompilationCheckBox")).isSelected());
 		clickOn("#okEditButton");
-		assertEquals(tv.getItems().get(0).getName().get(), "Throwback (Borderline Remix)");
-		assertEquals(tv.getItems().get(0).getArtist().get(), "Psidream & Pacific");
-		assertEquals(tv.getItems().get(0).getAlbum().get(), "Transformation");
-		assertEquals(tv.getItems().get(0).getAlbumArtist().get(), "Album Artist");
-		assertEquals(tv.getItems().get(0).getGenre().get(), "Drum & Bass");
-		assertEquals(tv.getItems().get(0).getLabel().get(), "Critical Recordings");
-		assertEquals(tv.getItems().get(0).getBPM().get(), Integer.parseInt("175"));
-		assertEquals(tv.getItems().get(0).getYear().get(), Integer.parseInt("2005"));
-		assertEquals(tv.getItems().get(0).getComments().get(), "Very nice drop");
-		assertEquals(tv.getItems().get(0).getTrackNumber().get(), Integer.parseInt("3"));
-		assertEquals(tv.getItems().get(0).getDiscNumber().get(), Integer.parseInt("1"));
+		assertEquals(tv.getItems().get(0).getName(), "Throwback (Borderline Remix)");
+		assertEquals(tv.getItems().get(0).getArtist(), "Psidream & Pacific");
+		assertEquals(tv.getItems().get(0).getAlbum(), "Transformation");
+		assertEquals(tv.getItems().get(0).getAlbumArtist(), "Album Artist");
+		assertEquals(tv.getItems().get(0).getGenre(), "Drum & Bass");
+		assertEquals(tv.getItems().get(0).getLabel(), "Critical Recordings");
+		assertEquals(tv.getItems().get(0).getBpm(), Integer.parseInt("175"));
+		assertEquals(tv.getItems().get(0).getYear(), Integer.parseInt("2005"));
+		assertEquals(tv.getItems().get(0).getComments(), "Very nice drop");
+		assertEquals(tv.getItems().get(0).getTrackNumber(), Integer.parseInt("3"));
+		assertEquals(tv.getItems().get(0).getDiscNumber(), Integer.parseInt("1"));
 	}
 	
 	@Test
@@ -164,7 +164,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		verifyThat("#pBar", isVisible());
 		ProgressBar pBar = find("#pBar");
 		while(pBar.progressProperty().get()<1.0);
-		TableView<ObservableTrack> tv = find("#trackTable");
+		TableView<Track> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 		clickOn("#trackTable");
@@ -213,6 +213,10 @@ public class SystemApplicationTest extends ApplicationTest {
 		verifyThat("#discNum", isVisible());
 		clickOn("#discNum").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("1");
 		assertEquals(((TextField) find("#discNum")).getText(), "1");
+		verifyThat("#year", isEnabled());
+		verifyThat("#year", isVisible());
+		clickOn("#year").push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN)).write("2005");
+		assertEquals(((TextField) find("#year")).getText(), "2005");
 		verifyThat("#isCompilationCheckBox", isEnabled());
 		verifyThat("#isCompilationCheckBox", isVisible());
 		clickOn("#isCompilationCheckBox");
@@ -220,24 +224,24 @@ public class SystemApplicationTest extends ApplicationTest {
 		clickOn("#okEditButton");
 		
 		for(int i=0; i<tv.getItems().size() ;i++) {
-			assertEquals(tv.getItems().get(i).getName().get(), "Throwback (Borderline Remix)");
-			assertEquals(tv.getItems().get(i).getArtist().get(), "Psidream & Pacific");
-			assertEquals(tv.getItems().get(i).getAlbum().get(), "Transformation");
-			assertEquals(tv.getItems().get(i).getAlbumArtist().get(), "Album Artist");
-			assertEquals(tv.getItems().get(i).getGenre().get(), "Drum & Bass");
-			assertEquals(tv.getItems().get(i).getLabel().get(), "Critical Recordings");
-			assertEquals(tv.getItems().get(i).getBPM().get(), Integer.parseInt("175"));
-			assertEquals(tv.getItems().get(i).getYear().get(), Integer.parseInt("2005"));
-			assertEquals(tv.getItems().get(i).getComments().get(), "Very nice drop");
-			assertEquals(tv.getItems().get(i).getTrackNumber().get(), Integer.parseInt("3"));
-			assertEquals(tv.getItems().get(i).getDiscNumber().get(), Integer.parseInt("1"));
-			assertTrue(tv.getItems().get(i).getIsCompilation().get());
+			assertEquals(tv.getItems().get(i).getName(), "Throwback (Borderline Remix)");
+			assertEquals(tv.getItems().get(i).getArtist(), "Psidream & Pacific");
+			assertEquals(tv.getItems().get(i).getAlbum(), "Transformation");
+			assertEquals(tv.getItems().get(i).getAlbumArtist(), "Album Artist");
+			assertEquals(tv.getItems().get(i).getGenre(), "Drum & Bass");
+			assertEquals(tv.getItems().get(i).getLabel(), "Critical Recordings");
+			assertEquals(tv.getItems().get(i).getBpm(), Integer.parseInt("175"));
+			assertEquals(tv.getItems().get(i).getYear(), Integer.parseInt("2005"));
+			assertEquals(tv.getItems().get(i).getComments(), "Very nice drop");
+			assertEquals(tv.getItems().get(i).getTrackNumber(), Integer.parseInt("3"));
+			assertEquals(tv.getItems().get(i).getDiscNumber(), Integer.parseInt("1"));
+			assertTrue(tv.getItems().get(i).getIsCompilation());
 		}
 	}
 	
 	@Test
 	public void showCorrectFieldsEditViewSeveraTracks_FildsInCommonTest() throws UnsupportedTagException, InvalidDataException, IOException, InterruptedException {
-		List<ObservableTrack> list = new ArrayList<ObservableTrack>();
+		List<Track> list = new ArrayList<Track>();
 		for(File f:new File(mp3FilePath).getParentFile().listFiles())
 			if(f.getName().substring(f.getName().length()-3).equals("mp3"))
 				list.add(Mp3Parser.parseMp3File(f));
@@ -250,9 +254,9 @@ public class SystemApplicationTest extends ApplicationTest {
 		verifyThat("#pBar", isVisible());
 		ProgressBar pBar = find("#pBar");
 		while(pBar.progressProperty().get()<1.0);
-		TableView<ObservableTrack> tv = find("#trackTable");
+		TableView<Track> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
-		verifyThat(numberOfRowsIn("#trackTable"), equalTo(list.size()));
+		verifyThat(numberOfRowsIn("#trackTable"), equalTo(list.size())); // change the list size with the true number of tracks imported
 		clickOn("#trackTable");
 		push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN));
 		clickOn("#menuEdit");
@@ -262,110 +266,128 @@ public class SystemApplicationTest extends ApplicationTest {
 		press(KeyCode.SPACE); 			// Alert dialog closes
 		release(KeyCode.SPACE);
 		List<String> listOfSameFields = new ArrayList<String>();
-		for(ObservableTrack t: list)
-			listOfSameFields.add(t.getName().get());
+		for(Track t: list)
+			listOfSameFields.add(t.getName());
 		assertEquals(((TextField) find("#name")).getText(), matchCommonString(listOfSameFields));
 		assertEquals(((Label) find("#titleName")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(ObservableTrack t: list)
-			listOfSameFields.add(t.getArtist().get());
+		for(Track t: list)
+			listOfSameFields.add(t.getArtist());
 		assertEquals(((TextField) find("#artist")).getText(), matchCommonString(listOfSameFields));
 		assertEquals(((Label) find("#titleArtist")).getText(), matchCommonString(listOfSameFields));		
 		listOfSameFields = new ArrayList<String>();
-		for(ObservableTrack t: list)
-			listOfSameFields.add(t.getAlbum().get());
+		for(Track t: list)
+			listOfSameFields.add(t.getAlbum());
 		assertEquals(((TextField) find("#album")).getText(), matchCommonString(listOfSameFields));
 		assertEquals(((Label) find("#titleAlbum")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(ObservableTrack t: list)
-			listOfSameFields.add(t.getAlbumArtist().get());
+		for(Track t: list)
+			listOfSameFields.add(t.getAlbumArtist());
 		assertEquals(((TextField) find("#albumArtist")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(ObservableTrack t: list)
-			listOfSameFields.add(t.getGenre().get());
+		for(Track t: list)
+			listOfSameFields.add(t.getGenre());
 		assertEquals(((TextField) find("#genre")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(ObservableTrack t: list)
-			listOfSameFields.add(t.getLabel().get());
+		for(Track t: list)
+			listOfSameFields.add(t.getLabel());
 		assertEquals(((TextField) find("#label")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(ObservableTrack t: list)
-			listOfSameFields.add(t.getYear().get()+"");
+		for(Track t: list)
+			if(t.getYear() == 0 || t.getYear() == -1)
+				listOfSameFields.add("");
+			else
+				listOfSameFields.add(t.getYear()+"");
 		assertEquals(((TextField) find("#year")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(ObservableTrack t: list)
-			listOfSameFields.add(t.getBPM().get()+"");
+		for(Track t: list)
+			if(t.getBpm() == 0 || t.getBpm() == -1)
+				listOfSameFields.add("");
+			else
+				listOfSameFields.add(t.getBpm()+"");
 		assertEquals(((TextField) find("#bpm")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(ObservableTrack t: list)
-			listOfSameFields.add(t.getTrackNumber().get()+"");
+		for(Track t: list)
+			if(t.getTrackNumber() == 0 || t.getTrackNumber() == -1)
+				listOfSameFields.add("");
+			else
+				listOfSameFields.add(t.getTrackNumber()+"");
 		assertEquals(((TextField) find("#trackNum")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(ObservableTrack t: list)
-			listOfSameFields.add(t.getDiscNumber().get()+"");
+		for(Track t: list)
+			if(t.getDiscNumber() == 0 || t.getDiscNumber() == -1)
+				listOfSameFields.add("");
+			else
+				listOfSameFields.add(t.getDiscNumber()+"");
 		assertEquals(((TextField) find("#discNum")).getText(), matchCommonString(listOfSameFields));
 		listOfSameFields = new ArrayList<String>();
-		for(ObservableTrack t: list)
-			listOfSameFields.add(t.getComments().get());
+		for(Track t: list)
+				listOfSameFields.add(t.getComments());
 		assertEquals(((TextArea) find("#comments")).getText(), matchCommonString(listOfSameFields));
-		assertTrue(((CheckBox) find("#isCompilationCheckBox")).isIndeterminate());
+		List<Boolean> listOfSameBools = new ArrayList<Boolean>();
+		for(Track t: list)
+			listOfSameBools.add(t.getIsCompilation());
+		if(!matchCommonBool(listOfSameBools, list.get(0).getIsCompilation()))
+			assertTrue(((CheckBox) find("#isCompilationCheckBox")).isIndeterminate());
+		else
+			assertTrue(!((CheckBox) find("#isCompilationCheckBox")).isIndeterminate());
 		clickOn("#cancelEditButton");
 	}
 	
 	@Test
 	public void showCorrectFieldsEditViewOneTrackTest() throws UnsupportedTagException, InvalidDataException, IOException {
-		ObservableTrack t = Mp3Parser.parseMp3File(new File(mp3FilePath));
+		Track t = Mp3Parser.parseMp3File(new File(mp3FilePath));
 		clickOn("#menuFile");
 		clickOn("#menuItemOpen");
 		press(KeyCode.DIGIT0);		// Because the Filechooser is not moveable with testFX, I set the correct folder
 		press(KeyCode.ENTER);		// previously selecting it in a normal execution, and the filechooser opens there
-		TableView<ObservableTrack> tv = find("#trackTable");
+		TableView<Track> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 		clickOn("#trackTable");
 		push(new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN));
 		clickOn("#menuEdit");
 		clickOn("#menuItemEdit");
-		assertEquals(((TextField) find("#name")).getText(), t.getName().get());
+		assertEquals(((TextField) find("#name")).getText(), t.getName());
 		verifyThat("#name", isEnabled());
 		verifyThat("#name", isVisible());
-		assertEquals(((TextField) find("#artist")).getText(), t.getArtist().get());
+		assertEquals(((TextField) find("#artist")).getText(), t.getArtist());
 		verifyThat("#artist", isEnabled());
 		verifyThat("#artist", isVisible());
-		assertEquals(((TextField) find("#album")).getText(), t.getAlbum().get());
+		assertEquals(((TextField) find("#album")).getText(), t.getAlbum());
 		verifyThat("#album", isEnabled());
 		verifyThat("#album", isVisible());
-		assertEquals(((TextField) find("#albumArtist")).getText(), t.getAlbumArtist().get());
+		assertEquals(((TextField) find("#albumArtist")).getText(), t.getAlbumArtist());
 		verifyThat("#albumArtist", isEnabled());
 		verifyThat("#albumArtist", isVisible());
-		assertEquals(((TextField) find("#genre")).getText(), t.getGenre().get());
+		assertEquals(((TextField) find("#genre")).getText(), t.getGenre());
 		verifyThat("#genre", isEnabled());
 		verifyThat("#genre", isVisible());
-		assertEquals(((TextField) find("#label")).getText(), t.getLabel().get());
+		assertEquals(((TextField) find("#label")).getText(), t.getLabel());
 		verifyThat("#label", isEnabled());
 		verifyThat("#label", isVisible());
-		assertEquals(((TextField) find("#bpm")).getText(), String.valueOf(t.getBPM().get()));
+		assertEquals(((TextField) find("#bpm")).getText(), String.valueOf(t.getBpm()));
 		verifyThat("#bpm", isEnabled());
 		verifyThat("#bpm", isVisible());
-		assertEquals(((TextArea) find("#comments")).getText(), t.getComments().get());
+		assertEquals(((TextArea) find("#comments")).getText(), t.getComments());
 		verifyThat("#comments", isEnabled());
 		verifyThat("#comments", isVisible());
-		assertEquals(((TextField) find("#trackNum")).getText(), String.valueOf(t.getTrackNumber().get()));
+		assertEquals(((TextField) find("#trackNum")).getText(), String.valueOf(t.getTrackNumber()));
 		verifyThat("#trackNum", isEnabled());
 		verifyThat("#trackNum", isVisible());
-		assertEquals(((TextField) find("#discNum")).getText(), String.valueOf(t.getDiscNumber().get()));
+		assertEquals(((TextField) find("#discNum")).getText(), String.valueOf(t.getDiscNumber()));
 		verifyThat("#discNum", isEnabled());
 		verifyThat("#discNum", isVisible());
-		assertEquals(((CheckBox) find("#isCompilationCheckBox")).isSelected(), t.getIsCompilation().get());
+		assertEquals(((CheckBox) find("#isCompilationCheckBox")).isSelected(), t.getIsCompilation());
 		verifyThat("#isCompilationCheckBox", isEnabled());
 		verifyThat("#isCompilationCheckBox", isVisible());
-		assertEquals(((Label) find("#titleName")).getText(), t.getName().get());
+		assertEquals(((Label) find("#titleName")).getText(), t.getName());
 		verifyThat("#titleName", isEnabled());
 		verifyThat("#titleName", isVisible());
-		assertEquals(((Label) find("#titleArtist")).getText(), t.getArtist().get());
+		assertEquals(((Label) find("#titleArtist")).getText(), t.getArtist());
 		verifyThat("#titleArtist", isEnabled());
 		verifyThat("#titleArtist", isVisible());
-		assertEquals(((Label) find("#titleAlbum")).getText(), t.getAlbum().get());
+		assertEquals(((Label) find("#titleAlbum")).getText(), t.getAlbum());
 		verifyThat("#titleAlbum", isEnabled());
 		verifyThat("#titleAlbum", isVisible());
 		verifyThat("#okEditButton", isVisible());
@@ -400,7 +422,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		verifyThat("#pBar", isVisible());
 		ProgressBar pBar = find("#pBar");
 		while(pBar.progressProperty().get()<1.0);
-		TableView<ObservableTrack> tv = find("#trackTable");
+		TableView<Track> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 		WaitForAsyncUtils.waitForFxEvents();
@@ -423,8 +445,8 @@ public class SystemApplicationTest extends ApplicationTest {
 		press(KeyCode.ENTER);		// previously selecting it in a normal execution, and the filechooser opens there
 	//	verifyThat("#pBar", isVisible());
 	//	ProgressBar pBar = find("#pBar");
-	//	while(pBar.progressProperty().get()<1.0);
-		TableView<ObservableTrack> tv = find("#trackTable");
+	//	while(pBar.progress()<1.0);
+		TableView<Track> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 	}
@@ -455,7 +477,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		verifyThat("#pBar", isVisible());
 		ProgressBar pBar = find("#pBar");
 		while(pBar.progressProperty().get()<1.0);
-		TableView<ObservableTrack> tv = find("#trackTable");
+		TableView<Track> tv = find("#trackTable");
 		while(tv.getItems() == null || tv.getItems().size() == 0);
 		verifyThat(numberOfRowsIn("#trackTable"), greaterThan(0));
 	}
@@ -471,6 +493,17 @@ public class SystemApplicationTest extends ApplicationTest {
 		verifyThat("#pBar", isVisible());
 		clickOn("#cancelTaskButton");
 		verifyThat(numberOfRowsIn("#trackTable"), equalTo(0));
+	}
+	
+	private boolean matchCommonBool(List<Boolean> list, boolean initial) {
+		boolean isCommon = true;
+		Boolean b = initial;
+		for(Boolean bl: list)
+			if(!b.equals(bl)) {
+				isCommon = false;
+				break;
+			}
+		return isCommon;
 	}
 	
 	private String matchCommonString (List<String> list) {

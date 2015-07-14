@@ -28,7 +28,7 @@ import javafx.concurrent.Task;
 import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ParseException;
-import com.musicott.model.ObservableTrack;
+import com.musicott.model.Track;
 import com.musicott.task.parser.FlacParser;
 import com.musicott.task.parser.Mp3Parser;
 
@@ -36,15 +36,15 @@ import com.musicott.task.parser.Mp3Parser;
  * @author Octavio Calleya
  *
  */
-public class ImportTask extends Task<List<ObservableTrack>>{
+public class ImportTask extends Task<List<Track>>{
 
-	private List<ObservableTrack> list;
+	private List<Track> list;
 	boolean m4a, wav, flac;
 	private int numFiles, currentFiles;
 	private File folder;
 	
 	public ImportTask(File folder, boolean importM4a, boolean importWav, boolean importFlac) {
-		list = new ArrayList<ObservableTrack>();
+		list = new ArrayList<Track>();
 		this.folder = folder;
 		numFiles = 0;
 		currentFiles = 0;
@@ -54,7 +54,7 @@ public class ImportTask extends Task<List<ObservableTrack>>{
 	}
 	
 	@Override
-	protected List<ObservableTrack> call() throws Exception {
+	protected List<Track> call() throws Exception {
 		countFiles(folder);
 		scanFolder(folder);
 		if(!isCancelled()) {

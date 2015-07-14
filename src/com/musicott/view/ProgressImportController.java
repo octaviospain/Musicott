@@ -56,7 +56,7 @@ public class ProgressImportController {
 	}
 	
 	public void runTask() {
-		Thread t = new Thread(task);
+		Thread t = new Thread(task, "ImportCollectionThread");
 		t.setDaemon(true);
 		t.start();
 	}
