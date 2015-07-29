@@ -93,8 +93,10 @@ public class Mp3Player implements TrackPlayer {
 		// if currentTrack is removed, stop the player and reset the play button
 		if(currentTrack != null)
 			for(Track t: tracks)
-				if(currentTrack.equals(t))
+				if(currentTrack.equals(t)) {
 					stop();
+					break;
+				}
 	}
 
 	@Override

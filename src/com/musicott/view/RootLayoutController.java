@@ -604,7 +604,7 @@ public class RootLayoutController {
 		Alert alert = new Alert(AlertType.INFORMATION);
 		alert.setTitle("About Musicott");
 		alert.setHeaderText("Musicott");
-		alert.setContentText("Version 0.3.0\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
+		alert.setContentText("Version 0.3.1\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
 		ImageView iv = new ImageView();
 		iv.setImage(new Image("file:resources/images/musicotticon.png"));
 		alert.setGraphic(iv);

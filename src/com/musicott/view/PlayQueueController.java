@@ -18,6 +18,7 @@
 
 package com.musicott.view;
 
+import java.util.Iterator;
 import java.util.List;
 
 import com.musicott.model.Track;
@@ -128,8 +129,23 @@ public class PlayQueueController {
 	}
 	
 	public void removeTracks(List<? extends Track> tracks) {
-		playQueueList.remove(tracks);
-		historyQueueList.remove(tracks);
+		Iterator<GridPane> listIter;
+		for(Track t: tracks) {
+			listIter = playQueueList.iterator();
+			while(listIter.hasNext()) {
+				GridPane gp = listIter.next();
+				Label l = (Label) gp.lookup(".label");
+				if(l.getText().equals(t.getName()))
+					listIter.remove();
+			}
+			listIter = historyQueueList.iterator();
+			while(listIter.hasNext()){
+				GridPane gp = listIter.next();
+				Label l = (Label) gp.lookup(".label");
+				if(l.getText().equals(t.getName()))
+					listIter.remove();
+			}
+		}
 	}
 	
 	public void moveTrackToHistory() {
