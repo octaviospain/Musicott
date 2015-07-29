@@ -26,6 +26,7 @@ import com.musicott.task.SaveLibraryTask;
 import com.musicott.view.EditController;
 import com.musicott.view.ErrorDialogController;
 import com.musicott.view.ImportCollectionController;
+import com.musicott.view.PlayQueueController;
 import com.musicott.view.ProgressImportController;
 import com.musicott.view.RootLayoutController;
 import com.musicott.model.Track;
@@ -34,6 +35,8 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.TableView;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
@@ -53,11 +56,15 @@ public class SceneManager {
 	private Stage progressStage;
 	private Stage editStage;
 	private Scene mainScene;
+	
+	private BorderPane rootLayout;
+	private AnchorPane playQueueLayout;
 
 	private EditController editController;
 	private RootLayoutController rootController;
 	private ImportCollectionController importController;
 	private ProgressImportController progressImportController;
+	private PlayQueueController playQueueController;
 	
 	private static SceneManager instance;
 	
@@ -92,6 +99,17 @@ public class SceneManager {
 	
 	public ProgressImportController getProgressImportController() {
 		return progressImportController;
+	}
+	
+	public PlayQueueController getPlayQueueController() {
+		return playQueueController;
+	}
+	
+	public void showHidePlayQueue() {
+		if(playQueueLayout.isVisible())
+			playQueueLayout.setVisible(false);
+		else
+			playQueueLayout.setVisible(true);
 	}
 	
 	public void openEditScene(ObservableList<Track> selection) {
@@ -182,7 +200,7 @@ public class SceneManager {
 		try {
 			FXMLLoader rootLoader = new FXMLLoader();
 			rootLoader.setLocation(MainApp.class.getResource("view/RootLayout.fxml"));
-			BorderPane rootLayout = (BorderPane) rootLoader.load();
+			rootLayout = (BorderPane) rootLoader.load();
 			rootController = rootLoader.getController();
 			rootController.setStage(rootStage);
 
@@ -191,11 +209,38 @@ public class SceneManager {
 			t.setDaemon(true);
 			t.start();
 			
-			mainScene = new Scene(rootLayout);
+			FXMLLoader pqLoader = new FXMLLoader();
+			pqLoader.setLocation(MainApp.class.getResource("view/PlayQueueView.fxml"));
+			playQueueLayout = (AnchorPane) pqLoader.load();
+			playQueueController = pqLoader.getController();
+			
+			mainScene = new Scene(rootLayout,1200,775);
 			rootStage.setMinWidth(1200);
 			rootStage.setMinHeight(775);
 			rootStage.setScene(mainScene);
 			rootStage.show();
+
+			// Set the dropdown play queue pane
+			ToggleButton playQueueButton = (ToggleButton)rootLayout.lookup("#playQueueButton");
+			playQueueLayout.setLayoutX(playQueueButton.getLayoutX()-150+(playQueueButton.getWidth()/2));
+			playQueueLayout.setLayoutY(playQueueButton.getLayoutY()+50);
+			playQueueLayout.setVisible(false);
+			rootLayout.getChildren().add(playQueueLayout);
+			
+			// The play queue pane moves if the window is resized
+			rootStage.widthProperty().addListener((observable, oldValue, newValue) -> {
+				playQueueLayout.setLayoutX(playQueueButton.getLayoutX()-150+(playQueueButton.getWidth()/2));
+				playQueueLayout.setLayoutY(playQueueButton.getLayoutY()+50);
+			});
+			rootStage.heightProperty().addListener((observable, oldValue, newValue) -> {
+				playQueueLayout.setLayoutX(playQueueButton.getLayoutX()-150+(playQueueButton.getWidth()/2));
+				playQueueLayout.setLayoutY(playQueueButton.getLayoutY()+50);
+			});
+			
+			// Closes the play queue pane when click on the view
+			rootLayout.setOnMouseClicked(event -> {if(playQueueLayout.isVisible()) playQueueLayout.setVisible(false);});
+			TableView<Track> trackTable = (TableView<Track>) rootLayout.lookup("#trackTable");
+			trackTable.setOnMouseClicked(event -> {if(playQueueLayout.isVisible()) playQueueLayout.setVisible(false);});
 			
 			// Set the thumb image of the track slider
 			StackPane thumb = (StackPane)rootLayout.lookup("#trackSlider").lookup(".thumb");

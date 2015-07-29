@@ -18,6 +18,7 @@
 
 package com.musicott.view;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +41,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
 /**
@@ -85,7 +87,7 @@ public class EditController {
 	@FXML
 	private Button okEditButton;
 	
-	private Map<TrackField,TextInputControl> fieldMap;
+	private Map<TrackField,TextInputControl> editFieldsMap;
 	private Stage editStage;
 	private ObservableList<Track> trackSelection;
 	
@@ -94,18 +96,18 @@ public class EditController {
 	
 	@FXML
 	private void initialize() {
-		fieldMap = new HashMap<TrackField,TextInputControl>();
-		fieldMap.put(TrackField.NAME, name);
-		fieldMap.put(TrackField.ARTIST, artist);
-		fieldMap.put(TrackField.ALBUM, album);
-		fieldMap.put(TrackField.GENRE, genre);
-		fieldMap.put(TrackField.COMMENTS, comments);
-		fieldMap.put(TrackField.ALBUM_ARTIST, albumArtist);
-		fieldMap.put(TrackField.LABEL, label);
-		fieldMap.put(TrackField.TRACK_NUMBER, trackNum);
-		fieldMap.put(TrackField.DISC_NUMBER, discNum);
-		fieldMap.put(TrackField.YEAR, year);
-		fieldMap.put(TrackField.BPM, bpm);
+		editFieldsMap = new HashMap<TrackField,TextInputControl>();
+		editFieldsMap.put(TrackField.NAME, name);
+		editFieldsMap.put(TrackField.ARTIST, artist);
+		editFieldsMap.put(TrackField.ALBUM, album);
+		editFieldsMap.put(TrackField.GENRE, genre);
+		editFieldsMap.put(TrackField.COMMENTS, comments);
+		editFieldsMap.put(TrackField.ALBUM_ARTIST, albumArtist);
+		editFieldsMap.put(TrackField.LABEL, label);
+		editFieldsMap.put(TrackField.TRACK_NUMBER, trackNum);
+		editFieldsMap.put(TrackField.DISC_NUMBER, discNum);
+		editFieldsMap.put(TrackField.YEAR, year);
+		editFieldsMap.put(TrackField.BPM, bpm);
 	}
 	
 	public void setStage(Stage stage) {
@@ -121,20 +123,29 @@ public class EditController {
 	private void doOK() {
 		if(trackSelection.size() == 1) {
 			Track t = trackSelection.get(0);
-			Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();
+			Map<TrackField, Property<?>> trackPropertiesMap = t.getPropertiesMap();
+			boolean changed = false;
 			
-			for(TrackField field: fieldMap.keySet()) {
+			for(TrackField field: editFieldsMap.keySet()) {
 				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
 					try {
-						IntegerProperty ip = (IntegerProperty) propertyMap.get(field);
-						ip.setValue(Integer.parseInt(fieldMap.get(field).textProperty().getValue()));
+						IntegerProperty ip = (IntegerProperty) trackPropertiesMap.get(field);
+						if(ip.get() != Integer.parseInt(editFieldsMap.get(field).textProperty().getValue())) {
+							ip.setValue(Integer.parseInt(editFieldsMap.get(field).textProperty().getValue()));
+							changed = true;
+						}
 					} catch(NumberFormatException e) {}
 				}
 				else {
-					StringProperty sp = (StringProperty) propertyMap.get(field);
-					sp.setValue(fieldMap.get(field).textProperty().getValue());
+					StringProperty sp = (StringProperty) trackPropertiesMap.get(field);
+					if(!sp.get().equals(editFieldsMap.get(field).textProperty().getValue())) {
+						sp.setValue(editFieldsMap.get(field).textProperty().getValue());
+						changed = true;
+					}
 				}
 			}
+			if(changed)
+				t.setDateModified(LocalDate.now());
 			
 			//TODO set image
 			//Changes in the elements of the list doesn't fire the ListChangeListener so save explicitly
@@ -144,24 +155,33 @@ public class EditController {
 			for(int i=0; i<trackSelection.size() ;i++) {
 				Track t = trackSelection.get(i);
 				Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();
+				boolean changed = false;
 				
-				for(TrackField field: fieldMap.keySet()) {
+				for(TrackField field: editFieldsMap.keySet()) {
 					if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
 						try {
 							IntegerProperty ip = (IntegerProperty) propertyMap.get(field);
-							if(!fieldMap.get(field).textProperty().getValue().equals("-") || !fieldMap.get(field).textProperty().getValue().equals(""))
-								ip.setValue(Integer.parseInt(fieldMap.get(field).textProperty().getValue()));
+							if(!editFieldsMap.get(field).textProperty().getValue().equals("-") || !editFieldsMap.get(field).textProperty().getValue().equals("")
+									&& ip.get() != Integer.parseInt(editFieldsMap.get(field).textProperty().getValue())) {
+								ip.setValue(Integer.parseInt(editFieldsMap.get(field).textProperty().getValue()));
+								changed = true;
+							}
 						} catch(NumberFormatException e) {}
 					}
 					else {
 						StringProperty sp = (StringProperty) propertyMap.get(field);
-						if(!fieldMap.get(field).textProperty().getValue().equals("-"))
-							sp.setValue(fieldMap.get(field).textProperty().getValue());
+						if(!editFieldsMap.get(field).textProperty().getValue().equals("-") && !sp.get().equals(editFieldsMap.get(field).textProperty().getValue())) {
+							sp.setValue(editFieldsMap.get(field).textProperty().getValue());
+							changed = true;
+						}
 					}
 				}
-				
-				if(!isCompilationCheckBox.isIndeterminate())
+				if(!isCompilationCheckBox.isIndeterminate()) {
 					t.setCompilation(isCompilationCheckBox.isSelected());
+					changed = true;
+				}
+				if(changed)
+					t.setDateModified(LocalDate.now());					
 				
 				//TODO set image
 				//Changes in the elements of the list doesn't fire the ListChangeListener so save explicitly
@@ -181,19 +201,19 @@ public class EditController {
 			Track track = trackSelection.get(0);
 			Map<TrackField, Property<?>> propertyMap = track.getPropertiesMap();
 			
-			for(TrackField field: fieldMap.keySet()) {
+			for(TrackField field: editFieldsMap.keySet()) {
 				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
 					try {
 						IntegerProperty ip = (IntegerProperty) propertyMap.get(field);
 						if(ip.get() == 0 || ip.get() == -1)
-							fieldMap.get(field).textProperty().setValue("");
+							editFieldsMap.get(field).textProperty().setValue("");
 						else
-							fieldMap.get(field).textProperty().setValue(ip.get()+"");
+							editFieldsMap.get(field).textProperty().setValue(ip.get()+"");
 					} catch(NumberFormatException e) {}
 				}
 				else {
 					StringProperty sp = (StringProperty) propertyMap.get(field);
-					fieldMap.get(field).textProperty().setValue(sp.get());
+					editFieldsMap.get(field).textProperty().setValue(sp.get());
 				}
 			}
 			
@@ -201,14 +221,11 @@ public class EditController {
 			titleArtist.textProperty().setValue(track.getArtist());
 			titleAlbum.textProperty().setValue(track.getAlbum());
 			
-			if(track.getHasCover())
-				coverImage.setImage(new Image("file:"+track.getFileFolder()+"/"+track.getCoverFileName()));
-			else
-				coverImage.setImage(new Image("file:resources/images/default-cover-icon.png"));
+			coverImage.setImage(new Image("file:"+track.getCoverFileName()));
 		}
 		else {
 			List<String> listOfSameFields = new ArrayList<String>();
-			for(TrackField field: fieldMap.keySet()) {
+			for(TrackField field: editFieldsMap.keySet()) {
 				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
 					for(Track t: trackSelection) {
 						Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();
@@ -218,7 +235,7 @@ public class EditController {
 						else
 							listOfSameFields.add(""+ip.get());
 					}
-					fieldMap.get(field).textProperty().setValue(matchCommonString(listOfSameFields));
+					editFieldsMap.get(field).textProperty().setValue(matchCommonString(listOfSameFields));
 				}
 				else {
 					for(Track t: trackSelection) {
@@ -226,7 +243,7 @@ public class EditController {
 						StringProperty ip= (StringProperty) propertyMap.get(field);
 						listOfSameFields.add(ip.get());
 					}
-					fieldMap.get(field).textProperty().setValue(matchCommonString(listOfSameFields));
+					editFieldsMap.get(field).textProperty().setValue(matchCommonString(listOfSameFields));
 				}
 				listOfSameFields.clear();
 			}
@@ -240,7 +257,7 @@ public class EditController {
 			}
 			
 			if(!matchCommonString(listOfSameFields).equals("-"))
-				coverImage.setImage(new Image("file:"+trackSelection.get(0).getFileFolder()+"/"+trackSelection.get(0).getCoverFileName()));
+				coverImage.setImage(new Image("file:"+trackSelection.get(0).getCoverFileName()));
 			else
 				coverImage.setImage(new Image("file:resources/images/default-cover-icon.png"));
 			

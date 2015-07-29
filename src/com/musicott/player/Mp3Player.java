@@ -19,11 +19,13 @@
 package com.musicott.player;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import com.musicott.SceneManager;
 import com.musicott.model.Track;
+import com.musicott.view.PlayQueueController;
 
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
@@ -33,124 +35,202 @@ import javafx.scene.media.MediaPlayer.Status;
  * @author Octavio Calleya
  *
  */
-public class Mp3Player {
+public class Mp3Player implements TrackPlayer {
 
 	private static int DEFAULT_RANDOMQUEUE_SIZE = 8;
 	
 	private Track currentTrack;
 	private MediaPlayer mediaPlayer;
-	private PlayQueue<Track> playQueue;
-	private PlayQueue<Track> historyQueue;
+	private PlayQueueController playQueueController;
+	private List<Track> playList;
+	private List<Track> historyList;
+	private List<Track> libraryTracks;
 	private boolean random;
+	private SceneManager sc;
 
-	public Mp3Player() {
-		playQueue = new PlayQueue<Track>();
-		historyQueue = new PlayQueue<Track>();
+	public Mp3Player(List<Track> libraryTracks) {
+		sc = SceneManager.getInstance();
+		playList = new ArrayList<Track>();
+		historyList = new ArrayList<Track>();
 		random = false;
+		this.libraryTracks = libraryTracks;
 	}
-	
-	public void addToList(List<Track> selection) {
+
+	@Override
+	public void addTracks(List<Track> tracks) {
+		if(playQueueController == null)
+			this.playQueueController = sc.getPlayQueueController();
 		if(random) {
-			playQueue.clear();
-			playQueue.addAll(selection);
+			playQueueController.add(tracks);
+			playList.clear();
+			playList.addAll(tracks);
 			random = false;
 		}
-		else
-			playQueue.addAll(selection);
+		else {
+			playQueueController.add(tracks);
+			playList.addAll(tracks);
+		}
+	}
+
+	@Override
+	public void play(List<Track> tracks) {
+		addTracks(tracks);
+		play();
 	}
 	
-	public void play(List<Track> selection) {
-			playQueue.clear();
-			playQueue.addAll(selection);
-			if(random)
-				random = false;
-			if(mediaPlayer != null && (mediaPlayer.getStatus() == Status.PLAYING || mediaPlayer.getStatus() == Status.PAUSED))
-				mediaPlayer.stop();
-			play();
+	public void play(Track track) {
+		List<Track> l = new ArrayList<Track>();
+		l.add(track);
+		play(l);
 	}
-	
-	public void removeFromList(List<? extends Track> selection) {
-		playQueue.removeAll(selection);
-		historyQueue.removeAll(selection);
+
+	@Override
+	public void removeTracks(List<? extends Track> tracks) {
+		if(playQueueController != null)
+			playQueueController.removeTracks(tracks);
+		playList.removeAll(tracks);
+		historyList.removeAll(tracks);
 		// if currentTrack is removed, stop the player and reset the play button
 		if(currentTrack != null)
-			for(Track t: selection)
-				if(currentTrack.equals(t)) {
-					mediaPlayer.stop();
-					SceneManager.getInstance().getRootController().setStopped();
-				}
+			for(Track t: tracks)
+				if(currentTrack.equals(t))
+					stop();
 	}
-	
-	public void play() {
-		if(mediaPlayer == null)	// first invocation
-			if(playQueue.size() > 0) {	// the play queue is saved/loaded if Musicott is closed/opened
-				historyQueue.add(playQueue.peek());
-				setCurrent(playQueue.poll());
-				mediaPlayer.play();
-			}
-			else
-				randomQueue();
-		
-		if(mediaPlayer != null)	// if is still null means empty library
+
+	@Override
+	public void play() {	
+		if(playQueueController == null)
+			this.playQueueController = sc.getPlayQueueController();
+		if(mediaPlayer == null) { // first invocation
+			if(playList.isEmpty())
+				randomList();
+			historyList.add(0, playList.get(0));
+			setCurrent(playList.get(0));
+			playList.remove(0);
+			playQueueController.moveTrackToHistory();
+			mediaPlayer.play();
+		}
+		else {
 			if(mediaPlayer.getStatus() == Status.PAUSED)
 				mediaPlayer.play();
 			else if(mediaPlayer.getStatus() == Status.STOPPED) {
-				if(playQueue.size() > 0) {
-					historyQueue.add(playQueue.peek());
-					setCurrent(playQueue.poll());
+				if(playList.isEmpty())
+					randomList();
+				historyList.add(0, playList.get(0));
+				setCurrent(playList.get(0));
+				playList.remove(0);
+				playQueueController.moveTrackToHistory();
+				mediaPlayer.play();
+			}
+			else if(mediaPlayer.getStatus() == Status.PLAYING) {
+				if(playList.isEmpty())
+					stop();
+				else {
+					historyList.add(0, playList.get(0));
+					setCurrent(playList.get(0));
+					playList.remove(0);
+					playQueueController.moveTrackToHistory();
 					mediaPlayer.play();
 				}
-				else
-					randomQueue();
 			}
+		}
+		sc.getRootController().setPlaying();
 	}
 	
+	@Override
 	public void pause() {
 		if(mediaPlayer.getStatus() == Status.PLAYING)
 			mediaPlayer.pause();
 	}
 	
+	@Override
 	public void next() {
-		if(random && playQueue.size() == 0)			
-			randomQueue();
-		else
-			if(!playQueue.isEmpty()){			
-				historyQueue.add(playQueue.peek());
-				setCurrent(playQueue.poll());
-				mediaPlayer.play();
-			}
-			else {
-				mediaPlayer.dispose();
-				play();
-			}
+		if(playList.isEmpty())
+			stop();
+		else {
+			stop();
+			play();
+		}
 	}
 	
+	@Override
 	public void previous() {
-		if(!historyQueue.isEmpty()) {
-			setCurrent(historyQueue.poll());
+		if(!historyList.isEmpty()) {
+			setCurrent(historyList.get(0));
+			historyList.remove(0);
+			playQueueController.removeTopHistoryQueue();
 			mediaPlayer.play();
 		}
-		else {
-			mediaPlayer.stop();
-		}
+		else
+			stop();
 	}
 	
-	private void randomQueue() {
+	@Override
+	public void stop() {
+		mediaPlayer.stop();
+		currentTrack = null;
+		sc.getRootController().setStopped();
+	}
+	
+	public Track getCurrentTrack() {
+		return currentTrack;
+	}
+	
+	public MediaPlayer getMediaPlayer() {
+		return mediaPlayer;
+	}
+	
+	public void removeTrackFromPlayList(int index) {
+		if(index == -1)
+			playList.clear();
+		else
+			playList.remove(index);
+	}
+	
+	public void removeTrackFromHistory(int index) {
+		if(index == -1)
+			historyList.clear();
+		else
+			historyList.remove(index);
+	}
+	
+	public void playHistoryIndex(int index) {
+		sc.getRootController().setPlaying();
+		setCurrent(historyList.get(index));
+		historyList.remove(index);
+		mediaPlayer.play();
+	}
+	
+	public void playQueueIndex(int index) {
+		sc.getRootController().setPlaying();
+		setCurrent(playList.get(index));
+		historyList.add(0, playList.get(index));
+		playList.remove(index);
+		mediaPlayer.play();
+	}
+	
+	public void increaseVolume(double d) {
+		mediaPlayer.setVolume(mediaPlayer.getVolume()+d);
+	}
+	
+	public void decreaseVolume(double d) {
+		mediaPlayer.setVolume(mediaPlayer.getVolume()-d);
+	}
+
+	private void randomList() {
 		random = true;
-		List<Track> libraryTrackList = SceneManager.getInstance().getRootController().getTracks();
-		if(libraryTrackList.size() > 0) {
+		if(!libraryTracks.isEmpty()) {
 			Random randomGenerator = new Random();
 			do {
-				int rnd = randomGenerator.nextInt(libraryTrackList.size());
-				Track t = libraryTrackList.get(rnd);
+				int rnd = randomGenerator.nextInt(libraryTracks.size());
+				Track t = libraryTracks.get(rnd);
 				if(t.getFileName().substring(t.getFileName().length()-3).equals("mp3"))
-					playQueue.add(t);
-			} while (playQueue.size() < DEFAULT_RANDOMQUEUE_SIZE);
-			setCurrent(playQueue.peek());
-			mediaPlayer.play();
+					playList.add(t);
+			} while (playList.size() < DEFAULT_RANDOMQUEUE_SIZE);
+			playQueueController.add(playList);
 		}
 	}
-	
+
 	private void setCurrent(Track track) {
 		currentTrack = track;
 		File mp3File = new File(currentTrack.getFileFolder()+"/"+currentTrack.getFileName());
@@ -160,6 +240,6 @@ public class Mp3Player {
 			mediaPlayer.dispose();
 		mediaPlayer = new MediaPlayer(media);
 		mediaPlayer.setOnEndOfMedia(() -> next());
-		SceneManager.getInstance().getRootController().preparePlayerInfo(mediaPlayer, currentTrack);
+		sc.getRootController().preparePlayerInfo(mediaPlayer, currentTrack);
 	}
 }

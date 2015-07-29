@@ -21,6 +21,8 @@ package com.musicott.task.parser;
 import java.io.File;
 import java.io.IOException;
 
+import javafx.util.Duration;
+
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.exceptions.CannotReadException;
@@ -49,54 +51,55 @@ public class FlacParser {
 		track.setInDisk(true);
 		track.setSize((int) (fileToParse.length()));
 		track.setBitRate(Integer.parseInt(audioFile.getAudioHeader().getBitRate()));
-		track.setTotalTime(audioFile.getAudioHeader().getTrackLength());
+		track.setTotalTime(Duration.seconds(audioFile.getAudioHeader().getTrackLength()));
 		//TODO check Image Cover
 		for(FieldKey t: FieldKey.values()) {
 			switch (t){
 			case TITLE:
-				track.getNameProperty().set(tag.getFirst(t));
+				track.setName(tag.getFirst(t));
 				break;
 			case ARTIST:
-				track.getArtistProperty().set(tag.getFirst(t));
+				track.setArtist(tag.getFirst(t));
 				break;
 			case ALBUM:
-				track.getAlbumProperty().set(tag.getFirst(t));
+				track.setAlbum(tag.getFirst(t));
 				break;
 			case ALBUM_ARTIST:
-				track.getAlbumArtistProperty().set(tag.getFirst(t));
+				track.setAlbumArtist(tag.getFirst(t));
 				break;
 			case BPM:
 				try {
-					track.getBpmProperty().set(Integer.parseInt(tag.getFirst(t)));
+					track.setBpm(Integer.parseInt(tag.getFirst(t)));
 				} catch (NumberFormatException e) {}
 				break;
 			case COMMENT:
-				track.getCommentsProperty().set(tag.getFirst(t));
+				track.setComments(tag.getFirst(t));
 				break;
 			case GENRE:
-				track.getGenreProperty().set(tag.getFirst(t));
+				track.setGenre(tag.getFirst(t));
 				break;
 			case GROUPING:
-				track.getLabelProperty().set(tag.getFirst(t));
+				track.setLabel(tag.getFirst(t));
 				break;
 			case IS_COMPILATION:
 				track.setCompilation(tag.getFirst(t).equals("true") ? Boolean.valueOf(tag.getFirst(t)) : false);
 				break;
 			case TRACK:
 				try {
-					track.getTrackNumberProperty().set(Integer.parseInt(tag.getFirst(t)));
+					track.setTrackNumber(Integer.parseInt(tag.getFirst(t)));
 				} catch (NumberFormatException e) {}
 				break;
 			case DISC_NO:
 				try {
-					track.getDiscNumberProperty().set(Integer.parseInt(tag.getFirst(t)));
+					track.setDiscNumber(Integer.parseInt(tag.getFirst(t)));
 				} catch (NumberFormatException e) {}
 				break;
 			case YEAR:
 				try {
-					track.getYearProperty().set(Integer.parseInt(tag.getFirst(t)));
+					track.setYear(Integer.parseInt(tag.getFirst(t)));
 				} catch (NumberFormatException e) {}
 				break;
+			default:
 			}
 		}
 		return track;

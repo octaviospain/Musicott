@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
 <?import javafx.scene.input.*?>
 <?import java.net.*?>
 <?import javafx.geometry.*?>
@@ -16,18 +18,61 @@
               <menus>
                 <Menu fx:id="menuFile" mnemonicParsing="false" text="File">
                   <items>
-                    <MenuItem fx:id="menuItemOpen" mnemonicParsing="false" onAction="#doOpen" text="Open File(s)..." />
-                    <MenuItem fx:id="menuItemImport" mnemonicParsing="false" onAction="#doImportCollection" text="Import collection" />
+                    <MenuItem fx:id="menuItemOpen" mnemonicParsing="false" onAction="#doOpen" text="Open File(s)...">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="O" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator></MenuItem>
+                    <MenuItem fx:id="menuItemImport" mnemonicParsing="false" onAction="#doImportCollection" text="Import collection">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="O" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                           </accelerator></MenuItem>
                     <SeparatorMenuItem mnemonicParsing="false" />
                     <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Close" />
                   </items>
                 </Menu>
                 <Menu fx:id="menuEdit" mnemonicParsing="false" text="Edit">
                   <items>
-                    <MenuItem fx:id="menuItemEdit" mnemonicParsing="false" onAction="#doEdit" text="Edit" />
-                        <MenuItem fx:id="menuItemDelete" mnemonicParsing="false" onAction="#doDelete" text="Delete" />
+                    <MenuItem fx:id="menuItemEdit" mnemonicParsing="false" onAction="#doEdit" text="Edit">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="I" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator></MenuItem>
+                        <MenuItem fx:id="menuItemDelete" mnemonicParsing="false" onAction="#doDelete" text="Delete">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="BACK_SPACE" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator></MenuItem>
                   </items>
                 </Menu>
+                  <Menu mnemonicParsing="false" text="Controls">
+                    <items>
+                      <MenuItem mnemonicParsing="false" onAction="#doNext" text="Next">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="RIGHT" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator>
+                        </MenuItem>
+                        <MenuItem mnemonicParsing="false" onAction="#doPrevious" text="Previous">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="LEFT" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator>
+                        </MenuItem>
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem mnemonicParsing="false" onAction="#doIncreaseVolume" text="Increase Volume">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="UP" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator>
+                        </MenuItem>
+                        <MenuItem mnemonicParsing="false" onAction="#doDecreaseVolume" text="Decrease Volume">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="DOWN" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator>
+                        </MenuItem>
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem mnemonicParsing="false" onAction="#doSelectCurrentTrack" text="Select Current Track">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="L" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator>
+                        </MenuItem>
+                    </items>
+                  </Menu>
                 <Menu fx:id="menuAbout" mnemonicParsing="false" text="About">
                   <items>
                     <MenuItem fx:id="menuItemAbout" mnemonicParsing="false" onAction="#doAbout" text="About" />
@@ -75,26 +120,73 @@
                         </Button>
                      </children>
                   </HBox>
-                  <StackPane fx:id="trackBarStack" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="NEVER">
+                  <HBox GridPane.columnIndex="2">
                      <children>
-                        <ProgressBar fx:id="trackProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="7.0" prefWidth="565.0" progress="0.0" StackPane.alignment="CENTER">
-                           <StackPane.margin>
-                              <Insets />
-                           </StackPane.margin>
-                        </ProgressBar>
-                        <Slider fx:id="trackSlider" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="7.0" prefWidth="570.0" StackPane.alignment="CENTER">
-                           <StackPane.margin>
-                              <Insets />
-                           </StackPane.margin>
-                        </Slider>
-                     </children></StackPane>
-                  <ToggleButton fx:id="playQueueButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="15.0" prefWidth="15.0" GridPane.columnIndex="3" GridPane.halignment="CENTER" GridPane.hgrow="NEVER" />
+                        <ImageView fx:id="currentCover" fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true" />
+                        <VBox GridPane.columnIndex="2">
+                           <children>
+                              <BorderPane prefHeight="200.0" prefWidth="150.0" VBox.vgrow="NEVER">
+                                 <left>
+                                    <Label fx:id="currentTimeLabel" textFill="#000000be" BorderPane.alignment="CENTER">
+                                       <BorderPane.margin>
+                                          <Insets left="10.0" />
+                                       </BorderPane.margin>
+                                       <font>
+                                          <Font size="11.0" />
+                                       </font>
+                                    </Label>
+                                 </left>
+                                 <right>
+                                    <Label fx:id="remainingTimeLabel" textFill="#000000be" BorderPane.alignment="CENTER">
+                                       <BorderPane.margin>
+                                          <Insets right="10.0" />
+                                       </BorderPane.margin>
+                                       <font>
+                                          <Font size="11.0" />
+                                       </font>
+                                    </Label>
+                                 </right>
+                                 <center>
+                                    <Label fx:id="artistAlbumLabel" textFill="#000000be" BorderPane.alignment="CENTER">
+                                       <font>
+                                          <Font size="11.0" />
+                                       </font>
+                                    </Label>
+                                 </center>
+                                 <top>
+                                    <Label fx:id="titleLabel" BorderPane.alignment="CENTER">
+                                       <BorderPane.margin>
+                                          <Insets top="5.0" />
+                                       </BorderPane.margin>
+                                    </Label>
+                                 </top>
+                              </BorderPane>
+                              <StackPane fx:id="trackBarStack" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="NEVER">
+                                 <children>
+                                    <ProgressBar fx:id="trackProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="7.0" prefWidth="515.0" progress="0.0" StackPane.alignment="CENTER">
+                                       <StackPane.margin>
+                                          <Insets />
+                                       </StackPane.margin>
+                                    </ProgressBar>
+                                    <Slider fx:id="trackSlider" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="7.0" prefWidth="520.0" StackPane.alignment="CENTER">
+                                       <StackPane.margin>
+                                          <Insets />
+                                       </StackPane.margin>
+                                    </Slider>
+                                 </children>
+                              </StackPane>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <ToggleButton fx:id="playQueueButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#doShowHidePlayQueue" prefHeight="15.0" prefWidth="15.0" GridPane.columnIndex="3" GridPane.halignment="CENTER" GridPane.hgrow="NEVER" />
                   <StackPane GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.hgrow="NEVER">
                      <children>
                         <ProgressBar fx:id="volumeProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="10.0" prefWidth="105.0" progress="0.0" StackPane.alignment="CENTER" />
                         <Slider fx:id="volumeSlider" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="110.0" StackPane.alignment="CENTER" />
                      </children>
                   </StackPane>
+                  <Accordion GridPane.columnIndex="4" />
                </children>
             </GridPane>
          </children>

@@ -20,7 +20,6 @@ package com.musicott.model;
 
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import javafx.beans.property.IntegerProperty;
@@ -28,6 +27,7 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.util.Duration;
 
 /**
  * @author Octavio Calleya
@@ -48,13 +48,13 @@ public class Track {
 	private String label;
 
 	private int size;
-	private int totalTime;
 	private int bitRate;
 	private int playCount;
 	private int trackNumber;
 	private int discNumber;
 	private int year;
 	private int bpm;
+	private Duration totalTime;
 
 	private boolean hasCover;
 	private boolean isInDisk;
@@ -96,7 +96,7 @@ public class Track {
     	year = 0;
     	bpm = -1;
     	size = -1;
-    	totalTime = -1;
+    	totalTime = Duration.UNKNOWN;
     	bitRate = -1;
     	playCount = 0;
     	hasCover = false;
@@ -269,11 +269,11 @@ public class Track {
 		this.size = size;
 	}
 
-	public int getTotalTime() {
+	public Duration getTotalTime() {
 		return totalTime;
 	}
 
-	public void setTotalTime(int totalTime) {
+	public void setTotalTime(Duration totalTime) {
 		this.totalTime = totalTime;
 	}
 
@@ -408,7 +408,7 @@ public class Track {
 		hash = 73*hash+albumArtist.hashCode();
 		hash = 73*hash+bpm;
 		hash = 73*hash+label.hashCode();
-		hash = 73*hash+totalTime;
+		hash = 73*hash+totalTime.hashCode();
 		return hash;
 	}
 	
@@ -428,7 +428,7 @@ public class Track {
 			o instanceof Track && ((Track) o).getAlbumArtist().equalsIgnoreCase(this.albumArtist) &&
 			o instanceof Track && ((Track) o).getBpm() == this.bpm &&
 			o instanceof Track && ((Track) o).getLabel().equalsIgnoreCase(this.label) &&
-			o instanceof Track && ((Track) o).getTotalTime() == this.totalTime)
+			o instanceof Track && ((Track) o).getTotalTime().equals(totalTime))
 				equals = true;
 		return equals;
 	}

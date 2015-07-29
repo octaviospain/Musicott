@@ -41,6 +41,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
@@ -48,14 +49,18 @@ import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaPlayer.Status;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
@@ -66,6 +71,8 @@ import javafx.util.Duration;
  *
  */
 public class RootLayoutController {
+	
+	private static final double AMOUNT_VOLUME = 0.05;
 	
 	@FXML
 	private Menu menuFile;
@@ -91,6 +98,16 @@ public class RootLayoutController {
 	private Button nextButton;
 	@FXML
 	private ToggleButton playQueueButton;
+	@FXML
+	private ImageView currentCover;
+	@FXML
+	private Label titleLabel;
+	@FXML
+	private Label artistAlbumLabel;
+	@FXML
+	private Label currentTimeLabel;
+	@FXML
+	private Label remainingTimeLabel;
 	@FXML
 	private Slider trackSlider;
 	@FXML
@@ -122,7 +139,7 @@ public class RootLayoutController {
 	@FXML
 	private TableColumn<Track,Number> sizeCol;
 	@FXML
-	private TableColumn<Track,Number> totalTimeCol;
+	private TableColumn<Track,Duration> totalTimeCol;
 	@FXML
 	private TableColumn<Track,Number> trackNumberCol;
 	@FXML
@@ -145,6 +162,7 @@ public class RootLayoutController {
 	
 	private Stage rootStage;
 	private SceneManager sc;
+	
 	private MusicLibrary ml;
 	private Mp3Player player;
 	
@@ -165,7 +183,7 @@ public class RootLayoutController {
 		dateModifiedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<LocalDate>(cellData.getValue().getDateModified()));
 		dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<LocalDate>(cellData.getValue().getDateAdded()));
 		sizeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getSize()));
-		totalTimeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getTotalTime()));
+		totalTimeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<Duration>(cellData.getValue().getTotalTime()));
 		yearCol.setCellValueFactory(cellData -> cellData.getValue().getYearProperty());
 		bitRateCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getBitRate()));
 		playCountCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getPlayCount()));
@@ -289,22 +307,17 @@ public class RootLayoutController {
 		});
 		totalTimeCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		totalTimeCol.setCellFactory(column -> {
-			return new TableCell<Track, Number>() {
+			return new TableCell<Track, Duration>() {
 				@Override
-				protected void updateItem(Number item, boolean empty) {
+				protected void updateItem(Duration item, boolean empty) {
 					super.updateItem(item, empty);
 					if(item == null)
 						setText("");
 					else {
-						int seconds = (int) item;
-						if(seconds<1)
-							setText("-");
-						else
-							if(seconds<60) {
-								setText("0:"+(seconds<10 ? "0"+seconds : seconds));
-							}
-							else
-								setText(seconds/60+":"+(seconds%60<10 ? "0"+seconds%60 : seconds%60));
+						int hours = (int)item.toHours();
+						int mins = (int)item.subtract(Duration.hours(hours)).toMinutes();
+						int secs = (int)item.subtract(Duration.minutes(mins)).subtract(Duration.hours(hours)).toSeconds();
+						setText((hours>0 ? hours+":" : "")+(mins<10 ? "0"+mins : mins)+":"+(secs<10 ? "0"+secs : secs));
 					}
 				}
 			};
@@ -325,15 +338,25 @@ public class RootLayoutController {
 		volumeSlider.setMax(1.0);
 		volumeSlider.setValue(1.0);
 		volumeProgressBar.setProgress(1.0);
+		volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {if(!isChanging) volumeProgressBar.setProgress(volumeSlider.getValue());});
+		volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
 		
 		tracks = trackTable.getItems();
 		ml.setTracks(tracks);
+		if(tracks.size() == 0) {
+			playButton.setDisable(true);
+			trackSlider.setDisable(true);
+			emptyTable = true;
+		}
+
+		prevButton.setDisable(true);
+		nextButton.setDisable(true);
 		
-		player = new Mp3Player();		
+		player = new Mp3Player(tracks);	
 		tracks.addListener(((ListChangeListener.Change<? extends Track> c) -> {
 			while(c.next()) {
 				if(c.wasRemoved()) {
-					player.removeFromList(c.getRemoved());
+					player.removeTracks(c.getRemoved());
 					sc.saveLibrary();
 				}
 				else
@@ -342,51 +365,58 @@ public class RootLayoutController {
 		}));
 		
 		// Set up the ContextMenu
+		MenuItem cmPlay = new MenuItem("Play");
+		cmPlay.setOnAction(event -> {if(!selection.isEmpty()) {player.play(selection); setPlaying();}});
 		MenuItem cmEdit = new MenuItem("Edit");
-		cmEdit.setOnAction((event) -> doEdit());
+		cmEdit.setOnAction(event -> doEdit());
 		MenuItem cmDelete = new MenuItem("Delete");
-		cmDelete.setOnAction((event) -> doDelete());
+		cmDelete.setOnAction(event -> doDelete());
 		MenuItem cmAddToQueue = new MenuItem("Add to Play Queue");
-		cmAddToQueue.setOnAction((event) -> {if(selection.size() != 0) player.addToList(selection);});
+		cmAddToQueue.setOnAction(event -> {if(!selection.isEmpty())	player.addTracks(selection);});
 		ContextMenu cm = new ContextMenu();
+		cm.getItems().add(cmPlay);
 		cm.getItems().add(cmAddToQueue);
 		cm.getItems().add(cmEdit);
 		cm.getItems().add(cmDelete);
-		trackTable.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {if(event.getButton() == MouseButton.SECONDARY) cm.show(trackTable,event.getScreenX(),event.getScreenY());});
-	
 		// Double click on row = play that track
-		trackTable.setOnMouseClicked(event -> {
-			if(event.getClickCount() == 2 && selection.size() == 1) {
-				if(emptyTable) {
-					prevButton.setDisable(false);
-					nextButton.setDisable(false);
-					playButton.setDisable(false);
-					trackSlider.setDisable(false);
-					emptyTable = false;
+		trackTable.setRowFactory(tv -> {
+			TableRow<Track> row = new TableRow<>();
+			row.setOnMouseClicked(event -> {
+				if(event.getClickCount() == 2 && !row.isEmpty()) {
+					player.play(row.getItem());
+					setPlaying();
 				}
-				if(!playButton.isSelected())
-					playButton.setSelected(true);
-				if(trackSlider.isDisabled())
-					trackSlider.setDisable(false);
+			});
+			return row;
+		});
+		trackTable.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {if(event.getButton() == MouseButton.SECONDARY) cm.show(trackTable,event.getScreenX(),event.getScreenY());});
+		trackTable.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+			if(event.getCode() == KeyCode.ENTER) {
 				player.play(selection);
-			}
+				setPlaying();
+		}});
+		trackTable.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+			if(event.getCode() == KeyCode.SPACE)
+				if(player.getMediaPlayer().getStatus() == Status.PLAYING) {
+					playButton.setSelected(false);
+					player.pause();
+				}
+				else if(player.getMediaPlayer().getStatus() == Status.PAUSED) {
+					playButton.setSelected(true);
+					player.play();
+				}
 		});
 	}	
 	
 	public void addTracks(List<Track> listTracks) {
-		if(listTracks != null && listTracks.size() != 0) {
-			trackTable.getItems().addAll(listTracks);
+		if(listTracks != null && !listTracks.isEmpty()) {
+			trackTable.getItems().addAll(listTracks);	
+			sc.getPlayQueueController().setPlayer(player);
 			if(emptyTable) {
-				prevButton.setDisable(false);
-				nextButton.setDisable(false);
 				playButton.setDisable(false);
 				emptyTable = false;
 			}
 		}
-	}
-	
-	public List<Track> getTracks() {
-		return tracks;
 	}
 	
 	public void setStage(Stage stage) {
@@ -396,10 +426,29 @@ public class RootLayoutController {
 	public void setStopped() {
 		playButton.setSelected(false);
 		trackSlider.setDisable(true);
+		nextButton.setDisable(true);
+		prevButton.setDisable(true);
+		titleLabel.setText("");
+		artistAlbumLabel.setVisible(false);
+		currentTimeLabel.setVisible(false);
+		remainingTimeLabel.setVisible(false);
+		currentCover.setImage(null);
+		volumeSlider.valueProperty().unbindBidirectional(player.getMediaPlayer().volumeProperty());
+	}
+	
+	public void setPlaying() {
+		playButton.setSelected(true);
+		trackSlider.setDisable(false);
+		nextButton.setDisable(false);
+		prevButton.setDisable(false);
+		artistAlbumLabel.setVisible(true);
+		currentTimeLabel.setVisible(true);
+		remainingTimeLabel.setVisible(true);
 	}
 	
 	public void preparePlayerInfo(MediaPlayer currentPlayer, Track currentTrack) {
 		// Set up the player and the view related to it
+		currentCover.setImage(new Image("file:"+currentTrack.getCoverFileName()));
 		trackSlider.valueProperty().addListener((observable) -> {
 			if(trackSlider.isValueChanging()) {
 				trackProgressBar.setProgress(trackSlider.getValue() / currentPlayer.getStopTime().toSeconds());
@@ -414,8 +463,28 @@ public class RootLayoutController {
 		currentPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> {if (!trackSlider.isValueChanging()) trackSlider.setValue(newTime.toSeconds());});
 		currentPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> trackProgressBar.setProgress(newTime.toSeconds() / currentPlayer.getStopTime().toSeconds()));
 		currentPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
-		volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {if(!isChanging) volumeProgressBar.setProgress(volumeSlider.getValue());});
-		volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
+		
+		titleLabel.setText(currentTrack.getName());
+		artistAlbumLabel.setText(currentTrack.getArtist()+" - "+currentTrack.getAlbum());
+		currentPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> formatTime(newTime,currentPlayer.getMedia().getDuration()));
+	}
+	
+	private void formatTime(Duration elapsed, Duration total) {
+		int currentHours = (int)elapsed.toHours();
+		int currentMins = (int)elapsed.subtract(Duration.hours(currentHours)).toMinutes();
+		int currentSecs = (int)elapsed.subtract(Duration.minutes(currentMins)).subtract(Duration.hours(currentHours)).toSeconds();
+		currentTimeLabel.setText(((int)total.toHours()>0 ? currentHours+":" : "")+(currentMins<10 ? "0"+currentMins : currentMins)+":"+(currentSecs<10 ? "0"+currentSecs : currentSecs));
+		
+		Duration remaining = total.subtract(elapsed);
+		int remainingHours = (int)remaining.toHours();
+		int remainingMins = (int)remaining.subtract(Duration.hours(remainingHours)).toMinutes();
+		int remainingSecs = (int)remaining.subtract(Duration.minutes(remainingMins)).subtract(Duration.hours(remainingHours)).toSeconds();
+		remainingTimeLabel.setText("-"+((int)total.toHours()>0 ? remainingHours+":" : "")+(remainingMins<10 ? "0"+remainingMins : remainingMins)+":"+(remainingSecs<10 ? "0"+remainingSecs : remainingSecs));
+	}
+	
+	@FXML
+	private void doShowHidePlayQueue() {
+		sc.showHidePlayQueue();
 	}
 	
 	@FXML
@@ -424,6 +493,10 @@ public class RootLayoutController {
 			player.play();
 			if(trackSlider.isDisabled())
 				trackSlider.setDisable(false);
+			if(prevButton.isDisabled())
+				prevButton.setDisable(false);
+			if(nextButton.isDisabled())
+				nextButton.setDisable(false);
 		}
 		else
 			player.pause();
@@ -431,12 +504,34 @@ public class RootLayoutController {
 	
 	@FXML
 	private void doNext() {
-		player.next();
+		if(!nextButton.isDisabled())
+			player.next();
 	}
 	
 	@FXML
 	private void doPrevious() {	
-		player.previous();
+		if(!prevButton.isDisabled())
+			player.previous();
+	}
+	
+	@FXML
+	private void doIncreaseVolume() {
+		if(player != null)
+			player.increaseVolume(AMOUNT_VOLUME);
+		volumeSlider.setValue(volumeSlider.getValue()+AMOUNT_VOLUME);
+	}
+	
+	@FXML
+	private void doDecreaseVolume() {
+		if(player != null)
+			player.decreaseVolume(AMOUNT_VOLUME);
+		volumeSlider.setValue(volumeSlider.getValue()-AMOUNT_VOLUME);
+	}
+	
+	@FXML
+	private void doSelectCurrentTrack() {
+		trackTable.getSelectionModel().clearSelection();
+		trackTable.getSelectionModel().select(player.getCurrentTrack());
 	}
 	
 	@FXML
@@ -509,7 +604,7 @@ public class RootLayoutController {
 		Alert alert = new Alert(AlertType.INFORMATION);
 		alert.setTitle("About Musicott");
 		alert.setHeaderText("Musicott");
-		alert.setContentText("Version 0.2.0\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
+		alert.setContentText("Version 0.3.0\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
 		ImageView iv = new ImageView();
 		iv.setImage(new Image("file:resources/images/musicotticon.png"));
 		alert.setGraphic(iv);

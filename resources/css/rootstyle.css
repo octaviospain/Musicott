@@ -21,6 +21,11 @@
 	-fx-background-color: transparent;
 }
 
+.toggle-button#playButton:disabled {
+	-fx-graphic: url('../icons/play-button-disabled-icon.png');
+	-fx-background-color: transparent;
+}
+
 .toggle-button:selected#playButton {	
 	-fx-graphic: url('../icons/pause-button-icon.png');
 	-fx-background-color: transparent;
@@ -31,18 +36,23 @@
 	-fx-background-color: transparent;
 }
 
+#prevButton:disabled {
+	-fx-graphic: url('../icons/prev-button-disabled-icon.png');
+	-fx-background-color: transparent;
+}
+
 #nextButton {
 	-fx-graphic: url('../icons/next-button-icon.png');
 	-fx-background-color: transparent;
 }
 
-.toggle-button#playQueueButton {
-	-fx-graphic: url('../icons/playqueue-button-icon.png');
+#nextButton:disabled {
+	-fx-graphic: url('../icons/next-button-disabled-icon.png');
 	-fx-background-color: transparent;
 }
 
-.toggle-button:selected#playQueueButton {
-	-fx-graphic: url('../icons/playqueue-button-icon-green.png');
+#playQueueButton {
+	-fx-graphic: url('../icons/playqueue-button-icon.png');
 	-fx-background-color: transparent;
 }
 
@@ -57,21 +67,21 @@
 }
 
 #volumeProgressBar .bar {
-	-fx-background-color: rgb(223,223,223);
+	-fx-background-color: black;
 	-fx-background-insets: 1 1 2 1;
 	-fx-background-radius: 2;	
 }
 
 #volumeProgressBar .track {
-	-fx-control-inner-background: black;
+	-fx-control-inner-background: rgb(182,182,182);
 }
 
 #trackProgressBar .bar {
-	-fx-background-color: forestgreen;
+	-fx-background-color: black;
 	-fx-background-insets: 1 1 2 1;
 	-fx-background-radius: 2;
 }
 
 #trackProgressBar .track {
-	-fx-control-inner-background: black;
+	-fx-control-inner-background: rgb(182,182,182);
 }

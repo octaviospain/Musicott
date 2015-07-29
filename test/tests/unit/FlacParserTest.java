@@ -47,36 +47,36 @@ public class FlacParserTest {
 	public void flacTagTest() throws Exception {
 		File flacFile = tagFile("/users/octavio/test/testeable.flac");
 		Track track = FlacParser.parseFlacFile(flacFile);
-		assertEquals(track.getNameProperty().get(),"Skeksis (Original Mix)");
-		assertEquals(track.getArtistProperty().get(),"Adam Beyer");
-		assertEquals(track.getAlbumProperty().get(),"Skeksis");
-		assertEquals(track.getAlbumArtistProperty().get(),"Alan Fitzpatrick");
-		assertEquals(track.getCommentsProperty().get(),"Good hit!");
-		assertEquals(track.getGenreProperty().get(),"Techno");
-		assertEquals(track.getLabelProperty().get(),"Drumcode");
+		assertEquals(track.getName(),"Skeksis (Original Mix)");
+		assertEquals(track.getArtist(),"Adam Beyer");
+		assertEquals(track.getAlbum(),"Skeksis");
+		assertEquals(track.getAlbumArtist(),"Alan Fitzpatrick");
+		assertEquals(track.getComments(),"Good hit!");
+		assertEquals(track.getGenre(),"Techno");
+		assertEquals(track.getLabel(),"Drumcode");
 		assertTrue(!track.getIsCompilation());
-		assertEquals(track.getBpmProperty().get(), 128);
-		assertEquals(track.getTrackNumberProperty().get(), 9);
-		assertEquals(track.getDiscNumberProperty().get(), 1);
-		assertEquals(track.getYearProperty().get(), 2003);
+		assertEquals(track.getBpm(), 128);
+		assertEquals(track.getTrackNumber(), 9);
+		assertEquals(track.getDiscNumber(), 1);
+		assertEquals(track.getYear(), 2003);
 	}
 	
 	@Test
 	public void flacNoTagTest() throws Exception {
 		File flacFile = noTagFile("/users/octavio/test/testeable.flac");
 		Track track = FlacParser.parseFlacFile(flacFile);
-		assertEquals(track.getNameProperty().get(),"");
-		assertEquals(track.getArtistProperty().get(),"");
-		assertEquals(track.getAlbumProperty().get(),"");
-		assertEquals(track.getAlbumArtistProperty().get(),"");
-		assertEquals(track.getCommentsProperty().get(),"");
-		assertEquals(track.getGenreProperty().get(),"");
-		assertEquals(track.getLabelProperty().get(),"");
+		assertEquals(track.getName(),"");
+		assertEquals(track.getArtist(),"");
+		assertEquals(track.getAlbum(),"");
+		assertEquals(track.getAlbumArtist(),"");
+		assertEquals(track.getComments(),"");
+		assertEquals(track.getGenre(),"");
+		assertEquals(track.getLabel(),"");
 		assertTrue(!track.getIsCompilation());
-		assertEquals(track.getBpmProperty().get(), -1);
-		assertEquals(track.getTrackNumberProperty().get(), 0);
-		assertEquals(track.getDiscNumberProperty().get(), 0);
-		assertEquals(track.getYearProperty().get(), 0);
+		assertEquals(track.getBpm(), -1);
+		assertEquals(track.getTrackNumber(), 0);
+		assertEquals(track.getDiscNumber(), 0);
+		assertEquals(track.getYear(), 0);
 	}
 	
 	public File tagFile(String path) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException {

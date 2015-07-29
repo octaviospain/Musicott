@@ -1,0 +1,37 @@
+	/*
+ * This file is part of Musicott software.
+ *
+ * Musicott software is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Musicott library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+#playQueuePane {
+	-fx-background-color: rgb(240,240,240);
+	-fx-border-color: rgb(0,0,0);
+	-fx-border-style: solid;
+	-fx-border-width: 1px;
+ 	-fx-border-insets: 2 0 0 0;
+ 	-fx-border-radius: 5px;
+}
+
+#historyQueueButton{
+	-fx-graphic: url('../icons/historyqueue-button-icon.png');
+	-fx-background-color: transparent;
+}
+
+#deleteTrackQueueButton{
+	-fx-graphic: url('../icons/remove-button-icon.png');
+	-fx-background-insets: 1 1 1 1;
+	-fx-background-color: transparent;
+}

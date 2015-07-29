@@ -28,6 +28,8 @@ import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
 import com.musicott.model.Track;
 
+import javafx.util.Duration;
+
 /**
  * @author Octavio Calleya
  *
@@ -46,14 +48,14 @@ public class Mp3Parser {
 		mp3Track.setInDisk(true);
 		mp3Track.setSize((int) (file.length()));
 		mp3Track.setBitRate(mp3File.getBitrate());
-		mp3Track.setTotalTime((int)mp3File.getLengthInSeconds());
+		mp3Track.setTotalTime(Duration.seconds(mp3File.getLengthInSeconds()));
 		if(mp3File.hasId3v2Tag())
 			readId3v2Tag(mp3Track, mp3File);
 		else
 			if(mp3File.hasId3v1Tag())
 				readId3v1Tag(mp3Track, mp3File);
 			else {
-				mp3Track.getNameProperty().set(file.getName());
+				mp3Track.setName(file.getName());
 			}
 		return mp3Track;
 	}
@@ -61,25 +63,25 @@ public class Mp3Parser {
 	private static void readId3v2Tag(Track track, Mp3File file) {
 		ID3v2 tag = file.getId3v2Tag();
 		if(tag.getTitle() != null)
-			track.getNameProperty().set((tag.getTitle()));
+			track.setName(tag.getTitle());
 		if(tag.getArtist() != null)
-			track.getArtistProperty().set(tag.getArtist());
+			track.setArtist(tag.getArtist());
 		if(tag.getAlbum() != null)
-			track.getAlbumProperty().set(tag.getAlbum());
+			track.setAlbum(tag.getAlbum());
 		if(tag.getAlbumArtist() != null)
-			track.getAlbumArtistProperty().set(tag.getAlbumArtist());
-		track.getBpmProperty().set(tag.getBPM());
+			track.setAlbumArtist(tag.getAlbumArtist());
+		track.setBpm(tag.getBPM());
 		if(tag.getComment() != null)
-			track.getCommentsProperty().set(tag.getComment());
+			track.setComments(tag.getComment());
 		if(tag.getGenreDescription() != null)
-		track.getGenreProperty().set(tag.getGenreDescription());
+		track.setGenre(tag.getGenreDescription());
 		if(tag.getGrouping() != null)
-			track.getLabelProperty().set(tag.getGrouping());
+			track.setLabel(tag.getGrouping());
 		track.setCompilation(tag.isCompilation());
 		try {
-			track.getTrackNumberProperty().set(Integer.valueOf(tag.getTrack()));
-			track.getYearProperty().set(Integer.valueOf(tag.getYear()));
-			track.getDiscNumberProperty().set(Integer.valueOf(tag.getPartOfSet()));
+			track.setTrackNumber(Integer.valueOf(tag.getTrack()));
+			track.setYear(Integer.valueOf(tag.getYear()));
+			track.setDiscNumber(Integer.valueOf(tag.getPartOfSet()));
 		} catch (NumberFormatException e) {
 			
 		}
@@ -89,18 +91,18 @@ public class Mp3Parser {
 	private static void readId3v1Tag(Track track, Mp3File file) {
 		ID3v1 tag = file.getId3v1Tag();
 		if(tag.getTitle() != null)
-			track.getNameProperty().set(tag.getTitle());
+			track.setName(tag.getTitle());
 		if(tag.getArtist() != null)
-			track.getArtistProperty().set(tag.getArtist());
+			track.setArtist(tag.getArtist());
 		if(tag.getAlbum() != null)
-			track.getAlbumProperty().set(tag.getAlbum());
+			track.setAlbum(tag.getAlbum());
 		if(tag.getComment() != null)
-			track.getCommentsProperty().set(tag.getComment());
+			track.setComments(tag.getComment());
 		if(tag.getGenreDescription() != null)
-			track.getGenreProperty().set(tag.getGenreDescription());
+			track.setGenre(tag.getGenreDescription());
 		try {
-			track.getTrackNumberProperty().set(Integer.valueOf(tag.getTrack()));
-			track.getYearProperty().set(Integer.valueOf(tag.getYear()));
+			track.setTrackNumber(Integer.valueOf(tag.getTrack()));
+			track.setYear(Integer.valueOf(tag.getYear()));
 		} catch (NumberFormatException e) {
 			
 		}
@@ -109,20 +111,22 @@ public class Mp3Parser {
 	private static void checkCover(Track track) {
 		if(new File(track.getFileFolder()+"/cover.jpg").exists()) {
 			track.setHasCover(true);
-			track.setCoverFileName("cover.jpg");
+			track.setCoverFileName(track.getFileFolder()+"/cover.jpg");
 		}
 		else
 			if(new File(track.getFileFolder()+"/cover.jpeg").exists()) {
 				track.setHasCover(true);
-				track.setCoverFileName("cover.jpeg");
+				track.setCoverFileName(track.getFileFolder()+"cover.jpeg");
 			}
 			else
 				if(new File(track.getFileFolder()+"/cover.png").exists()) {
 					track.setHasCover(true);
-					track.setCoverFileName("cover.png");
+					track.setCoverFileName(track.getFileFolder()+"cover.png");
 				}
-				else
+				else {
 					track.setHasCover(false);
+					track.setCoverFileName("resources/images/default-cover-icon.png");
+				}
 		
 		//TODO Check for the cover image in the ID3Layer
 	}

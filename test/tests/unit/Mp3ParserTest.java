@@ -21,6 +21,8 @@ package tests.unit;
 import java.io.File;
 import java.io.IOException;
 
+import javafx.util.Duration;
+
 import org.junit.Test;
 import org.junit.After;
 import org.junit.runner.RunWith;
@@ -68,7 +70,7 @@ public class Mp3ParserTest {
 		t.setInDisk(true);
 		t.setSize((int) (file.length()));
 		t.getNameProperty().set(file.getName());
-		t.setTotalTime((int)new Mp3File("/Users/Octavio/Test/testeable.mp3").getLengthInSeconds());
+		t.setTotalTime(Duration.seconds(new Mp3File("/Users/Octavio/Test/testeable.mp3").getLengthInSeconds()));
 
 		PowerMockito.spy(Mp3Parser.class);
 		Track expectedTrack = Mp3Parser.parseMp3File(file);
@@ -96,7 +98,7 @@ public class Mp3ParserTest {
 		track.getGenreProperty().set("Techno");
 		track.getTrackNumberProperty().set(3);
 		track.getYearProperty().set(2011);
-		track.setTotalTime((int)new Mp3File("/Users/Octavio/Test/testeable.mp3").getLengthInSeconds());
+		track.setTotalTime(Duration.seconds((int)new Mp3File("/Users/Octavio/Test/testeable.mp3").getLengthInSeconds()));
 
 		PowerMockito.spy(Mp3Parser.class);
 		Track expectedTrack = Mp3Parser.parseMp3File(file);
@@ -127,7 +129,7 @@ public class Mp3ParserTest {
 		track.getGenreProperty().set("Techno");
 		track.getTrackNumberProperty().set(3);
 		track.getYearProperty().set(2011);
-		track.setTotalTime((int)new Mp3File("/Users/Octavio/Test/testeable.mp3").getLengthInSeconds());
+		track.setTotalTime(Duration.seconds((int)new Mp3File("/Users/Octavio/Test/testeable.mp3").getLengthInSeconds()));
 
 		PowerMockito.spy(Mp3Parser.class);
 		Track expectedTrack = Mp3Parser.parseMp3File(file);
