@@ -18,12 +18,33 @@
 
 package com.musicott.model;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.audio.AudioFileIO;
+import org.jaudiotagger.audio.exceptions.CannotReadException;
+import org.jaudiotagger.audio.exceptions.CannotWriteException;
+import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
+import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
+import org.jaudiotagger.tag.TagException;
+import org.jaudiotagger.tag.flac.FlacTag;
+import org.jaudiotagger.tag.images.Artwork;
+import org.jaudiotagger.tag.images.ArtworkFactory;
+
+import com.mpatric.mp3agic.InvalidDataException;
+import com.mpatric.mp3agic.Mp3File;
+import com.mpatric.mp3agic.NotSupportedException;
+import com.mpatric.mp3agic.UnsupportedTagException;
+
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -38,7 +59,6 @@ public class Track {
 	private int trackID;
 	private String fileFolder;
 	private String fileName;
-	private String coverFileName;
 	private String name;
 	private String artist;
 	private String album;
@@ -76,6 +96,7 @@ public class Track {
 	private IntegerProperty discNumberProperty;
 	private IntegerProperty bpmProperty;
 	
+	private BooleanProperty hasCoverProperty;
 	
 	private Map<TrackField,Property<?>> propertyMap;
 	
@@ -83,7 +104,6 @@ public class Track {
     	trackID = -1;
     	fileFolder = "";
     	fileName = "";
-    	coverFileName = "";
     	name = "";
     	artist = "";
     	album = "";
@@ -127,6 +147,8 @@ public class Track {
     	discNumberProperty.addListener((observable, oldNumber, newNumber) -> setDiscNumber(newNumber.intValue()));
     	bpmProperty = new SimpleIntegerProperty(bpm);
     	bpmProperty.addListener((observable, oldNumber, newNumber) -> setBpm(newNumber.intValue()));
+    	hasCoverProperty = new SimpleBooleanProperty(hasCover);
+    	hasCoverProperty.addListener((observable, oldBoolean, newBoolean) -> setHasCover(newBoolean.booleanValue())); 
     	
     	propertyMap = new HashMap<TrackField,Property<?>>();
     	propertyMap.put(TrackField.NAME, nameProperty);
@@ -343,6 +365,10 @@ public class Track {
 		this.bpm = bpm;
 		bpmProperty.setValue(this.bpm);
 	}
+	
+	public BooleanProperty getHasCoverProperty() {
+		return this.hasCoverProperty;
+	}
 
 	public boolean getHasCover() {
 		return hasCover;
@@ -350,6 +376,7 @@ public class Track {
 
 	public void setHasCover(boolean hasCover) {
 		this.hasCover = hasCover;
+		hasCoverProperty.set(hasCover);
 	}
 
 	public boolean getIsInDisk() {
@@ -384,12 +411,65 @@ public class Track {
 		this.dateAdded = dateAdded;
 	}
 	
-	public String getCoverFileName() {
-		return coverFileName;
+	/**
+	 * Returns the byte array that represents the cover image
+	 * directly stored in the metadata of the file
+	 * 
+	 * @return the byte array of the file
+	 */
+	public byte[] getCoverFile() {
+		byte[] coverFile = null;
+		if(fileName.substring(fileName.length()-3).equals("mp3")) {
+			try {
+				Mp3File mp3File = new Mp3File(this.fileFolder+"/"+this.fileName);
+				coverFile = mp3File.getId3v2Tag().getAlbumImage();
+			} catch (UnsupportedTagException | InvalidDataException | IOException e) {}
+		}
+		else {	// flac file
+			try {
+				AudioFile audioFile = AudioFileIO.read(new File(this.fileFolder+"/"+this.fileName));
+				FlacTag tag = (FlacTag) audioFile.getTag();
+				if(!tag.getArtworkList().isEmpty())
+					coverFile = tag.getArtworkList().get(0).getBinaryData();
+			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException e) {}
+		}
+		return coverFile;
 	}
-
-	public void setCoverFileName(String coverFileName) {
-		this.coverFileName = coverFileName;
+	
+	/**
+	 * Stores directly into the metadata of the file the image represented
+	 * by the array of bytes
+	 * 
+	 * @param coverFile the array of bytes
+	 * @param mimeType the mimetype extension of the file
+	 */
+	public void setCoverFile(byte[] coverFile, String mimeType) {
+		if(fileName.substring(fileName.length()-3).equals("mp3")) {
+			try {
+				Mp3File mp3File = new Mp3File(this.fileFolder+"/"+this.fileName);
+				mp3File.getId3v2Tag().setAlbumImage(coverFile, mimeType);
+				File oldFile = new File(this.fileFolder+"/"+this.fileName);
+				mp3File.save(this.fileFolder+"/"+"TEMP"+this.fileName);
+				File newFile = new File(this.fileFolder+"/"+"TEMP"+this.fileName);
+				oldFile.delete();
+				newFile.renameTo(oldFile);
+			} catch (UnsupportedTagException | InvalidDataException | IOException | NotSupportedException e) {
+				e.printStackTrace();
+			}
+		}
+		else { // flac file
+			try {
+				AudioFile audioFile = AudioFileIO.read(new File(this.fileFolder+"/"+this.fileName));
+				FlacTag tag = (FlacTag) audioFile.getTag();
+				File file = new File("cover."+mimeType);
+				FileUtils.writeByteArrayToFile(file, coverFile);
+				Artwork cover = ArtworkFactory.createArtworkFromFile(file);
+				tag.addField(cover);
+				audioFile.commit();
+			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException | CannotWriteException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	@Override

@@ -18,11 +18,12 @@
 
 package com.musicott.view;
 
+import java.io.ByteArrayInputStream;
 import java.util.Iterator;
 import java.util.List;
 
 import com.musicott.model.Track;
-import com.musicott.player.Mp3Player;
+import com.musicott.player.PlayerFacade;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -55,7 +56,7 @@ public class PlayQueueController {
 	
 	private ObservableList<GridPane> playQueueList;
 	private ObservableList<GridPane> historyQueueList;
-	private Mp3Player player;
+	private PlayerFacade player;
 	
 	private boolean isPlayQueueShowing = true;
 	
@@ -85,7 +86,7 @@ public class PlayQueueController {
 		});
 	}
 	
-	public void setPlayer(Mp3Player player) {
+	public void setPlayer(PlayerFacade player) {
 		this.player = player;
 	}
 	
@@ -93,7 +94,11 @@ public class PlayQueueController {
 		for(Track t: list) {
 			GridPane gp = new GridPane();
 			VBox v = new VBox();
-			ImageView iv = new ImageView(new Image("file:"+t.getCoverFileName(),45,45,true,false));
+			ImageView iv;
+			if(t.getHasCover())
+				iv = new ImageView(new Image(new ByteArrayInputStream(t.getCoverFile()), 45, 45, true, true));
+			else
+				iv = new ImageView(new Image("file:resources/images/default-cover-icon.png", 45, 45, true, true));
 			Label nameLabel = new Label(t.getName());
 			Label artistAlbumLabel = new Label(t.getArtist()+" - "+t.getAlbum());
 			nameLabel.setStyle("-fx-font-size: 13px");
@@ -104,6 +109,8 @@ public class PlayQueueController {
 			b.setMinSize(3, 3);
 			b.setVisible(false);
 			b.setOnAction(event -> {player.removeTrackFromPlayList(playQueueList.indexOf(gp)); playQueueList.remove(gp);});
+			VBox.setMargin(nameLabel, new Insets(0,0,1,0));
+			VBox.setMargin(artistAlbumLabel, new Insets(1,0,0,0));
 			v.getChildren().add(nameLabel);
 			v.getChildren().add(artistAlbumLabel);
 			gp.add(iv, 0, 0);
@@ -113,7 +120,7 @@ public class PlayQueueController {
 			ColumnConstraints cc2 = new ColumnConstraints(200);
 			gp.getColumnConstraints().addAll(cc1,cc2);
 			GridPane.setMargin(b, new Insets(1,1,1,200));
-			GridPane.setMargin(iv, new Insets(1,1,1,1));
+			GridPane.setMargin(iv, new Insets(0,0,0,0));
 			GridPane.setMargin(v, new Insets(1,1,1,5));
 			gp.setOnMouseMoved(event -> b.setVisible(true));
 			gp.setOnMouseExited(event -> b.setVisible(false));

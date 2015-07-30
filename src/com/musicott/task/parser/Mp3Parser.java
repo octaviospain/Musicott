@@ -20,6 +20,8 @@ package com.musicott.task.parser;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import com.mpatric.mp3agic.ID3v1;
 import com.mpatric.mp3agic.ID3v2;
@@ -44,7 +46,7 @@ public class Mp3Parser {
 		Mp3File mp3File = new Mp3File(file);
 		mp3Track.setFileFolder(new File(file.getParent()).getAbsolutePath());
 		mp3Track.setFileName(file.getName());
-		checkCover(mp3Track);
+		checkCover(mp3Track, mp3File);
 		mp3Track.setInDisk(true);
 		mp3Track.setSize((int) (file.length()));
 		mp3Track.setBitRate(mp3File.getBitrate());
@@ -103,31 +105,43 @@ public class Mp3Parser {
 		try {
 			track.setTrackNumber(Integer.valueOf(tag.getTrack()));
 			track.setYear(Integer.valueOf(tag.getYear()));
-		} catch (NumberFormatException e) {
-			
-		}
+		} catch (NumberFormatException e) {}
 	}
-	
-	private static void checkCover(Track track) {
-		if(new File(track.getFileFolder()+"/cover.jpg").exists()) {
-			track.setHasCover(true);
-			track.setCoverFileName(track.getFileFolder()+"/cover.jpg");
-		}
-		else
-			if(new File(track.getFileFolder()+"/cover.jpeg").exists()) {
-				track.setHasCover(true);
-				track.setCoverFileName(track.getFileFolder()+"cover.jpeg");
-			}
-			else
-				if(new File(track.getFileFolder()+"/cover.png").exists()) {
-					track.setHasCover(true);
-					track.setCoverFileName(track.getFileFolder()+"cover.png");
-				}
-				else {
-					track.setHasCover(false);
-					track.setCoverFileName("resources/images/default-cover-icon.png");
-				}
 		
-		//TODO Check for the cover image in the ID3Layer
+	private static void checkCover(Track track, Mp3File file) {
+		if(file.hasId3v2Tag()) {
+			byte[] img = file.getId3v2Tag().getAlbumImage();
+			if(img != null)
+				track.setHasCover(true);
+		}
+		else {
+			File f = new File(track.getFileFolder()+"/cover.jpg");
+			if(f.exists()) {
+				try {
+					track.setCoverFile(Files.readAllBytes(Paths.get(f.getPath())),"jpg");
+					track.setHasCover(true);
+				} catch (IOException e) {}
+			}
+			else {
+				f = new File(track.getFileFolder()+"/cover.jpeg");
+				if(f.exists()) {
+					try {
+						track.setCoverFile(Files.readAllBytes(Paths.get(f.getPath())),"jpeg");
+						track.setHasCover(true);
+					} catch (IOException e) {}
+				}				
+				else {
+					f = new File(track.getFileFolder()+"/cover.png");
+					if(f.exists()) {
+						try {
+							track.setCoverFile(Files.readAllBytes(Paths.get(f.getPath())),"png");
+							track.setHasCover(true);
+						} catch (IOException e) {}
+					}
+					else
+						track.setHasCover(false);
+				}
+			}
+		}
 	}
 }

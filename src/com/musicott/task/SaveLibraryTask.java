@@ -54,7 +54,6 @@ public class SaveLibraryTask extends Task<Void> {
 		fieldNames.add("trackID");
 		fieldNames.add("fileFolder");
 		fieldNames.add("fileName");
-		fieldNames.add("coverFileName");
 		fieldNames.add("name");
 		fieldNames.add("artist");
 		fieldNames.add("album");

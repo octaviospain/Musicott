@@ -50,7 +50,7 @@ import javafx.stage.Stage;
  *
  */
 public class SceneManager {
-
+	
 	private Stage rootStage;
 	private Stage importStage;
 	private Stage progressStage;

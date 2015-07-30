@@ -20,6 +20,8 @@ package com.musicott.task.parser;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import javafx.util.Duration;
 
@@ -52,7 +54,7 @@ public class FlacParser {
 		track.setSize((int) (fileToParse.length()));
 		track.setBitRate(Integer.parseInt(audioFile.getAudioHeader().getBitRate()));
 		track.setTotalTime(Duration.seconds(audioFile.getAudioHeader().getTrackLength()));
-		//TODO check Image Cover
+		checkCover(track, tag);
 		for(FieldKey t: FieldKey.values()) {
 			switch (t){
 			case TITLE:
@@ -103,5 +105,39 @@ public class FlacParser {
 			}
 		}
 		return track;
+	}
+	
+	private static void checkCover(Track track, FlacTag tag) {
+		if(!tag.getArtworkList().isEmpty())
+			track.setHasCover(true);
+		else {
+			File f = new File(track.getFileFolder()+"/cover.jpg");
+			if(f.exists()) {
+				try {
+					track.setCoverFile(Files.readAllBytes(Paths.get(f.getPath())),"jpg");
+					track.setHasCover(true);
+				} catch (IOException e) {}
+			}
+			else {
+				f = new File(track.getFileFolder()+"/cover.jpeg");
+				if(f.exists()) {
+					try {
+						track.setCoverFile(Files.readAllBytes(Paths.get(f.getPath())),"jpeg");
+						track.setHasCover(true);
+					} catch (IOException e) {}
+				}				
+				else {
+					f = new File(track.getFileFolder()+"/cover.png");
+					if(f.exists()) {
+						try {
+							track.setCoverFile(Files.readAllBytes(Paths.get(f.getPath())),"png");
+							track.setHasCover(true);
+						} catch (IOException e) {}
+					}
+					else
+						track.setHasCover(false);
+				}
+			}
+		}
 	}
 }

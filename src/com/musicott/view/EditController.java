@@ -18,11 +18,16 @@
 
 package com.musicott.view;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import com.musicott.SceneManager;
 import com.musicott.model.Track;
@@ -41,8 +46,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyEvent;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.FileChooser.ExtensionFilter;
 
 /**
  * @author Octavio Calleya
@@ -108,6 +114,30 @@ public class EditController {
 		editFieldsMap.put(TrackField.DISC_NUMBER, discNum);
 		editFieldsMap.put(TrackField.YEAR, year);
 		editFieldsMap.put(TrackField.BPM, bpm);
+		coverImage.setOnMouseClicked(event -> {
+			if(event.getClickCount() == 2) {
+				FileChooser chooser = new FileChooser();
+				chooser.setTitle("Open file(s)...");
+				chooser.getExtensionFilters().addAll(new ExtensionFilter("Image files (*.png, *.jpg, *.jpeg)","*.png", "*.jpg", "*.jpeg"));
+				File newCoverImage = chooser.showOpenDialog(editStage);
+				if(newCoverImage != null) {
+					byte[] newCoverBytes = null;
+					try {
+						newCoverBytes = Files.readAllBytes(Paths.get(newCoverImage.getPath()));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					String mimeType = "";
+					StringTokenizer stk = new StringTokenizer(newCoverImage.getName(),".");
+					while(stk.hasMoreTokens()) mimeType = stk.nextToken();
+					for(Track t: trackSelection) {
+						t.setCoverFile(newCoverBytes, mimeType);
+						t.setHasCover(true);
+					}
+					coverImage.setImage(new Image(new ByteArrayInputStream(newCoverBytes), 132, 132, true, true));
+				}
+			}
+		});
 	}
 	
 	public void setStage(Stage stage) {
@@ -221,7 +251,10 @@ public class EditController {
 			titleArtist.textProperty().setValue(track.getArtist());
 			titleAlbum.textProperty().setValue(track.getAlbum());
 			
-			coverImage.setImage(new Image("file:"+track.getCoverFileName()));
+			if(track.getHasCover())
+				coverImage.setImage(new Image(new ByteArrayInputStream(track.getCoverFile()), 132, 132, true, true));
+			else
+				coverImage.setImage(new Image("file:resources/images/default-cover-icon.png", 132, 132, true, true));
 		}
 		else {
 			List<String> listOfSameFields = new ArrayList<String>();
@@ -245,19 +278,19 @@ public class EditController {
 					}
 					editFieldsMap.get(field).textProperty().setValue(matchCommonString(listOfSameFields));
 				}
-				listOfSameFields.clear();
 			}
 		
 			// Check for the same cover image and compilation value
 			List<Boolean> listOfSameBools = new ArrayList<Boolean>();
+			List<byte[]> listOfSameCover = new ArrayList<byte[]>();
 			
 			for(Track t: trackSelection) {
-				listOfSameFields.add(t.getFileFolder()+"/"+t.getCoverFileName());
+				listOfSameCover.add(t.getCoverFile());
 				listOfSameBools.add(t.getIsCompilation());
 			}
 			
-			if(!matchCommonString(listOfSameFields).equals("-"))
-				coverImage.setImage(new Image("file:"+trackSelection.get(0).getCoverFileName()));
+			if(matchCommonBytes(listOfSameCover))
+				coverImage.setImage(new Image(new ByteArrayInputStream(trackSelection.get(0).getCoverFile())));
 			else
 				coverImage.setImage(new Image("file:resources/images/default-cover-icon.png"));
 			
@@ -270,6 +303,16 @@ public class EditController {
 			titleArtist.textProperty().setValue(artist.textProperty().get());
 			titleAlbum.textProperty().setValue(album.textProperty().get());
 		}
+	}
+	
+	private boolean matchCommonBytes(List<byte[]> list) {
+		byte[] bt = list.get(0);
+		if(bt == null)
+			return false;
+		for(byte[] b: list)
+			if(b == null || !b.equals(bt))
+				return false;
+		return true;
 	}
 	
 	private boolean matchCommonBool(List<Boolean> list) {

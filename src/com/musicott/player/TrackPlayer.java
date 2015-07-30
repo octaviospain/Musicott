@@ -18,8 +18,6 @@
 
 package com.musicott.player;
 
-import java.util.List;
-
 import com.musicott.model.Track;
 
 /**
@@ -27,20 +25,18 @@ import com.musicott.model.Track;
  *
  */
 public interface TrackPlayer {
+	
+	public String getStatus();
+	
+	public void setTrack(Track track);
 
-	public void addTracks(List<Track> tracks);
-	
-	public void removeTracks(List<? extends Track> tracks);
-	
-	public void play(List<Track> tracks);
+	public void setVolume(double value);
 	
 	public void play();
-	
-	public void next();
-	
-	public void previous();
 	
 	public void pause();
 	
 	public void stop();
+	
+	public void dispose();
 }
