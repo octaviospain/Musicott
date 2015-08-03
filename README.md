@@ -13,17 +13,16 @@ A JavaFX application for import, organize and play music files.
 * Testing with [TestFx](https://github.com/TestFX/TestFX "TestFx"), [JUnit](https://github.com/junit-team/junit "JUnit"), [Mockito](https://github.com/mockito/mockito "Mockito") & [PowerMock](https://github.com/jayway/powermock "PowerMock").
 
 ## Features for now
-* Play mp3 files
-* Import mp3 and flac files from within a folder
+* Play mp3, wav and m4a files
+* Import mp3, wav and flac files from within a folder
 * Delete rows in the table
-* Edit single or multiple rows
-* Correct Mp3 and Flac metadata showing
+* Edit single or multiple tracks in the table including cover image
+* Shows correct Mp3 and Flac metadata
 
 ### To be implemented
-* Get/set cover image in the file
+* Play flac files
 * Fix metadata from 3rd party
 * Write metadata tags on edit
-* Play wav, m4a and flac files
 * Advanced search feature
 * Show cover image on table
 * Ability to manage different formats for a single track (implementing a TreeTableView)

@@ -64,9 +64,6 @@ public class ImportCollectionController {
 	
 	@FXML
 	private void initialize() {
-		cbM4a = new CheckBox();
-		cbWav = new CheckBox();
-		cbFlac = new CheckBox();
 	}
 	
 	public void setStage(Stage stage) {

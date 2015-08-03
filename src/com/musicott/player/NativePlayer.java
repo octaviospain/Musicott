@@ -29,11 +29,11 @@ import com.musicott.model.Track;
  * @author Octavio Calleya
  *
  */
-public class Mp3Player implements TrackPlayer {
+public class NativePlayer implements TrackPlayer {
 	
 	private MediaPlayer mediaPlayer;
 	
-	public Mp3Player(Track track) {
+	public NativePlayer(Track track) {
 		File mp3File = new File(track.getFileFolder()+"/"+track.getFileName());
 		Media media = new Media(mp3File.toURI().toString());
 		mediaPlayer = new MediaPlayer(media);

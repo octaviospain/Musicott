@@ -34,6 +34,10 @@ public class ParseException extends Exception{
 		super(msg);
 	}
 	
+	public ParseException(String msg, File f) {
+		super(msg+" in "+f.getName());
+	}
+	
 	public ParseException(Throwable cause) {
 		super(cause);
 	}

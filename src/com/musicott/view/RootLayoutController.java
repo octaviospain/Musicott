@@ -30,7 +30,7 @@ import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.player.FlacPlayer;
 import com.musicott.player.PlayerFacade;
-import com.musicott.player.Mp3Player;
+import com.musicott.player.NativePlayer;
 import com.musicott.player.TrackPlayer;
 import com.musicott.task.OpenTask;
 
@@ -386,20 +386,31 @@ public class RootLayoutController {
 			TableRow<Track> row = new TableRow<>();
 			row.setOnMouseClicked(event -> {
 				if(event.getClickCount() == 2 && !row.isEmpty()) {
-					player.play(row.getItem());
-					setPlaying();
+					if(!row.getItem().getFileName().substring(row.getItem().getFileName().length()-4).equals("flac")){
+						player.play(row.getItem());
+						setPlaying();
+					}
 				}
 			});
 			return row;
 		});
-		trackTable.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {if(event.getButton() == MouseButton.SECONDARY) cm.show(trackTable,event.getScreenX(),event.getScreenY());});
+		trackTable.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+			if(event.getButton() == MouseButton.SECONDARY)
+				cm.show(trackTable,event.getScreenX(),event.getScreenY());
+			else if(event.getButton() == MouseButton.PRIMARY && cm.isShowing())
+				cm.hide();
+		});
 		trackTable.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
 			if(event.getCode() == KeyCode.ENTER) {
-				player.play(selection);
-				setPlaying();
-		}});
-		trackTable.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-			if(event.getCode() == KeyCode.SPACE)
+				for(Track t: selection)
+					if(t.getFileName().substring(t.getFileName().length()-4).equals("flac"))
+						selection.remove(t);
+				if(!selection.isEmpty()) {
+					player.play(selection);
+					setPlaying();
+				}
+			}
+			else if(event.getCode() == KeyCode.SPACE) {
 				if(player.getTrackPlayer().getStatus().equals("PLAYING")) {
 					playButton.setSelected(false);
 					player.pause();
@@ -408,6 +419,7 @@ public class RootLayoutController {
 					playButton.setSelected(true);
 					player.play();
 				}
+			}
 		});
 	}	
 	
@@ -436,10 +448,10 @@ public class RootLayoutController {
 		currentTimeLabel.setVisible(false);
 		remainingTimeLabel.setVisible(false);
 		currentCover.setImage(null);
-		if(player.getTrackPlayer() instanceof Mp3Player)
-			volumeSlider.valueProperty().unbindBidirectional(((Mp3Player)player.getTrackPlayer()).getMediaPlayer().volumeProperty());
-		else {
-			
+		if(player.getTrackPlayer() instanceof NativePlayer)
+			volumeSlider.valueProperty().unbindBidirectional(((NativePlayer)player.getTrackPlayer()).getMediaPlayer().volumeProperty());
+		else if (player.getTrackPlayer() instanceof FlacPlayer) {
+			//TODO
 		}
 	}
 	
@@ -455,8 +467,8 @@ public class RootLayoutController {
 	
 	public void preparePlayerInfo(TrackPlayer currentPlayer, Track currentTrack) {
 		// Set up the player and the view related to it
-		if(currentPlayer instanceof Mp3Player)
-			setUpPlayer(((Mp3Player) currentPlayer).getMediaPlayer());
+		if(currentPlayer instanceof NativePlayer)
+			setUpPlayer(((NativePlayer) currentPlayer).getMediaPlayer());
 		else if(currentPlayer instanceof FlacPlayer)
 			setUpPlayer((FlacPlayer) currentPlayer);
 			
@@ -466,7 +478,6 @@ public class RootLayoutController {
 			currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverFile())));
 		else
 			currentCover.setImage(new Image("file:resources/images/default-cover-icon.png"));
-		
 	}
 	
 	private void setUpPlayer(MediaPlayer mediaPlayer) {
@@ -488,7 +499,7 @@ public class RootLayoutController {
 	}
 	
 	private void setUpPlayer(FlacPlayer flacPlayer) {
-		
+		//TODO
 	}
 	
 	private void formatTime(Duration elapsed, Duration total) {
@@ -503,7 +514,6 @@ public class RootLayoutController {
 		int remainingSecs = (int)remaining.subtract(Duration.minutes(remainingMins)).subtract(Duration.hours(remainingHours)).toSeconds();
 		remainingTimeLabel.setText("-"+((int)total.toHours()>0 ? remainingHours+":" : "")+(remainingMins<10 ? "0"+remainingMins : remainingMins)+":"+(remainingSecs<10 ? "0"+remainingSecs : remainingSecs));
 	}
-	
 	
 	@FXML
 	private void doShowHidePlayQueue() {
@@ -559,7 +569,7 @@ public class RootLayoutController {
 	
 	@FXML
 	private void doDelete() {
-		if(selection != null && selection.size() !=0) {
+		if(selection != null && !selection.isEmpty()) {
 			Alert alert = new Alert(AlertType.CONFIRMATION);
 			alert.setTitle("");
 			alert.setHeaderText("");
@@ -582,7 +592,7 @@ public class RootLayoutController {
 	
 	@FXML
 	private void doEdit() {
-		if(selection != null & selection.size() !=0) {
+		if(selection != null & !selection.isEmpty()) {
 			if(selection.size() > 1) {
 				Alert alert = new Alert(AlertType.CONFIRMATION);
 				alert.setTitle("");
@@ -604,9 +614,11 @@ public class RootLayoutController {
 		FileChooser chooser = new FileChooser();
 		chooser.setTitle("Open file(s)...");
 		chooser.getExtensionFilters().addAll(
-				new ExtensionFilter("All Supported (*.mp3, *.flac)","*.mp3", "*.flac"), //TODO m4a & wav when implemented
+				new ExtensionFilter("All Supported (*.mp3, *.flac, *.wav, *.m4a)","*.mp3", "*.flac", "*.wav", "*.m4a"),
 				new ExtensionFilter("Mp3 Files", "*.mp3"),
-				new ExtensionFilter("Flac Files","*.flac"));
+				new ExtensionFilter("Flac Files","*.flac"),
+				new ExtensionFilter("Wav Files", "*.wav"),
+				new ExtensionFilter("M4a Files", "*.m4a"));
 		List<File> files = chooser.showOpenMultipleDialog(rootStage);
 		if(files != null) {
 			OpenTask task = new OpenTask(files);
@@ -627,7 +639,7 @@ public class RootLayoutController {
 		Alert alert = new Alert(AlertType.INFORMATION);
 		alert.setTitle("About Musicott");
 		alert.setHeaderText("Musicott");
-		alert.setContentText("Version 0.3.1\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
+		alert.setContentText("Version 0.4.0\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
 		ImageView iv = new ImageView();
 		iv.setImage(new Image("file:resources/images/musicotticon.png"));
 		alert.setGraphic(iv);

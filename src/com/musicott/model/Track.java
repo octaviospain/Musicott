@@ -20,6 +20,8 @@ package com.musicott.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,10 +33,12 @@ import org.jaudiotagger.audio.exceptions.CannotReadException;
 import org.jaudiotagger.audio.exceptions.CannotWriteException;
 import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
 import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
+import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.TagException;
 import org.jaudiotagger.tag.flac.FlacTag;
 import org.jaudiotagger.tag.images.Artwork;
 import org.jaudiotagger.tag.images.ArtworkFactory;
+import org.jaudiotagger.tag.mp4.Mp4Tag;
 
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
@@ -419,56 +423,104 @@ public class Track {
 	 */
 	public byte[] getCoverFile() {
 		byte[] coverFile = null;
-		if(fileName.substring(fileName.length()-3).equals("mp3")) {
+		String extension = fileName.substring(fileName.length()-4);
+		if(extension.equals(".mp3")) {
 			try {
-				Mp3File mp3File = new Mp3File(this.fileFolder+"/"+this.fileName);
+				Mp3File mp3File = new Mp3File(fileFolder+"/"+fileName);
 				coverFile = mp3File.getId3v2Tag().getAlbumImage();
 			} catch (UnsupportedTagException | InvalidDataException | IOException e) {}
 		}
-		else {	// flac file
+		else if(extension.equals(".flac")) {
 			try {
-				AudioFile audioFile = AudioFileIO.read(new File(this.fileFolder+"/"+this.fileName));
+				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
 				FlacTag tag = (FlacTag) audioFile.getTag();
 				if(!tag.getArtworkList().isEmpty())
 					coverFile = tag.getArtworkList().get(0).getBinaryData();
 			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException e) {}
+		}
+		else if(extension.equals(".wav")) {
+			File cover = new File(fileFolder+"/"+"cover.png");
+			if(cover.exists())
+				try {
+					coverFile = Files.readAllBytes(Paths.get(cover.getPath()));
+				} catch (IOException e) {}
+			else {
+				cover = new File(fileFolder+"/"+"cover.jpg");
+				if(cover.exists())
+					try {
+						coverFile = Files.readAllBytes(Paths.get(cover.getPath()));
+					} catch (IOException e) {}
+				else {
+					cover = new File(fileFolder+"/"+"cover.jpeg");
+					if(cover.exists())
+						try {
+							coverFile = Files.readAllBytes(Paths.get(cover.getPath()));
+						} catch (IOException e) {}
+				}
+			}
+		} else if(extension.equals(".m4a")) {
+			try {
+				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
+				Mp4Tag mp4tag = (Mp4Tag) audioFile.getTag();
+				coverFile = mp4tag.getArtworkList().get(0).getBinaryData();
+			} catch(IOException | InvalidAudioFrameException | ReadOnlyFileException | TagException |CannotReadException e) {}			
 		}
 		return coverFile;
 	}
 	
 	/**
 	 * Stores directly into the metadata of the file the image represented
-	 * by the array of bytes
+	 * by the array of bytes. In the case of a wav file, it just save the image
+	 * to the folder of the file as "cover."+ <tt>mimeType</tt>
 	 * 
 	 * @param coverFile the array of bytes
 	 * @param mimeType the mimetype extension of the file
 	 */
 	public void setCoverFile(byte[] coverFile, String mimeType) {
-		if(fileName.substring(fileName.length()-3).equals("mp3")) {
+		String extension = fileName.substring(fileName.length()-4);
+		File oldFile = new File(fileFolder+"/"+fileName);
+		if(extension.equals(".mp3")) {
 			try {
-				Mp3File mp3File = new Mp3File(this.fileFolder+"/"+this.fileName);
+				Mp3File mp3File = new Mp3File(fileFolder+"/"+fileName);
 				mp3File.getId3v2Tag().setAlbumImage(coverFile, mimeType);
-				File oldFile = new File(this.fileFolder+"/"+this.fileName);
-				mp3File.save(this.fileFolder+"/"+"TEMP"+this.fileName);
-				File newFile = new File(this.fileFolder+"/"+"TEMP"+this.fileName);
-				oldFile.delete();
+				mp3File.save(fileFolder+"/"+"TEMP"+fileName);
+				File newFile = new File(fileFolder+"/"+"TEMP"+fileName);
 				newFile.renameTo(oldFile);
-			} catch (UnsupportedTagException | InvalidDataException | IOException | NotSupportedException e) {
-				e.printStackTrace();
+			} catch (UnsupportedTagException | InvalidDataException | IOException | NotSupportedException e) {}
+			finally {
+				if(oldFile.exists())
+					oldFile.delete();
 			}
 		}
-		else { // flac file
+		else if(extension.equals("flac")) {
+			File file = new File("cover."+mimeType);
 			try {
-				AudioFile audioFile = AudioFileIO.read(new File(this.fileFolder+"/"+this.fileName));
+				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
 				FlacTag tag = (FlacTag) audioFile.getTag();
-				File file = new File("cover."+mimeType);
 				FileUtils.writeByteArrayToFile(file, coverFile);
 				Artwork cover = ArtworkFactory.createArtworkFromFile(file);
 				tag.addField(cover);
 				audioFile.commit();
-			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException | CannotWriteException e) {
-				e.printStackTrace();
+			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException | CannotWriteException e) {}
+			finally {
+				if(file.exists())
+					file.delete();
 			}
+		}
+		else if(extension.equals(".wav")) {
+			try {
+				File file = new File(fileFolder+"/cover."+mimeType);
+				FileUtils.writeByteArrayToFile(file, coverFile);
+			} catch (IOException e) {}
+		}
+		else if(extension.equals(".m4a")) {
+			try {
+				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
+				Tag tag = audioFile.getTag();
+				tag.deleteArtworkField();
+				tag.addField(((Mp4Tag)tag).createArtworkField(coverFile));
+				audioFile.commit();
+			} catch(IOException | CannotReadException | TagException | ReadOnlyFileException | InvalidAudioFrameException | CannotWriteException e) {}
 		}
 	}
 	

@@ -27,7 +27,7 @@ import com.musicott.model.Track;
 public class FlacPlayer implements TrackPlayer {
 	
 	public FlacPlayer(Track track) {
-		
+		//TODO
 	}
 	
 	@Override

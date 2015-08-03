@@ -96,6 +96,7 @@ public class EditController {
 	private Map<TrackField,TextInputControl> editFieldsMap;
 	private Stage editStage;
 	private ObservableList<Track> trackSelection;
+	private boolean changed = false;
 	
 	public EditController() {
 	}
@@ -124,17 +125,18 @@ public class EditController {
 					byte[] newCoverBytes = null;
 					try {
 						newCoverBytes = Files.readAllBytes(Paths.get(newCoverImage.getPath()));
+						String mimeType = "";
+						StringTokenizer stk = new StringTokenizer(newCoverImage.getName(),".");
+						while(stk.hasMoreTokens()) mimeType = stk.nextToken();
+						for(Track t: trackSelection) {
+							t.setCoverFile(newCoverBytes, mimeType);
+							t.setHasCover(true);
+						}
+						changed = true;
+						coverImage.setImage(new Image(new ByteArrayInputStream(newCoverBytes), 132, 132, true, true));
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
-					String mimeType = "";
-					StringTokenizer stk = new StringTokenizer(newCoverImage.getName(),".");
-					while(stk.hasMoreTokens()) mimeType = stk.nextToken();
-					for(Track t: trackSelection) {
-						t.setCoverFile(newCoverBytes, mimeType);
-						t.setHasCover(true);
-					}
-					coverImage.setImage(new Image(new ByteArrayInputStream(newCoverBytes), 132, 132, true, true));
 				}
 			}
 		});
@@ -154,9 +156,9 @@ public class EditController {
 		if(trackSelection.size() == 1) {
 			Track t = trackSelection.get(0);
 			Map<TrackField, Property<?>> trackPropertiesMap = t.getPropertiesMap();
-			boolean changed = false;
 			
 			for(TrackField field: editFieldsMap.keySet()) {
+				changed = false;
 				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
 					try {
 						IntegerProperty ip = (IntegerProperty) trackPropertiesMap.get(field);

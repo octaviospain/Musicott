@@ -1,5 +1,10 @@
 # Changes
 
+## Version 0.4.0
+
+* Now you can edit the cover image by double clicking on the imageview at the edit window
+* Musicott now imports and plays wav and m4a files
+
 ## Version 0.3.1
 
 * Musicott plays mp3 files

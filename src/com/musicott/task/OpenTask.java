@@ -19,17 +19,27 @@
 package com.musicott.task;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jaudiotagger.audio.exceptions.CannotReadException;
+import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
+import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
+import org.jaudiotagger.tag.TagException;
+
 import javafx.concurrent.Task;
 
+import com.mpatric.mp3agic.InvalidDataException;
+import com.mpatric.mp3agic.UnsupportedTagException;
 import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ParseException;
 import com.musicott.model.Track;
 import com.musicott.task.parser.FlacParser;
+import com.musicott.task.parser.M4aParser;
 import com.musicott.task.parser.Mp3Parser;
+import com.musicott.task.parser.WavParser;
 
 /**
  * @author Octavio Calleya
@@ -60,21 +70,23 @@ public class OpenTask extends Task<List<Track>> {
 					else
 						if(file.getName().substring(file.getName().length()-3).equals("m4a")) {
 							updateProgress(++i, files.size());
-							//TODO M4aParser
+							list.add(M4aParser.parseM4a(file));
 						}
 						else
 							if(file.getName().substring(file.getName().length()-3).equals("wav")) {
 								updateProgress(++i, files.size());
-								//TODO WavParser
+								list.add(WavParser.parseWavFile(file));
 							}
 							else
 								if(file.getName().substring(file.getName().length()-4).equals("flac")) {
 									updateProgress(++i, files.size());
 									list.add(FlacParser.parseFlacFile(file));
 								}
-				} catch (Exception e) {
+				} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException | UnsupportedTagException |InvalidDataException e) {
 					ParseException pe = new ParseException("Parsing Error", e, file);
 					ErrorHandler.getInstance().addParseException(pe);
+				} catch (ParseException e) {
+					ErrorHandler.getInstance().addParseException(e);
 				}
 		if(!isCancelled())
 			SceneManager.getInstance().getRootController().addTracks(list);

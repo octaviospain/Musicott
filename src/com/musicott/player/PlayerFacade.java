@@ -221,14 +221,16 @@ public class PlayerFacade {
 
 	private void setCurrent(Track track) {
 		currentTrack = track;
+		String fileExtension = track.getFileName().substring(track.getFileName().length()-4);
 		if(trackPlayer != null)
 			trackPlayer.dispose();
-		if(track.getFileName().substring(track.getFileName().length()-3).equals("mp3")) {
-			trackPlayer = new Mp3Player(track);
-			((Mp3Player) trackPlayer).getMediaPlayer().setOnEndOfMedia(() -> next());
+		if(fileExtension.equals(".mp3") || fileExtension.equals(".wav") || fileExtension.equals(".m4a")) {
+			trackPlayer = new NativePlayer(track);
+			((NativePlayer) trackPlayer).getMediaPlayer().setOnEndOfMedia(() -> next());
 		}
-		else {
+		else if(fileExtension.equals("flac")) {
 			trackPlayer = new FlacPlayer(track);
+			//TODO
 		}
 		sc.getRootController().preparePlayerInfo(trackPlayer, currentTrack);
 	}
