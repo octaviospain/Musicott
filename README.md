@@ -3,9 +3,11 @@ A JavaFX application for import, organize and play music files.
 
 ![Musicott screenshot 1](https://dl.dropboxusercontent.com/u/3596661/main.png)
 
-![Musicott screenshot 2](https://dl.dropboxusercontent.com/u/3596661/edit.png)
+![Musicott screenshot 2](https://dl.dropboxusercontent.com/u/3596661/main2.png)
 
-![Musicott screenshot 3](https://dl.dropboxusercontent.com/u/3596661/import.png)
+![Musicott screenshot 3](https://dl.dropboxusercontent.com/u/3596661/edit.png)
+
+![Musicott screenshot 4](https://dl.dropboxusercontent.com/u/3596661/import.png)
 
 * ID3 mp3 tag parser with [mp3agic](https://github.com/mpatric/mp3agic "mp3agic")
 * Ogg Vorbis Comment Flac parser with [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger")
@@ -18,6 +20,7 @@ A JavaFX application for import, organize and play music files.
 * Delete rows in the table
 * Edit single or multiple tracks in the table including cover image
 * Shows correct Mp3 and Flac metadata
+* Search files
 
 ### To be implemented
 * Play flac files

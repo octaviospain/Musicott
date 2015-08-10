@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.5.0
+
+* Implemented search functionality
+
 ## Version 0.4.0
 
 * Now you can edit the cover image by double clicking on the imageview at the edit window

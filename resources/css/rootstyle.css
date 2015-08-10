@@ -85,3 +85,8 @@
 #trackProgressBar .track {
 	-fx-control-inner-background: rgb(182,182,182);
 }
+
+#searchTextField {
+	-fx-border-style: solid;
+	-fx-border-color: rgb(182,182,182);
+}

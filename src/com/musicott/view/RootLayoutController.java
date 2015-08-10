@@ -39,6 +39,8 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -55,6 +57,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.image.Image;
@@ -118,6 +121,8 @@ public class RootLayoutController {
 	@FXML
 	private Slider volumeSlider;
 	@FXML
+	private TextField searchTextField;
+	@FXML
 	private ProgressBar volumeProgressBar;	
 	@FXML
 	private TableView<Track> trackTable;
@@ -162,6 +167,7 @@ public class RootLayoutController {
 
 	private ObservableList<Track> tracks;
 	private ObservableList<Track> selection;
+	private FilteredList<Track> filteredTracks;
 	
 	private Stage rootStage;
 	private SceneManager sc;
@@ -345,6 +351,26 @@ public class RootLayoutController {
 		volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
 		
 		tracks = trackTable.getItems();
+		filteredTracks = new FilteredList<Track>(tracks, predicate -> true);
+		searchTextField.textProperty().addListener((observable, oldText, newText) -> {
+			filteredTracks.setPredicate(track -> {
+				boolean result = true;
+				if(newText != null && !newText.isEmpty()) {
+					if(track.getName().toLowerCase().contains(newText.toLowerCase()) ||
+					   track.getArtist().toLowerCase().contains(newText.toLowerCase()) ||
+					   track.getLabel().toLowerCase().contains(newText.toLowerCase()) ||
+					   track.getGenre().toLowerCase().contains(newText.toLowerCase()) ||
+					   track.getAlbum().toLowerCase().contains(newText.toLowerCase()))
+						result = true;
+					else
+						result = false;
+				}
+				return result;
+			});
+		});
+		SortedList<Track> sortedTracks = new SortedList<Track>(filteredTracks);
+		sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
+		trackTable.setItems(sortedTracks);
 		ml.setTracks(tracks);
 		if(tracks.size() == 0) {
 			playButton.setDisable(true);
@@ -425,7 +451,7 @@ public class RootLayoutController {
 	
 	public void addTracks(List<Track> listTracks) {
 		if(listTracks != null && !listTracks.isEmpty()) {
-			trackTable.getItems().addAll(listTracks);	
+			tracks.addAll(listTracks);	
 			sc.getPlayQueueController().setPlayer(player);
 			if(emptyTable) {
 				playButton.setDisable(false);
@@ -639,7 +665,7 @@ public class RootLayoutController {
 		Alert alert = new Alert(AlertType.INFORMATION);
 		alert.setTitle("About Musicott");
 		alert.setHeaderText("Musicott");
-		alert.setContentText("Version 0.4.0\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
+		alert.setContentText("Version 0.5.0\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
 		ImageView iv = new ImageView();
 		iv.setImage(new Image("file:resources/images/musicotticon.png"));
 		alert.setGraphic(iv);
