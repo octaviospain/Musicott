@@ -98,7 +98,7 @@ public class PlayQueueController {
 			if(t.getHasCover())
 				iv = new ImageView(new Image(new ByteArrayInputStream(t.getCoverFile()), 45, 45, true, true));
 			else
-				iv = new ImageView(new Image("file:resources/images/default-cover-icon.png", 45, 45, true, true));
+				iv = new ImageView(new Image(PlayQueueController.class.getResourceAsStream("/images/default-cover-icon.png"), 45, 45, true, true));
 			Label nameLabel = new Label(t.getName());
 			Label artistAlbumLabel = new Label(t.getArtist()+" - "+t.getAlbum());
 			nameLabel.setStyle("-fx-font-size: 13px");

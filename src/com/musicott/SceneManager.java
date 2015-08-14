@@ -245,7 +245,7 @@ public class SceneManager {
 			// Set the thumb image of the track slider
 			StackPane thumb = (StackPane)rootLayout.lookup("#trackSlider").lookup(".thumb");
 			thumb.getChildren().clear();
-			thumb.getChildren().add(new ImageView(new Image("file:resources/icons/sliderthumb-icon.png")));
+			thumb.getChildren().add(new ImageView(new Image(SceneManager.class.getResourceAsStream("/icons/sliderthumb-icon.png"))));
 			thumb.setPrefSize(5,5);
 		} catch (IOException e) {
 			//TODO Show error dialog and crashes

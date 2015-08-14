@@ -503,7 +503,7 @@ public class RootLayoutController {
 		if(currentTrack.getHasCover())
 			currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverFile())));
 		else
-			currentCover.setImage(new Image("file:resources/images/default-cover-icon.png"));
+			currentCover.setImage(new Image(RootLayoutController.class.getResourceAsStream("/images/default-cover-icon.png")));
 	}
 	
 	private void setUpPlayer(MediaPlayer mediaPlayer) {
