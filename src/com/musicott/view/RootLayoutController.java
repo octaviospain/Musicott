@@ -35,7 +35,6 @@ import com.musicott.player.TrackPlayer;
 import com.musicott.task.OpenTask;
 
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -47,6 +46,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -65,6 +65,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.media.MediaPlayer;
 import javafx.stage.FileChooser;
@@ -162,8 +163,6 @@ public class RootLayoutController {
 	private TableColumn<Track,Number> bpmCol;
 	@FXML
 	private TableColumn<Track,Boolean> coverCol;
-	@FXML
-	private TableColumn<Track,Boolean> inDiskCol;
 
 	private ObservableList<Track> tracks;
 	private ObservableList<Track> selection;
@@ -201,8 +200,6 @@ public class RootLayoutController {
 		bpmCol.setCellValueFactory(cellData -> cellData.getValue().getBpmProperty());
 		coverCol.setCellValueFactory(cellData -> cellData.getValue().getHasCoverProperty());
 		coverCol.setCellFactory(CheckBoxTableCell.forTableColumn(coverCol));
-		inDiskCol.setCellValueFactory(cellData -> new SimpleBooleanProperty(cellData.getValue().getIsInDisk()));
-		inDiskCol.setCellFactory(CheckBoxTableCell.forTableColumn(inDiskCol));
 		bpmCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		bpmCol.setCellFactory(columns -> {
 			return new TableCell<Track, Number>() {
@@ -401,7 +398,10 @@ public class RootLayoutController {
 		MenuItem cmDelete = new MenuItem("Delete");
 		cmDelete.setOnAction(event -> doDelete());
 		MenuItem cmAddToQueue = new MenuItem("Add to Play Queue");
-		cmAddToQueue.setOnAction(event -> {if(!selection.isEmpty())	player.addTracks(selection);});
+		cmAddToQueue.setOnAction(event -> {
+			if(!selection.isEmpty())
+				player.addTracks(selection);
+		});
 		ContextMenu cm = new ContextMenu();
 		cm.getItems().add(cmPlay);
 		cm.getItems().add(cmAddToQueue);
@@ -411,12 +411,8 @@ public class RootLayoutController {
 		trackTable.setRowFactory(tv -> {
 			TableRow<Track> row = new TableRow<>();
 			row.setOnMouseClicked(event -> {
-				if(event.getClickCount() == 2 && !row.isEmpty()) {
-					if(!row.getItem().getFileName().substring(row.getItem().getFileName().length()-4).equals("flac")){
-						player.play(row.getItem());
-						setPlaying();
-					}
-				}
+				if(event.getClickCount() == 2 && !row.isEmpty() && !row.getItem().getFileFormat().equals("flac")) //TODO
+					player.play(row.getItem());
 			});
 			return row;
 		});
@@ -549,13 +545,13 @@ public class RootLayoutController {
 	@FXML
 	private void doPlayPause() {
 		if(playButton.isSelected()) {
-			player.play();
 			if(trackSlider.isDisabled())
 				trackSlider.setDisable(false);
 			if(prevButton.isDisabled())
 				prevButton.setDisable(false);
 			if(nextButton.isDisabled())
 				nextButton.setDisable(false);
+			player.play();
 		}
 		else
 			player.pause();
@@ -603,12 +599,10 @@ public class RootLayoutController {
 			Optional<ButtonType> result = alert.showAndWait();
 			if (result.get() == ButtonType.OK) {
 				tracks.removeAll(selection);
+				setStopped();
 				if(tracks.size() == 0) {
-					prevButton.setDisable(true);
-					nextButton.setDisable(true);
 					playButton.setDisable(true);
-					trackSlider.setDisable(true);
-					emptyTable = true;
+					emptyTable = true;					
 				}
 			}
 			else
@@ -665,7 +659,15 @@ public class RootLayoutController {
 		Alert alert = new Alert(AlertType.INFORMATION);
 		alert.setTitle("About Musicott");
 		alert.setHeaderText("Musicott");
-		alert.setContentText("Version 0.5.0\n\nCopyright © 2015 Octavio Calleya https://github.com/octaviospain/Musicott/ \n\nLicensed under GNU GPLv3. This product includes software developed by other open source projects.");
+		Label text = new Label(" Version 0.6.0\n\n Copyright © 2015 Octavio Calleya.");
+		Label text2 = new Label(" Licensed under GNU GPLv3. This product includes\n software developed by other open source projects.");
+		Hyperlink githubLink = new Hyperlink("https://github.com/octaviospain/Musicott/");
+		githubLink.setOnAction(event -> {
+			sc.getApplication().getHostServices().showDocument(githubLink.getText());
+		});
+		FlowPane fp = new FlowPane();
+		fp.getChildren().addAll(text, githubLink, text2);
+		alert.getDialogPane().contentProperty().set(fp);
 		ImageView iv = new ImageView();
 		iv.setImage(new Image("file:resources/images/musicotticon.png"));
 		alert.setGraphic(iv);

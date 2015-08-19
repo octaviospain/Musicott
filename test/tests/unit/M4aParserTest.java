@@ -48,7 +48,7 @@ public class M4aParserTest {
 	@Test
 	public void m4aTagTest() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException, ParseException {
 		File m4aFile = tagFile("/users/octavio/test/testeable.m4a");
-		Track track = M4aParser.parseM4a(m4aFile);
+		Track track = M4aParser.parseM4aFile(m4aFile);
 		assertEquals(track.getName(),"Skeksis (Original Mix)");
 		assertEquals(track.getArtist(),"Adam Beyer");
 		assertEquals(track.getAlbum(),"Skeksis");
@@ -66,7 +66,7 @@ public class M4aParserTest {
 	@Test
 	public void m4aNoTagTest() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException, ParseException {
 		File m4aFile = noTagFile("/users/octavio/test/testeable.m4a");
-		Track track = M4aParser.parseM4a(m4aFile);
+		Track track = M4aParser.parseM4aFile(m4aFile);
 		assertEquals(track.getName(),"");
 		assertEquals(track.getArtist(),"");
 		assertEquals(track.getAlbum(),"");

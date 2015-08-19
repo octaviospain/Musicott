@@ -16,33 +16,32 @@
  *
  */
 
-package com.musicott;
+package com.musicott.task;
 
-import javafx.application.Application;
-import javafx.scene.image.Image;
-import javafx.stage.Stage;
+import java.util.List;
+
+import com.musicott.model.Track;
+import com.musicott.util.MetadataWriter;
+
+import javafx.concurrent.Task;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class MainApp extends Application {
+public class WriteMetadataTask extends Task<Void>{
 	
-	private Stage mainStage;
-	
-	public static void main(String[] args) {
-		launch();
+	private List<Track> tracks;
+
+	public WriteMetadataTask(List<Track> tracks) {
+		this.tracks = tracks;
 	}
 	
 	@Override
-	public void start(Stage primaryStage) {		
-		mainStage = primaryStage;
-		mainStage.setTitle("Musicott");
-		mainStage.getIcons().add(new Image("file:resources/images/musicotticon.png"));		
-		SceneManager.getInstance().setPrimaryStage(this);
-	}
-	
-	public Stage getStage() {
-		return mainStage;
+	protected Void call() {
+		for(Track track : tracks)
+			if(track.getInDisk())
+				MetadataWriter.writeTrackMetadata(track);
+		return null;
 	}
 }

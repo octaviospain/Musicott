@@ -75,7 +75,7 @@
                   </Menu>
                 <Menu fx:id="menuAbout" mnemonicParsing="false" text="About">
                   <items>
-                    <MenuItem fx:id="menuItemAbout" mnemonicParsing="false" onAction="#doAbout" text="About" />
+                    <MenuItem fx:id="menuItemAbout" mnemonicParsing="false" onAction="#doAbout" text="About Musicott" />
                   </items>
                 </Menu>
               </menus>
@@ -216,7 +216,6 @@
                   <TableColumn fx:id="commentsCol" prefWidth="150.0" text="Comments" />
                   <TableColumn fx:id="bitRateCol" prefWidth="60.0" text="BitRate" />
                   <TableColumn fx:id="coverCol" prefWidth="50.0" text="Cover" />
-                  <TableColumn fx:id="inDiskCol" minWidth="0.0" prefWidth="50.0" text="In Disk" />
                   <TableColumn fx:id="playCountCol" prefWidth="50.0" text="Plays" />
                   <TableColumn fx:id="dateModifiedCol" prefWidth="70.0" text="Modified" />
                   <TableColumn fx:id="dateAddedCol" prefWidth="70.0" text="Added" />

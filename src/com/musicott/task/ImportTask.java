@@ -19,28 +19,15 @@
 package com.musicott.task;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jaudiotagger.audio.exceptions.CannotReadException;
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
-import org.jaudiotagger.tag.TagException;
 
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 
-import com.mpatric.mp3agic.InvalidDataException;
-import com.mpatric.mp3agic.UnsupportedTagException;
 import com.musicott.SceneManager;
-import com.musicott.error.ErrorHandler;
-import com.musicott.error.ParseException;
 import com.musicott.model.Track;
-import com.musicott.task.parser.FlacParser;
-import com.musicott.task.parser.M4aParser;
-import com.musicott.task.parser.Mp3Parser;
-import com.musicott.task.parser.WavParser;
+import com.musicott.task.parser.AudioFileParser;
 
 /**
  * @author Octavio Calleya
@@ -50,14 +37,13 @@ public class ImportTask extends Task<List<Track>>{
 
 	private List<Track> list;
 	boolean m4a, wav, flac;
-	private int numFiles, currentFiles;
+	private int numFiles;
 	private File folder;
 	
 	public ImportTask(File folder, boolean importM4a, boolean importWav, boolean importFlac) {
 		list = new ArrayList<Track>();
 		this.folder = folder;
 		numFiles = 0;
-		currentFiles = 0;
 		m4a = importM4a;
 		wav = importWav;
 		flac = importFlac;
@@ -95,6 +81,7 @@ public class ImportTask extends Task<List<Track>>{
 	
 	private void scanFolder(File folder) {
 		File[] files = folder.listFiles();
+		int currentFiles = 0;
 		for(File file:files)
 			if(isCancelled())
 				break;
@@ -102,32 +89,10 @@ public class ImportTask extends Task<List<Track>>{
 				if(file.isDirectory())
 					scanFolder(file);
 				else {
-					try {
-						if(file.getName().substring(file.getName().length()-3).equals("mp3")) {
-							updateProgress(++currentFiles, numFiles);
-							list.add(Mp3Parser.parseMp3File(file));
-						}
-						else
-							if(m4a && file.getName().substring(file.getName().length()-3).equals("m4a")) {
-								updateProgress(++currentFiles, numFiles);
-								list.add(M4aParser.parseM4a(file));
-							}
-							else
-								if(wav && file.getName().substring(file.getName().length()-3).equals("wav")) {
-									updateProgress(++currentFiles, numFiles);
-									list.add(WavParser.parseWavFile(file));
-								}
-								else
-									if(flac && file.getName().substring(file.getName().length()-4).equals("flac")) {
-										updateProgress(++currentFiles, numFiles);
-										list.add(FlacParser.parseFlacFile(file));
-									}
-					} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException | UnsupportedTagException |InvalidDataException e) {
-						ParseException pe = new ParseException("Parsing Error", e, file);
-						ErrorHandler.getInstance().addParseException(pe);
-					} catch (ParseException e) {
-						ErrorHandler.getInstance().addParseException(e);
-					}
+					updateProgress(++currentFiles, numFiles);
+					Track currentTrack = AudioFileParser.parseAudioFile(file, m4a, wav, flac);
+					if(currentTrack != null)
+						list.add(currentTrack);
 				}
 	}
 	

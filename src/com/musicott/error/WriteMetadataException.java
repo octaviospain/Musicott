@@ -16,33 +16,33 @@
  *
  */
 
-package com.musicott;
+package com.musicott.error;
 
-import javafx.application.Application;
-import javafx.scene.image.Image;
-import javafx.stage.Stage;
+import com.musicott.model.Track;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class MainApp extends Application {
-	
-	private Stage mainStage;
-	
-	public static void main(String[] args) {
-		launch();
+public class WriteMetadataException extends Exception {
+
+	public WriteMetadataException() {
+		super();
 	}
 	
-	@Override
-	public void start(Stage primaryStage) {		
-		mainStage = primaryStage;
-		mainStage.setTitle("Musicott");
-		mainStage.getIcons().add(new Image("file:resources/images/musicotticon.png"));		
-		SceneManager.getInstance().setPrimaryStage(this);
+	public WriteMetadataException(String msg) {
+		super(msg);
 	}
 	
-	public Stage getStage() {
-		return mainStage;
+	public WriteMetadataException(String msg, Track track) {
+		super(msg+ "in "+track.getFileFolder()+"/"+track.getFileName());
+	}
+	
+	public WriteMetadataException(Throwable cause) {
+		super(cause);
+	}
+	
+	public WriteMetadataException(String msg, Throwable cause, Track track) {
+		super(msg+" in "+track.getFileFolder()+"/"+track.getFileName(), cause);
 	}
 }

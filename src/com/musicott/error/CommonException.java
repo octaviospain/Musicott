@@ -16,33 +16,27 @@
  *
  */
 
-package com.musicott;
-
-import javafx.application.Application;
-import javafx.scene.image.Image;
-import javafx.stage.Stage;
+package com.musicott.error;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class MainApp extends Application {
+public class CommonException extends Exception {
 	
-	private Stage mainStage;
-	
-	public static void main(String[] args) {
-		launch();
+	public CommonException() {
+		super();
 	}
 	
-	@Override
-	public void start(Stage primaryStage) {		
-		mainStage = primaryStage;
-		mainStage.setTitle("Musicott");
-		mainStage.getIcons().add(new Image("file:resources/images/musicotticon.png"));		
-		SceneManager.getInstance().setPrimaryStage(this);
+	public CommonException(String msg) {
+		super(msg);
 	}
 	
-	public Stage getStage() {
-		return mainStage;
+	public CommonException(Throwable cause) {
+		super(cause);
+	}
+	
+	public CommonException(String msg, Throwable cause) {
+		super(msg,cause);
 	}
 }

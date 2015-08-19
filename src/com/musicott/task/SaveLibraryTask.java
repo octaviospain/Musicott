@@ -47,7 +47,7 @@ public class SaveLibraryTask extends Task<Void> {
 		trackList = MusicLibrary.getInstance().getTracks();
 		
 		args = new HashMap<String,Object>();
-		Map<Class,List<String>> fields = new HashMap<Class,List<String>>();
+		Map<Class<?>,List<String>> fields = new HashMap<Class<?>,List<String>>();
 		args.put(JsonWriter.FIELD_SPECIFIERS, fields);
 		
 		List<String> fieldNames = new ArrayList<String>();
@@ -70,10 +70,11 @@ public class SaveLibraryTask extends Task<Void> {
 		fieldNames.add("year");
 		fieldNames.add("bpm");
 		fieldNames.add("hasCover");
-		fieldNames.add("isInDisk");
+		fieldNames.add("inDisk");
 		fieldNames.add("isCompilation");
 		fieldNames.add("dateModified");
 		fieldNames.add("dateAdded");
+		fieldNames.add("fileFormat");
 		
 		fields.put(Track.class,fieldNames);
 	}

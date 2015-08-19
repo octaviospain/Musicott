@@ -39,31 +39,32 @@ import javafx.util.Duration;
 public class Mp3Parser {
 	
 	private static File file;
+	private static Mp3File mp3File;
 
 	public static Track parseMp3File(final File fileToParse) throws UnsupportedTagException, InvalidDataException, IOException {
 		file = fileToParse;
 		Track mp3Track = new Track();
-		Mp3File mp3File = new Mp3File(file);
+		mp3File = new Mp3File(file);
 		mp3Track.setFileFolder(new File(file.getParent()).getAbsolutePath());
 		mp3Track.setFileName(file.getName());
-		checkCover(mp3Track, mp3File);
+		checkCover(mp3Track);
 		mp3Track.setInDisk(true);
 		mp3Track.setSize((int) (file.length()));
 		mp3Track.setBitRate(mp3File.getBitrate());
 		mp3Track.setTotalTime(Duration.seconds(mp3File.getLengthInSeconds()));
 		if(mp3File.hasId3v2Tag())
-			readId3v2Tag(mp3Track, mp3File);
+			readId3v2Tag(mp3Track);
 		else
 			if(mp3File.hasId3v1Tag())
-				readId3v1Tag(mp3Track, mp3File);
+				readId3v1Tag(mp3Track);
 			else {
 				mp3Track.setName(file.getName());
 			}
 		return mp3Track;
 	}
 	
-	private static void readId3v2Tag(Track track, Mp3File file) {
-		ID3v2 tag = file.getId3v2Tag();
+	private static void readId3v2Tag(Track track) {
+		ID3v2 tag = mp3File.getId3v2Tag();
 		if(tag.getTitle() != null)
 			track.setName(tag.getTitle());
 		if(tag.getArtist() != null)
@@ -90,8 +91,8 @@ public class Mp3Parser {
 		//TODO Think what to do with trackId here
 	}
 	
-	private static void readId3v1Tag(Track track, Mp3File file) {
-		ID3v1 tag = file.getId3v1Tag();
+	private static void readId3v1Tag(Track track) {
+		ID3v1 tag = mp3File.getId3v1Tag();
 		if(tag.getTitle() != null)
 			track.setName(tag.getTitle());
 		if(tag.getArtist() != null)
@@ -108,9 +109,9 @@ public class Mp3Parser {
 		} catch (NumberFormatException e) {}
 	}
 		
-	private static void checkCover(Track track, Mp3File file) {
-		if(file.hasId3v2Tag()) {
-			byte[] img = file.getId3v2Tag().getAlbumImage();
+	private static void checkCover(Track track) {
+		if(mp3File.hasId3v2Tag()) {
+			byte[] img = mp3File.getId3v2Tag().getAlbumImage();
 			if(img != null)
 				track.setHasCover(true);
 		}

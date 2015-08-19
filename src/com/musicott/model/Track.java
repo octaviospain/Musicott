@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.apache.commons.io.FileUtils;
 import org.jaudiotagger.audio.AudioFile;
@@ -81,7 +82,7 @@ public class Track {
 	private Duration totalTime;
 
 	private boolean hasCover;
-	private boolean isInDisk;
+	private boolean inDisk;
 	private boolean isCompilation;
 
 	private LocalDate dateModified;
@@ -101,8 +102,8 @@ public class Track {
 	private IntegerProperty bpmProperty;
 	
 	private BooleanProperty hasCoverProperty;
-	
 	private Map<TrackField,Property<?>> propertyMap;
+	private String fileFormat;
 	
     public Track() {
     	trackID = -1;
@@ -124,7 +125,7 @@ public class Track {
     	bitRate = -1;
     	playCount = 0;
     	hasCover = false;
-    	isInDisk = false;
+    	inDisk = false;
     	isCompilation = false;
     	dateModified = LocalDate.now();
     	dateAdded = LocalDate.now();
@@ -194,6 +195,12 @@ public class Track {
 
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
+		StringTokenizer stk = new StringTokenizer(fileName,".");
+		while(stk.hasMoreTokens()) fileFormat = stk.nextToken();
+	}
+	
+	public String getFileFormat() {
+		return fileFormat;
 	}
 
 	public StringProperty getNameProperty() {
@@ -383,12 +390,12 @@ public class Track {
 		hasCoverProperty.set(hasCover);
 	}
 
-	public boolean getIsInDisk() {
-		return isInDisk;
+	public boolean getInDisk() {
+		return inDisk;
 	}
 
-	public void setInDisk(boolean isInDisk) {
-		this.isInDisk = isInDisk;
+	public void setInDisk(boolean inDisk) {
+		this.inDisk = inDisk;
 	}
 	
 	public boolean getIsCompilation() {
@@ -423,14 +430,13 @@ public class Track {
 	 */
 	public byte[] getCoverFile() {
 		byte[] coverFile = null;
-		String extension = fileName.substring(fileName.length()-4);
-		if(extension.equals(".mp3")) {
+		if(fileFormat.equals("mp3")) {
 			try {
 				Mp3File mp3File = new Mp3File(fileFolder+"/"+fileName);
 				coverFile = mp3File.getId3v2Tag().getAlbumImage();
 			} catch (UnsupportedTagException | InvalidDataException | IOException e) {}
 		}
-		else if(extension.equals(".flac")) {
+		else if(fileFormat.equals("flac")) {
 			try {
 				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
 				FlacTag tag = (FlacTag) audioFile.getTag();
@@ -438,7 +444,7 @@ public class Track {
 					coverFile = tag.getArtworkList().get(0).getBinaryData();
 			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException e) {}
 		}
-		else if(extension.equals(".wav")) {
+		else if(fileFormat.equals("wav")) {
 			File cover = new File(fileFolder+"/"+"cover.png");
 			if(cover.exists())
 				try {
@@ -458,7 +464,7 @@ public class Track {
 						} catch (IOException e) {}
 				}
 			}
-		} else if(extension.equals(".m4a")) {
+		} else if(fileFormat.equals("m4a")) {
 			try {
 				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
 				Mp4Tag mp4tag = (Mp4Tag) audioFile.getTag();
@@ -477,9 +483,8 @@ public class Track {
 	 * @param mimeType the mimetype extension of the file
 	 */
 	public void setCoverFile(byte[] coverFile, String mimeType) {
-		String extension = fileName.substring(fileName.length()-4);
 		File oldFile = new File(fileFolder+"/"+fileName);
-		if(extension.equals(".mp3")) {
+		if(fileFormat.equals("mp3")) {
 			try {
 				Mp3File mp3File = new Mp3File(fileFolder+"/"+fileName);
 				mp3File.getId3v2Tag().setAlbumImage(coverFile, mimeType);
@@ -492,7 +497,7 @@ public class Track {
 					oldFile.delete();
 			}
 		}
-		else if(extension.equals("flac")) {
+		else if(fileFormat.equals("flac")) {
 			File file = new File("cover."+mimeType);
 			try {
 				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
@@ -507,13 +512,13 @@ public class Track {
 					file.delete();
 			}
 		}
-		else if(extension.equals(".wav")) {
+		else if(fileFormat.equals("wav")) {
 			try {
 				File file = new File(fileFolder+"/cover."+mimeType);
 				FileUtils.writeByteArrayToFile(file, coverFile);
 			} catch (IOException e) {}
 		}
-		else if(extension.equals(".m4a")) {
+		else if(fileFormat.equals("m4a")) {
 			try {
 				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
 				Tag tag = audioFile.getTag();

@@ -45,7 +45,7 @@ public class M4aParser {
 
 	private static Track track;
 	
-	public static Track parseM4a(final File fileToParse) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, ParseException {
+	public static Track parseM4aFile(final File fileToParse) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, ParseException {
 		track = new Track();
 		AudioFile audioFile = AudioFileIO.read(fileToParse);
 		String encoding = audioFile.getAudioHeader().getEncodingType();

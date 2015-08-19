@@ -20,6 +20,7 @@ package com.musicott.view;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -30,8 +31,11 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import com.musicott.SceneManager;
+import com.musicott.error.ErrorHandler;
+import com.musicott.error.ErrorType;
 import com.musicott.model.Track;
 import com.musicott.model.TrackField;
+import com.musicott.task.WriteMetadataTask;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
@@ -95,6 +99,7 @@ public class EditController {
 	
 	private Map<TrackField,TextInputControl> editFieldsMap;
 	private Stage editStage;
+	private ErrorHandler errorHandler = ErrorHandler.getInstance();
 	private ObservableList<Track> trackSelection;
 	private boolean changed = false;
 	
@@ -116,7 +121,7 @@ public class EditController {
 		editFieldsMap.put(TrackField.YEAR, year);
 		editFieldsMap.put(TrackField.BPM, bpm);
 		coverImage.setOnMouseClicked(event -> {
-			if(event.getClickCount() == 2) {
+			if(event.getClickCount() <= 2) {
 				FileChooser chooser = new FileChooser();
 				chooser.setTitle("Open file(s)...");
 				chooser.getExtensionFilters().addAll(new ExtensionFilter("Image files (*.png, *.jpg, *.jpeg)","*.png", "*.jpg", "*.jpeg"));
@@ -128,14 +133,16 @@ public class EditController {
 						String mimeType = "";
 						StringTokenizer stk = new StringTokenizer(newCoverImage.getName(),".");
 						while(stk.hasMoreTokens()) mimeType = stk.nextToken();
-						for(Track t: trackSelection) {
-							t.setCoverFile(newCoverBytes, mimeType);
-							t.setHasCover(true);
-						}
+						for(Track t: trackSelection)
+							if(t.getInDisk()) {
+								t.setCoverFile(newCoverBytes, mimeType);
+								t.setHasCover(true);
+							}
 						changed = true;
 						coverImage.setImage(new Image(new ByteArrayInputStream(newCoverBytes), 132, 132, true, true));
-					} catch (Exception e) {
-						e.printStackTrace();
+					} catch (IOException e) {
+						errorHandler.addError(e, ErrorType.COMMON);
+						errorHandler.showErrorDialog(editStage.getOwner().getScene(), ErrorType.COMMON);
 					}
 				}
 			}
@@ -179,7 +186,6 @@ public class EditController {
 			if(changed)
 				t.setDateModified(LocalDate.now());
 			
-			//TODO set image
 			//Changes in the elements of the list doesn't fire the ListChangeListener so save explicitly
 			SceneManager.getInstance().saveLibrary();
 		}
@@ -215,12 +221,15 @@ public class EditController {
 				if(changed)
 					t.setDateModified(LocalDate.now());					
 				
-				//TODO set image
 				//Changes in the elements of the list doesn't fire the ListChangeListener so save explicitly
 				SceneManager.getInstance().saveLibrary();
 			}
 		}
 		editStage.close();
+		WriteMetadataTask wmTask = new WriteMetadataTask(trackSelection);
+		Thread t = new Thread(wmTask, "Write Metadata Thread");
+		t.setDaemon(true);
+		t.start();
 	}
 		
 	@FXML
@@ -253,10 +262,16 @@ public class EditController {
 			titleArtist.textProperty().setValue(track.getArtist());
 			titleAlbum.textProperty().setValue(track.getAlbum());
 			
-			if(track.getHasCover())
-				coverImage.setImage(new Image(new ByteArrayInputStream(track.getCoverFile()), 132, 132, true, true));
-			else
+			if(track.getInDisk()) {
+				if(track.getHasCover())
+					coverImage.setImage(new Image(new ByteArrayInputStream(track.getCoverFile()), 132, 132, true, true));
+				else
+					coverImage.setImage(new Image("file:resources/images/default-cover-icon.png", 132, 132, true, true));	
+			}
+			else {
 				coverImage.setImage(new Image("file:resources/images/default-cover-icon.png", 132, 132, true, true));
+				coverImage.setDisable(true);
+			}
 		}
 		else {
 			List<String> listOfSameFields = new ArrayList<String>();
@@ -287,7 +302,8 @@ public class EditController {
 			List<byte[]> listOfSameCover = new ArrayList<byte[]>();
 			
 			for(Track t: trackSelection) {
-				listOfSameCover.add(t.getCoverFile());
+				if(t.getInDisk())
+					listOfSameCover.add(t.getCoverFile());
 				listOfSameBools.add(t.getIsCompilation());
 			}
 			

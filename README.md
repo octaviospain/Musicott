@@ -24,12 +24,14 @@ A JavaFX application for import, organize and play music files.
 
 ### To be implemented
 * Play flac files
-* Fix metadata from 3rd party
-* Write metadata tags on edit
+* Get metadata from 3rd party services (Beatport, discogs, etc)
 * Advanced search feature
 * Show cover image on table
 * Ability to manage different formats for a single track (implementing a TreeTableView)
 * Managing of HD space giving the option to move files to external drives but maintaining the info in the table
+
+## Download
+[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.6)
 
 ## Changes history
 In [CHANGES.md](https://github.com/octaviospain/Musicott/tree/master/CHANGES.md "Changes")

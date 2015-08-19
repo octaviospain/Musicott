@@ -19,28 +19,19 @@
 package tests.unit;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
-import org.junit.After;
 import org.junit.Test;
 
 import com.cedarsoftware.util.io.JsonReader;
 import com.cedarsoftware.util.io.JsonWriter;
-import com.mpatric.mp3agic.InvalidDataException;
-import com.mpatric.mp3agic.UnsupportedTagException;
-import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.task.parser.Mp3Parser;
 
@@ -57,14 +48,13 @@ public class LibrarySerializeTest {
 		FileOutputStream fos = new FileOutputStream(jsonFile);
 		
 		Map<String,Object> args = new HashMap<String,Object>();
-		Map<Class,List<String>> fields = new HashMap<Class,List<String>>();
+		Map<Class<?>,List<String>> fields = new HashMap<Class<?>,List<String>>();
 		args.put(JsonWriter.FIELD_SPECIFIERS, fields);
 		
 		List<String> fieldNames = new ArrayList<String>();
 		fieldNames.add("trackID");
 		fieldNames.add("fileFolder");
 		fieldNames.add("fileName");
-		fieldNames.add("coverFileName");
 		fieldNames.add("name");
 		fieldNames.add("artist");
 		fieldNames.add("album");
@@ -81,10 +71,11 @@ public class LibrarySerializeTest {
 		fieldNames.add("year");
 		fieldNames.add("bpm");
 		fieldNames.add("hasCover");
-		fieldNames.add("isInDisk");
+		fieldNames.add("inDisk");
 		fieldNames.add("isCompilation");
 		fieldNames.add("dateModified");
 		fieldNames.add("dateAdded");
+		fieldNames.add("fileFormat");
 		
 		fields.put(Track.class,fieldNames);
 		

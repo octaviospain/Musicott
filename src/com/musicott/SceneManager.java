@@ -21,10 +21,10 @@ package com.musicott;
 import java.io.IOException;
 
 import com.musicott.error.ErrorHandler;
+import com.musicott.error.ErrorType;
 import com.musicott.task.LoadLibraryTask;
 import com.musicott.task.SaveLibraryTask;
 import com.musicott.view.EditController;
-import com.musicott.view.ErrorDialogController;
 import com.musicott.view.ImportCollectionController;
 import com.musicott.view.PlayQueueController;
 import com.musicott.view.ProgressImportController;
@@ -51,11 +51,10 @@ import javafx.stage.Stage;
  */
 public class SceneManager {
 	
-	private Stage rootStage;
 	private Stage importStage;
 	private Stage progressStage;
 	private Stage editStage;
-	private Scene mainScene;
+	private MainApp application;
 	
 	private BorderPane rootLayout;
 	private AnchorPane playQueueLayout;
@@ -67,6 +66,7 @@ public class SceneManager {
 	private PlayQueueController playQueueController;
 	
 	private static SceneManager instance;
+	private ErrorHandler errorHandler;
 	
 	private SceneManager() {
 	}
@@ -77,16 +77,21 @@ public class SceneManager {
 		return instance;
 	}
 	
-	protected void setPrimaryStage(Stage primaryStage) {
-		rootStage = primaryStage;
+	protected void setPrimaryStage(MainApp application) {
+		this.application = application;
+		errorHandler = ErrorHandler.getInstance();
 		initPrimaryStage();
 	}
 
 	public void saveLibrary() {
 		SaveLibraryTask task = new SaveLibraryTask();
-		Thread t = new Thread(task, "SaveLibraryThread");
+		Thread t = new Thread(task, "SaveLibrary Thread");
 		t.setDaemon(true);
 		t.run();
+	}
+	
+	public MainApp getApplication() {
+		return application;
 	}
 	
 	public RootLayoutController getRootController() {
@@ -131,8 +136,8 @@ public class SceneManager {
 			editStage.setResizable(false);
 			editStage.showAndWait();
 		} catch (IOException e) {
-			//TODO Show error dialog and closes edit scene
-			e.printStackTrace();
+			errorHandler.addError(e, ErrorType.COMMON);
+			errorHandler.showErrorDialog(ErrorType.COMMON);
 		}
 	}
 	
@@ -155,17 +160,14 @@ public class SceneManager {
 			importStage.setResizable(false);
 			importStage.showAndWait();
 		} catch (IOException e) {
-			//TODO Show error dialog and closes import scene
-			e.printStackTrace();
+			errorHandler.addError(e, ErrorType.COMMON);
+			errorHandler.showErrorDialog(ErrorType.COMMON);
 		}
 	}
 	
 	public void closeImportScene() {
-		if(ErrorHandler.getInstance().hasErrors()) {
-			ErrorDialogController edc = new ErrorDialogController(progressStage.getScene());
-			edc.showDialog();
-			ErrorHandler.getInstance().reset();
-		}
+		if(errorHandler.hasErrors(ErrorType.PARSE)) 
+			errorHandler.showErrorDialog(progressStage.getScene(), ErrorType.PARSE);
 		progressStage.close();
 		if(importStage != null && importStage.isShowing())
 			importStage.close();
@@ -191,13 +193,14 @@ public class SceneManager {
 			progressStage.showAndWait();
 		}
 		catch(IOException e) {
-			// TODO Show error dialog and closes import scene
-			e.printStackTrace();
+			errorHandler.addError(e, ErrorType.COMMON);
+			errorHandler.showErrorDialog(ErrorType.COMMON);
 		}
 	}
 	
 	private void initPrimaryStage() {
 		try {
+			Stage rootStage = application.getStage();
 			FXMLLoader rootLoader = new FXMLLoader();
 			rootLoader.setLocation(MainApp.class.getResource("view/RootLayout.fxml"));
 			rootLayout = (BorderPane) rootLoader.load();
@@ -214,7 +217,7 @@ public class SceneManager {
 			playQueueLayout = (AnchorPane) pqLoader.load();
 			playQueueController = pqLoader.getController();
 			
-			mainScene = new Scene(rootLayout,1200,775);
+			Scene mainScene = new Scene(rootLayout,1200,775);
 			rootStage.setMinWidth(1200);
 			rootStage.setMinHeight(775);
 			rootStage.setScene(mainScene);
@@ -248,8 +251,8 @@ public class SceneManager {
 			thumb.getChildren().add(new ImageView(new Image(SceneManager.class.getResourceAsStream("/icons/sliderthumb-icon.png"))));
 			thumb.setPrefSize(5,5);
 		} catch (IOException e) {
-			//TODO Show error dialog and crashes
-			e.printStackTrace();
+			errorHandler.addError(e, ErrorType.COMMON);
+			errorHandler.showErrorDialog(ErrorType.COMMON);
 		}
 	}
 }

@@ -19,7 +19,6 @@
 package tests.unit;
 
 import java.io.File;
-import java.io.IOException;
 
 import javafx.util.Duration;
 
@@ -34,9 +33,7 @@ import com.mpatric.mp3agic.ID3v1;
 import com.mpatric.mp3agic.ID3v1Tag;
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.ID3v24Tag;
-import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
-import com.mpatric.mp3agic.UnsupportedTagException;
 import com.musicott.model.Track;
 import com.musicott.task.parser.Mp3Parser;
 

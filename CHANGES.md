@@ -1,5 +1,15 @@
 # Changes
 
+## Version 0.6
+
+* Now editing track information saves the metadata on the file, excepts wav files
+* Improved error handling
+* Minor refactors and fixes
+
+## Version 0.5.1
+
+* Fixed an error loading some resources
+
 ## Version 0.5.0
 
 * Implemented search functionality

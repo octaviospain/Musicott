@@ -16,33 +16,32 @@
  *
  */
 
-package com.musicott;
-
-import javafx.application.Application;
-import javafx.scene.image.Image;
-import javafx.stage.Stage;
+package com.musicott.error;
 
 /**
+ * This enum defines the possible types of collected errors
+ * 
  * @author Octavio Calleya
- *
  */
-public class MainApp extends Application {
+public enum ErrorType {
 	
-	private Stage mainStage;
+	/**
+	 * Error from parsing audio files
+	 */
+	PARSE,
 	
-	public static void main(String[] args) {
-		launch();
-	}
+	/**
+	 * Error from writing metadata on audio files
+	 */
+	METADATA,
 	
-	@Override
-	public void start(Stage primaryStage) {		
-		mainStage = primaryStage;
-		mainStage.setTitle("Musicott");
-		mainStage.getIcons().add(new Image("file:resources/images/musicotticon.png"));		
-		SceneManager.getInstance().setPrimaryStage(this);
-	}
+	/**
+	 * Common error
+	 */
+	COMMON,
 	
-	public Stage getStage() {
-		return mainStage;
-	}
+	/**
+	 * Fatal errors that force to end the normal execution
+	 */
+	FATAL
 }
