@@ -28,7 +28,7 @@ A JavaFX application that manages and plays music files.
 [Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.6)
 
 ## Manual
-Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki) for help about using Musicott.
+Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki") for help about using Musicott.
 
 ## Changes history
 In [CHANGES.md](https://github.com/octaviospain/Musicott/tree/master/CHANGES.md "Changes")
