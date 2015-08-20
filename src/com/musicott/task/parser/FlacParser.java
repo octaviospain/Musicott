@@ -34,6 +34,7 @@ import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.TagException;
 import org.jaudiotagger.tag.flac.FlacTag;
 
+import com.musicott.error.WriteMetadataException;
 import com.musicott.model.Track;
 
 /**
@@ -44,7 +45,7 @@ public class FlacParser {
 
 	private static Track track;
 	
-	public static Track parseFlacFile(final File fileToParse) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException {
+	public static Track parseFlacFile(final File fileToParse) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, WriteMetadataException {
 		track = new Track();
 		AudioFile audioFile = AudioFileIO.read(fileToParse);
 		FlacTag tag = (FlacTag) audioFile.getTag();
@@ -107,7 +108,7 @@ public class FlacParser {
 		return track;
 	}
 	
-	private static void checkCover(FlacTag tag) {
+	private static void checkCover(FlacTag tag) throws WriteMetadataException {
 		if(!tag.getArtworkList().isEmpty())
 			track.setHasCover(true);
 		else {

@@ -35,6 +35,7 @@ import org.jaudiotagger.tag.mp4.Mp4FieldKey;
 import org.jaudiotagger.tag.mp4.Mp4Tag;
 
 import com.musicott.error.ParseException;
+import com.musicott.error.WriteMetadataException;
 import com.musicott.model.Track;
 
 /**
@@ -45,7 +46,7 @@ public class M4aParser {
 
 	private static Track track;
 	
-	public static Track parseM4aFile(final File fileToParse) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, ParseException {
+	public static Track parseM4aFile(final File fileToParse) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, ParseException, WriteMetadataException {
 		track = new Track();
 		AudioFile audioFile = AudioFileIO.read(fileToParse);
 		String encoding = audioFile.getAudioHeader().getEncodingType();
@@ -123,7 +124,7 @@ public class M4aParser {
 		return track;
 	}
 	
-	public static void checkCover(Mp4Tag tag) {
+	public static void checkCover(Mp4Tag tag) throws WriteMetadataException {
 		if(!tag.getArtworkList().isEmpty())
 			track.setHasCover(true);
 		else {

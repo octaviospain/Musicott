@@ -32,6 +32,7 @@ import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
 import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
 import org.jaudiotagger.tag.TagException;
 
+import com.musicott.error.WriteMetadataException;
 import com.musicott.model.Track;
 
 /**
@@ -42,7 +43,7 @@ public class WavParser {
 
 	private static Track track;
 	
-	public static Track parseWavFile(final File fileToParse) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException {
+	public static Track parseWavFile(final File fileToParse) throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, WriteMetadataException {
 		track = new Track();
 		AudioFile audioFile = AudioFileIO.read(fileToParse);
 		track.setFileFolder(new File(fileToParse.getParent()).getAbsolutePath());
@@ -56,7 +57,7 @@ public class WavParser {
 		return track;
 	}
 	
-	private static void checkCover(Track track) {
+	private static void checkCover(Track track) throws WriteMetadataException {
 		File f = new File(track.getFileFolder()+"/cover.jpg");
 		if(f.exists()) {
 			try {

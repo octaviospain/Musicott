@@ -1,5 +1,5 @@
 /*
- * This file is part of Musicott software.
+q * This file is part of Musicott software.
  *
  * Musicott software is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ import java.util.StringTokenizer;
 import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
+import com.musicott.error.WriteMetadataException;
 import com.musicott.model.Track;
 import com.musicott.model.TrackField;
 import com.musicott.task.WriteMetadataTask;
@@ -135,15 +136,21 @@ public class EditController {
 						while(stk.hasMoreTokens()) mimeType = stk.nextToken();
 						for(Track t: trackSelection)
 							if(t.getInDisk()) {
-								t.setCoverFile(newCoverBytes, mimeType);
-								t.setHasCover(true);
+								try {
+									t.setCoverFile(newCoverBytes, mimeType);
+									t.setHasCover(true);
+									changed = true;
+								} catch (WriteMetadataException e) {
+									errorHandler.addError(e, ErrorType.METADATA);
+								}
 							}
-						changed = true;
 						coverImage.setImage(new Image(new ByteArrayInputStream(newCoverBytes), 132, 132, true, true));
 					} catch (IOException e) {
 						errorHandler.addError(e, ErrorType.COMMON);
 						errorHandler.showErrorDialog(editStage.getOwner().getScene(), ErrorType.COMMON);
 					}
+					if(errorHandler.hasErrors(ErrorType.METADATA))
+						errorHandler.showErrorDialog(editStage.getOwner().getScene(), ErrorType.METADATA);
 				}
 			}
 		});

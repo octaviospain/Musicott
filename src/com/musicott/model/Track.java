@@ -45,6 +45,7 @@ import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.NotSupportedException;
 import com.mpatric.mp3agic.UnsupportedTagException;
+import com.musicott.error.WriteMetadataException;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
@@ -481,32 +482,40 @@ public class Track {
 	 * 
 	 * @param coverFile the array of bytes
 	 * @param mimeType the mimetype extension of the file
+	 * @throws WriteMetadataException when cover image could not be saved
 	 */
-	public void setCoverFile(byte[] coverFile, String mimeType) {
-		File oldFile = new File(fileFolder+"/"+fileName);
+	public void setCoverFile(byte[] coverFile, String mimeType) throws WriteMetadataException {
+		File trackFile = new File(fileFolder+"/"+fileName);
+		AudioFile audioFile;
 		if(fileFormat.equals("mp3")) {
 			try {
 				Mp3File mp3File = new Mp3File(fileFolder+"/"+fileName);
 				mp3File.getId3v2Tag().setAlbumImage(coverFile, mimeType);
 				mp3File.save(fileFolder+"/"+"TEMP"+fileName);
 				File newFile = new File(fileFolder+"/"+"TEMP"+fileName);
-				newFile.renameTo(oldFile);
-			} catch (UnsupportedTagException | InvalidDataException | IOException | NotSupportedException e) {}
+				newFile.renameTo(trackFile);
+			} catch (UnsupportedTagException | InvalidDataException | IOException | NotSupportedException e) {
+				WriteMetadataException wme = new WriteMetadataException("Error setting cover image", this);
+				throw wme;
+			}
 			finally {
-				if(oldFile.exists())
-					oldFile.delete();
+				if(trackFile.exists())
+					trackFile.delete();
 			}
 		}
 		else if(fileFormat.equals("flac")) {
 			File file = new File("cover."+mimeType);
 			try {
-				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
+				audioFile = AudioFileIO.read(trackFile);
 				FlacTag tag = (FlacTag) audioFile.getTag();
 				FileUtils.writeByteArrayToFile(file, coverFile);
 				Artwork cover = ArtworkFactory.createArtworkFromFile(file);
 				tag.addField(cover);
 				audioFile.commit();
-			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException | CannotWriteException e) {}
+			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException | CannotWriteException e) {
+				WriteMetadataException wme = new WriteMetadataException("Error setting cover image", this);
+				throw wme;
+			}
 			finally {
 				if(file.exists())
 					file.delete();
@@ -516,16 +525,22 @@ public class Track {
 			try {
 				File file = new File(fileFolder+"/cover."+mimeType);
 				FileUtils.writeByteArrayToFile(file, coverFile);
-			} catch (IOException e) {}
+			} catch (IOException e) {
+				WriteMetadataException wme = new WriteMetadataException("Error setting cover image", this);
+				throw wme;
+			}
 		}
 		else if(fileFormat.equals("m4a")) {
 			try {
-				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
+				audioFile = AudioFileIO.read(trackFile);
 				Tag tag = audioFile.getTag();
 				tag.deleteArtworkField();
 				tag.addField(((Mp4Tag)tag).createArtworkField(coverFile));
 				audioFile.commit();
-			} catch(IOException | CannotReadException | TagException | ReadOnlyFileException | InvalidAudioFrameException | CannotWriteException e) {}
+			} catch(IOException | CannotReadException | TagException | ReadOnlyFileException | InvalidAudioFrameException | CannotWriteException e) {
+				WriteMetadataException wme = new WriteMetadataException("Error setting cover image", this);
+				throw wme;
+			}
 		}
 	}
 	

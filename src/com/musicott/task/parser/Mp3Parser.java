@@ -28,6 +28,7 @@ import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
+import com.musicott.error.WriteMetadataException;
 import com.musicott.model.Track;
 
 import javafx.util.Duration;
@@ -41,7 +42,7 @@ public class Mp3Parser {
 	private static File file;
 	private static Mp3File mp3File;
 
-	public static Track parseMp3File(final File fileToParse) throws UnsupportedTagException, InvalidDataException, IOException {
+	public static Track parseMp3File(final File fileToParse) throws UnsupportedTagException, InvalidDataException, IOException, WriteMetadataException {
 		file = fileToParse;
 		Track mp3Track = new Track();
 		mp3File = new Mp3File(file);
@@ -109,7 +110,7 @@ public class Mp3Parser {
 		} catch (NumberFormatException e) {}
 	}
 		
-	private static void checkCover(Track track) {
+	private static void checkCover(Track track) throws WriteMetadataException {
 		if(mp3File.hasId3v2Tag()) {
 			byte[] img = mp3File.getId3v2Tag().getAlbumImage();
 			if(img != null)

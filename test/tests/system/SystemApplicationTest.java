@@ -53,6 +53,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.UnsupportedTagException;
 import com.musicott.MainApp;
+import com.musicott.error.WriteMetadataException;
 import com.musicott.model.Track;
 import com.musicott.task.parser.Mp3Parser;
 
@@ -240,7 +241,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	}
 	
 	@Test
-	public void showCorrectFieldsEditViewSeveraTracks_FildsInCommonTest() throws UnsupportedTagException, InvalidDataException, IOException, InterruptedException {
+	public void showCorrectFieldsEditViewSeveraTracks_FildsInCommonTest() throws UnsupportedTagException, InvalidDataException, IOException, InterruptedException, WriteMetadataException {
 		List<Track> list = new ArrayList<Track>();
 		for(File f:new File(mp3FilePath).getParentFile().listFiles())
 			if(f.getName().substring(f.getName().length()-3).equals("mp3"))
@@ -335,7 +336,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	}
 	
 	@Test
-	public void showCorrectFieldsEditViewOneTrackTest() throws UnsupportedTagException, InvalidDataException, IOException {
+	public void showCorrectFieldsEditViewOneTrackTest() throws UnsupportedTagException, InvalidDataException, IOException, WriteMetadataException {
 		Track t = Mp3Parser.parseMp3File(new File(mp3FilePath));
 		clickOn("#menuFile");
 		clickOn("#menuItemOpen");

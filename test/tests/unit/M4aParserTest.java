@@ -36,6 +36,7 @@ import org.jaudiotagger.tag.mp4.Mp4Tag;
 import org.junit.Test;
 
 import com.musicott.error.ParseException;
+import com.musicott.error.WriteMetadataException;
 import com.musicott.model.Track;
 import com.musicott.task.parser.M4aParser;
 
@@ -46,7 +47,7 @@ import com.musicott.task.parser.M4aParser;
 public class M4aParserTest {
 	
 	@Test
-	public void m4aTagTest() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException, ParseException {
+	public void m4aTagTest() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException, ParseException, WriteMetadataException {
 		File m4aFile = tagFile("/users/octavio/test/testeable.m4a");
 		Track track = M4aParser.parseM4aFile(m4aFile);
 		assertEquals(track.getName(),"Skeksis (Original Mix)");
@@ -64,7 +65,7 @@ public class M4aParserTest {
 	}
 	
 	@Test
-	public void m4aNoTagTest() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException, ParseException {
+	public void m4aNoTagTest() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException, ParseException, WriteMetadataException {
 		File m4aFile = noTagFile("/users/octavio/test/testeable.m4a");
 		Track track = M4aParser.parseM4aFile(m4aFile);
 		assertEquals(track.getName(),"");

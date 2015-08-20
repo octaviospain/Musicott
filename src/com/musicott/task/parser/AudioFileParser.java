@@ -19,11 +19,20 @@
 package com.musicott.task.parser;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.StringTokenizer;
 
+import org.jaudiotagger.audio.exceptions.CannotReadException;
+import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
+import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
+import org.jaudiotagger.tag.TagException;
+
+import com.mpatric.mp3agic.InvalidDataException;
+import com.mpatric.mp3agic.UnsupportedTagException;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
 import com.musicott.error.ParseException;
+import com.musicott.error.WriteMetadataException;
 import com.musicott.model.Track;
 
 /**
@@ -56,7 +65,8 @@ public class AudioFileParser {
 					 break;
 			}
 		}
-		catch (Exception e) {
+		catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException |
+			   WriteMetadataException | UnsupportedTagException | InvalidDataException | ParseException e) {
 			ParseException pe = new ParseException("Parsing Error", e, file);
 			ErrorHandler.getInstance().addError(pe, ErrorType.PARSE);
 		}

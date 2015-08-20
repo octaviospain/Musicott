@@ -2,7 +2,7 @@
 
 ## Version 0.6
 
-* Now editing track information saves the metadata on the file, excepts wav files
+* Now editing track information saves the metadata on the file, except wav files
 * Improved error handling
 * Minor refactors and fixes
 
