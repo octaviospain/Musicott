@@ -21,11 +21,26 @@ A JavaFX application that manages and plays music files.
 * Get metadata from 3rd party services (Beatport, discogs, etc)
 * Advanced search feature
 * Show cover image on table
-* Ability to manage different formats for a single track (implementing a TreeTableView)
-* Managing of HD space giving the option to move files to external drives but maintaining the info in the table
 
 ## Download
 [Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.6)
+
+## Build
+I recommend to use Eclipse IDE witch e(fx)clipse plugin installed. To do so follow these steps:
+1. Create a new JavaFX project.
+2. Clone the repository in the folder of the project
+3. Right-click on the project and click Configure > Convert to Maven Project.
+4. Configure the build path adding the .jar libraries at `/lib` and set `/test/` and `/resources/` as source folders.
+5. Open `build.fxbuild`, select "exe" for Windows or "dmg" for OS X in the "Packaging Format" field, and deselect "Convert CSS into binary form". Then click "Generate ant build.xml"
+ 6. After that you must add these two lines to `build.xml`:
+
+Find `<filelist>` tag and write at the end `<file name="${basedir}"/>`
+ 
+Find `<fx:resources id="appRes">` tag and write before the closing tag `</fx:resources>` the following: `<fx:fileset dir="dist" includes="resources/**"/>`
+
+You have to do steop 6 *every time* you generate the `build.xml` file because e(fx)clipse doesn`t.
+
+Then Right-click on `build.xml` and click Run As > Ant Build. The deployed package will be at `/build/deploy/bundles`
 
 ## Manual
 Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki") for help about using Musicott.
