@@ -46,7 +46,7 @@ java -cp target/Musicott-x.y.z.jar com.musicott.MainApp
 Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki") for help about using Musicott.
 
 ## Changes history
-In [CHANGES.md]({{baseurl}}/changes.html "Changes History")
+In [CHANGES.md]({{baseurl}}/changes.md "Changes History")
 
 ## License
 Musicott is free softare under GNU GPL version 3 license. The license of Musicott and the licenses of the included libraries in this software are in the [LICENSE](https://github.com/octaviospain/Musicott/tree/master/license "License") folder
