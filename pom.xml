@@ -5,13 +5,20 @@
   <version>0.6.0</version>
   <name>Musicott</name>
   <build>
+    <directory>target</directory>
     <sourceDirectory>src</sourceDirectory>
+    <outputDirectory>target/classes</outputDirectory>
+    <testSourceDirectory>test</testSourceDirectory>
+    <testOutputDirectory>target/test-classes</testOutputDirectory>
     <resources>
       <resource>
         <directory>src</directory>
         <excludes>
           <exclude>**/*.java</exclude>
         </excludes>
+      </resource>
+      <resource>
+      	<directory>resources</directory>
       </resource>
     </resources>
     <plugins>
@@ -23,6 +30,26 @@
           <target>1.8</target>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>1.6</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+  		<groupId>org.apache.maven.plugins</groupId>
+  		<artifactId>maven-surefire-plugin</artifactId>
+ 		<configuration>
+    		<skipTests>true</skipTests>
+ 		</configuration>
+		</plugin>
     </plugins>
   </build>
   <dependencies>
@@ -60,6 +87,7 @@
     	<groupId>com.mpatric</groupId>
     	<artifactId>mp3agic</artifactId>
     	<version>0.8.3</version>
+    	<scope>compile</scope>
     </dependency>
     <dependency>
     	<groupId>org.mockito</groupId>
@@ -82,13 +110,21 @@
     <dependency>
     	<groupId>com.cedarsoftware</groupId>
     	<artifactId>json-io</artifactId>
-    	<version>4.1.0</version>
+    	<version>4.1.6</version>
+    	<scope>compile</scope>
     </dependency>
     <dependency>
     	<groupId>org.apache.commons</groupId>
     	<artifactId>commons-io</artifactId>
     	<version>1.3.2</version>
+    	<scope>compile</scope>
     </dependency>
+    <dependency>
+	    <groupId>org.bitbucket.ijabz</groupId>
+	    <artifactId>jaudiotagger</artifactId>
+	    <version>Version2_2_2</version>
+    	<scope>compile</scope>
+	</dependency>
   </dependencies>
   <repositories>
     <repository>
@@ -105,5 +141,9 @@
             <enabled>true</enabled>
        </snapshots>
     </repository>
+    	<repository>
+	    <id>jitpack.io</id>
+	    <url>https://jitpack.io</url>
+	</repository>
 </repositories>
 </project>
