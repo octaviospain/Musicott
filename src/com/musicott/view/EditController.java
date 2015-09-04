@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -191,7 +191,7 @@ public class EditController {
 				}
 			}
 			if(changed)
-				t.setDateModified(LocalDate.now());
+				t.setDateModified(LocalDateTime.now());
 			
 			//Changes in the elements of the list doesn't fire the ListChangeListener so save explicitly
 			SceneManager.getInstance().saveLibrary();
@@ -226,7 +226,7 @@ public class EditController {
 					changed = true;
 				}
 				if(changed)
-					t.setDateModified(LocalDate.now());					
+					t.setDateModified(LocalDateTime.now());					
 				
 				//Changes in the elements of the list doesn't fire the ListChangeListener so save explicitly
 				SceneManager.getInstance().saveLibrary();

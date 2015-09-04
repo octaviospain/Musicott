@@ -20,7 +20,7 @@ package com.musicott.view;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -142,9 +142,9 @@ public class RootLayoutController {
 	@FXML
 	private TableColumn<Track,String> labelCol;
 	@FXML
-	private TableColumn<Track,LocalDate> dateModifiedCol;
+	private TableColumn<Track,LocalDateTime> dateModifiedCol;
 	@FXML
-	private TableColumn<Track,LocalDate> dateAddedCol;
+	private TableColumn<Track,LocalDateTime> dateAddedCol;
 	@FXML
 	private TableColumn<Track,Number> sizeCol;
 	@FXML
@@ -188,8 +188,8 @@ public class RootLayoutController {
 		commentsCol.setCellValueFactory(cellData -> cellData.getValue().getCommentsProperty());
 		albumArtistCol.setCellValueFactory(cellData -> cellData.getValue().getAlbumArtistProperty());
 		labelCol.setCellValueFactory(cellData -> cellData.getValue().getLabelProperty());
-		dateModifiedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<LocalDate>(cellData.getValue().getDateModified()));
-		dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<LocalDate>(cellData.getValue().getDateAdded()));
+		dateModifiedCol.setCellValueFactory(cellData -> cellData.getValue().getDateModifiedProperty());
+		dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<LocalDateTime>(cellData.getValue().getDateAdded()));
 		sizeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getSize()));
 		totalTimeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<Duration>(cellData.getValue().getTotalTime()));
 		yearCol.setCellValueFactory(cellData -> cellData.getValue().getYearProperty());
@@ -263,30 +263,31 @@ public class RootLayoutController {
 				}
 			};
 		});
-		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy");
+		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
 		dateModifiedCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		dateModifiedCol.setCellFactory(column -> {
-			return new TableCell<Track,LocalDate>() {
+			return new TableCell<Track,LocalDateTime>() {
 				@Override
-				protected void updateItem(LocalDate item, boolean empty) {
+				protected void updateItem(LocalDateTime item, boolean empty) {
 					super.updateItem(item, empty);
 					if(item == null)
 						setText("");
 					else
-						setText(dateFormatter.format(item));
+						setText(item.format(dateFormatter));
 				}
 			}; 
 		});
 		dateAddedCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		dateAddedCol.setSortType(TableColumn.SortType.DESCENDING);
 		dateAddedCol.setCellFactory(column -> {
-			return new TableCell<Track,LocalDate>() {
+			return new TableCell<Track,LocalDateTime>() {
 				@Override
-				protected void updateItem(LocalDate item, boolean empty) {
+				protected void updateItem(LocalDateTime item, boolean empty) {
 					super.updateItem(item, empty);
 					if(item == null)
 						setText("");
 					else
-						setText(dateFormatter.format(item));
+						setText(item.format(dateFormatter));
 				}
 			}; 
 		});
@@ -333,6 +334,7 @@ public class RootLayoutController {
 		selection = trackTable.getSelectionModel().getSelectedItems();
 		trackTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		trackTable.getSelectionModel().selectedIndexProperty().addListener(((observable, oldValue, newValue) -> selection = trackTable.getSelectionModel().getSelectedItems()));
+		trackTable.getSortOrder().add(dateAddedCol);
 		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();
 		prevButton.setDisable(true);

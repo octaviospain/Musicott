@@ -70,6 +70,7 @@ public class LoadLibraryTask extends Task<Void>{
 				t.getDiscNumberProperty().setValue(t.getDiscNumber());
 				t.getBpmProperty().setValue(t.getBpm());
 				t.getHasCoverProperty().setValue(t.getHasCover());
+				t.getDateModifiedProperty().setValue(t.getDateModified());
 			}
 		}		
 		return null;

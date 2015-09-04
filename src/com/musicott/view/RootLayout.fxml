@@ -201,6 +201,7 @@
          <children>
          	<TableView fx:id="trackTable" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
               <columns>
+                  <TableColumn fx:id="coverCol" prefWidth="50.0" text="Cover" />
                   <TableColumn fx:id="artistCol" prefWidth="170.0" text="Artist" />
                   <TableColumn fx:id="nameCol" prefWidth="170.0" text="Name" />
                   <TableColumn fx:id="albumCol" prefWidth="170.0" text="Album" />
@@ -215,10 +216,9 @@
                   <TableColumn fx:id="albumArtistCol" prefWidth="100.0" text="Album Artist" />
                   <TableColumn fx:id="commentsCol" prefWidth="150.0" text="Comments" />
                   <TableColumn fx:id="bitRateCol" prefWidth="60.0" text="BitRate" />
-                  <TableColumn fx:id="coverCol" prefWidth="50.0" text="Cover" />
                   <TableColumn fx:id="playCountCol" prefWidth="50.0" text="Plays" />
-                  <TableColumn fx:id="dateModifiedCol" prefWidth="70.0" text="Modified" />
-                  <TableColumn fx:id="dateAddedCol" prefWidth="70.0" text="Added" />
+                  <TableColumn fx:id="dateModifiedCol" prefWidth="110.0" text="Modified" />
+                  <TableColumn fx:id="dateAddedCol" prefWidth="110.0" text="Added" />
               </columns>
             </TableView>
          </children>

@@ -22,7 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -49,9 +49,11 @@ import com.musicott.error.WriteMetadataException;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.util.Duration;
@@ -86,8 +88,8 @@ public class Track {
 	private boolean inDisk;
 	private boolean isCompilation;
 
-	private LocalDate dateModified;
-	private LocalDate dateAdded;
+	private LocalDateTime dateModified;
+	private LocalDateTime dateAdded;
 	
 	private StringProperty nameProperty;
 	private StringProperty artistProperty;
@@ -103,6 +105,7 @@ public class Track {
 	private IntegerProperty bpmProperty;
 	
 	private BooleanProperty hasCoverProperty;
+	private ObjectProperty<LocalDateTime> dateModifiedProperty;
 	private Map<TrackField,Property<?>> propertyMap;
 	private String fileFormat;
 	
@@ -128,8 +131,8 @@ public class Track {
     	hasCover = false;
     	inDisk = false;
     	isCompilation = false;
-    	dateModified = LocalDate.now();
-    	dateAdded = LocalDate.now();
+    	dateModified = LocalDateTime.now();
+    	dateAdded = LocalDateTime.now();
     	
     	nameProperty = new SimpleStringProperty(name);
     	nameProperty.addListener((observable, oldString, newString) -> setName(newString));
@@ -155,6 +158,8 @@ public class Track {
     	bpmProperty.addListener((observable, oldNumber, newNumber) -> setBpm(newNumber.intValue()));
     	hasCoverProperty = new SimpleBooleanProperty(hasCover);
     	hasCoverProperty.addListener((observable, oldBoolean, newBoolean) -> setHasCover(newBoolean.booleanValue())); 
+    	dateModifiedProperty = new SimpleObjectProperty<LocalDateTime>(dateModified);
+    	dateModifiedProperty.addListener((observable, oldDate, newDate) -> setDateModified(newDate));
     	
     	propertyMap = new HashMap<TrackField,Property<?>>();
     	propertyMap.put(TrackField.NAME, nameProperty);
@@ -407,19 +412,24 @@ public class Track {
 		this.isCompilation = isCompilation;
 	}
 	
-	public LocalDate getDateModified() {
+	public ObjectProperty<LocalDateTime> getDateModifiedProperty() {
+		return dateModifiedProperty;
+	}
+	
+	public LocalDateTime getDateModified() {
 		return dateModified;
 	}
 
-	public void setDateModified(LocalDate dateModified) {
+	public void setDateModified(LocalDateTime dateModified) {
 		this.dateModified = dateModified;
+		dateModifiedProperty.set(dateModified);
 	}
 
-	public LocalDate getDateAdded() {
+	public LocalDateTime getDateAdded() {
 		return dateAdded;
 	}
 
-	public void setDateAdded(LocalDate dateAdded) {
+	public void setDateAdded(LocalDateTime dateAdded) {
 		this.dateAdded = dateAdded;
 	}
 	
