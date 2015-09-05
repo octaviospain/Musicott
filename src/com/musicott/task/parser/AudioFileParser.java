@@ -20,7 +20,6 @@ package com.musicott.task.parser;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.StringTokenizer;
 
 import org.jaudiotagger.audio.exceptions.CannotReadException;
 import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
@@ -42,9 +41,8 @@ import com.musicott.model.Track;
 public class AudioFileParser {
 
 	public static Track parseAudioFile(File file, boolean acceptM4a, boolean acceptWav, boolean acceptFlac) {
-		String format = file.getName();
-		StringTokenizer stk = new StringTokenizer(format,".");
-		while(stk.hasMoreTokens()) format = stk.nextToken();
+		int pos= file.getName().lastIndexOf(".");
+		String format = file.getName().substring(pos + 1);
 		Track track = null;
 		try {
 			switch(format) {

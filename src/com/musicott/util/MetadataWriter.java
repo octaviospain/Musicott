@@ -22,7 +22,6 @@ import static com.mpatric.mp3agic.ID3v1Genres.matchGenreDescription;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.StringTokenizer;
 
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
@@ -60,11 +59,8 @@ public class MetadataWriter {
 	 * @throws WriteMetadataException 
 	 */
 	public static void writeTrackMetadata(Track track) {
-		String format = track.getFileName();
-		StringTokenizer stk = new StringTokenizer(format, ".");
-		while(stk.hasMoreTokens()) format = stk.nextToken();
 		try {
-			switch(format) {
+			switch(track.getFileFormat()) {
 				case "mp3":
 					writeMp3Metadata(track);
 					break;				

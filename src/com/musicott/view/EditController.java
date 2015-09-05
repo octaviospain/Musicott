@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 
 import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
@@ -132,8 +131,8 @@ public class EditController {
 					try {
 						newCoverBytes = Files.readAllBytes(Paths.get(newCoverImage.getPath()));
 						String mimeType = "";
-						StringTokenizer stk = new StringTokenizer(newCoverImage.getName(),".");
-						while(stk.hasMoreTokens()) mimeType = stk.nextToken();
+						int pos = newCoverImage.getName().lastIndexOf(".");
+						mimeType = newCoverImage.getName().substring(pos + 1 );
 						for(Track t: trackSelection)
 							if(t.getInDisk()) {
 								try {

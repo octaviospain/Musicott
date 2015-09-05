@@ -25,7 +25,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.StringTokenizer;
 
 import org.apache.commons.io.FileUtils;
 import org.jaudiotagger.audio.AudioFile;
@@ -201,8 +200,8 @@ public class Track {
 
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
-		StringTokenizer stk = new StringTokenizer(fileName,".");
-		while(stk.hasMoreTokens()) fileFormat = stk.nextToken();
+		int pos = fileName.lastIndexOf(".");
+		fileFormat = fileName.substring(pos + 1);
 	}
 	
 	public String getFileFormat() {
