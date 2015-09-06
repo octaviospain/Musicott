@@ -37,13 +37,15 @@ public class ImportTask extends Task<List<Track>>{
 
 	private List<Track> list;
 	boolean m4a, wav, flac;
-	private int numFiles, currentFiles;
+	private int currentFiles;
 	private File folder;
+	private List<File> finalFiles;
 	
 	public ImportTask(File folder, boolean importM4a, boolean importWav, boolean importFlac) {
 		list = new ArrayList<Track>();
+		finalFiles = new ArrayList<File>();
 		this.folder = folder;
-		numFiles = currentFiles = 0;
+		currentFiles = 0;
 		m4a = importM4a;
 		wav = importWav;
 		flac = importFlac;
@@ -80,44 +82,52 @@ public class ImportTask extends Task<List<Track>>{
 	}
 	
 	private void scanFolder(File folder) {
-		File[] files = folder.listFiles();
-		for(File file:files)
+		for(File file:finalFiles)
 			if(isCancelled())
 				break;
-			else
-				if(file.isDirectory())
-					scanFolder(file);
-				else {
-					Track currentTrack = AudioFileParser.parseAudioFile(file, m4a, wav, flac);
-					if(currentTrack != null) {
-						updateProgress(++currentFiles, numFiles);
-						list.add(currentTrack);
-					}
+			else {
+				updateProgress(++currentFiles, finalFiles.size());
+				System.out.println(currentFiles+"/"+finalFiles.size());
+				Track currentTrack = AudioFileParser.parseAudioFile(file);
+				if(currentTrack != null) {
+					list.add(currentTrack);
 				}
+			}
 	}
 	
 	private void countFiles(File folder) {
-		File[] files = folder.listFiles();
+		File[] files = folder.listFiles(file -> {
+			boolean res = false;
+			int pos = file.getName().lastIndexOf(".");
+			String format = file.getName().substring(pos + 1);
+			if(format.equals("mp3")) {
+				res = true;
+				finalFiles.add(file);
+			}
+			else
+				if(m4a && format.equals("m4a")) {
+					res = true;
+					finalFiles.add(file);
+				}
+				else
+					if(wav && format.equals("wav")) {
+						res = true;
+						finalFiles.add(file);
+					}
+					else
+						if(flac && format.equals("flac")) {
+							res = true;
+							finalFiles.add(file);
+						}
+			if(file.isDirectory())
+				res = true;
+			return res;
+		});
 		for(File file:files)
 			if(isCancelled())
 				break;
 			else
 				if(file.isDirectory())
 					countFiles(file);
-				else {
-					int pos = file.getName().lastIndexOf(".");
-					String format = file.getName().substring(pos + 1);
-					if(format.equals("mp3"))
-						numFiles++;
-					else
-						if(m4a && format.equals("m4a"))
-							numFiles++;
-						else
-							if(wav && format.equals("wav"))
-								numFiles++;
-							else
-								if(flac && format.equals("flac"))
-									numFiles++;		
-				}
 	}
 }

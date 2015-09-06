@@ -79,7 +79,7 @@ public class AudioFileParserTest {
 		track.getYearProperty().set(2011);
 		track.setTotalTime(Duration.seconds((int)new Mp3File("/Users/Octavio/Test/testeable.mp3").getLengthInSeconds()));
 
-		Track expectedTrack = AudioFileParser.parseAudioFile(mp3File, true, true, true);
+		Track expectedTrack = AudioFileParser.parseAudioFile(mp3File);
 		
 		assertEquals(expectedTrack, track);
 	}
@@ -87,7 +87,7 @@ public class AudioFileParserTest {
 	@Test
 	public void parseM4aTest() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException {
 		File m4aFile = m4aFile("/users/octavio/test/testeable.m4a");
-		Track track = AudioFileParser.parseAudioFile(m4aFile, true, true, true);
+		Track track = AudioFileParser.parseAudioFile(m4aFile);
 		assertEquals(track.getName(),"Skeksis (Original Mix)");
 		assertEquals(track.getArtist(),"Adam Beyer");
 		assertEquals(track.getAlbum(),"Skeksis");
@@ -105,7 +105,7 @@ public class AudioFileParserTest {
 	@Test
 	public void parseFlacTest() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException {
 		File flacFile = flacFile("/users/octavio/test/testeable.flac");
-		Track track = AudioFileParser.parseAudioFile(flacFile, true, true, true);
+		Track track = AudioFileParser.parseAudioFile(flacFile);
 		assertEquals(track.getName(),"Skeksis (Original Mix)");
 		assertEquals(track.getArtist(),"Adam Beyer");
 		assertEquals(track.getAlbum(),"Skeksis");
@@ -123,7 +123,7 @@ public class AudioFileParserTest {
 	@Test
 	public void parseWavTest() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException {
 		File wavFile = new File("/users/octavio/test/testeable.wav");
-		Track track = AudioFileParser.parseAudioFile(wavFile, true, true, true);
+		Track track = AudioFileParser.parseAudioFile(wavFile);
 		AudioFile audioFile = AudioFileIO.read(wavFile);
 		int bitRate = Integer.parseInt(audioFile.getAudioHeader().getBitRate());
 		Duration totalTime = Duration.seconds(audioFile.getAudioHeader().getTrackLength());

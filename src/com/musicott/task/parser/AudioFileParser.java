@@ -40,7 +40,14 @@ import com.musicott.model.Track;
  */
 public class AudioFileParser {
 
-	public static Track parseAudioFile(File file, boolean acceptM4a, boolean acceptWav, boolean acceptFlac) {
+	/**
+	 * Parses a file to a <tt>Track</tt> object that represents an audio file.
+	 * <p>Precondition: file must have *.mp3, *.m4a, *.wav or *.flac extension.
+	 * 
+	 * @param file the File object to parse
+	 * @return <tt>Track</tt> object
+	 */
+	public static Track parseAudioFile(File file) {
 		int pos= file.getName().lastIndexOf(".");
 		String format = file.getName().substring(pos + 1);
 		Track track = null;
@@ -50,17 +57,14 @@ public class AudioFileParser {
 					track = Mp3Parser.parseMp3File(file);
 					break;
 				case "m4a":
-					if(acceptM4a)
-						track = M4aParser.parseM4aFile(file);
+					track = M4aParser.parseM4aFile(file);
 					break;
 				case "wav":
-					if(acceptWav)
-						track = WavParser.parseWavFile(file);
+					track = WavParser.parseWavFile(file);
 					break;
 				case "flac":
-					if(acceptFlac)
-						track = FlacParser.parseFlacFile(file);
-					 break;
+					track = FlacParser.parseFlacFile(file);
+					break;
 			}
 		}
 		catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException |

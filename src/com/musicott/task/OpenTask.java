@@ -51,10 +51,10 @@ public class OpenTask extends Task<List<Track>> {
 			if(isCancelled())
 				break;
 			else {
-				Track currentTrack = AudioFileParser.parseAudioFile(file, true, true, true);
+				updateProgress(++i, numFiles);
+				Track currentTrack = AudioFileParser.parseAudioFile(file);
 				if(currentTrack != null) {
 					list.add(currentTrack);
-					updateProgress(++i, numFiles);
 				}
 			}
 		if(!isCancelled())
