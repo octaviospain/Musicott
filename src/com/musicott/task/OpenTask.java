@@ -51,10 +51,11 @@ public class OpenTask extends Task<List<Track>> {
 			if(isCancelled())
 				break;
 			else {
-				updateProgress(++i, numFiles);
 				Track currentTrack = AudioFileParser.parseAudioFile(file, true, true, true);
-				if(currentTrack != null)
+				if(currentTrack != null) {
 					list.add(currentTrack);
+					updateProgress(++i, numFiles);
+				}
 			}
 		if(!isCancelled())
 			SceneManager.getInstance().getRootController().addTracks(list);

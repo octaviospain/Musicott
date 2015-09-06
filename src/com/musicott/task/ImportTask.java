@@ -37,13 +37,13 @@ public class ImportTask extends Task<List<Track>>{
 
 	private List<Track> list;
 	boolean m4a, wav, flac;
-	private int numFiles;
+	private int numFiles, currentFiles;
 	private File folder;
 	
 	public ImportTask(File folder, boolean importM4a, boolean importWav, boolean importFlac) {
 		list = new ArrayList<Track>();
 		this.folder = folder;
-		numFiles = 0;
+		numFiles = currentFiles = 0;
 		m4a = importM4a;
 		wav = importWav;
 		flac = importFlac;
@@ -81,7 +81,6 @@ public class ImportTask extends Task<List<Track>>{
 	
 	private void scanFolder(File folder) {
 		File[] files = folder.listFiles();
-		int currentFiles = 0;
 		for(File file:files)
 			if(isCancelled())
 				break;
@@ -89,10 +88,11 @@ public class ImportTask extends Task<List<Track>>{
 				if(file.isDirectory())
 					scanFolder(file);
 				else {
-					updateProgress(++currentFiles, numFiles);
 					Track currentTrack = AudioFileParser.parseAudioFile(file, m4a, wav, flac);
-					if(currentTrack != null)
+					if(currentTrack != null) {
+						updateProgress(++currentFiles, numFiles);
 						list.add(currentTrack);
+					}
 				}
 	}
 	
@@ -104,17 +104,20 @@ public class ImportTask extends Task<List<Track>>{
 			else
 				if(file.isDirectory())
 					countFiles(file);
-				else
-					if(file.getName().substring(file.getName().length()-3).equals("mp3"))
+				else {
+					int pos = file.getName().lastIndexOf(".");
+					String format = file.getName().substring(pos + 1);
+					if(format.equals("mp3"))
 						numFiles++;
 					else
-						if(m4a && file.getName().substring(file.getName().length()-3).equals("m4a"))
+						if(m4a && format.equals("m4a"))
 							numFiles++;
 						else
-							if(wav && file.getName().substring(file.getName().length()-3).equals("wav"))
+							if(wav && format.equals("wav"))
 								numFiles++;
 							else
-								if(flac && file.getName().substring(file.getName().length()-4).equals("flac"))
+								if(flac && format.equals("flac"))
 									numFiles++;		
+				}
 	}
 }
