@@ -48,7 +48,7 @@ public class MusicLibrary {
 	
 	public int hashCode() {
 		int hash = 71;
-		hash = 73*tracks.hashCode();
+		hash = 73*hash + tracks.hashCode();
 		return hash;
 	}
 	

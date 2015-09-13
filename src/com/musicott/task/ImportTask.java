@@ -87,14 +87,13 @@ public class ImportTask extends Task<List<Track>>{
 				break;
 			else {
 				updateProgress(++currentFiles, finalFiles.size());
-				System.out.println(currentFiles+"/"+finalFiles.size());
 				Track currentTrack = AudioFileParser.parseAudioFile(file);
 				if(currentTrack != null) {
 					list.add(currentTrack);
 				}
 			}
 	}
-	
+		
 	private void countFiles(File folder) {
 		File[] files = folder.listFiles(file -> {
 			boolean res = false;
