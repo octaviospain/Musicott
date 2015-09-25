@@ -125,6 +125,21 @@
 	    <version>Version2_2_2</version>
     	<scope>compile</scope>
 	</dependency>
+	<dependency>
+	  <groupId>com.googlecode.soundlibs</groupId>
+	  <artifactId>tritonus-share</artifactId>
+	  <version>0.3.7-2</version>
+	</dependency>
+	<dependency>
+	  <groupId>com.googlecode.soundlibs</groupId>
+	  <artifactId>jlayer</artifactId>
+	  <version>1.0.1-1</version>
+	</dependency>
+	<dependency>
+	  <groupId>com.googlecode.soundlibs</groupId>
+	  <artifactId>mp3spi</artifactId>
+	  <version>1.9.5-1</version>
+	</dependency>
   </dependencies>
   <repositories>
     <repository>

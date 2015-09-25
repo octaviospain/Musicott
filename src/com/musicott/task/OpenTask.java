@@ -41,7 +41,7 @@ public class OpenTask extends Task<List<Track>> {
 	public OpenTask(List<File> files) {
 		this.files = files;
 		list = new ArrayList<Track>();
-		numFiles = list.size();
+		numFiles = files.size();
 	}
 	
 	@Override

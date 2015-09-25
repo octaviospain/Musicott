@@ -19,6 +19,7 @@
 package com.musicott.model;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Octavio Calleya
@@ -28,6 +29,7 @@ public class MusicLibrary {
 
 	private static MusicLibrary instance;
 	private List<Track> tracks;
+	private Map<Track,float[]> waveforms;
 	
 	private MusicLibrary() {
 	}
@@ -46,16 +48,26 @@ public class MusicLibrary {
 		return this.tracks;
 	}
 	
+	public void setWaveforms(Map<Track,float[]> waveforms) {
+		this.waveforms = waveforms;
+	}
+	
+	public Map<Track,float[]> getWaveforms() {
+		return this.waveforms;
+	}
+	
 	public int hashCode() {
 		int hash = 71;
 		hash = 73*hash + tracks.hashCode();
+		hash = 73*hash + waveforms.hashCode();
 		return hash;
 	}
 	
 	public boolean equals(Object o) {
 		boolean res;
 		if(o instanceof MusicLibrary &&
-		   ((MusicLibrary)o).getTracks().equals(tracks))
+		   ((MusicLibrary)o).getTracks().equals(tracks) &&
+		   ((MusicLibrary)o).getWaveforms().equals(waveforms))
 			res = true;
 		else
 			res = false;

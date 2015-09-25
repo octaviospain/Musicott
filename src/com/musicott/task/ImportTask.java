@@ -125,8 +125,7 @@ public class ImportTask extends Task<List<Track>>{
 		for(File file:files)
 			if(isCancelled())
 				break;
-			else
-				if(file.isDirectory())
+			else if(file.isDirectory())
 					countFiles(file);
 	}
 }

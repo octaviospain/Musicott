@@ -2,6 +2,7 @@
 /target/
 /build/
 /deploy/
+/temp/
 .metadata
 .DS_Store
 ._*
@@ -11,5 +12,6 @@
 .settings/
 .md
 /resources/tracks.json
+/resources/waveforms.json
 /resources/test.json
 /_site/

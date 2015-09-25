@@ -208,7 +208,7 @@ public class SceneManager {
 			rootController.setStage(rootStage);
 
 			LoadLibraryTask task = new LoadLibraryTask();
-			Thread t = new Thread(task,"LoadLibraryThread");
+			Thread t = new Thread(task,"LoadLibrary Thread");
 			t.setDaemon(true);
 			t.start();
 			

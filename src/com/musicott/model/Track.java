@@ -174,7 +174,7 @@ public class Track {
     	propertyMap.put(TrackField.BPM, bpmProperty);
     }
     
-    public Map<TrackField,Property<?>> getPropertiesMap() {
+	public Map<TrackField,Property<?>> getPropertiesMap() {
     	return propertyMap;
     }
     

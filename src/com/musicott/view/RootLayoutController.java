@@ -23,7 +23,10 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
+import javax.swing.SwingUtilities;
 
 import com.musicott.SceneManager;
 import com.musicott.model.MusicLibrary;
@@ -40,6 +43,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.embed.swing.SwingNode;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -66,6 +70,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.media.MediaPlayer;
 import javafx.stage.FileChooser;
@@ -107,6 +112,8 @@ public class RootLayoutController {
 	private ToggleButton playQueueButton;
 	@FXML
 	private ImageView currentCover;
+	@FXML
+	private StackPane playerStackPane;
 	@FXML
 	private Label titleLabel;
 	@FXML
@@ -163,7 +170,8 @@ public class RootLayoutController {
 	private TableColumn<Track,Number> bpmCol;
 	@FXML
 	private TableColumn<Track,Boolean> coverCol;
-
+	private WaveformPanel waveformPanel;
+	
 	private ObservableList<Track> tracks;
 	private ObservableList<Track> selection;
 	private FilteredList<Track> filteredTracks;
@@ -348,6 +356,12 @@ public class RootLayoutController {
 		volumeProgressBar.setProgress(1.0);
 		volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {if(!isChanging) volumeProgressBar.setProgress(volumeSlider.getValue());});
 		volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
+		SwingNode waveformSwingNode = new SwingNode();
+		SwingUtilities.invokeLater(() -> {
+            waveformPanel = new WaveformPanel(515, 50);
+            waveformSwingNode.setContent(waveformPanel);
+		});
+		playerStackPane.getChildren().add(0, waveformSwingNode);
 		
 		tracks = trackTable.getItems();
 		filteredTracks = new FilteredList<Track>(tracks, predicate -> true);
@@ -371,11 +385,9 @@ public class RootLayoutController {
 		sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
 		trackTable.setItems(sortedTracks);
 		ml.setTracks(tracks);
-		if(tracks.size() == 0) {
-			playButton.setDisable(true);
-			trackSlider.setDisable(true);
-			emptyTable = true;
-		}
+		playButton.setDisable(true);
+		trackSlider.setDisable(true);
+		emptyTable = true;
 
 		prevButton.setDisable(true);
 		nextButton.setDisable(true);
@@ -450,6 +462,7 @@ public class RootLayoutController {
 	public void addTracks(List<Track> listTracks) {
 		if(listTracks != null && !listTracks.isEmpty()) {
 			tracks.addAll(listTracks);	
+			ml.setTracks(tracks);
 			sc.getPlayQueueController().setPlayer(player);
 			if(emptyTable) {
 				playButton.setDisable(false);
@@ -472,6 +485,7 @@ public class RootLayoutController {
 		currentTimeLabel.setVisible(false);
 		remainingTimeLabel.setVisible(false);
 		currentCover.setImage(null);
+		SwingUtilities.invokeLater(() -> waveformPanel.clear());
 		if(player.getTrackPlayer() instanceof NativePlayer)
 			volumeSlider.valueProperty().unbindBidirectional(((NativePlayer)player.getTrackPlayer()).getMediaPlayer().volumeProperty());
 		else if (player.getTrackPlayer() instanceof FlacPlayer) {
@@ -495,7 +509,8 @@ public class RootLayoutController {
 			setUpPlayer(((NativePlayer) currentPlayer).getMediaPlayer());
 		else if(currentPlayer instanceof FlacPlayer)
 			setUpPlayer((FlacPlayer) currentPlayer);
-			
+		
+		SwingUtilities.invokeLater(() -> waveformPanel.setTrack(currentTrack));
 		titleLabel.setText(currentTrack.getName());
 		artistAlbumLabel.setText(currentTrack.getArtist()+" - "+currentTrack.getAlbum());
 		if(currentTrack.getHasCover())
@@ -601,6 +616,12 @@ public class RootLayoutController {
 			Optional<ButtonType> result = alert.showAndWait();
 			if (result.get() == ButtonType.OK) {
 				tracks.removeAll(selection);
+				Map<Track,float[]> waveformsMap = ml.getWaveforms();
+				for(Track t : selection) {
+					if(waveformsMap.containsKey(t))
+						waveformsMap.remove(t);
+				}
+				sc.saveLibrary(); 
 				setStopped();
 				if(tracks.size() == 0) {
 					playButton.setDisable(true);
@@ -645,7 +666,7 @@ public class RootLayoutController {
 		if(files != null) {
 			OpenTask task = new OpenTask(files);
 			sc.showImportProgressScene(task,false);
-			Thread t = new Thread(task, "OpenThread");
+			Thread t = new Thread(task, "Open Thread");
 			t.setDaemon(true);
 			t.start();
 		}

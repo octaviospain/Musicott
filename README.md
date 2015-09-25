@@ -21,6 +21,8 @@ A JavaFX application that manages and plays music files.
 * Get metadata from 3rd party services (Beatport, discogs, etc)
 * Advanced search feature
 * Show cover image on table
+* Hability to manage tracks in several lists
+* A row in the table showing the playlists in which the track is
 
 ## Download
 [Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.6)

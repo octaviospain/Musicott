@@ -26,9 +26,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 
 import com.cedarsoftware.util.io.JsonWriter;
+import com.musicott.error.ErrorHandler;
+import com.musicott.error.ErrorType;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 
@@ -39,12 +42,15 @@ import com.musicott.model.Track;
 public class SaveLibraryTask extends Task<Void> {
 
 	private List<Track> trackList;
-	private File tracksFile;
+	private Map<Track, float[]> waveformsMap;
+	private File tracksFile, waveformsFile;
 	private Map<String,Object> args;
 
 	public SaveLibraryTask() {
 		tracksFile = new File("./resources/tracks.json");
+		waveformsFile = new File("./resources/waveforms.json");
 		trackList = MusicLibrary.getInstance().getTracks();
+		waveformsMap = MusicLibrary.getInstance().getWaveforms();
 		
 		args = new HashMap<String,Object>();
 		Map<Class<?>,List<String>> fields = new HashMap<Class<?>,List<String>>();
@@ -82,14 +88,24 @@ public class SaveLibraryTask extends Task<Void> {
 	@Override
 	protected Void call() throws Exception {
 		try {
+			// Save the list of tracks
 			FileOutputStream fos = new FileOutputStream(tracksFile);				
 			JsonWriter jsw = new JsonWriter(fos, args);
 			jsw.write(trackList);
-			jsw.close();
 			fos.close();
+			jsw.close();
+			// Save the map of waveforms
+			fos = new FileOutputStream(waveformsFile);
+			jsw = new JsonWriter(fos, args);
+			jsw.write(waveformsMap);
+			fos.close();
+			jsw.close();
 		}
 		catch (IOException e) {
-			//TODO show error dialog and continue without save library
+			Platform.runLater(() -> {
+				ErrorHandler.getInstance().addError(e, ErrorType.COMMON);
+				ErrorHandler.getInstance().showErrorDialog(ErrorType.COMMON);
+			});
 		}
 		return null;
 	}

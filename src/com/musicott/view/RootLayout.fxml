@@ -84,8 +84,8 @@
               <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="395.0" minWidth="10.0" prefWidth="158.0" />
                   <ColumnConstraints hgrow="SOMETIMES" maxWidth="891.0" minWidth="10.0" prefWidth="141.0" />
-                <ColumnConstraints hgrow="SOMETIMES" maxWidth="891.0" minWidth="10.0" prefWidth="601.0" />
-                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="444.0" minWidth="10.0" prefWidth="51.0" />
+                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="891.0" minWidth="10.0" prefWidth="601.0" />
+                  <ColumnConstraints halignment="RIGHT" hgrow="NEVER" maxWidth="444.0" minWidth="10.0" prefWidth="51.0" />
                   <ColumnConstraints hgrow="SOMETIMES" maxWidth="444.0" minWidth="10.0" prefWidth="249.0" />
               </columnConstraints>
               <rowConstraints>
@@ -120,63 +120,67 @@
                         </Button>
                      </children>
                   </HBox>
-                  <HBox GridPane.columnIndex="2">
+                  <HBox GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="NEVER">
                      <children>
                         <ImageView fx:id="currentCover" fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true" />
-                        <VBox GridPane.columnIndex="2">
+                        <StackPane fx:id="playerStackPane" GridPane.columnIndex="2">
                            <children>
-                              <BorderPane prefHeight="200.0" prefWidth="150.0" VBox.vgrow="NEVER">
-                                 <left>
-                                    <Label fx:id="currentTimeLabel" textFill="#000000be" BorderPane.alignment="CENTER">
-                                       <BorderPane.margin>
-                                          <Insets left="10.0" />
-                                       </BorderPane.margin>
-                                       <font>
-                                          <Font size="11.0" />
-                                       </font>
-                                    </Label>
-                                 </left>
-                                 <right>
-                                    <Label fx:id="remainingTimeLabel" textFill="#000000be" BorderPane.alignment="CENTER">
-                                       <BorderPane.margin>
-                                          <Insets right="10.0" />
-                                       </BorderPane.margin>
-                                       <font>
-                                          <Font size="11.0" />
-                                       </font>
-                                    </Label>
-                                 </right>
-                                 <center>
-                                    <Label fx:id="artistAlbumLabel" textFill="#000000be" BorderPane.alignment="CENTER">
-                                       <font>
-                                          <Font size="11.0" />
-                                       </font>
-                                    </Label>
-                                 </center>
-                                 <top>
-                                    <Label fx:id="titleLabel" BorderPane.alignment="CENTER">
-                                       <BorderPane.margin>
-                                          <Insets top="5.0" />
-                                       </BorderPane.margin>
-                                    </Label>
-                                 </top>
-                              </BorderPane>
-                              <StackPane fx:id="trackBarStack" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="NEVER">
+                              <VBox>
                                  <children>
-                                    <ProgressBar fx:id="trackProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="7.0" prefWidth="515.0" progress="0.0" StackPane.alignment="CENTER">
-                                       <StackPane.margin>
-                                          <Insets />
-                                       </StackPane.margin>
-                                    </ProgressBar>
-                                    <Slider fx:id="trackSlider" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="7.0" prefWidth="520.0" StackPane.alignment="CENTER">
-                                       <StackPane.margin>
-                                          <Insets />
-                                       </StackPane.margin>
-                                    </Slider>
+                                    <BorderPane prefHeight="200.0" prefWidth="150.0" VBox.vgrow="NEVER">
+                                       <left>
+                                          <Label fx:id="currentTimeLabel" textFill="#000000be" BorderPane.alignment="CENTER">
+                                             <BorderPane.margin>
+                                                <Insets left="10.0" />
+                                             </BorderPane.margin>
+                                             <font>
+                                                <Font size="11.0" />
+                                             </font>
+                                          </Label>
+                                       </left>
+                                       <right>
+                                          <Label fx:id="remainingTimeLabel" textFill="#000000be" BorderPane.alignment="CENTER">
+                                             <BorderPane.margin>
+                                                <Insets right="10.0" />
+                                             </BorderPane.margin>
+                                             <font>
+                                                <Font size="11.0" />
+                                             </font>
+                                          </Label>
+                                       </right>
+                                       <center>
+                                          <Label fx:id="artistAlbumLabel" textFill="#000000be" BorderPane.alignment="CENTER">
+                                             <font>
+                                                <Font size="11.0" />
+                                             </font>
+                                          </Label>
+                                       </center>
+                                       <top>
+                                          <Label fx:id="titleLabel" BorderPane.alignment="CENTER">
+                                             <BorderPane.margin>
+                                                <Insets top="5.0" />
+                                             </BorderPane.margin>
+                                          </Label>
+                                       </top>
+                                    </BorderPane>
+                                    <StackPane fx:id="trackBarStack" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="NEVER">
+                                       <children>
+                                          <ProgressBar fx:id="trackProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="7.0" prefWidth="515.0" progress="0.0" StackPane.alignment="CENTER">
+                                             <StackPane.margin>
+                                                <Insets />
+                                             </StackPane.margin>
+                                          </ProgressBar>
+                                          <Slider fx:id="trackSlider" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="7.0" prefWidth="520.0" StackPane.alignment="CENTER">
+                                             <StackPane.margin>
+                                                <Insets />
+                                             </StackPane.margin>
+                                          </Slider>
+                                       </children>
+                                    </StackPane>
                                  </children>
-                              </StackPane>
+                              </VBox>
                            </children>
-                        </VBox>
+                        </StackPane>
                      </children>
                   </HBox>
                   <ToggleButton fx:id="playQueueButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#doShowHidePlayQueue" prefHeight="15.0" prefWidth="15.0" GridPane.columnIndex="3" GridPane.halignment="CENTER" GridPane.hgrow="NEVER" />
