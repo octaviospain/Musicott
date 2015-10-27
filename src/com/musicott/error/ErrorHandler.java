@@ -12,7 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -24,14 +24,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.musicott.SceneManager;
 
+import javafx.application.HostServices;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -42,15 +47,18 @@ import javafx.stage.Stage;
  *
  */
 public class ErrorHandler {
+
+	private final Logger LOG = LoggerFactory.getLogger(ErrorHandler.class.getName());
 	
-	private static ErrorHandler instance;
+	private HostServices hostServices;
+	private static volatile ErrorHandler instance;
+	private SceneManager sc = SceneManager.getInstance();
 	private Stage mainStage;
 	private Map<ErrorType,Stack<Exception>> mapExceptions;
 	private Alert alert;
 
 	private ErrorHandler() {
 		mapExceptions = new HashMap<ErrorType,Stack<Exception>>();
-		mainStage = SceneManager.getInstance().getApplication().getStage();
 	}
 	
 	public static ErrorHandler getInstance() {
@@ -59,7 +67,12 @@ public class ErrorHandler {
 		return instance;
 	}
 	
+	public void setApplicationHostServices(HostServices hostServices) {
+		this.hostServices= hostServices;
+	}
+	
 	public void addError(Exception ex, ErrorType type) {
+		LOG.debug("Error handled:", ex);
 		if(mapExceptions.containsKey(type))
 			mapExceptions.get(type).push(ex);
 		else {
@@ -69,11 +82,12 @@ public class ErrorHandler {
 		}
 	}
 	
-	public boolean hasErrors(ErrorType type) {
-		boolean has = false;
-		if(!mapExceptions.isEmpty() && mapExceptions.containsKey(type) && !mapExceptions.get(type).isEmpty())
-			has = true;
-		return has;
+	public boolean hasErrors(ErrorType... type) {
+		if(!mapExceptions.isEmpty())
+			for(ErrorType et: type)
+				if(mapExceptions.containsKey(et) && !mapExceptions.get(et).isEmpty())
+					return true;
+		return false;
 	}
 
 	public Stack<Exception> getErrors(ErrorType type){
@@ -81,43 +95,51 @@ public class ErrorHandler {
 	}
 	
 	public void showErrorDialog(ErrorType type) {
+		if(mainStage == null)
+			mainStage = sc.getMainStage();
 		showErrorDialog(mainStage.getScene(), type);
 	}
 	
-	public void showErrorDialog(Scene ownerScene, ErrorType type) {
+	public void showErrorDialog(Scene ownerScene, ErrorType... types) {
 		alert = new Alert(AlertType.ERROR);
-		alert.initOwner(ownerScene.getWindow());
+		if(ownerScene != null)
+			alert.initOwner(ownerScene.getWindow());
+		else {
+			Scene errorScene = new Scene(new AnchorPane(),800,300);
+			alert.initOwner(errorScene.getWindow());			
+		}
 		alert.setTitle("Error");
 		alert.setHeaderText("Error");
-		switch(type) {
-			case COMMON:
-				if(mapExceptions.get(type).size() == 1 && mapExceptions.get(type).peek() instanceof CommonException)
-					alert.getDialogPane().contentProperty().set(new Label(mapExceptions.get(type).pop().getMessage()));
-				else
-					setExpandable(getErrors(type));
-				break;
-			case METADATA:
-				alert.setHeaderText("Error(s) writing metadata on file(s)");
-				setExpandable(getErrors(type));
-				break;
-			case PARSE:
-				alert.setHeaderText("Error(s) parsing file(s)");
-				setExpandable(getErrors(type));
-				break;
-			case FATAL:
-				alert.setHeaderText("Fatal error");
-				setExpandable(getErrors(type));
-				Label text = new Label(" Please help Musicott to fix this kind of bugs. Report this error at");
-				Hyperlink githubIssuesLink = new Hyperlink("https://github.com/octaviospain/Musicott/issues");
-				githubIssuesLink.setOnAction(event -> {
-					SceneManager.getInstance().getApplication().getHostServices().showDocument(githubIssuesLink.getText());
-				});
-				FlowPane fp = new FlowPane();
-				fp.getChildren().addAll(text, githubIssuesLink);
-				alert.getDialogPane().contentProperty().set(fp);
-				break;
+		for(ErrorType et: types) {
+			switch(et) {
+				case COMMON:
+					if(mapExceptions.get(et).size() == 1 && mapExceptions.get(et).peek() instanceof CommonException)
+						alert.getDialogPane().contentProperty().set(new Label(mapExceptions.get(et).pop().getMessage()));
+					else
+						setExpandable(getErrors(et));
+					break;
+				case METADATA:
+					alert.setHeaderText("Error(s) writing metadata on file(s)");
+					setExpandable(getErrors(et));
+					break;
+				case PARSE:
+					alert.setHeaderText("Error(s) parsing file(s)");
+					setExpandable(getErrors(et));
+					break;
+				case FATAL:
+					alert.setHeaderText("Fatal error");
+					setExpandable(getErrors(et));
+					Label text = new Label(" Please help Musicott to fix this kind of bugs. Report this error at");
+					Hyperlink githubIssuesLink = new Hyperlink("https://github.com/octaviospain/Musicott/issues");
+					githubIssuesLink.setOnAction(event -> hostServices.showDocument(githubIssuesLink.getText()));
+					FlowPane fp = new FlowPane();
+					fp.getChildren().addAll(text, githubIssuesLink);
+					alert.getDialogPane().contentProperty().set(fp);
+					break;
+			}
+			LOG.info("Showing error dialog type {}", et);
+			alert.showAndWait();
 		}
-		alert.showAndWait();
 	}
 	
 	private void setExpandable(Stack<Exception> exceptions) {

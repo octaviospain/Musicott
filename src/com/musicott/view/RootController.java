@@ -12,7 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -28,15 +28,21 @@ import java.util.Optional;
 
 import javax.swing.SwingUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.musicott.SceneManager;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.player.FlacPlayer;
-import com.musicott.player.PlayerFacade;
 import com.musicott.player.NativePlayer;
+import com.musicott.player.PlayerFacade;
 import com.musicott.player.TrackPlayer;
-import com.musicott.task.OpenTask;
+import com.musicott.task.ParseFilesTask;
+import com.musicott.view.custom.WaveformPanel;
 
+import javafx.application.HostServices;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ListChangeListener;
@@ -46,7 +52,6 @@ import javafx.collections.transformation.SortedList;
 import javafx.embed.swing.SwingNode;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
@@ -63,29 +68,37 @@ import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaPlayer.Status;
 import javafx.stage.FileChooser;
-import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
+import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.util.Callback;
 import javafx.util.Duration;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class RootLayoutController {
+public class RootController {
 	
+	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private static final double AMOUNT_VOLUME = 0.05;
-	
+
+	@FXML
+	private BorderPane rootBorderPane;
 	@FXML
 	private Menu menuFile;
 	@FXML
@@ -112,6 +125,8 @@ public class RootLayoutController {
 	private ToggleButton playQueueButton;
 	@FXML
 	private ImageView currentCover;
+	@FXML
+	private SwingNode waveformSwingNode;
 	@FXML
 	private StackPane playerStackPane;
 	@FXML
@@ -170,184 +185,57 @@ public class RootLayoutController {
 	private TableColumn<Track,Number> bpmCol;
 	@FXML
 	private TableColumn<Track,Boolean> coverCol;
-	private WaveformPanel waveformPanel;
-	
+	private AnchorPane playQueuePane;
+
 	private ObservableList<Track> tracks;
 	private ObservableList<Track> selection;
-	private FilteredList<Track> filteredTracks;
-	
 	private Stage rootStage;
 	private SceneManager sc;
-	
 	private MusicLibrary ml;
 	private PlayerFacade player;
+	private WaveformPanel mainWaveformPane;
+	private HostServices hostServices;
 	
-	private boolean emptyTable = true;
-	
- 	public RootLayoutController() {
+	public RootController() {
 	}
 	
 	@FXML
 	public void initialize() {
-		nameCol.setCellValueFactory(cellData -> cellData.getValue().getNameProperty());
-		artistCol.setCellValueFactory(cellData -> cellData.getValue().getArtistProperty());
-		albumCol.setCellValueFactory(cellData -> cellData.getValue().getAlbumProperty());
-		genreCol.setCellValueFactory(cellData -> cellData.getValue().getGenreProperty());
-		commentsCol.setCellValueFactory(cellData -> cellData.getValue().getCommentsProperty());
-		albumArtistCol.setCellValueFactory(cellData -> cellData.getValue().getAlbumArtistProperty());
-		labelCol.setCellValueFactory(cellData -> cellData.getValue().getLabelProperty());
-		dateModifiedCol.setCellValueFactory(cellData -> cellData.getValue().getDateModifiedProperty());
-		dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<LocalDateTime>(cellData.getValue().getDateAdded()));
-		sizeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getSize()));
-		totalTimeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<Duration>(cellData.getValue().getTotalTime()));
-		yearCol.setCellValueFactory(cellData -> cellData.getValue().getYearProperty());
-		bitRateCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getBitRate()));
-		playCountCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getPlayCount()));
-		discNumberCol.setCellValueFactory(cellData -> cellData.getValue().getDiscNumberProperty());
-		trackNumberCol.setCellValueFactory(cellData -> cellData.getValue().getTrackNumberProperty());
-		bpmCol.setCellValueFactory(cellData -> cellData.getValue().getBpmProperty());
-		coverCol.setCellValueFactory(cellData -> cellData.getValue().getHasCoverProperty());
-		coverCol.setCellFactory(CheckBoxTableCell.forTableColumn(coverCol));
-		bpmCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		bpmCol.setCellFactory(columns -> {
-			return new TableCell<Track, Number>() {
-				@Override
-				protected void updateItem(Number item, boolean empty) {
-					super.updateItem(item, empty);
-					if(empty || item == null)
-						setText("");
-					else
-						if(((int) item) == 0 || ((int) item) == -1)
-							setText("");
-						else
-							setText(""+item);
-				}
-			};
-		});
-		discNumberCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		discNumberCol.setCellFactory(columns -> {
-			return new TableCell<Track, Number>() {
-				@Override
-				protected void updateItem(Number item, boolean empty) {
-					super.updateItem(item, empty);
-					if(empty || item == null)
-						setText("");
-					else
-						if(((int) item) == 0)
-							setText("");
-						else
-							setText(""+item);
-				}
-			};
-		});
-		trackNumberCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		trackNumberCol.setCellFactory(columns -> {
-			return new TableCell<Track, Number>() {
-				@Override
-				protected void updateItem(Number item, boolean empty) {
-					super.updateItem(item, empty);
-					if(empty || item == null)
-						setText("");
-					else
-						if(((int) item) == 0)
-							setText("");
-						else
-							setText(""+item);
-				}
-			};
-		});
-		yearCol.setCellFactory(columns -> {
-			return new TableCell<Track, Number>() {
-				@Override
-				protected void updateItem(Number item, boolean empty) {
-					super.updateItem(item, empty);
-					if(empty || item == null)
-						setText("");
-					else
-						if(((int) item) == 0)
-							setText("");
-						else
-							setText(""+item);
-				}
-			};
-		});
-		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
-		dateModifiedCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		dateModifiedCol.setCellFactory(column -> {
-			return new TableCell<Track,LocalDateTime>() {
-				@Override
-				protected void updateItem(LocalDateTime item, boolean empty) {
-					super.updateItem(item, empty);
-					if(item == null)
-						setText("");
-					else
-						setText(item.format(dateFormatter));
-				}
-			}; 
-		});
-		dateAddedCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		dateAddedCol.setSortType(TableColumn.SortType.DESCENDING);
-		dateAddedCol.setCellFactory(column -> {
-			return new TableCell<Track,LocalDateTime>() {
-				@Override
-				protected void updateItem(LocalDateTime item, boolean empty) {
-					super.updateItem(item, empty);
-					if(item == null)
-						setText("");
-					else
-						setText(item.format(dateFormatter));
-				}
-			}; 
-		});
-		sizeCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		sizeCol.setCellFactory(column -> {
-			return new TableCell<Track,Number>() {
-				@Override
-				protected void updateItem(Number item, boolean empty) {
-					super.updateItem(item, empty);
-					if(item == null)
-						setText("");	
-					else {
-						int kiloBytes = ((int) item)/1024;
-						if(kiloBytes < 1024)
-							setText(kiloBytes+" KB");
-						else {
-							int megaBytes = kiloBytes/1024;
-							String strKiloBytes = ""+kiloBytes%1024;
-							setText(megaBytes+","+(strKiloBytes.length()>1 ? strKiloBytes.substring(0, 1) : strKiloBytes)+" MB");
-						}
-					}
-				}
-			};
-		});
-		totalTimeCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		totalTimeCol.setCellFactory(column -> {
-			return new TableCell<Track, Duration>() {
-				@Override
-				protected void updateItem(Duration item, boolean empty) {
-					super.updateItem(item, empty);
-					if(item == null)
-						setText("");
-					else {
-						int hours = (int)item.toHours();
-						int mins = (int)item.subtract(Duration.hours(hours)).toMinutes();
-						int secs = (int)item.subtract(Duration.minutes(mins)).subtract(Duration.hours(hours)).toSeconds();
-						setText((hours>0 ? hours+":" : "")+(mins<10 ? "0"+mins : mins)+":"+(secs<10 ? "0"+secs : secs));
-					}
-				}
-			};
-		});
-		playCountCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		bitRateCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		selection = trackTable.getSelectionModel().getSelectedItems();
-		trackTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-		trackTable.getSelectionModel().selectedIndexProperty().addListener(((observable, oldValue, newValue) -> selection = trackTable.getSelectionModel().getSelectedItems()));
-		trackTable.getSortOrder().add(dateAddedCol);
 		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();
+		tracks = ml.getTracks();
+		trackTable.setItems(tracks);
+		tracks.addListener(((ListChangeListener.Change<? extends Track> c) -> {
+			boolean waveformsMapChanged = false;
+			while(c.next()) {
+				if(c.wasRemoved()) {
+					List<Track> tracksToRemove = (List<Track>) c.getRemoved();
+					player.removeTracks(tracksToRemove);
+					Map<Integer,float[]> waveformsMap = ml.getWaveforms();
+					for(Track t : tracksToRemove) {
+						int trackID = t.getTrackID();
+						if(waveformsMap.containsKey(trackID)) {
+							waveformsMap.remove(trackID);
+							waveformsMapChanged = true;
+							LOG.debug("Deleted waveform of {}", t);
+						}
+					}
+					LOG.info("Deleted tracks: {}", tracksToRemove);
+					sc.saveLibrary(true, waveformsMapChanged);
+				}
+				else if(c.wasAdded() || c.wasUpdated()) {
+						if(playButton.isDisabled())
+							playButton.setDisable(false);
+						sc.saveLibrary(true, true);
+				}
+			}
+			if(tracks.isEmpty())
+				playButton.setDisable(true);
+		}));
+		if(tracks.isEmpty())
+			playButton.setDisable(true);
 		prevButton.setDisable(true);
 		nextButton.setDisable(true);
-		playButton.setDisable(true);
 		trackSlider.setDisable(true);
 		trackSlider.setValue(0.0);
 		volumeSlider.setMin(0.0);
@@ -356,15 +244,22 @@ public class RootLayoutController {
 		volumeProgressBar.setProgress(1.0);
 		volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {if(!isChanging) volumeProgressBar.setProgress(volumeSlider.getValue());});
 		volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
-		SwingNode waveformSwingNode = new SwingNode();
+		initColumns();
+		
 		SwingUtilities.invokeLater(() -> {
-            waveformPanel = new WaveformPanel(515, 50);
-            waveformSwingNode.setContent(waveformPanel);
+			mainWaveformPane = new WaveformPanel(515, 50);
+            waveformSwingNode.setContent(mainWaveformPane);
 		});
 		playerStackPane.getChildren().add(0, waveformSwingNode);
+	
+		player = PlayerFacade.getInstance();
+		selection = trackTable.getSelectionModel().getSelectedItems();
+		selection = trackTable.getSelectionModel().getSelectedItems();
+		trackTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+		trackTable.getSelectionModel().selectedIndexProperty().addListener(((observable, oldValue, newValue) -> selection = trackTable.getSelectionModel().getSelectedItems()));
+		trackTable.getSortOrder().add(dateAddedCol);
 		
-		tracks = trackTable.getItems();
-		filteredTracks = new FilteredList<Track>(tracks, predicate -> true);
+		FilteredList<Track> filteredTracks = new FilteredList<>(tracks, predicate -> true);
 		searchTextField.textProperty().addListener((observable, oldText, newText) -> {
 			filteredTracks.setPredicate(track -> {
 				boolean result = true;
@@ -381,28 +276,9 @@ public class RootLayoutController {
 				return result;
 			});
 		});
-		SortedList<Track> sortedTracks = new SortedList<Track>(filteredTracks);
+		SortedList<Track> sortedTracks = new SortedList<>(filteredTracks);
 		sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
 		trackTable.setItems(sortedTracks);
-		ml.setTracks(tracks);
-		playButton.setDisable(true);
-		trackSlider.setDisable(true);
-		emptyTable = true;
-
-		prevButton.setDisable(true);
-		nextButton.setDisable(true);
-		
-		player = new PlayerFacade(tracks);	
-		tracks.addListener(((ListChangeListener.Change<? extends Track> c) -> {
-			while(c.next()) {
-				if(c.wasRemoved()) {
-					player.removeTracks(c.getRemoved());
-					sc.saveLibrary();
-				}
-				else
-					sc.saveLibrary();
-			}
-		}));
 		
 		// Set up the ContextMenu
 		MenuItem cmPlay = new MenuItem("Play");
@@ -421,58 +297,151 @@ public class RootLayoutController {
 		cm.getItems().add(cmAddToQueue);
 		cm.getItems().add(cmEdit);
 		cm.getItems().add(cmDelete);
+		
 		// Double click on row = play that track
 		trackTable.setRowFactory(tv -> {
 			TableRow<Track> row = new TableRow<>();
 			row.setOnMouseClicked(event -> {
-				if(event.getClickCount() == 2 && !row.isEmpty() && !row.getItem().getFileFormat().equals("flac")) //TODO
+				if(event.getClickCount() == 2 && !row.isEmpty())
 					player.play(row.getItem());
 			});
 			return row;
 		});
+		// Right click on row = show ContextMenu
 		trackTable.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-			if(event.getButton() == MouseButton.SECONDARY)
+			if(event.getButton() == MouseButton.SECONDARY) {
 				cm.show(trackTable,event.getScreenX(),event.getScreenY());
+				LOG.debug("Showing context menu");
+			}
 			else if(event.getButton() == MouseButton.PRIMARY && cm.isShowing())
 				cm.hide();
 		});
+		// Enter key pressed = play; Space key = pause/resume
 		trackTable.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
 			if(event.getCode() == KeyCode.ENTER) {
-				for(Track t: selection)
-					if(t.getFileName().substring(t.getFileName().length()-4).equals("flac"))
-						selection.remove(t);
-				if(!selection.isEmpty()) {
-					player.play(selection);
-					setPlaying();
-				}
+				player.play(selection);
 			}
 			else if(event.getCode() == KeyCode.SPACE) {
-				if(player.getTrackPlayer().getStatus().equals("PLAYING")) {
-					playButton.setSelected(false);
+				if(player.getTrackPlayer().getStatus().equals("PLAYING"))
 					player.pause();
-				}
-				else if(player.getTrackPlayer().getStatus().equals("PAUSED")) {
-					playButton.setSelected(true);
+				else if(player.getTrackPlayer().getStatus().equals("PAUSED"))
 					player.play();
-				}
 			}
 		});
-	}	
+	}
 	
-	public void addTracks(List<Track> listTracks) {
-		if(listTracks != null && !listTracks.isEmpty()) {
-			tracks.addAll(listTracks);	
-			ml.setTracks(tracks);
-			sc.getPlayQueueController().setPlayer(player);
-			if(emptyTable) {
-				playButton.setDisable(false);
-				emptyTable = false;
+	private void initColumns() {
+		Callback<TableColumn<Track,Number>, TableCell<Track,Number>> numericCallback = columns -> new TableCell<Track, Number>() {
+			@Override
+			protected void updateItem(Number item, boolean empty) {
+				super.updateItem(item, empty);
+				if(empty || item == null)
+					setText("");
+				else if(((int) item) < 1)
+						setText("");
+					else
+						setText(""+item);
 			}
-		}
+		};
+		Callback<TableColumn<Track, LocalDateTime>, TableCell<Track, LocalDateTime>> dateCallback = column -> new TableCell<Track, LocalDateTime>() {
+			@Override
+			protected void updateItem(LocalDateTime item, boolean empty) {
+				super.updateItem(item, empty);
+				DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
+				if(item == null)
+					setText("");
+				else
+					setText(item.format(dateFormatter));
+			}
+		};
+		nameCol.setCellValueFactory(cellData -> cellData.getValue().getNameProperty());
+		artistCol.setCellValueFactory(cellData -> cellData.getValue().getArtistProperty());
+		albumCol.setCellValueFactory(cellData -> cellData.getValue().getAlbumProperty());
+		genreCol.setCellValueFactory(cellData -> cellData.getValue().getGenreProperty());
+		commentsCol.setCellValueFactory(cellData -> cellData.getValue().getCommentsProperty());
+		albumArtistCol.setCellValueFactory(cellData -> cellData.getValue().getAlbumArtistProperty());
+		labelCol.setCellValueFactory(cellData -> cellData.getValue().getLabelProperty());
+		dateModifiedCol.setCellValueFactory(cellData -> cellData.getValue().getDateModifiedProperty());
+		dateModifiedCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		dateModifiedCol.setCellFactory(dateCallback);
+		dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<LocalDateTime>(cellData.getValue().getDateAdded()));
+		dateAddedCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		dateAddedCol.setSortType(TableColumn.SortType.DESCENDING); 	// Default sort of the table
+		dateAddedCol.setCellFactory(dateCallback);
+		sizeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getSize()));
+		sizeCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		sizeCol.setCellFactory(column -> {return new TableCell<Track,Number>() {
+				@Override
+				protected void updateItem(Number item, boolean empty) {
+					super.updateItem(item, empty);
+					if(item == null)
+						setText("");	
+					else {
+						int kiloBytes = ((int) item)/1024;
+						if(kiloBytes < 1024)
+							setText(kiloBytes+" KB");
+						else {
+							int megaBytes = kiloBytes/1024;
+							String strKiloBytes = ""+kiloBytes%1024;
+							setText(megaBytes+","+(strKiloBytes.length()>1 ? strKiloBytes.substring(0, 1) : strKiloBytes)+" MB");
+						}
+					}
+				}
+			};});
+		totalTimeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<Duration>(cellData.getValue().getTotalTime()));
+		totalTimeCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		totalTimeCol.setCellFactory(column -> {return new TableCell<Track, Duration>() {
+				@Override
+				protected void updateItem(Duration item, boolean empty) {
+					super.updateItem(item, empty);
+					if(item == null)
+						setText("");
+					else {
+						int hours = (int)item.toHours();
+						int mins = (int)item.subtract(Duration.hours(hours)).toMinutes();
+						int secs = (int)item.subtract(Duration.minutes(mins)).subtract(Duration.hours(hours)).toSeconds();
+						setText((hours>0 ? hours+":" : "")+(mins<10 ? "0"+mins : mins)+":"+(secs<10 ? "0"+secs : secs));
+					}
+				}
+			};});
+		yearCol.setCellValueFactory(cellData -> cellData.getValue().getYearProperty());
+		yearCol.setCellFactory(numericCallback);
+		yearCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		playCountCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getPlayCount()));
+		playCountCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		discNumberCol.setCellValueFactory(cellData -> cellData.getValue().getDiscNumberProperty());
+		discNumberCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		discNumberCol.setCellFactory(numericCallback);
+		trackNumberCol.setCellValueFactory(cellData -> cellData.getValue().getTrackNumberProperty());
+		trackNumberCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		trackNumberCol.setCellFactory(numericCallback);
+		bitRateCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getBitRate()));
+		bitRateCol.setCellFactory(columns -> new TableCell<Track, Number>() {
+			@Override
+			protected void updateItem(Number item, boolean empty) {
+				super.updateItem(item, empty);
+				if(empty || item == null)
+					setText("");
+				else if(((int) item) < 1)
+						setText("");
+					else
+						setText(""+item);
+			}
+		});
+		bitRateCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		coverCol.setCellValueFactory(cellData -> cellData.getValue().getHasCoverProperty());
+		coverCol.setCellFactory(CheckBoxTableCell.forTableColumn(coverCol));
+		bpmCol.setCellValueFactory(cellData -> cellData.getValue().getBpmProperty());
+		bpmCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		bpmCol.setCellFactory(numericCallback);
 	}
 	
 	public void setStage(Stage stage) {
 		rootStage = stage;
+	}
+	
+	public void setApplicationHostServices(HostServices applicationHostServices) {
+		this.hostServices = applicationHostServices;
 	}
 	
 	public void setStopped() {
@@ -480,17 +449,20 @@ public class RootLayoutController {
 		trackSlider.setDisable(true);
 		nextButton.setDisable(true);
 		prevButton.setDisable(true);
+		titleLabel.textProperty().unbind();
 		titleLabel.setText("");
 		artistAlbumLabel.setVisible(false);
+		artistAlbumLabel.textProperty().unbind();
 		currentTimeLabel.setVisible(false);
 		remainingTimeLabel.setVisible(false);
 		currentCover.setImage(null);
-		SwingUtilities.invokeLater(() -> waveformPanel.clear());
+		SwingUtilities.invokeLater(() -> mainWaveformPane.clear());
 		if(player.getTrackPlayer() instanceof NativePlayer)
 			volumeSlider.valueProperty().unbindBidirectional(((NativePlayer)player.getTrackPlayer()).getMediaPlayer().volumeProperty());
 		else if (player.getTrackPlayer() instanceof FlacPlayer) {
 			//TODO
 		}
+		LOG.info("Player stopped");
 	}
 	
 	public void setPlaying() {
@@ -505,18 +477,26 @@ public class RootLayoutController {
 	
 	public void preparePlayerInfo(TrackPlayer currentPlayer, Track currentTrack) {
 		// Set up the player and the view related to it
+		LOG.debug("Setting up player and view for track {}", currentTrack);
 		if(currentPlayer instanceof NativePlayer)
 			setUpPlayer(((NativePlayer) currentPlayer).getMediaPlayer());
 		else if(currentPlayer instanceof FlacPlayer)
 			setUpPlayer((FlacPlayer) currentPlayer);
 		
-		SwingUtilities.invokeLater(() -> waveformPanel.setTrack(currentTrack));
-		titleLabel.setText(currentTrack.getName());
-		artistAlbumLabel.setText(currentTrack.getArtist()+" - "+currentTrack.getAlbum());
-		if(currentTrack.getHasCover())
-			currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverFile())));
+		SwingUtilities.invokeLater(() -> mainWaveformPane.setTrack(currentTrack));
+		titleLabel.textProperty().bind(currentTrack.getNameProperty());;
+		artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
+				() -> currentTrack.getArtistProperty().get()+" - "+currentTrack.getAlbumProperty().get(), currentTrack.getArtistProperty(), currentTrack.getAlbumProperty())
+		);
+		if(currentTrack.hasCover())
+			currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverBytes())));
 		else
-			currentCover.setImage(new Image(RootLayoutController.class.getResourceAsStream("/images/default-cover-icon.png")));
+			currentCover.setImage(new Image(getClass().getResourceAsStream("/images/default-cover-icon.png")));
+	//	currentTrack.getHasCoverProperty().addListener(observable -> currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverBytes()))));
+	}
+	
+	public void setWaveform(Track track) {
+		this.mainWaveformPane.setTrack(track);
 	}
 	
 	private void setUpPlayer(MediaPlayer mediaPlayer) {
@@ -535,6 +515,17 @@ public class RootLayoutController {
 		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> trackProgressBar.setProgress(newTime.toSeconds() / mediaPlayer.getStopTime().toSeconds()));
 		mediaPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
 		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> formatTime(newTime,mediaPlayer.getMedia().getDuration()));	
+		mediaPlayer.statusProperty().addListener((observable, oldStatus, newStatus) -> {
+			if(newStatus == Status.PLAYING) {
+				setPlaying();
+			}
+			else if (newStatus == Status.PAUSED) {
+				playButton.setSelected(false);
+			}
+			else if (newStatus == Status.STOPPED) {
+				setStopped();
+			}
+		});
 	}
 	
 	private void setUpPlayer(FlacPlayer flacPlayer) {
@@ -556,11 +547,18 @@ public class RootLayoutController {
 	
 	@FXML
 	private void doShowHidePlayQueue() {
-		sc.showHidePlayQueue();
+		if(playQueuePane == null)
+			playQueuePane = (AnchorPane) rootStage.getScene().lookup("#playQueuePane");
+		if(playQueuePane.isVisible())
+			playQueuePane.setVisible(false);
+		else
+			playQueuePane.setVisible(true);
+		LOG.trace("Play queue show/hide");
 	}
 	
 	@FXML
 	private void doPlayPause() {
+		LOG.trace("Play/pause button clicked");
 		if(playButton.isSelected()) {
 			if(trackSlider.isDisabled())
 				trackSlider.setDisable(false);
@@ -591,6 +589,7 @@ public class RootLayoutController {
 		if(player != null)
 			player.increaseVolume(AMOUNT_VOLUME);
 		volumeSlider.setValue(volumeSlider.getValue()+AMOUNT_VOLUME);
+		LOG.trace("Volume increased "+volumeSlider.getValue());
 	}
 	
 	@FXML
@@ -598,12 +597,14 @@ public class RootLayoutController {
 		if(player != null)
 			player.decreaseVolume(AMOUNT_VOLUME);
 		volumeSlider.setValue(volumeSlider.getValue()-AMOUNT_VOLUME);
+		LOG.trace("Volume decreased "+volumeSlider.getValue());
 	}
 	
 	@FXML
 	private void doSelectCurrentTrack() {
 		trackTable.getSelectionModel().clearSelection();
 		trackTable.getSelectionModel().select(player.getCurrentTrack());
+		LOG.info("Current track in the player selected in the table");
 	}
 	
 	@FXML
@@ -614,20 +615,8 @@ public class RootLayoutController {
 			alert.setHeaderText("");
 			alert.setContentText("Delete this files from Musicott?");
 			Optional<ButtonType> result = alert.showAndWait();
-			if (result.get() == ButtonType.OK) {
-				tracks.removeAll(selection);
-				Map<Track,float[]> waveformsMap = ml.getWaveforms();
-				for(Track t : selection) {
-					if(waveformsMap.containsKey(t))
-						waveformsMap.remove(t);
-				}
-				sc.saveLibrary(); 
-				setStopped();
-				if(tracks.size() == 0) {
-					playButton.setDisable(true);
-					emptyTable = true;					
-				}
-			}
+			if (result.get() == ButtonType.OK)
+				tracks.removeAll(selection);	// This fires the ListChangeListener in line 233
 			else
 				alert.close();
 		}
@@ -642,18 +631,23 @@ public class RootLayoutController {
 				alert.setHeaderText("");
 				alert.setContentText("Are you sure you want to edit multiple files?");
 				Optional<ButtonType> result = alert.showAndWait();
-				if (result.get() == ButtonType.OK)
+				if (result.get() == ButtonType.OK) {
 					sc.openEditScene(selection);
+					LOG.debug("Opened edit stage for various tracks");
+				}
 				else
 					alert.close();
 			}
-			else
+			else {
 				sc.openEditScene(selection);
+				LOG.debug("Opened edit stage for a single track");
+			}
 		}
 	}
 	
 	@FXML
 	private void doOpen() {
+		LOG.debug("Selecting files to open");
 		FileChooser chooser = new FileChooser();
 		chooser.setTitle("Open file(s)...");
 		chooser.getExtensionFilters().addAll(
@@ -664,7 +658,7 @@ public class RootLayoutController {
 				new ExtensionFilter("M4a Files", "*.m4a"));
 		List<File> files = chooser.showOpenMultipleDialog(rootStage);
 		if(files != null) {
-			OpenTask task = new OpenTask(files);
+			ParseFilesTask task = new ParseFilesTask(files);
 			sc.showImportProgressScene(task,false);
 			Thread t = new Thread(task, "Open Thread");
 			t.setDaemon(true);
@@ -685,9 +679,7 @@ public class RootLayoutController {
 		Label text = new Label(" Version 0.6.0\n\n Copyright © 2015 Octavio Calleya.");
 		Label text2 = new Label(" Licensed under GNU GPLv3. This product includes\n software developed by other open source projects.");
 		Hyperlink githubLink = new Hyperlink("https://github.com/octaviospain/Musicott/");
-		githubLink.setOnAction(event -> {
-			sc.getApplication().getHostServices().showDocument(githubLink.getText());
-		});
+		githubLink.setOnAction(event -> hostServices.showDocument(githubLink.getText()));
 		FlowPane fp = new FlowPane();
 		fp.getChildren().addAll(text, githubLink, text2);
 		alert.getDialogPane().contentProperty().set(fp);
@@ -695,10 +687,12 @@ public class RootLayoutController {
 		iv.setImage(new Image("file:resources/images/musicotticon.png"));
 		alert.setGraphic(iv);
 		alert.showAndWait();
+		LOG.debug("Showing about window");
 	}
 	
 	@FXML
 	private void handleExit() {
+		LOG.info("Exiting Musicott");
 		System.exit(0);
 	}
 }

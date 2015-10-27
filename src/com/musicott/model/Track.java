@@ -12,7 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -20,31 +20,18 @@ package com.musicott.model;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.exceptions.CannotReadException;
-import org.jaudiotagger.audio.exceptions.CannotWriteException;
 import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
 import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
-import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.TagException;
-import org.jaudiotagger.tag.flac.FlacTag;
-import org.jaudiotagger.tag.images.Artwork;
-import org.jaudiotagger.tag.images.ArtworkFactory;
-import org.jaudiotagger.tag.mp4.Mp4Tag;
 
-import com.mpatric.mp3agic.InvalidDataException;
-import com.mpatric.mp3agic.Mp3File;
-import com.mpatric.mp3agic.NotSupportedException;
-import com.mpatric.mp3agic.UnsupportedTagException;
-import com.musicott.error.WriteMetadataException;
+import com.musicott.util.MetadataUpdater;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
@@ -83,9 +70,10 @@ public class Track {
 	private int bpm;
 	private Duration totalTime;
 
-	private boolean hasCover;
 	private boolean inDisk;
 	private boolean isCompilation;
+	private boolean isVariableBitRate;
+	private boolean hasCover;
 
 	private LocalDateTime dateModified;
 	private LocalDateTime dateAdded;
@@ -104,14 +92,17 @@ public class Track {
 	private IntegerProperty bpmProperty;
 	
 	private BooleanProperty hasCoverProperty;
+
 	private ObjectProperty<LocalDateTime> dateModifiedProperty;
 	private Map<TrackField,Property<?>> propertyMap;
 	private String fileFormat;
+	private MetadataUpdater updater;
 	
     public Track() {
-    	trackID = -1;
+    	trackID = MusicLibrary.getInstance().getTrackSequence().getAndIncrement();
     	fileFolder = "";
     	fileName = "";
+    	fileFormat = "";
     	name = "";
     	artist = "";
     	album = "";
@@ -127,11 +118,13 @@ public class Track {
     	totalTime = Duration.UNKNOWN;
     	bitRate = -1;
     	playCount = 0;
-    	hasCover = false;
     	inDisk = false;
     	isCompilation = false;
+    	hasCover = false;
+    	isVariableBitRate = false;
     	dateModified = LocalDateTime.now();
     	dateAdded = LocalDateTime.now();
+    	updater = new MetadataUpdater(this);
     	
     	nameProperty = new SimpleStringProperty(name);
     	nameProperty.addListener((observable, oldString, newString) -> setName(newString));
@@ -155,24 +148,43 @@ public class Track {
     	discNumberProperty.addListener((observable, oldNumber, newNumber) -> setDiscNumber(newNumber.intValue()));
     	bpmProperty = new SimpleIntegerProperty(bpm);
     	bpmProperty.addListener((observable, oldNumber, newNumber) -> setBpm(newNumber.intValue()));
-    	hasCoverProperty = new SimpleBooleanProperty(hasCover);
-    	hasCoverProperty.addListener((observable, oldBoolean, newBoolean) -> setHasCover(newBoolean.booleanValue())); 
-    	dateModifiedProperty = new SimpleObjectProperty<LocalDateTime>(dateModified);
+    	dateModifiedProperty = new SimpleObjectProperty<>(dateModified);
     	dateModifiedProperty.addListener((observable, oldDate, newDate) -> setDateModified(newDate));
+    	hasCoverProperty = new SimpleBooleanProperty(hasCover);
     	
-    	propertyMap = new HashMap<TrackField,Property<?>>();
+    	propertyMap = new HashMap<>();
     	propertyMap.put(TrackField.NAME, nameProperty);
-    	propertyMap.put(TrackField.ARTIST, artistProperty);
     	propertyMap.put(TrackField.ALBUM, albumProperty);
+    	propertyMap.put(TrackField.ALBUM_ARTIST, albumArtistProperty);
+    	propertyMap.put(TrackField.ARTIST, artistProperty);
     	propertyMap.put(TrackField.GENRE, genreProperty);
     	propertyMap.put(TrackField.COMMENTS, commentsProperty);
-    	propertyMap.put(TrackField.ALBUM_ARTIST, albumArtistProperty);
     	propertyMap.put(TrackField.LABEL, labelProperty);
     	propertyMap.put(TrackField.TRACK_NUMBER, trackNumberProperty);
     	propertyMap.put(TrackField.DISC_NUMBER, discNumberProperty);
     	propertyMap.put(TrackField.YEAR, yearProperty);
     	propertyMap.put(TrackField.BPM, bpmProperty);
     }
+    
+    public boolean updateMetadata() {
+    	return updater.updateMetadata();
+    }
+    
+    public boolean updateCover(File coverFile) {
+    	return updater.updateCover(coverFile);
+    }
+    
+	public byte[] getCoverBytes() {
+		byte[] coverBytes = null;
+		try {
+			AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
+			if(!audioFile.getTag().getArtworkList().isEmpty())
+				coverBytes = audioFile.getTag().getFirstArtwork().getBinaryData();
+		} catch (CannotReadException | IOException | TagException
+				|ReadOnlyFileException | InvalidAudioFrameException e) {
+		}
+		return coverBytes;
+	}
     
 	public Map<TrackField,Property<?>> getPropertiesMap() {
     	return propertyMap;
@@ -382,19 +394,6 @@ public class Track {
 		bpmProperty.setValue(this.bpm);
 	}
 	
-	public BooleanProperty getHasCoverProperty() {
-		return this.hasCoverProperty;
-	}
-
-	public boolean getHasCover() {
-		return hasCover;
-	}
-
-	public void setHasCover(boolean hasCover) {
-		this.hasCover = hasCover;
-		hasCoverProperty.set(hasCover);
-	}
-
 	public boolean getInDisk() {
 		return inDisk;
 	}
@@ -431,134 +430,41 @@ public class Track {
 	public void setDateAdded(LocalDateTime dateAdded) {
 		this.dateAdded = dateAdded;
 	}
-	
-	/**
-	 * Returns the byte array that represents the cover image
-	 * directly stored in the metadata of the file
-	 * 
-	 * @return the byte array of the file
-	 */
-	public byte[] getCoverFile() {
-		byte[] coverFile = null;
-		if(fileFormat.equals("mp3")) {
-			try {
-				Mp3File mp3File = new Mp3File(fileFolder+"/"+fileName);
-				coverFile = mp3File.getId3v2Tag().getAlbumImage();
-			} catch (UnsupportedTagException | InvalidDataException | IOException e) {}
-		}
-		else if(fileFormat.equals("flac")) {
-			try {
-				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
-				FlacTag tag = (FlacTag) audioFile.getTag();
-				if(!tag.getArtworkList().isEmpty())
-					coverFile = tag.getArtworkList().get(0).getBinaryData();
-			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException e) {}
-		}
-		else if(fileFormat.equals("wav")) {
-			File cover = new File(fileFolder+"/"+"cover.png");
-			if(cover.exists())
-				try {
-					coverFile = Files.readAllBytes(Paths.get(cover.getPath()));
-				} catch (IOException e) {}
-			else {
-				cover = new File(fileFolder+"/"+"cover.jpg");
-				if(cover.exists())
-					try {
-						coverFile = Files.readAllBytes(Paths.get(cover.getPath()));
-					} catch (IOException e) {}
-				else {
-					cover = new File(fileFolder+"/"+"cover.jpeg");
-					if(cover.exists())
-						try {
-							coverFile = Files.readAllBytes(Paths.get(cover.getPath()));
-						} catch (IOException e) {}
-				}
-			}
-		} else if(fileFormat.equals("m4a")) {
-			try {
-				AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
-				Mp4Tag mp4tag = (Mp4Tag) audioFile.getTag();
-				coverFile = mp4tag.getArtworkList().get(0).getBinaryData();
-			} catch(IOException | InvalidAudioFrameException | ReadOnlyFileException | TagException |CannotReadException e) {}			
-		}
-		return coverFile;
+
+	public BooleanProperty getHasCoverProperty() {
+		return hasCoverProperty;
 	}
 	
-	/**
-	 * Stores directly into the metadata of the file the image represented
-	 * by the array of bytes. In the case of a wav file, it just save the image
-	 * to the folder of the file as "cover."+ <tt>mimeType</tt>
-	 * 
-	 * @param coverFile the array of bytes
-	 * @param mimeType the mimetype extension of the file
-	 * @throws WriteMetadataException when cover image could not be saved
-	 */
-	public void setCoverFile(byte[] coverFile, String mimeType) throws WriteMetadataException {
-		File trackFile = new File(fileFolder+"/"+fileName);
-		AudioFile audioFile;
-		if(fileFormat.equals("mp3")) {
-			try {
-				Mp3File mp3File = new Mp3File(fileFolder+"/"+fileName);
-				mp3File.getId3v2Tag().setAlbumImage(coverFile, mimeType);
-				mp3File.save(fileFolder+"/"+"TEMP"+fileName);
-				File newFile = new File(fileFolder+"/"+"TEMP"+fileName);
-				newFile.renameTo(trackFile);
-			} catch (UnsupportedTagException | InvalidDataException | IOException | NotSupportedException e) {
-				WriteMetadataException wme = new WriteMetadataException("Error setting cover image", this);
-				throw wme;
-			}
-			finally {
-				if(trackFile.exists())
-					trackFile.delete();
-			}
-		}
-		else if(fileFormat.equals("flac")) {
-			File file = new File("cover."+mimeType);
-			try {
-				audioFile = AudioFileIO.read(trackFile);
-				FlacTag tag = (FlacTag) audioFile.getTag();
-				FileUtils.writeByteArrayToFile(file, coverFile);
-				Artwork cover = ArtworkFactory.createArtworkFromFile(file);
-				tag.addField(cover);
-				audioFile.commit();
-			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException | CannotWriteException e) {
-				WriteMetadataException wme = new WriteMetadataException("Error setting cover image", this);
-				throw wme;
-			}
-			finally {
-				if(file.exists())
-					file.delete();
-			}
-		}
-		else if(fileFormat.equals("wav")) {
-			try {
-				File file = new File(fileFolder+"/cover."+mimeType);
-				FileUtils.writeByteArrayToFile(file, coverFile);
-			} catch (IOException e) {
-				WriteMetadataException wme = new WriteMetadataException("Error setting cover image", this);
-				throw wme;
-			}
-		}
-		else if(fileFormat.equals("m4a")) {
-			try {
-				audioFile = AudioFileIO.read(trackFile);
-				Tag tag = audioFile.getTag();
-				tag.deleteArtworkField();
-				tag.addField(((Mp4Tag)tag).createArtworkField(coverFile));
-				audioFile.commit();
-			} catch(IOException | CannotReadException | TagException | ReadOnlyFileException | InvalidAudioFrameException | CannotWriteException e) {
-				WriteMetadataException wme = new WriteMetadataException("Error setting cover image", this);
-				throw wme;
-			}
-		}
+	public boolean hasCover() {
+		return this.hasCover;
 	}
 	
+	public void setHasCover(boolean hasCover) {
+		this.hasCover = hasCover;
+		hasCoverProperty.set(hasCover);
+	}
+	
+	public boolean isVariableBitRate() {
+		return this.isVariableBitRate;
+	}
+	
+	public void setIsVariableBitRate(boolean isVariableBitRate) {
+		this.isVariableBitRate = isVariableBitRate;
+	}
+	
+	public MetadataUpdater getUpdater() {
+		return updater;
+	}
+
+	public void setUpdater(MetadataUpdater updater) {
+		this.updater = updater;
+	}
+
 	@Override
 	public int hashCode() {
 		int hash=71;
 		hash = 73*hash+fileName.hashCode();
 		hash = 73*hash+fileFolder.hashCode();
-		hash = 73*hash+size;
 		hash = 73*hash+name.hashCode();
 		hash = 73*hash+artist.hashCode();
 		hash = 73*hash+album.hashCode();
@@ -569,7 +475,6 @@ public class Track {
 		hash = 73*hash+albumArtist.hashCode();
 		hash = 73*hash+bpm;
 		hash = 73*hash+label.hashCode();
-		hash = 73*hash+totalTime.hashCode();
 		return hash;
 	}
 	
@@ -578,7 +483,6 @@ public class Track {
 		boolean equals = false;
 		if((o instanceof Track && ((Track) o).getFileName().equalsIgnoreCase(this.fileName)) &&
 			o instanceof Track && ((Track) o).getFileFolder().equalsIgnoreCase(this.fileFolder) && 
-			o instanceof Track && ((Track) o).getSize() == this.size &&
 			o instanceof Track && ((Track) o).getName().equalsIgnoreCase(this.name) &&
 			o instanceof Track && ((Track) o).getArtist().equalsIgnoreCase(this.artist) &&
 			o instanceof Track && ((Track) o).getAlbum().equalsIgnoreCase(this.album) &&
@@ -588,14 +492,13 @@ public class Track {
 			o instanceof Track && ((Track) o).getYear() == this.year &&
 			o instanceof Track && ((Track) o).getAlbumArtist().equalsIgnoreCase(this.albumArtist) &&
 			o instanceof Track && ((Track) o).getBpm() == this.bpm &&
-			o instanceof Track && ((Track) o).getLabel().equalsIgnoreCase(this.label) &&
-			o instanceof Track && ((Track) o).getTotalTime().equals(totalTime))
+			o instanceof Track && ((Track) o).getLabel().equalsIgnoreCase(this.label))
 				equals = true;
 		return equals;
 	}
 	
 	@Override
     public String toString(){
-    	return name+" "+artist+" "+genre+" "+album+"("+year+") "+bpm+" "+label+" "+totalTime;
+    	return "["+name+"|"+artist+"|"+genre+"|"+album+"("+year+")|"+bpm+"|"+label+"]";
     }
 }

@@ -57,13 +57,17 @@
 }
 
 #trackSlider .track {
-    -fx-background-color:null;
+    -fx-background-color: null;
 	-fx-background-insets: 1 1 2 1;
 	-fx-background-radius: 2;	
 }
 
+#trackSlider .thumb {
+	-fx-background-color: null;
+}
+
 #volumeSlider .track {
-    -fx-background-color:null;
+    -fx-background-color: null;
 }
 
 #volumeProgressBar .bar {
@@ -79,11 +83,12 @@
 #trackProgressBar .bar {
 	-fx-background-color: black;
 	-fx-background-insets: 1 1 2 1;
-	-fx-background-radius: 2;
+	-fx-background-radius: null;
 }
 
 #trackProgressBar .track {
 	-fx-control-inner-background: rgb(182,182,182);
+	-fx-background-radius: null;
 }
 
 #searchTextField {

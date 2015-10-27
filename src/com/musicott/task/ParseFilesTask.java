@@ -12,36 +12,31 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
 package com.musicott.task;
 
+import java.io.File;
 import java.util.List;
 
 import com.musicott.model.Track;
-import com.musicott.util.MetadataWriter;
-
-import javafx.concurrent.Task;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class WriteMetadataTask extends Task<Void>{
+public class ParseFilesTask extends ParseTask {
 	
-	private List<Track> tracks;
-
-	public WriteMetadataTask(List<Track> tracks) {
-		this.tracks = tracks;
+	public ParseFilesTask(List<File> filesToParse) {
+		super();
+		files = filesToParse;
 	}
-	
+
 	@Override
-	protected Void call() {
-		for(Track track : tracks)
-			if(track.getInDisk())
-				MetadataWriter.writeTrackMetadata(track);
-		return null;
+	protected List<Track> call() throws Exception {
+		parseFiles();
+		return tracks;
 	}
 }

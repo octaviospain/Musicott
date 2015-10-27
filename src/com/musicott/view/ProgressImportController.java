@@ -12,11 +12,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
 package com.musicott.view;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.musicott.SceneManager;
 
@@ -31,6 +34,8 @@ import javafx.scene.layout.BorderPane;
  *
  */
 public class ProgressImportController {
+	
+	private final Logger LOG = LoggerFactory.getLogger(ProgressImportController.class.getName());
 
 	@FXML
 	private BorderPane pane;
@@ -52,16 +57,18 @@ public class ProgressImportController {
 	}
 	
 	public void hideCancelButton() {
+		LOG.trace("Task not cancelable");
 		cancelTaskButton.setVisible(false);
 	}
 	
 	public void runTask() {
-		Thread t = new Thread(task, "ImportCollectionThread");
+		Thread t = new Thread(task);
 		t.setDaemon(true);
 		t.start();
 	}
 	
 	public void cancelTask() {
+		LOG.info(task.getTitle()+" cancelled");
 		task.cancel();
 		SceneManager.getInstance().closeImportScene();
 	}
@@ -72,6 +79,7 @@ public class ProgressImportController {
 	}
 	
 	public void setIndeterminate() {
+		LOG.trace(task.getTitle()+" reseted");
 		initialize();
 	}
 }

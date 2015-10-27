@@ -16,24 +16,17 @@
  *
  */
 
-package com.musicott.util;
+package tests.unit;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
-import com.cedarsoftware.util.io.JsonReader.ClassFactory;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
 /**
- * Needed class for serialize to .json with json-io library
- * 
  * @author Octavio Calleya
  *
  */
-public class ObservableListWrapperCreator implements ClassFactory {
-
-	@Override
-	public Object newInstance(Class c) {
-		ObservableList ol = FXCollections.observableArrayList();
-		return ol;
-	}
+@RunWith(Suite.class)
+@SuiteClasses({LibrarySerializeTest.class, ParseUpdateTest.class})
+public class UnitTestSuit {
 }

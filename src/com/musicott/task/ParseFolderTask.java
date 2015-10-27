@@ -16,24 +16,35 @@
  *
  */
 
-package com.musicott.util;
+package com.musicott.task;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import java.io.File;
+import java.io.FileFilter;
+import java.util.List;
 
-import com.cedarsoftware.util.io.JsonReader.ClassFactory;
+import com.musicott.model.Track;
+import com.musicott.util.Utils;
 
 /**
- * Needed class for serialize to .json with json-io library
- * 
  * @author Octavio Calleya
  *
  */
-public class ObservableListWrapperCreator implements ClassFactory {
+public class ParseFolderTask extends ParseTask {
+	
+	private FileFilter fileFilter;
+	private File rootFolder;
+	
+	public ParseFolderTask(File folder, FileFilter filter) {
+		super();
+		rootFolder = folder;
+		fileFilter = filter;
+	}
 
 	@Override
-	public Object newInstance(Class c) {
-		ObservableList ol = FXCollections.observableArrayList();
-		return ol;
+	protected List<Track> call() throws Exception {
+		LOG.info("Finding valid files in {}", rootFolder);
+		files = Utils.getAllFilesInFolder(rootFolder, fileFilter, 0);
+		parseFiles();
+		return tracks;
 	}
 }

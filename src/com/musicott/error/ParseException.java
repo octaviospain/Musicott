@@ -12,13 +12,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
 package com.musicott.error;
 
 import java.io.File;
+
+import com.musicott.model.Track;
 
 /**
  * @author Octavio Calleya
@@ -44,5 +46,9 @@ public class ParseException extends Exception{
 	
 	public ParseException(String msg, Throwable cause, File f) {
 		super(msg+" in "+f.getName(), cause);
+	}
+	
+	public ParseException(String msg, Throwable cause, Track t) {
+		super(msg+" in "+t, cause);
 	}
 }

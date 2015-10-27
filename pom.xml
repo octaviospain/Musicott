@@ -90,24 +90,6 @@
     	<scope>compile</scope>
     </dependency>
     <dependency>
-    	<groupId>org.mockito</groupId>
-    	<artifactId>mockito-core</artifactId>
-    	<version>1.10.19</version>
-    	<scope>test</scope>
-    </dependency>
-    <dependency>
-    	<groupId>org.powermock</groupId>
-    	<artifactId>powermock-module-junit4</artifactId>
-    	<version>1.6.2</version>
-    	<scope>test</scope>
-    </dependency>
-    <dependency>
-    	<groupId>org.powermock</groupId>
-    	<artifactId>powermock-api-mockito</artifactId>
-    	<version>1.6.2</version>
-    	<scope>test</scope>
-    </dependency>
-    <dependency>
     	<groupId>com.cedarsoftware</groupId>
     	<artifactId>json-io</artifactId>
     	<version>4.1.6</version>
@@ -119,11 +101,10 @@
     	<version>1.3.2</version>
     	<scope>compile</scope>
     </dependency>
-    <dependency>
-	    <groupId>org.bitbucket.ijabz</groupId>
-	    <artifactId>jaudiotagger</artifactId>
-	    <version>Version2_2_2</version>
-    	<scope>compile</scope>
+	<dependency>
+ 	<groupId>com.mpatric</groupId>
+  		<artifactId>mp3agic</artifactId>
+  		<version>0.8.3</version>
 	</dependency>
 	<dependency>
 	  <groupId>com.googlecode.soundlibs</groupId>
@@ -139,6 +120,16 @@
 	  <groupId>com.googlecode.soundlibs</groupId>
 	  <artifactId>mp3spi</artifactId>
 	  <version>1.9.5-1</version>
+	</dependency>
+	<dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>slf4j-api</artifactId>
+		<version>1.7.12</version>
+	</dependency>
+	<dependency> 
+  		<groupId>org.slf4j</groupId>
+  		<artifactId>slf4j-jdk14</artifactId>
+  		<version>1.7.11</version>
 	</dependency>
   </dependencies>
   <repositories>

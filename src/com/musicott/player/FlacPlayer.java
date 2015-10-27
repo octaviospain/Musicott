@@ -12,7 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -26,13 +26,12 @@ import com.musicott.model.Track;
  */
 public class FlacPlayer implements TrackPlayer {
 	
-	public FlacPlayer(Track track) {
+	public FlacPlayer() {
 		//TODO
 	}
 	
 	@Override
 	public String getStatus() {
-		
 		return "";
 	}
 	

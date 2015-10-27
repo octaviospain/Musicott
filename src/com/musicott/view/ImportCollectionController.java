@@ -12,16 +12,20 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
 package com.musicott.view;
 
 import java.io.File;
+import java.io.FileFilter;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.musicott.SceneManager;
-import com.musicott.task.ImportTask;
+import com.musicott.task.ParseFolderTask;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -35,6 +39,8 @@ import javafx.stage.Stage;
  *
  */
 public class ImportCollectionController {
+	
+	private final Logger LOG = LoggerFactory.getLogger(ImportCollectionController.class.getName());
 	
 	@FXML
 	private Button openButton;
@@ -72,12 +78,24 @@ public class ImportCollectionController {
 	
 	@FXML
 	private void doImport() {
-		ImportTask task = new ImportTask(folder,cbM4a.isSelected(),cbWav.isSelected(),cbFlac.isSelected());
+		FileFilter formatFilter = file -> {
+			int pos = file.getName().lastIndexOf(".");
+			String format = file.getName().substring(pos+1);
+			if((cbM4a.isSelected() && format.equals("m4a")) ||
+				cbWav.isSelected() && format.equals("wav") ||
+				cbFlac.isSelected() && format.equals("flac") ||
+				format.equals("mp3"))
+				return true;
+			else
+				return false;
+		};
+		ParseFolderTask task = new ParseFolderTask(folder, formatFilter);
 		SceneManager.getInstance().showImportProgressScene(task, false);
 	}
 	
 	@FXML
 	private void doOpen() {
+		LOG.info("Choosing folder to being imported");
 		DirectoryChooser chooser = new DirectoryChooser();
 		chooser.setTitle("Choose folder");
 		folder = chooser.showDialog(importStage);
@@ -90,5 +108,6 @@ public class ImportCollectionController {
 	@FXML
 	private void doCancel() {
 		importStage.close();
+		LOG.info("Import cancelled");
 	}
 }

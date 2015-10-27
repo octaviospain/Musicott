@@ -19,7 +19,6 @@
 package tests.system;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,12 +49,9 @@ import static org.testfx.matcher.base.NodeMatchers.*;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
-import com.mpatric.mp3agic.InvalidDataException;
-import com.mpatric.mp3agic.UnsupportedTagException;
 import com.musicott.MainApp;
-import com.musicott.error.WriteMetadataException;
 import com.musicott.model.Track;
-import com.musicott.task.parser.Mp3Parser;
+import com.musicott.util.MetadataParser;
 
 /**
  * @author Octavio Calleya
@@ -241,11 +237,13 @@ public class SystemApplicationTest extends ApplicationTest {
 	}
 	
 	@Test
-	public void showCorrectFieldsEditViewSeveraTracks_FildsInCommonTest() throws UnsupportedTagException, InvalidDataException, IOException, InterruptedException, WriteMetadataException {
+	public void showCorrectFieldsEditViewSeveraTracks_FildsInCommonTest() throws Exception {
 		List<Track> list = new ArrayList<Track>();
 		for(File f:new File(mp3FilePath).getParentFile().listFiles())
-			if(f.getName().substring(f.getName().length()-3).equals("mp3"))
-				list.add(Mp3Parser.parseMp3File(f));
+			if(f.getName().substring(f.getName().length()-3).equals("mp3")) {
+				MetadataParser parser = new MetadataParser(f);
+				list.add(parser.createTrack());
+			}
 		clickOn("#menuFile");
 		clickOn("#menuItemImport");		// Because the Filechooser is not selectable with testFX, I set the correct folder
 		checkImportView();				// previously selecting it in a normal execution, and the filechooser opens there
@@ -336,8 +334,9 @@ public class SystemApplicationTest extends ApplicationTest {
 	}
 	
 	@Test
-	public void showCorrectFieldsEditViewOneTrackTest() throws UnsupportedTagException, InvalidDataException, IOException, WriteMetadataException {
-		Track t = Mp3Parser.parseMp3File(new File(mp3FilePath));
+	public void showCorrectFieldsEditViewOneTrackTest() throws Exception {
+		MetadataParser parser = new MetadataParser(new File(mp3FilePath));
+		Track t = parser.createTrack();
 		clickOn("#menuFile");
 		clickOn("#menuItemOpen");
 		press(KeyCode.DIGIT0);		// Because the Filechooser is not moveable with testFX, I set the correct folder

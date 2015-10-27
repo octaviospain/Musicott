@@ -6,9 +6,9 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="playQueuePane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="300.0" stylesheets="@../../../css/playqueuepane.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.PlayQueueController">
+<AnchorPane id="playQueuePane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="300.0" stylesheets="@../css/playqueuepane.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.PlayQueueController">
    <children>
-      <BorderPane id="playQueuePane" prefHeight="450.0" prefWidth="300.0" stylesheets="@../../../css/playqueuepane.css">
+      <BorderPane id="playQueuePane" prefHeight="450.0" prefWidth="300.0" stylesheets="@../css/playqueuepane.css">
          <top>
             <GridPane prefHeight="35.0" BorderPane.alignment="CENTER">
                <columnConstraints>
@@ -38,7 +38,7 @@
                         <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
                      </padding>
                   </Button>
-                  <Button fx:id="historyQueueButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#doHistoryQueueButton" prefHeight="20.0" prefWidth="20.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" />
+                  <Button fx:id="historyQueueButton" cacheHint="QUALITY" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#doHistoryQueueButton" prefHeight="20.0" prefWidth="20.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" />
                </children>
             </GridPane>
          </top>

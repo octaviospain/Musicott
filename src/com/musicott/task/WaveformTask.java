@@ -12,17 +12,18 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
-package com.musicott.view;
+package com.musicott.task;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
+import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.CopyOption;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,122 +33,107 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.musicott.SceneManager;
-import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
+import com.musicott.view.RootController;
 
 import be.tarsos.transcoder.DefaultAttributes;
 import be.tarsos.transcoder.Transcoder;
 import be.tarsos.transcoder.ffmpeg.EncoderException;
-import javafx.application.Platform;
-
-import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;;
+import javafx.concurrent.Task;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class WaveformPanel extends JPanel {
+public class WaveformTask extends Task<float[]> {
 	
-	private static final long serialVersionUID = 2195160480150957593L;
+	private final Logger LOG = LoggerFactory.getLogger(WaveformTask.class.getName());
 	
-	private final double HEIGHT_COEFICIENT = 4.4;
-	private float[] waveData;
-	private int width;
-	private Map<Track,float[]> waveforms = MusicLibrary.getInstance().getWaveforms();
-	private Color backgroundColor;
+	private Map<Integer,float[]> waveforms = MusicLibrary.getInstance().getWaveforms();
+	private final double HEIGHT_COEFICIENT = 4.2;
+	private Track track;
+	private float[] waveform;
 	
-	public WaveformPanel(int width, int height) {
-		this.width = width;
-		waveData = new float[width];
-		Dimension dim = new Dimension(width, height);
-		setMinimumSize(dim);
-		setMaximumSize(dim);
-		setPreferredSize(dim);
-		backgroundColor = new Color(244,244,244);
-		setBackground(backgroundColor);
-		setForeground(backgroundColor);
+	private SceneManager sc = SceneManager.getInstance();
+	private RootController rootController;
+	
+	public WaveformTask(Track track) {
+		this.track = track;
+		this.rootController = sc.getRootController();
 	}
-	
-	public void clear() {
-		waveData = new float[width];
-		setForeground(backgroundColor);
-		repaint();
-	}
-	
-	public void setTrack(Track track) {
-		boolean done = false;
-		if(waveforms.containsKey(track))
-			waveData = waveforms.get(track);
+
+	@Override
+	protected float[] call() {
+		LOG.info("Processing waveform of track "+track);
+		if(track.getFileFormat().equals("wav"))
+			waveform = processWav();
 		else
-			if(track.getFileFormat().equals("wav"))
-				done = processWav(track);
-			else
-				if(track.getFileFormat().equals("mp3")) {
-					done = processMp3(track);
-				}
-		if(done) {
-			if(getForeground().equals(backgroundColor))
-				setForeground(Color.GRAY);
-			repaint();
+			if(track.getFileFormat().equals("mp3")) {
+				waveform = processMp3();
+			}
+		return waveform;
+	}
+
+	@Override
+	protected void succeeded() {
+		super.succeeded();
+		if(waveform != null) {
+			waveforms.put(track.getTrackID(), waveform);
+			Track currentTrack = sc.getPlayQueueController().getCurrentTrack();
+			if(currentTrack != null && currentTrack.equals(track))
+				SwingUtilities.invokeLater(() -> rootController.setWaveform(track));
+			LOG.info("Waveform of track {} completed", track);
+			sc.saveLibrary(false, true);
 		}
-		else
-			clear();
 	}
-	
-	private boolean processMp3(Track track) {
-		boolean res;
-	//	String fileNameTrimmed = track.getFileName().replaceAll("\\s",""); // spaces in the file name causes error on Tarsos transcoder
-		Path temporalDecodedPath = FileSystems.getDefault().getPath("temp", "decoded.wav");
+
+	private float[] processMp3() {
+		float[] waveData;
+		String trackName = track.getName();
+		Path temporalDecodedPath = FileSystems.getDefault().getPath("temp", new String("decoded_"+trackName+".wav").replaceAll(" ","_"));
 		Path trackPath = FileSystems.getDefault().getPath(track.getFileFolder(), track.getFileName());
-		Path temporalCoppiedPath = FileSystems.getDefault().getPath("temp", "original.mp3");
-		File trackFileCopiedTrimmed = temporalCoppiedPath.toFile();
+		Path temporalCoppiedPath = FileSystems.getDefault().getPath("temp", new String("original_"+trackName+".mp3").replaceAll(" ","_"));
 		File temporalDecodedFile = temporalDecodedPath.toFile();
+		File temporalCoppiedFile = temporalCoppiedPath.toFile();
 		try {
 			temporalDecodedFile.createNewFile();
-			Files.copy(trackPath, temporalCoppiedPath, COPY_ATTRIBUTES);
+			CopyOption[] options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING}; 
+			Files.copy(trackPath, temporalCoppiedPath, options);
 			Transcoder.transcode(temporalCoppiedPath.toString(), temporalDecodedPath.toString(), DefaultAttributes.WAV_PCM_S16LE_STEREO_44KHZ.getAttributes());
-			processAmplitudes(getWavAmplitudes(temporalDecodedFile));
-			waveforms.put(track, waveData);
-			SceneManager.getInstance().saveLibrary(); // save the state of the waveform map
-			res = true;
+			waveData = processAmplitudes(getWavAmplitudes(temporalDecodedFile));
 		} catch (EncoderException | UnsupportedAudioFileException | IOException e) {
-			res = false;
-			Platform.runLater(() -> {
-				ErrorHandler.getInstance().addError(e, ErrorType.COMMON);
-				ErrorHandler.getInstance().showErrorDialog(ErrorType.COMMON);
-			});
+			LOG.warn("Error processing audio waveform of {}: "+e.getMessage(), track);
+			waveData = null;
 		} finally {
 			if(temporalDecodedFile.exists())
 				temporalDecodedFile.delete();
-			if(trackFileCopiedTrimmed.exists())
-				trackFileCopiedTrimmed.delete();
+			if(temporalCoppiedFile.exists())
+				temporalCoppiedFile.delete();
 		}
-		return res;
+		return waveData;
 	}
 	
-	private boolean processWav(Track track) {
-		boolean res;
+	
+	private float[] processWav() {
+		float[] waveData;
 		String trackPath = track.getFileFolder()+"/"+track.getFileName();
 		File trackFile = new File(trackPath);
 		try {
-			processAmplitudes(getWavAmplitudes(trackFile));
-			waveforms.put(track, waveData);
-			SceneManager.getInstance().saveLibrary(); // save the state of the waveform map
-			res = true;
+			waveData = processAmplitudes(getWavAmplitudes(trackFile));
 		} catch (UnsupportedAudioFileException | IOException e) {
-			res = false;
-			Platform.runLater(() -> {
-				ErrorHandler.getInstance().addError(e, ErrorType.COMMON);
-				ErrorHandler.getInstance().showErrorDialog(ErrorType.COMMON);
-			});
+			LOG.warn("Error processing audio waveform of {}: "+e.getMessage(), track);
+			waveData = null;
 		}
-		return res;
+		return waveData;
 	}
+	
 	
 	private int[] getWavAmplitudes(File file) throws UnsupportedAudioFileException, IOException {
 		int[] amp = null;
@@ -175,7 +161,10 @@ public class WaveformPanel extends JPanel {
 		return amp;
 	}
 	
-	private void processAmplitudes(int[] sourcePCMData) {
+	
+	private float[] processAmplitudes(int[] sourcePCMData) {
+		int width = 515;	// the width of th waveform panel
+		float[] waveData = new float[width];
 		int	nSamplesPerPixel = sourcePCMData.length / width;
 		for (int i = 0; i<width; i++) {
 			float nValue = 0.0f;
@@ -185,17 +174,6 @@ public class WaveformPanel extends JPanel {
 			nValue /= nSamplesPerPixel;
 			waveData[i] = nValue;
 		}
-	}
-
-	@Override
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		int nHeight = getHeight();
-		for (int i = 0; i<width; i++) {
-			int value = (int) (waveData[i] * nHeight);
-			int y1 = (nHeight - 2 * value) / 2;
-			int y2 = y1 + 2 * value;
-			g.drawLine(i, y1, i, y2);
-		}
+		return waveData;
 	}
 }
