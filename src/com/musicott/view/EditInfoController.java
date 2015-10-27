@@ -1,5 +1,5 @@
 /*
-q * This file is part of Musicott software.
+ * This file is part of Musicott software.
  *
  * Musicott software is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@ q * This file is part of Musicott software.
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -29,19 +29,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
-import com.musicott.error.WriteMetadataException;
 import com.musicott.model.Track;
 import com.musicott.model.TrackField;
-import com.musicott.task.WriteMetadataTask;
+import com.musicott.task.UpdateMetadataTask;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.StringProperty;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.CacheHint;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -58,7 +60,9 @@ import javafx.stage.FileChooser.ExtensionFilter;
  * @author Octavio Calleya
  *
  */
-public class EditController {
+public class EditInfoController {
+	
+	private final Logger LOG = LoggerFactory.getLogger(EditInfoController.class.getName());
 
 	@FXML
 	private TextField name;
@@ -98,16 +102,17 @@ public class EditController {
 	private Button okEditButton;
 	
 	private Map<TrackField,TextInputControl> editFieldsMap;
+	private File newCoverImage;
+	private Image defaultImage;
 	private Stage editStage;
-	private ErrorHandler errorHandler = ErrorHandler.getInstance();
-	private ObservableList<Track> trackSelection;
-	private boolean changed = false;
+	private List<Track> trackSelection;
 	
-	public EditController() {
+	public EditInfoController() {
 	}
 	
 	@FXML
 	private void initialize() {
+		defaultImage = new Image(EditInfoController.class.getResourceAsStream("/images/default-cover-icon.png"));
 		editFieldsMap = new HashMap<TrackField,TextInputControl>();
 		editFieldsMap.put(TrackField.NAME, name);
 		editFieldsMap.put(TrackField.ARTIST, artist);
@@ -120,36 +125,29 @@ public class EditController {
 		editFieldsMap.put(TrackField.DISC_NUMBER, discNum);
 		editFieldsMap.put(TrackField.YEAR, year);
 		editFieldsMap.put(TrackField.BPM, bpm);
+		
+		titleName.textProperty().bind(name.textProperty());
+		titleArtist.textProperty().bind(artist.textProperty());
+		titleAlbum.textProperty().bind(album.textProperty());
+		
+		coverImage.setImage(defaultImage);
+		coverImage.setCacheHint(CacheHint.QUALITY);
 		coverImage.setOnMouseClicked(event -> {
 			if(event.getClickCount() <= 2) {
+				LOG.debug("Choosing cover image");
 				FileChooser chooser = new FileChooser();
 				chooser.setTitle("Open file(s)...");
 				chooser.getExtensionFilters().addAll(new ExtensionFilter("Image files (*.png, *.jpg, *.jpeg)","*.png", "*.jpg", "*.jpeg"));
-				File newCoverImage = chooser.showOpenDialog(editStage);
-				if(newCoverImage != null) {
-					byte[] newCoverBytes = null;
-					try {
-						newCoverBytes = Files.readAllBytes(Paths.get(newCoverImage.getPath()));
-						String mimeType = "";
-						int pos = newCoverImage.getName().lastIndexOf(".");
-						mimeType = newCoverImage.getName().substring(pos + 1 );
-						for(Track t: trackSelection)
-							if(t.getInDisk()) {
-								try {
-									t.setCoverFile(newCoverBytes, mimeType);
-									t.setHasCover(true);
-									changed = true;
-								} catch (WriteMetadataException e) {
-									errorHandler.addError(e, ErrorType.METADATA);
-								}
-							}
-						coverImage.setImage(new Image(new ByteArrayInputStream(newCoverBytes), 132, 132, true, true));
-					} catch (IOException e) {
-						errorHandler.addError(e, ErrorType.COMMON);
-						errorHandler.showErrorDialog(editStage.getOwner().getScene(), ErrorType.COMMON);
-					}
-					if(errorHandler.hasErrors(ErrorType.METADATA))
-						errorHandler.showErrorDialog(editStage.getOwner().getScene(), ErrorType.METADATA);
+				newCoverImage = chooser.showOpenDialog(editStage);
+				byte[] newCoverBytes;
+				try {
+					newCoverBytes = Files.readAllBytes(Paths.get(newCoverImage.getPath()));
+					if(newCoverImage != null)
+						coverImage.setImage(new Image(new ByteArrayInputStream(newCoverBytes)));
+				} catch (IOException e) {
+					ErrorHandler.getInstance().addError(e, ErrorType.COMMON);
+					ErrorHandler.getInstance().showErrorDialog(editStage.getScene(), ErrorType.COMMON);
+					LOG.error("Error setting image: "+e.getMessage());
 				}
 			}
 		});
@@ -159,80 +157,59 @@ public class EditController {
 		editStage = stage;
 	}
 	
-	public void setSelection(ObservableList<Track> selection) {
+	public void setSelection(List<Track> selection) {
 		trackSelection = selection;
 		setFields();
 	}
 
 	@FXML
 	private void doOK() {
-		if(trackSelection.size() == 1) {
-			Track t = trackSelection.get(0);
-			Map<TrackField, Property<?>> trackPropertiesMap = t.getPropertiesMap();
+		boolean changed;
+		String newValue;
+		for(int i=0; i<trackSelection.size() ;i++) {
+			Track track = trackSelection.get(i);
+			Map<TrackField, Property<?>> trackPropertiesMap = track.getPropertiesMap();
+			changed = false;
 			
 			for(TrackField field: editFieldsMap.keySet()) {
-				changed = false;
-				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
+				newValue = editFieldsMap.get(field).textProperty().getValue();
+/*Numeric fields*/	if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
 					try {
 						IntegerProperty ip = (IntegerProperty) trackPropertiesMap.get(field);
-						if(ip.get() != Integer.parseInt(editFieldsMap.get(field).textProperty().getValue())) {
-							ip.setValue(Integer.parseInt(editFieldsMap.get(field).textProperty().getValue()));
+						if(!newValue.equals("-") || (!newValue.equals("") && ip.get() != Integer.parseInt(newValue))) {
+							ip.setValue(Integer.parseInt(newValue));
 							changed = true;
 						}
 					} catch(NumberFormatException e) {}
 				}
-				else {
+/*String fields*/	else {
 					StringProperty sp = (StringProperty) trackPropertiesMap.get(field);
-					if(!sp.get().equals(editFieldsMap.get(field).textProperty().getValue())) {
-						sp.setValue(editFieldsMap.get(field).textProperty().getValue());
+					if(!newValue.equals("-") && !sp.get().equals(newValue)) {
+						sp.setValue(newValue);
 						changed = true;
 					}
 				}
 			}
-			if(changed)
-				t.setDateModified(LocalDateTime.now());
-			
-			//Changes in the elements of the list doesn't fire the ListChangeListener so save explicitly
-			SceneManager.getInstance().saveLibrary();
-		}
-		else {
-			for(int i=0; i<trackSelection.size() ;i++) {
-				Track t = trackSelection.get(i);
-				Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();
-				boolean changed = false;
-				
-				for(TrackField field: editFieldsMap.keySet()) {
-					if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
-						try {
-							IntegerProperty ip = (IntegerProperty) propertyMap.get(field);
-							if(!editFieldsMap.get(field).textProperty().getValue().equals("-") || !editFieldsMap.get(field).textProperty().getValue().equals("")
-									&& ip.get() != Integer.parseInt(editFieldsMap.get(field).textProperty().getValue())) {
-								ip.setValue(Integer.parseInt(editFieldsMap.get(field).textProperty().getValue()));
-								changed = true;
-							}
-						} catch(NumberFormatException e) {}
-					}
-					else {
-						StringProperty sp = (StringProperty) propertyMap.get(field);
-						if(!editFieldsMap.get(field).textProperty().getValue().equals("-") && !sp.get().equals(editFieldsMap.get(field).textProperty().getValue())) {
-							sp.setValue(editFieldsMap.get(field).textProperty().getValue());
-							changed = true;
-						}
-					}
-				}
-				if(!isCompilationCheckBox.isIndeterminate()) {
-					t.setCompilation(isCompilationCheckBox.isSelected());
-					changed = true;
-				}
-				if(changed)
-					t.setDateModified(LocalDateTime.now());					
-				
-				//Changes in the elements of the list doesn't fire the ListChangeListener so save explicitly
-				SceneManager.getInstance().saveLibrary();
+			if(!isCompilationCheckBox.isIndeterminate()) {
+				track.setCompilation(isCompilationCheckBox.isSelected());
+				changed = true;
+			}
+			if(changed) {
+				track.setDateModified(LocalDateTime.now());				
+				LOG.info("Track {} edited to {}", track.getTrackID(), track);
 			}
 		}
 		editStage.close();
-		WriteMetadataTask wmTask = new WriteMetadataTask(trackSelection);
+		if(newCoverImage != null) {	// Fires the hasCover property to change the cover in the main scene
+			int currentPlayingTrackID = SceneManager.getInstance().getPlayQueueController().getCurrentTrack().getTrackID();
+			for(Track t: trackSelection)
+				if(currentPlayingTrackID == t.getTrackID()) {
+					t.setHasCover(false);
+					t.setHasCover(true);
+					break;
+				}
+		}
+		UpdateMetadataTask wmTask = new UpdateMetadataTask(trackSelection, newCoverImage);
 		Thread t = new Thread(wmTask, "Write Metadata Thread");
 		t.setDaemon(true);
 		t.start();
@@ -240,10 +217,12 @@ public class EditController {
 		
 	@FXML
 	private void doCancel() {
+		LOG.info("Edit stage cancelled");
 		editStage.close();
 	}
 	
 	private void setFields() {
+		newCoverImage = null;
 		if(trackSelection.size() == 1) {
 			Track track = trackSelection.get(0);
 			Map<TrackField, Property<?>> propertyMap = track.getPropertiesMap();
@@ -263,21 +242,10 @@ public class EditController {
 					editFieldsMap.get(field).textProperty().setValue(sp.get());
 				}
 			}
-			
-			titleName.textProperty().setValue(track.getName());
-			titleArtist.textProperty().setValue(track.getArtist());
-			titleAlbum.textProperty().setValue(track.getAlbum());
-			
-			if(track.getInDisk()) {
-				if(track.getHasCover())
-					coverImage.setImage(new Image(new ByteArrayInputStream(track.getCoverFile()), 132, 132, true, true));
-				else
-					coverImage.setImage(new Image("file:resources/images/default-cover-icon.png", 132, 132, true, true));	
-			}
-			else {
-				coverImage.setImage(new Image("file:resources/images/default-cover-icon.png", 132, 132, true, true));
-				coverImage.setDisable(true);
-			}
+			if(track.hasCover())
+				coverImage.setImage(new Image(new ByteArrayInputStream(track.getCoverBytes())));
+			else
+				coverImage.setImage(defaultImage);
 		}
 		else {
 			List<String> listOfSameFields = new ArrayList<String>();
@@ -308,24 +276,20 @@ public class EditController {
 			List<byte[]> listOfSameCover = new ArrayList<byte[]>();
 			
 			for(Track t: trackSelection) {
-				if(t.getInDisk())
-					listOfSameCover.add(t.getCoverFile());
+				if(t.hasCover())
+					listOfSameCover.add(t.getCoverBytes());
 				listOfSameBools.add(t.getIsCompilation());
 			}
 			
 			if(matchCommonBytes(listOfSameCover))
-				coverImage.setImage(new Image(new ByteArrayInputStream(trackSelection.get(0).getCoverFile())));
+				coverImage.setImage(new Image(new ByteArrayInputStream(trackSelection.get(0).getCoverBytes())));
 			else
-				coverImage.setImage(new Image("file:resources/images/default-cover-icon.png"));
+				coverImage.setImage(defaultImage);
 			
 			if(!matchCommonBool(listOfSameBools))
 				isCompilationCheckBox.setIndeterminate(true);
 			else
 				isCompilationCheckBox.setSelected(trackSelection.get(0).getIsCompilation());
-			
-			titleName.textProperty().setValue(name.textProperty().get());
-			titleArtist.textProperty().setValue(artist.textProperty().get());
-			titleAlbum.textProperty().setValue(album.textProperty().get());
 		}
 	}
 	

@@ -12,14 +12,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
 package com.musicott.model;
 
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javafx.collections.ObservableList;
 
 /**
  * @author Octavio Calleya
@@ -27,9 +29,10 @@ import java.util.Map;
  */
 public class MusicLibrary {
 
-	private static MusicLibrary instance;
-	private List<Track> tracks;
-	private Map<Track,float[]> waveforms;
+	private static volatile MusicLibrary instance;
+	private ObservableList<Track> tracks;
+	private Map<Integer,float[]> waveforms;
+	private AtomicInteger trackSequenceID;
 	
 	private MusicLibrary() {
 	}
@@ -40,26 +43,35 @@ public class MusicLibrary {
 		return instance;
 	}
 	
-	public void setTracks(List<Track> tracks) {
+	public void setTracks(ObservableList<Track> tracks) {
 		this.tracks = tracks;
 	}
 	
-	public List<Track> getTracks() {
+	public ObservableList<Track> getTracks() {
 		return this.tracks;
 	}
 	
-	public void setWaveforms(Map<Track,float[]> waveforms) {
+	public void setWaveforms(Map<Integer,float[]> waveforms) {
 		this.waveforms = waveforms;
 	}
 	
-	public Map<Track,float[]> getWaveforms() {
+	public Map<Integer,float[]> getWaveforms() {
 		return this.waveforms;
+	}
+	
+	public void setTrackSequence(AtomicInteger trackSequence) {
+		trackSequenceID = trackSequence;
+	}
+	
+	public AtomicInteger getTrackSequence() {
+		return trackSequenceID;
 	}
 	
 	public int hashCode() {
 		int hash = 71;
 		hash = 73*hash + tracks.hashCode();
 		hash = 73*hash + waveforms.hashCode();
+		hash = 73*hash + trackSequenceID.hashCode();
 		return hash;
 	}
 	
@@ -67,7 +79,8 @@ public class MusicLibrary {
 		boolean res;
 		if(o instanceof MusicLibrary &&
 		   ((MusicLibrary)o).getTracks().equals(tracks) &&
-		   ((MusicLibrary)o).getWaveforms().equals(waveforms))
+		   ((MusicLibrary)o).getWaveforms().equals(waveforms) &&
+		   ((MusicLibrary)o).getTrackSequence().equals(trackSequenceID))
 			res = true;
 		else
 			res = false;

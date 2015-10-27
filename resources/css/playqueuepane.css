@@ -25,11 +25,6 @@
  	-fx-border-radius: 5px;
 }
 
-#historyQueueButton{
-	-fx-graphic: url('../icons/historyqueue-button-icon.png');
-	-fx-background-color: transparent;
-}
-
 #deleteTrackQueueButton{
 	-fx-graphic: url('../icons/remove-button-icon.png');
 	-fx-background-insets: 1 1 1 1;

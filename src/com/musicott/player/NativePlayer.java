@@ -12,7 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -33,10 +33,7 @@ public class NativePlayer implements TrackPlayer {
 	
 	private MediaPlayer mediaPlayer;
 	
-	public NativePlayer(Track track) {
-		File mp3File = new File(track.getFileFolder()+"/"+track.getFileName());
-		Media media = new Media(mp3File.toURI().toString());
-		mediaPlayer = new MediaPlayer(media);
+	public NativePlayer() {
 	}
 	
 	public MediaPlayer getMediaPlayer() {
@@ -69,6 +66,10 @@ public class NativePlayer implements TrackPlayer {
 	
 	@Override
 	public void setTrack(Track track) {
+		File mp3File = new File(track.getFileFolder()+"/"+track.getFileName());
+		Media media = new Media(mp3File.toURI().toString());
+		mediaPlayer = new MediaPlayer(media);
+		mediaPlayer.setOnEndOfMedia(() -> PlayerFacade.getInstance().next());
 	}
 
 	@Override

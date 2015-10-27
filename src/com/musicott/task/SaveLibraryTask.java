@@ -12,7 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -25,8 +25,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 
 import com.cedarsoftware.util.io.JsonWriter;
@@ -40,23 +45,34 @@ import com.musicott.model.Track;
  *
  */
 public class SaveLibraryTask extends Task<Void> {
+	
+	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-	private List<Track> trackList;
-	private Map<Track, float[]> waveformsMap;
-	private File tracksFile, waveformsFile;
+	private ObservableList<Track> trackList;
+	private Map<Integer, float[]> waveformsMap;
+	private File tracksFile, waveformsFile, sequenceFile;
+	private AtomicInteger trackSequence;
 	private Map<String,Object> args;
+	private boolean saveTracks, saveWaveforms;
+	
+	private MusicLibrary ml = MusicLibrary.getInstance();
 
-	public SaveLibraryTask() {
+	public SaveLibraryTask(boolean saveTracks, boolean saveWaveforms) {
+		this.saveTracks = saveTracks;
+		this.saveWaveforms = saveWaveforms;
 		tracksFile = new File("./resources/tracks.json");
 		waveformsFile = new File("./resources/waveforms.json");
-		trackList = MusicLibrary.getInstance().getTracks();
-		waveformsMap = MusicLibrary.getInstance().getWaveforms();
+		sequenceFile = new File("./resources/seq.json");
+		trackList = ml.getTracks();
+		waveformsMap = ml.getWaveforms();
+		trackSequence = ml.getTrackSequence();
 		
-		args = new HashMap<String,Object>();
-		Map<Class<?>,List<String>> fields = new HashMap<Class<?>,List<String>>();
+		args = new HashMap<>();
+		Map<Class<?>,List<String>> fields = new HashMap<>();
 		args.put(JsonWriter.FIELD_SPECIFIERS, fields);
+		args.put(JsonWriter.PRETTY_PRINT, true);
 		
-		List<String> fieldNames = new ArrayList<String>();
+		List<String> fieldNames = new ArrayList<>();
 		fieldNames.add("trackID");
 		fieldNames.add("fileFolder");
 		fieldNames.add("fileName");
@@ -75,34 +91,51 @@ public class SaveLibraryTask extends Task<Void> {
 		fieldNames.add("discNumber");
 		fieldNames.add("year");
 		fieldNames.add("bpm");
-		fieldNames.add("hasCover");
 		fieldNames.add("inDisk");
 		fieldNames.add("isCompilation");
 		fieldNames.add("dateModified");
 		fieldNames.add("dateAdded");
 		fieldNames.add("fileFormat");
+		fieldNames.add("hasCover");
+		fieldNames.add("isVariableBitRate");
 		
 		fields.put(Track.class,fieldNames);
 	}
 	
 	@Override
-	protected Void call() throws Exception {
+	protected Void call() {
 		try {
-			// Save the list of tracks
-			FileOutputStream fos = new FileOutputStream(tracksFile);				
-			JsonWriter jsw = new JsonWriter(fos, args);
-			jsw.write(trackList);
-			fos.close();
-			jsw.close();
+			// Save the list of tracks, covers, and the sequence object
+			FileOutputStream fos;
+			JsonWriter jsw;
+			if(saveTracks) {
+				LOG.debug("Saving list of tracks in {}", tracksFile);
+				fos = new FileOutputStream(tracksFile);				
+				jsw = new JsonWriter(fos, args);
+				jsw.write(trackList);
+				fos.close();
+				jsw.close();
+				
+				LOG.debug("Saving sequence object in {}", sequenceFile);
+				fos = new FileOutputStream(sequenceFile);
+				jsw = new JsonWriter(fos);
+				jsw.write(trackSequence);
+				fos.close();
+				jsw.close();
+			}
 			// Save the map of waveforms
-			fos = new FileOutputStream(waveformsFile);
-			jsw = new JsonWriter(fos, args);
-			jsw.write(waveformsMap);
-			fos.close();
-			jsw.close();
+			if(saveWaveforms) {
+				LOG.debug("Saving waveform images in {}", waveformsFile);
+				fos = new FileOutputStream(waveformsFile);
+				jsw = new JsonWriter(fos);
+				jsw.write(waveformsMap);
+				fos.close();
+				jsw.close();
+			}
 		}
-		catch (IOException e) {
+		catch (IOException |RuntimeException e) {
 			Platform.runLater(() -> {
+				LOG.error("Error saving music library", e);
 				ErrorHandler.getInstance().addError(e, ErrorType.COMMON);
 				ErrorHandler.getInstance().showErrorDialog(ErrorType.COMMON);
 			});

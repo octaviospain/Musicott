@@ -16,24 +16,19 @@
  *
  */
 
-package com.musicott.util;
+package tests.unit;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
-import com.cedarsoftware.util.io.JsonReader.ClassFactory;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
 /**
- * Needed class for serialize to .json with json-io library
- * 
  * @author Octavio Calleya
  *
  */
-public class ObservableListWrapperCreator implements ClassFactory {
+@RunWith(Suite.class)
+@SuiteClasses({GetFilesInFolder_1LevelHeightTest.class,
+			   GetFilesInFolder_2LevelHeightTest.class})
+public class GetFilesInFolderTestSuit {
 
-	@Override
-	public Object newInstance(Class c) {
-		ObservableList ol = FXCollections.observableArrayList();
-		return ol;
-	}
 }

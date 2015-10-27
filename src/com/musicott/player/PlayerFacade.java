@@ -12,7 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -21,14 +21,19 @@ package com.musicott.player;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.musicott.SceneManager;
 import com.musicott.error.CommonException;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
+import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.view.PlayQueueController;
 
@@ -38,6 +43,7 @@ import com.musicott.view.PlayQueueController;
  */
 public class PlayerFacade {
 
+	private final Logger LOG = LoggerFactory.getLogger(PlayerFacade.class.getName());
 	private static int DEFAULT_RANDOMQUEUE_SIZE = 8;
 	
 	private Track currentTrack;
@@ -48,38 +54,48 @@ public class PlayerFacade {
 	private List<Track> libraryTracks;
 	private boolean random;
 	private SceneManager sc;
+	private static PlayerFacade instance;
 
-	public PlayerFacade(List<Track> libraryTracks) {
+	private PlayerFacade() {
 		sc = SceneManager.getInstance();
-		playList = new ArrayList<Track>();
-		historyList = new ArrayList<Track>();
+		libraryTracks = MusicLibrary.getInstance().getTracks();
+		playList = new ArrayList<>();
+		historyList = new ArrayList<>();
 		random = false;
-		this.libraryTracks = libraryTracks;
+	}
+	
+	public static PlayerFacade getInstance() {
+		if(instance == null)
+			instance = new PlayerFacade();
+		return instance;
 	}
 
 	public void addTracks(List<Track> tracks) {
 		if(playQueueController == null)
-			this.playQueueController = sc.getPlayQueueController();
-		List<Track> safeTracks = checkFilesConsistency(tracks);
+			playQueueController = sc.getPlayQueueController();
 		if(random) {
-			playQueueController.add(safeTracks);
+			playQueueController.add(tracks);
 			playList.clear();
-			playList.addAll(safeTracks);
+			playList.addAll(tracks);
 			random = false;
 		}
 		else {
-			playQueueController.add(safeTracks);
-			playList.addAll(safeTracks);
+				playQueueController.add(tracks);
+			playList.addAll(tracks);
 		}
+		LOG.info("Added tracks to player: {}", tracks);
 	}
 
 	public void play(List<Track> tracks) {
-		addTracks(checkFilesConsistency(tracks));
-		play();
+		checkPlayableTracks(tracks);
+		if(!tracks.isEmpty()) {
+			addTracks(tracks);
+			play();
+		}
 	}
 	
 	public void play(Track track) {
-		List<Track> l = new ArrayList<Track>();
+		List<Track> l = new ArrayList<>();
 		l.add(track);
 		play(l);
 	}
@@ -105,8 +121,11 @@ public class PlayerFacade {
 			prepareAndPlay();
 		}
 		else {
-			if(trackPlayer.getStatus().equals("PAUSED"))
+			if(trackPlayer.getStatus().equals("PAUSED")) {
+				LOG.info("Player resumed");
+				sc.getRootController().setPlaying();
 				trackPlayer.play();
+			}
 			else if(trackPlayer.getStatus().equals("STOPPED")) {
 				prepareAndPlay();
 			}
@@ -120,8 +139,10 @@ public class PlayerFacade {
 	}
 	
 	public void pause() {
-		if(trackPlayer.getStatus().equals("PLAYING"));
+		if(trackPlayer.getStatus().equals("PLAYING")) {
 			trackPlayer.pause();
+			LOG.info("Player paused");
+		}
 	}
 
 	public void next() {
@@ -211,7 +232,7 @@ public class PlayerFacade {
 				do {
 					int rnd = randomGenerator.nextInt(libraryTracks.size());
 					Track t = libraryTracks.get(rnd);
-					if(t.getInDisk())
+					if(!t.getFileFormat().equals("flac") && t.getInDisk())		// TODO for flac
 						playList.add(t);
 					else
 						notInDiskTracks.add(t);
@@ -219,8 +240,10 @@ public class PlayerFacade {
 			}
 			playQueueController.add(playList);
 		}
-		if(!playList.isEmpty())
+		if(!playList.isEmpty()) {
+			LOG.info("Created random list of tracks");
 			random = true;
+		}
 		else {
 			random = false;
 			sc.getRootController().setStopped();
@@ -228,20 +251,23 @@ public class PlayerFacade {
 		return random;
 	}
 	
-	private List<Track> checkFilesConsistency(List<Track> tracks) {
-		List<Track> safeTracks = new ArrayList<Track>();
-		for(Track track :  tracks) {
+	private void checkPlayableTracks(List<Track> tracks) {
+		LOG.debug("Checking files consistency");
+		Iterator<Track> it = tracks.iterator();
+		while(it.hasNext()) {
+			Track track = it.next();
 			File file = new File(track.getFileFolder()+"/"+track.getFileName());
 			if(!file.exists()) {
+				LOG.warn("File {} not found", file);
 				ErrorHandler.getInstance().addError(new CommonException(track.getFileFolder()+"/"+track.getFileName()+" not found"), ErrorType.COMMON);
 				track.setInDisk(false);
+				it.remove();
 			}
-			else
-				safeTracks.add(track);
+			if(track.getFileFormat().equals("flac"))
+				it.remove();
 		}
 		if(ErrorHandler.getInstance().hasErrors(ErrorType.COMMON))
 			ErrorHandler.getInstance().showErrorDialog(ErrorType.COMMON);
-		return safeTracks;
 	}
 	
 	private void prepareAndPlay() {
@@ -258,23 +284,27 @@ public class PlayerFacade {
 		setPlayer(playList.get(0));
 		playList.remove(0);
 		playQueueController.moveTrackToHistory();
+		LOG.info("Playing {}", historyList.get(0));
 		trackPlayer.play();
 		sc.getRootController().setPlaying();
 	}
 
 	private void setPlayer(Track track) {
 		currentTrack = track;
-		String fileExtension = track.getFileFormat();
-		if(trackPlayer != null)
+		if(trackPlayer != null) {
 			trackPlayer.dispose();
+			LOG.debug("Disposed recent player");
+		}
+		String fileExtension = track.getFileFormat();
 		if(fileExtension.equals("mp3") || fileExtension.equals("wav") || fileExtension.equals("m4a")) {
-			trackPlayer = new NativePlayer(track);
-			((NativePlayer) trackPlayer).getMediaPlayer().setOnEndOfMedia(() -> next());
+			trackPlayer = new NativePlayer();
 		}
 		else if(fileExtension.equals("flac")) {
-			trackPlayer = new FlacPlayer(track);
+			trackPlayer = new FlacPlayer();
 			//TODO
 		}
+		trackPlayer.setTrack(track);
+		LOG.debug("Created new player");
 		sc.getRootController().preparePlayerInfo(trackPlayer, currentTrack);
 	}
 }
