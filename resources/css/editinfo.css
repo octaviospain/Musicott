@@ -1,0 +1,50 @@
+/*
+ * This file is part of Musicott software.
+ *
+ * Musicott software is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Musicott library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+ 
+.root {
+    -fx-focus-color: rgb(73, 73, 73);
+    -fx-faint-focus-color: transparent;
+    -fx-background-color: transparent, transparent, transparent, -fx-body-color;
+    -fx-background-radius: 0, 0, 0, 0;
+}
+
+.text-field {
+	-fx-padding: 350%;
+}
+
+.text-field, .text-area {
+	-fx-focus-color: rgb(73, 73, 73);
+    -fx-border-radius: 5, 5, 5, 5;
+	-fx-border-style: solid;
+	-fx-border-color: rgb(182,182,182);
+}
+
+.text-field:focused,
+.text-area:focused {
+	-fx-border-color: transparent;
+}
+
+.text-area .scroll-pane .scroll-bar,
+.text-area .scroll-pane .scroll-bar {
+	-fx-opacity: 0;
+}
+
+#imagePane {
+	-fx-border-style: solid;
+	-fx-border-color: rgb(182,182,182);
+}

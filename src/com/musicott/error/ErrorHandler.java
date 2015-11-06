@@ -48,17 +48,23 @@ import javafx.stage.Stage;
  */
 public class ErrorHandler {
 
-	private final Logger LOG = LoggerFactory.getLogger(ErrorHandler.class.getName());
+	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
 	private HostServices hostServices;
 	private static volatile ErrorHandler instance;
-	private SceneManager sc = SceneManager.getInstance();
+	private SceneManager sc;
 	private Stage mainStage;
 	private Map<ErrorType,Stack<Exception>> mapExceptions;
 	private Alert alert;
+	private String dialogStyle;
 
 	private ErrorHandler() {
+		sc = SceneManager.getInstance();
 		mapExceptions = new HashMap<ErrorType,Stack<Exception>>();
+		dialogStyle = "-fx-focus-color: rgb(73, 73, 73);" +
+				  "-fx-faint-focus-color: transparent;" +
+				  "-fx-background-color: transparent, transparent, transparent, -fx-body-color;" +
+				  "-fx-background-radius: 0, 0, 0, 0";
 	}
 	
 	public static ErrorHandler getInstance() {
@@ -102,6 +108,7 @@ public class ErrorHandler {
 	
 	public void showErrorDialog(Scene ownerScene, ErrorType... types) {
 		alert = new Alert(AlertType.ERROR);
+		alert.getDialogPane().setStyle(dialogStyle);
 		if(ownerScene != null)
 			alert.initOwner(ownerScene.getWindow());
 		else {

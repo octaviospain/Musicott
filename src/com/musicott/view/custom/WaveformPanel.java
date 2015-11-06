@@ -21,7 +21,6 @@ package com.musicott.view.custom;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.util.Map;
 
 import javax.swing.JPanel;
 
@@ -39,20 +38,21 @@ public class WaveformPanel extends JPanel {
 	
 	private float[] waveData;
 	private int width;
-	private Map<Integer,float[]> waveforms = MusicLibrary.getInstance().getWaveforms();
 	private Color backgroundColor;
+	private Color foregroundColor;
 	
 	public WaveformPanel(int width, int height) {
-		this.width = width;
-		defaultWave = new float[width];
-		for(int i=0; i<width; i++)
-				defaultWave[i] = 0.41192132f;
-		waveData = defaultWave;
 		Dimension dim = new Dimension(width, height);
 		setMinimumSize(dim);
 		setMaximumSize(dim);
 		setPreferredSize(dim);
-		backgroundColor = new Color(244,244,244);
+		this.width = width;
+		defaultWave = new float[width];
+		for(int i=0; i<width; i++)
+				defaultWave[i] = 0.28802148f;
+		waveData = defaultWave;
+		backgroundColor = new Color(237, 237, 237);
+		foregroundColor = new Color(182, 182, 182);
 		setBackground(backgroundColor);
 		setForeground(backgroundColor);
 	}
@@ -64,10 +64,10 @@ public class WaveformPanel extends JPanel {
 	}
 	
 	public void setTrack(Track track) {
-		if(waveforms.containsKey(track.getTrackID())) {
-			waveData = waveforms.get(track.getTrackID());
+		if(MusicLibrary.getInstance().getWaveforms().containsKey(track.getTrackID())) {
+			waveData = MusicLibrary.getInstance().getWaveforms().get(track.getTrackID());
 			if(getForeground().equals(backgroundColor))
-				setForeground(Color.GRAY);
+				setForeground(foregroundColor);
 			repaint();
 		}
 		else

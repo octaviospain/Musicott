@@ -28,13 +28,11 @@ import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
 import com.musicott.task.SaveLibraryTask;
 import com.musicott.view.EditInfoController;
-import com.musicott.view.ImportCollectionController;
+import com.musicott.view.ImportController;
 import com.musicott.view.PlayQueueController;
-import com.musicott.view.ProgressImportController;
 import com.musicott.view.RootController;
 import com.musicott.model.Track;
 
-import javafx.concurrent.Task;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
@@ -47,7 +45,7 @@ import javafx.stage.Stage;
  */
 public class SceneManager {
 	
-	private final Logger LOG = LoggerFactory.getLogger(SceneManager.class.getName());
+	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
 	private Stage mainStage;
 	private Stage importStage;
@@ -56,11 +54,10 @@ public class SceneManager {
 	
 	private EditInfoController editController;
 	private RootController rootController;
-	private ImportCollectionController importController;
-	private ProgressImportController progressImportController;
+	private ImportController importController;
 	private PlayQueueController playQueueController;
 	
-	private static SceneManager instance;
+	private static volatile SceneManager instance;
 	private static ErrorHandler errorHandler;
 	
 	private SceneManager() {
@@ -80,9 +77,8 @@ public class SceneManager {
 
 	public void saveLibrary(boolean saveTracks, boolean saveWaveforms) {
 		SaveLibraryTask task = new SaveLibraryTask(saveTracks, saveWaveforms);
-		Thread t = new Thread(task, "Save Library Thread");
-		t.setDaemon(true);
-		t.run();
+		task.setDaemon(true);
+		task.run();
 	}
 	
 	public Stage getMainStage() {
@@ -102,16 +98,9 @@ public class SceneManager {
 	}
 	
 	public PlayQueueController getPlayQueueController() {
-		return playQueueController;
+		return this.playQueueController;
 	}
 	
-	public ImportCollectionController getImportController() {
-		return importController;
-	}
-	
-	public ProgressImportController getProgressImportController() {
-		return progressImportController;
-	}
 	public void openEditScene(List<Track> selection) {
 		if(editStage == null) {
 			try {
@@ -175,17 +164,12 @@ public class SceneManager {
 			importStage.close();
 	}
 		
-	public void showImportProgressScene(Task<?> task, boolean hideCancelButton) {
+	public void showImportProgressScene(boolean hideCancelButton) {
 		try {
 			progressStage = new Stage();
 			FXMLLoader loader = new FXMLLoader();
 			loader.setLocation(getClass().getResource("/view/ProgressImportLayout.fxml"));
 			AnchorPane progressLayout =  (AnchorPane) loader.load();
-			progressImportController = loader.getController();
-			if(hideCancelButton)
-				progressImportController.hideCancelButton();
-			progressImportController.setTask(task);
-			progressImportController.runTask();
 			
 			Scene progressScene = new Scene(progressLayout);
 			progressStage.initModality(Modality.APPLICATION_MODAL);

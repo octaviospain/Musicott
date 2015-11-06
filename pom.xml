@@ -131,6 +131,11 @@
   		<artifactId>slf4j-jdk14</artifactId>
   		<version>1.7.11</version>
 	</dependency>
+	<dependency>
+    	<groupId>org.controlsfx</groupId>
+    	<artifactId>controlsfx</artifactId>
+    	<version>8.40.10</version>
+	</dependency>
   </dependencies>
   <repositories>
     <repository>

@@ -47,7 +47,7 @@ public class MusicLibrary {
 		this.tracks = tracks;
 	}
 	
-	public ObservableList<Track> getTracks() {
+	public synchronized ObservableList<Track> getTracks() {
 		return this.tracks;
 	}
 	
@@ -55,7 +55,7 @@ public class MusicLibrary {
 		this.waveforms = waveforms;
 	}
 	
-	public Map<Integer,float[]> getWaveforms() {
+	public synchronized Map<Integer,float[]> getWaveforms() {
 		return this.waveforms;
 	}
 	
@@ -63,7 +63,7 @@ public class MusicLibrary {
 		trackSequenceID = trackSequence;
 	}
 	
-	public AtomicInteger getTrackSequence() {
+	public synchronized AtomicInteger getTrackSequence() {
 		return trackSequenceID;
 	}
 	

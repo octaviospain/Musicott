@@ -26,6 +26,8 @@ import com.musicott.model.Track;
  */
 public class WriteMetadataException extends Exception {
 
+	private static final long serialVersionUID = 1L;
+
 	public WriteMetadataException() {
 		super();
 	}

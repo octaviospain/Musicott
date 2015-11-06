@@ -27,6 +27,9 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 
+import com.musicott.view.ImportController;
+import com.musicott.view.ImportController.ThreadStopFlag;
+
 /**
  * @author Octavio Calleya
  *
@@ -34,6 +37,8 @@ import org.junit.Before;
 public abstract class GetFilesInFolder_BaseTest {
 	
 	File rootFolder = new File("./temp/foldertest/");
+	ImportController icc = new ImportController();
+	ThreadStopFlag flag = icc.new ThreadStopFlag();
 	List<File> files;
 	int NUM_FOLDERS, NUM_FILES, MAX_FILES;
 	String extensionTest = "txt";

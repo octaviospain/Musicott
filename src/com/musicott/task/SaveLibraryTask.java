@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 
 import com.cedarsoftware.util.io.JsonWriter;
 import com.musicott.error.ErrorHandler;
@@ -44,7 +43,7 @@ import com.musicott.model.Track;
  * @author Octavio Calleya
  *
  */
-public class SaveLibraryTask extends Task<Void> {
+public class SaveLibraryTask extends Thread {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
@@ -98,12 +97,13 @@ public class SaveLibraryTask extends Task<Void> {
 		fieldNames.add("fileFormat");
 		fieldNames.add("hasCover");
 		fieldNames.add("isVariableBitRate");
+		fieldNames.add("encoder");
 		
 		fields.put(Track.class,fieldNames);
 	}
 	
 	@Override
-	protected Void call() {
+	public void run() {
 		try {
 			// Save the list of tracks, covers, and the sequence object
 			FileOutputStream fos;
@@ -140,6 +140,5 @@ public class SaveLibraryTask extends Task<Void> {
 				ErrorHandler.getInstance().showErrorDialog(ErrorType.COMMON);
 			});
 		}
-		return null;
 	}
 }

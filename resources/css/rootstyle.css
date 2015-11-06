@@ -1,4 +1,4 @@
-	/*
+/*
  * This file is part of Musicott software.
  *
  * Musicott software is free software: you can redistribute it and/or modify
@@ -16,17 +16,84 @@
  *
  */
 
-.toggle-button#playButton {
+.root,
+.menu-bar,
+.dialog-pane {
+    -fx-focus-color: rgb(73, 73, 73);
+    -fx-faint-focus-color: transparent;
+    -fx-background-color: transparent, transparent, transparent, -fx-body-color;
+    -fx-background-radius: 0, 0, 0, 0;
+}
+
+.text-field {
+	-fx-focus-color: rgb(73, 73, 73);
+    -fx-border-radius: 5, 5, 5, 5;
+	-fx-border-style: solid;
+	-fx-border-color: rgb(182,182,182);
+}
+
+.text-field:focused {
+	-fx-border-color: transparent;
+}
+
+/* The main scrollbar **track** CSS class  */
+#trackTable .scroll-bar:horizontal .track,
+#trackTable .scroll-bar:vertical .track {
+	-fx-background-color:transparent;
+	-fx-opacity: 0;
+	-fx-border-color:transparent;
+	-fx-background-radius: 0em;
+	-fx-border-radius:2em;
+}
+
+/* The increment and decrement button CSS class of scrollbar */
+#trackTable .scroll-bar:horizontal .increment-button ,
+#trackTable .scroll-bar:horizontal .decrement-button {
+    -fx-background-color:transparent;
+	-fx-background-radius: 0em;
+	-fx-padding:0 0 10 0;
+}
+
+/* The increment and decrement button CSS class of scrollbar */
+#trackTable .scroll-bar:vertical .increment-button ,
+#trackTable .scroll-bar:vertical .decrement-button {
+
+    -fx-background-color:transparent;
+	-fx-background-radius: 0em;
+	-fx-padding:0 10 0 0;
+
+}
+
+#trackTable .scroll-bar .increment-arrow,
+#trackTable .scroll-bar .decrement-arrow {
+	-fx-shape: " ";	
+	-fx-padding:0;
+}
+
+/* The main scrollbar **thumb** CSS class which we drag every time (movable) */
+#trackTable .scroll-bar:horizontal .thumb,
+#trackTable .scroll-bar:vertical .thumb {
+    -fx-background-color:derive(black,90%);
+	-fx-background-insets: 2, 0, 0;
+	-fx-background-radius: 2em;
+
+}
+
+#trackTable, .scroll-pane {
+    -fx-background-color: transparent, transparent, transparent, white;
+}
+
+#playButton {
 	-fx-graphic: url('../icons/play-button-icon.png');
 	-fx-background-color: transparent;
 }
 
-.toggle-button#playButton:disabled {
+#playButton:disabled {
 	-fx-graphic: url('../icons/play-button-disabled-icon.png');
 	-fx-background-color: transparent;
 }
 
-.toggle-button:selected#playButton {	
+#playButton:selected {	
 	-fx-graphic: url('../icons/pause-button-icon.png');
 	-fx-background-color: transparent;
 }
@@ -56,14 +123,37 @@
 	-fx-background-color: transparent;
 }
 
+#playQueueButton:selected {
+	-fx-graphic: url('../icons/playqueue-button-selected-icon.png');
+ 	-fx-effect: dropshadow(gaussian, rgb(73, 73, 73), 15, 0.3, 0, 0);
+}
+
+#trackSlider {
+	-fx-block-increment: 0.0;
+	-fx-major-tick-unit: 0.0;
+	-fx-minor-tick-count: 0.0;
+}
+
 #trackSlider .track {
     -fx-background-color: null;
-	-fx-background-insets: 1 1 2 1;
-	-fx-background-radius: 2;	
+	-fx-background-insets: 0 0 0 0;
 }
 
 #trackSlider .thumb {
 	-fx-background-color: null;
+	-fx-background-image: url('../icons/sliderthumb-icon.png');
+ 	-fx-background-repeat:no-repeat ;
+}
+
+#trackProgressBar .bar {
+	-fx-background-color: black;
+	-fx-background-insets: 0 0 1 0;
+	-fx-background-radius: null;
+}
+
+#trackProgressBar .track {
+	-fx-control-inner-background: rgb(182,182,182);
+	-fx-background-radius: null;
 }
 
 #volumeSlider .track {
@@ -78,20 +168,4 @@
 
 #volumeProgressBar .track {
 	-fx-control-inner-background: rgb(182,182,182);
-}
-
-#trackProgressBar .bar {
-	-fx-background-color: black;
-	-fx-background-insets: 1 1 2 1;
-	-fx-background-radius: null;
-}
-
-#trackProgressBar .track {
-	-fx-control-inner-background: rgb(182,182,182);
-	-fx-background-radius: null;
-}
-
-#searchTextField {
-	-fx-border-style: solid;
-	-fx-border-color: rgb(182,182,182);
 }
