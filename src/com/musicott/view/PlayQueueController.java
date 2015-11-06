@@ -18,7 +18,6 @@
 
 package com.musicott.view;
 
-import java.io.ByteArrayInputStream;
 import java.util.Iterator;
 import java.util.List;
 
@@ -27,23 +26,17 @@ import org.slf4j.LoggerFactory;
 
 import com.musicott.model.Track;
 import com.musicott.player.PlayerFacade;
+import com.musicott.view.custom.TrackQueueRow;
 
-import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.CacheHint;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
 
 /**
  * @author Octavio Calleya
@@ -58,17 +51,15 @@ public class PlayQueueController {
 	@FXML
 	private Label titleQueueLabel;
 	@FXML
-	private Button historyQueueButton;
+	private ToggleButton historyQueueButton;
 	@FXML
 	private Button deleteAllButton;
 	@FXML
-	private ListView<GridPane> listView;
+	private ListView<TrackQueueRow> listView;
 	
-	private ObservableList<GridPane> playQueueList;
-	private ObservableList<GridPane> historyQueueList;
+	private ObservableList<TrackQueueRow> playQueueList;
+	private ObservableList<TrackQueueRow> historyQueueList;
 	private PlayerFacade player;
-	
-	private boolean isPlayQueueShowing = true;
 	
 	public PlayQueueController () {
 	}
@@ -78,83 +69,28 @@ public class PlayQueueController {
 		player = PlayerFacade.getInstance();
 		playQueueList = FXCollections.observableArrayList();
 		historyQueueList = FXCollections.observableArrayList();
-		historyQueueButton.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/icons/historyqueue-button-icon.png"))));
-		historyQueueButton.setStyle("-fx-background-color: transparent");
+		historyQueueButton.setId("historyQueueButton");
 		listView.setItems(playQueueList);
 		listView.setOnMouseClicked(event -> {
 			if(event.getClickCount() == 2) {
-				if(isPlayQueueShowing) {
-					GridPane gp = listView.getSelectionModel().getSelectedItem();
+				if(historyQueueButton.isSelected()) {
+					player.playHistoryIndex(historyQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
+					historyQueueList.remove(historyQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
+				}
+				else {
+					TrackQueueRow gp = listView.getSelectionModel().getSelectedItem();
 					player.playQueueIndex(playQueueList.indexOf(gp));
 					playQueueList.remove(playQueueList.indexOf(gp));
 					historyQueueList.add(0, gp);
 					changeRemoveButton(gp);
 				}
-				else {
-					player.playHistoryIndex(historyQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
-					historyQueueList.remove(historyQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
-				}
 			}
 		});
 	}
 	
-	public PlayerFacade getPlayer() {
-		return this.player;
-	}
-	
-	public Track getCurrentTrack() {
-		if(player != null)
-			return player.getCurrentTrack();
-		else
-			return null;
-	}
-	
 	public void add(List<Track> list) {
 		for(Track track: list) {
-			GridPane gp = new GridPane();
-			VBox v = new VBox();
-			ImageView iv;
-			if(track.hasCover())
-				iv = new ImageView(new Image(new ByteArrayInputStream(track.getCoverBytes())));
-			else
-				iv = new ImageView(new Image(PlayQueueController.class.getResourceAsStream("/images/default-cover-icon.png")));
-			iv.setCacheHint(CacheHint.QUALITY);
-			iv.setCache(false);
-			iv.setSmooth(true);
-			iv.setFitWidth(45.0);
-			iv.setFitHeight(45.0);
-			Label nameLabel = new Label();
-			nameLabel.textProperty().bind(track.getNameProperty());
-			Label artistAlbumLabel = new Label();
-			artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
-					() -> track.getArtistProperty().get()+" - "+track.getAlbumProperty().get(), track.getArtistProperty(), track.getAlbumProperty())
-			);
-			nameLabel.setStyle("-fx-font-size: 13px");
-			artistAlbumLabel.setStyle("-fx-text-fill: #000000be; -fx-font-size: 11px;");
-			Button b = new Button();
-			b.setId("deleteTrackQueueButton");
-			b.setMaxSize(3, 3);
-			b.setMinSize(3, 3);
-			b.setVisible(false);
-			b.setOnAction(event -> {player.removeTrackFromPlayList(playQueueList.indexOf(gp)); playQueueList.remove(gp);});
-			VBox.setMargin(nameLabel, new Insets(0,0,1,0));
-			VBox.setMargin(artistAlbumLabel, new Insets(1,0,0,0));
-			v.getChildren().add(nameLabel);
-			v.getChildren().add(artistAlbumLabel);
-			gp.add(iv, 0, 0);
-			gp.add(v, 1, 0);
-			gp.add(b, 1, 0);
-			ColumnConstraints cc1 = new ColumnConstraints(50);
-			ColumnConstraints cc2 = new ColumnConstraints(200);
-			gp.getColumnConstraints().addAll(cc1,cc2);
-			GridPane.setMargin(b, new Insets(1,1,1,200));
-			GridPane.setMargin(iv, new Insets(0,0,0,0));
-			GridPane.setMargin(v, new Insets(1,1,1,5));
-			gp.setOnMouseMoved(event -> b.setVisible(true));
-			gp.setOnMouseExited(event -> b.setVisible(false));
-			gp.setAlignment(Pos.CENTER_LEFT);
-			v.setAlignment(Pos.CENTER_LEFT);
-			playQueueList.add(gp);
+			playQueueList.add(new TrackQueueRow(track));
 		}
 	}
 	
@@ -164,7 +100,7 @@ public class PlayQueueController {
 	}
 	
 	public void removeTracks(List<? extends Track> tracks) {
-		Iterator<GridPane> listIter;
+		Iterator<TrackQueueRow> listIter;
 		for(Track t: tracks) {
 			listIter = playQueueList.iterator();
 			while(listIter.hasNext()) {
@@ -188,7 +124,7 @@ public class PlayQueueController {
 	}
 	
 	public void moveTrackToHistory() {
-		GridPane gp = playQueueList.get(0);
+		TrackQueueRow gp = playQueueList.get(0);
 		changeRemoveButton(gp);
 		historyQueueList.add(0, gp);
 		playQueueList.remove(0);
@@ -198,34 +134,37 @@ public class PlayQueueController {
 		Button b = (Button)gp.lookup(".button");
 		b.setOnAction(event -> {player.removeTrackFromHistory(historyQueueList.indexOf(gp)); historyQueueList.remove(gp);});
 	}
+
+	public void removeFromList(TrackQueueRow trackQueueRow) {
+		if(historyQueueButton.isSelected() && !historyQueueList.isEmpty())
+			historyQueueList.remove(trackQueueRow);
+		else
+			playQueueList.remove(trackQueueRow);
+	}
 	
 	@FXML
 	public void doDeleteAll() {
-		if(isPlayQueueShowing) {
-			if(!playQueueList.isEmpty()) {
-				playQueueList.clear();
-				player.removeTrackFromPlayList(-1);
-				LOG.trace("Play queue cleared");
-			}
-		}
-		else if(!historyQueueList.isEmpty()) {
+		if(historyQueueButton.isSelected() && !historyQueueList.isEmpty()) {
 			historyQueueList.clear();
 			player.removeTrackFromHistory(-1);
 			LOG.trace("History queue cleared");
+		}
+		else if(!playQueueList.isEmpty()) {
+			playQueueList.clear();
+			player.removeTrackFromPlayList(-1);
+			LOG.trace("Play queue cleared");
 		}
 	}
 	
 	@FXML
 	public void doHistoryQueueButton() {
-		if(isPlayQueueShowing) {
+		if(historyQueueButton.isSelected()) {
 			listView.setItems(historyQueueList);
-			titleQueueLabel.setText("History");
-			isPlayQueueShowing = false;
+			titleQueueLabel.setText("Recently played");
 		}
 		else {
 			listView.setItems(playQueueList);
 			titleQueueLabel.setText("Play Queue");
-			isPlayQueueShowing = true;
 		}
 		LOG.trace("Changed between play and history queue");
 	}

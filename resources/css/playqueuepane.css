@@ -1,4 +1,4 @@
-	/*
+/*
  * This file is part of Musicott software.
  *
  * Musicott software is free software: you can redistribute it and/or modify
@@ -17,16 +17,85 @@
  */
 
 #playQueuePane {
-	-fx-background-color: rgb(240,240,240);
-	-fx-border-color: rgb(0,0,0);
-	-fx-border-style: solid;
-	-fx-border-width: 1px;
- 	-fx-border-insets: 2 0 0 0;
- 	-fx-border-radius: 5px;
+	-fx-background-image: url('../images/playqueue-background-image.png');
+	-fx-background-color: transparent;
+ 	-fx-effect: dropshadow(gaussian, rgb(182,182,182), 10, 0, 0, 0); 
 }
 
-#deleteTrackQueueButton{
+#listView {
+	-fx-background-color: transparent;
+    -fx-background-radius: 10px;
+}
+
+/* The main scrollbar **track** CSS class  */
+#listView .scroll-bar:horizontal .track,
+#listView .scroll-bar:vertical .track {
+	-fx-background-color:transparent;
+	-fx-opacity: 0;
+	-fx-border-color:transparent;
+	-fx-background-radius: 0em;
+	-fx-border-radius:2em;
+}
+
+/* The increment and decrement button CSS class of scrollbar */
+#listView .scroll-bar:horizontal .increment-button ,
+#listView .scroll-bar:horizontal .decrement-button {
+    -fx-background-color:transparent;
+	-fx-background-radius: 0em;
+	-fx-padding:0 0 10 0;
+}
+
+/* The increment and decrement button CSS class of scrollbar */
+#listView .scroll-bar:vertical .increment-button ,
+#listView .scroll-bar:vertical .decrement-button {
+
+    -fx-background-color:transparent;
+	-fx-background-radius: 0em;
+	-fx-padding:0 10 0 0;
+
+}
+
+#listView .scroll-bar .increment-arrow,
+#listView .scroll-bar .decrement-arrow {
+	-fx-shape: " ";	
+	-fx-padding:0;
+}
+
+/* The main scrollbar **thumb** CSS class which we drag every time (movable) */
+#listView .scroll-bar:horizontal .thumb,
+#listView .scroll-bar:vertical .thumb {
+    -fx-background-color:derive(black,90%);
+	-fx-background-insets: 2, 0, 0;
+	-fx-background-radius: 2em;
+
+}
+
+#deleteTrackQueueRowButton {
 	-fx-graphic: url('../icons/remove-button-icon.png');
 	-fx-background-insets: 1 1 1 1;
 	-fx-background-color: transparent;
+}
+
+#nameLabel {
+	-fx-font-size: 11.5px;
+}
+
+#artistAlbumLabel{
+	-fx-text-fill: #000000be;
+	-fx-font-size: 9.5px;
+}
+
+#historyQueueButton {
+	-fx-graphic: url('../icons/historyqueue-button-icon.png');
+	-fx-background-color: transparent;
+}
+
+#historyQueueButton:selected{
+	-fx-graphic: url('../icons/historyqueue-button-selected-icon.png');
+ 	-fx-effect: dropshadow(gaussian, rgb(73, 73, 73), 15, 0.3, 0, 0);
+}
+
+#coverImage {
+	-fx-image: url('../images/default-cover-image-queue.png');
+	-fx-background-insets: 0 0 0 0;
 }

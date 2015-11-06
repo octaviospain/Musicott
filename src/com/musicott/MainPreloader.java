@@ -18,15 +18,18 @@
 
 package com.musicott;
 
+import com.musicott.MainApp.CustomPreloaderNotification;
+
 import javafx.application.Platform;
 import javafx.application.Preloader;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 /**
@@ -36,9 +39,11 @@ import javafx.stage.Stage;
 public class MainPreloader extends Preloader {
 	
 	private Stage preloaderStage;
-	protected Scene preloaderScene;
+	private Scene preloaderScene;
+	private Image musicottIcon;
+	private ImageView musicottImageView;
+	private Label infoLabel;
 	private ProgressBar preloaderProgressBar;
-	private Label title;
 	
 	public MainPreloader() {
 	}
@@ -46,14 +51,16 @@ public class MainPreloader extends Preloader {
 	@Override
     public void init() throws Exception {
         Platform.runLater(() -> {
-            title = new Label("Loading track library...");
+        	musicottIcon = new Image("file:resources/images/musicotticon.png");
+        	musicottImageView = new ImageView(musicottIcon);
+        	infoLabel = new Label();
             preloaderProgressBar = new ProgressBar();
-            preloaderProgressBar.setId("preloaderProgressBar");
-            preloaderProgressBar.setPrefSize(470.0, 20.0);
-            title.setTextAlignment(TextAlignment.CENTER);
-            VBox root = new VBox(title, preloaderProgressBar);
+            preloaderProgressBar.setPrefSize(300, 20.0);
+            preloaderProgressBar.setProgress(0.0);
+            VBox root = new VBox(musicottImageView, infoLabel, preloaderProgressBar);
             root.setAlignment(Pos.CENTER);
-            preloaderScene = new Scene(root, 500, 50);
+            VBox.setMargin(infoLabel, new Insets(10, 0, 10, 0));
+            preloaderScene = new Scene(root, 350, 230);
         });
     }
 	
@@ -62,17 +69,19 @@ public class MainPreloader extends Preloader {
 		// Set preloader scene and show stage.
         preloaderStage = primaryStage;
         preloaderStage.setTitle("Musicott");
-        preloaderStage.getIcons().add(new Image("file:resources/images/musicotticon.png"));
+        preloaderStage.getIcons().add(musicottIcon);
         preloaderStage.setScene(preloaderScene);
         preloaderStage.setResizable(false);
         preloaderStage.show();
 	}
 	
 	@Override
-	public void handleProgressNotification(ProgressNotification info) {
-		preloaderProgressBar.setProgress(info.getProgress());
-		title.setText("Progress "+info.getProgress()+" of 1");
+	public void handleApplicationNotification(PreloaderNotification info) {
+		CustomPreloaderNotification pn = (CustomPreloaderNotification) info;
+		preloaderProgressBar.setProgress(pn.getProgress());
+		infoLabel.setText(pn.getDetails());
 	}
+	
 
     @Override
     public void handleStateChangeNotification(StateChangeNotification info) {

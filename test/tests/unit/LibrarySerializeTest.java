@@ -42,6 +42,8 @@ import com.musicott.model.Track;
 import com.musicott.util.MetadataParser;
 import com.musicott.util.ObservableListWrapperCreator;
 import com.musicott.util.Utils;
+import com.musicott.view.ImportController;
+import com.musicott.view.ImportController.ThreadStopFlag;
 import com.sun.javafx.collections.ObservableListWrapper;
 
 import javafx.collections.FXCollections;
@@ -51,6 +53,7 @@ import javafx.collections.ObservableList;
  * @author Octavio Calleya
  *
  */
+@SuppressWarnings({"restriction", "unchecked"})
 public class LibrarySerializeTest {
 	
 	File jsonFile;
@@ -59,6 +62,8 @@ public class LibrarySerializeTest {
 	JsonWriter jsw;
 	FileInputStream fis;
 	JsonReader jsr;
+	ImportController icc = new ImportController();
+	ThreadStopFlag flag = icc.new ThreadStopFlag();
 	
 	@Before
 	public void setUp() {
@@ -94,6 +99,7 @@ public class LibrarySerializeTest {
 		fieldNames.add("fileFormat");
 		fieldNames.add("hasCover");
 		fieldNames.add("isVariableBitRate");
+		fieldNames.add("encoding");
 
 		fields.put(Track.class,fieldNames);
 	}
@@ -117,7 +123,7 @@ public class LibrarySerializeTest {
 				return false;
 		};
 		File folder = new File("/users/octavio/music/itunes/itunes media/music/");
-		List<File> audioFiles = Utils.getAllFilesInFolder(folder, filter, MAX_TRACKS);
+		List<File> audioFiles = Utils.getAllFilesInFolder(folder, filter, MAX_TRACKS, flag);
 		assertEquals(MAX_TRACKS, audioFiles.size());
 		List<Track> tracks = new ArrayList<>();
 		for(File f: audioFiles) {
@@ -152,7 +158,7 @@ public class LibrarySerializeTest {
 				return false;
 		};
 		File folder = new File("/users/octavio/music/itunes/itunes media/music/");
-		List<File> audioFiles = Utils.getAllFilesInFolder(folder, filter, MAX_TRACKS);
+		List<File> audioFiles = Utils.getAllFilesInFolder(folder, filter, MAX_TRACKS, flag);
 		assertEquals(MAX_TRACKS, audioFiles.size());
 		List<Track> tracks = new ArrayList<>();
 		for(File f: audioFiles) {

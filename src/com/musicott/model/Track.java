@@ -60,6 +60,7 @@ public class Track {
 	private String comments;
 	private String albumArtist;
 	private String label;
+	private String encoder;
 
 	private int size;
 	private int bitRate;
@@ -309,6 +310,14 @@ public class Track {
 	public void setLabel(String label) {
 		this.label = label;
 		labelProperty.setValue(this.label);
+	}
+
+	public String getEncoding() {
+		return encoder;
+	}
+
+	public void setEncoding(String encoding) {
+		this.encoder = encoding;
 	}
 
 	public int getSize() {

@@ -45,7 +45,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				folders2[j].mkdir();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, allFilter, 0);
+		files = Utils.getAllFilesInFolder(rootFolder, allFilter, 0, flag);
 		assertEquals(NUM_FOLDERS * NUM_FOLDERS + NUM_FOLDERS, files.size());
 	}
 	
@@ -63,7 +63,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				folders2[j].mkdir();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES, flag);
 		assertEquals(MAX_FILES, files.size());
 	}
 	
@@ -81,7 +81,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				folders2[j].mkdir();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES, flag);
 		assertEquals(MAX_FILES, files.size());
 	}
 	
@@ -99,7 +99,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				folders2[j].mkdir();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES, flag);
 		assertEquals(MAX_FILES, files.size());
 	}
 	
@@ -117,7 +117,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				folders2[j].mkdir();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES, flag);
 		assertEquals(NUM_FOLDERS * NUM_FOLDERS + NUM_FOLDERS, files.size());
 	}
 	
@@ -135,7 +135,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				files2[j].createNewFile();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, allFilter, 0);
+		files = Utils.getAllFilesInFolder(rootFolder, allFilter, 0, flag);
 		assertEquals(NUM_FOLDERS * NUM_FILES + NUM_FOLDERS, files.size());
 	}
 	
@@ -154,7 +154,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				files2[j].createNewFile();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES, flag);
 		assertEquals(MAX_FILES, files.size());
 	}
 	
@@ -173,7 +173,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				files2[j].createNewFile();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES, flag);
 		assertEquals(MAX_FILES, files.size());
 	}
 	
@@ -192,7 +192,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				files2[j].createNewFile();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES, flag);
 		assertEquals(MAX_FILES, files.size());
 	}
 	
@@ -211,7 +211,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				files2[j].createNewFile();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, allFilter, MAX_FILES, flag);
 		assertEquals(NUM_FOLDERS * NUM_FILES + NUM_FOLDERS, files.size());
 	}
 	
@@ -229,7 +229,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				files2[j].createNewFile();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, file -> {return !file.isDirectory();}, 0);
+		files = Utils.getAllFilesInFolder(rootFolder, file -> {return !file.isDirectory();}, 0, flag);
 		assertEquals(NUM_FOLDERS * NUM_FILES, files.size());
 	}
 	
@@ -248,7 +248,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				files2[j].createNewFile();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, file -> {return !file.isDirectory();}, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, file -> {return !file.isDirectory();}, MAX_FILES, flag);
 		assertEquals(MAX_FILES, files.size());
 	}
 	
@@ -267,7 +267,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				files2[j].createNewFile();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, file -> {return !file.isDirectory();}, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, file -> {return !file.isDirectory();}, MAX_FILES, flag);
 		assertEquals(MAX_FILES, files.size());
 	}
 	
@@ -286,7 +286,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				files2[j].createNewFile();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, file -> {return !file.isDirectory();}, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, file -> {return !file.isDirectory();}, MAX_FILES, flag);
 		assertEquals(MAX_FILES, files.size());
 	}
 	
@@ -305,7 +305,7 @@ public class GetFilesInFolder_2LevelHeightTest extends GetFilesInFolder_BaseTest
 				files2[j].createNewFile();
 			}
 		}
-		files = Utils.getAllFilesInFolder(rootFolder, file -> {return !file.isDirectory();}, MAX_FILES);
+		files = Utils.getAllFilesInFolder(rootFolder, file -> {return !file.isDirectory();}, MAX_FILES, flag);
 		assertEquals(NUM_FOLDERS * NUM_FILES, files.size());
 	}
 }

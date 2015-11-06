@@ -20,11 +20,9 @@ package com.musicott.player;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,28 +35,32 @@ import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.view.PlayQueueController;
 
+import javafx.application.Platform;
+
 /**
  * @author Octavio Calleya
  *
  */
 public class PlayerFacade {
 
-	private final Logger LOG = LoggerFactory.getLogger(PlayerFacade.class.getName());
+	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private static int DEFAULT_RANDOMQUEUE_SIZE = 8;
-	
+
+	private static volatile	PlayerFacade instance;
+	private SceneManager sc;
+	private ErrorHandler eh;
+	private MusicLibrary ml;
+	private PlayQueueController playQueueController;
 	private Track currentTrack;
 	private TrackPlayer trackPlayer;
-	private PlayQueueController playQueueController;
 	private List<Track> playList;
 	private List<Track> historyList;
-	private List<Track> libraryTracks;
 	private boolean random;
-	private SceneManager sc;
-	private static PlayerFacade instance;
 
 	private PlayerFacade() {
 		sc = SceneManager.getInstance();
-		libraryTracks = MusicLibrary.getInstance().getTracks();
+		eh = ErrorHandler.getInstance();
+		ml = MusicLibrary.getInstance();
 		playList = new ArrayList<>();
 		historyList = new ArrayList<>();
 		random = false;
@@ -69,29 +71,50 @@ public class PlayerFacade {
 			instance = new PlayerFacade();
 		return instance;
 	}
+	
+	public Track getCurrentTrack() {
+		return currentTrack;
+	}
+	
+	public TrackPlayer getTrackPlayer() {
+		return trackPlayer;
+	}
 
 	public void addTracks(List<Track> tracks) {
+		List<Track> playableTracks = tracks.stream().filter(t -> isPlayableTrack(t)).collect(Collectors.toList());
 		if(playQueueController == null)
 			playQueueController = sc.getPlayQueueController();
 		if(random) {
-			playQueueController.add(tracks);
+			playQueueController.add(playableTracks);
 			playList.clear();
-			playList.addAll(tracks);
+			playList.addAll(playableTracks);
 			random = false;
 		}
 		else {
-				playQueueController.add(tracks);
-			playList.addAll(tracks);
+			playQueueController.add(playableTracks);
+			playList.addAll(playableTracks);
 		}
-		LOG.info("Added tracks to player: {}", tracks);
+		LOG.info("Added tracks to player: {}", playableTracks);
 	}
 
+	public void removeTracks(List<? extends Track> tracks) { 
+		if(playQueueController == null)
+			playQueueController = sc.getPlayQueueController();
+		playQueueController.removeTracks(tracks);
+		playList.removeAll(tracks);
+		historyList.removeAll(tracks);
+		// if currentTrack is removed, stop the player
+		if(currentTrack != null)
+			for(Track t: tracks)
+				if(currentTrack.equals(t)) {
+					stop();
+					break;
+				}
+	}
+	
 	public void play(List<Track> tracks) {
-		checkPlayableTracks(tracks);
-		if(!tracks.isEmpty()) {
-			addTracks(tracks);
-			play();
-		}
+		addTracks(tracks);
+		play();
 	}
 	
 	public void play(Track track) {
@@ -100,34 +123,14 @@ public class PlayerFacade {
 		play(l);
 	}
 
-	public void removeTracks(List<? extends Track> tracks) {
-		if(playQueueController != null)
-			playQueueController.removeTracks(tracks);
-		playList.removeAll(tracks);
-		historyList.removeAll(tracks);
-		// if currentTrack is removed, stop the player and reset the play button
-		if(currentTrack != null)
-			for(Track t: tracks)
-				if(currentTrack.equals(t)) {
-					stop();
-					break;
-				}
-	}
-
 	public void play() {	
-		if(playQueueController == null)
-			this.playQueueController = sc.getPlayQueueController();
-		if(trackPlayer == null) { // first invocation
+		if(trackPlayer == null || (trackPlayer != null && trackPlayer.getStatus().equals("STOPPED"))) {
 			prepareAndPlay();
 		}
 		else {
 			if(trackPlayer.getStatus().equals("PAUSED")) {
 				LOG.info("Player resumed");
-				sc.getRootController().setPlaying();
 				trackPlayer.play();
-			}
-			else if(trackPlayer.getStatus().equals("STOPPED")) {
-				prepareAndPlay();
 			}
 			else if(trackPlayer.getStatus().equals("PLAYING")) {
 				if(playList.isEmpty())
@@ -148,10 +151,8 @@ public class PlayerFacade {
 	public void next() {
 		if(playList.isEmpty())
 			stop();
-		else {
-			stop();
+		else
 			play();
-		}
 	}
 	
 	public void previous() {
@@ -168,15 +169,6 @@ public class PlayerFacade {
 	public void stop() {
 		trackPlayer.stop();
 		currentTrack = null;
-		sc.getRootController().setStopped();
-	}
-	
-	public Track getCurrentTrack() {
-		return currentTrack;
-	}
-	
-	public TrackPlayer getTrackPlayer() {
-		return trackPlayer;
 	}
 	
 	public void removeTrackFromPlayList(int index) {
@@ -194,14 +186,12 @@ public class PlayerFacade {
 	}
 	
 	public void playHistoryIndex(int index) {
-		sc.getRootController().setPlaying();
 		setPlayer(historyList.get(index));
 		historyList.remove(index);
 		trackPlayer.play();
 	}
 	
 	public void playQueueIndex(int index) {
-		sc.getRootController().setPlaying();
 		setPlayer(playList.get(index));
 		historyList.add(0, playList.get(index));
 		playList.remove(index);
@@ -219,24 +209,23 @@ public class PlayerFacade {
 	}
 
 	private boolean randomList() {
-		if(!libraryTracks.isEmpty()) {
-			if(libraryTracks.size() <= DEFAULT_RANDOMQUEUE_SIZE) {
-				for(Track t: libraryTracks)
-					if(t.getInDisk())
-						playList.add(t);
+		if(playQueueController == null)
+			playQueueController = sc.getPlayQueueController();
+		List<Track> libraryTracks = ml.getTracks();
+		List<Track> playableTracks = libraryTracks.stream().filter(t -> isPlayableTrack(t)).collect(Collectors.toList());
+		if(!playableTracks.isEmpty()) {
+			if(playableTracks.size() <= DEFAULT_RANDOMQUEUE_SIZE) {
+				playList.addAll(playableTracks);
 				playQueueController.add(playList);
 			}
 			else {
-				Set<Track> notInDiskTracks = new HashSet<Track>();
 				Random randomGenerator = new Random();
+				List<Integer> listVisited = new ArrayList<>();
 				do {
 					int rnd = randomGenerator.nextInt(libraryTracks.size());
-					Track t = libraryTracks.get(rnd);
-					if(!t.getFileFormat().equals("flac") && t.getInDisk())		// TODO for flac
-						playList.add(t);
-					else
-						notInDiskTracks.add(t);
-				} while (playList.size() < DEFAULT_RANDOMQUEUE_SIZE || notInDiskTracks.containsAll(libraryTracks));
+					playList.add(playableTracks.get(rnd));
+					listVisited.add(rnd);
+				} while (playList.size() < DEFAULT_RANDOMQUEUE_SIZE || listVisited.size() == playableTracks.size());
 			}
 			playQueueController.add(playList);
 		}
@@ -244,30 +233,30 @@ public class PlayerFacade {
 			LOG.info("Created random list of tracks");
 			random = true;
 		}
-		else {
+		else
 			random = false;
-			sc.getRootController().setStopped();
-		}
+		if(random)
+			Platform.runLater(() -> sc.getRootController().setStatusMessage("Playing a random playlist"));
 		return random;
 	}
 	
-	private void checkPlayableTracks(List<Track> tracks) {
-		LOG.debug("Checking files consistency");
-		Iterator<Track> it = tracks.iterator();
-		while(it.hasNext()) {
-			Track track = it.next();
-			File file = new File(track.getFileFolder()+"/"+track.getFileName());
-			if(!file.exists()) {
-				LOG.warn("File {} not found", file);
-				ErrorHandler.getInstance().addError(new CommonException(track.getFileFolder()+"/"+track.getFileName()+" not found"), ErrorType.COMMON);
-				track.setInDisk(false);
-				it.remove();
-			}
-			if(track.getFileFormat().equals("flac"))
-				it.remove();
+	private boolean isPlayableTrack(Track track) {	//TODO
+		boolean playable = true;
+		File file = new File(track.getFileFolder()+"/"+track.getFileName());
+		if(!file.exists()) {
+			LOG.warn("File {} not found", file);
+			eh.addError(new CommonException(track.getFileFolder()+"/"+track.getFileName()+" not found"), ErrorType.COMMON);
+			track.setInDisk(false);
+			playable = false;
 		}
-		if(ErrorHandler.getInstance().hasErrors(ErrorType.COMMON))
-			ErrorHandler.getInstance().showErrorDialog(ErrorType.COMMON);
+		else if(track.getFileFormat().equals("flac") || track.getEncoding().startsWith("iTunes")) {
+			Platform.runLater(() -> sc.getRootController().setStatusMessage("Musicott can't play .flac files or .mp4 files with ALAC encoding yet"));
+			playable = false;
+		}
+		if(eh.hasErrors(ErrorType.COMMON)) {
+			Platform.runLater(() -> eh.showErrorDialog(ErrorType.COMMON));
+		}
+		return playable;
 	}
 	
 	private void prepareAndPlay() {
@@ -284,9 +273,8 @@ public class PlayerFacade {
 		setPlayer(playList.get(0));
 		playList.remove(0);
 		playQueueController.moveTrackToHistory();
-		LOG.info("Playing {}", historyList.get(0));
 		trackPlayer.play();
-		sc.getRootController().setPlaying();
+		LOG.info("Playing {}", historyList.get(0));
 	}
 
 	private void setPlayer(Track track) {

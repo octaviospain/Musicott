@@ -31,6 +31,7 @@ import com.cedarsoftware.util.io.JsonReader.ClassFactory;
  */
 public class ObservableListWrapperCreator implements ClassFactory {
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Object newInstance(Class c) {
 		ObservableList ol = FXCollections.observableArrayList();

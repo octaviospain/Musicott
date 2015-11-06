@@ -6,9 +6,9 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="playQueuePane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="300.0" stylesheets="@../css/playqueuepane.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.PlayQueueController">
+<AnchorPane id="playQueuePane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="465.0" prefWidth="300.0" stylesheets="@../css/playqueuepane.css" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.PlayQueueController">
    <children>
-      <BorderPane id="playQueuePane" prefHeight="450.0" prefWidth="300.0" stylesheets="@../css/playqueuepane.css">
+      <BorderPane id="playQueuePane" prefHeight="465.0" prefWidth="300.0" stylesheets="@../css/playqueuepane.css" AnchorPane.topAnchor="0.0">
          <top>
             <GridPane prefHeight="35.0" BorderPane.alignment="CENTER">
                <columnConstraints>
@@ -24,7 +24,7 @@
                         <Font size="15.0" />
                      </font>
                      <padding>
-                        <Insets bottom="5.0" left="10.0" top="5.0" />
+                        <Insets bottom="8.0" left="10.0" top="5.0" />
                      </padding>
                   </Label>
                   <Button fx:id="deleteAllButton" mnemonicParsing="false" onAction="#doDeleteAll" text="Delete" GridPane.columnIndex="1" GridPane.halignment="RIGHT">
@@ -32,18 +32,24 @@
                         <Font size="11.0" />
                      </font>
                      <GridPane.margin>
-                        <Insets right="10.0" />
+                        <Insets bottom="2.0" right="10.0" />
                      </GridPane.margin>
                      <padding>
                         <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
                      </padding>
                   </Button>
-                  <Button fx:id="historyQueueButton" cacheHint="QUALITY" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#doHistoryQueueButton" prefHeight="20.0" prefWidth="20.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" />
+                  <ToggleButton fx:id="historyQueueButton" cacheHint="QUALITY" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#doHistoryQueueButton" prefHeight="20.0" prefWidth="20.0" GridPane.columnIndex="1" GridPane.halignment="CENTER">
+                     <GridPane.margin>
+                        <Insets bottom="2.0" />
+                     </GridPane.margin></ToggleButton>
                </children>
+               <BorderPane.margin>
+                  <Insets top="20.0" />
+               </BorderPane.margin>
             </GridPane>
          </top>
          <center>
-            <ListView fx:id="listView" BorderPane.alignment="CENTER" />
+            <ListView id="listView" fx:id="listView" BorderPane.alignment="CENTER" />
          </center>
       </BorderPane>
    </children>

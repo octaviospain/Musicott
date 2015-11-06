@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.musicott.view.ImportController.ThreadStopFlag;
+
 /**
  * Class that does some useful operations with files and directories
  * 
@@ -35,7 +37,7 @@ public class Utils {
 	/**
 	 * Retrieves a list with at most <tt>maxFiles</tt> files that are in a folder or
 	 * any of the subfolders in that folder satisfying a condition.
-	 * Indicating 0 or less will retrieve al the files.
+	 * If <tt>maxFilesRequired</tt> is 0 all the files will be retrieved.
 	 * 
 	 * @param rootFolder The folder from within to find the files
 	 * @param filter The FileFilter condition
@@ -43,36 +45,40 @@ public class Utils {
 	 * @return The list containing all the files
 	 * @throws IllegalArgumentException Thrown if <tt>maxFilesRequired</tt> argument is less than zero
 	 */
-	public static List<File> getAllFilesInFolder(File rootFolder, FileFilter filter, int maxFilesRequired) throws IllegalArgumentException {
-		if(maxFilesRequired < 0)
-			throw new IllegalArgumentException("maxFilesRequired argument less than zero");
-		if(!rootFolder.exists() || !rootFolder.isDirectory())
-			throw new IllegalArgumentException("rootFolder argument is not a directory");
+	public static List<File> getAllFilesInFolder(File rootFolder, FileFilter filter, int maxFilesRequired, ThreadStopFlag stop) throws IllegalArgumentException {
 		List<File> finalFiles = new ArrayList<>();
-		File[] subFiles = rootFolder.listFiles(filter);
-		int remainingFiles = maxFilesRequired;
-		if(maxFilesRequired == 0)	// No max = add all files
-			finalFiles.addAll(Arrays.asList(subFiles));
-		else if(maxFilesRequired < subFiles.length) {	// There are more valid files than the required
-				finalFiles.addAll(Arrays.asList(Arrays.copyOfRange(subFiles, 0, maxFilesRequired)));
-				remainingFiles -= finalFiles.size();		// Zero files remaining
-			}
-			else if (subFiles.length > 0) {
-					finalFiles.addAll(Arrays.asList(subFiles));	// Add all valid files
-					remainingFiles -= finalFiles.size();		// If remainingFiles == 0, end;
+		if(!stop.stop()) {
+			if(maxFilesRequired < 0)
+				throw new IllegalArgumentException("maxFilesRequired argument less than zero");
+			if(rootFolder == null || filter == null)
+				throw new IllegalArgumentException("folder or filter null");
+			if(!rootFolder.exists() || !rootFolder.isDirectory())
+				throw new IllegalArgumentException("rootFolder argument is not a directory");
+			File[] subFiles = rootFolder.listFiles(filter);
+			int remainingFiles = maxFilesRequired;
+			if(maxFilesRequired == 0)	// No max = add all files
+				finalFiles.addAll(Arrays.asList(subFiles));
+			else if(maxFilesRequired < subFiles.length) {	// There are more valid files than the required
+					finalFiles.addAll(Arrays.asList(Arrays.copyOfRange(subFiles, 0, maxFilesRequired)));
+					remainingFiles -= finalFiles.size();		// Zero files remaining
 				}
-		
-		if(maxFilesRequired == 0 || remainingFiles > 0) {
-			File[] rootSubFolders = rootFolder.listFiles(file -> {return file.isDirectory();});
-			int sbFldrsCount = 0;
-			while((sbFldrsCount < rootSubFolders.length)) {
-				File subFolder = rootSubFolders[sbFldrsCount++];
-				List<File> subFolderFiles = getAllFilesInFolder(subFolder, filter, remainingFiles);
-				finalFiles.addAll(subFolderFiles);
-				if(remainingFiles > 0)
-					remainingFiles = maxFilesRequired - finalFiles.size();
-				if(maxFilesRequired > 0 && remainingFiles == 0)
-					break;
+				else if (subFiles.length > 0) {
+						finalFiles.addAll(Arrays.asList(subFiles));	// Add all valid files
+						remainingFiles -= finalFiles.size();		// If remainingFiles == 0, end;
+					}
+			
+			if(maxFilesRequired == 0 || remainingFiles > 0) {
+				File[] rootSubFolders = rootFolder.listFiles(file -> {return file.isDirectory();});
+				int sbFldrsCount = 0;
+				while((sbFldrsCount < rootSubFolders.length) && !stop.stop()) {
+					File subFolder = rootSubFolders[sbFldrsCount++];
+					List<File> subFolderFiles = getAllFilesInFolder(subFolder, filter, remainingFiles, stop);
+					finalFiles.addAll(subFolderFiles);
+					if(remainingFiles > 0)
+						remainingFiles = maxFilesRequired - finalFiles.size();
+					if(maxFilesRequired > 0 && remainingFiles == 0)
+						break;
+				}
 			}
 		}
 		return finalFiles;

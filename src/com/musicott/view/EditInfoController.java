@@ -32,7 +32,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
 import com.musicott.model.Track;
@@ -42,6 +41,7 @@ import com.musicott.task.UpdateMetadataTask;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.StringProperty;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
 import javafx.scene.control.Button;
@@ -52,6 +52,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser.ExtensionFilter;
@@ -62,7 +63,7 @@ import javafx.stage.FileChooser.ExtensionFilter;
  */
 public class EditInfoController {
 	
-	private final Logger LOG = LoggerFactory.getLogger(EditInfoController.class.getName());
+	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	@FXML
 	private TextField name;
@@ -112,8 +113,8 @@ public class EditInfoController {
 	
 	@FXML
 	private void initialize() {
-		defaultImage = new Image(EditInfoController.class.getResourceAsStream("/images/default-cover-icon.png"));
-		editFieldsMap = new HashMap<TrackField,TextInputControl>();
+		defaultImage = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
+		editFieldsMap = new HashMap<>();
 		editFieldsMap.put(TrackField.NAME, name);
 		editFieldsMap.put(TrackField.ARTIST, artist);
 		editFieldsMap.put(TrackField.ALBUM, album);
@@ -130,6 +131,17 @@ public class EditInfoController {
 		titleArtist.textProperty().bind(artist.textProperty());
 		titleAlbum.textProperty().bind(album.textProperty());
 		
+		// Validation of the numeric fields
+		EventHandler<? super KeyEvent> nonNumericFilter = event -> {if(!event.getCharacter().matches("[0-9]")) event.consume();};
+		trackNum.addEventFilter(KeyEvent.KEY_TYPED, nonNumericFilter); 
+		trackNum.addEventFilter(KeyEvent.KEY_TYPED, event -> {if(trackNum.getText().length() == 3) event.consume();});
+		discNum.addEventFilter(KeyEvent.KEY_TYPED, nonNumericFilter);
+		discNum.addEventFilter(KeyEvent.KEY_TYPED, event -> {if(discNum.getText().length() == 3) event.consume();});
+		bpm.addEventFilter(KeyEvent.KEY_TYPED, nonNumericFilter);
+		bpm.addEventFilter(KeyEvent.KEY_TYPED, event -> {if(bpm.getText().length() == 3) event.consume();});
+		year.addEventFilter(KeyEvent.KEY_TYPED, nonNumericFilter);
+		year.addEventFilter(KeyEvent.KEY_TYPED, event -> {if(year.getText().length() == 4) event.consume();});
+		
 		coverImage.setImage(defaultImage);
 		coverImage.setCacheHint(CacheHint.QUALITY);
 		coverImage.setOnMouseClicked(event -> {
@@ -140,14 +152,15 @@ public class EditInfoController {
 				chooser.getExtensionFilters().addAll(new ExtensionFilter("Image files (*.png, *.jpg, *.jpeg)","*.png", "*.jpg", "*.jpeg"));
 				newCoverImage = chooser.showOpenDialog(editStage);
 				byte[] newCoverBytes;
-				try {
-					newCoverBytes = Files.readAllBytes(Paths.get(newCoverImage.getPath()));
-					if(newCoverImage != null)
+				if(newCoverImage != null) {
+					try {
+						newCoverBytes = Files.readAllBytes(Paths.get(newCoverImage.getPath()));
 						coverImage.setImage(new Image(new ByteArrayInputStream(newCoverBytes)));
-				} catch (IOException e) {
-					ErrorHandler.getInstance().addError(e, ErrorType.COMMON);
-					ErrorHandler.getInstance().showErrorDialog(editStage.getScene(), ErrorType.COMMON);
-					LOG.error("Error setting image: "+e.getMessage());
+					} catch (IOException e) {
+						ErrorHandler.getInstance().addError(e, ErrorType.COMMON);
+						ErrorHandler.getInstance().showErrorDialog(editStage.getScene(), ErrorType.COMMON);
+						LOG.error("Error setting image: "+e.getMessage());
+					}
 				}
 			}
 		});
@@ -173,7 +186,7 @@ public class EditInfoController {
 			
 			for(TrackField field: editFieldsMap.keySet()) {
 				newValue = editFieldsMap.get(field).textProperty().getValue();
-/*Numeric fields*/	if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
+				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
 					try {
 						IntegerProperty ip = (IntegerProperty) trackPropertiesMap.get(field);
 						if(!newValue.equals("-") || (!newValue.equals("") && ip.get() != Integer.parseInt(newValue))) {
@@ -182,7 +195,7 @@ public class EditInfoController {
 						}
 					} catch(NumberFormatException e) {}
 				}
-/*String fields*/	else {
+				else {
 					StringProperty sp = (StringProperty) trackPropertiesMap.get(field);
 					if(!newValue.equals("-") && !sp.get().equals(newValue)) {
 						sp.setValue(newValue);
@@ -199,128 +212,82 @@ public class EditInfoController {
 				LOG.info("Track {} edited to {}", track.getTrackID(), track);
 			}
 		}
+		UpdateMetadataTask updateTask = new UpdateMetadataTask(trackSelection, newCoverImage);
+		updateTask.setDaemon(true);
+		updateTask.start();
+		newCoverImage = null;
 		editStage.close();
-		if(newCoverImage != null) {	// Fires the hasCover property to change the cover in the main scene
-			int currentPlayingTrackID = SceneManager.getInstance().getPlayQueueController().getCurrentTrack().getTrackID();
-			for(Track t: trackSelection)
-				if(currentPlayingTrackID == t.getTrackID()) {
-					t.setHasCover(false);
-					t.setHasCover(true);
-					break;
-				}
-		}
-		UpdateMetadataTask wmTask = new UpdateMetadataTask(trackSelection, newCoverImage);
-		Thread t = new Thread(wmTask, "Write Metadata Thread");
-		t.setDaemon(true);
-		t.start();
 	}
 		
 	@FXML
 	private void doCancel() {
 		LOG.info("Edit stage cancelled");
+		newCoverImage = null;
 		editStage.close();
 	}
 	
 	private void setFields() {
-		newCoverImage = null;
-		if(trackSelection.size() == 1) {
-			Track track = trackSelection.get(0);
-			Map<TrackField, Property<?>> propertyMap = track.getPropertiesMap();
-			
-			for(TrackField field: editFieldsMap.keySet()) {
-				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
-					try {
-						IntegerProperty ip = (IntegerProperty) propertyMap.get(field);
-						if(ip.get() == 0 || ip.get() == -1)
-							editFieldsMap.get(field).textProperty().setValue("");
-						else
-							editFieldsMap.get(field).textProperty().setValue(ip.get()+"");
-					} catch(NumberFormatException e) {}
-				}
-				else {
-					StringProperty sp = (StringProperty) propertyMap.get(field);
-					editFieldsMap.get(field).textProperty().setValue(sp.get());
-				}
-			}
-			if(track.hasCover())
-				coverImage.setImage(new Image(new ByteArrayInputStream(track.getCoverBytes())));
-			else
-				coverImage.setImage(defaultImage);
-		}
-		else {
-			List<String> listOfSameFields = new ArrayList<String>();
-			for(TrackField field: editFieldsMap.keySet()) {
-				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
-					for(Track t: trackSelection) {
-						Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();
-						IntegerProperty ip= (IntegerProperty) propertyMap.get(field);
-						if(ip.get() == 0 || ip.get() == -1)
-							listOfSameFields.add("");
-						else
-							listOfSameFields.add(""+ip.get());
-					}
-					editFieldsMap.get(field).textProperty().setValue(matchCommonString(listOfSameFields));
-				}
-				else {
-					for(Track t: trackSelection) {
-						Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();
-						StringProperty ip= (StringProperty) propertyMap.get(field);
-						listOfSameFields.add(ip.get());
-					}
-					editFieldsMap.get(field).textProperty().setValue(matchCommonString(listOfSameFields));
-				}
-			}
-		
-			// Check for the same cover image and compilation value
-			List<Boolean> listOfSameBools = new ArrayList<Boolean>();
-			List<byte[]> listOfSameCover = new ArrayList<byte[]>();
-			
+		List<String> valuesList = new ArrayList<String>();
+		for(TrackField field: editFieldsMap.keySet()) {
 			for(Track t: trackSelection) {
-				if(t.hasCover())
-					listOfSameCover.add(t.getCoverBytes());
-				listOfSameBools.add(t.getIsCompilation());
+				Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();
+				Property<?> trackProperty = propertyMap.get(field);
+				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
+					IntegerProperty ip = (IntegerProperty) trackProperty;
+					if(ip.get() == 0 || ip.get() == -1)
+						valuesList.add("");
+					else
+						valuesList.add("" + ip.get());
+				}
+				else
+					valuesList.add("" + trackProperty.getValue());
 			}
-			
-			if(matchCommonBytes(listOfSameCover))
-				coverImage.setImage(new Image(new ByteArrayInputStream(trackSelection.get(0).getCoverBytes())));
-			else
-				coverImage.setImage(defaultImage);
-			
-			if(!matchCommonBool(listOfSameBools))
-				isCompilationCheckBox.setIndeterminate(true);
-			else
-				isCompilationCheckBox.setSelected(trackSelection.get(0).getIsCompilation());
+			editFieldsMap.get(field).textProperty().setValue(matchCommonString(valuesList));
+			valuesList.clear();
 		}
+		// Check for the same cover image and compilation value
+		
+		byte[] commonCover = matchCommonCover();
+		if(commonCover != null)
+			coverImage.setImage(new Image(new ByteArrayInputStream(commonCover)));
+		else
+			coverImage.setImage(defaultImage);
+
+		if(!matchCommonCompilation())
+			isCompilationCheckBox.setIndeterminate(true);
+		else
+			isCompilationCheckBox.setSelected(trackSelection.get(0).getIsCompilation());
 	}
 	
-	private boolean matchCommonBytes(List<byte[]> list) {
-		byte[] bt = list.get(0);
-		if(bt == null)
-			return false;
-		for(byte[] b: list)
-			if(b == null || !b.equals(bt))
-				return false;
-		return true;
-	}
-	
-	private boolean matchCommonBool(List<Boolean> list) {
-		boolean isCommon = true;
-		Boolean b = trackSelection.get(0).getIsCompilation();
-		for(Boolean bl: list)
-			if(!b.equals(bl)) {
-				isCommon = false;
+	private byte[] matchCommonCover() {
+		byte[] coverBytes = null;
+		String sameAlbum = trackSelection.get(0).getAlbum();
+		for(Track t: trackSelection)
+			if(!t.getAlbum().equalsIgnoreCase(sameAlbum)) {
+				sameAlbum = null;
 				break;
 			}
-		return isCommon;
+		if(sameAlbum != null)
+			for(Track t: trackSelection)
+				if(t.hasCover())
+					coverBytes = t.getCoverBytes();
+		return coverBytes;
+	}
+	
+	private boolean matchCommonCompilation() {
+		Boolean isCommon = trackSelection.get(0).getIsCompilation();
+		if(trackSelection.stream().allMatch(t -> isCommon.equals(t.getIsCompilation())))
+			return true;
+		else
+			return false;
 	}
 
-	private String matchCommonString (List<String> list) {
-		String s = list.get(0);
-		for(String st: list)
-			if(!s.equalsIgnoreCase(st)) {
-					s = "-";
-					break;
-			}
-		return s;
+	private String matchCommonString(List<String> list) {
+		String commonString;
+		if(list.stream().allMatch(st -> st.equalsIgnoreCase(list.get(0))))
+			commonString = list.get(0);
+		else
+			commonString = "-";
+		return commonString;
 	}
 }

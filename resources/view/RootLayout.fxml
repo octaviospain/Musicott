@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.input.*?>
 <?import javafx.geometry.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
@@ -18,27 +19,57 @@
               <menus>
                 <Menu fx:id="menuFile" mnemonicParsing="false" text="File">
                   <items>
-                    <MenuItem fx:id="menuItemOpen" mnemonicParsing="false" onAction="#doOpen" text="Open File(s)..." />
-                    <MenuItem fx:id="menuItemImport" mnemonicParsing="false" onAction="#doImportCollection" text="Import collection" />
+                    <MenuItem fx:id="menuItemOpen" mnemonicParsing="false" onAction="#doOpen" text="Open File(s)...">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="O" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
+                    <MenuItem fx:id="menuItemImport" mnemonicParsing="false" onAction="#doImportCollection" text="Import collection">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="R" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                           </accelerator></MenuItem>
                     <SeparatorMenuItem mnemonicParsing="false" />
-                    <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Close" />
+                    <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Close">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                   </items>
                 </Menu>
                 <Menu fx:id="menuEdit" mnemonicParsing="false" text="Edit">
                   <items>
-                    <MenuItem fx:id="menuItemEdit" mnemonicParsing="false" onAction="#doEdit" text="Edit" />
-                        <MenuItem fx:id="menuItemDelete" mnemonicParsing="false" onAction="#doDelete" text="Delete" />
+                    <MenuItem fx:id="menuItemEdit" mnemonicParsing="false" onAction="#doEdit" text="Edit">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="I" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
+                        <MenuItem fx:id="menuItemDelete" mnemonicParsing="false" onAction="#doDelete" text="Delete">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="BACK_SPACE" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                   </items>
                 </Menu>
                   <Menu mnemonicParsing="false" text="Controls">
                     <items>
-                      <MenuItem mnemonicParsing="false" onAction="#doNext" text="Next" />
-                        <MenuItem mnemonicParsing="false" onAction="#doPrevious" text="Previous" />
+                      <MenuItem fx:id="menuItemNext" mnemonicParsing="false" onAction="#doNext" text="Next">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="RIGHT" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
+                        <MenuItem fx:id="menuItemPrev" mnemonicParsing="false" onAction="#doPrevious" text="Previous">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="LEFT" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" onAction="#doIncreaseVolume" text="Increase Volume" />
-                        <MenuItem mnemonicParsing="false" onAction="#doDecreaseVolume" text="Decrease Volume" />
+                        <MenuItem mnemonicParsing="false" onAction="#doIncreaseVolume" text="Increase Volume">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="UP" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
+                        <MenuItem mnemonicParsing="false" onAction="#doDecreaseVolume" text="Decrease Volume">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="DOWN" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" onAction="#doSelectCurrentTrack" text="Select Current Track" />
+                        <MenuItem mnemonicParsing="false" onAction="#doSelectCurrentTrack" text="Select Current Track">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="L" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                     </items>
                   </Menu>
                 <Menu fx:id="menuAbout" mnemonicParsing="false" text="About">
@@ -72,15 +103,15 @@
                   </HBox>
                   <HBox GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="NEVER">
                      <children>
-                        <ImageView fx:id="currentCover" cacheHint="SPEED" fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true" />
+                        <ImageView fx:id="currentCover" cacheHint="SPEED" fitHeight="51.0" fitWidth="51.0" pickOnBounds="true" preserveRatio="true" />
                         <StackPane fx:id="playerStackPane" GridPane.columnIndex="2">
                            <children>
                               <VBox>
                                  <children>
                                     <SwingNode fx:id="waveformSwingNode" VBox.vgrow="NEVER" />
-                                    <BorderPane prefHeight="200.0" prefWidth="150.0" VBox.vgrow="NEVER">
+                                    <BorderPane minWidth="-Infinity" prefHeight="50.0" prefWidth="520.0" VBox.vgrow="NEVER">
                                        <left>
-                                          <Label fx:id="currentTimeLabel" textFill="#000000be" BorderPane.alignment="CENTER_LEFT">
+                                          <Label fx:id="currentTimeLabel" prefWidth="50.0" textFill="#000000be" BorderPane.alignment="CENTER_LEFT">
                                              <font>
                                                 <Font size="11.0" />
                                              </font>
@@ -90,7 +121,7 @@
                                           </Label>
                                        </left>
                                        <right>
-                                          <Label fx:id="remainingTimeLabel" textFill="#000000be" BorderPane.alignment="CENTER_RIGHT">
+                                          <Label fx:id="remainingTimeLabel" contentDisplay="RIGHT" prefWidth="50.0" textFill="#000000be" BorderPane.alignment="CENTER_RIGHT">
                                              <font>
                                                 <Font size="11.0" />
                                              </font>
@@ -100,7 +131,7 @@
                                           </Label>
                                        </right>
                                        <center>
-                                          <Label fx:id="artistAlbumLabel" contentDisplay="CENTER" textFill="#000000be" BorderPane.alignment="CENTER">
+                                          <Label fx:id="artistAlbumLabel" alignment="CENTER" contentDisplay="CENTER" prefWidth="400.0" textFill="#000000be" BorderPane.alignment="CENTER">
                                              <font>
                                                 <Font size="11.0" />
                                              </font>
@@ -110,16 +141,31 @@
                                           <Label fx:id="titleLabel" BorderPane.alignment="CENTER">
                                              <BorderPane.margin>
                                                 <Insets top="3.0" />
-                                             </BorderPane.margin></Label>
+                                             </BorderPane.margin>
+                                          </Label>
                                        </top>
                                     </BorderPane>
                                     <StackPane GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="NEVER">
                                        <children>
-                                          <ProgressBar fx:id="trackProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="7.0" prefWidth="515.0" progress="0.0" StackPane.alignment="CENTER" />
-                                          <Slider fx:id="trackSlider" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="7.0" prefWidth="520.0" StackPane.alignment="CENTER" />
+                                          <ProgressBar fx:id="trackProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="5.0" prefWidth="520.0" progress="0.0" StackPane.alignment="CENTER">
+                                             <StackPane.margin>
+                                                <Insets bottom="-1.0" />
+                                             </StackPane.margin>
+                                          </ProgressBar>
+                                          <Slider fx:id="trackSlider" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="5.0" prefWidth="520.0" StackPane.alignment="CENTER">
+                                             <StackPane.margin>
+                                                <Insets bottom="-1.0" />
+                                             </StackPane.margin>
+                                             <rotationAxis>
+                                                <Point3D />
+                                             </rotationAxis>
+                                             <padding>
+                                                <Insets right="-15.0" />
+                                             </padding>
+                                          </Slider>
                                        </children>
                                        <VBox.margin>
-                                          <Insets bottom="1.0" />
+                                          <Insets />
                                        </VBox.margin>
                                     </StackPane>
                                  </children>

@@ -75,6 +75,7 @@ public class MetadataParser {
 		track.setGenre(tag.getFirst(FieldKey.GENRE));
 		track.setComments(tag.getFirst(FieldKey.COMMENT));
 		track.setLabel(tag.getFirst(FieldKey.GROUPING));
+		track.setEncoding(tag.getFirst(FieldKey.ENCODER));
 		if(track.getFileFormat().equals("m4a"))
 			track.setCompilation(tag.getFirst(FieldKey.IS_COMPILATION).equals("1") ? true : false);
 		else

@@ -27,7 +27,7 @@ import java.nio.file.CopyOption;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.concurrent.Semaphore;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -41,56 +41,65 @@ import org.slf4j.LoggerFactory;
 import com.musicott.SceneManager;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
-import com.musicott.view.RootController;
+import com.musicott.player.PlayerFacade;
 
 import be.tarsos.transcoder.DefaultAttributes;
 import be.tarsos.transcoder.Transcoder;
+import be.tarsos.transcoder.ffmpeg.Encoder;
 import be.tarsos.transcoder.ffmpeg.EncoderException;
-import javafx.concurrent.Task;
+import be.tarsos.transcoder.ffmpeg.FFMPEGLocator;
+import javafx.application.Platform;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class WaveformTask extends Task<float[]> {
+public class WaveformTask extends Thread {
 	
-	private final Logger LOG = LoggerFactory.getLogger(WaveformTask.class.getName());
+	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+	private final double HEIGHT_COEFICIENT = 4.2; // This fits the waveform to the swingnode height
 	
-	private Map<Integer,float[]> waveforms = MusicLibrary.getInstance().getWaveforms();
-	private final double HEIGHT_COEFICIENT = 4.2;
+	private MusicLibrary ml;
+	private SceneManager sc;
+	private TaskPoolManager tpm;
 	private Track track;
 	private float[] waveform;
+	private Semaphore taskSemaphore;
 	
-	private SceneManager sc = SceneManager.getInstance();
-	private RootController rootController;
-	
-	public WaveformTask(Track track) {
-		this.track = track;
-		this.rootController = sc.getRootController();
+	public WaveformTask(String id, Semaphore taskSemaphore, TaskPoolManager taskPoolManager) {
+		super(id);
+		sc = SceneManager.getInstance();
+		ml = MusicLibrary.getInstance();
+		tpm = taskPoolManager;
+		this.taskSemaphore = taskSemaphore;
 	}
-
+	
 	@Override
-	protected float[] call() {
-		LOG.info("Processing waveform of track "+track);
-		if(track.getFileFormat().equals("wav"))
-			waveform = processWav();
-		else
-			if(track.getFileFormat().equals("mp3")) {
-				waveform = processMp3();
+	public void run() {
+		while(true) {
+			try {
+				taskSemaphore.acquire();
+				track = tpm.getTrackToProcess();
+				LOG.debug("Processing waveform of track {}", track);
+				if(track.getFileFormat().equals("wav"))
+					waveform = processWav();
+				else
+					if(track.getFileFormat().equals("mp3")) {
+						waveform = processMp3();
+					}
+				if(waveform != null) {
+					ml.getWaveforms().put(track.getTrackID(), waveform);
+					Track currentTrack = PlayerFacade.getInstance().getCurrentTrack();
+					if(currentTrack != null && currentTrack.equals(track))
+						SwingUtilities.invokeLater(() -> sc.getRootController().setWaveform(track));
+					LOG.debug("Waveform of track {} completed", track);
+					sc.saveLibrary(false, true);
+				}
+				else
+					Platform.runLater(() -> sc.getRootController().setStatusMessage("Fail processing waveform of "+track.getName()));
+			} catch (InterruptedException e) {
+				LOG.warn("Waveform thread error: {}", e);
 			}
-		return waveform;
-	}
-
-	@Override
-	protected void succeeded() {
-		super.succeeded();
-		if(waveform != null) {
-			waveforms.put(track.getTrackID(), waveform);
-			Track currentTrack = sc.getPlayQueueController().getCurrentTrack();
-			if(currentTrack != null && currentTrack.equals(track))
-				SwingUtilities.invokeLater(() -> rootController.setWaveform(track));
-			LOG.info("Waveform of track {} completed", track);
-			sc.saveLibrary(false, true);
 		}
 	}
 
@@ -106,6 +115,18 @@ public class WaveformTask extends Task<float[]> {
 			temporalDecodedFile.createNewFile();
 			CopyOption[] options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING}; 
 			Files.copy(trackPath, temporalCoppiedPath, options);
+			Encoder.addFFMPEGLocator(new FFMPEGLocator() {
+				@Override
+				public boolean pickMe() {
+					String os = System.getProperty("os.name").toLowerCase();
+					return os.contains("mac");
+				}
+
+				@Override
+				protected String getFFMPEGExecutablePath() {
+					return "/usr/local/bin/ffmpeg";
+				}
+			});
 			Transcoder.transcode(temporalCoppiedPath.toString(), temporalDecodedPath.toString(), DefaultAttributes.WAV_PCM_S16LE_STEREO_44KHZ.getAttributes());
 			waveData = processAmplitudes(getWavAmplitudes(temporalDecodedFile));
 		} catch (EncoderException | UnsupportedAudioFileException | IOException e) {
@@ -120,7 +141,6 @@ public class WaveformTask extends Task<float[]> {
 		return waveData;
 	}
 	
-	
 	private float[] processWav() {
 		float[] waveData;
 		String trackPath = track.getFileFolder()+"/"+track.getFileName();
@@ -133,7 +153,6 @@ public class WaveformTask extends Task<float[]> {
 		}
 		return waveData;
 	}
-	
 	
 	private int[] getWavAmplitudes(File file) throws UnsupportedAudioFileException, IOException {
 		int[] amp = null;
@@ -161,9 +180,8 @@ public class WaveformTask extends Task<float[]> {
 		return amp;
 	}
 	
-	
 	private float[] processAmplitudes(int[] sourcePCMData) {
-		int width = 515;	// the width of th waveform panel
+		int width = 520;	// the width of th waveform panel
 		float[] waveData = new float[width];
 		int	nSamplesPerPixel = sourcePCMData.length / width;
 		for (int i = 0; i<width; i++) {

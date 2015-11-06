@@ -28,6 +28,7 @@ import java.util.Optional;
 
 import javax.swing.SwingUtilities;
 
+import org.controlsfx.control.StatusBar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ import com.musicott.player.FlacPlayer;
 import com.musicott.player.NativePlayer;
 import com.musicott.player.PlayerFacade;
 import com.musicott.player.TrackPlayer;
-import com.musicott.task.ParseFilesTask;
+import com.musicott.task.TaskPoolManager;
 import com.musicott.view.custom.WaveformPanel;
 
 import javafx.application.HostServices;
@@ -111,6 +112,10 @@ public class RootController {
 	private MenuItem menuItemDelete;
 	@FXML
 	private MenuItem menuItemEdit; 
+	@FXML
+	private MenuItem menuItemPrev;
+	@FXML
+	private MenuItem menuItemNext;
 	@FXML
 	private Menu menuAbout;
 	@FXML
@@ -186,15 +191,17 @@ public class RootController {
 	@FXML
 	private TableColumn<Track,Boolean> coverCol;
 	private AnchorPane playQueuePane;
+	private StatusBar statusBar;
 
 	private ObservableList<Track> tracks;
-	private ObservableList<Track> selection;
+	private List<Track> selection;
 	private Stage rootStage;
 	private SceneManager sc;
 	private MusicLibrary ml;
 	private PlayerFacade player;
 	private WaveformPanel mainWaveformPane;
 	private HostServices hostServices;
+	private String dialogStyle;
 	
 	public RootController() {
 	}
@@ -209,6 +216,7 @@ public class RootController {
 			boolean waveformsMapChanged = false;
 			while(c.next()) {
 				if(c.wasRemoved()) {
+					@SuppressWarnings("unchecked")
 					List<Track> tracksToRemove = (List<Track>) c.getRemoved();
 					player.removeTracks(tracksToRemove);
 					Map<Integer,float[]> waveformsMap = ml.getWaveforms();
@@ -235,7 +243,9 @@ public class RootController {
 		if(tracks.isEmpty())
 			playButton.setDisable(true);
 		prevButton.setDisable(true);
+		menuItemPrev.disableProperty().bind(prevButton.disableProperty());
 		nextButton.setDisable(true);
+		menuItemNext.disableProperty().bind(nextButton.disableProperty());
 		trackSlider.setDisable(true);
 		trackSlider.setValue(0.0);
 		volumeSlider.setMin(0.0);
@@ -246,14 +256,17 @@ public class RootController {
 		volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
 		initColumns();
 		
+		statusBar = new StatusBar();
+		statusBar.setMaxHeight(3.0);
+		statusBar.setText("");
+		rootBorderPane.setBottom(statusBar);
 		SwingUtilities.invokeLater(() -> {
-			mainWaveformPane = new WaveformPanel(515, 50);
+			mainWaveformPane = new WaveformPanel(520, 50);
             waveformSwingNode.setContent(mainWaveformPane);
 		});
 		playerStackPane.getChildren().add(0, waveformSwingNode);
 	
 		player = PlayerFacade.getInstance();
-		selection = trackTable.getSelectionModel().getSelectedItems();
 		selection = trackTable.getSelectionModel().getSelectedItems();
 		trackTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		trackTable.getSelectionModel().selectedIndexProperty().addListener(((observable, oldValue, newValue) -> selection = trackTable.getSelectionModel().getSelectedItems()));
@@ -270,7 +283,7 @@ public class RootController {
 					   track.getGenre().toLowerCase().contains(newText.toLowerCase()) ||
 					   track.getAlbum().toLowerCase().contains(newText.toLowerCase()))
 						result = true;
-					else
+					else	
 						result = false;
 				}
 				return result;
@@ -328,6 +341,10 @@ public class RootController {
 					player.play();
 			}
 		});
+		dialogStyle = "-fx-focus-color: rgb(73, 73, 73);" +
+					  "-fx-faint-focus-color: transparent;" +
+					  "-fx-background-color: transparent, transparent, transparent, -fx-body-color;" +
+					  "-fx-background-radius: 0, 0, 0, 0";
 	}
 	
 	private void initColumns() {
@@ -444,40 +461,21 @@ public class RootController {
 		this.hostServices = applicationHostServices;
 	}
 	
-	public void setStopped() {
-		playButton.setSelected(false);
-		trackSlider.setDisable(true);
-		nextButton.setDisable(true);
-		prevButton.setDisable(true);
-		titleLabel.textProperty().unbind();
-		titleLabel.setText("");
-		artistAlbumLabel.setVisible(false);
-		artistAlbumLabel.textProperty().unbind();
-		currentTimeLabel.setVisible(false);
-		remainingTimeLabel.setVisible(false);
-		currentCover.setImage(null);
-		SwingUtilities.invokeLater(() -> mainWaveformPane.clear());
-		if(player.getTrackPlayer() instanceof NativePlayer)
-			volumeSlider.valueProperty().unbindBidirectional(((NativePlayer)player.getTrackPlayer()).getMediaPlayer().volumeProperty());
-		else if (player.getTrackPlayer() instanceof FlacPlayer) {
-			//TODO
-		}
-		LOG.info("Player stopped");
+	public void setStatusMessage(String message) {
+		statusBar.setText(message);
 	}
 	
-	public void setPlaying() {
-		playButton.setSelected(true);
-		trackSlider.setDisable(false);
-		nextButton.setDisable(false);
-		prevButton.setDisable(false);
-		artistAlbumLabel.setVisible(true);
-		currentTimeLabel.setVisible(true);
-		remainingTimeLabel.setVisible(true);
+	public void setStatusProgress(double progress) {
+		statusBar.setProgress(progress);
 	}
 	
 	public void preparePlayerInfo(TrackPlayer currentPlayer, Track currentTrack) {
 		// Set up the player and the view related to it
 		LOG.debug("Setting up player and view for track {}", currentTrack);
+		if(ml.getWaveforms().containsKey(currentTrack.getTrackID()))
+			setWaveform(currentTrack);
+		else if (currentTrack.getFileFormat().equals("wav") || currentTrack.getFileFormat().equals("mp3")) 
+			TaskPoolManager.getInstance().addTrackToProcess(currentTrack);
 		if(currentPlayer instanceof NativePlayer)
 			setUpPlayer(((NativePlayer) currentPlayer).getMediaPlayer());
 		else if(currentPlayer instanceof FlacPlayer)
@@ -491,28 +489,32 @@ public class RootController {
 		if(currentTrack.hasCover())
 			currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverBytes())));
 		else
-			currentCover.setImage(new Image(getClass().getResourceAsStream("/images/default-cover-icon.png")));
+			currentCover.setImage(new Image(getClass().getResourceAsStream("/images/default-cover-image.png")));
 	//	currentTrack.getHasCoverProperty().addListener(observable -> currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverBytes()))));
 	}
 	
 	public void setWaveform(Track track) {
-		this.mainWaveformPane.setTrack(track);
+		mainWaveformPane.setTrack(track);
 	}
 	
 	private void setUpPlayer(MediaPlayer mediaPlayer) {
 		trackSlider.valueProperty().addListener((observable) -> {
-			if(trackSlider.isValueChanging()) {
-				trackProgressBar.setProgress(trackSlider.getValue() / mediaPlayer.getStopTime().toSeconds());
-				mediaPlayer.seek(Duration.seconds(trackSlider.getValue()));
+			double endTime = mediaPlayer.getStopTime().toMillis();
+			if(trackSlider.isValueChanging() && (!(endTime == Double.POSITIVE_INFINITY) || !(endTime == Double.NaN))) {
+				trackProgressBar.setProgress(trackSlider.getValue() / endTime);
+				mediaPlayer.seek(Duration.millis(trackSlider.getValue()));
 			}
 		});
 		trackSlider.addEventHandler(MouseEvent.MOUSE_CLICKED, (event) -> {
-			trackProgressBar.setProgress(trackSlider.getValue() / mediaPlayer.getStopTime().toSeconds());
-			mediaPlayer.seek(Duration.seconds(trackSlider.getValue()));
+			double endTime = mediaPlayer.getStopTime().toMillis();
+			if(!(endTime == Double.POSITIVE_INFINITY) || !(endTime == Double.NaN)) {
+			trackProgressBar.setProgress(trackSlider.getValue() / endTime);
+			mediaPlayer.seek(Duration.millis(trackSlider.getValue()));
+			}
 		});
-		mediaPlayer.totalDurationProperty().addListener((observable, oldDuration, newDuration) -> trackSlider.setMax(newDuration.toSeconds()));
-		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> {if (!trackSlider.isValueChanging()) trackSlider.setValue(newTime.toSeconds());});
-		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> trackProgressBar.setProgress(newTime.toSeconds() / mediaPlayer.getStopTime().toSeconds()));
+		mediaPlayer.totalDurationProperty().addListener((observable, oldDuration, newDuration) -> trackSlider.setMax(newDuration.toMillis()));
+		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> {if (!trackSlider.isValueChanging()) trackSlider.setValue(newTime.toMillis());});
+		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> trackProgressBar.setProgress(newTime.toMillis() / mediaPlayer.getStopTime().toMillis()));
 		mediaPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
 		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> formatTime(newTime,mediaPlayer.getMedia().getDuration()));	
 		mediaPlayer.statusProperty().addListener((observable, oldStatus, newStatus) -> {
@@ -545,6 +547,35 @@ public class RootController {
 		remainingTimeLabel.setText("-"+((int)total.toHours()>0 ? remainingHours+":" : "")+(remainingMins<10 ? "0"+remainingMins : remainingMins)+":"+(remainingSecs<10 ? "0"+remainingSecs : remainingSecs));
 	}
 	
+	private void setPlaying() {
+		playButton.setSelected(true);
+		trackSlider.setDisable(false);
+		nextButton.setDisable(false);
+		prevButton.setDisable(false);
+		currentCover.setVisible(true);
+	}
+	
+	private void setStopped() {
+		playButton.setSelected(false);
+		trackSlider.setDisable(true);
+		nextButton.setDisable(true);
+		prevButton.setDisable(true);
+		titleLabel.textProperty().unbind();
+		titleLabel.setText("");
+		artistAlbumLabel.textProperty().unbind();
+		artistAlbumLabel.setText("");
+		currentCover.setVisible(false);
+		currentTimeLabel.setText("");
+		remainingTimeLabel.setText("");
+		setStatusMessage("");
+		SwingUtilities.invokeLater(() -> mainWaveformPane.clear());
+		if(player.getTrackPlayer() instanceof NativePlayer)
+			volumeSlider.valueProperty().unbindBidirectional(((NativePlayer)player.getTrackPlayer()).getMediaPlayer().volumeProperty());
+		else if (player.getTrackPlayer() instanceof FlacPlayer) {
+			//TODO
+		}
+	}
+	
 	@FXML
 	private void doShowHidePlayQueue() {
 		if(playQueuePane == null)
@@ -574,14 +605,12 @@ public class RootController {
 	
 	@FXML
 	private void doNext() {
-		if(!nextButton.isDisabled())
-			player.next();
+		player.next();
 	}
 	
 	@FXML
 	private void doPrevious() {	
-		if(!prevButton.isDisabled())
-			player.previous();
+		player.previous();
 	}
 	
 	@FXML
@@ -610,13 +639,17 @@ public class RootController {
 	@FXML
 	private void doDelete() {
 		if(selection != null && !selection.isEmpty()) {
+			int numDeletedTracks = selection.size();
 			Alert alert = new Alert(AlertType.CONFIRMATION);
+			alert.getDialogPane().setStyle(dialogStyle);
 			alert.setTitle("");
 			alert.setHeaderText("");
-			alert.setContentText("Delete this files from Musicott?");
+			alert.setContentText("Delete "+numDeletedTracks+" files from Musicott?");
 			Optional<ButtonType> result = alert.showAndWait();
-			if (result.get() == ButtonType.OK)
+			if (result.get() == ButtonType.OK) {
 				tracks.removeAll(selection);	// This fires the ListChangeListener in line 233
+				setStatusMessage("Deleted "+numDeletedTracks+" tracks");
+			}
 			else
 				alert.close();
 		}
@@ -627,6 +660,7 @@ public class RootController {
 		if(selection != null & !selection.isEmpty()) {
 			if(selection.size() > 1) {
 				Alert alert = new Alert(AlertType.CONFIRMATION);
+				alert.getDialogPane().setStyle(dialogStyle);
 				alert.setTitle("");
 				alert.setHeaderText("");
 				alert.setContentText("Are you sure you want to edit multiple files?");
@@ -658,11 +692,8 @@ public class RootController {
 				new ExtensionFilter("M4a Files", "*.m4a"));
 		List<File> files = chooser.showOpenMultipleDialog(rootStage);
 		if(files != null) {
-			ParseFilesTask task = new ParseFilesTask(files);
-			sc.showImportProgressScene(task,false);
-			Thread t = new Thread(task, "Open Thread");
-			t.setDaemon(true);
-			t.start();
+			TaskPoolManager.getInstance().parseFiles(files);
+			setStatusMessage("Opening files");
 		}
 	}
 	
@@ -674,6 +705,7 @@ public class RootController {
 	@FXML
 	private void doAbout() {
 		Alert alert = new Alert(AlertType.INFORMATION);
+		alert.getDialogPane().setStyle(dialogStyle);
 		alert.setTitle("About Musicott");
 		alert.setHeaderText("Musicott");
 		Label text = new Label(" Version 0.6.0\n\n Copyright © 2015 Octavio Calleya.");

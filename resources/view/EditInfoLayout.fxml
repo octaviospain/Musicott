@@ -7,7 +7,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="560.0" prefWidth="630.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.EditInfoController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="560.0" prefWidth="630.0" stylesheets="@../css/editinfo.css" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.EditInfoController">
    <children>
       <BorderPane layoutX="215.0" layoutY="182.0" prefHeight="540.0" prefWidth="630.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <bottom>
@@ -84,7 +84,7 @@
                         <Insets right="7.0" />
                      </GridPane.margin>
                   </Label>
-                  <TextField fx:id="name" maxHeight="-Infinity" prefHeight="26.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.vgrow="NEVER">
+                  <TextField fx:id="name" maxHeight="-Infinity" prefHeight="26.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.vgrow="NEVER">
                      <GridPane.margin>
                         <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
                      </GridPane.margin>
@@ -109,56 +109,56 @@
                         <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
                      </GridPane.margin>
                   </TextField>
-                  <TextField fx:id="label" maxHeight="-Infinity" maxWidth="150.0" prefHeight="26.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
+                  <TextField fx:id="label" maxHeight="-Infinity" maxWidth="185.0" prefHeight="26.0" prefWidth="185.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="trackNum" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="26.0" prefWidth="35.0" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets right="130.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="discNum" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="26.0" prefWidth="35.0" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets right="15.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="year" alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="50.0" prefHeight="26.0" prefWidth="50.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="6" GridPane.vgrow="NEVER">
                      <GridPane.margin>
                         <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
                      </GridPane.margin>
                   </TextField>
                   <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Track Num" textAlignment="RIGHT" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
                      <GridPane.margin>
-                        <Insets right="225.0" />
+                        <Insets right="175.0" />
                      </GridPane.margin>
                   </Label>
-                  <TextField fx:id="year" alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="50.0" prefHeight="26.0" prefWidth="50.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="6" GridPane.vgrow="NEVER">
+                  <TextField fx:id="bpm" alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="26.0" prefWidth="50.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="7" GridPane.vgrow="NEVER">
                      <GridPane.margin>
                         <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
-                     </GridPane.margin>
-                  </TextField>
-                  <TextField fx:id="bpm" alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="50.0" prefHeight="26.0" prefWidth="50.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="7" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
-                     </GridPane.margin>
-                  </TextField>
-                  <TextField fx:id="trackNum" maxHeight="-Infinity" maxWidth="35.0" prefHeight="26.0" prefWidth="35.0" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets right="180.0" />
                      </GridPane.margin>
                   </TextField>
                   <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Disc Num" textAlignment="RIGHT" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
                      <GridPane.margin>
-                        <Insets right="100.0" />
+                        <Insets right="60.0" />
                      </GridPane.margin>
                   </Label>
-                  <TextField fx:id="discNum" maxHeight="-Infinity" maxWidth="35.0" prefHeight="26.0" prefWidth="35.0" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets right="55.0" />
-                     </GridPane.margin>
-                  </TextField>
                   <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Comments" textAlignment="RIGHT" GridPane.halignment="RIGHT" GridPane.rowIndex="8" GridPane.valignment="TOP">
                      <GridPane.margin>
                         <Insets right="7.0" top="7.0" />
                      </GridPane.margin>
                   </Label>
-                  <TextArea fx:id="comments" prefHeight="200.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="8">
-                     <GridPane.margin>
-                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
-                     </GridPane.margin>
-                  </TextArea>
                   <CheckBox fx:id="isCompilationCheckBox" mnemonicParsing="false" text="Part of a compilation" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="6">
                      <GridPane.margin>
                         <Insets left="75.0" />
                      </GridPane.margin>
                   </CheckBox>
+                  <TextArea fx:id="comments" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="8">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextArea>
                </children>
                <opaqueInsets>
                   <Insets />
@@ -175,11 +175,14 @@
                 <RowConstraints maxHeight="170.0" minHeight="170.0" prefHeight="170.0" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <ImageView fx:id="coverImage" cacheHint="QUALITY" fitHeight="133.0" fitWidth="133.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.hgrow="NEVER" GridPane.valignment="CENTER" GridPane.vgrow="NEVER">
+                  <Pane fx:id="imagePane" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="133.0" prefWidth="133.0" GridPane.halignment="CENTER" GridPane.hgrow="NEVER" GridPane.valignment="CENTER" GridPane.vgrow="NEVER">
                      <GridPane.margin>
                         <Insets />
                      </GridPane.margin>
-                  </ImageView>
+                     <children>
+                        <ImageView fx:id="coverImage" cacheHint="QUALITY" fitHeight="133.0" fitWidth="133.0" pickOnBounds="true" preserveRatio="true" />
+                     </children>
+                  </Pane>
                   <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1">
                      <children>
                         <Label fx:id="titleName">

@@ -37,15 +37,15 @@ import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
 import com.musicott.model.Track;
 
-import javafx.concurrent.Task;
+import javafx.application.Platform;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class UpdateMetadataTask extends Task<Void>{
+public class UpdateMetadataTask extends Thread {
 	
-	private final Logger LOG = LoggerFactory.getLogger(UpdateMetadataTask.class.getName());
+	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
 	private List<Track> tracks;
 	private File imageFile;
@@ -58,7 +58,7 @@ public class UpdateMetadataTask extends Task<Void>{
 	}
 	
 	@Override
-	protected Void call() {
+	public void run() {
 		Path trackFile, backup;
 		boolean updated = false, coverChanged = false;
 		if(imageFile == null)
@@ -80,7 +80,9 @@ public class UpdateMetadataTask extends Task<Void>{
 				else
 					restoreBackup(trackFile, backup);
 			}
-		return null;
+		SceneManager.getInstance().saveLibrary(true, false);
+		if(ErrorHandler.getInstance().hasErrors(ErrorType.METADATA))
+			Platform.runLater(() -> ErrorHandler.getInstance().showErrorDialog(ErrorType.METADATA));
 	}
 	
 	private void makeBackup(Path original, Path backup) {
@@ -99,13 +101,5 @@ public class UpdateMetadataTask extends Task<Void>{
 			LOG.error("It wasn't able to restore the backup file: "+e.getMessage(), e);
 			ErrorHandler.getInstance().addError(e, ErrorType.METADATA);
 		}
-	}
-	
-	@Override
-	protected void succeeded() {
-		super.succeeded();
-		SceneManager.getInstance().saveLibrary(true, false);
-		if(ErrorHandler.getInstance().hasErrors(ErrorType.METADATA))
-			ErrorHandler.getInstance().showErrorDialog(ErrorType.METADATA);
 	}
 }

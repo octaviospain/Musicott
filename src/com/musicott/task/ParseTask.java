@@ -20,8 +20,10 @@ package com.musicott.task;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 import org.jaudiotagger.audio.exceptions.CannotReadException;
 import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
@@ -38,71 +40,98 @@ import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.util.MetadataParser;
 
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 
 /**
  * @author Octavio Calleya
  *
  */
-public abstract class ParseTask extends Task<List<Track>> {
+public class ParseTask extends Task<List<Track>> {
 
 	protected final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private SceneManager sc = SceneManager.getInstance();
+	private SceneManager sc;
+	private MusicLibrary ml;
 
+	protected Thread addFilesInFolderThread;
 	protected List<Track> tracks;
-	protected List<File> files;
+	protected Queue<File> files;
+	protected int totalFiles;
+	private int currentFiles;
+	private Track currentTrack;
 	
-	public ParseTask() {
+	public ParseTask(List<File> filesToParse) {
 		tracks = new ArrayList<>();
+		files = new ArrayDeque<>();
+		files.addAll(filesToParse);
+		currentFiles = 0;
+		totalFiles = files.size();
+		sc = SceneManager.getInstance();
+		ml = MusicLibrary.getInstance();
+	}
+	
+	@Override
+	protected List<Track> call() {
+		parseFiles();
+		return tracks;
+	}
+	
+	public void addFilesToParse(List<File> newFilesToParse) {
+		synchronized(files) {
+			files.addAll(newFilesToParse);
+			totalFiles += files.size();
+			LOG.debug("Added more tracks to parse {}", newFilesToParse);
+		}
 	}
 	
 	protected void parseFiles() {
-		int currentFiles = 0;
-		int totalFiles = files.size();
-		Track currentTrack;
-		for(File file: files)
+		boolean end = false;
+		File currentFile = null;
+		while(!end) {
 			if(isCancelled())
 				break;
-			else {
-				currentTrack = parseFileToTrack(file);
-				if(currentTrack != null)
-					tracks.add(currentTrack);
-				updateProgress(++currentFiles, totalFiles);
+			synchronized(files) {
+				if(!files.isEmpty())
+					currentFile = files.poll();
+				else
+					break;
 			}
+			currentTrack = parseFileToTrack(currentFile);
+			if(currentTrack != null) 
+				tracks.add(currentTrack);
+			++currentFiles;
+			Platform.runLater(() -> {
+				sc.getRootController().setStatusMessage("Imported "+currentFiles+" of "+totalFiles);
+				sc.getRootController().setStatusProgress((double) currentFiles/totalFiles);
+			});
+			synchronized(files) {
+				if(files.isEmpty())
+					end = true;
+			}
+		}
 	}
 	
 	private Track parseFileToTrack(File file) {
 		MetadataParser parser = new MetadataParser(file);
-		Track currentTrack = null;
+		Track newTrack = null;
 		try {
-			currentTrack = parser.createTrack();
+			newTrack = parser.createTrack();
 		} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
 				| InvalidAudioFrameException e) {
 			ParseException pe = new ParseException("Error parsing "+file+": "+e.getMessage(), e, file);
 			LOG.error(pe.getMessage(), pe);
 			ErrorHandler.getInstance().addError(pe, ErrorType.PARSE);
 		}
-		if(currentTrack != null) {
-			String format = currentTrack.getFileFormat();
-			if(format.equals("wav") || format.equals("mp3")) 
-				processWaveform(currentTrack);
-		}
-		return currentTrack;
-	}
-
-	private void processWaveform(Track track) {
-		WaveformTask waveformTask = new WaveformTask(track);
-		Thread t = new Thread(waveformTask,"Waveform Task of track "+track.getTrackID());
-		t.start();
+		return newTrack;
 	}
 	
 	@Override
 	protected void succeeded() {
 		super.succeeded();
 		updateMessage("Parse succeeded");
-		sc.getProgressImportController().setIndeterminate();
-		MusicLibrary.getInstance().getTracks().addAll(tracks);
-		sc.closeImportScene();
+		ml.getTracks().addAll(tracks);
+		sc.getRootController().setStatusProgress(0.0);
+		sc.getRootController().setStatusMessage("Import completed");
 		LOG.info("Parse task completed");
 	}
 	
