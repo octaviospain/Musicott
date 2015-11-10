@@ -18,7 +18,6 @@
 
 package com.musicott.player;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -28,9 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.musicott.SceneManager;
-import com.musicott.error.CommonException;
-import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.view.PlayQueueController;
@@ -46,30 +42,37 @@ public class PlayerFacade {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private static int DEFAULT_RANDOMQUEUE_SIZE = 8;
 
-	private static volatile	PlayerFacade instance;
+	private static	PlayerFacade instance;
 	private SceneManager sc;
-	private ErrorHandler eh;
 	private MusicLibrary ml;
 	private PlayQueueController playQueueController;
 	private Track currentTrack;
 	private TrackPlayer trackPlayer;
 	private List<Track> playList;
 	private List<Track> historyList;
-	private boolean random;
+	private boolean random, played;
 
 	private PlayerFacade() {
 		sc = SceneManager.getInstance();
-		eh = ErrorHandler.getInstance();
 		ml = MusicLibrary.getInstance();
 		playList = new ArrayList<>();
 		historyList = new ArrayList<>();
 		random = false;
+		played = false;
 	}
 	
 	public static PlayerFacade getInstance() {
 		if(instance == null)
 			instance = new PlayerFacade();
 		return instance;
+	}
+	
+	public void incrementCurentTrackPlayCount() {
+		if(!played) {
+			currentTrack.incrementPlayCount();
+			sc.saveLibrary(true, false);
+			played = true;
+		}
 	}
 	
 	public Track getCurrentTrack() {
@@ -81,20 +84,21 @@ public class PlayerFacade {
 	}
 
 	public void addTracks(List<Track> tracks) {
-		List<Track> playableTracks = tracks.stream().filter(t -> isPlayableTrack(t)).collect(Collectors.toList());
+		List<Track> playableTracks = tracks.stream().filter(t -> t.isPlayable()).collect(Collectors.toList());
 		if(playQueueController == null)
 			playQueueController = sc.getPlayQueueController();
 		if(random) {
+			playQueueController.doDeleteAll();
 			playQueueController.add(playableTracks);
 			playList.clear();
 			playList.addAll(playableTracks);
 			random = false;
 		}
-		else {
+		else if (playableTracks.size() != 0){
 			playQueueController.add(playableTracks);
 			playList.addAll(playableTracks);
+			LOG.info("Added tracks to player: {}", playableTracks);
 		}
-		LOG.info("Added tracks to player: {}", playableTracks);
 	}
 
 	public void removeTracks(List<? extends Track> tracks) { 
@@ -125,7 +129,29 @@ public class PlayerFacade {
 
 	public void play() {	
 		if(trackPlayer == null || (trackPlayer != null && trackPlayer.getStatus().equals("STOPPED"))) {
-			prepareAndPlay();
+			if(!playList.isEmpty())
+				setCurrent();
+		}
+		else {
+			if(trackPlayer.getStatus().equals("PAUSED")) {
+				LOG.info("Player resumed");
+				trackPlayer.play();
+			}
+			else if(trackPlayer.getStatus().equals("PLAYING")) {
+				if(playList.isEmpty())
+					stop();
+				else 
+					setCurrent();
+			}
+		}
+	}
+	
+	public void playOrRandom() {
+		if(trackPlayer == null || (trackPlayer != null && trackPlayer.getStatus().equals("STOPPED"))) {
+			if(randomList())
+				setCurrent();
+			else
+				sc.getRootController().setStopped();
 		}
 		else {
 			if(trackPlayer.getStatus().equals("PAUSED")) {
@@ -142,7 +168,7 @@ public class PlayerFacade {
 	}
 	
 	public void pause() {
-		if(trackPlayer.getStatus().equals("PLAYING")) {
+		if(trackPlayer != null && trackPlayer.getStatus().equals("PLAYING")) {
 			trackPlayer.pause();
 			LOG.info("Player paused");
 		}
@@ -212,7 +238,7 @@ public class PlayerFacade {
 		if(playQueueController == null)
 			playQueueController = sc.getPlayQueueController();
 		List<Track> libraryTracks = ml.getTracks();
-		List<Track> playableTracks = libraryTracks.stream().filter(t -> isPlayableTrack(t)).collect(Collectors.toList());
+		List<Track> playableTracks = libraryTracks.stream().filter(t -> t.isPlayable()).collect(Collectors.toList());
 		if(!playableTracks.isEmpty()) {
 			if(playableTracks.size() <= DEFAULT_RANDOMQUEUE_SIZE) {
 				playList.addAll(playableTracks);
@@ -240,34 +266,6 @@ public class PlayerFacade {
 		return random;
 	}
 	
-	private boolean isPlayableTrack(Track track) {	//TODO
-		boolean playable = true;
-		File file = new File(track.getFileFolder()+"/"+track.getFileName());
-		if(!file.exists()) {
-			LOG.warn("File {} not found", file);
-			eh.addError(new CommonException(track.getFileFolder()+"/"+track.getFileName()+" not found"), ErrorType.COMMON);
-			track.setInDisk(false);
-			playable = false;
-		}
-		else if(track.getFileFormat().equals("flac") || track.getEncoding().startsWith("iTunes")) {
-			Platform.runLater(() -> sc.getRootController().setStatusMessage("Musicott can't play .flac files or .mp4 files with ALAC encoding yet"));
-			playable = false;
-		}
-		if(eh.hasErrors(ErrorType.COMMON)) {
-			Platform.runLater(() -> eh.showErrorDialog(ErrorType.COMMON));
-		}
-		return playable;
-	}
-	
-	private void prepareAndPlay() {
-		if(playList.isEmpty()) {
-			if(randomList())
-				setCurrent();
-		}
-		else
-			setCurrent();
-	}
-	
 	private void setCurrent() {
 		historyList.add(0, playList.get(0));
 		setPlayer(playList.get(0));
@@ -279,6 +277,7 @@ public class PlayerFacade {
 
 	private void setPlayer(Track track) {
 		currentTrack = track;
+		played = false;
 		if(trackPlayer != null) {
 			trackPlayer.dispose();
 			LOG.debug("Disposed recent player");

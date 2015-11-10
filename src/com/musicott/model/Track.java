@@ -31,8 +31,13 @@ import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
 import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
 import org.jaudiotagger.tag.TagException;
 
+import com.musicott.SceneManager;
+import com.musicott.error.CommonException;
+import com.musicott.error.ErrorHandler;
+import com.musicott.error.ErrorType;
 import com.musicott.util.MetadataUpdater;
 
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -91,6 +96,7 @@ public class Track {
 	private IntegerProperty yearProperty;
 	private IntegerProperty discNumberProperty;
 	private IntegerProperty bpmProperty;
+	private IntegerProperty playCountProperty;
 	
 	private BooleanProperty hasCoverProperty;
 
@@ -114,10 +120,10 @@ public class Track {
     	trackNumber = 0;
     	discNumber = 0;
     	year = 0;
-    	bpm = -1;
-    	size = -1;
+    	bpm = 0;
+    	size = 0;
     	totalTime = Duration.UNKNOWN;
-    	bitRate = -1;
+    	bitRate = 0;
     	playCount = 0;
     	inDisk = false;
     	isCompilation = false;
@@ -152,6 +158,7 @@ public class Track {
     	dateModifiedProperty = new SimpleObjectProperty<>(dateModified);
     	dateModifiedProperty.addListener((observable, oldDate, newDate) -> setDateModified(newDate));
     	hasCoverProperty = new SimpleBooleanProperty(hasCover);
+    	playCountProperty = new SimpleIntegerProperty(playCount);
     	
     	propertyMap = new HashMap<>();
     	propertyMap.put(TrackField.NAME, nameProperty);
@@ -190,6 +197,28 @@ public class Track {
 	public Map<TrackField,Property<?>> getPropertiesMap() {
     	return propertyMap;
     }
+	
+	public boolean isPlayable() {
+		boolean playable = true;
+		if(getInDisk()) {
+			File file = new File(fileFolder+"/"+fileName);
+			if(!file.exists()) {
+				ErrorHandler.getInstance().addError(new CommonException(fileFolder+"/"+fileName+" not found"), ErrorType.COMMON);
+				setInDisk(false);
+				playable = false;
+			}
+			else if(fileFormat.equals("flac") || encoder.startsWith("iTunes")) {
+				Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Musicott can't play .flac files or .mp4 files with ALAC encoding yet"));
+				playable = false;
+			}
+		}
+		else
+			playable = false;
+		if(ErrorHandler.getInstance().hasErrors(ErrorType.COMMON)) {
+			Platform.runLater(() -> ErrorHandler.getInstance().showErrorDialog(ErrorType.COMMON));
+		}
+		return playable;
+	}
     
     public int getTrackID() {
 		return trackID;
@@ -312,12 +341,12 @@ public class Track {
 		labelProperty.setValue(this.label);
 	}
 
-	public String getEncoding() {
+	public String getEncoder() {
 		return encoder;
 	}
 
-	public void setEncoding(String encoding) {
-		this.encoder = encoding;
+	public void setEncoder(String encoder) {
+		this.encoder = encoder;
 	}
 
 	public int getSize() {
@@ -372,9 +401,14 @@ public class Track {
 	public int getPlayCount() {
 		return playCount;
 	}
+	
+	public IntegerProperty getPlayCountProperty() {
+		return this.playCountProperty;
+	}
 
-	public void setPlayCount(int playCount) {
-		this.playCount = playCount;
+	public void incrementPlayCount() {
+		this.playCount++;
+		this.playCountProperty.setValue(playCount);
 	}
 
 	public IntegerProperty getDiscNumberProperty() {

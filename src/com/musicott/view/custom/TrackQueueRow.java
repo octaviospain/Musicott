@@ -80,11 +80,18 @@ public class TrackQueueRow extends GridPane {
 		return this.track;
 	}
 	
-	public static List<TrackQueueRow> makeTrackQueueRows(List<Track> tracks){
+	public List<TrackQueueRow> makeTrackQueueRows(List<Track> tracks){
 		List<TrackQueueRow> tqrList = new ArrayList<>();
 		for(Track t: tracks)
 			tqrList.add(new TrackQueueRow(t));
 		return tqrList;
+	}
+	
+	public void changeRemoveButtonColor() {
+		if(deleteTrackQueueRowButton.getId().equals("deleteButton-black"))
+			deleteTrackQueueRowButton.setId("deleteButton-white");
+		else
+			deleteTrackQueueRowButton.setId("deleteButton-black");
 	}
 	
  	private void placeLabels() {
@@ -107,7 +114,7 @@ public class TrackQueueRow extends GridPane {
 
 	private void placeDeleteHoverButton() {
 		deleteTrackQueueRowButton = new Button();
-		deleteTrackQueueRowButton.setId("deleteTrackQueueRowButton");
+		deleteTrackQueueRowButton.setId("deleteButton-black");
 		deleteTrackQueueRowButton.setPrefSize(3, 3);
 		deleteTrackQueueRowButton.setVisible(false);
 		deleteTrackQueueRowButton.setOnAction(event -> playQueueController.removeFromList(this));

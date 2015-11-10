@@ -187,13 +187,13 @@ public class EditInfoController {
 			for(TrackField field: editFieldsMap.keySet()) {
 				newValue = editFieldsMap.get(field).textProperty().getValue();
 				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
+					IntegerProperty ip = (IntegerProperty) trackPropertiesMap.get(field);
 					try {
-						IntegerProperty ip = (IntegerProperty) trackPropertiesMap.get(field);
 						if(!newValue.equals("-") || (!newValue.equals("") && ip.get() != Integer.parseInt(newValue))) {
 							ip.setValue(Integer.parseInt(newValue));
 							changed = true;
 						}
-					} catch(NumberFormatException e) {}
+					} catch (NumberFormatException e) {}
 				}
 				else {
 					StringProperty sp = (StringProperty) trackPropertiesMap.get(field);
@@ -234,7 +234,7 @@ public class EditInfoController {
 				Property<?> trackProperty = propertyMap.get(field);
 				if(field == TrackField.TRACK_NUMBER || field == TrackField.DISC_NUMBER || field == TrackField.YEAR || field == TrackField.BPM) {
 					IntegerProperty ip = (IntegerProperty) trackProperty;
-					if(ip.get() == 0 || ip.get() == -1)
+					if(ip.get() == 0)
 						valuesList.add("");
 					else
 						valuesList.add("" + ip.get());
