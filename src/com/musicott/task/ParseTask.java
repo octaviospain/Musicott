@@ -76,7 +76,7 @@ public class ParseTask extends Task<List<Track>> {
 		return tracks;
 	}
 	
-	public void addFilesToParse(List<File> newFilesToParse) {
+	protected void addFilesToParse(List<File> newFilesToParse) {
 		synchronized(files) {
 			files.addAll(newFilesToParse);
 			totalFiles += files.size();

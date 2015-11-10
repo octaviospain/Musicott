@@ -23,6 +23,11 @@
     -fx-faint-focus-color: transparent;
     -fx-background-color: transparent, transparent, transparent, -fx-body-color;
     -fx-background-radius: 0, 0, 0, 0;
+    -fx-accent: black;
+}
+
+.progress-bar {
+    -fx-accent: rgb(99,255,109);
 }
 
 .text-field {
@@ -34,6 +39,14 @@
 
 .text-field:focused {
 	-fx-border-color: transparent;
+}
+
+.text-field {
+    -fx-highlight-text-fill: white;
+}
+
+.table-row-cell:fillled:focused:selected {
+	-fx-text-fill: white;
 }
 
 /* The main scrollbar **track** CSS class  */
@@ -126,12 +139,6 @@
 #playQueueButton:selected {
 	-fx-graphic: url('../icons/playqueue-button-selected-icon.png');
  	-fx-effect: dropshadow(gaussian, rgb(73, 73, 73), 15, 0.3, 0, 0);
-}
-
-#trackSlider {
-	-fx-block-increment: 0.0;
-	-fx-major-tick-unit: 0.0;
-	-fx-minor-tick-count: 0.0;
 }
 
 #trackSlider .track {

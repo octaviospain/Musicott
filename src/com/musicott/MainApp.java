@@ -198,6 +198,7 @@ public class MainApp extends Application {
 					t.getBpmProperty().setValue(t.getBpm());
 					t.getHasCoverProperty().setValue(t.hasCover());
 					t.getDateModifiedProperty().setValue(t.getDateModified());
+					t.getPlayCountProperty().setValue(t.getPlayCount());
 					notifyPreloader(++step, list.size(), "Loading tracks...");
 				}
 				LOG.info("Loaded tracks from {}", tracksFile);
@@ -265,7 +266,7 @@ public class MainApp extends Application {
 		java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
 		Handler rootHandler = logger.getHandlers()[0];
 		try {
-			LogManager.getLogManager().readConfiguration(new FileInputStream("./resources/config/logging.properties"));
+			LogManager.getLogManager().readConfiguration(new FileInputStream("resources/config/logging.properties"));
 			baseFileHandler = new FileHandler("Musicott-main-log.txt");
 			baseFileHandler.setFormatter(new SimpleFormatter() {
 				public String format(LogRecord rec) {

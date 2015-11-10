@@ -70,7 +70,6 @@ public class ImportController {
 	private List<File> files;
 	private String folderString;
 	private Thread findFilesThread;
-	private volatile ThreadStopFlag stop;
 	
 	public ImportController() {
 	}
@@ -91,7 +90,6 @@ public class ImportController {
 		cbM4a.selectedProperty().addListener(observable -> {if(folder!= null) updateInfo();});
 		cbWav.selectedProperty().addListener(observable -> {if(folder!= null) updateInfo();});
 		cbFlac.selectedProperty().addListener(observable -> {if(folder!= null) updateInfo();});
-		stop = new ThreadStopFlag();
 	}
 	
 	public void setStage(Stage stage) {
@@ -103,8 +101,8 @@ public class ImportController {
 		infoLabel.setText("");
 		importButton.setDisable(true);
 		importStage.close();
-		if(findFilesThread.isAlive())
-			stop.flagStop();
+		if(findFilesThread != null && findFilesThread.isAlive())
+			findFilesThread.interrupt();;
 	}
 	
 	private void updateInfo() {
@@ -113,13 +111,12 @@ public class ImportController {
 		if(!importButton.isDisabled())
 			importButton.setDisable(true);
 		if(findFilesThread != null && findFilesThread.isAlive())
-			stop.flagStop();
-		stop.reset();
+			findFilesThread.interrupt();
 		findFilesThread = new Thread(() -> {
-			files = Utils.getAllFilesInFolder(folder, formatFilter, 0, stop);
+			files = Utils.getAllFilesInFolder(folder, formatFilter, 0);
 			Platform.runLater(() -> {
-				if(!stop.stop()) {
-					infoLabel.setText(""+files.size()+" files in "+folderString);
+				if(!findFilesThread.isInterrupted()) {
+					infoLabel.setText("" + files.size() + " files in " + folderString);
 					importButton.setDisable(false);
 				}
 			});
@@ -148,21 +145,5 @@ public class ImportController {
 	private void doCancel() {
 		clear();
 		LOG.info("Import cancelled");
-	}
-
-	public class ThreadStopFlag {
-		private boolean stop = false;
-		
-		public void flagStop() {
-			stop = true;
-		}
-		
-		public void reset() {
-			stop = false;
-		}
-		
-		public boolean stop() {
-			return stop;
-		}
 	}
 }

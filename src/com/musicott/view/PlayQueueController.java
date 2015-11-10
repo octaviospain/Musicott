@@ -70,6 +70,12 @@ public class PlayQueueController {
 		playQueueList = FXCollections.observableArrayList();
 		historyQueueList = FXCollections.observableArrayList();
 		historyQueueButton.setId("historyQueueButton");
+		listView.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
+			if(oldValue != null)
+				oldValue.changeRemoveButtonColor();
+			if(newValue != null)
+				newValue.changeRemoveButtonColor();
+		});
 		listView.setItems(playQueueList);
 		listView.setOnMouseClicked(event -> {
 			if(event.getClickCount() == 2) {

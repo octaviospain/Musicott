@@ -68,10 +68,6 @@ public class TaskPoolManager {
 			parseTask.addFilesToParse(files);
 	}
 	
-	protected synchronized Track getTrackToProcess() {
-		return tracksToProcessQueue.poll();
-	}
-	
 	public synchronized void addTrackToProcess(Track track) {
 		if(firstCall) {	
 			for(int i=0; i<MAX_CONCURRENT_WAVEFORM_TASKS; i++)
@@ -81,5 +77,9 @@ public class TaskPoolManager {
 		tracksToProcessQueue.add(track);
 		threadsSemaphore.release();
 		LOG.debug("Added track {} to waveform process queue", track);
+	}
+	
+	protected synchronized Track getTrackToProcess() {
+		return tracksToProcessQueue.poll();
 	}
 }

@@ -57,6 +57,7 @@ public class MainPreloader extends Preloader {
             preloaderProgressBar = new ProgressBar();
             preloaderProgressBar.setPrefSize(300, 20.0);
             preloaderProgressBar.setProgress(0.0);
+            preloaderProgressBar.setStyle("-fx-accent: rgb(99,255,109);");
             VBox root = new VBox(musicottImageView, infoLabel, preloaderProgressBar);
             root.setAlignment(Pos.CENTER);
             VBox.setMargin(infoLabel, new Insets(10, 0, 10, 0));

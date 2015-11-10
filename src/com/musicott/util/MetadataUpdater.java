@@ -86,7 +86,9 @@ public class MetadataUpdater {
 		tag.setField(FieldKey.COMMENT, track.getComments());
 		tag.setField(FieldKey.GROUPING, track.getLabel());
 		tag.setField(FieldKey.TRACK, ""+track.getTrackNumber());
+		tag.deleteField(FieldKey.TRACK_TOTAL);
 		tag.setField(FieldKey.DISC_NO, ""+track.getDiscNumber());
+		tag.deleteField(FieldKey.DISC_TOTAL);
 		tag.setField(FieldKey.YEAR, ""+track.getYear());
 		tag.setField(FieldKey.BPM, ""+track.getBpm());
 		if(track.getFileFormat().equals("m4a"))
