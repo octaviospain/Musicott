@@ -454,10 +454,10 @@ p {
 }
 
 a {
-  color: #2879d0;
+  color: #55D95D;
 }
 a:hover {
-  color: #2268b2;
+  color: #63FF6D;
 }
 
 header {
@@ -490,7 +490,7 @@ header h2 {
   font-size: 26px;
   font-weight: normal;
   line-height: 1.3;
-  color: #9ddcff;
+  color: #4ED457;
   letter-spacing: 0;
 }
 
@@ -571,7 +571,7 @@ code, pre {
 
 code {
   padding: 0 3px;
-  background-color: #f2f8fc;
+  background-color: #CBF2CE;
   border: solid 1px #dbe7f3;
 }
 
@@ -642,7 +642,7 @@ form {
 #main-content h1:before {
   padding-right: 0.3em;
   margin-left: -0.9em;
-  color: #9ddcff;
+  color: #63FF6D;
   content: "/";
 }
 
@@ -658,7 +658,7 @@ form {
   padding-right: 0.3em;
   margin-left: -1.5em;
   content: "//";
-  color: #9ddcff;
+  color: #63FF6D;
 }
 
 #main-content h3 {
@@ -675,7 +675,7 @@ form {
   padding-right: 0.3em;
   margin-left: -2em;
   content: "///";
-  color: #9ddcff;
+  color: #63FF6D;
 }
 
 #main-content h4 {
@@ -691,7 +691,7 @@ h4:before {
   padding-right: 0.3em;
   margin-left: -2.8em;
   content: "////";
-  color: #9ddcff;
+  color: #63FF6D;
 }
 
 #main-content h5 {
@@ -705,7 +705,7 @@ h5:before {
   padding-right: 0.3em;
   margin-left: -3.2em;
   content: "/////";
-  color: #9ddcff;
+  color: #63FF6D;
 }
 
 #main-content h6 {
@@ -719,7 +719,7 @@ h6:before {
   padding-right: 0.3em;
   margin-left: -3.7em;
   content: "//////";
-  color: #9ddcff;
+  color: #63FF6D;
 }
 
 p {
