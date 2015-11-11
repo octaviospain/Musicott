@@ -24,9 +24,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.CopyOption;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -59,44 +57,42 @@ public class UpdateMetadataTask extends Thread {
 	
 	@Override
 	public void run() {
-		Path trackFile, backup;
 		boolean updated = false, coverChanged = false;
 		if(imageFile == null)
 			coverChanged = true;
 		for(Track track : tracks)
 			if(track.getInDisk()) {
 				LOG.debug("Updating metadata of {}", track.getFileFolder()+"/"+track.getFileName());
-				trackFile = FileSystems.getDefault().getPath(track.getFileFolder(), track.getFileName());
-				backup = FileSystems.getDefault().getPath("temp", track.getFileName());
-				makeBackup(trackFile, backup);
-				
+				File backup = makeBackup(track);
 				updated = track.updateMetadata();
 				if(imageFile != null)
 					coverChanged = track.updateCover(imageFile);
-				if(updated && coverChanged) {
-					if(backup.toFile().exists())
-						backup.toFile().delete();
-				}
-				else
-					restoreBackup(trackFile, backup);
+				if((!updated || !coverChanged) && backup != null)
+					restoreBackup(track, backup);
 			}
 		SceneManager.getInstance().saveLibrary(true, false);
 		if(ErrorHandler.getInstance().hasErrors(ErrorType.METADATA))
 			Platform.runLater(() -> ErrorHandler.getInstance().showErrorDialog(ErrorType.METADATA));
 	}
 	
-	private void makeBackup(Path original, Path backup) {
+	private File makeBackup(Track track) {
+		File original, backup = null;
+		original = new File(track.getFileFolder()+"/"+track.getFileName());
 		try {
-			Files.copy(original, backup, options);
+			backup = File.createTempFile(track.getName(), "");
+			Files.copy(original.toPath(), backup.toPath(), options);
 		} catch (IOException e) {
 			LOG.error("It wasn't able to copy the backup file: "+e.getMessage(), e);
 			ErrorHandler.getInstance().addError(e, ErrorType.METADATA);
 		}	
+		return backup;
 	}
 	
-	private void restoreBackup(Path original, Path backup) {
+	private void restoreBackup(Track track, File backup) {
+		File original = new File(track.getFileFolder()+"/"+track.getFileName());
 		try {
-			Files.move(backup, original, options);
+			backup = File.createTempFile(track.getName(), "");
+			Files.move(backup.toPath(), original.toPath(), options);
 		} catch (IOException e) {
 			LOG.error("It wasn't able to restore the backup file: "+e.getMessage(), e);
 			ErrorHandler.getInstance().addError(e, ErrorType.METADATA);
