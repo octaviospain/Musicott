@@ -37,18 +37,16 @@ import com.musicott.model.Track;
 public class TaskPoolManager {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private final int MAX_CONCURRENT_WAVEFORM_TASKS = 1;
 	
 	private volatile static TaskPoolManager instance;
 	private ParseTask parseTask;
 	private Semaphore threadsSemaphore;
 	private Queue<Track> tracksToProcessQueue;
-	private boolean firstCall;
+	private WaveformTask waveformTask;
 	
 	private TaskPoolManager() {
 		tracksToProcessQueue = new ArrayDeque<>();
 		threadsSemaphore = new Semaphore(0);
-		firstCall = true;
 	}
 	
 	public static TaskPoolManager getInstance() {
@@ -57,9 +55,9 @@ public class TaskPoolManager {
 		return instance;
 	}
 
-	public void parseFiles(List<File> files) {
+	public void parseFiles(List<File> files, boolean playfinally) {
 		if(parseTask == null || parseTask.isDone()) {
-			parseTask = new ParseTask(files);
+			parseTask = new ParseTask(files, playfinally);
 			Thread parseThread = new Thread(parseTask, "Parse Files Task");
 			parseThread.setDaemon(true);
 			parseThread.start();
@@ -69,10 +67,9 @@ public class TaskPoolManager {
 	}
 	
 	public synchronized void addTrackToProcess(Track track) {
-		if(firstCall) {	
-			for(int i=0; i<MAX_CONCURRENT_WAVEFORM_TASKS; i++)
-				new WaveformTask("Waveform task "+(i+1), threadsSemaphore, this).start();
-			firstCall = false;
+		if(waveformTask == null) {
+			waveformTask = new WaveformTask("Waveform task ", threadsSemaphore, this);
+			waveformTask.start();
 		}
 		tracksToProcessQueue.add(track);
 		threadsSemaphore.release();

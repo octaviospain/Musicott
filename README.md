@@ -5,29 +5,31 @@ A JavaFX application that manages and plays music files.
 
 ![Musicott screenshot 2](https://dl.dropboxusercontent.com/u/3596661/main2.png)
 
-* ID3 mp3 tag parser with [mp3agic](https://github.com/mpatric/mp3agic "mp3agic")
-* Ogg Vorbis Comment Flac parser with [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger")
+* ID3 mp3 tag parser with [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger")
 * Persistence with [Json-io](https://github.com/jdereg/json-io "Json-io")
-* Testing with [TestFx](https://github.com/TestFX/TestFX "TestFx"), [JUnit](https://github.com/junit-team/junit "JUnit"), [Mockito](https://github.com/mockito/mockito "Mockito") & [PowerMock](https://github.com/jayway/powermock "PowerMock").
 
 ## Features for now
-* Play mp3, wav and m4a files
+* Play mp3, wav and m4a (with ALAC encoding) files
 * Import mp3, wav and flac files
 * Edit metadata of the audio files and add a cover image
 * Search files
+* Waveform display of mp3 and wav
 
-### To be implemented
-* Play flac files
+### Coming soon
+* Import and play more file formats
+* Import from itunes library
 * Get metadata from 3rd party services (Beatport, discogs, etc)
 * Advanced search feature
 * Show cover image on table
-* Hability to manage tracks in several lists
+* Manage tracks in several lists
 * A row in the table showing the playlists in which the track is
+* Library statistics
 
 ## Download
-[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.6)
+[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.7)
 
 ## How to build and run
+To build you need at least Java 8 update 40.
 1. Clone Musicott at any directory `git clone https://github.com/octaviospain/Musicott.git`
 2. Build with maven at Musicott's root folder (where pom.xml is) with `mvn package`
 3. Run with `java -cp target/Musicott-x.y.z.jar com.musicott.MainApp`

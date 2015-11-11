@@ -25,7 +25,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.LogManager;
@@ -71,12 +70,14 @@ public class MainApp extends Application {
 	private ErrorHandler eh;
 	private SceneManager sc;
 	private MusicLibrary ml;
+	private MainPreferences pf;
 	private Stage rootStage;
 	private BorderPane rootLayout;
 	private FXMLLoader rootLoader, playQueueLoader;
 	private int totalPreloadSteps;
 	
 	public MainApp() {
+		pf = MainPreferences.getInstance();
 		eh = ErrorHandler.getInstance();
 		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();
@@ -89,8 +90,9 @@ public class MainApp extends Application {
 	
 	@Override
 	public void init() throws Exception {
+		if(pf.getMusicottUserFolder() == null || !new File(pf.getMusicottUserFolder()).exists())
+			LauncherImpl.notifyPreloader(this, new EventNotification("first_use"));
 		eh.setApplicationHostServices(getHostServices());
-		loadSequence();
 		loadWaveforms();
 		loadLayout();
 		loadTracks();
@@ -174,7 +176,7 @@ public class MainApp extends Application {
 	
 	private void loadTracks() {
 		ObservableList<Track> list = null;
-		File tracksFile = new File("./resources/tracks.json");
+		File tracksFile = new File(pf.getMusicottUserFolder()+"/Musicott-tracks.json");
 		int step = 0;
 		if(tracksFile.exists()) {
 			try {
@@ -215,7 +217,7 @@ public class MainApp extends Application {
 	
 	private void loadWaveforms() {
 		Map<Integer,float[]> waveformsMap = null;
-		File waveformsFile = new File("./resources/waveforms.json");
+		File waveformsFile = new File(pf.getMusicottUserFolder()+"/Musicott-waveforms.json");
 		FileInputStream fis;
 		JsonReader jsr;
 		if(waveformsFile.exists()) {
@@ -235,30 +237,6 @@ public class MainApp extends Application {
 			waveformsMap = new HashMap<Integer, float[]>();
 		ml.setWaveforms(waveformsMap);
 		notifyPreloader(2, 4, "Loading waveforms...");
-	}
-	
-	private void loadSequence() {
-		AtomicInteger sequence = null;
-		File sequenceFile = new File("./resources/seq.json");
-		FileInputStream fis;
-		JsonReader jsr;
-		if(sequenceFile.exists()) {
-			try {
-				fis = new FileInputStream(sequenceFile);
-				jsr = new JsonReader(fis);
-				sequence = (AtomicInteger) jsr.readObject();
-				jsr.close();
-				fis.close();
-				LOG.info("Loaded track sequence from {}", sequenceFile);
-			} catch (IOException e) {
-				eh.addError(e, ErrorType.FATAL);
-				LOG.error("Error loading waveform images: ", e);
-			}
-		}
-		else
-			sequence = new AtomicInteger();
-		ml.setTrackSequence(sequence);
-		notifyPreloader(1, 4, "Loading sequence...");
 	}
 	
 	private static void prepareLogger() {
@@ -293,19 +271,19 @@ public class MainApp extends Application {
 		else
 			this.totalPreloadSteps = 3;
 		double progress = (double) step/this.totalPreloadSteps;
-		LauncherImpl.notifyPreloader(this, new CustomPreloaderNotification(progress, detailMessage));
+		LauncherImpl.notifyPreloader(this, new CustomProgressNotification(progress, detailMessage));
 	}
 	
-	class CustomPreloaderNotification implements PreloaderNotification {
+	class CustomProgressNotification implements PreloaderNotification {
 		
 		private final double progress;
         private final String details;
         
-        public CustomPreloaderNotification(double progress) {
+        public CustomProgressNotification(double progress) {
             this(progress, "");
         }
         
-        public CustomPreloaderNotification(double progress, String details) {
+        public CustomProgressNotification(double progress, String details) {
             this.progress = progress;
             this.details = details;
         }
@@ -317,5 +295,18 @@ public class MainApp extends Application {
         public String getDetails() {
             return details;
         }
+	}
+	
+	class EventNotification implements PreloaderNotification {
+		
+		private String event;
+		
+		public EventNotification(String event) {
+			this.event = event;
+		}
+		
+		public String getEvent() {
+			return event;
+		}
 	}
 }

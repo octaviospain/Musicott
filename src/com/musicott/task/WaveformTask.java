@@ -45,7 +45,6 @@ import com.musicott.player.PlayerFacade;
 
 import be.tarsos.transcoder.DefaultAttributes;
 import be.tarsos.transcoder.Transcoder;
-import be.tarsos.transcoder.ffmpeg.EncoderException;
 import javafx.application.Platform;
 import javafx.util.Duration;
 
@@ -93,6 +92,7 @@ public class WaveformTask extends Thread {
 					if(currentTrack != null && currentTrack.equals(track))
 						SwingUtilities.invokeLater(() -> sc.getRootController().setWaveform(track));
 					LOG.debug("Waveform of track {} completed", track);
+					Platform.runLater(() -> sc.getRootController().setStatusMessage(""));
 					sc.saveLibrary(false, true);
 				}
 				else
@@ -105,26 +105,20 @@ public class WaveformTask extends Thread {
 
 	private float[] processMp3() {
 		float[] waveData;
-		String trackName = track.getName();
-		Path temporalDecodedPath = FileSystems.getDefault().getPath("temp", new String("decoded_"+trackName+".wav").replaceAll(" ","_"));
+		int trackID = track.getTrackID();
 		Path trackPath = FileSystems.getDefault().getPath(track.getFileFolder(), track.getFileName());
-		Path temporalCoppiedPath = FileSystems.getDefault().getPath("temp", new String("original_"+trackName+".mp3").replaceAll(" ","_"));
-		File temporalDecodedFile = temporalDecodedPath.toFile();
-		File temporalCoppiedFile = temporalCoppiedPath.toFile();
+		File temporalDecodedFile;
+		File temporalCoppiedFile;
 		try {
-			temporalDecodedFile.createNewFile();
+			temporalDecodedFile = File.createTempFile("decoded_" + trackID, ".wav");
+			temporalCoppiedFile = File.createTempFile("original_" + trackID, ".mp3");
 			CopyOption[] options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING}; 
-			Files.copy(trackPath, temporalCoppiedPath, options);
-			Transcoder.transcode(temporalCoppiedPath.toString(), temporalDecodedPath.toString(), DefaultAttributes.WAV_PCM_S16LE_STEREO_44KHZ.getAttributes());
+			Files.copy(trackPath, temporalCoppiedFile.toPath(), options);
+			Transcoder.transcode(temporalCoppiedFile.toString(), temporalDecodedFile.toString(), DefaultAttributes.WAV_PCM_S16LE_STEREO_44KHZ.getAttributes());
 			waveData = processAmplitudes(getWavAmplitudes(temporalDecodedFile));
-		} catch (EncoderException | UnsupportedAudioFileException | IOException e) {
+		} catch (Exception e) {
 			LOG.warn("Error processing audio waveform of {}: "+e.getMessage(), track);
 			waveData = null;
-		} finally {
-			if(temporalDecodedFile.exists())
-				temporalDecodedFile.delete();
-			if(temporalCoppiedFile.exists())
-				temporalCoppiedFile.delete();
 		}
 		return waveData;
 	}

@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -37,7 +36,6 @@ import org.junit.Test;
 
 import com.cedarsoftware.util.io.JsonReader;
 import com.cedarsoftware.util.io.JsonWriter;
-import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.util.MetadataParser;
 import com.musicott.util.ObservableListWrapperCreator;
@@ -65,7 +63,6 @@ public class LibrarySerializeTest {
 	
 	@Before
 	public void setUp() {
-		MusicLibrary.getInstance().setTrackSequence(new AtomicInteger());
 		jsonFile = new File("./temp/test.json");
 		args = new HashMap<>();
 		Map<Class<?>,List<String>> fields = new HashMap<>();
@@ -97,7 +94,7 @@ public class LibrarySerializeTest {
 		fieldNames.add("fileFormat");
 		fieldNames.add("hasCover");
 		fieldNames.add("isVariableBitRate");
-		fieldNames.add("encoding");
+		fieldNames.add("encoder");
 
 		fields.put(Track.class,fieldNames);
 	}

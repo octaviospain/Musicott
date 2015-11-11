@@ -302,7 +302,7 @@ public class RootController {
 		MenuItem cmAddToQueue = new MenuItem("Add to Play Queue");
 		cmAddToQueue.setOnAction(event -> {
 			if(!selection.isEmpty())
-				player.addTracks(selection);
+				player.addTracks(selection, false);
 		});
 		ContextMenu cm = new ContextMenu();
 		cm.getItems().add(cmPlay);
@@ -338,9 +338,9 @@ public class RootController {
 				if(playerStatus.equals("PLAYING"))
 					player.pause();
 				else if(playerStatus.equals("PAUSED"))
-					player.play();
+					player.resume();
 				else if(playerStatus.equals("STOPPED"))
-					player.playOrRandom();
+					player.play();
 			}
 		});
 	}
@@ -592,10 +592,13 @@ public class RootController {
 	@FXML
 	private void doPlayPause() {
 		LOG.trace("Play/pause button clicked");
-		if(playButton.isSelected()) {
-			player.playOrRandom();
+		if(playButton.isSelected()) {	// play
+			if(player.getCurrentTrack() != null)
+				player.resume();
+			else
+				player.play();
 		}
-		else
+		else							// pause
 			player.pause();
 	}
 	
@@ -682,13 +685,13 @@ public class RootController {
 		chooser.setTitle("Open file(s)...");
 		chooser.getExtensionFilters().addAll(
 				new ExtensionFilter("All Supported (*.mp3, *.flac, *.wav, *.m4a)","*.mp3", "*.flac", "*.wav", "*.m4a"),
-				new ExtensionFilter("Mp3 Files", "*.mp3"),
-				new ExtensionFilter("Flac Files","*.flac"),
-				new ExtensionFilter("Wav Files", "*.wav"),
-				new ExtensionFilter("M4a Files", "*.m4a"));
+				new ExtensionFilter("mp3 files (*.mp3)", "*.mp3"),
+				new ExtensionFilter("flac files (*.flac)","*.flac"),
+				new ExtensionFilter("wav files (*.wav)", "*.wav"),
+				new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
 		List<File> files = chooser.showOpenMultipleDialog(rootStage);
 		if(files != null) {
-			TaskPoolManager.getInstance().parseFiles(files);
+			TaskPoolManager.getInstance().parseFiles(files, true);
 			setStatusMessage("Opening files");
 		}
 	}
@@ -704,7 +707,7 @@ public class RootController {
 		alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
 		alert.setTitle("About Musicott");
 		alert.setHeaderText("Musicott");
-		Label text = new Label(" Version 0.6.0\n\n Copyright © 2015 Octavio Calleya.");
+		Label text = new Label(" Version 0.7.0\n\n Copyright © 2015 Octavio Calleya.");
 		Label text2 = new Label(" Licensed under GNU GPLv3. This product includes\n software developed by other open source projects.");
 		Hyperlink githubLink = new Hyperlink("https://github.com/octaviospain/Musicott/");
 		githubLink.setOnAction(event -> hostServices.showDocument(githubLink.getText()));

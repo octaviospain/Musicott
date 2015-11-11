@@ -204,7 +204,7 @@
                   <TableColumn fx:id="bpmCol" prefWidth="60.0" text="BPM" />
                   <TableColumn fx:id="totalTimeCol" prefWidth="60.0" text="Duration" />
                   <TableColumn fx:id="yearCol" prefWidth="60.0" text="Year" />
-                  <TableColumn fx:id="sizeCol" prefWidth="60.0" text="Size" />
+                  <TableColumn fx:id="sizeCol" prefWidth="64.0" text="Size" />
                   <TableColumn fx:id="trackNumberCol" prefWidth="45.0" text="Track Num" />
                   <TableColumn fx:id="discNumberCol" prefWidth="45.0" text="Disc Num" />
                   <TableColumn fx:id="albumArtistCol" prefWidth="100.0" text="Album Artist" />

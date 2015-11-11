@@ -126,7 +126,7 @@ public class ImportController {
 	
 	@FXML
 	private void doImport() {
-		TaskPoolManager.getInstance().parseFiles(files);
+		TaskPoolManager.getInstance().parseFiles(files, false);
 		SceneManager.getInstance().getRootController().setStatusMessage("Importing files");
 		clear();
 	}
