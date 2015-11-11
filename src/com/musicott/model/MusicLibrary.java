@@ -19,7 +19,6 @@
 package com.musicott.model;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javafx.collections.ObservableList;
 
@@ -32,7 +31,6 @@ public class MusicLibrary {
 	private static volatile MusicLibrary instance;
 	private ObservableList<Track> tracks;
 	private Map<Integer,float[]> waveforms;
-	private AtomicInteger trackSequenceID;
 	
 	private MusicLibrary() {
 	}
@@ -59,19 +57,10 @@ public class MusicLibrary {
 		return this.waveforms;
 	}
 	
-	public void setTrackSequence(AtomicInteger trackSequence) {
-		trackSequenceID = trackSequence;
-	}
-	
-	public synchronized AtomicInteger getTrackSequence() {
-		return trackSequenceID;
-	}
-	
 	public int hashCode() {
 		int hash = 71;
 		hash = 73*hash + tracks.hashCode();
 		hash = 73*hash + waveforms.hashCode();
-		hash = 73*hash + trackSequenceID.hashCode();
 		return hash;
 	}
 	
@@ -79,8 +68,7 @@ public class MusicLibrary {
 		boolean res;
 		if(o instanceof MusicLibrary &&
 		   ((MusicLibrary)o).getTracks().equals(tracks) &&
-		   ((MusicLibrary)o).getWaveforms().equals(waveforms) &&
-		   ((MusicLibrary)o).getTrackSequence().equals(trackSequenceID))
+		   ((MusicLibrary)o).getWaveforms().equals(waveforms))
 			res = true;
 		else
 			res = false;

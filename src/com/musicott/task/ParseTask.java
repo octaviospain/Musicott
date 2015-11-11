@@ -38,6 +38,7 @@ import com.musicott.error.ErrorType;
 import com.musicott.error.ParseException;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
+import com.musicott.player.PlayerFacade;
 import com.musicott.util.MetadataParser;
 
 import javafx.application.Platform;
@@ -49,18 +50,19 @@ import javafx.concurrent.Task;
  */
 public class ParseTask extends Task<List<Track>> {
 
-	protected final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private SceneManager sc;
 	private MusicLibrary ml;
+	private PlayerFacade player;
 
-	protected Thread addFilesInFolderThread;
-	protected List<Track> tracks;
-	protected Queue<File> files;
-	protected int totalFiles;
+	private List<Track> tracks;
+	private Queue<File> files;
+	private int totalFiles;
 	private int currentFiles;
 	private Track currentTrack;
+	private boolean play = false;
 	
-	public ParseTask(List<File> filesToParse) {
+	public ParseTask(List<File> filesToParse, boolean playFinally) {
 		tracks = new ArrayList<>();
 		files = new ArrayDeque<>();
 		files.addAll(filesToParse);
@@ -68,6 +70,8 @@ public class ParseTask extends Task<List<Track>> {
 		totalFiles = files.size();
 		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();
+		player = PlayerFacade.getInstance();
+		play = playFinally;
 	}
 	
 	@Override
@@ -76,7 +80,7 @@ public class ParseTask extends Task<List<Track>> {
 		return tracks;
 	}
 	
-	public void addFilesToParse(List<File> newFilesToParse) {
+	protected void addFilesToParse(List<File> newFilesToParse) {
 		synchronized(files) {
 			files.addAll(newFilesToParse);
 			totalFiles += files.size();
@@ -121,6 +125,7 @@ public class ParseTask extends Task<List<Track>> {
 			ParseException pe = new ParseException("Error parsing "+file+": "+e.getMessage(), e, file);
 			LOG.error(pe.getMessage(), pe);
 			ErrorHandler.getInstance().addError(pe, ErrorType.PARSE);
+			Platform.runLater(() -> sc.getRootController().setStatusMessage("Error: "+e.getMessage()));
 		}
 		return newTrack;
 	}
@@ -132,6 +137,8 @@ public class ParseTask extends Task<List<Track>> {
 		ml.getTracks().addAll(tracks);
 		sc.getRootController().setStatusProgress(0.0);
 		sc.getRootController().setStatusMessage("Import completed");
+		if(play)
+			player.play(tracks);
 		LOG.info("Parse task completed");
 	}
 	

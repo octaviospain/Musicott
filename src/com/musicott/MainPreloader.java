@@ -18,15 +18,20 @@
 
 package com.musicott;
 
-import com.musicott.MainApp.CustomPreloaderNotification;
+import java.util.Optional;
+
+import com.musicott.MainApp.CustomProgressNotification;
+import com.musicott.MainApp.EventNotification;
 
 import javafx.application.Platform;
 import javafx.application.Preloader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
@@ -38,6 +43,7 @@ import javafx.stage.Stage;
  */
 public class MainPreloader extends Preloader {
 	
+	private MainPreferences pf;
 	private Stage preloaderStage;
 	private Scene preloaderScene;
 	private Image musicottIcon;
@@ -46,6 +52,7 @@ public class MainPreloader extends Preloader {
 	private ProgressBar preloaderProgressBar;
 	
 	public MainPreloader() {
+		pf = MainPreferences.getInstance();
 	}
 	
 	@Override
@@ -57,6 +64,7 @@ public class MainPreloader extends Preloader {
             preloaderProgressBar = new ProgressBar();
             preloaderProgressBar.setPrefSize(300, 20.0);
             preloaderProgressBar.setProgress(0.0);
+            preloaderProgressBar.setStyle("-fx-accent: rgb(99,255,109);");
             VBox root = new VBox(musicottImageView, infoLabel, preloaderProgressBar);
             root.setAlignment(Pos.CENTER);
             VBox.setMargin(infoLabel, new Insets(10, 0, 10, 0));
@@ -68,6 +76,7 @@ public class MainPreloader extends Preloader {
 	public void start(Stage primaryStage) throws Exception {
 		// Set preloader scene and show stage.
         preloaderStage = primaryStage;
+        preloaderStage.setOnCloseRequest(event -> event.consume());
         preloaderStage.setTitle("Musicott");
         preloaderStage.getIcons().add(musicottIcon);
         preloaderStage.setScene(preloaderScene);
@@ -77,12 +86,16 @@ public class MainPreloader extends Preloader {
 	
 	@Override
 	public void handleApplicationNotification(PreloaderNotification info) {
-		CustomPreloaderNotification pn = (CustomPreloaderNotification) info;
-		preloaderProgressBar.setProgress(pn.getProgress());
-		infoLabel.setText(pn.getDetails());
+		if(info instanceof CustomProgressNotification) {
+			CustomProgressNotification pn = (CustomProgressNotification) info;
+			preloaderProgressBar.setProgress(pn.getProgress());
+			infoLabel.setText(pn.getDetails());
+		}
+		else if(info instanceof EventNotification) {
+			openFirstUseDialog();
+		}
 	}
 	
-
     @Override
     public void handleStateChangeNotification(StateChangeNotification info) {
         // Handle state change notifications.
@@ -99,5 +112,23 @@ public class MainPreloader extends Preloader {
 	            preloaderStage.close();
                 break;
         }
+    }
+    
+    private void openFirstUseDialog() {
+    	String defaultMusicottLocation = System.getProperty("user.home")+"/Music/Musicott";
+    	TextInputDialog inputDialog = new TextInputDialog(defaultMusicottLocation);
+    	DialogPane pane = inputDialog.getDialogPane();
+    	pane.setMinWidth(500);
+    	pane.setGraphic(null);
+    	pane.getButtonTypes().remove(1);
+    	pane.getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
+    	inputDialog.setOnCloseRequest(event -> pf.setMusicottUserFolder(defaultMusicottLocation));
+    	inputDialog.setResizable(false);
+    	inputDialog.setTitle("");
+    	inputDialog.setHeaderText("");
+    	inputDialog.setContentText("Musicott folder");
+    	Optional<String> result = inputDialog.showAndWait();
+		if(result.isPresent())
+			pf.setMusicottUserFolder(result.get());
     }
 }

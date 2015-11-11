@@ -24,7 +24,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
@@ -36,7 +35,6 @@ import org.jaudiotagger.tag.mp4.Mp4Tag;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.model.TrackField;
 import com.musicott.util.MetadataParser;
@@ -54,7 +52,6 @@ public class ParseUpdateTest extends AudioBaseTest {
 	
 	@Before
 	public void setUp() {
-		MusicLibrary.getInstance().setTrackSequence(new AtomicInteger());
 		expectedTest = new Track();
 		expectedTest.setTrackID(0);
 		expectedTest.setInDisk(true);
@@ -127,7 +124,7 @@ public class ParseUpdateTest extends AudioBaseTest {
 		expectedTest.setSize((int)testPath.toFile().length());
 		
 		assertTrue(expectedTest.updateMetadata());
-		assertTrue(type == WAV ? !expectedTest.updateCover(cover.toFile()) : expectedTest.updateCover(cover.toFile()));
+		assertTrue(expectedTest.updateCover(cover.toFile()));
 		
 		AudioFile audioFile = AudioFileIO.read(testPath.toFile());
 		Tag tag = audioFile.getTag();
@@ -146,7 +143,7 @@ public class ParseUpdateTest extends AudioBaseTest {
 			assertEquals(expectedTest.getIsCompilation(), ((Mp4Tag)tag).getFirst(Mp4FieldKey.COMPILATION).equals("1") ? true : false);
 		else
 			assertEquals(expectedTest.getIsCompilation(), tag.getFirst(FieldKey.IS_COMPILATION).equals("true") ? true : false);
-		assertTrue(type == WAV ? tag.getArtworkList().isEmpty() : !tag.getArtworkList().isEmpty());
+		assertTrue(!tag.getArtworkList().isEmpty());
 	}
 
 	
@@ -182,14 +179,14 @@ public class ParseUpdateTest extends AudioBaseTest {
 		assertEquals(fileFolder, tested.getFileFolder());
 		assertEquals(expectedTest.getFileName(), tested.getFileName());
 		assertEquals(expectedTest.getBitRate(), tested.getBitRate());
-		assertEquals(1, tested.getTrackID());
+//		assertEquals(1, tested.getTrackID()); 	// can't be tested because the ID is stored in the JVM config
 		assertEquals(expectedTest.getInDisk(), tested.getInDisk());
 		assertEquals(expectedTest, tested);
 		Map<TrackField, Property<?>> expectedMap = expectedTest.getPropertiesMap();
 		Map<TrackField, Property<?>> testedMap = expectedTest.getPropertiesMap();
 		for(TrackField tf: TrackField.values())
 			assertEquals(expectedMap.get(tf), testedMap.get(tf));
-		assertTrue(type == WAV ? !tested.hasCover() : tested.hasCover());
+		assertTrue(tested.hasCover());
 		assertEquals(expectedTest.getTotalTime(), tested.getTotalTime());
 		assertEquals(expectedTest, tested);
 	}

@@ -51,20 +51,15 @@ public class ErrorHandler {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
 	private HostServices hostServices;
-	private static volatile ErrorHandler instance;
+	private static ErrorHandler instance;
 	private SceneManager sc;
 	private Stage mainStage;
 	private Map<ErrorType,Stack<Exception>> mapExceptions;
 	private Alert alert;
-	private String dialogStyle;
 
 	private ErrorHandler() {
 		sc = SceneManager.getInstance();
 		mapExceptions = new HashMap<ErrorType,Stack<Exception>>();
-		dialogStyle = "-fx-focus-color: rgb(73, 73, 73);" +
-				  "-fx-faint-focus-color: transparent;" +
-				  "-fx-background-color: transparent, transparent, transparent, -fx-body-color;" +
-				  "-fx-background-radius: 0, 0, 0, 0";
 	}
 	
 	public static ErrorHandler getInstance() {
@@ -77,7 +72,7 @@ public class ErrorHandler {
 		this.hostServices= hostServices;
 	}
 	
-	public void addError(Exception ex, ErrorType type) {
+	public synchronized void addError(Exception ex, ErrorType type) {
 		LOG.debug("Error handled:", ex);
 		if(mapExceptions.containsKey(type))
 			mapExceptions.get(type).push(ex);
@@ -88,7 +83,7 @@ public class ErrorHandler {
 		}
 	}
 	
-	public boolean hasErrors(ErrorType... type) {
+	public synchronized boolean hasErrors(ErrorType... type) {
 		if(!mapExceptions.isEmpty())
 			for(ErrorType et: type)
 				if(mapExceptions.containsKey(et) && !mapExceptions.get(et).isEmpty())
@@ -96,19 +91,19 @@ public class ErrorHandler {
 		return false;
 	}
 
-	public Stack<Exception> getErrors(ErrorType type){
+	public synchronized Stack<Exception> getErrors(ErrorType type){
 		return mapExceptions.get(type);
 	}
 	
-	public void showErrorDialog(ErrorType type) {
+	public synchronized void showErrorDialog(ErrorType type) {
 		if(mainStage == null)
 			mainStage = sc.getMainStage();
 		showErrorDialog(mainStage.getScene(), type);
 	}
 	
-	public void showErrorDialog(Scene ownerScene, ErrorType... types) {
+	public synchronized void showErrorDialog(Scene ownerScene, ErrorType... types) {
 		alert = new Alert(AlertType.ERROR);
-		alert.getDialogPane().setStyle(dialogStyle);
+		alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
 		if(ownerScene != null)
 			alert.initOwner(ownerScene.getWindow());
 		else {

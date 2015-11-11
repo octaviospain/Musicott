@@ -201,7 +201,6 @@ public class RootController {
 	private PlayerFacade player;
 	private WaveformPanel mainWaveformPane;
 	private HostServices hostServices;
-	private String dialogStyle;
 	
 	public RootController() {
 	}
@@ -303,7 +302,7 @@ public class RootController {
 		MenuItem cmAddToQueue = new MenuItem("Add to Play Queue");
 		cmAddToQueue.setOnAction(event -> {
 			if(!selection.isEmpty())
-				player.addTracks(selection);
+				player.addTracks(selection, false);
 		});
 		ContextMenu cm = new ContextMenu();
 		cm.getItems().add(cmPlay);
@@ -335,16 +334,15 @@ public class RootController {
 				player.play(selection);
 			}
 			else if(event.getCode() == KeyCode.SPACE) {
-				if(player.getTrackPlayer().getStatus().equals("PLAYING"))
+				String playerStatus = player.getTrackPlayer().getStatus();
+				if(playerStatus.equals("PLAYING"))
 					player.pause();
-				else if(player.getTrackPlayer().getStatus().equals("PAUSED"))
+				else if(playerStatus.equals("PAUSED"))
+					player.resume();
+				else if(playerStatus.equals("STOPPED"))
 					player.play();
 			}
 		});
-		dialogStyle = "-fx-focus-color: rgb(73, 73, 73);" +
-					  "-fx-faint-focus-color: transparent;" +
-					  "-fx-background-color: transparent, transparent, transparent, -fx-body-color;" +
-					  "-fx-background-radius: 0, 0, 0, 0";
 	}
 	
 	private void initColumns() {
@@ -424,7 +422,7 @@ public class RootController {
 		yearCol.setCellValueFactory(cellData -> cellData.getValue().getYearProperty());
 		yearCol.setCellFactory(numericCallback);
 		yearCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		playCountCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getPlayCount()));
+		playCountCol.setCellValueFactory(cellData -> cellData.getValue().getPlayCountProperty());
 		playCountCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		discNumberCol.setCellValueFactory(cellData -> cellData.getValue().getDiscNumberProperty());
 		discNumberCol.setStyle("-fx-alignment: CENTER-RIGHT;");
@@ -439,7 +437,7 @@ public class RootController {
 				super.updateItem(item, empty);
 				if(empty || item == null)
 					setText("");
-				else if(((int) item) < 1)
+				else if(((int) item) == 0)
 						setText("");
 					else
 						setText(""+item);
@@ -528,6 +526,10 @@ public class RootController {
 				setStopped();
 			}
 		});
+		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> {
+			if(newTime.greaterThanOrEqualTo(mediaPlayer.getStopTime().divide(2.0)))
+				player.incrementCurentTrackPlayCount();
+		});
 	}
 	
 	private void setUpPlayer(FlacPlayer flacPlayer) {
@@ -555,7 +557,7 @@ public class RootController {
 		currentCover.setVisible(true);
 	}
 	
-	private void setStopped() {
+	public void setStopped() {
 		playButton.setSelected(false);
 		trackSlider.setDisable(true);
 		nextButton.setDisable(true);
@@ -590,16 +592,13 @@ public class RootController {
 	@FXML
 	private void doPlayPause() {
 		LOG.trace("Play/pause button clicked");
-		if(playButton.isSelected()) {
-			if(trackSlider.isDisabled())
-				trackSlider.setDisable(false);
-			if(prevButton.isDisabled())
-				prevButton.setDisable(false);
-			if(nextButton.isDisabled())
-				nextButton.setDisable(false);
-			player.play();
+		if(playButton.isSelected()) {	// play
+			if(player.getCurrentTrack() != null)
+				player.resume();
+			else
+				player.play();
 		}
-		else
+		else							// pause
 			player.pause();
 	}
 	
@@ -641,7 +640,7 @@ public class RootController {
 		if(selection != null && !selection.isEmpty()) {
 			int numDeletedTracks = selection.size();
 			Alert alert = new Alert(AlertType.CONFIRMATION);
-			alert.getDialogPane().setStyle(dialogStyle);
+			alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
 			alert.setTitle("");
 			alert.setHeaderText("");
 			alert.setContentText("Delete "+numDeletedTracks+" files from Musicott?");
@@ -660,7 +659,7 @@ public class RootController {
 		if(selection != null & !selection.isEmpty()) {
 			if(selection.size() > 1) {
 				Alert alert = new Alert(AlertType.CONFIRMATION);
-				alert.getDialogPane().setStyle(dialogStyle);
+				alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
 				alert.setTitle("");
 				alert.setHeaderText("");
 				alert.setContentText("Are you sure you want to edit multiple files?");
@@ -686,13 +685,13 @@ public class RootController {
 		chooser.setTitle("Open file(s)...");
 		chooser.getExtensionFilters().addAll(
 				new ExtensionFilter("All Supported (*.mp3, *.flac, *.wav, *.m4a)","*.mp3", "*.flac", "*.wav", "*.m4a"),
-				new ExtensionFilter("Mp3 Files", "*.mp3"),
-				new ExtensionFilter("Flac Files","*.flac"),
-				new ExtensionFilter("Wav Files", "*.wav"),
-				new ExtensionFilter("M4a Files", "*.m4a"));
+				new ExtensionFilter("mp3 files (*.mp3)", "*.mp3"),
+				new ExtensionFilter("flac files (*.flac)","*.flac"),
+				new ExtensionFilter("wav files (*.wav)", "*.wav"),
+				new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
 		List<File> files = chooser.showOpenMultipleDialog(rootStage);
 		if(files != null) {
-			TaskPoolManager.getInstance().parseFiles(files);
+			TaskPoolManager.getInstance().parseFiles(files, true);
 			setStatusMessage("Opening files");
 		}
 	}
@@ -705,10 +704,10 @@ public class RootController {
 	@FXML
 	private void doAbout() {
 		Alert alert = new Alert(AlertType.INFORMATION);
-		alert.getDialogPane().setStyle(dialogStyle);
+		alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
 		alert.setTitle("About Musicott");
 		alert.setHeaderText("Musicott");
-		Label text = new Label(" Version 0.6.0\n\n Copyright © 2015 Octavio Calleya.");
+		Label text = new Label(" Version 0.7.0\n\n Copyright © 2015 Octavio Calleya.");
 		Label text2 = new Label(" Licensed under GNU GPLv3. This product includes\n software developed by other open source projects.");
 		Hyperlink githubLink = new Hyperlink("https://github.com/octaviospain/Musicott/");
 		githubLink.setOnAction(event -> hostServices.showDocument(githubLink.getText()));

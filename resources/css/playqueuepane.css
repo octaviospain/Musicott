@@ -27,6 +27,18 @@
     -fx-background-radius: 10px;
 }
 
+.list-cell {
+	-fx-background-color: transparent;
+}
+
+.list-cell:filled:selected {
+    -fx-background-color: black;
+}
+
+.list-cell:filled:selected .text{
+    -fx-fill: white !important;
+}
+
 /* The main scrollbar **track** CSS class  */
 #listView .scroll-bar:horizontal .track,
 #listView .scroll-bar:vertical .track {
@@ -70,19 +82,25 @@
 
 }
 
-#deleteTrackQueueRowButton {
-	-fx-graphic: url('../icons/remove-button-icon.png');
+#deleteButton-black {
+	-fx-graphic: url('../icons/remove-button-black-icon.png');
+	-fx-background-insets: 1 1 1 1;
+	-fx-background-color: transparent;
+}
+
+#deleteButton-white {
+	-fx-graphic: url('../icons/remove-button-white-icon.png');
 	-fx-background-insets: 1 1 1 1;
 	-fx-background-color: transparent;
 }
 
 #nameLabel {
-	-fx-font-size: 11.5px;
+	-fx-font-size: 12px;
 }
 
 #artistAlbumLabel{
 	-fx-text-fill: #000000be;
-	-fx-font-size: 9.5px;
+	-fx-font-size: 10px;
 }
 
 #historyQueueButton {
