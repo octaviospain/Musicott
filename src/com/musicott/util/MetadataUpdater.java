@@ -53,8 +53,8 @@ import com.musicott.model.Track;
 public class MetadataUpdater {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	protected boolean succeeded;
-	protected Track track;
+	private boolean succeeded;
+	private Track track;
 	
 	public MetadataUpdater(Track track) {
 		this.track = track;
@@ -86,7 +86,9 @@ public class MetadataUpdater {
 		tag.setField(FieldKey.COMMENT, track.getComments());
 		tag.setField(FieldKey.GROUPING, track.getLabel());
 		tag.setField(FieldKey.TRACK, ""+track.getTrackNumber());
+		tag.deleteField(FieldKey.TRACK_TOTAL);
 		tag.setField(FieldKey.DISC_NO, ""+track.getDiscNumber());
+		tag.deleteField(FieldKey.DISC_TOTAL);
 		tag.setField(FieldKey.YEAR, ""+track.getYear());
 		tag.setField(FieldKey.BPM, ""+track.getBpm());
 		if(track.getFileFormat().equals("m4a"))
@@ -96,20 +98,18 @@ public class MetadataUpdater {
 	
 	public boolean updateCover(File coverFile) {
 		succeeded = false;
-		if(!track.getFileFormat().equals("wav")) {
-			Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
-			try {
-				AudioFile audioFile = AudioFileIO.read(trackPath.toFile());
-				Tag tag = audioFile.getTag();
-				Artwork cover = ArtworkFactory.createArtworkFromFile(coverFile);
-				tag.deleteArtworkField();
-				tag.addField(cover);
-				audioFile.commit();
-				succeeded = true;
-			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
-					| InvalidAudioFrameException | CannotWriteException e) {
-				treatException("Error saving cover: "+e.getMessage(), e, track);
-			}
+		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
+		try {
+			AudioFile audioFile = AudioFileIO.read(trackPath.toFile());
+			Tag tag = audioFile.getTag();
+			Artwork cover = ArtworkFactory.createArtworkFromFile(coverFile);
+			tag.deleteArtworkField();
+			tag.addField(cover);
+			audioFile.commit();
+			succeeded = true;
+		} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
+				| InvalidAudioFrameException | CannotWriteException e) {
+			treatException("Error saving cover: "+e.getMessage(), e, track);
 		}
 		if(succeeded)
 			track.setHasCover(true);

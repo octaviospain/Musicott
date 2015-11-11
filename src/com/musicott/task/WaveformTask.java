@@ -45,10 +45,8 @@ import com.musicott.player.PlayerFacade;
 
 import be.tarsos.transcoder.DefaultAttributes;
 import be.tarsos.transcoder.Transcoder;
-import be.tarsos.transcoder.ffmpeg.Encoder;
-import be.tarsos.transcoder.ffmpeg.EncoderException;
-import be.tarsos.transcoder.ffmpeg.FFMPEGLocator;
 import javafx.application.Platform;
+import javafx.util.Duration;
 
 /**
  * @author Octavio Calleya
@@ -58,6 +56,7 @@ public class WaveformTask extends Thread {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private final double HEIGHT_COEFICIENT = 4.2; // This fits the waveform to the swingnode height
+	private final double MAX_LENGTH_TO_PROCESS = 1582000.0; // Maxixum length of the file that can be processed without overflow the heap space //TODO find a way to solve
 	
 	private MusicLibrary ml;
 	private SceneManager sc;
@@ -81,10 +80,10 @@ public class WaveformTask extends Thread {
 				taskSemaphore.acquire();
 				track = tpm.getTrackToProcess();
 				LOG.debug("Processing waveform of track {}", track);
-				if(track.getFileFormat().equals("wav"))
+				if(track.getFileFormat().equals("wav") && track.getTotalTime().lessThanOrEqualTo(Duration.millis(MAX_LENGTH_TO_PROCESS)))
 					waveform = processWav();
 				else
-					if(track.getFileFormat().equals("mp3")) {
+					if(track.getFileFormat().equals("mp3") && track.getTotalTime().lessThanOrEqualTo(Duration.millis(MAX_LENGTH_TO_PROCESS))) {
 						waveform = processMp3();
 					}
 				if(waveform != null) {
@@ -93,11 +92,12 @@ public class WaveformTask extends Thread {
 					if(currentTrack != null && currentTrack.equals(track))
 						SwingUtilities.invokeLater(() -> sc.getRootController().setWaveform(track));
 					LOG.debug("Waveform of track {} completed", track);
+					Platform.runLater(() -> sc.getRootController().setStatusMessage(""));
 					sc.saveLibrary(false, true);
 				}
 				else
 					Platform.runLater(() -> sc.getRootController().setStatusMessage("Fail processing waveform of "+track.getName()));
-			} catch (InterruptedException e) {
+			} catch (Exception e) {
 				LOG.warn("Waveform thread error: {}", e);
 			}
 		}
@@ -105,38 +105,20 @@ public class WaveformTask extends Thread {
 
 	private float[] processMp3() {
 		float[] waveData;
-		String trackName = track.getName();
-		Path temporalDecodedPath = FileSystems.getDefault().getPath("temp", new String("decoded_"+trackName+".wav").replaceAll(" ","_"));
+		int trackID = track.getTrackID();
 		Path trackPath = FileSystems.getDefault().getPath(track.getFileFolder(), track.getFileName());
-		Path temporalCoppiedPath = FileSystems.getDefault().getPath("temp", new String("original_"+trackName+".mp3").replaceAll(" ","_"));
-		File temporalDecodedFile = temporalDecodedPath.toFile();
-		File temporalCoppiedFile = temporalCoppiedPath.toFile();
+		File temporalDecodedFile;
+		File temporalCoppiedFile;
 		try {
-			temporalDecodedFile.createNewFile();
+			temporalDecodedFile = File.createTempFile("decoded_" + trackID, ".wav");
+			temporalCoppiedFile = File.createTempFile("original_" + trackID, ".mp3");
 			CopyOption[] options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING}; 
-			Files.copy(trackPath, temporalCoppiedPath, options);
-			Encoder.addFFMPEGLocator(new FFMPEGLocator() {
-				@Override
-				public boolean pickMe() {
-					String os = System.getProperty("os.name").toLowerCase();
-					return os.contains("mac");
-				}
-
-				@Override
-				protected String getFFMPEGExecutablePath() {
-					return "/usr/local/bin/ffmpeg";
-				}
-			});
-			Transcoder.transcode(temporalCoppiedPath.toString(), temporalDecodedPath.toString(), DefaultAttributes.WAV_PCM_S16LE_STEREO_44KHZ.getAttributes());
+			Files.copy(trackPath, temporalCoppiedFile.toPath(), options);
+			Transcoder.transcode(temporalCoppiedFile.toString(), temporalDecodedFile.toString(), DefaultAttributes.WAV_PCM_S16LE_STEREO_44KHZ.getAttributes());
 			waveData = processAmplitudes(getWavAmplitudes(temporalDecodedFile));
-		} catch (EncoderException | UnsupportedAudioFileException | IOException e) {
+		} catch (Exception e) {
 			LOG.warn("Error processing audio waveform of {}: "+e.getMessage(), track);
 			waveData = null;
-		} finally {
-			if(temporalDecodedFile.exists())
-				temporalDecodedFile.delete();
-			if(temporalCoppiedFile.exists())
-				temporalCoppiedFile.delete();
 		}
 		return waveData;
 	}

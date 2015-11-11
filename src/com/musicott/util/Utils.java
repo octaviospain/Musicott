@@ -24,8 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.musicott.view.ImportController.ThreadStopFlag;
-
 /**
  * Class that does some useful operations with files and directories
  * 
@@ -45,9 +43,9 @@ public class Utils {
 	 * @return The list containing all the files
 	 * @throws IllegalArgumentException Thrown if <tt>maxFilesRequired</tt> argument is less than zero
 	 */
-	public static List<File> getAllFilesInFolder(File rootFolder, FileFilter filter, int maxFilesRequired, ThreadStopFlag stop) throws IllegalArgumentException {
+	public static List<File> getAllFilesInFolder(File rootFolder, FileFilter filter, int maxFilesRequired) throws IllegalArgumentException {
 		List<File> finalFiles = new ArrayList<>();
-		if(!stop.stop()) {
+		if(!Thread.interrupted()) {
 			if(maxFilesRequired < 0)
 				throw new IllegalArgumentException("maxFilesRequired argument less than zero");
 			if(rootFolder == null || filter == null)
@@ -70,9 +68,9 @@ public class Utils {
 			if(maxFilesRequired == 0 || remainingFiles > 0) {
 				File[] rootSubFolders = rootFolder.listFiles(file -> {return file.isDirectory();});
 				int sbFldrsCount = 0;
-				while((sbFldrsCount < rootSubFolders.length) && !stop.stop()) {
+				while((sbFldrsCount < rootSubFolders.length) && !Thread.interrupted()) {
 					File subFolder = rootSubFolders[sbFldrsCount++];
-					List<File> subFolderFiles = getAllFilesInFolder(subFolder, filter, remainingFiles, stop);
+					List<File> subFolderFiles = getAllFilesInFolder(subFolder, filter, remainingFiles);
 					finalFiles.addAll(subFolderFiles);
 					if(remainingFiles > 0)
 						remainingFiles = maxFilesRequired - finalFiles.size();

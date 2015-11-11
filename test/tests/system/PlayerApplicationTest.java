@@ -54,8 +54,7 @@ public class PlayerApplicationTest extends ApplicationTest {
 	public void start(Stage stage) throws Exception {
 		frame = new MainApp();
 		this.stage = stage;
-		
-		
+		frame.init();
 		frame.start(this.stage);
 	}
 	

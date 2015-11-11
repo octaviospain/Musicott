@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -37,13 +36,11 @@ import org.junit.Test;
 
 import com.cedarsoftware.util.io.JsonReader;
 import com.cedarsoftware.util.io.JsonWriter;
-import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.util.MetadataParser;
 import com.musicott.util.ObservableListWrapperCreator;
 import com.musicott.util.Utils;
 import com.musicott.view.ImportController;
-import com.musicott.view.ImportController.ThreadStopFlag;
 import com.sun.javafx.collections.ObservableListWrapper;
 
 import javafx.collections.FXCollections;
@@ -63,11 +60,9 @@ public class LibrarySerializeTest {
 	FileInputStream fis;
 	JsonReader jsr;
 	ImportController icc = new ImportController();
-	ThreadStopFlag flag = icc.new ThreadStopFlag();
 	
 	@Before
 	public void setUp() {
-		MusicLibrary.getInstance().setTrackSequence(new AtomicInteger());
 		jsonFile = new File("./temp/test.json");
 		args = new HashMap<>();
 		Map<Class<?>,List<String>> fields = new HashMap<>();
@@ -99,7 +94,7 @@ public class LibrarySerializeTest {
 		fieldNames.add("fileFormat");
 		fieldNames.add("hasCover");
 		fieldNames.add("isVariableBitRate");
-		fieldNames.add("encoding");
+		fieldNames.add("encoder");
 
 		fields.put(Track.class,fieldNames);
 	}
@@ -123,7 +118,7 @@ public class LibrarySerializeTest {
 				return false;
 		};
 		File folder = new File("/users/octavio/music/itunes/itunes media/music/");
-		List<File> audioFiles = Utils.getAllFilesInFolder(folder, filter, MAX_TRACKS, flag);
+		List<File> audioFiles = Utils.getAllFilesInFolder(folder, filter, MAX_TRACKS);
 		assertEquals(MAX_TRACKS, audioFiles.size());
 		List<Track> tracks = new ArrayList<>();
 		for(File f: audioFiles) {
@@ -158,7 +153,7 @@ public class LibrarySerializeTest {
 				return false;
 		};
 		File folder = new File("/users/octavio/music/itunes/itunes media/music/");
-		List<File> audioFiles = Utils.getAllFilesInFolder(folder, filter, MAX_TRACKS, flag);
+		List<File> audioFiles = Utils.getAllFilesInFolder(folder, filter, MAX_TRACKS);
 		assertEquals(MAX_TRACKS, audioFiles.size());
 		List<Track> tracks = new ArrayList<>();
 		for(File f: audioFiles) {

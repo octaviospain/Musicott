@@ -2,7 +2,6 @@
 /target/
 /build/
 /deploy/
-/temp/
 .metadata
 .DS_Store
 ._*
@@ -12,8 +11,4 @@
 .settings/
 Musicott-main-log.txt
 .md
-/resources/tracks.json
-/resources/waveforms.json
-/resources/test.json
-/resources/seq.json
 /_site/

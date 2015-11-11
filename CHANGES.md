@@ -1,5 +1,10 @@
 # Changes
 
+## Version 0.7
+* Added waveform image for mostly all mp3 files and all wav files
+* Better design
+* Big refactor implementing better concurrent model
+ 
 ## Version 0.6
 
 * Now editing track information saves the metadata on the file, except wav files
