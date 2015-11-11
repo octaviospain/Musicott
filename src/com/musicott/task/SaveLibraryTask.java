@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +33,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 
 import com.cedarsoftware.util.io.JsonWriter;
+import com.musicott.MainPreferences;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
 import com.musicott.model.MusicLibrary;
@@ -49,8 +49,7 @@ public class SaveLibraryTask extends Thread {
 
 	private ObservableList<Track> trackList;
 	private Map<Integer, float[]> waveformsMap;
-	private File tracksFile, waveformsFile, sequenceFile;
-	private AtomicInteger trackSequence;
+	private File tracksFile, waveformsFile;
 	private Map<String,Object> args;
 	private boolean saveTracks, saveWaveforms;
 	
@@ -59,12 +58,11 @@ public class SaveLibraryTask extends Thread {
 	public SaveLibraryTask(boolean saveTracks, boolean saveWaveforms) {
 		this.saveTracks = saveTracks;
 		this.saveWaveforms = saveWaveforms;
-		tracksFile = new File("./resources/tracks.json");
-		waveformsFile = new File("./resources/waveforms.json");
-		sequenceFile = new File("./resources/seq.json");
+		String musicottUserPath = MainPreferences.getInstance().getMusicottUserFolder();
+		tracksFile = new File(musicottUserPath+"/Musicott-tracks.json");
+		waveformsFile = new File(musicottUserPath+"/Musicott-waveforms.json");
 		trackList = ml.getTracks();
 		waveformsMap = ml.getWaveforms();
-		trackSequence = ml.getTrackSequence();
 		
 		args = new HashMap<>();
 		Map<Class<?>,List<String>> fields = new HashMap<>();
@@ -113,13 +111,6 @@ public class SaveLibraryTask extends Thread {
 				fos = new FileOutputStream(tracksFile);				
 				jsw = new JsonWriter(fos, args);
 				jsw.write(trackList);
-				fos.close();
-				jsw.close();
-				
-				LOG.debug("Saving sequence object in {}", sequenceFile);
-				fos = new FileOutputStream(sequenceFile);
-				jsw = new JsonWriter(fos);
-				jsw.write(trackSequence);
 				fos.close();
 				jsw.close();
 			}

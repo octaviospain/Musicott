@@ -83,20 +83,25 @@ public class PlayerFacade {
 		return trackPlayer;
 	}
 
-	public void addTracks(List<Track> tracks) {
-		List<Track> playableTracks = tracks.stream().filter(t -> t.isPlayable()).collect(Collectors.toList());
+	public void addTracks(List<Track> tracks, boolean placeFirst) {
+		List<Track> playableTracks = new ArrayList<>();
+		if(tracks != null)
+			playableTracks.addAll(tracks.stream().filter(t -> t.isPlayable()).collect(Collectors.toList()));
 		if(playQueueController == null)
 			playQueueController = sc.getPlayQueueController();
 		if(random) {
 			playQueueController.doDeleteAll();
-			playQueueController.add(playableTracks);
+			playQueueController.add(playableTracks, false);
 			playList.clear();
 			playList.addAll(playableTracks);
 			random = false;
 		}
-		else if (playableTracks.size() != 0){
-			playQueueController.add(playableTracks);
-			playList.addAll(playableTracks);
+		else if (!playableTracks.isEmpty()){
+			playQueueController.add(playableTracks, placeFirst);
+			if(placeFirst)
+				playList.addAll(0, playableTracks);
+			else
+				playList.addAll(playableTracks);
 			LOG.info("Added tracks to player: {}", playableTracks);
 		}
 	}
@@ -117,7 +122,7 @@ public class PlayerFacade {
 	}
 	
 	public void play(List<Track> tracks) {
-		addTracks(tracks);
+		addTracks(tracks, true);
 		play();
 	}
 	
@@ -131,34 +136,11 @@ public class PlayerFacade {
 		if(trackPlayer == null || (trackPlayer != null && trackPlayer.getStatus().equals("STOPPED"))) {
 			if(!playList.isEmpty())
 				setCurrent();
-		}
-		else {
-			if(trackPlayer.getStatus().equals("PAUSED")) {
-				LOG.info("Player resumed");
-				trackPlayer.play();
-			}
-			else if(trackPlayer.getStatus().equals("PLAYING")) {
-				if(playList.isEmpty())
-					stop();
-				else 
-					setCurrent();
-			}
-		}
-	}
-	
-	public void playOrRandom() {
-		if(trackPlayer == null || (trackPlayer != null && trackPlayer.getStatus().equals("STOPPED"))) {
-			if(randomList())
+			else if(randomList())
 				setCurrent();
-			else
-				sc.getRootController().setStopped();
 		}
 		else {
-			if(trackPlayer.getStatus().equals("PAUSED")) {
-				LOG.info("Player resumed");
-				trackPlayer.play();
-			}
-			else if(trackPlayer.getStatus().equals("PLAYING")) {
+			if(trackPlayer.getStatus().equals("PLAYING")) {
 				if(playList.isEmpty())
 					stop();
 				else 
@@ -195,6 +177,11 @@ public class PlayerFacade {
 	public void stop() {
 		trackPlayer.stop();
 		currentTrack = null;
+	}
+	
+	public void resume() {
+		trackPlayer.play();
+		LOG.info("Player resumed");
 	}
 	
 	public void removeTrackFromPlayList(int index) {
@@ -242,7 +229,7 @@ public class PlayerFacade {
 		if(!playableTracks.isEmpty()) {
 			if(playableTracks.size() <= DEFAULT_RANDOMQUEUE_SIZE) {
 				playList.addAll(playableTracks);
-				playQueueController.add(playList);
+				playQueueController.add(playList, false);
 			}
 			else {
 				Random randomGenerator = new Random();
@@ -253,7 +240,7 @@ public class PlayerFacade {
 					listVisited.add(rnd);
 				} while (playList.size() < DEFAULT_RANDOMQUEUE_SIZE || listVisited.size() == playableTracks.size());
 			}
-			playQueueController.add(playList);
+			playQueueController.add(playList, false);
 		}
 		if(!playList.isEmpty()) {
 			LOG.info("Created random list of tracks");

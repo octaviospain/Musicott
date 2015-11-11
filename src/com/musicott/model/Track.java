@@ -31,6 +31,7 @@ import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
 import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
 import org.jaudiotagger.tag.TagException;
 
+import com.musicott.MainPreferences;
 import com.musicott.SceneManager;
 import com.musicott.error.CommonException;
 import com.musicott.error.ErrorHandler;
@@ -106,7 +107,7 @@ public class Track {
 	private MetadataUpdater updater;
 	
     public Track() {
-    	trackID = MusicLibrary.getInstance().getTrackSequence().getAndIncrement();
+    	trackID = MainPreferences.getInstance().getTrackSequence();
     	fileFolder = "";
     	fileName = "";
     	fileFormat = "";

@@ -18,6 +18,7 @@
 
 package com.musicott.view;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -94,10 +95,13 @@ public class PlayQueueController {
 		});
 	}
 	
-	public void add(List<Track> list) {
-		for(Track track: list) {
-			playQueueList.add(new TrackQueueRow(track));
-		}
+	public void add(List<Track> list, boolean placeFirst) {
+		List<TrackQueueRow> newTracks = new ArrayList<>();
+		list.forEach(track -> newTracks.add(new TrackQueueRow(track)));
+		if(placeFirst)
+			playQueueList.addAll(0, newTracks);
+		else
+			playQueueList.addAll(newTracks);
 	}
 	
 	public void removeTopHistoryQueue() {
