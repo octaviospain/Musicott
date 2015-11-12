@@ -5,4 +5,4 @@ defaults:
     values:
       layout: "default"
       author: "Octavio"
-baseurl: “/Musicott“
+baseurl: /Musicott
