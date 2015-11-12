@@ -48,7 +48,7 @@ import javafx.concurrent.Task;
  * @author Octavio Calleya
  *
  */
-public class ParseTask extends Task<List<Track>> {
+public class ParseTask extends Task<Void> {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private SceneManager sc;
@@ -75,9 +75,9 @@ public class ParseTask extends Task<List<Track>> {
 	}
 	
 	@Override
-	protected List<Track> call() {
+	protected Void call() {
 		parseFiles();
-		return tracks;
+		return null;
 	}
 	
 	protected void addFilesToParse(List<File> newFilesToParse) {

@@ -103,6 +103,8 @@ public class RootController {
 	@FXML
 	private Menu menuFile;
 	@FXML
+	private MenuItem menuItemItunesImport;
+	@FXML
 	private MenuItem menuItemImport;
 	@FXML
 	private MenuItem  menuItemOpen;
@@ -697,8 +699,13 @@ public class RootController {
 	}
 	
 	@FXML
-	private void doImportCollection() {
+	private void doImportFolder() {
 		sc.openImportScene();
+	}
+	
+	@FXML
+	private void doItunesImport() {
+		sc.openItunesImportScene();
 	}
 	
 	@FXML

@@ -40,6 +40,7 @@ public class TaskPoolManager {
 	
 	private volatile static TaskPoolManager instance;
 	private ParseTask parseTask;
+	private ItunesImportTask itunesImportTask;
 	private Semaphore threadsSemaphore;
 	private Queue<Track> tracksToProcessQueue;
 	private WaveformTask waveformTask;
@@ -53,6 +54,18 @@ public class TaskPoolManager {
 		if(instance == null)
 			instance = new TaskPoolManager();
 		return instance;
+	}
+	
+	public void parseItunesLibrary(String path, int metadataPolicy, boolean importPlaylists, boolean keepPlaycount) {
+		if(itunesImportTask == null || itunesImportTask.isDone()) {
+			itunesImportTask = new ItunesImportTask(path, metadataPolicy, importPlaylists, keepPlaycount);
+			Thread itunesThread = new Thread (itunesImportTask);
+			itunesThread.setDaemon(true);
+			itunesThread.start();
+		}
+		else if(itunesImportTask.isRunning()) {
+			//TODO notify the user to wait until the current import is ended
+		}
 	}
 
 	public void parseFiles(List<File> files, boolean playfinally) {
