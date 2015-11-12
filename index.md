@@ -9,7 +9,7 @@ JavaFX application that manages and plays music files. Uses [JAudioTagger](https
 ![Musicott screenshot 2](https://dl.dropboxusercontent.com/u/3596661/main2.png)
 
 ## Features for now
-* Play mp3, wav and m4a (with ALAC encoding) files
+* Play mp3, wav and m4a (with AAC encoding) files
 * Import mp3, wav and flac files
 * Edit metadata of the audio files and add a cover image
 * Search files
