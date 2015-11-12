@@ -38,7 +38,7 @@ To build you need at least Java 8 update 40.
 Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki") for help about using Musicott.
 
 ## Changes history
-In [CHANGES.md]({{ sit.url}}/changes.html "Changes")
+In [CHANGES.md]({{ sit.url}}/Musicott/changes.html "Changes")
 
 ## License
 Musicott is free softare under GNU GPL version 3 license. The license of Musicott and the licenses of the included libraries in this software are in the [LICENSE](https://github.com/octaviospain/Musicott/tree/master/license "License") folder
