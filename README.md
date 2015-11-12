@@ -1,12 +1,9 @@
 # Musicott
-A JavaFX application that manages and plays music files.
+JavaFX application that manages and plays music files. Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to read and write the metadata, [Json-io](https://github.com/jdereg/json-io "Json-io") for persistence, and [JUnit](https://github.com/junit-team/junit "JUnit") & [TestFx](https://github.com/TestFX/TestFX "TestFx") for testing. Also [ControlsFx](https://bitbucket.org/controlsfx/controlsfx/ "ControlsFx") and [TarsosTranscoder](https://github.com/JorenSix/TarsosTranscoder "TarsosTranscoder").
 
 ![Musicott screenshot 1](https://dl.dropboxusercontent.com/u/3596661/main.png)
 
 ![Musicott screenshot 2](https://dl.dropboxusercontent.com/u/3596661/main2.png)
-
-* ID3 mp3 tag parser with [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger")
-* Persistence with [Json-io](https://github.com/jdereg/json-io "Json-io")
 
 ## Features for now
 * Play mp3, wav and m4a (with ALAC encoding) files
