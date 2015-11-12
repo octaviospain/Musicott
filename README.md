@@ -26,10 +26,11 @@ JavaFX application that manages and plays music files. Uses [JAudioTagger](https
 [Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.7)
 
 ## How to build and run
-To build you need at least Java 8 update 40.
-1. Clone Musicott at any directory `git clone https://github.com/octaviospain/Musicott.git`
-2. Build with maven at Musicott's root folder (where pom.xml is) with `mvn package`
-3. Run with `java -cp target/Musicott-x.y.z.jar com.musicott.MainApp`
+To build you need at least Java 8 update 40
+
+ 1. Clone Musicott at any directory `git clone https://github.com/octaviospain/Musicott.git`
+ 2. Build with maven at Musicott's root folder (where pom.xml is) with `mvn package`
+ 3. Run with `java -cp target/Musicott-x.y.z.jar com.musicott.MainApp`
 
 ## Manual
 Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki") for help about using Musicott.
