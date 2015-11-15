@@ -160,7 +160,27 @@ public class SceneManager {
 
 	public void openItunesImportScene() {
 		if(itunesImportStage == null) {
-			
+			try {
+				itunesImportStage = new Stage();
+				itunesImportStage.setTitle("Itunes Import");
+				
+				FXMLLoader loader = new FXMLLoader();
+				loader.setLocation(getClass().getResource("/view/ItunesImportLayout.fxml"));
+				
+				AnchorPane itunesImportLayout = (AnchorPane) loader.load();
+				itunesImportController = loader.getController();
+				itunesImportController.setStage(itunesImportStage);
+				
+				Scene itunesImportScene = new Scene(itunesImportLayout);
+				itunesImportStage.initModality(Modality.APPLICATION_MODAL);
+				itunesImportStage.initOwner(itunesImportScene.getWindow());
+				itunesImportStage.setScene(itunesImportScene);
+				itunesImportStage.setResizable(false);
+			} catch (IOException e) {
+				LOG.error("Error", e);
+				errorHandler.addError(e, ErrorType.COMMON);
+				errorHandler.showErrorDialog(ErrorType.COMMON);
+			}
 		}
 		itunesImportStage.showAndWait();
 	}

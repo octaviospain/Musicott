@@ -75,6 +75,8 @@ public class ItunesImportTask extends Task<Void> {
 	private int counter, totalItems;
 
 	public ItunesImportTask(String path, int metadataPolicy, boolean importPlaylists, boolean keepPlaycount) {
+		sc = SceneManager.getInstance();
+		ml = MusicLibrary.getInstance();
 		itunesLibraryXMLPath = path;
 		this.metadataPolicy = metadataPolicy;
 		this.importPlaylists = importPlaylists;
@@ -105,14 +107,18 @@ public class ItunesImportTask extends Task<Void> {
 			Track t = parseTrack(it);
 			if(t != null)
 				tracks.add(t);
-			Platform.runLater(() -> sc.getRootController().setStatusProgress(++counter/totalItems));
+			++counter;
+			Platform.runLater(() -> sc.getRootController().setStatusProgress(counter/totalItems));
 		}
 	}
 	
 	private void parseItunesLibraryData() {
 		for(ItunesTrack it: itunesItems.values()) {
-			tracks.add(createTrack(it));
-			Platform.runLater(() -> sc.getRootController().setStatusProgress(++counter/totalItems));
+			Track t = createTrack(it);
+			if(t != null)
+				tracks.add(t);
+			++counter;
+			Platform.runLater(() -> sc.getRootController().setStatusProgress(counter/totalItems));
 		}
 	}
 	
@@ -125,54 +131,72 @@ public class ItunesImportTask extends Task<Void> {
 		int index = itunesFile.toString().lastIndexOf(File.separator);
 		String fileFolder = itunesFile.toString().substring(0, index);
 		String fileName = itunesFile.toString().substring(index+1);
-		Track track = new Track();
-		track.setFileFolder(fileFolder);
-		track.setFileName(fileName);
-		track.setInDisk(itunesFile.exists());
-		track.setSize(iTrack.getSize());
-		track.setTotalTime(Duration.seconds(iTrack.getTotalTime()));
-		track.setBitRate(iTrack.getBitRate());
-		track.setName(iTrack.getName());
-		track.setAlbum(iTrack.getAlbum());
-		track.setAlbumArtist(iTrack.getAlbumArtist());
-		track.setGenre(iTrack.getGenre());
-		track.setLabel(iTrack.getGrouping());
-		track.setCompilation(false);
-		track.setBpm(iTrack.getBPM());
-		track.setDiscNumber(iTrack.getDiscNumber());
-		track.setTrackNumber(iTrack.getTrackNumber());
-		track.setYear(iTrack.getYear());
-		if(keepPlayCount)
-			track.setPlayCount(iTrack.getPlayCount());
-		AudioFile audioFile;
-		try {
-			audioFile = AudioFileIO.read(itunesFile);
-			Tag tag = audioFile.getTag();
-			track.setEncoder(tag.getFirst(FieldKey.ENCODER));
-		} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
-				| InvalidAudioFrameException e) {
-			LOG.warn("Error getting encoder from track {}: {}", track.getTrackID(), e.getMessage());
-			Platform.runLater(() -> sc.getRootController().setStatusMessage("Error getting encoder from "+track.getName()));
+		index = fileName.lastIndexOf(".");
+		String fileExtension = fileName.substring(index+1);
+		if(fileExtension.equals("mp3") || fileExtension.equals("m4a") || fileExtension.equals("wav")) {
+			Track track = new Track();
+			track.setFileFolder(fileFolder);
+			track.setFileName(fileName);
+			track.setInDisk(itunesFile.exists());
+			track.setSize(iTrack.getSize());
+			track.setTotalTime(Duration.millis(iTrack.getTotalTime()));
+			track.setName(iTrack.getName() == null ? "" : iTrack.getName());
+			track.setAlbum(iTrack.getAlbum() == null ? "" : iTrack.getAlbum());
+			track.setArtist(iTrack.getArtist() == null ? "" : iTrack.getArtist());
+			track.setAlbumArtist(iTrack.getAlbumArtist() == null ? "" : iTrack.getAlbumArtist());
+			track.setGenre(iTrack.getGenre() == null ? "" : iTrack.getGenre());
+			track.setLabel(iTrack.getGrouping() == null ? "" : iTrack.getGrouping());
+			track.setCompilation(false);
+			track.setBpm(iTrack.getBPM());
+			track.setDiscNumber(iTrack.getDiscNumber());
+			track.setTrackNumber(iTrack.getTrackNumber());
+			track.setYear(iTrack.getYear());
+			if(keepPlayCount)
+				track.setPlayCount(iTrack.getPlayCount());
+			AudioFile audioFile;
+			try {
+				audioFile = AudioFileIO.read(itunesFile);
+				Tag tag = audioFile.getTag();
+				track.setEncoder(tag.getFirst(FieldKey.ENCODER));
+				String bitRate = audioFile.getAudioHeader().getBitRate();
+				if(bitRate.substring(0, 1).equals("~")) {
+					track.setIsVariableBitRate(true);
+					bitRate = bitRate.substring(1);
+				}
+				track.setBitRate(Integer.parseInt(bitRate));
+			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
+					| InvalidAudioFrameException e) {
+				LOG.warn("Error getting encoder or bitrate from track {}: {}", track.getTrackID(), e.getMessage());
+				Platform.runLater(() -> sc.getRootController().setStatusMessage("Error getting encoder from "+track.getName()));
+			}
+			return track;
 		}
-		return track;
+		else
+			return null;
 	}
 	
 	private Track parseTrack(ItunesTrack iTrack) {
 		File itunesFile = Paths.get(URI.create(iTrack.getLocation())).toFile();
-		MetadataParser parser = new MetadataParser(itunesFile);
-		Track newTrack = null;
-		try {
-			newTrack = parser.createTrack();
-		} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
-				| InvalidAudioFrameException e) {
-			ParseException pe = new ParseException("Error parsing "+itunesFile+": "+e.getMessage(), e, itunesFile);
-			LOG.error(pe.getMessage(), pe);
-			ErrorHandler.getInstance().addError(pe, ErrorType.PARSE);
-			Platform.runLater(() -> sc.getRootController().setStatusMessage("Error: "+e.getMessage()));
+		int index = itunesFile.toString().lastIndexOf(".");
+		String fileExtension = itunesFile.getName().substring(index+1);
+		if(fileExtension.equals("mp3") || fileExtension.equals("m4a") || fileExtension.equals("wav")) {
+			MetadataParser parser = new MetadataParser(itunesFile);
+			Track newTrack = null;
+			try {
+				newTrack = parser.createTrack();
+			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
+					| InvalidAudioFrameException e) {
+				ParseException pe = new ParseException("Error parsing "+itunesFile+": "+e.getMessage(), e, itunesFile);
+				LOG.error(pe.getMessage(), pe);
+				ErrorHandler.getInstance().addError(pe, ErrorType.PARSE);
+				Platform.runLater(() -> sc.getRootController().setStatusMessage("Error: "+e.getMessage()));
+			}
+			if(newTrack != null && keepPlayCount)
+				newTrack.setPlayCount(iTrack.getPlayCount());
+			return newTrack;
 		}
-		if(newTrack != null && keepPlayCount)
-			newTrack.setPlayCount(iTrack.getPlayCount());
-		return newTrack;
+		else
+			return null;
 	}
 	
 	@Override
