@@ -63,7 +63,6 @@ public class MetadataParser {
 		Tag tag = audioFile.getTag();
 		parseBaseMetadata(track, tag);
 		checkCoverImage(track, tag);
-		track.setSize((int) (fileToParse.length()));
 		return track;
 	}
 	

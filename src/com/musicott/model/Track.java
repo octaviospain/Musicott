@@ -403,6 +403,11 @@ public class Track {
 		return playCount;
 	}
 	
+	public void setPlayCount(int playCount) {
+		this.playCount = playCount;
+		this.playCountProperty.setValue(playCount);
+	}
+	
 	public IntegerProperty getPlayCountProperty() {
 		return this.playCountProperty;
 	}
