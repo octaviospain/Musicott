@@ -165,7 +165,7 @@ public class MainApp extends Application {
 			rootStage.getIcons().add(new Image(getClass().getResourceAsStream("/images/musicotticon.png")));
 			rootStage.setMinWidth(1200);
 			rootStage.setMinHeight(775);
-			rootStage.setMaxWidth(2000);
+			rootStage.setMaxWidth(1800);
 			Scene mainScene = new Scene(rootLayout,1200,775);
 			rootStage.setScene(mainScene);
 			rootStage.show();
