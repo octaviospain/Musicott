@@ -103,6 +103,8 @@ public class RootController {
 	@FXML
 	private Menu menuFile;
 	@FXML
+	private MenuItem menuItemItunesImport;
+	@FXML
 	private MenuItem menuItemImport;
 	@FXML
 	private MenuItem  menuItemOpen;
@@ -340,7 +342,7 @@ public class RootController {
 				else if(playerStatus.equals("PAUSED"))
 					player.resume();
 				else if(playerStatus.equals("STOPPED"))
-					player.play();
+					player.play(true);
 			}
 		});
 	}
@@ -596,7 +598,7 @@ public class RootController {
 			if(player.getCurrentTrack() != null)
 				player.resume();
 			else
-				player.play();
+				player.play(true);
 		}
 		else							// pause
 			player.pause();
@@ -697,8 +699,13 @@ public class RootController {
 	}
 	
 	@FXML
-	private void doImportCollection() {
+	private void doImportFolder() {
 		sc.openImportScene();
+	}
+	
+	@FXML
+	private void doItunesImport() {
+		sc.openItunesImportScene();
 	}
 	
 	@FXML

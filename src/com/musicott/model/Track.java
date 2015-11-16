@@ -66,6 +66,7 @@ public class Track {
 	private String comments;
 	private String albumArtist;
 	private String label;
+	private String encoding;
 	private String encoder;
 
 	private int size;
@@ -118,6 +119,8 @@ public class Track {
     	comments = "";
     	albumArtist = "";
     	label = "";
+    	encoder = "";
+    	encoding = "";
     	trackNumber = 0;
     	discNumber = 0;
     	year = 0;
@@ -208,8 +211,8 @@ public class Track {
 				setInDisk(false);
 				playable = false;
 			}
-			else if(fileFormat.equals("flac") || encoder.startsWith("iTunes")) {
-				Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Musicott can't play .flac files or .mp4 files with ALAC encoding yet"));
+			else if(fileFormat.equals("flac") || encoding.startsWith("Apple") || encoder.startsWith("iTunes")) {
+				Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Musicott can't play .flac files or files encoded by Apple"));
 				playable = false;
 			}
 		}
@@ -342,12 +345,20 @@ public class Track {
 		labelProperty.setValue(this.label);
 	}
 
-	public String getEncoder() {
-		return encoder;
+	public String getEncoding() {
+		return encoding;
 	}
 
+	public void setEncoding(String encoding) {
+		this.encoding = encoding;
+	}
+	
 	public void setEncoder(String encoder) {
 		this.encoder = encoder;
+	}
+	
+	public String getEncoder() {
+		return this.encoder;
 	}
 
 	public int getSize() {
@@ -401,6 +412,11 @@ public class Track {
 
 	public int getPlayCount() {
 		return playCount;
+	}
+	
+	public void setPlayCount(int playCount) {
+		this.playCount = playCount;
+		this.playCountProperty.setValue(playCount);
 	}
 	
 	public IntegerProperty getPlayCountProperty() {

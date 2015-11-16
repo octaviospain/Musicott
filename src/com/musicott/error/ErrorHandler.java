@@ -21,6 +21,7 @@ package com.musicott.error;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -115,8 +116,14 @@ public class ErrorHandler {
 		for(ErrorType et: types) {
 			switch(et) {
 				case COMMON:
-					if(mapExceptions.get(et).size() == 1 && mapExceptions.get(et).peek() instanceof CommonException)
-						alert.getDialogPane().contentProperty().set(new Label(mapExceptions.get(et).pop().getMessage()));
+					Stack<Exception> excs = mapExceptions.get(et);
+					if(excs.peek() instanceof CommonVerboseException) {
+						CommonVerboseException ex = (CommonVerboseException) excs.pop();
+						alert.getDialogPane().contentProperty().set(new Label(ex.getMessage()));
+						setExpandable(ex.getExceptionMessages());
+					}
+					else if(excs.size() == 1 && excs.peek() instanceof CommonException)
+						alert.getDialogPane().contentProperty().set(new Label(excs.pop().getMessage()));
 					else
 						setExpandable(getErrors(et));
 					break;
@@ -162,6 +169,28 @@ public class ErrorHandler {
 		GridPane expContent = new GridPane();
 		expContent.setMaxWidth(Double.MAX_VALUE);
 		expContent.add(new Label("The exception stacktrace was:"), 0, 0);
+		expContent.add(textArea, 0, 1);
+		alert.getDialogPane().setExpandableContent(expContent);	
+	}
+	
+	private void setExpandable(List<String> listMessages) {
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		for(String msg: listMessages) {
+			pw.println(msg);
+		}
+
+		TextArea textArea = new TextArea(sw.toString());
+		textArea.setEditable(false);
+		textArea.setWrapText(true);
+
+		textArea.setMaxWidth(Double.MAX_VALUE);
+		textArea.setMaxHeight(Double.MAX_VALUE);
+		GridPane.setVgrow(textArea, Priority.ALWAYS);
+		GridPane.setHgrow(textArea, Priority.ALWAYS);
+
+		GridPane expContent = new GridPane();
+		expContent.setMaxWidth(Double.MAX_VALUE);
 		expContent.add(textArea, 0, 1);
 		alert.getDialogPane().setExpandableContent(expContent);	
 	}

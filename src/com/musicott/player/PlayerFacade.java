@@ -123,7 +123,7 @@ public class PlayerFacade {
 	
 	public void play(List<Track> tracks) {
 		addTracks(tracks, true);
-		play();
+		play(false);
 	}
 	
 	public void play(Track track) {
@@ -132,11 +132,11 @@ public class PlayerFacade {
 		play(l);
 	}
 
-	public void play() {	
+	public void play(boolean playRandom) {	
 		if(trackPlayer == null || (trackPlayer != null && trackPlayer.getStatus().equals("STOPPED"))) {
 			if(!playList.isEmpty())
 				setCurrent();
-			else if(randomList())
+			else if(playRandom && randomList())
 				setCurrent();
 		}
 		else {
@@ -160,7 +160,7 @@ public class PlayerFacade {
 		if(playList.isEmpty())
 			stop();
 		else
-			play();
+			play(false);
 	}
 	
 	public void previous() {
@@ -250,6 +250,8 @@ public class PlayerFacade {
 			random = false;
 		if(random)
 			Platform.runLater(() -> sc.getRootController().setStatusMessage("Playing a random playlist"));
+		else
+			Platform.runLater(() -> sc.getRootController().setStopped());
 		return random;
 	}
 	
