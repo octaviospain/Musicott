@@ -29,15 +29,19 @@ import org.jaudiotagger.audio.exceptions.CannotReadException;
 import org.jaudiotagger.audio.exceptions.CannotWriteException;
 import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
 import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
+import org.jaudiotagger.audio.wav.WavOptions;
 import org.jaudiotagger.tag.FieldDataInvalidException;
 import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.KeyNotFoundException;
 import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.TagException;
+import org.jaudiotagger.tag.id3.ID3v24Tag;
 import org.jaudiotagger.tag.images.Artwork;
 import org.jaudiotagger.tag.images.ArtworkFactory;
 import org.jaudiotagger.tag.mp4.Mp4FieldKey;
 import org.jaudiotagger.tag.mp4.Mp4Tag;
+import org.jaudiotagger.tag.wav.WavInfoTag;
+import org.jaudiotagger.tag.wav.WavTag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +70,13 @@ public class MetadataUpdater {
 		AudioFile audio;
 		try {
 			audio = AudioFileIO.read(trackPath.toFile());
+			String format = audio.getAudioHeader().getFormat();
+			if(format.startsWith("WAV")) {
+				WavTag wavTag = new WavTag(WavOptions.READ_ID3_ONLY);
+				wavTag.setID3Tag(new ID3v24Tag());
+				wavTag.setInfoTag(new WavInfoTag());
+				audio.setTag(wavTag);
+			}
 			baseUpdater(audio.getTag());
 			audio.commit();
 			succeeded = true;

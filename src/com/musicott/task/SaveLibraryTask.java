@@ -96,6 +96,7 @@ public class SaveLibraryTask extends Thread {
 		fieldNames.add("hasCover");
 		fieldNames.add("isVariableBitRate");
 		fieldNames.add("encoder");
+		fieldNames.add("encoding");
 		
 		fields.put(Track.class,fieldNames);
 	}

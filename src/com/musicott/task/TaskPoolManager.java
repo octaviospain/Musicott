@@ -59,9 +59,10 @@ public class TaskPoolManager {
 	public void parseItunesLibrary(String path, int metadataPolicy, boolean importPlaylists, boolean keepPlaycount) {
 		if(itunesImportTask == null || itunesImportTask.isDone()) {
 			itunesImportTask = new ItunesImportTask(path, metadataPolicy, importPlaylists, keepPlaycount);
-			Thread itunesThread = new Thread (itunesImportTask);
+			Thread itunesThread = new Thread(itunesImportTask, "Parse Itunes Task");
 			itunesThread.setDaemon(true);
 			itunesThread.start();
+			LOG.debug("Parsing Itunes Library: {}", path);
 		}
 		else if(itunesImportTask.isRunning()) {
 			//TODO notify the user to wait until the current import is ended

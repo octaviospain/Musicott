@@ -33,12 +33,12 @@ import org.jaudiotagger.audio.exceptions.CannotReadException;
 import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
 import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
 import org.jaudiotagger.tag.FieldKey;
-import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.TagException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.musicott.SceneManager;
+import com.musicott.error.CommonVerboseException;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
 import com.musicott.error.ParseException;
@@ -66,24 +66,28 @@ public class ItunesImportTask extends Task<Void> {
 	
 	private SceneManager sc;
 	private MusicLibrary ml;
+	private ErrorHandler eh;
 	private List<Track> tracks;
 	private ItunesLibrary itunesLibrary;
 	private Map<Integer, ItunesTrack> itunesItems;
 	private final String itunesLibraryXMLPath;
 	private final int metadataPolicy;
 	private boolean importPlaylists, keepPlayCount;
-	private int counter, totalItems;
+	private int counter, totalItems, notFound;
+	private List<String> notFoundFiles;
 
 	public ItunesImportTask(String path, int metadataPolicy, boolean importPlaylists, boolean keepPlaycount) {
 		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();
+		eh = ErrorHandler.getInstance();
 		itunesLibraryXMLPath = path;
 		this.metadataPolicy = metadataPolicy;
 		this.importPlaylists = importPlaylists;
 		this.keepPlayCount = keepPlaycount;
 		tracks = new ArrayList<>();
+		notFoundFiles = new ArrayList<>();
 		itunesItems = new HashMap<>();
-		counter = 0;
+		counter = notFound = 0;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -93,32 +97,31 @@ public class ItunesImportTask extends Task<Void> {
 		itunesLibrary = ItunesLibraryParser.parseLibrary(itunesLibraryXMLPath, iLogger);
 		itunesItems = itunesLibrary.getTracks();
 		totalItems = itunesItems.size();
-		if(metadataPolicy == HOLD_METADATA_POLICY)
-			parseItunesLibraryFiles();
-		else if(metadataPolicy == HOLD_ITUNES_DATA_POLICY)
-			parseItunesLibraryData();
+		parseItunesLibrary();
 		if(importPlaylists)
 			parsePlaylists();
+		if(notFound > 0)
+			eh.addError(new CommonVerboseException(notFound+" files were not found", notFoundFiles), ErrorType.COMMON);
+		if(eh.hasErrors(ErrorType.COMMON))
+			Platform.runLater(() -> eh.showErrorDialog(ErrorType.COMMON)); 
 		return null;
 	}
 	
-	private void parseItunesLibraryFiles() {
+	private void parseItunesLibrary() {
 		for(ItunesTrack it: itunesItems.values()) {
-			Track t = parseTrack(it);
-			if(t != null)
-				tracks.add(t);
+			Track track = null;
+			if(isValidItunesTrack(it)) {
+				if(metadataPolicy == HOLD_METADATA_POLICY)
+					track = parseTrack(it);
+				else if(metadataPolicy == HOLD_ITUNES_DATA_POLICY)
+					track = convertTrack(it);
+				if(track != null) {
+					tracks.add(track);
+				}
+			}
 			++counter;
-			Platform.runLater(() -> sc.getRootController().setStatusProgress(counter/totalItems));
-		}
-	}
-	
-	private void parseItunesLibraryData() {
-		for(ItunesTrack it: itunesItems.values()) {
-			Track t = createTrack(it);
-			if(t != null)
-				tracks.add(t);
-			++counter;
-			Platform.runLater(() -> sc.getRootController().setStatusProgress(counter/totalItems));
+			double progress = (double) counter/totalItems;
+			Platform.runLater(() -> sc.getRootController().setStatusProgress(progress));
 		}
 	}
 	
@@ -126,77 +129,92 @@ public class ItunesImportTask extends Task<Void> {
 		// TODO
 	}
 	
-	private Track createTrack(ItunesTrack iTrack) {
+	private boolean isValidItunesTrack(ItunesTrack iTrack) {
+		boolean valid = true;
+		if(iTrack.getTrackType().equals("URL") || iTrack.getTrackType().equals("Remote"))
+			valid = false;
+		else {
+			File itunesFile = Paths.get(URI.create(iTrack.getLocation())).toFile();
+			int index = itunesFile.toString().lastIndexOf(".");
+			String fileExtension = itunesFile.toString().substring(index+1);
+			 if(!(fileExtension.equals("mp3") || fileExtension.equals("m4a") || fileExtension.equals("wav")))
+					valid = false;
+		}
+		return valid;
+	}
+	
+	private Track convertTrack(ItunesTrack iTrack) {
 		File itunesFile = Paths.get(URI.create(iTrack.getLocation())).toFile();
 		int index = itunesFile.toString().lastIndexOf(File.separator);
 		String fileFolder = itunesFile.toString().substring(0, index);
 		String fileName = itunesFile.toString().substring(index+1);
-		index = fileName.lastIndexOf(".");
-		String fileExtension = fileName.substring(index+1);
-		if(fileExtension.equals("mp3") || fileExtension.equals("m4a") || fileExtension.equals("wav")) {
-			Track track = new Track();
-			track.setFileFolder(fileFolder);
-			track.setFileName(fileName);
-			track.setInDisk(itunesFile.exists());
-			track.setSize(iTrack.getSize());
-			track.setTotalTime(Duration.millis(iTrack.getTotalTime()));
-			track.setName(iTrack.getName() == null ? "" : iTrack.getName());
-			track.setAlbum(iTrack.getAlbum() == null ? "" : iTrack.getAlbum());
-			track.setArtist(iTrack.getArtist() == null ? "" : iTrack.getArtist());
-			track.setAlbumArtist(iTrack.getAlbumArtist() == null ? "" : iTrack.getAlbumArtist());
-			track.setGenre(iTrack.getGenre() == null ? "" : iTrack.getGenre());
-			track.setLabel(iTrack.getGrouping() == null ? "" : iTrack.getGrouping());
-			track.setCompilation(false);
-			track.setBpm(iTrack.getBPM());
-			track.setDiscNumber(iTrack.getDiscNumber());
-			track.setTrackNumber(iTrack.getTrackNumber());
-			track.setYear(iTrack.getYear());
+		Track newTrack = null;
+		if(itunesFile.exists()) {
+			newTrack = new Track();
+			newTrack.setFileFolder(fileFolder);
+			newTrack.setFileName(fileName);
+			newTrack.setInDisk(itunesFile.exists());
+			newTrack.setSize(iTrack.getSize());
+			newTrack.setTotalTime(Duration.millis(iTrack.getTotalTime()));
+			newTrack.setName(iTrack.getName() == null ? "" : iTrack.getName());
+			newTrack.setAlbum(iTrack.getAlbum() == null ? "" : iTrack.getAlbum());
+			newTrack.setArtist(iTrack.getArtist() == null ? "" : iTrack.getArtist());
+			newTrack.setAlbumArtist(iTrack.getAlbumArtist() == null ? "" : iTrack.getAlbumArtist());
+			newTrack.setGenre(iTrack.getGenre() == null ? "" : iTrack.getGenre());
+			newTrack.setLabel(iTrack.getGrouping() == null ? "" : iTrack.getGrouping());
+			newTrack.setCompilation(false);
+			newTrack.setBpm(iTrack.getBPM() < 1 ? 0 : iTrack.getBPM());
+			newTrack.setDiscNumber(iTrack.getDiscNumber() < 1 ? 0 : iTrack.getDiscNumber());
+			newTrack.setTrackNumber(iTrack.getTrackNumber() < 1 ? 0 : iTrack.getTrackNumber());
+			newTrack.setYear(iTrack.getYear() < 1 ? 0 : iTrack.getYear());
 			if(keepPlayCount)
-				track.setPlayCount(iTrack.getPlayCount());
+				newTrack.setPlayCount(iTrack.getPlayCount() < 1 ? 0 : iTrack.getPlayCount());
 			AudioFile audioFile;
 			try {
 				audioFile = AudioFileIO.read(itunesFile);
-				Tag tag = audioFile.getTag();
-				track.setEncoder(tag.getFirst(FieldKey.ENCODER));
+				newTrack.setEncoding(audioFile.getAudioHeader().getEncodingType());
+				newTrack.setEncoder(audioFile.getTag().getFirst(FieldKey.ENCODER));
+				MetadataParser.checkCoverImage(newTrack, audioFile.getTag());
 				String bitRate = audioFile.getAudioHeader().getBitRate();
 				if(bitRate.substring(0, 1).equals("~")) {
-					track.setIsVariableBitRate(true);
+					newTrack.setIsVariableBitRate(true);
 					bitRate = bitRate.substring(1);
 				}
-				track.setBitRate(Integer.parseInt(bitRate));
+				newTrack.setBitRate(Integer.parseInt(bitRate));
 			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
 					| InvalidAudioFrameException e) {
-				LOG.warn("Error getting encoder or bitrate from track {}: {}", track.getTrackID(), e.getMessage());
-				Platform.runLater(() -> sc.getRootController().setStatusMessage("Error getting encoder from "+track.getName()));
+				LOG.warn("Error getting encoder or bitrate from track {}: {}", newTrack.getTrackID(), e.getMessage());
 			}
-			return track;
 		}
-		else
-			return null;
+		else {
+			notFound++;
+			notFoundFiles.add(itunesFile.toString());
+		}
+		return newTrack;
 	}
 	
 	private Track parseTrack(ItunesTrack iTrack) {
 		File itunesFile = Paths.get(URI.create(iTrack.getLocation())).toFile();
-		int index = itunesFile.toString().lastIndexOf(".");
-		String fileExtension = itunesFile.getName().substring(index+1);
-		if(fileExtension.equals("mp3") || fileExtension.equals("m4a") || fileExtension.equals("wav")) {
+		Track newTrack = null;
+		if(itunesFile.exists()) {
 			MetadataParser parser = new MetadataParser(itunesFile);
-			Track newTrack = null;
 			try {
 				newTrack = parser.createTrack();
 			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
 					| InvalidAudioFrameException e) {
 				ParseException pe = new ParseException("Error parsing "+itunesFile+": "+e.getMessage(), e, itunesFile);
 				LOG.error(pe.getMessage(), pe);
-				ErrorHandler.getInstance().addError(pe, ErrorType.PARSE);
+				eh.addError(pe, ErrorType.PARSE);
 				Platform.runLater(() -> sc.getRootController().setStatusMessage("Error: "+e.getMessage()));
 			}
 			if(newTrack != null && keepPlayCount)
-				newTrack.setPlayCount(iTrack.getPlayCount());
-			return newTrack;
+				newTrack.setPlayCount(iTrack.getPlayCount() < 1 ? 0 : iTrack.getPlayCount());
 		}
-		else
-			return null;
+		else {
+			notFound++;
+			notFoundFiles.add(itunesFile.toString());
+		}
+		return newTrack;
 	}
 	
 	@Override

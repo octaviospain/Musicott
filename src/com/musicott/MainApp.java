@@ -112,14 +112,14 @@ public class MainApp extends Application {
 	
 	private void loadLayout() {
 		LOG.debug("Loading layouts");
+		notifyPreloader(1, 3, "Loading layout...");
 	    rootLoader = new FXMLLoader();
 		rootLoader.setLocation(getClass().getResource("/view/RootLayout.fxml"));
-		notifyPreloader(3, 4, "Loading layout...");
 		
 		// Set the dropdown play queue 
 		playQueueLoader = new FXMLLoader();
 		playQueueLoader.setLocation(getClass().getResource("/view/PlayQueueLayout.fxml"));
-		notifyPreloader(4, 4, "Loading layout...");
+		notifyPreloader(2, 3, "Loading tracks...");
 	}
 	
 	private void loadStage() {
@@ -178,13 +178,15 @@ public class MainApp extends Application {
 	private void loadTracks() {
 		ObservableList<Track> list = null;
 		File tracksFile = new File(pf.getMusicottUserFolder()+"/Musicott-tracks.json");
-		int step = 0;
+		int totalTracks, step = 0;
 		if(tracksFile.exists()) {
 			try {
+				notifyPreloader(-1, 0, "Loading tracks...");
 				FileInputStream fis = new FileInputStream(tracksFile);
 				JsonReader jsr = new JsonReader(fis);
 				JsonReader.assignInstantiator(ObservableListWrapper.class, new ObservableListWrapperCreator());
 				list = (ObservableList<Track>) jsr.readObject();
+				totalTracks = list.size();
 				jsr.close();
 				fis.close();
 				for(Track t: list) {
@@ -202,7 +204,7 @@ public class MainApp extends Application {
 					t.getHasCoverProperty().setValue(t.hasCover());
 					t.getDateModifiedProperty().setValue(t.getDateModified());
 					t.getPlayCountProperty().setValue(t.getPlayCount());
-					notifyPreloader(++step, list.size(), "Loading tracks...");
+					notifyPreloader(++step, totalTracks, "Loading tracks...");
 				}
 				LOG.info("Loaded tracks from {}", tracksFile);
 			} catch (IOException | JsonIoException e) {
@@ -223,6 +225,7 @@ public class MainApp extends Application {
 		JsonReader jsr;
 		if(waveformsFile.exists()) {
 			try {
+				notifyPreloader(0, 3, "Loading waveforms...");
 				fis = new FileInputStream(waveformsFile);
 				jsr = new JsonReader(fis);
 				waveformsMap = (Map<Integer,float[]>) jsr.readObject();
@@ -237,7 +240,7 @@ public class MainApp extends Application {
 		else
 			waveformsMap = new HashMap<Integer, float[]>();
 		ml.setWaveforms(waveformsMap);
-		notifyPreloader(2, 4, "Loading waveforms...");
+		notifyPreloader(1, 3, "Loading layout...");
 	}
 	
 	private static void prepareLogger() {

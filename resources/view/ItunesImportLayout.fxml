@@ -5,7 +5,6 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="350.0" stylesheets="@../css/dialog.css" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.ItunesImportController">
    <children>
       <BorderPane layoutX="175.0" layoutY="14.0" prefHeight="200.0" prefWidth="500.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
@@ -47,14 +46,17 @@
                            <HBox.margin>
                               <Insets right="15.0" />
                            </HBox.margin>
+                           <tooltip>
+                              <Tooltip autoHide="true" graphicTextGap="0.0" prefWidth="260.0" text="If you dismark this, metadata of the files will be used instead of the iTunes library data" wrapText="true" />
+                           </tooltip>
                         </CheckBox>
                      </children>
                   </HBox>
                   <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
                      <children>
-                        <Label text="Maintain play count from iTunes">
+                        <Label text="Keep play count from iTunes">
                            <HBox.margin>
-                              <Insets left="15.0" right="59.0" />
+                              <Insets left="15.0" right="80.0" />
                            </HBox.margin>
                         </Label>
                         <CheckBox fx:id="playCountCheckBox" mnemonicParsing="false" selected="true">
