@@ -342,7 +342,7 @@ public class RootController {
 				else if(playerStatus.equals("PAUSED"))
 					player.resume();
 				else if(playerStatus.equals("STOPPED"))
-					player.play();
+					player.play(true);
 			}
 		});
 	}
@@ -598,7 +598,7 @@ public class RootController {
 			if(player.getCurrentTrack() != null)
 				player.resume();
 			else
-				player.play();
+				player.play(true);
 		}
 		else							// pause
 			player.pause();
