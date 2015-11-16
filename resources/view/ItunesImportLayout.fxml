@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="350.0" stylesheets="@../css/dialog.css" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.ItunesImportController">
+   <children>
+      <BorderPane layoutX="175.0" layoutY="14.0" prefHeight="200.0" prefWidth="500.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <bottom>
+            <HBox alignment="CENTER_RIGHT" minHeight="-Infinity" prefHeight="70.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Button fx:id="cancelButton" alignment="CENTER" cancelButton="true" contentDisplay="CENTER" mnemonicParsing="false" onAction="#doCancel" prefHeight="26.0" prefWidth="80.0" text="Cancel" />
+                  <Button fx:id="okButton" alignment="CENTER" contentDisplay="CENTER" defaultButton="true" disable="true" mnemonicParsing="false" onAction="#doOK" prefHeight="26.0" prefWidth="80.0" text="OK" textAlignment="CENTER">
+                     <HBox.margin>
+                        <Insets left="15.0" right="15.0" />
+                     </HBox.margin>
+                  </Button>
+               </children>
+            </HBox>
+         </bottom>
+         <top>
+            <HBox alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="200.0">
+               <children>
+                  <Button fx:id="openButton" mnemonicParsing="false" text="Open..">
+                     <HBox.margin>
+                        <Insets left="15.0" right="15.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Label fx:id="itunesFileLabel" contentDisplay="CENTER" maxWidth="-Infinity" prefHeight="17.0" prefWidth="244.0" text="Select 'iTunes Music Library.xml' file" />
+               </children>
+            </HBox>
+         </top>
+         <center>
+            <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+               <children>
+                  <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
+                     <children>
+                        <Label text="Maintain music info from iTunes">
+                           <HBox.margin>
+                              <Insets left="15.0" right="60.0" />
+                           </HBox.margin>
+                        </Label>
+                        <CheckBox fx:id="importPolicyCheckBox" depthTest="DISABLE" mnemonicParsing="false" selected="true">
+                           <HBox.margin>
+                              <Insets right="15.0" />
+                           </HBox.margin>
+                           <tooltip>
+                              <Tooltip autoHide="true" graphicTextGap="0.0" prefWidth="260.0" text="If you dismark this, metadata of the files will be used instead of the iTunes library data" wrapText="true" />
+                           </tooltip>
+                        </CheckBox>
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
+                     <children>
+                        <Label text="Keep play count from iTunes">
+                           <HBox.margin>
+                              <Insets left="15.0" right="80.0" />
+                           </HBox.margin>
+                        </Label>
+                        <CheckBox fx:id="playCountCheckBox" mnemonicParsing="false" selected="true">
+                           <HBox.margin>
+                              <Insets right="15.0" />
+                           </HBox.margin>
+                        </CheckBox>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </center>
+      </BorderPane>
+   </children>
+</AnchorPane>

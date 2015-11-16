@@ -18,6 +18,7 @@
 
 package com.musicott;
 
+import java.io.File;
 import java.util.Optional;
 
 import com.musicott.MainApp.CustomProgressNotification;
@@ -115,7 +116,8 @@ public class MainPreloader extends Preloader {
     }
     
     private void openFirstUseDialog() {
-    	String defaultMusicottLocation = System.getProperty("user.home")+"/Music/Musicott";
+    	String sep = File.separator;
+    	String defaultMusicottLocation = System.getProperty("user.home")+sep+"Music"+sep+"Musicott";
     	TextInputDialog inputDialog = new TextInputDialog(defaultMusicottLocation);
     	DialogPane pane = inputDialog.getDialogPane();
     	pane.setMinWidth(500);

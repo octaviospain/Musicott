@@ -29,6 +29,7 @@ import com.musicott.error.ErrorType;
 import com.musicott.task.SaveLibraryTask;
 import com.musicott.view.EditInfoController;
 import com.musicott.view.ImportController;
+import com.musicott.view.ItunesImportController;
 import com.musicott.view.PlayQueueController;
 import com.musicott.view.RootController;
 import com.musicott.model.Track;
@@ -49,12 +50,13 @@ public class SceneManager {
 	
 	private Stage mainStage;
 	private Stage importStage;
-	private Stage progressStage;
+	private Stage itunesImportStage;
 	private Stage editStage;
 	
 	private EditInfoController editController;
 	private RootController rootController;
 	private ImportController importController;
+	private ItunesImportController itunesImportController;
 	private PlayQueueController playQueueController;
 	
 	private static volatile SceneManager instance;
@@ -155,32 +157,31 @@ public class SceneManager {
 		}
 		importStage.showAndWait();
 	}
-	
-	public void closeImportScene() {
-		if(errorHandler.hasErrors(ErrorType.PARSE)) 
-			errorHandler.showErrorDialog(progressStage.getScene(), ErrorType.PARSE);
-		progressStage.close();
-		if(importStage != null && importStage.isShowing())
-			importStage.close();
-	}
-		
-	public void showImportProgressScene(boolean hideCancelButton) {
-		try {
-			progressStage = new Stage();
-			FXMLLoader loader = new FXMLLoader();
-			loader.setLocation(getClass().getResource("/view/ProgressImportLayout.fxml"));
-			AnchorPane progressLayout =  (AnchorPane) loader.load();
-			
-			Scene progressScene = new Scene(progressLayout);
-			progressStage.initModality(Modality.APPLICATION_MODAL);
-			progressStage.initOwner(progressScene.getWindow());
-			progressStage.setScene(progressScene);
-			progressStage.setResizable(false);
-			progressStage.showAndWait();
-		} catch(IOException e) {
-			LOG.error("Error", e);
-			errorHandler.addError(e, ErrorType.COMMON);
-			errorHandler.showErrorDialog(ErrorType.COMMON);
+
+	public void openItunesImportScene() {
+		if(itunesImportStage == null) {
+			try {
+				itunesImportStage = new Stage();
+				itunesImportStage.setTitle("Itunes Import");
+				
+				FXMLLoader loader = new FXMLLoader();
+				loader.setLocation(getClass().getResource("/view/ItunesImportLayout.fxml"));
+				
+				AnchorPane itunesImportLayout = (AnchorPane) loader.load();
+				itunesImportController = loader.getController();
+				itunesImportController.setStage(itunesImportStage);
+				
+				Scene itunesImportScene = new Scene(itunesImportLayout);
+				itunesImportStage.initModality(Modality.APPLICATION_MODAL);
+				itunesImportStage.initOwner(itunesImportScene.getWindow());
+				itunesImportStage.setScene(itunesImportScene);
+				itunesImportStage.setResizable(false);
+			} catch (IOException e) {
+				LOG.error("Error", e);
+				errorHandler.addError(e, ErrorType.COMMON);
+				errorHandler.showErrorDialog(ErrorType.COMMON);
+			}
 		}
+		itunesImportStage.showAndWait();
 	}
 }

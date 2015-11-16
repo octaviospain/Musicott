@@ -63,7 +63,7 @@ public class LibrarySerializeTest {
 	
 	@Before
 	public void setUp() {
-		jsonFile = new File("./temp/test.json");
+		jsonFile = new File(System.getProperty("user.home")+"/test.json");
 		args = new HashMap<>();
 		Map<Class<?>,List<String>> fields = new HashMap<>();
 		List<String> fieldNames = new ArrayList<>();		
@@ -95,6 +95,7 @@ public class LibrarySerializeTest {
 		fieldNames.add("hasCover");
 		fieldNames.add("isVariableBitRate");
 		fieldNames.add("encoder");
+		fieldNames.add("encoding");
 
 		fields.put(Track.class,fieldNames);
 	}
