@@ -94,6 +94,7 @@ public class ImportController {
 	
 	public void setStage(Stage stage) {
 		importStage = stage;
+		importStage.setOnCloseRequest(event -> doCancel());
 	}
 	
 	private void clear() {

@@ -30,6 +30,9 @@ import org.slf4j.LoggerFactory;
 
 import com.musicott.model.Track;
 
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+
 /**
  * @author Octavio Calleya
  *
@@ -65,7 +68,10 @@ public class TaskPoolManager {
 			LOG.debug("Parsing Itunes Library: {}", path);
 		}
 		else if(itunesImportTask.isRunning()) {
-			//TODO notify the user to wait until the current import is ended
+			Alert alert = new Alert(AlertType.INFORMATION);
+			alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
+			alert.setContentText("There is already an import task running.");
+			alert.showAndWait();
 		}
 	}
 

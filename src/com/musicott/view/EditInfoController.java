@@ -168,6 +168,7 @@ public class EditInfoController {
 	
 	public void setStage(Stage stage) {
 		editStage = stage;
+		editStage.setOnCloseRequest(event -> doCancel());
 	}
 	
 	public void setSelection(List<Track> selection) {

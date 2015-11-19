@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
-import com.musicott.task.SaveLibraryTask;
 import com.musicott.view.EditInfoController;
 import com.musicott.view.ImportController;
 import com.musicott.view.ItunesImportController;
@@ -35,6 +34,7 @@ import com.musicott.view.RootController;
 import com.musicott.model.Track;
 
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
@@ -52,6 +52,7 @@ public class SceneManager {
 	private Stage importStage;
 	private Stage itunesImportStage;
 	private Stage editStage;
+	private Stage progressStage;
 	
 	private EditInfoController editController;
 	private RootController rootController;
@@ -75,12 +76,6 @@ public class SceneManager {
 	
 	protected void setMainStage(Stage mainStage) {
 		this.mainStage = mainStage;
-	}
-
-	public void saveLibrary(boolean saveTracks, boolean saveWaveforms) {
-		SaveLibraryTask task = new SaveLibraryTask(saveTracks, saveWaveforms);
-		task.setDaemon(true);
-		task.run();
 	}
 	
 	public Stage getMainStage() {
@@ -183,5 +178,33 @@ public class SceneManager {
 			}
 		}
 		itunesImportStage.showAndWait();
+	}
+	
+	public void openIndeterminatedProgressScene() {
+		if(progressStage == null) {
+			try {
+				progressStage = new Stage();
+				FXMLLoader loader = new FXMLLoader();
+				loader.setLocation(getClass().getResource("/view/ProgressLayout.fxml"));
+				AnchorPane progressLayout =  (AnchorPane) loader.load();
+				((ProgressBar) progressLayout.lookup(".progress-bar")).setStyle("-fx-accent: rgb(99,255,109);");
+				
+				Scene progressScene = new Scene(progressLayout);
+				progressStage.setOnCloseRequest(event -> event.consume());
+				progressStage.initModality(Modality.APPLICATION_MODAL);
+				progressStage.initOwner(progressScene.getWindow());
+				progressStage.setScene(progressScene);
+				progressStage.setResizable(false);
+			} catch(IOException e) {
+				LOG.error("Error", e);
+				errorHandler.addError(e, ErrorType.COMMON);
+				errorHandler.showErrorDialog(ErrorType.COMMON);
+			}
+		}
+		progressStage.showAndWait();
+	}
+	
+	public void closeIndeterminatedProgressScene() {
+		progressStage.close();
 	}
 }

@@ -18,18 +18,12 @@
 
 package com.musicott.view;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.musicott.model.Track;
 import com.musicott.player.PlayerFacade;
 import com.musicott.view.custom.TrackQueueRow;
 
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -37,7 +31,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.GridPane;
 
 /**
  * @author Octavio Calleya
@@ -68,8 +61,8 @@ public class PlayQueueController {
 	@FXML
 	public void initialize() {
 		player = PlayerFacade.getInstance();
-		playQueueList = FXCollections.observableArrayList();
-		historyQueueList = FXCollections.observableArrayList();
+		playQueueList = player.getPlayList();
+		historyQueueList = player.getHistorylist();
 		historyQueueButton.setId("historyQueueButton");
 		listView.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
 			if(oldValue != null)
@@ -80,88 +73,29 @@ public class PlayQueueController {
 		listView.setItems(playQueueList);
 		listView.setOnMouseClicked(event -> {
 			if(event.getClickCount() == 2) {
-				if(historyQueueButton.isSelected()) {
+				if(historyQueueButton.isSelected()) 
 					player.playHistoryIndex(historyQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
-					historyQueueList.remove(historyQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
-				}
-				else {
-					TrackQueueRow gp = listView.getSelectionModel().getSelectedItem();
-					player.playQueueIndex(playQueueList.indexOf(gp));
-					playQueueList.remove(playQueueList.indexOf(gp));
-					historyQueueList.add(0, gp);
-					changeRemoveButton(gp);
-				}
+				else 
+					player.playQueueIndex(playQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
 			}
 		});
 	}
 	
-	public void add(List<Track> list, boolean placeFirst) {
-		List<TrackQueueRow> newTracks = new ArrayList<>();
-		list.forEach(track -> newTracks.add(new TrackQueueRow(track)));
-		if(placeFirst)
-			playQueueList.addAll(0, newTracks);
+	public void removeTrackQueueRow(TrackQueueRow tqr) {
+		if(historyQueueButton.isSelected())
+			historyQueueList.remove(tqr);
 		else
-			playQueueList.addAll(newTracks);
-	}
-	
-	public void removeTopHistoryQueue() {
-		if(!historyQueueList.isEmpty())
-			historyQueueList.remove(0);
-	}
-	
-	public void removeTracks(List<? extends Track> tracks) {
-		Iterator<TrackQueueRow> listIter;
-		for(Track t: tracks) {
-			listIter = playQueueList.iterator();
-			while(listIter.hasNext()) {
-				GridPane gp = listIter.next();
-				Label l = (Label) gp.lookup(".label");
-				if(l.getText().equals(t.getName())) {
-					listIter.remove();
-					LOG.debug("Track removed from play queue: {}", t);
-				}
-			}
-			listIter = historyQueueList.iterator();
-			while(listIter.hasNext()){
-				GridPane gp = listIter.next();
-				Label l = (Label) gp.lookup(".label");
-				if(l.getText().equals(t.getName())) {
-					listIter.remove();
-					LOG.debug("Track removed from history queue: {}", t);
-				}
-			}
-		}
-	}
-	
-	public void moveTrackToHistory() {
-		TrackQueueRow gp = playQueueList.get(0);
-		changeRemoveButton(gp);
-		historyQueueList.add(0, gp);
-		playQueueList.remove(0);
-	}
-	
-	private void changeRemoveButton(GridPane gp) {
-		Button b = (Button)gp.lookup(".button");
-		b.setOnAction(event -> {player.removeTrackFromHistory(historyQueueList.indexOf(gp)); historyQueueList.remove(gp);});
-	}
-
-	public void removeFromList(TrackQueueRow trackQueueRow) {
-		if(historyQueueButton.isSelected() && !historyQueueList.isEmpty())
-			historyQueueList.remove(trackQueueRow);
-		else
-			playQueueList.remove(trackQueueRow);
+			playQueueList.remove(tqr);
 	}
 	
 	@FXML
 	public void doDeleteAll() {
 		if(historyQueueButton.isSelected() && !historyQueueList.isEmpty()) {
 			historyQueueList.clear();
-			player.removeTrackFromHistory(-1);
 			LOG.trace("History queue cleared");
 		}
 		else if(!playQueueList.isEmpty()) {
 			playQueueList.clear();
-			player.removeTrackFromPlayList(-1);
 			LOG.trace("Play queue cleared");
 		}
 	}

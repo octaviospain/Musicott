@@ -18,23 +18,21 @@
 
 package com.musicott.util;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
 import com.cedarsoftware.util.io.JsonReader.ClassFactory;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
+
 /**
- * Needed class for serialize to .json with json-io library
- * 
  * @author Octavio Calleya
  *
  */
-public class ObservableListWrapperCreator implements ClassFactory {
+public class ObservableMapWrapperCreator implements ClassFactory {
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Object newInstance(Class c) {
-		ObservableList ol = FXCollections.observableArrayList();
+		ObservableMap ol = FXCollections.observableHashMap();
 		return ol;
 	}
 }

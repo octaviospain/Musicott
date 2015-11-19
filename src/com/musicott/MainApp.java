@@ -40,16 +40,16 @@ import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
-import com.musicott.util.ObservableListWrapperCreator;
+import com.musicott.util.ObservableMapWrapperCreator;
 import com.musicott.view.RootController;
 import com.musicott.view.PlayQueueController;
 import com.sun.javafx.application.LauncherImpl;
-import com.sun.javafx.collections.ObservableListWrapper;
+import com.sun.javafx.collections.ObservableMapWrapper;
 
 import javafx.application.Application;
 import javafx.application.Preloader.PreloaderNotification;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.TableView;
@@ -176,7 +176,7 @@ public class MainApp extends Application {
 	}
 	
 	private void loadTracks() {
-		ObservableList<Track> list = null;
+		ObservableMap<Integer, Track> map = null;
 		File tracksFile = new File(pf.getMusicottUserFolder()+"/Musicott-tracks.json");
 		int totalTracks, step = 0;
 		if(tracksFile.exists()) {
@@ -184,12 +184,12 @@ public class MainApp extends Application {
 				notifyPreloader(-1, 0, "Loading tracks...");
 				FileInputStream fis = new FileInputStream(tracksFile);
 				JsonReader jsr = new JsonReader(fis);
-				JsonReader.assignInstantiator(ObservableListWrapper.class, new ObservableListWrapperCreator());
-				list = (ObservableList<Track>) jsr.readObject();
-				totalTracks = list.size();
+				JsonReader.assignInstantiator(ObservableMapWrapper.class, new ObservableMapWrapperCreator());
+				map = (ObservableMap<Integer, Track>) jsr.readObject();
+				totalTracks = map.size();
 				jsr.close();
 				fis.close();
-				for(Track t: list) {
+				for(Track t: map.values()) {
 					t.getNameProperty().setValue(t.getName());
 					t.getArtistProperty().setValue(t.getArtist());
 					t.getAlbumProperty().setValue(t.getAlbum());
@@ -212,10 +212,10 @@ public class MainApp extends Application {
 				ErrorHandler.getInstance().addError(e, ErrorType.FATAL);
 			}
 		}
-		if(list != null)
-			MusicLibrary.getInstance().setTracks(list);
+		if(map != null)
+			MusicLibrary.getInstance().setTracks(map);
 		else
-			MusicLibrary.getInstance().setTracks(FXCollections.observableArrayList());
+			MusicLibrary.getInstance().setTracks(FXCollections.observableHashMap());
 	}
 	
 	private void loadWaveforms() {

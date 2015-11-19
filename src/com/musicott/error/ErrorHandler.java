@@ -96,10 +96,11 @@ public class ErrorHandler {
 		return mapExceptions.get(type);
 	}
 	
-	public synchronized void showErrorDialog(ErrorType type) {
+	public synchronized void showErrorDialog(ErrorType... types) {
 		if(mainStage == null)
 			mainStage = sc.getMainStage();
-		showErrorDialog(mainStage.getScene(), type);
+		for(int i=0; i<types.length; i++)
+			showErrorDialog(mainStage.getScene(), types[i]);
 	}
 	
 	public synchronized void showErrorDialog(Scene ownerScene, ErrorType... types) {
