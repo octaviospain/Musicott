@@ -30,9 +30,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
 import com.musicott.error.ErrorType;
+import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 
 import javafx.application.Platform;
@@ -70,7 +70,7 @@ public class UpdateMetadataTask extends Thread {
 				if((!updated || !coverChanged) && backup != null)
 					restoreBackup(track, backup);
 			}
-		SceneManager.getInstance().saveLibrary(true, false);
+		MusicLibrary.getInstance().saveLibrary(true, false);
 		if(ErrorHandler.getInstance().hasErrors(ErrorType.METADATA))
 			Platform.runLater(() -> ErrorHandler.getInstance().showErrorDialog(ErrorType.METADATA));
 	}

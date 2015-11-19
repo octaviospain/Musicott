@@ -21,8 +21,9 @@ package com.musicott.task;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 import org.jaudiotagger.audio.exceptions.CannotReadException;
@@ -43,6 +44,7 @@ import com.musicott.util.MetadataParser;
 
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.util.Duration;
 
 /**
  * @author Octavio Calleya
@@ -53,29 +55,33 @@ public class ParseTask extends Task<Void> {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private SceneManager sc;
 	private MusicLibrary ml;
+	private ErrorHandler eh;
 	private PlayerFacade player;
 
-	private List<Track> tracks;
+	private Map<Integer, Track> tracks;
 	private Queue<File> files;
 	private int totalFiles;
 	private int currentFiles;
 	private Track currentTrack;
 	private boolean play = false;
+	private long startMillis, totalTime;
 	
 	public ParseTask(List<File> filesToParse, boolean playFinally) {
-		tracks = new ArrayList<>();
+		tracks = new HashMap<>();
 		files = new ArrayDeque<>();
 		files.addAll(filesToParse);
 		currentFiles = 0;
 		totalFiles = files.size();
 		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();
+		eh = ErrorHandler.getInstance();
 		player = PlayerFacade.getInstance();
 		play = playFinally;
 	}
 	
 	@Override
 	protected Void call() {
+		startMillis = System.currentTimeMillis();
 		parseFiles();
 		return null;
 	}
@@ -101,12 +107,12 @@ public class ParseTask extends Task<Void> {
 					break;
 			}
 			currentTrack = parseFileToTrack(currentFile);
-			if(currentTrack != null) 
-				tracks.add(currentTrack);
-			++currentFiles;
+			if(currentTrack != null) {
+				tracks.put(currentTrack.getTrackID(), currentTrack);
+			}
 			Platform.runLater(() -> {
 				sc.getRootController().setStatusMessage("Imported "+currentFiles+" of "+totalFiles);
-				sc.getRootController().setStatusProgress((double) currentFiles/totalFiles);
+				sc.getRootController().setStatusProgress((double) ++currentFiles/totalFiles);
 			});
 			synchronized(files) {
 				if(files.isEmpty())
@@ -123,9 +129,8 @@ public class ParseTask extends Task<Void> {
 		} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
 				| InvalidAudioFrameException e) {
 			ParseException pe = new ParseException("Error parsing "+file+": "+e.getMessage(), e, file);
+			eh.addError(pe, ErrorType.PARSE);
 			LOG.error(pe.getMessage(), pe);
-			ErrorHandler.getInstance().addError(pe, ErrorType.PARSE);
-			Platform.runLater(() -> sc.getRootController().setStatusMessage("Error: "+e.getMessage()));
 		}
 		return newTrack;
 	}
@@ -134,11 +139,21 @@ public class ParseTask extends Task<Void> {
 	protected void succeeded() {
 		super.succeeded();
 		updateMessage("Parse succeeded");
-		ml.getTracks().addAll(tracks);
-		sc.getRootController().setStatusProgress(0.0);
-		sc.getRootController().setStatusMessage("Import completed");
+		sc.getRootController().setStatusProgress(-1);
+		new Thread(() -> {
+			ml.addTracks(tracks);
+			totalTime = System.currentTimeMillis() - startMillis;
+			Platform.runLater(() -> {
+				sc.closeIndeterminatedProgressScene();
+				sc.getRootController().setStatusProgress(0.0);
+				sc.getRootController().setStatusMessage("Imported "+tracks.size()+" files in "+Duration.millis(totalTime).toSeconds()+" seconds");
+			});
+		}).start();
+		sc.openIndeterminatedProgressScene();
+		if(eh.hasErrors(ErrorType.PARSE))
+			eh.showErrorDialog(ErrorType.PARSE);
 		if(play)
-			player.play(tracks);
+			player.addTracks(tracks.keySet(), true);
 		LOG.info("Parse task completed");
 	}
 	

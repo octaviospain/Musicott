@@ -90,6 +90,7 @@ public class ItunesImportController {
 	
 	public void setStage(Stage stage) {
 		itunesImportStage = stage;
+		itunesImportStage.setOnCloseRequest(event -> doCancel());
 	}
 	
 	private void validXML() {

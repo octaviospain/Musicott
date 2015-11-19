@@ -19,10 +19,9 @@
 package com.musicott.view.custom;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.musicott.SceneManager;
+import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.view.PlayQueueController;
 
@@ -54,9 +53,9 @@ public class TrackQueueRow extends GridPane {
 	private Label artistAlbumLabel;
 	private Button deleteTrackQueueRowButton;
 
-	public TrackQueueRow(Track track) {
+	public TrackQueueRow(int trackID) {
 		super();
-		this.track = track;
+		this.track = MusicLibrary.getInstance().getTrack(trackID);
 		playQueueController = SceneManager.getInstance().getPlayQueueController();
 		placeCover();
 		placeLabels();
@@ -72,19 +71,8 @@ public class TrackQueueRow extends GridPane {
 		setAlignment(Pos.CENTER_LEFT);
 	}
 	
-	public void setTrack(Track track) {
-		this.track = track;
-	}
-	
-	public Track getTrack() {
-		return this.track;
-	}
-	
-	public List<TrackQueueRow> makeTrackQueueRows(List<Track> tracks){
-		List<TrackQueueRow> tqrList = new ArrayList<>();
-		for(Track t: tracks)
-			tqrList.add(new TrackQueueRow(t));
-		return tqrList;
+	public int getRepresentedTrackID() {
+		return track.getTrackID();
 	}
 	
 	public void changeRemoveButtonColor() {
@@ -117,7 +105,7 @@ public class TrackQueueRow extends GridPane {
 		deleteTrackQueueRowButton.setId("deleteButton-black");
 		deleteTrackQueueRowButton.setPrefSize(3, 3);
 		deleteTrackQueueRowButton.setVisible(false);
-		deleteTrackQueueRowButton.setOnAction(event -> playQueueController.removeFromList(this));
+		deleteTrackQueueRowButton.setOnAction(event -> playQueueController.removeTrackQueueRow(this));
 		add(deleteTrackQueueRowButton, 1, 0);
 	}
 

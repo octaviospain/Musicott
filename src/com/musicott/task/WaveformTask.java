@@ -87,13 +87,13 @@ public class WaveformTask extends Thread {
 						waveform = processMp3();
 					}
 				if(waveform != null) {
-					ml.getWaveforms().put(track.getTrackID(), waveform);
+					ml.addWaveform(track.getTrackID(), waveform);
 					Track currentTrack = PlayerFacade.getInstance().getCurrentTrack();
 					if(currentTrack != null && currentTrack.equals(track))
 						SwingUtilities.invokeLater(() -> sc.getRootController().setWaveform(track));
 					LOG.debug("Waveform of track {} completed", track);
 					Platform.runLater(() -> sc.getRootController().setStatusMessage(""));
-					sc.saveLibrary(false, true);
+					ml.saveLibrary(false, true);
 				}
 				else
 					Platform.runLater(() -> sc.getRootController().setStatusMessage("Fail processing waveform of "+track.getName()));

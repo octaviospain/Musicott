@@ -67,14 +67,15 @@ public class ItunesImportTask extends Task<Void> {
 	private SceneManager sc;
 	private MusicLibrary ml;
 	private ErrorHandler eh;
-	private List<Track> tracks;
 	private ItunesLibrary itunesLibrary;
 	private Map<Integer, ItunesTrack> itunesItems;
+	private Map<Integer, Track> tracks;
 	private final String itunesLibraryXMLPath;
 	private final int metadataPolicy;
 	private boolean importPlaylists, keepPlayCount;
-	private int counter, totalItems, notFound;
+	private int currentItems, totalItems, notFound;
 	private List<String> notFoundFiles;
+	private long startMillis, totalTime;
 
 	public ItunesImportTask(String path, int metadataPolicy, boolean importPlaylists, boolean keepPlaycount) {
 		sc = SceneManager.getInstance();
@@ -84,15 +85,16 @@ public class ItunesImportTask extends Task<Void> {
 		this.metadataPolicy = metadataPolicy;
 		this.importPlaylists = importPlaylists;
 		this.keepPlayCount = keepPlaycount;
-		tracks = new ArrayList<>();
+		tracks = new HashMap<>();
 		notFoundFiles = new ArrayList<>();
 		itunesItems = new HashMap<>();
-		counter = notFound = 0;
+		currentItems = notFound = 0;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Void call() throws Exception {
+		startMillis = System.currentTimeMillis();
 		ItunesParserLogger iLogger = new ItunesParserLogger();
 		itunesLibrary = ItunesLibraryParser.parseLibrary(itunesLibraryXMLPath, iLogger);
 		itunesItems = itunesLibrary.getTracks();
@@ -102,8 +104,6 @@ public class ItunesImportTask extends Task<Void> {
 			parsePlaylists();
 		if(notFound > 0)
 			eh.addError(new CommonVerboseException(notFound+" files were not found", notFoundFiles), ErrorType.COMMON);
-		if(eh.hasErrors(ErrorType.COMMON))
-			Platform.runLater(() -> eh.showErrorDialog(ErrorType.COMMON)); 
 		return null;
 	}
 	
@@ -116,12 +116,13 @@ public class ItunesImportTask extends Task<Void> {
 				else if(metadataPolicy == HOLD_ITUNES_DATA_POLICY)
 					track = convertTrack(it);
 				if(track != null) {
-					tracks.add(track);
+					tracks.put(track.getTrackID(), track);
 				}
 			}
-			++counter;
-			double progress = (double) counter/totalItems;
-			Platform.runLater(() -> sc.getRootController().setStatusProgress(progress));
+			Platform.runLater(() -> {
+				sc.getRootController().setStatusMessage("Imported "+currentItems+" of "+totalItems);
+				sc.getRootController().setStatusProgress((double) ++currentItems/totalItems);
+			});
 		}
 	}
 	
@@ -203,9 +204,8 @@ public class ItunesImportTask extends Task<Void> {
 			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
 					| InvalidAudioFrameException e) {
 				ParseException pe = new ParseException("Error parsing "+itunesFile+": "+e.getMessage(), e, itunesFile);
-				LOG.error(pe.getMessage(), pe);
 				eh.addError(pe, ErrorType.PARSE);
-				Platform.runLater(() -> sc.getRootController().setStatusMessage("Error: "+e.getMessage()));
+				LOG.error(pe.getMessage(), pe);
 			}
 			if(newTrack != null && keepPlayCount)
 				newTrack.setPlayCount(iTrack.getPlayCount() < 1 ? 0 : iTrack.getPlayCount());
@@ -221,9 +221,19 @@ public class ItunesImportTask extends Task<Void> {
 	protected void succeeded() {
 		super.succeeded();
 		updateMessage("Itunes import succeeded");
-		ml.getTracks().addAll(tracks);
-		sc.getRootController().setStatusProgress(0.0);
-		sc.getRootController().setStatusMessage("Itunes import completed");
+		sc.getRootController().setStatusProgress(-1);
+		new Thread(() -> {
+			ml.addTracks(tracks);
+			totalTime = System.currentTimeMillis() - startMillis;
+			Platform.runLater(() -> {
+				sc.closeIndeterminatedProgressScene();
+				sc.getRootController().setStatusProgress(0.0);
+				sc.getRootController().setStatusMessage("Imported "+tracks.size()+" files in "+Duration.millis(totalTime).toSeconds()+" seconds");
+			});
+		}).start();
+		sc.openIndeterminatedProgressScene();
+		if(eh.hasErrors(ErrorType.PARSE))
+			eh.showErrorDialog(ErrorType.PARSE);
 		LOG.info("Itunes import task completed");
 	}
 	
