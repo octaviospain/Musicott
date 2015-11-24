@@ -164,7 +164,7 @@ public class MainApp extends Application {
 			rootStage.setTitle("Musicott");
 			rootStage.getIcons().add(new Image(getClass().getResourceAsStream("/images/musicotticon.png")));
 			rootStage.setMinWidth(1200);
-			rootStage.setMinHeight(775);
+			rootStage.setMinHeight(790);
 			rootStage.setMaxWidth(1800);
 			Scene mainScene = new Scene(rootLayout,1200,775);
 			rootStage.setScene(mainScene);
