@@ -474,7 +474,7 @@ public class RootController {
 		LOG.debug("Setting up player and view for track {}", currentTrack);
 		if(ml.containsWaveform(currentTrack.getTrackID()))
 			setWaveform(currentTrack);
-		else if (currentTrack.getFileFormat().equals("wav") || currentTrack.getFileFormat().equals("mp3")) 
+		else if (currentTrack.getFileFormat().equals("wav") || currentTrack.getFileFormat().equals("mp3") || currentTrack.getFileFormat().equals("m4a")) 
 			TaskPoolManager.getInstance().addTrackToProcess(currentTrack);
 		if(currentPlayer instanceof NativePlayer)
 			setUpPlayer(((NativePlayer) currentPlayer).getMediaPlayer());
