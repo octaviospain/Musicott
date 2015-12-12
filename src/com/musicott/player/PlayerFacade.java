@@ -125,7 +125,7 @@ public class PlayerFacade {
 				else
 					playList.addAll(newTrackRows);
 			}
-			LOG.info("Added tracks to player: {}", playableTracks);
+			LOG.info("Added tracks to player: {}", playableTracks.size());
 			if(placeFirst)
 				play(false);
 		}
@@ -245,7 +245,7 @@ public class PlayerFacade {
 		setPlayer(playList.get(0).getRepresentedTrackID());
 		playList.remove(0);
 		trackPlayer.play();
-		LOG.info("Playing {}", historyList.get(0));
+		LOG.info("Playing {}", currentTrack);
 	}
 
 	private void setPlayer(int trackID) {

@@ -29,6 +29,7 @@ public class MainPreferences {
 
 	private final String MUSICOTT_FOLDER = "musicott_folder";
 	private final String TRACK_SEQUENCE = "track_sequence";
+	private final String LASTFM_SESSION_KEY = "lastfm_session_key";
 	
 	private static MainPreferences instance;
 	private Preferences mainPreferences;
@@ -57,5 +58,13 @@ public class MainPreferences {
 	
 	public String getMusicottUserFolder() {
 		return mainPreferences.get(MUSICOTT_FOLDER, null);
+	}
+	
+	public void setLastFMSessionkey(String sessionKey) {
+		mainPreferences.put(LASTFM_SESSION_KEY, sessionKey);
+	}
+	
+	public String getLastFMSessionKey() {
+		return mainPreferences.get(LASTFM_SESSION_KEY, null);
 	}
 }
