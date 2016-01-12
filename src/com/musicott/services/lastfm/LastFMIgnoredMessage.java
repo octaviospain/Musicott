@@ -19,57 +19,34 @@
 package com.musicott.services.lastfm;
 
 import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlValue;
 
 /**
  * @author Octavio Calleya
  *
  */
-@XmlRootElement(name = "lfm")
-public class LastFMResponse {
-
-	private String token;
-	private String status;
-	private LastFMError error;
-	private LastFMSession session;
-	
-	public LastFMResponse() {
-	}
+@XmlRootElement(name = "ignoredmessage")
+public class LastFMIgnoredMessage {
 
 	@XmlAttribute
-	public String getStatus() {
-		return this.status;
-	}
+	private String code;
+	@XmlValue
+	private String message;
 	
-	public void setStatus(String status) {
-		this.status = status;
+	public String getCode() {
+		return code;
 	}
 
-	@XmlElement
-	public String getToken() {
-		return this.token;
+	public void setCode(String code) {
+		this.code = code;
 	}
 	
-	public void setToken(String token) {
-		this.token = token;
-	}
-
-	@XmlElement
-	public LastFMError getError() {
-		return this.error;
+	public String getMesage() {
+		return this.message;
 	}
 	
-	public void setError(LastFMError error) {
-		this.error = error;
-	}
-
-	@XmlElement
-	public LastFMSession getSession() {
-		return session;
-	}
-	
-	public void setSession(LastFMSession session) {
-		this.session = session;
+	public void setMessage(String message) {
+		this.message = message;
 	}
 }

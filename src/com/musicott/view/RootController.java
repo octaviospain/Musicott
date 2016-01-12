@@ -110,6 +110,8 @@ public class RootController {
 	@FXML
 	private Menu menuFile;
 	@FXML
+	private MenuItem menuItemLastFM;
+	@FXML
 	private MenuItem menuItemItunesImport;
 	@FXML
 	private MenuItem menuItemImport;
@@ -534,10 +536,18 @@ public class RootController {
 		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> {
 			if(newTime.greaterThanOrEqualTo(mediaPlayer.getStopTime().divide(2.0)))
 				player.incrementCurentTrackPlayCount();
-			if(mediaPlayer.getTotalDuration().greaterThanOrEqualTo(Duration.seconds(30)) &&	// LastFM scrobblogging
-			   (newTime.greaterThanOrEqualTo(mediaPlayer.getStopTime().divide(2.0)) ||
-			    newTime.greaterThanOrEqualTo(Duration.minutes(4))))
-				services.updateLastFMNowPlaying();				
+			if(!player.isCurrentTrackScrobbled() && mediaPlayer.getTotalDuration().greaterThanOrEqualTo(Duration.seconds(30)) &&
+			  (newTime.greaterThanOrEqualTo(mediaPlayer.getStopTime().divide(2.0)) || newTime.greaterThanOrEqualTo(Duration.minutes(4)))) {
+				player.setCurrentTrackScrobbled(true);
+				if(services.udpateLastFMNowPlaying(player.getCurrentTrack())) {
+					services.scrobbleLastFMTrack(player.getCurrentTrack());
+					setStatusMessage("Track scrobbled and updated on LastFM");
+				}
+				else {
+					setStatusMessage("Error scrobbling "+player.getCurrentTrack().getName()+" on LastFM");
+					services.addTrackToScrobbleLater(player.getCurrentTrack());
+				}
+			}
 		});
 	}
 	
@@ -721,6 +731,11 @@ public class RootController {
 	@FXML
 	private void doItunesImport() {
 		sc.openItunesImportScene();
+	}
+	
+	@FXML
+	private void doConnectToLastFM() {
+		sc.openLastFMLogin();
 	}
 	
 	@FXML

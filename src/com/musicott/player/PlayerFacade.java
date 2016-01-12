@@ -53,7 +53,7 @@ public class PlayerFacade {
 	private TrackPlayer trackPlayer;
 	private ObservableList<TrackQueueRow> playList;
 	private ObservableList<TrackQueueRow> historyList;
-	private boolean random, played;
+	private boolean random, played, scrobbled;
 
 	private PlayerFacade() {
 		sc = SceneManager.getInstance();
@@ -62,6 +62,7 @@ public class PlayerFacade {
 		historyList = FXCollections.observableArrayList();
 		random = false;
 		played = false;
+		scrobbled = false;
 	}
 	
 	public static PlayerFacade getInstance() {
@@ -240,6 +241,14 @@ public class PlayerFacade {
 			Platform.runLater(() -> sc.getRootController().setStopped());
 	}
 	
+	public boolean isCurrentTrackScrobbled() {
+		return this.scrobbled;
+	}
+	
+	public void setCurrentTrackScrobbled(boolean scrobbled) {
+		this.scrobbled = scrobbled;
+	}
+	
 	private void setCurrent() {
 		historyList.add(0, playList.get(0));
 		setPlayer(playList.get(0).getRepresentedTrackID());
@@ -251,6 +260,7 @@ public class PlayerFacade {
 	private void setPlayer(int trackID) {
 		Track track = ml.getTrack(trackID);
 		currentTrack = track;
+		scrobbled = false;
 		played = false;
 		if(trackPlayer != null) {
 			trackPlayer.dispose();

@@ -16,7 +16,7 @@
  *
  */
 
-package com.musicott.services.lastfm;
+package com.musicott.error;
 
 /**
  * @author Octavio Calleya
