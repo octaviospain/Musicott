@@ -78,11 +78,19 @@ public class MainPreferences {
 		return mainPreferences.get(LASTFM_USERNAME, null);
 	}
 	
+	public void deleteLastFMUsername() {
+		mainPreferences.remove(LASTFM_USERNAME);
+	}
+	
 	public void setLasFMPassword(String password) {
 		mainPreferences.put(LASTFM_PASSWORD, password);
 	}
 
 	public String getLastFMPassword() {
 		return mainPreferences.get(LASTFM_PASSWORD, null);
+	}
+	
+	public void deleteLastFMPassword() {
+		mainPreferences.remove(LASTFM_PASSWORD);
 	}
 }

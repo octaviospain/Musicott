@@ -44,13 +44,13 @@ public class TaskPoolManager {
 	private volatile static TaskPoolManager instance;
 	private ParseTask parseTask;
 	private ItunesImportTask itunesImportTask;
-	private Semaphore threadsSemaphore;
+	private Semaphore waveformSemaphore;
 	private Queue<Track> tracksToProcessQueue;
 	private WaveformTask waveformTask;
 	
 	private TaskPoolManager() {
 		tracksToProcessQueue = new ArrayDeque<>();
-		threadsSemaphore = new Semaphore(0);
+		waveformSemaphore = new Semaphore(0);
 	}
 	
 	public static TaskPoolManager getInstance() {
@@ -88,11 +88,11 @@ public class TaskPoolManager {
 	
 	public synchronized void addTrackToProcess(Track track) {
 		if(waveformTask == null) {
-			waveformTask = new WaveformTask("Waveform task ", threadsSemaphore, this);
+			waveformTask = new WaveformTask("Waveform task ", waveformSemaphore, this);
 			waveformTask.start();
 		}
 		tracksToProcessQueue.add(track);
-		threadsSemaphore.release();
+		waveformSemaphore.release();
 		LOG.debug("Added track {} to waveform process queue", track);
 	}
 	

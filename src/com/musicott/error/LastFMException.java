@@ -18,6 +18,7 @@
 
 package com.musicott.error;
 
+
 /**
  * @author Octavio Calleya
  *

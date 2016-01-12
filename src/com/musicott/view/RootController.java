@@ -538,15 +538,10 @@ public class RootController {
 				player.incrementCurentTrackPlayCount();
 			if(!player.isCurrentTrackScrobbled() && mediaPlayer.getTotalDuration().greaterThanOrEqualTo(Duration.seconds(30)) &&
 			  (newTime.greaterThanOrEqualTo(mediaPlayer.getStopTime().divide(2.0)) || newTime.greaterThanOrEqualTo(Duration.minutes(4)))) {
+				
 				player.setCurrentTrackScrobbled(true);
-				if(services.udpateLastFMNowPlaying(player.getCurrentTrack())) {
-					services.scrobbleLastFMTrack(player.getCurrentTrack());
-					setStatusMessage("Track scrobbled and updated on LastFM");
-				}
-				else {
-					setStatusMessage("Error scrobbling "+player.getCurrentTrack().getName()+" on LastFM");
-					services.addTrackToScrobbleLater(player.getCurrentTrack());
-				}
+				if(services.usingLastFM())
+					services.udpateAndScrobbleLastFM(player.getCurrentTrack());
 			}
 		});
 	}
