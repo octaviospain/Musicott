@@ -36,6 +36,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
@@ -123,9 +125,11 @@ public class ErrorHandler {
 						alert.getDialogPane().contentProperty().set(new Label(ex.getMessage()));
 						setExpandable(ex.getExceptionMessages());
 					}
-					else if(excs.size() == 1 && excs.peek() instanceof CommonException)
+					else if(excs.size() == 1) {
+						if(excs.peek() instanceof LastFMException)
+							alert.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/images/lastfm-logo.png"))));
 						alert.getDialogPane().contentProperty().set(new Label(excs.pop().getMessage()));
-					else
+					} else
 						setExpandable(getErrors(et));
 					break;
 				case METADATA:
@@ -180,7 +184,7 @@ public class ErrorHandler {
 		for(String msg: listMessages) {
 			pw.println(msg);
 		}
-
+		
 		TextArea textArea = new TextArea(sw.toString());
 		textArea.setEditable(false);
 		textArea.setWrapText(true);

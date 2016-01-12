@@ -42,6 +42,7 @@ import com.musicott.player.FlacPlayer;
 import com.musicott.player.NativePlayer;
 import com.musicott.player.PlayerFacade;
 import com.musicott.player.TrackPlayer;
+import com.musicott.services.ServiceManager;
 import com.musicott.task.TaskPoolManager;
 import com.musicott.view.custom.WaveformPanel;
 
@@ -108,6 +109,8 @@ public class RootController {
 	private BorderPane rootBorderPane;
 	@FXML
 	private Menu menuFile;
+	@FXML
+	private MenuItem menuItemLastFM;
 	@FXML
 	private MenuItem menuItemItunesImport;
 	@FXML
@@ -207,6 +210,7 @@ public class RootController {
 	private Stage rootStage;
 	private SceneManager sc;
 	private MusicLibrary ml;
+	private ServiceManager services;
 	private PlayerFacade player;
 	private WaveformPanel mainWaveformPane;
 	private HostServices hostServices;
@@ -218,6 +222,7 @@ public class RootController {
 	public void initialize() {
 		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();
+		services = ServiceManager.getInstance();
 		map = ml.getTracks();
 		tracks = FXCollections.observableArrayList(map.entrySet());
 		map.addListener((MapChangeListener.Change<? extends Integer, ? extends Track> c) -> {
@@ -531,6 +536,13 @@ public class RootController {
 		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> {
 			if(newTime.greaterThanOrEqualTo(mediaPlayer.getStopTime().divide(2.0)))
 				player.incrementCurentTrackPlayCount();
+			if(!player.isCurrentTrackScrobbled() && mediaPlayer.getTotalDuration().greaterThanOrEqualTo(Duration.seconds(30)) &&
+			  (newTime.greaterThanOrEqualTo(mediaPlayer.getStopTime().divide(2.0)) || newTime.greaterThanOrEqualTo(Duration.minutes(4)))) {
+				
+				player.setCurrentTrackScrobbled(true);
+				if(services.usingLastFM())
+					services.udpateAndScrobbleLastFM(player.getCurrentTrack());
+			}
 		});
 	}
 	
@@ -714,6 +726,11 @@ public class RootController {
 	@FXML
 	private void doItunesImport() {
 		sc.openItunesImportScene();
+	}
+	
+	@FXML
+	private void doConnectToLastFM() {
+		sc.openLastFMLogin();
 	}
 	
 	@FXML

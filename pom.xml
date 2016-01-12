@@ -139,6 +139,11 @@
 		<version>1.2</version>
 		<systemPath>${project.basedir}/lib/TarsosTranscoder-1.2.jar</systemPath>
 	</dependency>
+	<dependency>
+		<groupId>com.sun.jersey</groupId>
+		<artifactId>jersey-client</artifactId>
+		<version>1.8</version>
+	</dependency>
   </dependencies>
   <repositories>
     <repository>

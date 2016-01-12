@@ -20,6 +20,7 @@ package com.musicott;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,11 +35,23 @@ import com.musicott.view.RootController;
 import com.musicott.model.Track;
 
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 
 /**
  * @author Octavio Calleya
@@ -206,5 +219,54 @@ public class SceneManager {
 	
 	public void closeIndeterminatedProgressScene() {
 		progressStage.close();
+	}
+	
+	public void openLastFMLogin() {
+		Dialog<Optional<Pair<String, String>>> dialog = new Dialog<>();
+		dialog.setWidth(200);
+		dialog.setHeight(150);
+		dialog.initModality(Modality.NONE);
+		dialog.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
+		dialog.setTitle("LastFM Login");
+		dialog.setHeaderText("Log in to your LastFM account");
+		dialog.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/images/lastfm-logo.png"))));
+
+		ButtonType loginButtonType = new ButtonType("Login", ButtonData.OK_DONE);
+		dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(10);
+		grid.setPadding(new Insets(20, 150, 10, 10));
+
+		TextField usernameField = new TextField();
+		usernameField.setPromptText("Username/email");
+		PasswordField passwordField = new PasswordField();
+		passwordField.setPromptText("Password");
+
+		grid.add(new Label("Username:"), 0, 0);
+		grid.add(usernameField, 1, 0);
+		grid.add(new Label("Password:"), 0, 1);
+		grid.add(passwordField, 1, 1);
+		
+		Label contentText = new Label("Log in to your LastFM account to scrobble your listened tracks on your profile");
+		BorderPane pane = new BorderPane();
+		pane.setCenter(grid);
+		pane.setTop(contentText);
+
+		dialog.getDialogPane().setContent(pane);
+		dialog.setResultConverter(dialogButton -> {
+		    if (dialogButton == loginButtonType) {
+		        return Optional.of(new Pair<>(usernameField.getText(), passwordField.getText()));
+		    }
+		    return null;
+		});
+		dialog.show();
+		dialog.resultProperty().addListener(listener -> {
+			dialog.getResult().ifPresent(usernamePassword -> {
+				MainPreferences.getInstance().setLasFMUsername(usernamePassword.getKey());
+				MainPreferences.getInstance().setLasFMPassword(usernamePassword.getValue());
+			});
+		});
 	}
 }

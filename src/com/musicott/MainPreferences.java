@@ -29,6 +29,9 @@ public class MainPreferences {
 
 	private final String MUSICOTT_FOLDER = "musicott_folder";
 	private final String TRACK_SEQUENCE = "track_sequence";
+	private final String LASTFM_SESSION_KEY = "lastfm_session_key";
+	private final String LASTFM_USERNAME = "lastfm_username";
+	private final String LASTFM_PASSWORD = "lastfm_password";
 	
 	private static MainPreferences instance;
 	private Preferences mainPreferences;
@@ -57,5 +60,37 @@ public class MainPreferences {
 	
 	public String getMusicottUserFolder() {
 		return mainPreferences.get(MUSICOTT_FOLDER, null);
+	}
+	
+	public void setLastFMSessionkey(String sessionKey) {
+		mainPreferences.put(LASTFM_SESSION_KEY, sessionKey);
+	}
+	
+	public String getLastFMSessionKey() {
+		return mainPreferences.get(LASTFM_SESSION_KEY, null);
+	}
+	
+	public void setLasFMUsername(String username) {
+		mainPreferences.put(LASTFM_USERNAME, username);
+	}
+
+	public String getLastFMUsername() {
+		return mainPreferences.get(LASTFM_USERNAME, null);
+	}
+	
+	public void deleteLastFMUsername() {
+		mainPreferences.remove(LASTFM_USERNAME);
+	}
+	
+	public void setLasFMPassword(String password) {
+		mainPreferences.put(LASTFM_PASSWORD, password);
+	}
+
+	public String getLastFMPassword() {
+		return mainPreferences.get(LASTFM_PASSWORD, null);
+	}
+	
+	public void deleteLastFMPassword() {
+		mainPreferences.remove(LASTFM_PASSWORD);
 	}
 }
