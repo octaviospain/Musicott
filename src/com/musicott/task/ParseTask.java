@@ -21,6 +21,7 @@ package com.musicott.task;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
-import com.musicott.error.ParseException;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.player.PlayerFacade;
@@ -65,10 +64,12 @@ public class ParseTask extends Task<Void> {
 	private Track currentTrack;
 	private boolean play = false;
 	private long startMillis, totalTime;
+	private List<String> parseErrors;
 	
 	public ParseTask(List<File> filesToParse, boolean playFinally) {
 		tracks = new HashMap<>();
 		files = new ArrayDeque<>();
+		parseErrors = new ArrayList<>();
 		files.addAll(filesToParse);
 		currentFiles = 0;
 		totalFiles = files.size();
@@ -126,11 +127,9 @@ public class ParseTask extends Task<Void> {
 		Track newTrack = null;
 		try {
 			newTrack = parser.createTrack();
-		} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
-				| InvalidAudioFrameException e) {
-			ParseException pe = new ParseException("Error parsing "+file+": "+e.getMessage(), e, file);
-			eh.addError(pe, ErrorType.PARSE);
-			LOG.error(pe.getMessage(), pe);
+		} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException e) {
+			LOG.error("Error parsing file "+file+": ", e);
+			parseErrors.add(file+": "+e.getMessage());
 		}
 		return newTrack;
 	}
@@ -150,8 +149,8 @@ public class ParseTask extends Task<Void> {
 			});
 		}).start();
 		sc.openIndeterminatedProgressScene();
-		if(eh.hasErrors(ErrorType.PARSE))
-			eh.showErrorDialog(ErrorType.PARSE);
+		if(!parseErrors.isEmpty())
+			eh.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
 		if(play)
 			player.addTracks(tracks.keySet(), true);
 		LOG.info("Parse task completed");

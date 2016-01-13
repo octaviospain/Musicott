@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import com.musicott.MainApp.CustomProgressNotification;
 import com.musicott.MainApp.EventNotification;
+import com.musicott.error.ErrorHandler;
 
 import javafx.application.Platform;
 import javafx.application.Preloader;
@@ -152,7 +153,7 @@ public class MainPreloader extends Preloader {
 			promptStage.setScene(promptScene);
 			promptStage.showAndWait();
 		} catch (IOException e) {
-			e.printStackTrace();
+			ErrorHandler.getInstance().showErrorDialog("Error opening Musicott's folder selection", null, e);
 		}
     }
 }

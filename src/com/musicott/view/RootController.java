@@ -65,7 +65,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
-import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SelectionMode;
@@ -108,37 +107,11 @@ public class RootController {
 	@FXML
 	private BorderPane rootBorderPane;
 	@FXML
-	private Menu menuFile;
+	private MenuItem menuItemPrev, menuItemNext;
 	@FXML
-	private MenuItem menuItemLastFM;
+	private ToggleButton playButton, playQueueButton;
 	@FXML
-	private MenuItem menuItemItunesImport;
-	@FXML
-	private MenuItem menuItemImport;
-	@FXML
-	private MenuItem  menuItemOpen;
-	@FXML
-	private Menu menuEdit;
-	@FXML
-	private MenuItem menuItemDelete;
-	@FXML
-	private MenuItem menuItemEdit; 
-	@FXML
-	private MenuItem menuItemPrev;
-	@FXML
-	private MenuItem menuItemNext;
-	@FXML
-	private Menu menuAbout;
-	@FXML
-	private MenuItem menuItemAbout;
-	@FXML
-	private ToggleButton playButton;
-	@FXML
-	private Button prevButton;
-	@FXML
-	private Button nextButton;
-	@FXML
-	private ToggleButton playQueueButton;
+	private Button prevButton, nextButton;
 	@FXML
 	private ImageView currentCover;
 	@FXML
@@ -146,19 +119,11 @@ public class RootController {
 	@FXML
 	private StackPane playerStackPane;
 	@FXML
-	private Label titleLabel;
+	private Label titleLabel, artistAlbumLabel, currentTimeLabel, remainingTimeLabel;
 	@FXML
-	private Label artistAlbumLabel;
-	@FXML
-	private Label currentTimeLabel;
-	@FXML
-	private Label remainingTimeLabel;
-	@FXML
-	private Slider trackSlider;
+	private Slider trackSlider, volumeSlider;
 	@FXML
 	private ProgressBar trackProgressBar;
-	@FXML
-	private Slider volumeSlider;
 	@FXML
 	private TextField searchTextField;
 	@FXML
@@ -166,39 +131,13 @@ public class RootController {
 	@FXML
 	private TableView<Map.Entry<Integer, Track>> trackTable;
 	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, String> nameCol;
+	private TableColumn<Map.Entry<Integer, Track>, String> nameCol, artistCol, albumCol, genreCol, commentsCol, albumArtistCol, labelCol;
 	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, String> artistCol;
+	private TableColumn<Map.Entry<Integer, Track>, LocalDateTime> dateModifiedCol, dateAddedCol;
 	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, String> albumCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, String> genreCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, String> commentsCol;
-	@FXML 
-	private TableColumn<Map.Entry<Integer, Track>, String> albumArtistCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, String> labelCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, LocalDateTime> dateModifiedCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, LocalDateTime> dateAddedCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, Number> sizeCol;
+	private TableColumn<Map.Entry<Integer, Track>, Number> sizeCol, totalTimeCole, trackNumberCOl, yearCol, bitRateCol, playCountCol, discNumberCol, bpmCol, trackNumberCol;
 	@FXML
 	private TableColumn<Map.Entry<Integer, Track>, Duration> totalTimeCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, Number> trackNumberCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, Number> yearCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, Number> bitRateCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, Number> playCountCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, Number> discNumberCol;
-	@FXML
-	private TableColumn<Map.Entry<Integer, Track>, Number> bpmCol;
 	@FXML
 	private TableColumn<Map.Entry<Integer, Track>, Boolean> coverCol;
 	private AnchorPane playQueuePane;

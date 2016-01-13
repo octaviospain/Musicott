@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
 import com.musicott.view.EditInfoController;
 import com.musicott.view.ImportController;
 import com.musicott.view.ItunesImportController;
@@ -131,8 +130,7 @@ public class SceneManager {
 				editStage.setResizable(false);
 			} catch (IOException e) {
 				LOG.error("Error", e);
-				errorHandler.addError(e, ErrorType.COMMON);
-				errorHandler.showErrorDialog(ErrorType.COMMON);
+				errorHandler.showErrorDialog("Error opening edit window", "", e);
 			}
 		}
 		editController.setSelection(selection);
@@ -159,8 +157,7 @@ public class SceneManager {
 				importStage.setResizable(false);
 			} catch (IOException e) {
 				LOG.error("Error", e);
-				errorHandler.addError(e, ErrorType.COMMON);
-				errorHandler.showErrorDialog(ErrorType.COMMON);
+				errorHandler.showErrorDialog("Error opening import window", "", e);
 			}
 		}
 		importStage.showAndWait();
@@ -186,8 +183,7 @@ public class SceneManager {
 				itunesImportStage.setResizable(false);
 			} catch (IOException e) {
 				LOG.error("Error", e);
-				errorHandler.addError(e, ErrorType.COMMON);
-				errorHandler.showErrorDialog(ErrorType.COMMON);
+				errorHandler.showErrorDialog("Error opening itunes import window", "", e);
 			}
 		}
 		itunesImportStage.showAndWait();
@@ -210,8 +206,7 @@ public class SceneManager {
 				progressStage.setResizable(false);
 			} catch(IOException e) {
 				LOG.error("Error", e);
-				errorHandler.addError(e, ErrorType.COMMON);
-				errorHandler.showErrorDialog(ErrorType.COMMON);
+				errorHandler.showErrorDialog("Error opening progress window", "", e);
 			}
 		}
 		progressStage.showAndWait();

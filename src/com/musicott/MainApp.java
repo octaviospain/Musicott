@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import com.cedarsoftware.util.io.JsonIoException;
 import com.cedarsoftware.util.io.JsonReader;
 import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.util.ObservableMapWrapperCreator;
@@ -104,10 +103,6 @@ public class MainApp extends Application {
 		rootStage = primaryStage;
 		loadStage();
 		LOG.debug("Showing root stage");
-		if(eh.hasErrors(ErrorType.FATAL)) {
-			eh.showErrorDialog(rootStage.getScene(), ErrorType.FATAL);
-			System.exit(0);
-		}
 	}
 	
 	private void loadLayout() {
@@ -170,8 +165,9 @@ public class MainApp extends Application {
 			rootStage.setScene(mainScene);
 			rootStage.show();
 		} catch (IOException | RuntimeException e) {
-			eh.addError(e, ErrorType.FATAL);
 			LOG.error("Error", e);
+			eh.showErrorDialog("Error opening Musicott", null, e);
+			System.exit(0);
 		}
 	}
 	
@@ -208,8 +204,8 @@ public class MainApp extends Application {
 				}
 				LOG.info("Loaded tracks from {}", tracksFile);
 			} catch (IOException | JsonIoException e) {
-				LOG.error("Error loading track library: ", e);
-				ErrorHandler.getInstance().addError(e, ErrorType.FATAL);
+				LOG.error("Error loading track library", e);
+				eh.showErrorDialog("Error loading track library", null, e);
 			}
 		}
 		if(map != null)
@@ -233,8 +229,8 @@ public class MainApp extends Application {
 				fis.close();
 				LOG.info("Loaded waveform images from {}", waveformsFile);
 			} catch(IOException e) {
-				eh.addError(e, ErrorType.FATAL);
-				LOG.error("Error loading waveform images: ", e);
+				LOG.error("Error loading waveform thumbnails", e);
+				eh.showErrorDialog("Error loading waveforms thumbnails", null, e);
 			}
 		}
 		else

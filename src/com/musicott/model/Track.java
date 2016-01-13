@@ -27,15 +27,14 @@ import java.util.Map;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.exceptions.CannotReadException;
+import org.jaudiotagger.audio.exceptions.CannotWriteException;
 import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
 import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
 import org.jaudiotagger.tag.TagException;
 
 import com.musicott.MainPreferences;
 import com.musicott.SceneManager;
-import com.musicott.error.CommonException;
 import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
 import com.musicott.util.MetadataUpdater;
 
 import javafx.application.Platform;
@@ -178,7 +177,7 @@ public class Track {
     	propertyMap.put(TrackField.BPM, bpmProperty);
     }
     
-    public boolean updateMetadata() {
+    public boolean updateMetadata() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException {
     	return updater.updateMetadata();
     }
     
@@ -207,20 +206,17 @@ public class Track {
 		if(getInDisk()) {
 			File file = new File(fileFolder+"/"+fileName);
 			if(!file.exists()) {
-				ErrorHandler.getInstance().addError(new CommonException(fileFolder+"/"+fileName+" not found"), ErrorType.COMMON);
+				ErrorHandler.getInstance().showErrorDialog(fileFolder+"/"+fileName+" not found");
 				setInDisk(false);
 				playable = false;
 			}
 			else if(fileFormat.equals("flac") || encoding.startsWith("Apple") || encoder.startsWith("iTunes")) {
-				Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Musicott can't play .flac files or files encoded by Apple"));
+				Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Musicott can't play .flac files or .m4a files encoded by Apple"));
 				playable = false;
 			}
 		}
 		else
 			playable = false;
-		if(ErrorHandler.getInstance().hasErrors(ErrorType.COMMON)) {
-			Platform.runLater(() -> ErrorHandler.getInstance().showErrorDialog(ErrorType.COMMON));
-		}
 		return playable;
 	}
     

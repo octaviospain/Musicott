@@ -46,8 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
-import com.musicott.error.WriteMetadataException;
 import com.musicott.model.Track;
 
 /**
@@ -64,26 +62,22 @@ public class MetadataUpdater {
 		this.track = track;
 	}
 	
-	public boolean updateMetadata() {
+	public boolean updateMetadata() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException {
 		succeeded = false;
 		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
-		AudioFile audio;
-		try {
-			audio = AudioFileIO.read(trackPath.toFile());
-			String format = audio.getAudioHeader().getFormat();
-			if(format.startsWith("WAV")) {
-				WavTag wavTag = new WavTag(WavOptions.READ_ID3_ONLY);
-				wavTag.setID3Tag(new ID3v24Tag());
-				wavTag.setInfoTag(new WavInfoTag());
-				audio.setTag(wavTag);
-			}
-			baseUpdater(audio.getTag());
-			audio.commit();
-			succeeded = true;
-		} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
-				| InvalidAudioFrameException | CannotWriteException e) {
-			treatException("Error writing metadata "+e.getMessage(), e, track);
+		AudioFile audio = AudioFileIO.read(trackPath.toFile());
+		String format = audio.getAudioHeader().getFormat();
+		if(format.startsWith("WAV")) {
+			WavTag wavTag = new WavTag(WavOptions.READ_ID3_ONLY);
+			wavTag.setID3Tag(new ID3v24Tag());
+			wavTag.setInfoTag(new WavInfoTag());
+			audio.setTag(wavTag);
 		}
+		baseUpdater(audio.getTag());
+		audio.commit();
+		succeeded = true;
+//		LOG.warn("Error updating metadata of "+track, e);
+//		ErrorHandler.getInstance().showErrorDialog("Error writing metadata of "+track.getArtist()+" - "+track.getName(), null, e);
 		return succeeded;
 	}
 	
@@ -120,7 +114,8 @@ public class MetadataUpdater {
 			succeeded = true;
 		} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
 				| InvalidAudioFrameException | CannotWriteException e) {
-			treatException("Error saving cover: "+e.getMessage(), e, track);
+			LOG.warn("Error saving cover image of "+track, e);
+			ErrorHandler.getInstance().showErrorDialog("Error saving cover image of "+track.getArtist()+" - "+track.getName(), null, e);
 		}
 		if(succeeded)
 			track.setHasCover(true);
@@ -152,12 +147,5 @@ public class MetadataUpdater {
 					| ReadOnlyFileException | InvalidAudioFrameException e) {}
 		}
 		return finded;
-	}
-	
-	private void treatException(String msg, Exception ex, Track track) {
-		succeeded = false;
-		WriteMetadataException wme = new WriteMetadataException(msg, ex, track);
-		ErrorHandler.getInstance().addError(wme, ErrorType.METADATA);  // Comment for testing
-		LOG.error(wme.getMessage());
 	}
 }

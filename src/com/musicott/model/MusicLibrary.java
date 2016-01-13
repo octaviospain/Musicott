@@ -34,7 +34,6 @@ import com.cedarsoftware.util.io.JsonWriter;
 import com.musicott.MainPreferences;
 import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
 import com.musicott.player.PlayerFacade;
 
 import javafx.application.Platform;
@@ -281,8 +280,7 @@ public class MusicLibrary {
 			catch (IOException |RuntimeException e) {
 				Platform.runLater(() -> {
 					LOG.error("Error saving music library", e);
-					ErrorHandler.getInstance().addError(e, ErrorType.COMMON);
-					ErrorHandler.getInstance().showErrorDialog(ErrorType.COMMON);
+					ErrorHandler.getInstance().showErrorDialog("Error saving music library", null, e);
 				});
 			}
 		}

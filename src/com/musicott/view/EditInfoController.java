@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
 import com.musicott.model.Track;
 import com.musicott.model.TrackField;
 import com.musicott.task.UpdateMetadataTask;
@@ -157,9 +156,8 @@ public class EditInfoController {
 						newCoverBytes = Files.readAllBytes(Paths.get(newCoverImage.getPath()));
 						coverImage.setImage(new Image(new ByteArrayInputStream(newCoverBytes)));
 					} catch (IOException e) {
-						ErrorHandler.getInstance().addError(e, ErrorType.COMMON);
-						ErrorHandler.getInstance().showErrorDialog(editStage.getScene(), ErrorType.COMMON);
-						LOG.error("Error setting image: "+e.getMessage());
+						LOG.error("Error setting image", e);
+						ErrorHandler.getInstance().showErrorDialog("Error setting image", null, e, editStage.getScene());
 					}
 				}
 			}

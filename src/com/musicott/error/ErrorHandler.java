@@ -20,17 +20,12 @@ package com.musicott.error;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Collection;
 
 import com.musicott.SceneManager;
 
 import javafx.application.HostServices;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Hyperlink;
@@ -51,18 +46,18 @@ import javafx.stage.Stage;
  */
 public class ErrorHandler {
 
-	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	
-	private HostServices hostServices;
 	private static ErrorHandler instance;
-	private SceneManager sc;
+	private HostServices hostServices;
 	private Stage mainStage;
-	private Map<ErrorType,Stack<Exception>> mapExceptions;
 	private Alert alert;
+	private FlowPane helpContentTextFP;
 
 	private ErrorHandler() {
-		sc = SceneManager.getInstance();
-		mapExceptions = new HashMap<ErrorType,Stack<Exception>>();
+		Label text = new Label("Help Musicott to fix this kind of bugs. Report this error at");
+		Hyperlink githubIssuesLink = new Hyperlink("https://github.com/octaviospain/Musicott/issues");
+		githubIssuesLink.setOnAction(event -> hostServices.showDocument(githubIssuesLink.getText()));
+		helpContentTextFP = new FlowPane();
+		helpContentTextFP.getChildren().addAll(text, githubIssuesLink);
 	}
 	
 	public static ErrorHandler getInstance() {
@@ -75,99 +70,81 @@ public class ErrorHandler {
 		this.hostServices= hostServices;
 	}
 	
-	public synchronized void addError(Exception ex, ErrorType type) {
-		LOG.debug("Error handled:", ex);
-		if(mapExceptions.containsKey(type))
-			mapExceptions.get(type).push(ex);
-		else {
-			Stack<Exception> stack = new Stack<Exception>();
-			stack.push(ex);
-			mapExceptions.put(type, stack);
-		}
+	public synchronized void showErrorDialog(String message) {
+		showErrorDialog(message, "");
 	}
 	
-	public synchronized boolean hasErrors(ErrorType... type) {
-		if(!mapExceptions.isEmpty())
-			for(ErrorType et: type)
-				if(mapExceptions.containsKey(et) && !mapExceptions.get(et).isEmpty())
-					return true;
-		return false;
-	}
-
-	public synchronized Stack<Exception> getErrors(ErrorType type){
-		return mapExceptions.get(type);
+	public synchronized void showErrorDialog(String message, String content) {
+		showErrorDialog(message, content, null);
 	}
 	
-	public synchronized void showErrorDialog(ErrorType... types) {
+	public synchronized void showErrorDialog(String message, String content, Exception exception) {
+		showErrorDialog(message, content, exception, getMainStage().getScene());
+	}
+	
+	public synchronized void showErrorDialog(String message, String content, Exception exception, Scene alertStage) {
+		Platform.runLater(() -> {
+			alert = createAlert(message, content, alertStage);
+			if(exception != null)
+				addExpandableStackTrace(exception);
+			alert.showAndWait();
+		});		
+	}
+	
+	public synchronized void showExpandableErrorsDialog(String message, String content, Collection<String> errors) {
+		Platform.runLater(() -> {
+			alert = createAlert(message, content, getMainStage().getScene());
+			if(errors != null)
+				addExpandableErrorMessages(errors);
+			alert.showAndWait();
+		});			
+	}
+	
+	public synchronized void showLastFMErrorDialog(String message, String content) {
+		Platform.runLater(() -> {
+			alert = createAlert(message, content, getMainStage().getScene());
+			alert.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/images/lastfm-logo.png"))));
+			alert.show();
+		});
+	}
+	
+	private Stage getMainStage() {
 		if(mainStage == null)
-			mainStage = sc.getMainStage();
-		for(int i=0; i<types.length; i++)
-			showErrorDialog(mainStage.getScene(), types[i]);
+			mainStage = SceneManager.getInstance().getMainStage();
+		return mainStage;
 	}
 	
-	public synchronized void showErrorDialog(Scene ownerScene, ErrorType... types) {
-		alert = new Alert(AlertType.ERROR);
+	private Alert createAlert(String message, String content, Scene ownerScene) {
+		Alert alert = new Alert(AlertType.ERROR);
+		alert.setTitle("Error");
+		alert.setHeaderText(message == null ? "Error" : message);
 		alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
+		if(content == null)
+			alert.getDialogPane().contentProperty().set(helpContentTextFP);
+		else
+			alert.setContentText(content);
 		if(ownerScene != null)
 			alert.initOwner(ownerScene.getWindow());
 		else {
-			Scene errorScene = new Scene(new AnchorPane(),800,300);
+			Scene errorScene = new Scene(new AnchorPane(), 800, 300);
 			alert.initOwner(errorScene.getWindow());			
 		}
-		alert.setTitle("Error");
-		alert.setHeaderText("Error");
-		for(ErrorType et: types) {
-			switch(et) {
-				case COMMON:
-					Stack<Exception> excs = mapExceptions.get(et);
-					if(excs.peek() instanceof CommonVerboseException) {
-						CommonVerboseException ex = (CommonVerboseException) excs.pop();
-						alert.getDialogPane().contentProperty().set(new Label(ex.getMessage()));
-						setExpandable(ex.getExceptionMessages());
-					}
-					else if(excs.size() == 1) {
-						if(excs.peek() instanceof LastFMException)
-							alert.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/images/lastfm-logo.png"))));
-						alert.getDialogPane().contentProperty().set(new Label(excs.pop().getMessage()));
-					} else
-						setExpandable(getErrors(et));
-					break;
-				case METADATA:
-					alert.setHeaderText("Error(s) writing metadata on file(s)");
-					setExpandable(getErrors(et));
-					break;
-				case PARSE:
-					alert.setHeaderText("Error(s) parsing file(s)");
-					setExpandable(getErrors(et));
-					break;
-				case FATAL:
-					alert.setHeaderText("Fatal error");
-					setExpandable(getErrors(et));
-					Label text = new Label(" Please help Musicott to fix this kind of bugs. Report this error at");
-					Hyperlink githubIssuesLink = new Hyperlink("https://github.com/octaviospain/Musicott/issues");
-					githubIssuesLink.setOnAction(event -> hostServices.showDocument(githubIssuesLink.getText()));
-					FlowPane fp = new FlowPane();
-					fp.getChildren().addAll(text, githubIssuesLink);
-					alert.getDialogPane().contentProperty().set(fp);
-					break;
-			}
-			LOG.info("Showing error dialog type {}", et);
-			alert.showAndWait();
-		}
+		return alert;
 	}
 	
-	private void setExpandable(Stack<Exception> exceptions) {
+	private String buildStackTraceContentText(Exception... exceptions) {
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
-		while(!exceptions.isEmpty())
-			exceptions.pop().printStackTrace(pw);
-
-		TextArea textArea = new TextArea(sw.toString());
+		for(Exception e: exceptions)
+			e.printStackTrace(pw);
+		return sw.toString();
+	}
+	
+	private void addExpandableStackTrace(Exception... exceptions) {
+		TextArea textArea = new TextArea(buildStackTraceContentText(exceptions));
 		textArea.setEditable(false);
 		textArea.setWrapText(true);
-
-		textArea.setMaxWidth(Double.MAX_VALUE);
-		textArea.setMaxHeight(Double.MAX_VALUE);
+		
 		GridPane.setVgrow(textArea, Priority.ALWAYS);
 		GridPane.setHgrow(textArea, Priority.ALWAYS);
 
@@ -175,28 +152,23 @@ public class ErrorHandler {
 		expContent.setMaxWidth(Double.MAX_VALUE);
 		expContent.add(new Label("The exception stacktrace was:"), 0, 0);
 		expContent.add(textArea, 0, 1);
-		alert.getDialogPane().setExpandableContent(expContent);	
+		alert.getDialogPane().setExpandableContent(expContent);
 	}
 	
-	private void setExpandable(List<String> listMessages) {
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		for(String msg: listMessages) {
-			pw.println(msg);
-		}
-		
-		TextArea textArea = new TextArea(sw.toString());
+	private void addExpandableErrorMessages(Collection<String> messages) {
+		TextArea textArea = new TextArea();
 		textArea.setEditable(false);
 		textArea.setWrapText(true);
-
-		textArea.setMaxWidth(Double.MAX_VALUE);
-		textArea.setMaxHeight(Double.MAX_VALUE);
+		for(String s: messages)
+			textArea.appendText(s+"\n");
+		
 		GridPane.setVgrow(textArea, Priority.ALWAYS);
 		GridPane.setHgrow(textArea, Priority.ALWAYS);
 
 		GridPane expContent = new GridPane();
 		expContent.setMaxWidth(Double.MAX_VALUE);
+		expContent.add(new Label("The exception stacktrace was:"), 0, 0);
 		expContent.add(textArea, 0, 1);
-		alert.getDialogPane().setExpandableContent(expContent);	
+		alert.getDialogPane().setExpandableContent(expContent);		
 	}
 }

@@ -29,8 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import com.musicott.SceneManager;
 import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
-import com.musicott.error.LastFMException;
 import com.musicott.model.Track;
 import com.musicott.services.LastFMService;
 import com.musicott.services.ServiceManager;
@@ -70,7 +68,7 @@ public class LastFMTask extends Thread {
 			try {
 				semaphore.acquire();
 				if(!lastfm.isValidAPIConfig()) {
-					treatException("LastFM API Key or Secret are invalid", null);
+					eh.showLastFMErrorDialog("LastFM error", "LastFM API Key or Secret are invalid");
 					sm.endLastfmUsage();
 					break;
 				}	
@@ -128,24 +126,10 @@ public class LastFMTask extends Thread {
 	
 	private void handleLastFMError(LastFMError error) {
 		//TODO Error handling for Last FM error statuses
-		treatException("LastFM error: "+error.getMessage(), null);
-		Platform.runLater(() -> {
-			SceneManager.getInstance().getRootController().setStatusMessage("Error updating LastFM");
-		});
+		LOG.info("LastFM error: {}", error.getMessage());
+		eh.showLastFMErrorDialog("LastFM error "+error.getCode(), error.getMessage());
+		Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Error updating LastFM"));
 		sm.endLastfmUsage();
 		end = true;
-	}
-	
-	private void treatException(String msg, Exception ex) {
-		LastFMException lfmerr;
-		if(ex == null)
-			lfmerr = new LastFMException(msg);
-		else
-			lfmerr = new LastFMException(msg, ex);
-		eh.addError(lfmerr, ErrorType.COMMON);
-		Platform.runLater(() -> { 
-			eh.showErrorDialog(ErrorType.COMMON);
-		});
-		LOG.error(lfmerr.getMessage());
 	}
 }
