@@ -16,41 +16,36 @@
  *
  */
 
-package com.musicott.error;
+package com.musicott.services.lastfm;
 
-import java.io.File;
-
-import com.musicott.model.Track;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlValue;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class ParseException extends Exception{
+@XmlRootElement(name = "track")
+public class LastFMTrack {
 
-	private static final long serialVersionUID = 1L;
-
-	public ParseException() {
-		super();
+	private String corrected;
+	private String value;
+	
+	@XmlAttribute
+	public String getCorrected() {
+		return corrected;
+	}
+	public void setCorrected(String corrected) {
+		this.corrected = corrected;
 	}
 	
-	public ParseException(String msg) {
-		super(msg);
+	@XmlValue
+	public String getValue() {
+		return value;
 	}
 	
-	public ParseException(String msg, File f) {
-		super(msg+" in "+f.getName());
-	}
-	
-	public ParseException(Throwable cause) {
-		super(cause);
-	}
-	
-	public ParseException(String msg, Throwable cause, File f) {
-		super(msg+" in "+f.getName(), cause);
-	}
-	
-	public ParseException(String msg, Throwable cause, Track t) {
-		super(msg+" in "+t, cause);
-	}
+	public void setValue(String value) {
+		this.value = value;
+	}	
 }

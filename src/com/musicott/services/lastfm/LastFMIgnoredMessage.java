@@ -16,35 +16,37 @@
  *
  */
 
-package com.musicott.error;
+package com.musicott.services.lastfm;
 
-import com.musicott.model.Track;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlValue;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class WriteMetadataException extends Exception {
+@XmlRootElement(name = "ignoredmessage")
+public class LastFMIgnoredMessage {
 
-	private static final long serialVersionUID = 1L;
+	@XmlAttribute
+	private String code;
+	@XmlValue
+	private String message;
+	
+	public String getCode() {
+		return code;
+	}
 
-	public WriteMetadataException() {
-		super();
+	public void setCode(String code) {
+		this.code = code;
 	}
 	
-	public WriteMetadataException(String msg) {
-		super(msg);
+	public String getMesage() {
+		return this.message;
 	}
 	
-	public WriteMetadataException(String msg, Track track) {
-		super(msg+ "in "+track.getFileFolder()+"/"+track.getFileName());
-	}
-	
-	public WriteMetadataException(Throwable cause) {
-		super(cause);
-	}
-	
-	public WriteMetadataException(String msg, Throwable cause, Track track) {
-		super(msg+" in "+track.getFileFolder()+"/"+track.getFileName(), cause);
+	public void setMessage(String message) {
+		this.message = message;
 	}
 }

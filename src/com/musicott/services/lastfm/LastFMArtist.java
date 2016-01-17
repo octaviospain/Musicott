@@ -16,25 +16,36 @@
  *
  */
 
-package com.musicott.util;
+package com.musicott.services.lastfm;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
-import com.cedarsoftware.util.io.JsonReader.ClassFactory;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlValue;
 
 /**
- * Needed class for serialize to .json with json-io library
- * 
  * @author Octavio Calleya
  *
  */
-public class ObservableListWrapperCreator implements ClassFactory {
+@XmlRootElement(name = "artist")
+public class LastFMArtist {
 
-	@SuppressWarnings("rawtypes")
-	@Override
-	public Object newInstance(Class c) {
-		ObservableList ol = FXCollections.observableArrayList();
-		return ol;
+	@XmlAttribute
+	private String corrected;
+	@XmlValue
+	private String value;
+	
+	public String getCorrected() {
+		return corrected;
 	}
+	public void setCorrected(String corrected) {
+		this.corrected = corrected;
+	}
+	
+	public String getValue() {
+		return value;
+	}
+	
+	public void setValue(String value) {
+		this.value = value;
+	}	
 }

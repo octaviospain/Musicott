@@ -45,8 +45,8 @@ import com.musicott.player.PlayerFacade;
 
 import be.tarsos.transcoder.DefaultAttributes;
 import be.tarsos.transcoder.Transcoder;
+import be.tarsos.transcoder.ffmpeg.EncoderException;
 import javafx.application.Platform;
-import javafx.util.Duration;
 
 /**
  * @author Octavio Calleya
@@ -56,7 +56,6 @@ public class WaveformTask extends Thread {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private final double HEIGHT_COEFICIENT = 4.2; // This fits the waveform to the swingnode height
-	private final double MAX_LENGTH_TO_PROCESS = 1582000.0; // Maxixum length of the file that can be processed without overflow the heap space //TODO find a way to solve
 	
 	private MusicLibrary ml;
 	private SceneManager sc;
@@ -80,20 +79,20 @@ public class WaveformTask extends Thread {
 				taskSemaphore.acquire();
 				track = tpm.getTrackToProcess();
 				LOG.debug("Processing waveform of track {}", track);
-				if(track.getFileFormat().equals("wav") && track.getTotalTime().lessThanOrEqualTo(Duration.millis(MAX_LENGTH_TO_PROCESS)))
+				String fileFormat = track.getFileFormat();
+				if(fileFormat.equals("wav"))
 					waveform = processWav();
-				else
-					if(track.getFileFormat().equals("mp3") && track.getTotalTime().lessThanOrEqualTo(Duration.millis(MAX_LENGTH_TO_PROCESS))) {
-						waveform = processMp3();
-					}
+				else if(fileFormat.equals("mp3") || fileFormat.equals("m4a"))
+					waveform = processNoWav(fileFormat);
+				
 				if(waveform != null) {
-					ml.getWaveforms().put(track.getTrackID(), waveform);
+					ml.addWaveform(track.getTrackID(), waveform);
 					Track currentTrack = PlayerFacade.getInstance().getCurrentTrack();
 					if(currentTrack != null && currentTrack.equals(track))
 						SwingUtilities.invokeLater(() -> sc.getRootController().setWaveform(track));
 					LOG.debug("Waveform of track {} completed", track);
 					Platform.runLater(() -> sc.getRootController().setStatusMessage(""));
-					sc.saveLibrary(false, true);
+					ml.saveLibrary(false, true);
 				}
 				else
 					Platform.runLater(() -> sc.getRootController().setStatusMessage("Fail processing waveform of "+track.getName()));
@@ -103,22 +102,28 @@ public class WaveformTask extends Thread {
 		}
 	}
 
-	private float[] processMp3() {
-		float[] waveData;
+	private float[] processNoWav(String fileFormat) {
+		float[] waveData = null;
 		int trackID = track.getTrackID();
 		Path trackPath = FileSystems.getDefault().getPath(track.getFileFolder(), track.getFileName());
 		File temporalDecodedFile;
 		File temporalCoppiedFile;
 		try {
 			temporalDecodedFile = File.createTempFile("decoded_" + trackID, ".wav");
-			temporalCoppiedFile = File.createTempFile("original_" + trackID, ".mp3");
+			temporalCoppiedFile = File.createTempFile("original_" + trackID, "."+fileFormat);
 			CopyOption[] options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING}; 
 			Files.copy(trackPath, temporalCoppiedFile.toPath(), options);
-			Transcoder.transcode(temporalCoppiedFile.toString(), temporalDecodedFile.toString(), DefaultAttributes.WAV_PCM_S16LE_STEREO_44KHZ.getAttributes());
-			waveData = processAmplitudes(getWavAmplitudes(temporalDecodedFile));
-		} catch (Exception e) {
+			try {
+				Transcoder.transcode(temporalCoppiedFile.toString(), temporalDecodedFile.toString(), DefaultAttributes.WAV_PCM_S16LE_STEREO_44KHZ.getAttributes());
+				waveData = processAmplitudes(getWavAmplitudes(temporalDecodedFile));
+			} catch (EncoderException e) {
+				if(e.getMessage().startsWith("Source and target should"))
+					waveData = processAmplitudes(getWavAmplitudes(temporalDecodedFile));
+				else
+					LOG.warn("Error processing audio waveform of {}: "+e.getMessage(), track);
+			}
+		} catch (IOException | UnsupportedAudioFileException e) {
 			LOG.warn("Error processing audio waveform of {}: "+e.getMessage(), track);
-			waveData = null;
 		}
 		return waveData;
 	}

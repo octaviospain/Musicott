@@ -16,32 +16,37 @@
  *
  */
 
-package com.musicott.error;
+package com.musicott.services.lastfm;
+
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlValue;
 
 /**
- * This enum defines the possible types of collected errors
- * 
  * @author Octavio Calleya
+ *
  */
-public enum ErrorType {
+@XmlRootElement(name = "album")
+public class LastFMAlbum {
+
+	@XmlAttribute
+	private String corrected;
+	@XmlValue
+	private String value;
 	
-	/**
-	 * Error from parsing audio files
-	 */
-	PARSE,
+	public String getCorrected() {
+		return corrected;
+	}
 	
-	/**
-	 * Error from writing metadata on audio files
-	 */
-	METADATA,
+	public void setCorrected(String corrected) {
+		this.corrected = corrected;
+	}
 	
-	/**
-	 * Common error
-	 */
-	COMMON,
+	public String getValue() {
+		return value;
+	}
 	
-	/**
-	 * Fatal errors that force to end the normal execution
-	 */
-	FATAL
+	public void setValue(String value) {
+		this.value = value;
+	}	
 }

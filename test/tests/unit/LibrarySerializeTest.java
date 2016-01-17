@@ -38,13 +38,12 @@ import com.cedarsoftware.util.io.JsonReader;
 import com.cedarsoftware.util.io.JsonWriter;
 import com.musicott.model.Track;
 import com.musicott.util.MetadataParser;
-import com.musicott.util.ObservableListWrapperCreator;
+import com.musicott.util.ObservableMapWrapperCreator;
 import com.musicott.util.Utils;
-import com.musicott.view.ImportController;
-import com.sun.javafx.collections.ObservableListWrapper;
+import com.sun.javafx.collections.ObservableMapWrapper;
 
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 
 /**
  * @author Octavio Calleya
@@ -59,11 +58,10 @@ public class LibrarySerializeTest {
 	JsonWriter jsw;
 	FileInputStream fis;
 	JsonReader jsr;
-	ImportController icc = new ImportController();
 	
 	@Before
 	public void setUp() {
-		jsonFile = new File("./temp/test.json");
+		jsonFile = new File(System.getProperty("user.home")+"/test.json");
 		args = new HashMap<>();
 		Map<Class<?>,List<String>> fields = new HashMap<>();
 		List<String> fieldNames = new ArrayList<>();		
@@ -95,6 +93,7 @@ public class LibrarySerializeTest {
 		fieldNames.add("hasCover");
 		fieldNames.add("isVariableBitRate");
 		fieldNames.add("encoder");
+		fieldNames.add("encoding");
 
 		fields.put(Track.class,fieldNames);
 	}
@@ -106,42 +105,7 @@ public class LibrarySerializeTest {
 	}
 	
 	@Test
-	public void testTrackListToJson() throws Exception {
-		int MAX_TRACKS = 5;
-		FileFilter filter = file -> {
-			int pos = file.getName().lastIndexOf(".");
-			String format = file.getName().substring(pos+1);
-			if(format.equals("mp3") ||
-			   format.equals("flac"))
-			   return true;
-			else
-				return false;
-		};
-		File folder = new File("/users/octavio/music/itunes/itunes media/music/");
-		List<File> audioFiles = Utils.getAllFilesInFolder(folder, filter, MAX_TRACKS);
-		assertEquals(MAX_TRACKS, audioFiles.size());
-		List<Track> tracks = new ArrayList<>();
-		for(File f: audioFiles) {
-			MetadataParser parser = new MetadataParser(f);
-			Track t = parser.createTrack();
-			tracks.add(t);
-		}
-		FileOutputStream fos = new FileOutputStream(jsonFile);
-		JsonWriter jsw = new JsonWriter(fos, args);
-		jsw.write(tracks);
-		jsw.close();
-		fos.close();
-		
-		FileInputStream fis = new FileInputStream(jsonFile);
-		JsonReader jsr = new JsonReader(fis);
-		List<Track> testedTracks = (List<Track>) jsr.readObject();
-		jsr.close();
-		fis.close();
-		assertEquals(tracks, testedTracks);
-	}
-	
-	@Test
-	public void testObservableTrackListToJson() throws Exception {
+	public void testTrackMapToJson() throws Exception {
 		int MAX_TRACKS = 10;
 		FileFilter filter = file -> {
 			int pos = file.getName().lastIndexOf(".");
@@ -155,15 +119,50 @@ public class LibrarySerializeTest {
 		File folder = new File("/users/octavio/music/itunes/itunes media/music/");
 		List<File> audioFiles = Utils.getAllFilesInFolder(folder, filter, MAX_TRACKS);
 		assertEquals(MAX_TRACKS, audioFiles.size());
-		List<Track> tracks = new ArrayList<>();
+		Map<Integer, Track> tracks = new HashMap<>();
 		for(File f: audioFiles) {
 			MetadataParser parser = new MetadataParser(f);
 			Track t = parser.createTrack();
-			tracks.add(t);
+			tracks.put(t.getTrackID(), t);
+		}
+		FileOutputStream fos = new FileOutputStream(jsonFile);
+		JsonWriter jsw = new JsonWriter(fos, args);
+		jsw.write(tracks);
+		jsw.close();
+		fos.close();
+		
+		FileInputStream fis = new FileInputStream(jsonFile);
+		JsonReader jsr = new JsonReader(fis);
+		Map<Integer, Track> testedTracks = (Map<Integer, Track>) jsr.readObject();
+		jsr.close();
+		fis.close();
+		assertEquals(tracks, testedTracks);
+	}
+	
+	@Test
+	public void testObservableTrackMapToJson() throws Exception {
+		int MAX_TRACKS = 10;
+		FileFilter filter = file -> {
+			int pos = file.getName().lastIndexOf(".");
+			String format = file.getName().substring(pos+1);
+			if(format.equals("mp3") ||
+			   format.equals("flac"))
+			   return true;
+			else
+				return false;
+		};
+		File folder = new File("/users/octavio/music/itunes/itunes media/music/");
+		List<File> audioFiles = Utils.getAllFilesInFolder(folder, filter, MAX_TRACKS);
+		assertEquals(MAX_TRACKS, audioFiles.size());
+		Map<Integer, Track> tracks = new HashMap<>();
+		for(File f: audioFiles) {
+			MetadataParser parser = new MetadataParser(f);
+			Track t = parser.createTrack();
+			tracks.put(t.getTrackID(), t);
 		}
 		
-		ObservableList<Track> obsTracks = FXCollections.observableArrayList();
-		obsTracks.addAll(tracks);
+		ObservableMap<Integer, Track> obsTracks = FXCollections.observableHashMap();
+		obsTracks.putAll(tracks);
 		
 		FileOutputStream fos = new FileOutputStream(jsonFile);
 		JsonWriter jsw = new JsonWriter(fos, args);
@@ -173,8 +172,8 @@ public class LibrarySerializeTest {
 		
 		FileInputStream fis = new FileInputStream(jsonFile);
 		JsonReader jsr = new JsonReader(fis);
-		JsonReader.assignInstantiator(ObservableListWrapper.class, new ObservableListWrapperCreator());
-		List<Track> testedTracks = (List<Track>) jsr.readObject();
+		JsonReader.assignInstantiator(ObservableMapWrapper.class, new ObservableMapWrapperCreator());
+		Map<Integer, Track> testedTracks = (Map<Integer, Track>) jsr.readObject();
 		jsr.close();
 		fis.close();
 		assertEquals(obsTracks, testedTracks);

@@ -16,29 +16,40 @@
  *
  */
 
-package com.musicott.error;
+package com.musicott.services.lastfm;
+
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlValue;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class CommonException extends Exception {
-	
-	private static final long serialVersionUID = 1L;
+@XmlRootElement(name = "error")
+public class LastFMError {
 
-	public CommonException() {
-		super();
+	private String code;
+	private String message;
+	
+	public LastFMError() {
+	}
+
+	@XmlValue
+	public String getMessage() {
+		return this.message;
 	}
 	
-	public CommonException(String msg) {
-		super(msg);
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	@XmlAttribute
+	public String getCode() {
+		return this.code;
 	}
 	
-	public CommonException(Throwable cause) {
-		super(cause);
+	public void setCode(String code) {
+		this.code = code;
 	}
-	
-	public CommonException(String msg, Throwable cause) {
-		super(msg,cause);
-	}
-}
+}	

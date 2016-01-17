@@ -28,6 +28,7 @@ import java.util.concurrent.Semaphore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.musicott.ErrorHandler;
 import com.musicott.model.Track;
 
 /**
@@ -40,13 +41,14 @@ public class TaskPoolManager {
 	
 	private volatile static TaskPoolManager instance;
 	private ParseTask parseTask;
-	private Semaphore threadsSemaphore;
+	private ItunesImportTask itunesImportTask;
+	private Semaphore waveformSemaphore;
 	private Queue<Track> tracksToProcessQueue;
 	private WaveformTask waveformTask;
 	
 	private TaskPoolManager() {
 		tracksToProcessQueue = new ArrayDeque<>();
-		threadsSemaphore = new Semaphore(0);
+		waveformSemaphore = new Semaphore(0);
 	}
 	
 	public static TaskPoolManager getInstance() {
@@ -54,25 +56,37 @@ public class TaskPoolManager {
 			instance = new TaskPoolManager();
 		return instance;
 	}
+	
+	public void parseItunesLibrary(String path) {
+		if((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning()))
+			ErrorHandler.getInstance().showErrorDialog("There is already an import task running.");
+		else {
+			itunesImportTask = new ItunesImportTask(path);
+			Thread itunesThread = new Thread(itunesImportTask, "Parse Itunes Task");
+			itunesThread.setDaemon(true);
+			itunesThread.start();
+			LOG.debug("Parsing Itunes Library: {}", path);
+		}
+	}
 
-	public void parseFiles(List<File> files, boolean playfinally) {
-		if(parseTask == null || parseTask.isDone()) {
-			parseTask = new ParseTask(files, playfinally);
+	public void parseFiles(List<File> filesToParse, boolean playFinally) {
+		if((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning())) 
+			ErrorHandler.getInstance().showErrorDialog("There is already an import task running.");
+		else {
+			parseTask = new ParseTask(filesToParse, playFinally);
 			Thread parseThread = new Thread(parseTask, "Parse Files Task");
 			parseThread.setDaemon(true);
 			parseThread.start();
 		}
-		else if(parseTask.isRunning())
-			parseTask.addFilesToParse(files);
 	}
 	
 	public synchronized void addTrackToProcess(Track track) {
 		if(waveformTask == null) {
-			waveformTask = new WaveformTask("Waveform task ", threadsSemaphore, this);
+			waveformTask = new WaveformTask("Waveform task ", waveformSemaphore, this);
 			waveformTask.start();
 		}
 		tracksToProcessQueue.add(track);
-		threadsSemaphore.release();
+		waveformSemaphore.release();
 		LOG.debug("Added track {} to waveform process queue", track);
 	}
 	

@@ -24,12 +24,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
-import com.musicott.task.SaveLibraryTask;
-import com.musicott.view.EditInfoController;
-import com.musicott.view.ImportController;
+import com.musicott.view.EditController;
 import com.musicott.view.PlayQueueController;
+import com.musicott.view.PreferencesController;
 import com.musicott.view.RootController;
 import com.musicott.model.Track;
 
@@ -46,19 +43,25 @@ import javafx.stage.Stage;
 public class SceneManager {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+	protected static final String LAYOUTS_PATH = "/view/";
+	protected static final String ROOT_LAYOUT = "RootLayout.fxml";
+	protected static final String PRELOADER_LAYOUT = "PreloaderPromptLayout.fxml";
+	protected static final String EDIT_LAYOUT = "EditLayout.fxml";
+	protected static final String PLAYQUEUE_LAYOUT = "PlayQueueLayout.fxml";
+	protected static final String PROGRESS_LAYOUT = "ProgressLayout.fxml";
+	protected static final String PREFERENCES_LAYOUT = "PreferencesLayout.fxml";
 	
-	private Stage mainStage;
-	private Stage importStage;
-	private Stage progressStage;
-	private Stage editStage;
+	private Stage mainStage, editStage, progressStage, preferencesStage;
 	
-	private EditInfoController editController;
+	private EditController editController;
 	private RootController rootController;
-	private ImportController importController;
 	private PlayQueueController playQueueController;
+	private PreferencesController preferencesController;
 	
 	private static volatile SceneManager instance;
 	private static ErrorHandler errorHandler;
+	
+	private List<Track> tracksToEdit;
 	
 	private SceneManager() {
 	}
@@ -74,15 +77,13 @@ public class SceneManager {
 	protected void setMainStage(Stage mainStage) {
 		this.mainStage = mainStage;
 	}
-
-	public void saveLibrary(boolean saveTracks, boolean saveWaveforms) {
-		SaveLibraryTask task = new SaveLibraryTask(saveTracks, saveWaveforms);
-		task.setDaemon(true);
-		task.run();
-	}
 	
 	public Stage getMainStage() {
 		return mainStage;
+	}
+	
+	protected Stage getPreferencesStage() {
+		return preferencesStage;
 	}
 	
 	protected void setRootController(RootController rootController) {
@@ -101,86 +102,75 @@ public class SceneManager {
 		return this.playQueueController;
 	}
 	
+	public PreferencesController getPreferencesController() {
+		return this.preferencesController;
+	}
+	
 	public void openEditScene(List<Track> selection) {
-		if(editStage == null) {
-			try {
-				editStage = new Stage();
-				editStage.setTitle("Edit");
-				
-				FXMLLoader loader = new FXMLLoader();
-				loader.setLocation(getClass().getResource("/view/EditInfoLayout.fxml"));
-				AnchorPane editLayout = (AnchorPane) loader.load();
-				editController = loader.getController();
-				editController.setStage(editStage);
-				editController.setSelection(selection);
-				
-				Scene editScene = new Scene(editLayout);
-				editStage.initModality(Modality.APPLICATION_MODAL);
-				editStage.initOwner(editScene.getWindow());
-				editStage.setScene(editScene);
-				editStage.setResizable(false);
-			} catch (IOException e) {
-				LOG.error("Error", e);
-				errorHandler.addError(e, ErrorType.COMMON);
-				errorHandler.showErrorDialog(ErrorType.COMMON);
-			}
-		}
-		editController.setSelection(selection);
-		editStage.showAndWait();
+		tracksToEdit = selection;
+		openStage(EDIT_LAYOUT);
+	}
+
+	public void openPreferencesScene() {
+		openStage(PREFERENCES_LAYOUT);
+	}	
+	
+	public void openIndeterminatedProgressScene() {
+		openStage(PROGRESS_LAYOUT);
 	}
 	
-	public void openImportScene() {
-		if(importStage == null) {
-			try {
-				importStage = new Stage();
-				importStage.setTitle("Import");
-				
-				FXMLLoader loader = new FXMLLoader();
-				loader.setLocation(getClass().getResource("/view/ImportCollectionLayout.fxml"));
-	
-				AnchorPane importLayout = (AnchorPane) loader.load();
-				importController = loader.getController();
-				importController.setStage(importStage);
-				
-				Scene importMainScene = new Scene(importLayout);
-				importStage.initModality(Modality.APPLICATION_MODAL);
-				importStage.initOwner(importMainScene.getWindow());
-				importStage.setScene(importMainScene);
-				importStage.setResizable(false);
-			} catch (IOException e) {
-				LOG.error("Error", e);
-				errorHandler.addError(e, ErrorType.COMMON);
-				errorHandler.showErrorDialog(ErrorType.COMMON);
-			}
-		}
-		importStage.showAndWait();
-	}
-	
-	public void closeImportScene() {
-		if(errorHandler.hasErrors(ErrorType.PARSE)) 
-			errorHandler.showErrorDialog(progressStage.getScene(), ErrorType.PARSE);
+	public void closeIndeterminatedProgressScene() {
 		progressStage.close();
-		if(importStage != null && importStage.isShowing())
-			importStage.close();
 	}
-		
-	public void showImportProgressScene(boolean hideCancelButton) {
-		try {
-			progressStage = new Stage();
-			FXMLLoader loader = new FXMLLoader();
-			loader.setLocation(getClass().getResource("/view/ProgressImportLayout.fxml"));
-			AnchorPane progressLayout =  (AnchorPane) loader.load();
-			
-			Scene progressScene = new Scene(progressLayout);
-			progressStage.initModality(Modality.APPLICATION_MODAL);
-			progressStage.initOwner(progressScene.getWindow());
-			progressStage.setScene(progressScene);
-			progressStage.setResizable(false);
-			progressStage.showAndWait();
-		} catch(IOException e) {
-			LOG.error("Error", e);
-			errorHandler.addError(e, ErrorType.COMMON);
-			errorHandler.showErrorDialog(ErrorType.COMMON);
+	
+	private void openStage(String layout) {
+		Stage stageToOpen = null;
+		switch(layout) {
+			case EDIT_LAYOUT:
+				stageToOpen = editStage = editStage == null ? initStage(layout, "Edit") : editStage; break;
+			case PREFERENCES_LAYOUT:
+				stageToOpen = preferencesStage = preferencesStage == null ? initStage(layout, "Preferences") : preferencesStage; break; 
+			case PROGRESS_LAYOUT:
+				stageToOpen = progressStage = progressStage == null ? initStage(layout, "") : progressStage; break;
 		}
+		if(stageToOpen != null) {
+			if(layout.equals(EDIT_LAYOUT))
+				editController.setSelection(tracksToEdit);
+			else if(layout.equals(PREFERENCES_LAYOUT))
+				preferencesController.load();
+			stageToOpen.showAndWait();
+		}
+	}
+	
+	private Stage initStage(String layout, String title) {
+		Stage newStage;
+		try {
+			newStage = new Stage();
+			newStage.setTitle(title);
+			FXMLLoader loader = new FXMLLoader();
+			loader.setLocation(getClass().getResource(LAYOUTS_PATH + layout));
+			AnchorPane baseLayout = (AnchorPane) loader.load();
+			
+			if(layout.equals(PROGRESS_LAYOUT))
+				newStage.setOnCloseRequest(event -> event.consume());
+			else if(layout.equals(EDIT_LAYOUT)) {
+				editController = (EditController) loader.getController();
+				editController.setStage(newStage);
+			} else if(layout.equals(PREFERENCES_LAYOUT)) {
+				preferencesController = (PreferencesController) loader.getController();
+				preferencesController.setStage(newStage);
+			}
+			
+			Scene newScene = new Scene(baseLayout);
+			newStage.initModality(Modality.APPLICATION_MODAL);
+			newStage.initOwner(newScene.getWindow());
+			newStage.setScene(newScene);
+			newStage.setResizable(false);
+		} catch(IOException e) {
+			LOG.error("Error opening " + layout, e);
+			errorHandler.showErrorDialog("Error opening " + layout, null, e);
+			newStage = null;
+		}
+		return newStage;
 	}
 }

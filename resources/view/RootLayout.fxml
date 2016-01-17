@@ -23,11 +23,22 @@
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="O" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                            </accelerator></MenuItem>
-                    <MenuItem fx:id="menuItemImport" mnemonicParsing="false" onAction="#doImportCollection" text="Import collection">
+                    <MenuItem fx:id="menuItemImport" mnemonicParsing="false" onAction="#doImportFolder" text="Import folder...">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="R" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
                            </accelerator></MenuItem>
+                        <MenuItem fx:id="menuItemItunesImport" mnemonicParsing="false" onAction="#doItunesImport" text="Import from Itunes Library..">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="I" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                           </accelerator>
+                        </MenuItem>
                     <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="menuItemLastFM" mnemonicParsing="false" onAction="#doPreferences" text="Preferences">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="COMMA" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator>
+                        </MenuItem>
+                        <SeparatorMenuItem mnemonicParsing="false" />
                     <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Close">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="UP" shortcut="UP" />

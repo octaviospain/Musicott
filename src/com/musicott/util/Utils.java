@@ -45,7 +45,7 @@ public class Utils {
 	 */
 	public static List<File> getAllFilesInFolder(File rootFolder, FileFilter filter, int maxFilesRequired) throws IllegalArgumentException {
 		List<File> finalFiles = new ArrayList<>();
-		if(!Thread.interrupted()) {
+		if(!Thread.currentThread().isInterrupted()) {
 			if(maxFilesRequired < 0)
 				throw new IllegalArgumentException("maxFilesRequired argument less than zero");
 			if(rootFolder == null || filter == null)
@@ -68,7 +68,7 @@ public class Utils {
 			if(maxFilesRequired == 0 || remainingFiles > 0) {
 				File[] rootSubFolders = rootFolder.listFiles(file -> {return file.isDirectory();});
 				int sbFldrsCount = 0;
-				while((sbFldrsCount < rootSubFolders.length) && !Thread.interrupted()) {
+				while((sbFldrsCount < rootSubFolders.length) && !Thread.currentThread().isInterrupted()) {
 					File subFolder = rootSubFolders[sbFldrsCount++];
 					List<File> subFolderFiles = getAllFilesInFolder(subFolder, filter, remainingFiles);
 					finalFiles.addAll(subFolderFiles);

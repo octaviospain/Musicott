@@ -25,17 +25,20 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.jaudiotagger.audio.exceptions.CannotReadException;
+import org.jaudiotagger.audio.exceptions.CannotWriteException;
+import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
+import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
+import org.jaudiotagger.tag.TagException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.musicott.SceneManager;
-import com.musicott.error.ErrorHandler;
-import com.musicott.error.ErrorType;
+import com.musicott.ErrorHandler;
+import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
-
-import javafx.application.Platform;
 
 /**
  * @author Octavio Calleya
@@ -48,11 +51,13 @@ public class UpdateMetadataTask extends Thread {
 	private List<Track> tracks;
 	private File imageFile;
 	private CopyOption[] options;
+	private List<String> updateErrors;
 
 	public UpdateMetadataTask(List<Track> tracks, File imageFile) {
 		this.tracks = tracks;
 		this.imageFile = imageFile;
 		options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
+		updateErrors = new ArrayList<>();
 	}
 	
 	@Override
@@ -64,15 +69,21 @@ public class UpdateMetadataTask extends Thread {
 			if(track.getInDisk()) {
 				LOG.debug("Updating metadata of {}", track.getFileFolder()+"/"+track.getFileName());
 				File backup = makeBackup(track);
-				updated = track.updateMetadata();
+				try {
+					updated = track.updateMetadata();
+				} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
+						| InvalidAudioFrameException | CannotWriteException e) {
+					LOG.warn("Error writing metadata of "+track, e);
+					updateErrors.add(track.getArtist()+" - "+track.getName()+": "+e.getMessage());
+				}
 				if(imageFile != null)
 					coverChanged = track.updateCover(imageFile);
 				if((!updated || !coverChanged) && backup != null)
 					restoreBackup(track, backup);
 			}
-		SceneManager.getInstance().saveLibrary(true, false);
-		if(ErrorHandler.getInstance().hasErrors(ErrorType.METADATA))
-			Platform.runLater(() -> ErrorHandler.getInstance().showErrorDialog(ErrorType.METADATA));
+		MusicLibrary.getInstance().saveLibrary(true, false);
+		if(!updateErrors.isEmpty())
+			ErrorHandler.getInstance().showExpandableErrorsDialog("Errors writing metadata on some tracks", "", updateErrors);
 	}
 	
 	private File makeBackup(Track track) {
@@ -82,8 +93,8 @@ public class UpdateMetadataTask extends Thread {
 			backup = File.createTempFile(track.getName(), "");
 			Files.copy(original.toPath(), backup.toPath(), options);
 		} catch (IOException e) {
-			LOG.error("It wasn't able to copy the backup file: "+e.getMessage(), e);
-			ErrorHandler.getInstance().addError(e, ErrorType.METADATA);
+			LOG.error("Error creating the backup file: "+e.getMessage(), e);
+			ErrorHandler.getInstance().showErrorDialog("Error creating the backup file", null, e);
 		}	
 		return backup;
 	}
@@ -94,8 +105,8 @@ public class UpdateMetadataTask extends Thread {
 			backup = File.createTempFile(track.getName(), "");
 			Files.move(backup.toPath(), original.toPath(), options);
 		} catch (IOException e) {
-			LOG.error("It wasn't able to restore the backup file: "+e.getMessage(), e);
-			ErrorHandler.getInstance().addError(e, ErrorType.METADATA);
+			LOG.error("Error restoring the backup file: "+e.getMessage(), e);
+			ErrorHandler.getInstance().showErrorDialog("Error restoring the backup file", null, e);
 		}
 	}
 }
