@@ -27,8 +27,8 @@ import java.util.concurrent.Semaphore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.musicott.ErrorHandler;
 import com.musicott.SceneManager;
-import com.musicott.error.ErrorHandler;
 import com.musicott.model.Track;
 import com.musicott.services.LastFMService;
 import com.musicott.services.ServiceManager;
@@ -50,13 +50,13 @@ public class LastFMTask extends Thread {
 	private Semaphore semaphore;
 	private Track actualTrack;
 	private List<Map<Track, Integer>> tracksToScrobbleLater;
-	private boolean end;
+	private boolean end, login;
 	
 	public LastFMTask(String id, ServiceManager services) {
 		super(id);
 		eh = ErrorHandler.getInstance();
 		sm = services;
-		end = false;
+		end = login = false;
 		lastfm = new LastFMService();
 		semaphore = new Semaphore(0);
 	}
@@ -64,20 +64,26 @@ public class LastFMTask extends Thread {
 	@Override
 	public void run() {
 		LastFMResponse lfm;
-		while(true) {
-			try {
-				semaphore.acquire();
+		while(!isInterrupted()) {
+			if(login) {
 				if(!lastfm.isValidAPIConfig()) {
 					eh.showLastFMErrorDialog("LastFM error", "LastFM API Key or Secret are invalid");
-					sm.endLastfmUsage();
+					sm.lastFMLogOut();
 					break;
 				}	
 				lfm = lastfm.getSession();
-				if(lfm.getStatus().equals("failed")) {
-					handleLastFMError(lfm.getError());					
-					if(end)
-						break;
-				}
+				if(lfm.getStatus().equals("failed"))
+					handleLastFMError(lfm.getError());
+				Platform.runLater(() -> {
+					SceneManager.getInstance().getPreferencesController().endLogin(!end);
+				});			
+				login = false;	
+				if(end)
+					break;
+			}
+			try {
+				semaphore.acquire();
+				
 				lfm = lastfm.updateNowPlaying(actualTrack);
 				if(lfm.getStatus().equals("failed")) {
 					handleLastFMError(lfm.getError());
@@ -99,6 +105,10 @@ public class LastFMTask extends Thread {
 				break;
 			}
 		}
+	}
+	
+	public void loginBefore() {
+		login = true;
 	}
 	
 	public void updateAndScrobble(Track track) {
@@ -126,10 +136,19 @@ public class LastFMTask extends Thread {
 	
 	private void handleLastFMError(LastFMError error) {
 		//TODO Error handling for Last FM error statuses
+		String errorTitle, errorMessage;
+		switch(error.getCode()) {
+			case "4":
+				errorTitle = "Authentication Failed";
+				errorMessage = "Username or password invalid";
+				break;
+			default:
+				errorTitle = "LastFM error "+error.getCode();
+				errorMessage = error.getMessage();
+		}
 		LOG.info("LastFM error: {}", error.getMessage());
-		eh.showLastFMErrorDialog("LastFM error "+error.getCode(), error.getMessage());
-		Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Error updating LastFM"));
-		sm.endLastfmUsage();
+		eh.showLastFMErrorDialog(errorTitle, errorMessage);
+		sm.lastFMLogOut();
 		end = true;
 	}
 }

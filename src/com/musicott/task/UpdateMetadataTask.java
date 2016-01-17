@@ -36,7 +36,7 @@ import org.jaudiotagger.tag.TagException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.musicott.error.ErrorHandler;
+import com.musicott.ErrorHandler;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 

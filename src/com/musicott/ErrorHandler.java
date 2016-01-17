@@ -16,13 +16,13 @@
  *
  */
 
-package com.musicott.error;
+package com.musicott;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
-
-import com.musicott.SceneManager;
+import java.util.List;
 
 import javafx.application.HostServices;
 import javafx.application.Platform;
@@ -48,9 +48,11 @@ public class ErrorHandler {
 
 	private static ErrorHandler instance;
 	private HostServices hostServices;
-	private Stage mainStage;
+	private Stage mainStage, preferencesStage;
 	private Alert alert;
 	private FlowPane helpContentTextFP;
+	private TextArea textArea;
+	private GridPane expandableArea;
 
 	private ErrorHandler() {
 		Label text = new Label("Help Musicott to fix this kind of bugs. Report this error at");
@@ -85,8 +87,14 @@ public class ErrorHandler {
 	public synchronized void showErrorDialog(String message, String content, Exception exception, Scene alertStage) {
 		Platform.runLater(() -> {
 			alert = createAlert(message, content, alertStage);
-			if(exception != null)
-				addExpandableStackTrace(exception);
+			if(exception != null) {
+				StringWriter sw = new StringWriter();
+				PrintWriter pw = new PrintWriter(sw);
+				exception.printStackTrace(pw);
+				List<String> singleErrorList = new ArrayList<String>();
+				singleErrorList.add(sw.toString());
+				addExpandableErrorMessages(singleErrorList);
+			}
 			alert.showAndWait();
 		});		
 	}
@@ -102,7 +110,9 @@ public class ErrorHandler {
 	
 	public synchronized void showLastFMErrorDialog(String message, String content) {
 		Platform.runLater(() -> {
-			alert = createAlert(message, content, getMainStage().getScene());
+			preferencesStage = SceneManager.getInstance().getPreferencesStage();
+			Scene sceneWhereShow = preferencesStage != null && preferencesStage.isShowing() ? preferencesStage.getScene() : getMainStage().getScene(); 
+			alert = createAlert(message, content, sceneWhereShow);
 			alert.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/images/lastfm-logo.png"))));
 			alert.show();
 		});
@@ -132,43 +142,18 @@ public class ErrorHandler {
 		return alert;
 	}
 	
-	private String buildStackTraceContentText(Exception... exceptions) {
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		for(Exception e: exceptions)
-			e.printStackTrace(pw);
-		return sw.toString();
-	}
-	
-	private void addExpandableStackTrace(Exception... exceptions) {
-		TextArea textArea = new TextArea(buildStackTraceContentText(exceptions));
-		textArea.setEditable(false);
-		textArea.setWrapText(true);
-		
-		GridPane.setVgrow(textArea, Priority.ALWAYS);
-		GridPane.setHgrow(textArea, Priority.ALWAYS);
-
-		GridPane expContent = new GridPane();
-		expContent.setMaxWidth(Double.MAX_VALUE);
-		expContent.add(new Label("The exception stacktrace was:"), 0, 0);
-		expContent.add(textArea, 0, 1);
-		alert.getDialogPane().setExpandableContent(expContent);
-	}
-	
 	private void addExpandableErrorMessages(Collection<String> messages) {
-		TextArea textArea = new TextArea();
+		textArea = new TextArea();
 		textArea.setEditable(false);
 		textArea.setWrapText(true);
 		for(String s: messages)
 			textArea.appendText(s+"\n");
-		
+		expandableArea = new GridPane();
+		expandableArea.setMaxWidth(Double.MAX_VALUE);
+		expandableArea.add(new Label("The exception stacktrace was:"), 0, 0);
+		expandableArea.add(textArea, 0, 1);
 		GridPane.setVgrow(textArea, Priority.ALWAYS);
 		GridPane.setHgrow(textArea, Priority.ALWAYS);
-
-		GridPane expContent = new GridPane();
-		expContent.setMaxWidth(Double.MAX_VALUE);
-		expContent.add(new Label("The exception stacktrace was:"), 0, 0);
-		expContent.add(textArea, 0, 1);
-		alert.getDialogPane().setExpandableContent(expContent);		
+		alert.getDialogPane().setExpandableContent(expandableArea);		
 	}
 }

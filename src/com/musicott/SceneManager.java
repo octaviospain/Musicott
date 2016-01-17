@@ -20,37 +20,21 @@ package com.musicott;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.musicott.error.ErrorHandler;
-import com.musicott.view.EditInfoController;
-import com.musicott.view.ImportController;
-import com.musicott.view.ItunesImportController;
+import com.musicott.view.EditController;
 import com.musicott.view.PlayQueueController;
+import com.musicott.view.PreferencesController;
 import com.musicott.view.RootController;
 import com.musicott.model.Track;
 
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TextField;
-import javafx.scene.control.ButtonBar.ButtonData;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.util.Pair;
 
 /**
  * @author Octavio Calleya
@@ -59,21 +43,25 @@ import javafx.util.Pair;
 public class SceneManager {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+	protected static final String LAYOUTS_PATH = "/view/";
+	protected static final String ROOT_LAYOUT = "RootLayout.fxml";
+	protected static final String PRELOADER_LAYOUT = "PreloaderPromptLayout.fxml";
+	protected static final String EDIT_LAYOUT = "EditLayout.fxml";
+	protected static final String PLAYQUEUE_LAYOUT = "PlayQueueLayout.fxml";
+	protected static final String PROGRESS_LAYOUT = "ProgressLayout.fxml";
+	protected static final String PREFERENCES_LAYOUT = "PreferencesLayout.fxml";
 	
-	private Stage mainStage;
-	private Stage importStage;
-	private Stage itunesImportStage;
-	private Stage editStage;
-	private Stage progressStage;
+	private Stage mainStage, editStage, progressStage, preferencesStage;
 	
-	private EditInfoController editController;
+	private EditController editController;
 	private RootController rootController;
-	private ImportController importController;
-	private ItunesImportController itunesImportController;
 	private PlayQueueController playQueueController;
+	private PreferencesController preferencesController;
 	
 	private static volatile SceneManager instance;
 	private static ErrorHandler errorHandler;
+	
+	private List<Track> tracksToEdit;
 	
 	private SceneManager() {
 	}
@@ -94,6 +82,10 @@ public class SceneManager {
 		return mainStage;
 	}
 	
+	protected Stage getPreferencesStage() {
+		return preferencesStage;
+	}
+	
 	protected void setRootController(RootController rootController) {
 		this.rootController = rootController;
 	}
@@ -110,158 +102,75 @@ public class SceneManager {
 		return this.playQueueController;
 	}
 	
-	public void openEditScene(List<Track> selection) {
-		if(editStage == null) {
-			try {
-				editStage = new Stage();
-				editStage.setTitle("Edit");
-				
-				FXMLLoader loader = new FXMLLoader();
-				loader.setLocation(getClass().getResource("/view/EditInfoLayout.fxml"));
-				AnchorPane editLayout = (AnchorPane) loader.load();
-				editController = loader.getController();
-				editController.setStage(editStage);
-				editController.setSelection(selection);
-				
-				Scene editScene = new Scene(editLayout);
-				editStage.initModality(Modality.APPLICATION_MODAL);
-				editStage.initOwner(editScene.getWindow());
-				editStage.setScene(editScene);
-				editStage.setResizable(false);
-			} catch (IOException e) {
-				LOG.error("Error", e);
-				errorHandler.showErrorDialog("Error opening edit window", "", e);
-			}
-		}
-		editController.setSelection(selection);
-		editStage.showAndWait();
+	public PreferencesController getPreferencesController() {
+		return this.preferencesController;
 	}
 	
-	public void openImportScene() {
-		if(importStage == null) {
-			try {
-				importStage = new Stage();
-				importStage.setTitle("Import");
-				
-				FXMLLoader loader = new FXMLLoader();
-				loader.setLocation(getClass().getResource("/view/ImportCollectionLayout.fxml"));
-	
-				AnchorPane importLayout = (AnchorPane) loader.load();
-				importController = loader.getController();
-				importController.setStage(importStage);
-				
-				Scene importMainScene = new Scene(importLayout);
-				importStage.initModality(Modality.APPLICATION_MODAL);
-				importStage.initOwner(importMainScene.getWindow());
-				importStage.setScene(importMainScene);
-				importStage.setResizable(false);
-			} catch (IOException e) {
-				LOG.error("Error", e);
-				errorHandler.showErrorDialog("Error opening import window", "", e);
-			}
-		}
-		importStage.showAndWait();
+	public void openEditScene(List<Track> selection) {
+		tracksToEdit = selection;
+		openStage(EDIT_LAYOUT);
 	}
 
-	public void openItunesImportScene() {
-		if(itunesImportStage == null) {
-			try {
-				itunesImportStage = new Stage();
-				itunesImportStage.setTitle("Itunes Import");
-				
-				FXMLLoader loader = new FXMLLoader();
-				loader.setLocation(getClass().getResource("/view/ItunesImportLayout.fxml"));
-				
-				AnchorPane itunesImportLayout = (AnchorPane) loader.load();
-				itunesImportController = loader.getController();
-				itunesImportController.setStage(itunesImportStage);
-				
-				Scene itunesImportScene = new Scene(itunesImportLayout);
-				itunesImportStage.initModality(Modality.APPLICATION_MODAL);
-				itunesImportStage.initOwner(itunesImportScene.getWindow());
-				itunesImportStage.setScene(itunesImportScene);
-				itunesImportStage.setResizable(false);
-			} catch (IOException e) {
-				LOG.error("Error", e);
-				errorHandler.showErrorDialog("Error opening itunes import window", "", e);
-			}
-		}
-		itunesImportStage.showAndWait();
-	}
+	public void openPreferencesScene() {
+		openStage(PREFERENCES_LAYOUT);
+	}	
 	
 	public void openIndeterminatedProgressScene() {
-		if(progressStage == null) {
-			try {
-				progressStage = new Stage();
-				FXMLLoader loader = new FXMLLoader();
-				loader.setLocation(getClass().getResource("/view/ProgressLayout.fxml"));
-				AnchorPane progressLayout =  (AnchorPane) loader.load();
-				((ProgressBar) progressLayout.lookup(".progress-bar")).setStyle("-fx-accent: rgb(99,255,109);");
-				
-				Scene progressScene = new Scene(progressLayout);
-				progressStage.setOnCloseRequest(event -> event.consume());
-				progressStage.initModality(Modality.APPLICATION_MODAL);
-				progressStage.initOwner(progressScene.getWindow());
-				progressStage.setScene(progressScene);
-				progressStage.setResizable(false);
-			} catch(IOException e) {
-				LOG.error("Error", e);
-				errorHandler.showErrorDialog("Error opening progress window", "", e);
-			}
-		}
-		progressStage.showAndWait();
+		openStage(PROGRESS_LAYOUT);
 	}
 	
 	public void closeIndeterminatedProgressScene() {
 		progressStage.close();
 	}
 	
-	public void openLastFMLogin() {
-		Dialog<Optional<Pair<String, String>>> dialog = new Dialog<>();
-		dialog.setWidth(200);
-		dialog.setHeight(150);
-		dialog.initModality(Modality.NONE);
-		dialog.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
-		dialog.setTitle("LastFM Login");
-		dialog.setHeaderText("Log in to your LastFM account");
-		dialog.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/images/lastfm-logo.png"))));
-
-		ButtonType loginButtonType = new ButtonType("Login", ButtonData.OK_DONE);
-		dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
-
-		GridPane grid = new GridPane();
-		grid.setHgap(10);
-		grid.setVgap(10);
-		grid.setPadding(new Insets(20, 150, 10, 10));
-
-		TextField usernameField = new TextField();
-		usernameField.setPromptText("Username/email");
-		PasswordField passwordField = new PasswordField();
-		passwordField.setPromptText("Password");
-
-		grid.add(new Label("Username:"), 0, 0);
-		grid.add(usernameField, 1, 0);
-		grid.add(new Label("Password:"), 0, 1);
-		grid.add(passwordField, 1, 1);
-		
-		Label contentText = new Label("Log in to your LastFM account to scrobble your listened tracks on your profile");
-		BorderPane pane = new BorderPane();
-		pane.setCenter(grid);
-		pane.setTop(contentText);
-
-		dialog.getDialogPane().setContent(pane);
-		dialog.setResultConverter(dialogButton -> {
-		    if (dialogButton == loginButtonType) {
-		        return Optional.of(new Pair<>(usernameField.getText(), passwordField.getText()));
-		    }
-		    return null;
-		});
-		dialog.show();
-		dialog.resultProperty().addListener(listener -> {
-			dialog.getResult().ifPresent(usernamePassword -> {
-				MainPreferences.getInstance().setLasFMUsername(usernamePassword.getKey());
-				MainPreferences.getInstance().setLasFMPassword(usernamePassword.getValue());
-			});
-		});
+	private void openStage(String layout) {
+		Stage stageToOpen = null;
+		switch(layout) {
+			case EDIT_LAYOUT:
+				stageToOpen = editStage = editStage == null ? initStage(layout, "Edit") : editStage; break;
+			case PREFERENCES_LAYOUT:
+				stageToOpen = preferencesStage = preferencesStage == null ? initStage(layout, "Preferences") : preferencesStage; break; 
+			case PROGRESS_LAYOUT:
+				stageToOpen = progressStage = progressStage == null ? initStage(layout, "") : progressStage; break;
+		}
+		if(stageToOpen != null) {
+			if(layout.equals(EDIT_LAYOUT))
+				editController.setSelection(tracksToEdit);
+			else if(layout.equals(PREFERENCES_LAYOUT))
+				preferencesController.load();
+			stageToOpen.showAndWait();
+		}
+	}
+	
+	private Stage initStage(String layout, String title) {
+		Stage newStage;
+		try {
+			newStage = new Stage();
+			newStage.setTitle(title);
+			FXMLLoader loader = new FXMLLoader();
+			loader.setLocation(getClass().getResource(LAYOUTS_PATH + layout));
+			AnchorPane baseLayout = (AnchorPane) loader.load();
+			
+			if(layout.equals(PROGRESS_LAYOUT))
+				newStage.setOnCloseRequest(event -> event.consume());
+			else if(layout.equals(EDIT_LAYOUT)) {
+				editController = (EditController) loader.getController();
+				editController.setStage(newStage);
+			} else if(layout.equals(PREFERENCES_LAYOUT)) {
+				preferencesController = (PreferencesController) loader.getController();
+				preferencesController.setStage(newStage);
+			}
+			
+			Scene newScene = new Scene(baseLayout);
+			newStage.initModality(Modality.APPLICATION_MODAL);
+			newStage.initOwner(newScene.getWindow());
+			newStage.setScene(newScene);
+			newStage.setResizable(false);
+		} catch(IOException e) {
+			LOG.error("Error opening " + layout, e);
+			errorHandler.showErrorDialog("Error opening " + layout, null, e);
+			newStage = null;
+		}
+		return newStage;
 	}
 }

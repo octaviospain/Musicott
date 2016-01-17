@@ -40,7 +40,6 @@ import com.musicott.model.Track;
 import com.musicott.util.MetadataParser;
 import com.musicott.util.ObservableMapWrapperCreator;
 import com.musicott.util.Utils;
-import com.musicott.view.ImportController;
 import com.sun.javafx.collections.ObservableMapWrapper;
 
 import javafx.collections.FXCollections;
@@ -59,7 +58,6 @@ public class LibrarySerializeTest {
 	JsonWriter jsw;
 	FileInputStream fis;
 	JsonReader jsr;
-	ImportController icc = new ImportController();
 	
 	@Before
 	public void setUp() {

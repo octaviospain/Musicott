@@ -19,6 +19,7 @@
 package com.musicott.task;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Paths;
@@ -26,6 +27,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Scanner;
+import java.util.concurrent.Semaphore;
+import java.util.regex.Pattern;
 
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
@@ -37,8 +42,9 @@ import org.jaudiotagger.tag.TagException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.musicott.ErrorHandler;
+import com.musicott.MainPreferences;
 import com.musicott.SceneManager;
-import com.musicott.error.ErrorHandler;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.util.ItunesParserLogger;
@@ -49,6 +55,10 @@ import com.worldsworstsoftware.itunes.parser.ItunesLibraryParser;
 
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Alert.AlertType;
+import javafx.stage.Modality;
 import javafx.util.Duration;
 
 /**
@@ -68,33 +78,56 @@ public class ItunesImportTask extends Task<Void> {
 	private Map<Integer, Track> tracks;
 	private final String itunesLibraryXMLPath;
 	private final int metadataPolicy;
-	private boolean importPlaylists, keepPlayCount;
-	private int currentItems, totalItems;
+	private boolean importPlaylists, holdPlayCount;
+	private int currentItems, totalItems, numPlaylists;
 	private List<String> notFoundFiles, parseErrors;
 	private long startMillis, totalTime;
+	private Semaphore waitConfirmationSemaphore;
 
-	public ItunesImportTask(String path, int metadataPolicy, boolean importPlaylists, boolean keepPlaycount) {
+	public ItunesImportTask(String path) {
 		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();
 		itunesLibraryXMLPath = path;
-		this.metadataPolicy = metadataPolicy;
-		this.importPlaylists = importPlaylists;
-		this.keepPlayCount = keepPlaycount;
+		metadataPolicy = MainPreferences.getInstance().getItunesImportMetadataPolicy();
+		importPlaylists = MainPreferences.getInstance().getItunesImportPlaylists();
+		holdPlayCount = MainPreferences.getInstance().getItunesImportHoldPlaycount();
 		tracks = new HashMap<>();
 		notFoundFiles = new ArrayList<>();
 		parseErrors = new ArrayList<>();
 		itunesItems = new HashMap<>();
+		waitConfirmationSemaphore = new Semaphore(0);
 		currentItems = 0;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Void call() throws Exception {
-		startMillis = System.currentTimeMillis();
-		ItunesParserLogger iLogger = new ItunesParserLogger();
-		itunesLibrary = ItunesLibraryParser.parseLibrary(itunesLibraryXMLPath, iLogger);
-		itunesItems = itunesLibrary.getTracks();
-		totalItems = itunesItems.size();
+		if(isValidItunesXML()) {
+			startMillis = System.currentTimeMillis();
+			ItunesParserLogger iLogger = new ItunesParserLogger();
+			itunesLibrary = ItunesLibraryParser.parseLibrary(itunesLibraryXMLPath, iLogger);
+			itunesItems = itunesLibrary.getTracks();
+			totalItems = itunesItems.size();
+			numPlaylists = itunesLibrary.getPlaylists().size();
+			Platform.runLater(() -> {
+				Alert alert = new Alert(AlertType.CONFIRMATION);
+				alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
+				alert.setTitle("Import");
+				alert.setHeaderText("Import " + totalItems + " tracks"+(importPlaylists ? " and "+numPlaylists+" playlists" : "")+" from itunes?");
+				alert.initModality(Modality.APPLICATION_MODAL);
+				Optional<ButtonType> result = alert.showAndWait();
+				if(result.isPresent() && result.get().equals(ButtonType.OK)) {
+					waitConfirmationSemaphore.release();
+					SceneManager.getInstance().getRootController().setStatusMessage("Importing files");
+				}
+				else
+					cancel();
+			});
+		} else {
+			ErrorHandler.getInstance().showErrorDialog("The seleted xml file is not valid");
+			cancel();
+		}
+		waitConfirmationSemaphore.acquire();
 		parseItunesLibrary();
 		if(importPlaylists)
 			parsePlaylists();
@@ -122,6 +155,23 @@ public class ItunesImportTask extends Task<Void> {
 	
 	private void parsePlaylists() {
 		// TODO
+	}
+	
+	private boolean isValidItunesXML() {
+		boolean valid = true;
+		Scanner scnr;
+		try {
+			scnr = new Scanner(new File(itunesLibraryXMLPath));
+			scnr.useDelimiter(Pattern.compile(">"));
+			if(!(scnr.hasNextLine() && scnr.nextLine().contains("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")))
+					valid = false;
+			if(!(scnr.hasNextLine() && scnr.nextLine().contains("<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">")))
+					valid = false;
+			scnr.close();
+		} catch (FileNotFoundException e) {
+			valid = false;
+		}
+		return valid;
 	}
 	
 	private boolean isValidItunesTrack(ItunesTrack iTrack) {
@@ -162,7 +212,7 @@ public class ItunesImportTask extends Task<Void> {
 			newTrack.setDiscNumber(iTrack.getDiscNumber() < 1 ? 0 : iTrack.getDiscNumber());
 			newTrack.setTrackNumber(iTrack.getTrackNumber() < 1 ? 0 : iTrack.getTrackNumber());
 			newTrack.setYear(iTrack.getYear() < 1 ? 0 : iTrack.getYear());
-			if(keepPlayCount)
+			if(holdPlayCount)
 				newTrack.setPlayCount(iTrack.getPlayCount() < 1 ? 0 : iTrack.getPlayCount());
 			AudioFile audioFile;
 			try {
@@ -197,7 +247,7 @@ public class ItunesImportTask extends Task<Void> {
 				LOG.error("Error parsing "+itunesFile, e);
 				parseErrors.add(itunesFile+e.getMessage());
 			}
-			if(newTrack != null && keepPlayCount)
+			if(newTrack != null && holdPlayCount)
 				newTrack.setPlayCount(iTrack.getPlayCount() < 1 ? 0 : iTrack.getPlayCount());
 		}
 		else

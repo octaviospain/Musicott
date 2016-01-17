@@ -32,9 +32,9 @@ import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
 import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
 import org.jaudiotagger.tag.TagException;
 
+import com.musicott.ErrorHandler;
 import com.musicott.MainPreferences;
 import com.musicott.SceneManager;
-import com.musicott.error.ErrorHandler;
 import com.musicott.util.MetadataUpdater;
 
 import javafx.application.Platform;

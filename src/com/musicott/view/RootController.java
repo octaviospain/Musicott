@@ -35,6 +35,7 @@ import org.controlsfx.control.StatusBar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.musicott.MainPreferences;
 import com.musicott.SceneManager;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
@@ -44,6 +45,7 @@ import com.musicott.player.PlayerFacade;
 import com.musicott.player.TrackPlayer;
 import com.musicott.services.ServiceManager;
 import com.musicott.task.TaskPoolManager;
+import com.musicott.util.Utils;
 import com.musicott.view.custom.WaveformPanel;
 
 import javafx.application.HostServices;
@@ -89,9 +91,11 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaPlayer.Status;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Modality;
 import javafx.util.Callback;
 import javafx.util.Duration;
 
@@ -102,7 +106,7 @@ import javafx.util.Duration;
 public class RootController {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private static final double AMOUNT_VOLUME = 0.05;
+	private static final double VOLUME_AMOUNT = 0.05;
 
 	@FXML
 	private BorderPane rootBorderPane;
@@ -151,17 +155,18 @@ public class RootController {
 	private MusicLibrary ml;
 	private ServiceManager services;
 	private PlayerFacade player;
+	private MainPreferences preferences;
 	private WaveformPanel mainWaveformPane;
 	private HostServices hostServices;
 	
-	public RootController() {
-	}
+	public RootController() {}
 	
 	@FXML
 	public void initialize() {
 		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();
 		services = ServiceManager.getInstance();
+		preferences = MainPreferences.getInstance();
 		map = ml.getTracks();
 		tracks = FXCollections.observableArrayList(map.entrySet());
 		map.addListener((MapChangeListener.Change<? extends Integer, ? extends Track> c) -> {
@@ -479,8 +484,7 @@ public class RootController {
 			  (newTime.greaterThanOrEqualTo(mediaPlayer.getStopTime().divide(2.0)) || newTime.greaterThanOrEqualTo(Duration.minutes(4)))) {
 				
 				player.setCurrentTrackScrobbled(true);
-				if(services.usingLastFM())
-					services.udpateAndScrobbleLastFM(player.getCurrentTrack());
+				services.udpateAndScrobbleLastFM(player.getCurrentTrack());
 			}
 		});
 	}
@@ -531,6 +535,17 @@ public class RootController {
 		}
 	}
 	
+	private Alert createAlert(String title, String header, String content, AlertType type) {
+		Alert alert = new Alert(AlertType.CONFIRMATION);
+		alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
+		alert.setTitle(title);
+		alert.setHeaderText(header);
+		alert.setContentText(content);
+		alert.initModality(Modality.APPLICATION_MODAL);
+		alert.initOwner(rootStage);
+		return alert;
+	}
+	
 	@FXML
 	private void doShowHidePlayQueue() {
 		if(playQueuePane == null)
@@ -568,16 +583,16 @@ public class RootController {
 	@FXML
 	private void doIncreaseVolume() {
 		if(player != null)
-			player.increaseVolume(AMOUNT_VOLUME);
-		volumeSlider.setValue(volumeSlider.getValue()+AMOUNT_VOLUME);
+			player.increaseVolume(VOLUME_AMOUNT);
+		volumeSlider.setValue(volumeSlider.getValue()+VOLUME_AMOUNT);
 		LOG.trace("Volume increased "+volumeSlider.getValue());
 	}
 	
 	@FXML
 	private void doDecreaseVolume() {
 		if(player != null)
-			player.decreaseVolume(AMOUNT_VOLUME);
-		volumeSlider.setValue(volumeSlider.getValue()-AMOUNT_VOLUME);
+			player.decreaseVolume(VOLUME_AMOUNT);
+		volumeSlider.setValue(volumeSlider.getValue()-VOLUME_AMOUNT);
 		LOG.trace("Volume decreased "+volumeSlider.getValue());
 	}
 	
@@ -597,11 +612,7 @@ public class RootController {
 	private void doDelete() {
 		if(selection != null && !selection.isEmpty()) {
 			int numDeletedTracks = selection.size();
-			Alert alert = new Alert(AlertType.CONFIRMATION);
-			alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
-			alert.setTitle("");
-			alert.setHeaderText("");
-			alert.setContentText("Delete "+numDeletedTracks+" files from Musicott?");
+			Alert alert = createAlert("", "Delete "+numDeletedTracks+" files from Musicott?", "", AlertType.CONFIRMATION);
 			Optional<ButtonType> result = alert.showAndWait();
 			if (result.get() == ButtonType.OK) {
 				new Thread(() -> {
@@ -619,11 +630,7 @@ public class RootController {
 	private void doEdit() {
 		if(selection != null & !selection.isEmpty()) {
 			if(selection.size() > 1) {
-				Alert alert = new Alert(AlertType.CONFIRMATION);
-				alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
-				alert.setTitle("");
-				alert.setHeaderText("");
-				alert.setContentText("Are you sure you want to edit multiple files?");
+				Alert alert = createAlert("", "Are you sure you want to edit multiple files?", "", AlertType.CONFIRMATION);
 				Optional<ButtonType> result = alert.showAndWait();
 				if (result.get() == ButtonType.OK) {
 					sc.openEditScene(selection.stream().map(Map.Entry::getValue).collect(Collectors.toList()));
@@ -659,26 +666,53 @@ public class RootController {
 	
 	@FXML
 	private void doImportFolder() {
-		sc.openImportScene();
+		LOG.debug("Choosing folder to being imported");
+		DirectoryChooser chooser = new DirectoryChooser();
+		chooser.setTitle("Choose folder");
+		File folder = chooser.showDialog(rootStage);
+		if(folder != null) {
+			Thread countFilesThread = new Thread(() -> {
+				List<File> files = Utils.getAllFilesInFolder(folder, preferences.getExtensionsFileFilter(), 0);
+				Platform.runLater(() -> {
+					if(files.isEmpty()) {
+						Alert alert = createAlert("Import", "No files", "There are no valid files to import on the selected folder."
+								+ "Change the folder or the import options in preferences", AlertType.WARNING);
+						alert.showAndWait();
+					}
+					else {
+						Alert alert = createAlert("Import", "Import " + files.size() + " files?", "", AlertType.CONFIRMATION);
+						Optional<ButtonType> result = alert.showAndWait();
+						if(result.isPresent() && result.get().equals(ButtonType.OK)) {
+							TaskPoolManager.getInstance().parseFiles(files, false);
+							setStatusMessage("Importing files");
+						}
+					}
+				});
+			});
+			countFilesThread.start();
+		}
 	}
 	
 	@FXML
 	private void doItunesImport() {
-		sc.openItunesImportScene();
+		LOG.debug("Choosing Itunes xml file");
+		FileChooser chooser = new FileChooser();
+		chooser.setTitle("Select 'iTunes Music Library.xml' file");
+		chooser.getExtensionFilters().add(new ExtensionFilter("xml files (*.xml)", "*.xml"));
+		File xmlFile = chooser.showOpenDialog(rootStage);
+		if(xmlFile != null) 
+			TaskPoolManager.getInstance().parseItunesLibrary(xmlFile.getAbsolutePath());
 	}
 	
 	@FXML
-	private void doConnectToLastFM() {
-		sc.openLastFMLogin();
+	private void doPreferences() {
+		sc.openPreferencesScene();
 	}
 	
 	@FXML
 	private void doAbout() {
-		Alert alert = new Alert(AlertType.INFORMATION);
-		alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
-		alert.setTitle("About Musicott");
-		alert.setHeaderText("Musicott");
-		Label text = new Label(" Version 0.7.0\n\n Copyright © 2015 Octavio Calleya.");
+		Alert alert = createAlert("About Musicott", "Musicott", "", AlertType.INFORMATION);
+		Label text = new Label(" Version 0.8.0\n\n Copyright © 2015 Octavio Calleya.");
 		Label text2 = new Label(" Licensed under GNU GPLv3. This product includes\n software developed by other open source projects.");
 		Hyperlink githubLink = new Hyperlink("https://github.com/octaviospain/Musicott/");
 		githubLink.setOnAction(event -> hostServices.showDocument(githubLink.getText()));

@@ -23,7 +23,6 @@ import java.io.IOException;
 
 import com.musicott.MainApp.CustomProgressNotification;
 import com.musicott.MainApp.EventNotification;
-import com.musicott.error.ErrorHandler;
 
 import javafx.application.Platform;
 import javafx.application.Preloader;
@@ -43,12 +42,16 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import static com.musicott.MainApp.FIRST_USE_EVENT;
+import static com.musicott.SceneManager.LAYOUTS_PATH;
+import static com.musicott.SceneManager.PRELOADER_LAYOUT;
+
 /**
  * @author Octavio Calleya
  *
  */
 public class MainPreloader extends Preloader {
-	
+
 	private MainPreferences pf;
 	private Stage preloaderStage;
 	private Scene preloaderScene;
@@ -97,7 +100,7 @@ public class MainPreloader extends Preloader {
 			preloaderProgressBar.setProgress(pn.getProgress());
 			infoLabel.setText(pn.getDetails());
 		}
-		else if(info instanceof EventNotification) {
+		else if(info instanceof EventNotification && ((EventNotification)info).getEvent().equals(FIRST_USE_EVENT)) {
 			openFirstUseDialog();
 		}
 	}
@@ -124,7 +127,7 @@ public class MainPreloader extends Preloader {
     	try {
 			Stage promptStage = new Stage();
         	FXMLLoader loader = new FXMLLoader();
-        	loader.setLocation(getClass().getResource("/view/PreloaderPromptLayout.fxml"));
+        	loader.setLocation(getClass().getResource(LAYOUTS_PATH + PRELOADER_LAYOUT));
 			AnchorPane pane = (AnchorPane) loader.load();
 			Button openButton = (Button) pane.lookup("#openButton");
 			Button okButton = (Button) pane.lookup("#okButton");

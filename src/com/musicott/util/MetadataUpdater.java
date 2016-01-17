@@ -45,7 +45,7 @@ import org.jaudiotagger.tag.wav.WavTag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.musicott.error.ErrorHandler;
+import com.musicott.ErrorHandler;
 import com.musicott.model.Track;
 
 /**

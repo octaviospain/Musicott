@@ -19,6 +19,7 @@
 package com.musicott.model;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,19 +27,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Semaphore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cedarsoftware.util.io.JsonWriter;
+import com.musicott.ErrorHandler;
 import com.musicott.MainPreferences;
 import com.musicott.SceneManager;
-import com.musicott.error.ErrorHandler;
 import com.musicott.player.PlayerFacade;
 
 import javafx.application.Platform;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
+
+import static com.musicott.MainApp.TRACKS_PERSISTENCE_FILE;
+import static com.musicott.MainApp.WAVEFORMS_PERSISTENCE_FILE;;
 
 /**
  * @author Octavio Calleya
@@ -53,9 +58,10 @@ public class MusicLibrary {
 	private ObservableMap<Integer, Track> tracks;
 	private Map<Integer,float[]> waveforms;
 	private SaveLibraryTask saveLibraryTask;
-	private volatile boolean save = true;
+	private Semaphore saveSemaphore;
 	
 	private MusicLibrary() {
+		saveSemaphore = new Semaphore(0);
 	}
 	
 	public static MusicLibrary getInstance() {
@@ -68,12 +74,11 @@ public class MusicLibrary {
 		synchronized(tracks) {
 			this.tracks = tracks;
 			this.tracks.addListener((MapChangeListener.Change<? extends Integer, ? extends Track> c) -> {
-				boolean waveformsMapChanged = false;
 				if(c.wasRemoved()) {
-					waveformsMapChanged = removeWaveform(c.getKey());
+					waveforms.remove(c.getKey());
 					Platform.runLater(() -> PlayerFacade.getInstance().removeTrack(c.getKey()));
 				}
-				saveLibrary(true, waveformsMapChanged);
+				saveLibrary(true, true);
 			});
 		}
 	}
@@ -113,15 +118,9 @@ public class MusicLibrary {
 		return waveforms.get(trackID);
 	}
 	
-	private Map<Integer,float[]> getWaveforms() {
+	public Map<Integer,float[]> getWaveforms() {
 		synchronized(waveforms) {
 			return this.waveforms;
-		}
-	}
-	
-	public boolean removeWaveform(int trackID) {
-		synchronized(waveforms) {
-			return waveforms.remove(trackID, waveforms.get(trackID));
 		}
 	}
 	
@@ -157,16 +156,14 @@ public class MusicLibrary {
 	}
 	
 	public void saveLibrary(boolean saveTracks, boolean saveWaveforms) {
-		if(saveLibraryTask == null || (saveLibraryTask != null && !saveLibraryTask.isAlive())) {
-			saveLibraryTask = new SaveLibraryTask(saveTracks, saveWaveforms);
+		if(saveLibraryTask == null) {
+			saveLibraryTask = new SaveLibraryTask();
 			saveLibraryTask.setDaemon(true);
 			saveLibraryTask.start();
 		}
-		else {
-			save = true;
-			saveLibraryTask.saveTracks = saveTracks;
-			saveLibraryTask.saveWaveforms = saveWaveforms;
-		}
+		saveLibraryTask.saveTracks = saveTracks;
+		saveLibraryTask.saveWaveforms = saveWaveforms;
+		saveSemaphore.release();
 	}
 	
 	public int hashCode() {
@@ -197,17 +194,16 @@ public class MusicLibrary {
 	
 	public class SaveLibraryTask extends Thread {
 
+		private String musicottUserPath;
 		private File tracksFile, waveformsFile;
 		private Map<String,Object> args;
-		private boolean saveTracks, saveWaveforms;
+		private FileOutputStream tracksFOS, waveformsFOS;
+		private JsonWriter tracksJSW, waveformsJSW;
+		private volatile boolean saveTracks, saveWaveforms;
 
-		public SaveLibraryTask(boolean saveTracks, boolean saveWaveforms) {
+		public SaveLibraryTask() {
 			setName("Save Library Thread");
-			this.saveTracks = saveTracks;
-			this.saveWaveforms = saveWaveforms;
-			String musicottUserPath = MainPreferences.getInstance().getMusicottUserFolder();
-			tracksFile = new File(musicottUserPath+"/Musicott-tracks.json");
-			waveformsFile = new File(musicottUserPath+"/Musicott-waveforms.json");
+			musicottUserPath = "";
 			
 			args = new HashMap<>();
 			Map<Class<?>,List<String>> fields = new HashMap<>();
@@ -249,39 +245,45 @@ public class MusicLibrary {
 		@Override
 		public void run() {
 			try {
-				// Save the list of tracks, covers, and the sequence object
-				FileOutputStream fos;
-				JsonWriter jsw;
-				while(save) {
-					save = false;
+				while(true) {
+					saveSemaphore.acquire();
+					checkMusicottFiles();
 					if(saveTracks) {
 						LOG.debug("Saving list of tracks in {}", tracksFile);
-						fos = new FileOutputStream(tracksFile);				
-						jsw = new JsonWriter(fos, args);
+						tracksFOS = new FileOutputStream(tracksFile);
+						tracksJSW = new JsonWriter(tracksFOS, args);
 						synchronized(tracks) {
-							jsw.write(tracks);
+							tracksJSW.write(tracks);
 						}
-						fos.close();
-						jsw.close();
+						tracksFOS.close();
+						tracksJSW.close();
 					}
 					// Save the map of waveforms
 					if(saveWaveforms) {
 						LOG.debug("Saving waveform images in {}", waveformsFile);
-						fos = new FileOutputStream(waveformsFile);
-						jsw = new JsonWriter(fos);
+						waveformsFOS = new FileOutputStream(waveformsFile);
+						waveformsJSW = new JsonWriter(waveformsFOS);
 						synchronized(waveforms) {
-							jsw.write(waveforms);
+							waveformsJSW.write(waveforms);
 						}
-						fos.close();
-						jsw.close();
+						waveformsFOS.close();
+						waveformsJSW.close();
 					}
 				}
-			}
-			catch (IOException |RuntimeException e) {
+			} catch (IOException | RuntimeException | InterruptedException e) {
 				Platform.runLater(() -> {
 					LOG.error("Error saving music library", e);
 					ErrorHandler.getInstance().showErrorDialog("Error saving music library", null, e);
 				});
+			}
+		}
+		
+		private void checkMusicottFiles() throws FileNotFoundException {
+			String newPath = MainPreferences.getInstance().getMusicottUserFolder();
+			if(!newPath.equals(musicottUserPath)) {	// Musicott folder has changed
+				tracksFile = new File(newPath+"/"+TRACKS_PERSISTENCE_FILE);
+				waveformsFile = new File(newPath+"/"+WAVEFORMS_PERSISTENCE_FILE);
+				musicottUserPath = newPath;
 			}
 		}
 	}

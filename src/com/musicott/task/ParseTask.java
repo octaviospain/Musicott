@@ -34,8 +34,8 @@ import org.jaudiotagger.tag.TagException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.musicott.ErrorHandler;
 import com.musicott.SceneManager;
-import com.musicott.error.ErrorHandler;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.player.PlayerFacade;
@@ -67,17 +67,17 @@ public class ParseTask extends Task<Void> {
 	private List<String> parseErrors;
 	
 	public ParseTask(List<File> filesToParse, boolean playFinally) {
-		tracks = new HashMap<>();
-		files = new ArrayDeque<>();
-		parseErrors = new ArrayList<>();
-		files.addAll(filesToParse);
-		currentFiles = 0;
-		totalFiles = files.size();
 		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();
 		eh = ErrorHandler.getInstance();
 		player = PlayerFacade.getInstance();
+		tracks = new HashMap<>();
+		files = new ArrayDeque<>();
+		parseErrors = new ArrayList<>();
+		currentFiles = 0;
 		play = playFinally;
+		files.addAll(filesToParse);
+		totalFiles = files.size();
 	}
 	
 	@Override
@@ -85,14 +85,6 @@ public class ParseTask extends Task<Void> {
 		startMillis = System.currentTimeMillis();
 		parseFiles();
 		return null;
-	}
-	
-	protected void addFilesToParse(List<File> newFilesToParse) {
-		synchronized(files) {
-			files.addAll(newFilesToParse);
-			totalFiles += files.size();
-			LOG.debug("Added more tracks to parse {}", newFilesToParse);
-		}
 	}
 	
 	protected void parseFiles() {

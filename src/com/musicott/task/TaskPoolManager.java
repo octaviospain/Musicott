@@ -28,10 +28,8 @@ import java.util.concurrent.Semaphore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.musicott.ErrorHandler;
 import com.musicott.model.Track;
-
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 
 /**
  * @author Octavio Calleya
@@ -59,31 +57,27 @@ public class TaskPoolManager {
 		return instance;
 	}
 	
-	public void parseItunesLibrary(String path, int metadataPolicy, boolean importPlaylists, boolean keepPlaycount) {
-		if(itunesImportTask == null || itunesImportTask.isDone()) {
-			itunesImportTask = new ItunesImportTask(path, metadataPolicy, importPlaylists, keepPlaycount);
+	public void parseItunesLibrary(String path) {
+		if((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning()))
+			ErrorHandler.getInstance().showErrorDialog("There is already an import task running.");
+		else {
+			itunesImportTask = new ItunesImportTask(path);
 			Thread itunesThread = new Thread(itunesImportTask, "Parse Itunes Task");
 			itunesThread.setDaemon(true);
 			itunesThread.start();
 			LOG.debug("Parsing Itunes Library: {}", path);
 		}
-		else if(itunesImportTask.isRunning()) {
-			Alert alert = new Alert(AlertType.INFORMATION);
-			alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
-			alert.setContentText("There is already an import task running.");
-			alert.showAndWait();
-		}
 	}
 
-	public void parseFiles(List<File> files, boolean playfinally) {
-		if(parseTask == null || parseTask.isDone()) {
-			parseTask = new ParseTask(files, playfinally);
+	public void parseFiles(List<File> filesToParse, boolean playFinally) {
+		if((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning())) 
+			ErrorHandler.getInstance().showErrorDialog("There is already an import task running.");
+		else {
+			parseTask = new ParseTask(filesToParse, playFinally);
 			Thread parseThread = new Thread(parseTask, "Parse Files Task");
 			parseThread.setDaemon(true);
 			parseThread.start();
 		}
-		else if(parseTask.isRunning())
-			parseTask.addFilesToParse(files);
 	}
 	
 	public synchronized void addTrackToProcess(Track track) {

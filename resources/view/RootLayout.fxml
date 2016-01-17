@@ -32,10 +32,10 @@
                               <KeyCodeCombination alt="UP" code="I" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
                            </accelerator>
                         </MenuItem>
-                    <SeparatorMenuItem mnemonicParsing="false"/>
-                        <MenuItem  fx:id="menuItemLastFM" mnemonicParsing="false" onAction="#doConnectToLastFM" text="Connect to LastFM...">
+                    <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="menuItemLastFM" mnemonicParsing="false" onAction="#doPreferences" text="Preferences">
                            <accelerator>
-                              <KeyCodeCombination alt="UP" code="S" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                              <KeyCodeCombination alt="UP" code="COMMA" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                            </accelerator>
                         </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />

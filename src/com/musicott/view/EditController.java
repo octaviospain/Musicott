@@ -32,7 +32,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.musicott.error.ErrorHandler;
+import com.musicott.ErrorHandler;
 import com.musicott.model.Track;
 import com.musicott.model.TrackField;
 import com.musicott.task.UpdateMetadataTask;
@@ -60,46 +60,22 @@ import javafx.stage.FileChooser.ExtensionFilter;
  * @author Octavio Calleya
  *
  */
-public class EditInfoController {
+public class EditController {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	@FXML
-	private TextField name;
-	@FXML
-	private TextField artist;
-	@FXML
-	private TextField album;
-	@FXML
-	private TextField albumArtist;
-	@FXML
-	private TextField genre;
-	@FXML
-	private TextField label;
-	@FXML
-	private TextField year;
-	@FXML
-	private TextField bpm;
+	private TextField name, artist, album, albumArtist, genre, label, year, bpm, trackNum, discNum;
 	@FXML
 	private TextArea comments;
 	@FXML
-	private TextField trackNum;
-	@FXML
-	private TextField discNum;
-	@FXML
-	private Label titleName;
-	@FXML
-	private Label titleArtist;
-	@FXML
-	private Label titleAlbum;
+	private Label titleName, titleArtist, titleAlbum;
 	@FXML
 	private ImageView coverImage;
 	@FXML
 	private CheckBox isCompilationCheckBox;
 	@FXML
-	private Button cancelEditButton;
-	@FXML
-	private Button okEditButton;
+	private Button cancelEditButton, okEditButton;
 	
 	private Map<TrackField,TextInputControl> editFieldsMap;
 	private File newCoverImage;
@@ -107,8 +83,7 @@ public class EditInfoController {
 	private Stage editStage;
 	private List<Track> trackSelection;
 	
-	public EditInfoController() {
-	}
+	public EditController() {}
 	
 	@FXML
 	private void initialize() {

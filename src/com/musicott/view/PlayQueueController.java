@@ -55,8 +55,7 @@ public class PlayQueueController {
 	private ObservableList<TrackQueueRow> historyQueueList;
 	private PlayerFacade player;
 	
-	public PlayQueueController () {
-	}
+	public PlayQueueController () {}
 	
 	@FXML
 	public void initialize() {
