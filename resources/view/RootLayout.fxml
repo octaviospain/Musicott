@@ -29,9 +29,9 @@
                <children>
                   <HBox alignment="CENTER_LEFT" minHeight="50.0" minWidth="-Infinity" prefHeight="50.0" GridPane.columnIndex="0">
                      <children>
-                        <Button fx:id="prevButton" ellipsisString="" mnemonicParsing="false" onAction="#doPrevious" />
+                        <Button fx:id="prevButton" ellipsisString="" mnemonicParsing="false" />
                         <ToggleButton fx:id="playButton" ellipsisString="" mnemonicParsing="false" onAction="#doPlayPause" />
-                        <Button fx:id="nextButton" ellipsisString="" mnemonicParsing="false" onAction="#doNext" />
+                        <Button fx:id="nextButton" ellipsisString="" mnemonicParsing="false" />
                      </children>
                      <GridPane.margin>
                         <Insets />

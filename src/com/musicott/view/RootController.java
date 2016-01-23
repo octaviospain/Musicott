@@ -140,6 +140,7 @@ public class RootController {
 	@FXML
 	public void initialize() {
 		ml = MusicLibrary.getInstance();
+		services = ServiceManager.getInstance();
 		map = ml.getTracks();
 		tracks = FXCollections.observableArrayList(map.entrySet());
 		map.addListener((MapChangeListener.Change<? extends Integer, ? extends Track> c) -> {
