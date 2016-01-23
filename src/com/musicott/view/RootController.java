@@ -19,14 +19,12 @@
 package com.musicott.view;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.swing.SwingUtilities;
@@ -35,8 +33,6 @@ import org.controlsfx.control.StatusBar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.musicott.MainPreferences;
-import com.musicott.SceneManager;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.player.FlacPlayer;
@@ -45,11 +41,8 @@ import com.musicott.player.PlayerFacade;
 import com.musicott.player.TrackPlayer;
 import com.musicott.services.ServiceManager;
 import com.musicott.task.TaskPoolManager;
-import com.musicott.util.Utils;
 import com.musicott.view.custom.WaveformPanel;
 
-import javafx.application.HostServices;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -61,13 +54,8 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.embed.swing.SwingNode;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
@@ -77,25 +65,18 @@ import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaPlayer.Status;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.stage.Modality;
 import javafx.util.Callback;
 import javafx.util.Duration;
 
@@ -110,8 +91,6 @@ public class RootController {
 
 	@FXML
 	private BorderPane rootBorderPane;
-	@FXML
-	private MenuItem menuItemPrev, menuItemNext;
 	@FXML
 	private ToggleButton playButton, playQueueButton;
 	@FXML
@@ -151,22 +130,16 @@ public class RootController {
 	private ObservableList<Map.Entry<Integer, Track>> tracks;
 	private List<Map.Entry<Integer, Track>> selection;
 	private Stage rootStage;
-	private SceneManager sc;
 	private MusicLibrary ml;
 	private ServiceManager services;
 	private PlayerFacade player;
-	private MainPreferences preferences;
 	private WaveformPanel mainWaveformPane;
-	private HostServices hostServices;
 	
 	public RootController() {}
 	
 	@FXML
 	public void initialize() {
-		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();
-		services = ServiceManager.getInstance();
-		preferences = MainPreferences.getInstance();
 		map = ml.getTracks();
 		tracks = FXCollections.observableArrayList(map.entrySet());
 		map.addListener((MapChangeListener.Change<? extends Integer, ? extends Track> c) -> {
@@ -188,9 +161,7 @@ public class RootController {
 		if(map.isEmpty())
 			playButton.setDisable(true);
 		prevButton.setDisable(true);
-		menuItemPrev.disableProperty().bind(prevButton.disableProperty());
 		nextButton.setDisable(true);
-		menuItemNext.disableProperty().bind(nextButton.disableProperty());
 		trackSlider.setDisable(true);
 		trackSlider.setValue(0.0);
 		volumeSlider.setMin(0.0);
@@ -239,24 +210,6 @@ public class RootController {
 		sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
 		trackTable.setItems(sortedTracks);
 		
-		// Set up the ContextMenu
-		MenuItem cmPlay = new MenuItem("Play");
-		cmPlay.setOnAction(event -> {if(!selection.isEmpty()) player.addTracks(selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), true);});
-		MenuItem cmEdit = new MenuItem("Edit");
-		cmEdit.setOnAction(event -> doEdit());
-		MenuItem cmDelete = new MenuItem("Delete");
-		cmDelete.setOnAction(event -> doDelete());
-		MenuItem cmAddToQueue = new MenuItem("Add to Play Queue");
-		cmAddToQueue.setOnAction(event -> {
-			if(!selection.isEmpty())
-				player.addTracks(selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), false);
-		});
-		ContextMenu cm = new ContextMenu();
-		cm.getItems().add(cmPlay);
-		cm.getItems().add(cmAddToQueue);
-		cm.getItems().add(cmEdit);
-		cm.getItems().add(cmDelete);
-		
 		// Double click on row = play that track
 		trackTable.setRowFactory(tv -> {
 			TableRow<Map.Entry<Integer, Track>> row = new TableRow<>();
@@ -268,15 +221,6 @@ public class RootController {
 				}
 			});
 			return row;
-		});
-		// Right click on row = show ContextMenu
-		trackTable.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-			if(event.getButton() == MouseButton.SECONDARY) {
-				cm.show(trackTable,event.getScreenX(),event.getScreenY());
-				LOG.debug("Showing context menu");
-			}
-			else if(event.getButton() == MouseButton.PRIMARY && cm.isShowing())
-				cm.hide();
 		});
 		// Enter key pressed = play; Space key = pause/resume
 		trackTable.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
@@ -403,11 +347,7 @@ public class RootController {
 	
 	public void setStage(Stage stage) {
 		rootStage = stage;
-		rootStage.setOnCloseRequest(event -> handleExit());
-	}
-	
-	public void setApplicationHostServices(HostServices applicationHostServices) {
-		this.hostServices = applicationHostServices;
+		rootStage.setOnCloseRequest(event -> {LOG.info("Exiting Musicott");	System.exit(0);});
 	}
 	
 	public void setStatusMessage(String message) {
@@ -535,17 +475,6 @@ public class RootController {
 		}
 	}
 	
-	private Alert createAlert(String title, String header, String content, AlertType type) {
-		Alert alert = new Alert(AlertType.CONFIRMATION);
-		alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
-		alert.setTitle(title);
-		alert.setHeaderText(header);
-		alert.setContentText(content);
-		alert.initModality(Modality.APPLICATION_MODAL);
-		alert.initOwner(rootStage);
-		return alert;
-	}
-	
 	@FXML
 	private void doShowHidePlayQueue() {
 		if(playQueuePane == null)
@@ -580,155 +509,17 @@ public class RootController {
 		player.previous();
 	}
 	
-	@FXML
-	private void doIncreaseVolume() {
+	public void doIncreaseVolume() {
 		if(player != null)
 			player.increaseVolume(VOLUME_AMOUNT);
 		volumeSlider.setValue(volumeSlider.getValue()+VOLUME_AMOUNT);
 		LOG.trace("Volume increased "+volumeSlider.getValue());
 	}
 	
-	@FXML
-	private void doDecreaseVolume() {
+	public void doDecreaseVolume() {
 		if(player != null)
 			player.decreaseVolume(VOLUME_AMOUNT);
 		volumeSlider.setValue(volumeSlider.getValue()-VOLUME_AMOUNT);
 		LOG.trace("Volume decreased "+volumeSlider.getValue());
-	}
-	
-	@FXML
-	private void doSelectCurrentTrack() {
-		Track currentTrack = player.getCurrentTrack();
-		trackTable.getSelectionModel().clearSelection();
-		if(currentTrack != null) {
-			Map.Entry<Integer, Track> currentEntry = new AbstractMap.SimpleEntry<Integer, Track>(currentTrack.getTrackID(), currentTrack);
-			trackTable.getSelectionModel().select(currentEntry);
-			trackTable.scrollTo(currentEntry);
-		}
-		LOG.debug("Current track in the player selected in the table");
-	}
-	
-	@FXML
-	private void doDelete() {
-		if(selection != null && !selection.isEmpty()) {
-			int numDeletedTracks = selection.size();
-			Alert alert = createAlert("", "Delete "+numDeletedTracks+" files from Musicott?", "", AlertType.CONFIRMATION);
-			Optional<ButtonType> result = alert.showAndWait();
-			if (result.get() == ButtonType.OK) {
-				new Thread(() -> {
-					ml.removeTracks(selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
-					Platform.runLater(() -> sc.closeIndeterminatedProgressScene());
-				}).start();
-				sc.openIndeterminatedProgressScene();
-			}
-			else
-				alert.close();
-		}
-	}
-	
-	@FXML
-	private void doEdit() {
-		if(selection != null & !selection.isEmpty()) {
-			if(selection.size() > 1) {
-				Alert alert = createAlert("", "Are you sure you want to edit multiple files?", "", AlertType.CONFIRMATION);
-				Optional<ButtonType> result = alert.showAndWait();
-				if (result.get() == ButtonType.OK) {
-					sc.openEditScene(selection.stream().map(Map.Entry::getValue).collect(Collectors.toList()));
-					LOG.debug("Opened edit stage for various tracks");
-				}
-				else
-					alert.close();
-			}
-			else {
-				sc.openEditScene(selection.stream().map(Map.Entry::getValue).collect(Collectors.toList()));
-				LOG.debug("Opened edit stage for a single track");
-			}
-		}
-	}
-	
-	@FXML
-	private void doOpen() {
-		LOG.debug("Selecting files to open");
-		FileChooser chooser = new FileChooser();
-		chooser.setTitle("Open file(s)...");
-		chooser.getExtensionFilters().addAll(
-				new ExtensionFilter("All Supported (*.mp3, *.flac, *.wav, *.m4a)","*.mp3", "*.flac", "*.wav", "*.m4a"),
-				new ExtensionFilter("mp3 files (*.mp3)", "*.mp3"),
-				new ExtensionFilter("flac files (*.flac)","*.flac"),
-				new ExtensionFilter("wav files (*.wav)", "*.wav"),
-				new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
-		List<File> files = chooser.showOpenMultipleDialog(rootStage);
-		if(files != null) {
-			TaskPoolManager.getInstance().parseFiles(files, true);
-			setStatusMessage("Opening files");
-		}
-	}
-	
-	@FXML
-	private void doImportFolder() {
-		LOG.debug("Choosing folder to being imported");
-		DirectoryChooser chooser = new DirectoryChooser();
-		chooser.setTitle("Choose folder");
-		File folder = chooser.showDialog(rootStage);
-		if(folder != null) {
-			Thread countFilesThread = new Thread(() -> {
-				List<File> files = Utils.getAllFilesInFolder(folder, preferences.getExtensionsFileFilter(), 0);
-				Platform.runLater(() -> {
-					if(files.isEmpty()) {
-						Alert alert = createAlert("Import", "No files", "There are no valid files to import on the selected folder."
-								+ "Change the folder or the import options in preferences", AlertType.WARNING);
-						alert.showAndWait();
-					}
-					else {
-						Alert alert = createAlert("Import", "Import " + files.size() + " files?", "", AlertType.CONFIRMATION);
-						Optional<ButtonType> result = alert.showAndWait();
-						if(result.isPresent() && result.get().equals(ButtonType.OK)) {
-							TaskPoolManager.getInstance().parseFiles(files, false);
-							setStatusMessage("Importing files");
-						}
-					}
-				});
-			});
-			countFilesThread.start();
-		}
-	}
-	
-	@FXML
-	private void doItunesImport() {
-		LOG.debug("Choosing Itunes xml file");
-		FileChooser chooser = new FileChooser();
-		chooser.setTitle("Select 'iTunes Music Library.xml' file");
-		chooser.getExtensionFilters().add(new ExtensionFilter("xml files (*.xml)", "*.xml"));
-		File xmlFile = chooser.showOpenDialog(rootStage);
-		if(xmlFile != null) 
-			TaskPoolManager.getInstance().parseItunesLibrary(xmlFile.getAbsolutePath());
-	}
-	
-	@FXML
-	private void doPreferences() {
-		sc.openPreferencesScene();
-	}
-	
-	@FXML
-	private void doAbout() {
-		Alert alert = createAlert("About Musicott", "Musicott", "", AlertType.INFORMATION);
-		Label text = new Label(" Version 0.8.0\n\n Copyright © 2015 Octavio Calleya.");
-		Label text2 = new Label(" Licensed under GNU GPLv3. This product includes\n software developed by other open source projects.");
-		Hyperlink githubLink = new Hyperlink("https://github.com/octaviospain/Musicott/");
-		githubLink.setOnAction(event -> hostServices.showDocument(githubLink.getText()));
-		FlowPane fp = new FlowPane();
-		fp.getChildren().addAll(text, githubLink, text2);
-		alert.getDialogPane().contentProperty().set(fp);
-		ImageView iv = new ImageView();
-		iv.setImage(new Image("file:resources/images/musicotticon.png"));
-		alert.setGraphic(iv);
-		alert.showAndWait();
-		LOG.debug("Showing about window");
-	}
-	
-	@FXML
-	private void handleExit() {
-		LOG.info("Exiting Musicott");
-		System.exit(0);
 	}
 }

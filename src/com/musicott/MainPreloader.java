@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 
 import com.musicott.MainApp.CustomProgressNotification;
-import com.musicott.MainApp.EventNotification;
 
 import javafx.application.Platform;
 import javafx.application.Preloader;
@@ -97,11 +96,12 @@ public class MainPreloader extends Preloader {
 	public void handleApplicationNotification(PreloaderNotification info) {
 		if(info instanceof CustomProgressNotification) {
 			CustomProgressNotification pn = (CustomProgressNotification) info;
-			preloaderProgressBar.setProgress(pn.getProgress());
-			infoLabel.setText(pn.getDetails());
-		}
-		else if(info instanceof EventNotification && ((EventNotification)info).getEvent().equals(FIRST_USE_EVENT)) {
-			openFirstUseDialog();
+			if(pn.getDetails().equals(FIRST_USE_EVENT))
+				openFirstUseDialog();
+			else {
+				preloaderProgressBar.setProgress(pn.getProgress());
+				infoLabel.setText(pn.getDetails());
+			}
 		}
 	}
 	

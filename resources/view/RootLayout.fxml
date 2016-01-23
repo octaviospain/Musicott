@@ -13,83 +13,8 @@
 
 <BorderPane fx:id="rootBorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="750.0" prefWidth="1200.0" stylesheets="@../css/rootstyle.css" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.RootController">
    <top>
-      <VBox BorderPane.alignment="CENTER">
+      <VBox fx:id="headerVBox" BorderPane.alignment="CENTER">
          <children>
-            <MenuBar minHeight="30.0" prefHeight="30.0">
-              <menus>
-                <Menu fx:id="menuFile" mnemonicParsing="false" text="File">
-                  <items>
-                    <MenuItem fx:id="menuItemOpen" mnemonicParsing="false" onAction="#doOpen" text="Open File(s)...">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="O" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                    <MenuItem fx:id="menuItemImport" mnemonicParsing="false" onAction="#doImportFolder" text="Import folder...">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="R" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <MenuItem fx:id="menuItemItunesImport" mnemonicParsing="false" onAction="#doItunesImport" text="Import from Itunes Library..">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="I" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
-                           </accelerator>
-                        </MenuItem>
-                    <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem fx:id="menuItemLastFM" mnemonicParsing="false" onAction="#doPreferences" text="Preferences">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="COMMA" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator>
-                        </MenuItem>
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                    <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Close">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                  </items>
-                </Menu>
-                <Menu fx:id="menuEdit" mnemonicParsing="false" text="Edit">
-                  <items>
-                    <MenuItem fx:id="menuItemEdit" mnemonicParsing="false" onAction="#doEdit" text="Edit">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="I" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <MenuItem fx:id="menuItemDelete" mnemonicParsing="false" onAction="#doDelete" text="Delete">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="BACK_SPACE" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                  </items>
-                </Menu>
-                  <Menu mnemonicParsing="false" text="Controls">
-                    <items>
-                      <MenuItem fx:id="menuItemNext" mnemonicParsing="false" onAction="#doNext" text="Next">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="RIGHT" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <MenuItem fx:id="menuItemPrev" mnemonicParsing="false" onAction="#doPrevious" text="Previous">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="LEFT" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" onAction="#doIncreaseVolume" text="Increase Volume">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="UP" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#doDecreaseVolume" text="Decrease Volume">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="DOWN" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" onAction="#doSelectCurrentTrack" text="Select Current Track">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="L" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                    </items>
-                  </Menu>
-                <Menu fx:id="menuAbout" mnemonicParsing="false" text="About">
-                  <items>
-                    <MenuItem fx:id="menuItemAbout" mnemonicParsing="false" onAction="#doAbout" text="About Musicott" />
-                  </items>
-                </Menu>
-              </menus>
-            </MenuBar>
             <GridPane minHeight="50.0">
               <columnConstraints>
                 <ColumnConstraints halignment="CENTER" hgrow="NEVER" maxWidth="395.0" minWidth="10.0" prefWidth="164.0" />
