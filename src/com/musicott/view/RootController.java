@@ -161,7 +161,9 @@ public class RootController {
 		if(map.isEmpty())
 			playButton.setDisable(true);
 		prevButton.setDisable(true);
+		prevButton.setOnAction(e -> player.previous());
 		nextButton.setDisable(true);
+		nextButton.setOnAction(e -> player.next());
 		trackSlider.setDisable(true);
 		trackSlider.setValue(0.0);
 		volumeSlider.setMin(0.0);
@@ -386,6 +388,41 @@ public class RootController {
 		mainWaveformPane.setTrack(track);
 	}
 	
+	public void setStopped() {
+		playButton.setSelected(false);
+		trackSlider.setDisable(true);
+		nextButton.setDisable(true);
+		prevButton.setDisable(true);
+		titleLabel.textProperty().unbind();
+		titleLabel.setText("");
+		artistAlbumLabel.textProperty().unbind();
+		artistAlbumLabel.setText("");
+		currentCover.setVisible(false);
+		currentTimeLabel.setText("");
+		remainingTimeLabel.setText("");
+		setStatusMessage("");
+		SwingUtilities.invokeLater(() -> mainWaveformPane.clear());
+		if(player.getTrackPlayer() instanceof NativePlayer)
+			volumeSlider.valueProperty().unbindBidirectional(((NativePlayer)player.getTrackPlayer()).getMediaPlayer().volumeProperty());
+		else if (player.getTrackPlayer() instanceof FlacPlayer) {
+			//TODO
+		}
+	}
+	
+	public void doIncreaseVolume() {
+		if(player != null)
+			player.increaseVolume(VOLUME_AMOUNT);
+		volumeSlider.setValue(volumeSlider.getValue()+VOLUME_AMOUNT);
+		LOG.trace("Volume increased "+volumeSlider.getValue());
+	}
+	
+	public void doDecreaseVolume() {
+		if(player != null)
+			player.decreaseVolume(VOLUME_AMOUNT);
+		volumeSlider.setValue(volumeSlider.getValue()-VOLUME_AMOUNT);
+		LOG.trace("Volume decreased "+volumeSlider.getValue());
+	}
+	
 	private void setUpPlayer(MediaPlayer mediaPlayer) {
 		trackSlider.valueProperty().addListener((observable) -> {
 			double endTime = mediaPlayer.getStopTime().toMillis();
@@ -454,27 +491,6 @@ public class RootController {
 		currentCover.setVisible(true);
 	}
 	
-	public void setStopped() {
-		playButton.setSelected(false);
-		trackSlider.setDisable(true);
-		nextButton.setDisable(true);
-		prevButton.setDisable(true);
-		titleLabel.textProperty().unbind();
-		titleLabel.setText("");
-		artistAlbumLabel.textProperty().unbind();
-		artistAlbumLabel.setText("");
-		currentCover.setVisible(false);
-		currentTimeLabel.setText("");
-		remainingTimeLabel.setText("");
-		setStatusMessage("");
-		SwingUtilities.invokeLater(() -> mainWaveformPane.clear());
-		if(player.getTrackPlayer() instanceof NativePlayer)
-			volumeSlider.valueProperty().unbindBidirectional(((NativePlayer)player.getTrackPlayer()).getMediaPlayer().volumeProperty());
-		else if (player.getTrackPlayer() instanceof FlacPlayer) {
-			//TODO
-		}
-	}
-	
 	@FXML
 	private void doShowHidePlayQueue() {
 		if(playQueuePane == null)
@@ -497,29 +513,5 @@ public class RootController {
 		}
 		else							// pause
 			player.pause();
-	}
-	
-	@FXML
-	private void doNext() {
-		player.next();
-	}
-	
-	@FXML
-	private void doPrevious() {	
-		player.previous();
-	}
-	
-	public void doIncreaseVolume() {
-		if(player != null)
-			player.increaseVolume(VOLUME_AMOUNT);
-		volumeSlider.setValue(volumeSlider.getValue()+VOLUME_AMOUNT);
-		LOG.trace("Volume increased "+volumeSlider.getValue());
-	}
-	
-	public void doDecreaseVolume() {
-		if(player != null)
-			player.decreaseVolume(VOLUME_AMOUNT);
-		volumeSlider.setValue(volumeSlider.getValue()-VOLUME_AMOUNT);
-		LOG.trace("Volume decreased "+volumeSlider.getValue());
 	}
 }
