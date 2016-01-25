@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import com.cedarsoftware.util.io.JsonIoException;
 import com.cedarsoftware.util.io.JsonReader;
 import com.musicott.model.MusicLibrary;
+import com.musicott.model.Playlist;
 import com.musicott.model.Track;
 import com.musicott.player.PlayerFacade;
 import com.musicott.services.ServiceManager;
@@ -54,6 +56,8 @@ import com.musicott.util.ObservableMapWrapperCreator;
 import com.musicott.util.Utils;
 import com.musicott.view.PlayQueueController;
 import com.musicott.view.RootController;
+import com.musicott.view.custom.PlaylistTreeView;
+import com.musicott.view.custom.TrackTableView;
 import com.sun.javafx.application.LauncherImpl;
 import com.sun.javafx.collections.ObservableMapWrapper;
 
@@ -76,18 +80,19 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.control.TableView;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination.Modifier;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.input.KeyCombination.Modifier;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -110,11 +115,13 @@ public class MainApp extends Application {
 	private static final String LOGGING_PROPERTIES = "resources/config/logging.properties";
 	public static final String TRACKS_PERSISTENCE_FILE = "Musicott-tracks.json";
 	public static final String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
+	public static final String PLAYLISTS_PERSISTENCE_FILE = "Musicott-playlists.json";
 	private ErrorHandler eh;
 	private SceneManager sc;
 	private MusicLibrary ml;
 	private MainPreferences pf;
 	private Stage rootStage;
+	private TrackTableView trackTable;
 	private BorderPane rootLayout;
 	private FXMLLoader rootLoader, playQueueLoader;
 	private int totalPreloadSteps;
@@ -140,6 +147,7 @@ public class MainApp extends Application {
 		loadWaveforms();
 		loadLayout();
 		loadTracks();
+		loadPlaylists();
 	}	
 	
 	@Override
@@ -155,14 +163,13 @@ public class MainApp extends Application {
 	 */
 	private void loadLayout() {
 		LOG.debug("Loading layouts");
-		notifyPreloader(1, 3, "Loading layout...");
+		notifyPreloader(1, 4, "Loading layout...");
 	    rootLoader = new FXMLLoader();
 		rootLoader.setLocation(getClass().getResource(LAYOUTS_PATH+ROOT_LAYOUT));
 		
 		// Set the dropdown play queue 
 		playQueueLoader = new FXMLLoader();
 		playQueueLoader.setLocation(getClass().getResource(LAYOUTS_PATH+PLAYQUEUE_LAYOUT));
-		notifyPreloader(2, 3, "Loading tracks...");
 	}
 	
 	/**
@@ -176,6 +183,11 @@ public class MainApp extends Application {
 			rootController.setStage(rootStage);
 			sc.setRootController(rootController);
 			LOG.debug("Root layout loaded");
+			
+			SplitPane rootSplitPane = (SplitPane) rootLayout.lookup("#rootSplitPane");			
+			GridPane tableViewGridPane = (GridPane) rootSplitPane.getItems().get(1).lookup("#tableViewGridPane");
+			trackTable = new TrackTableView();
+			tableViewGridPane.add(trackTable, 0, 0);
 			
 			// Set the play queue layout on the rootlayout
 			AnchorPane playQueuePane = (AnchorPane) playQueueLoader.load();
@@ -203,7 +215,6 @@ public class MainApp extends Application {
 			
 			// Closes the play queue pane when click on the view
 			rootLayout.setOnMouseClicked(event -> {if(playQueuePane.isVisible()) {playQueuePane.setVisible(false); playQueueButton.setSelected(false);}});
-			TableView<Map.Entry<Integer, Track>> trackTable = (TableView<Map.Entry<Integer, Track>>) rootLayout.lookup("#trackTable");
 			trackTable.setOnMouseClicked(event -> {if(playQueuePane.isVisible()) {playQueuePane.setVisible(false); playQueueButton.setSelected(false);}});
 			LOG.debug("Configured play queue pane to close if the user click outside it");			
 
@@ -220,7 +231,7 @@ public class MainApp extends Application {
 			
 			fileMN.getItems().addAll(openFileMI, importFolderMI, importItunesMI);
 			editMN.getItems().addAll(editMI, deleteMI);
-			controlsMN.getItems().addAll(prevMI, nextMI, volIncrMI, volDecrMI, selCurrMI);
+			controlsMN.getItems().addAll(prevMI, nextMI, new SeparatorMenuItem(), volIncrMI, volDecrMI, new SeparatorMenuItem(), selCurrMI);
 			aboutMN.getItems().add(aboutMI);
 			
 			// Native Menubar for os x
@@ -239,6 +250,7 @@ public class MainApp extends Application {
 				menuBar.getMenus().addAll(appMenu, fileMN, editMN, controlsMN, windowMenu, aboutMN);
 				tk.autoAddWindowMenuItems(windowMenu);
 				tk.setGlobalMenuBar(menuBar);
+				LOG.debug("OS X native menubar created");
 			}
 			else {	// Default MenuBar
 				MenuItem closeMI = new MenuItem("Close");
@@ -249,6 +261,7 @@ public class MainApp extends Application {
 				menuBar.getMenus().addAll(fileMN, editMN, controlsMN, aboutMN);
 				VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
 				headerVBox.getChildren().add(0, menuBar);
+				LOG.debug("Default menubar created");
 			}
 			
 			// Key acceleratos. Command down for os x and control down for windows and linux
@@ -354,6 +367,11 @@ public class MainApp extends Application {
 				LOG.debug("Showing about window");
 			});
 			
+			// Playlists pane
+			PlaylistTreeView playlistTV = new PlaylistTreeView();
+			AnchorPane leftSplitPane = (AnchorPane) rootSplitPane.getItems().get(0);
+			leftSplitPane.getChildren().add(playlistTV);		
+			
 			// Context menu on table
 			MenuItem cmPlay = new MenuItem("Play");
 			cmPlay.setOnAction(event -> {
@@ -371,11 +389,28 @@ public class MainApp extends Application {
 				if(!selection.isEmpty())
 					PlayerFacade.getInstance().addTracks(selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), false);
 			});
+			MenuItem cmDeleteFromPlaylist = new MenuItem("Delete from playlist");
+			cmDeleteFromPlaylist.setOnAction(event -> {
+				List<Map.Entry<Integer, Track>> selection = trackTable.getSelectionModel().getSelectedItems();
+				if(!selection.isEmpty())
+					ml.removeFromPlaylist(playlistTV.getSelectedPlaylist(), selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+			});
+			Menu cmAddToPlaylist = new Menu("Add to Playlist");
+			List<MenuItem> playlistsMI = new ArrayList<>();
+			for(Playlist pl: ml.getPlaylists()) {
+				String playListName = pl.getName();
+				MenuItem playlistItem = new MenuItem(playListName);
+				playlistItem.setOnAction(event -> {
+					List<Map.Entry<Integer, Track>> selection = trackTable.getSelectionModel().getSelectedItems();
+					if(!selection.isEmpty())
+						ml.addToPlaylist(playListName, selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+				});
+				playlistsMI.add(playlistItem);
+			}
+			cmAddToPlaylist.getItems().addAll(playlistsMI);
+			
 			ContextMenu cm = new ContextMenu();
-			cm.getItems().add(cmPlay);
-			cm.getItems().add(cmAddToQueue);
-			cm.getItems().add(cmEdit);
-			cm.getItems().add(cmDelete);
+			cm.getItems().addAll(cmPlay, cmEdit, cmDelete, cmAddToQueue, new SeparatorMenuItem(), cmDeleteFromPlaylist, cmAddToPlaylist);
 			
 			// Right click on row = show ContextMenu
 			trackTable.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
@@ -420,7 +455,6 @@ public class MainApp extends Application {
 	 * Handles edit action
 	 */
 	private void doEdit() {
-		TableView<Map.Entry<Integer, Track>> trackTable = (TableView<Map.Entry<Integer, Track>>) rootLayout.lookup("#trackTable");
 		List<Map.Entry<Integer, Track>> selection = trackTable.getSelectionModel().getSelectedItems();
 		if(selection != null & !selection.isEmpty()) {
 			if(selection.size() > 1) {
@@ -444,7 +478,6 @@ public class MainApp extends Application {
 	 * Handles delete action
 	 */
 	private void doDelete() {
-		TableView<Map.Entry<Integer, Track>> trackTable = (TableView<Map.Entry<Integer, Track>>) rootLayout.lookup("#trackTable");
 		List<Map.Entry<Integer, Track>> selection = trackTable.getSelectionModel().getSelectedItems();
 		if(selection != null && !selection.isEmpty()) {
 			int numDeletedTracks = selection.size();
@@ -469,11 +502,11 @@ public class MainApp extends Application {
 	 */
 	private void loadTracks() {
 		ObservableMap<Integer, Track> map = null;
-		File tracksFile = new File(pf.getMusicottUserFolder()+"/"+TRACKS_PERSISTENCE_FILE);
+		File tracksFile = new File(pf.getMusicottUserFolder()+File.separator+TRACKS_PERSISTENCE_FILE);
 		int totalTracks, step = 0;
 		if(tracksFile.exists()) {
+			notifyPreloader(-1, 0, "Loading tracks...");
 			try {
-				notifyPreloader(-1, 0, "Loading tracks...");
 				FileInputStream fis = new FileInputStream(tracksFile);
 				JsonReader jsr = new JsonReader(fis);
 				JsonReader.assignInstantiator(ObservableMapWrapper.class, new ObservableMapWrapperCreator());
@@ -517,14 +550,12 @@ public class MainApp extends Application {
 	 */
 	private void loadWaveforms() {
 		Map<Integer,float[]> waveformsMap = null;
-		File waveformsFile = new File(pf.getMusicottUserFolder()+"/"+WAVEFORMS_PERSISTENCE_FILE);
-		FileInputStream fis;
-		JsonReader jsr;
+		File waveformsFile = new File(pf.getMusicottUserFolder()+File.separator+WAVEFORMS_PERSISTENCE_FILE);
 		if(waveformsFile.exists()) {
+			notifyPreloader(0, 4, "Loading waveforms...");
 			try {
-				notifyPreloader(0, 3, "Loading waveforms...");
-				fis = new FileInputStream(waveformsFile);
-				jsr = new JsonReader(fis);
+				FileInputStream fis = new FileInputStream(waveformsFile);
+				JsonReader jsr = new JsonReader(fis);
 				waveformsMap = (Map<Integer,float[]>) jsr.readObject();
 				jsr.close();
 				fis.close();
@@ -537,7 +568,36 @@ public class MainApp extends Application {
 		else
 			waveformsMap = new HashMap<Integer, float[]>();
 		ml.setWaveforms(waveformsMap);
-		notifyPreloader(1, 3, "Loading layout...");
+	}
+	
+	/**
+	 * Loads the playlists from a saved file formatted in JSON using Json-IO
+	 * 
+	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
+	 */
+	private void loadPlaylists() {
+		List<Playlist> playlists = null;
+		File playlistsFile = new File(pf.getMusicottUserFolder()+File.separator+PLAYLISTS_PERSISTENCE_FILE);
+		if(playlistsFile.exists()) {
+			notifyPreloader(3, 4, "Loading playlists...");
+			try {
+				FileInputStream fis = new FileInputStream(playlistsFile);
+				JsonReader jsr = new JsonReader(fis);
+				playlists = (List<Playlist>) jsr.readObject();
+				jsr.close();
+				fis.close();
+				LOG.info("Loaded waveform images from {}", playlists);
+			} catch(IOException e) {
+				LOG.error("Error loading playlists", e);
+				eh.showErrorDialog("Error loading playlists", null, e);
+			}
+		}
+		else {
+			playlists = new ArrayList<Playlist>();
+			playlists.add(new Playlist("Recently Added"));
+			playlists.add(new Playlist("Random"));
+		}
+		ml.setPlaylists(playlists);
 	}
 	
 	/**

@@ -149,7 +149,7 @@ public class PreferencesController {
 			if(waveformsFile.exists())
 				waveformsFile.delete();
 			preferences.setMusicottUserFolder(folderLocationTextField.getText());
-			MusicLibrary.getInstance().saveLibrary(true, true);
+			MusicLibrary.getInstance().saveLibrary(true, true, true);
 		}
 	}
 	

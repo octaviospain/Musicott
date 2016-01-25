@@ -74,7 +74,7 @@ public class PlayerFacade {
 	public void incrementCurentTrackPlayCount() {
 		if(!played) {
 			currentTrack.incrementPlayCount();
-			ml.saveLibrary(true, false);
+			ml.saveLibrary(true, false, false);
 			played = true;
 		}
 	}
@@ -276,6 +276,6 @@ public class PlayerFacade {
 		}
 		trackPlayer.setTrack(track);
 		LOG.debug("Created new player");
-		sc.getRootController().preparePlayerInfo(trackPlayer, currentTrack);
+		sc.getRootController().updatePlayerInfo(trackPlayer, currentTrack);
 	}
 }

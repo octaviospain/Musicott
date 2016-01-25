@@ -18,10 +18,15 @@
 
 package com.musicott.model;
 
+import static com.musicott.MainApp.PLAYLISTS_PERSISTENCE_FILE;
+import static com.musicott.MainApp.TRACKS_PERSISTENCE_FILE;
+import static com.musicott.MainApp.WAVEFORMS_PERSISTENCE_FILE;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,11 +44,13 @@ import com.musicott.SceneManager;
 import com.musicott.player.PlayerFacade;
 
 import javafx.application.Platform;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
-
-import static com.musicott.MainApp.TRACKS_PERSISTENCE_FILE;
-import static com.musicott.MainApp.WAVEFORMS_PERSISTENCE_FILE;;
 
 /**
  * @author Octavio Calleya
@@ -56,7 +63,10 @@ public class MusicLibrary {
 
 	private static MusicLibrary instance;
 	private ObservableMap<Integer, Track> tracks;
+	private ObservableList<Map.Entry<Integer, Track>> showingTracks;
 	private Map<Integer,float[]> waveforms;
+	private List<Playlist> playlists;
+	private ListProperty<Map.Entry<Integer, Track>> tracksListProperty;
 	private SaveLibraryTask saveLibraryTask;
 	private Semaphore saveSemaphore;
 	
@@ -73,12 +83,23 @@ public class MusicLibrary {
 	public void setTracks(ObservableMap<Integer, Track> tracks) {
 		synchronized(tracks) {
 			this.tracks = tracks;
+			this.showingTracks = FXCollections.observableArrayList(tracks.entrySet());
+			this.tracksListProperty = new SimpleListProperty<>();
+			this.tracksListProperty.bind(new SimpleObjectProperty<>(showingTracks));
 			this.tracks.addListener((MapChangeListener.Change<? extends Integer, ? extends Track> c) -> {
-				if(c.wasRemoved()) {
-					waveforms.remove(c.getKey());
-					Platform.runLater(() -> PlayerFacade.getInstance().removeTrack(c.getKey()));
+				if(c.wasAdded()) {
+					Track added = c.getValueAdded();
+					showingTracks.add(new AbstractMap.SimpleEntry<Integer, Track>(added.getTrackID(), added));
+		        }
+				else if (c.wasRemoved()) {
+		          	Track removed = c.getValueRemoved();
+		          	waveforms.remove(c.getKey());
+					PlayerFacade.getInstance().removeTrack(c.getKey());
+		          	showingTracks.remove(new AbstractMap.SimpleEntry<Integer, Track>(removed.getTrackID(), removed));
+		          	playlists.removeIf(p -> p.getTracks().contains(removed.getTrackID()));
+					LOG.info("Deleted track: {}", removed);
 				}
-				saveLibrary(true, true);
+				saveLibrary(true, true, true);
 			});
 		}
 	}
@@ -89,9 +110,26 @@ public class MusicLibrary {
 		}
 	}
 	
-	public ObservableMap<Integer, Track> getTracks(){
+	private ObservableMap<Integer, Track> getTracks(){
 		synchronized(tracks) {
 			return this.tracks;
+		}
+	}
+	
+	public ObservableList<Map.Entry<Integer, Track>> getShowingTracks() {
+		return this.showingTracks;
+	}
+	
+	public void setShowingPlaylist(Playlist playlist) {
+		showingTracks.clear();
+		synchronized(tracks) {
+			if(playlist != null) {
+				for(Integer id: playlist.getTracks()) {
+					Map.Entry<Integer, Track> entry = new AbstractMap.SimpleEntry<Integer, Track>(id, tracks.get(id));
+					showingTracks.add(entry);
+				}
+			} else
+				showingTracks.addAll(tracks.entrySet());
 		}
 	}
 	
@@ -103,7 +141,7 @@ public class MusicLibrary {
 	
 	public void removeTracks(List<Integer> selection) {
 		synchronized(tracks) {
-				tracks.keySet().removeAll(selection);
+			tracks.keySet().removeAll(selection);
 		}
 		Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Removed "+selection.size()+" tracks"));
 	}
@@ -136,6 +174,38 @@ public class MusicLibrary {
 		}
 	}
 	
+	public void setPlaylists(List<Playlist> playlists) {
+		synchronized(playlists) {
+			this.playlists = playlists;
+		}
+	}
+	
+	public List<Playlist> getPlaylists() {
+		synchronized(playlists) {
+			return this.playlists;
+		}
+	}
+	
+	public void addToPlaylist(String playlistName, List<Integer> tracksIDs) {
+		synchronized(playlists) {
+			Playlist pl = playlists.stream().filter(p -> p.getName().equalsIgnoreCase(playlistName)).findFirst().get();
+			pl.getTracks().addAll(tracksIDs);
+		}
+		saveLibrary(false, false, true);
+	}
+	
+	public void removeFromPlaylist(Playlist playlist, List<Integer> tracksIDs) {
+		synchronized(playlists) {
+			playlist.getTracks().removeAll(tracksIDs);
+			showingTracks.removeIf(f -> tracksIDs.contains(f.getKey()));
+		}
+		saveLibrary(false, false, true);
+	}
+	
+	public ListProperty<Map.Entry<Integer, Track>> trackslistProperty() {
+		return this.tracksListProperty;
+	}
+	
 	public void playRandomPlaylist(){
 		Thread randomPlaylistThread = new Thread(() -> {
 			List<Integer> randomPlaylist = new ArrayList<>();
@@ -155,7 +225,7 @@ public class MusicLibrary {
 		randomPlaylistThread.start();
 	}
 	
-	public void saveLibrary(boolean saveTracks, boolean saveWaveforms) {
+	public void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
 		if(saveLibraryTask == null) {
 			saveLibraryTask = new SaveLibraryTask();
 			saveLibraryTask.setDaemon(true);
@@ -163,6 +233,7 @@ public class MusicLibrary {
 		}
 		saveLibraryTask.saveTracks = saveTracks;
 		saveLibraryTask.saveWaveforms = saveWaveforms;
+		saveLibraryTask.savePlaylists = savePlaylists;
 		saveSemaphore.release();
 	}
 	
@@ -195,11 +266,11 @@ public class MusicLibrary {
 	public class SaveLibraryTask extends Thread {
 
 		private String musicottUserPath;
-		private File tracksFile, waveformsFile;
+		private File tracksFile, waveformsFile, playlistsFile;
 		private Map<String,Object> args;
-		private FileOutputStream tracksFOS, waveformsFOS;
-		private JsonWriter tracksJSW, waveformsJSW;
-		private volatile boolean saveTracks, saveWaveforms;
+		private FileOutputStream tracksFOS, waveformsFOS, playlistsFOS;
+		private JsonWriter tracksJSW, waveformsJSW, playlistsJSW;
+		private volatile boolean saveTracks, saveWaveforms, savePlaylists;
 
 		public SaveLibraryTask() {
 			setName("Save Library Thread");
@@ -269,6 +340,17 @@ public class MusicLibrary {
 						waveformsFOS.close();
 						waveformsJSW.close();
 					}
+					// Save the playlists
+					if(savePlaylists) {
+						LOG.debug("Saving playlists in {}", playlistsFile);
+						playlistsFOS = new FileOutputStream(playlistsFile);
+						playlistsJSW = new JsonWriter(playlistsFOS);
+						synchronized(playlists){
+							playlistsJSW.write(playlists);
+						}
+						playlistsFOS.close();
+						playlistsJSW.close();
+					}
 				}
 			} catch (IOException | RuntimeException | InterruptedException e) {
 				Platform.runLater(() -> {
@@ -281,8 +363,9 @@ public class MusicLibrary {
 		private void checkMusicottFiles() throws FileNotFoundException {
 			String newPath = MainPreferences.getInstance().getMusicottUserFolder();
 			if(!newPath.equals(musicottUserPath)) {	// Musicott folder has changed
-				tracksFile = new File(newPath+"/"+TRACKS_PERSISTENCE_FILE);
-				waveformsFile = new File(newPath+"/"+WAVEFORMS_PERSISTENCE_FILE);
+				tracksFile = new File(newPath+File.separator+TRACKS_PERSISTENCE_FILE);
+				waveformsFile = new File(newPath+File.separator+WAVEFORMS_PERSISTENCE_FILE);
+				playlistsFile = new File(newPath+File.separator+PLAYLISTS_PERSISTENCE_FILE);
 				musicottUserPath = newPath;
 			}
 		}

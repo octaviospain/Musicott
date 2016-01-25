@@ -81,7 +81,7 @@ public class UpdateMetadataTask extends Thread {
 				if((!updated || !coverChanged) && backup != null)
 					restoreBackup(track, backup);
 			}
-		MusicLibrary.getInstance().saveLibrary(true, false);
+		MusicLibrary.getInstance().saveLibrary(true, false, false);
 		if(!updateErrors.isEmpty())
 			ErrorHandler.getInstance().showExpandableErrorsDialog("Errors writing metadata on some tracks", "", updateErrors);
 	}

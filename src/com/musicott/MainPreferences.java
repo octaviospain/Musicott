@@ -33,6 +33,7 @@ public class MainPreferences {
 
 	private final String MUSICOTT_FOLDER = "musicott_folder";
 	private final String TRACK_SEQUENCE = "track_sequence";
+	private final String PLAYLIST_SEQUENCE = "playlist_sequence";
 	private final String IMPORT_MP3 = "import_mp3_flag";
 	private final String IMPORT_M4A = "import_m4a_flag";
 	private final String IMPORT_WAV = "import_wav_flag";
@@ -70,9 +71,16 @@ public class MainPreferences {
 		return sequence;
 	}
 	
+	public int getPlaylistSequence() {
+		int sequence = preferences.getInt(PLAYLIST_SEQUENCE, 0);
+		preferences.putInt(PLAYLIST_SEQUENCE, ++sequence);
+		return sequence;
+	}
+	
 	public boolean setMusicottUserFolder(String path) {
 		preferences.put(MUSICOTT_FOLDER, path);
-		preferences.putInt(TRACK_SEQUENCE, 0);	// reset the sequence number
+		preferences.putInt(TRACK_SEQUENCE, 0);	// reset the sequences
+		preferences.putInt(PLAYLIST_SEQUENCE, 0);
 		return new File(path).mkdirs();
 	}
 	
