@@ -1,17 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.input.*?>
-<?import javafx.geometry.*?>
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.paint.*?>
-<?import javafx.scene.text.*?>
-<?import javafx.embed.swing.*?>
-<?import javafx.scene.image.*?>
+<?import javafx.embed.swing.SwingNode?>
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Point3D?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="rootBorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="750.0" prefWidth="1200.0" stylesheets="@../css/rootstyle.css" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.RootController">
+<BorderPane fx:id="rootBorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="750.0" prefWidth="1200.0" stylesheets="@../css/rootstyle.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.RootController">
    <top>
       <VBox fx:id="headerVBox" BorderPane.alignment="CENTER" />
    </top>
@@ -127,70 +136,55 @@
         </GridPane>
    </bottom>
    <center>
-      <SplitPane fx:id="rootSplitPane" dividerPositions="0.17028380634390652" prefHeight="160.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-        <items>
-          <AnchorPane fx:id="leftSplitAnchorPane" maxWidth="500.0" minHeight="0.0" minWidth="-Infinity" prefWidth="200.0" />
-          <AnchorPane fx:id="rightSplitAnchorPane" minHeight="0.0" minWidth="0.0">
-               <children>
-                  <BorderPane fx:id="rb" prefHeight="698.0" prefWidth="837.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                     <center>
-                        <GridPane fx:id="tableViewGridPane" alignment="CENTER">
-                           <columnConstraints>
-                              <ColumnConstraints />
-                           </columnConstraints>
-                           <rowConstraints>
-                              <RowConstraints />
-                           </rowConstraints>
-                        </GridPane>
-                     </center>
-                     <top>
-                        <HBox alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+      <BorderPane fx:id="contentBorderLayout" BorderPane.alignment="CENTER">
+         <center>
+            <BorderPane fx:id="tableBorderPane" BorderPane.alignment="CENTER">
+               <top>
+                  <HBox fx:id="tableInfoHBox" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                     <children>
+                        <ImageView fx:id="playlistCover" fitHeight="90.0" fitWidth="90.0" pickOnBounds="true" preserveRatio="true">
+                           <HBox.margin>
+                              <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                           </HBox.margin>
+                           <image>
+                              <Image url="@../images/default-cover-image.png" />
+                           </image>
+                        </ImageView>
+                        <VBox>
                            <children>
-                              <ImageView fx:id="playlistCover" fitHeight="90.0" fitWidth="90.0" pickOnBounds="true" preserveRatio="true">
-                                 <HBox.margin>
-                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-                                 </HBox.margin>
-                                 <image>
-                                    <Image url="@../images/default-cover-image.png" />
-                                 </image>
-                              </ImageView>
-                              <VBox>
+                              <Label fx:id="playlistTitleLabel">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" left="15.0" top="30.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <HBox>
+                                 <VBox.margin>
+                                    <Insets left="15.0" top="10.0" />
+                                 </VBox.margin>
                                  <children>
-                                    <Label fx:id="playlistTitleLabel">
-                                       <font>
-                                          <Font size="20.0" />
-                                       </font>
-                                       <VBox.margin>
-                                          <Insets bottom="5.0" left="15.0" top="30.0" />
-                                       </VBox.margin>
+                                    <Label fx:id="playlistTracksNumberLabel" textFill="#000000bf">
+                                       <HBox.margin>
+                                          <Insets right="10.0" />
+                                       </HBox.margin>
                                     </Label>
-                                    <HBox>
-                                       <VBox.margin>
-                                          <Insets left="15.0" top="10.0" />
-                                       </VBox.margin>
-                                       <children>
-                                          <Label fx:id="playlistTracksNumberLabel" textFill="#000000bf">
-                                             <HBox.margin>
-                                                <Insets right="10.0" />
-                                             </HBox.margin>
-                                          </Label>
-                                          <Label fx:id="playlistSizeLabel" textFill="#000000bf">
-                                             <HBox.margin>
-                                                <Insets right="10.0" />
-                                             </HBox.margin>
-                                          </Label>
-                                       </children>
-                                    </HBox>
+                                    <Label fx:id="playlistSizeLabel" textFill="#000000bf">
+                                       <HBox.margin>
+                                          <Insets right="10.0" />
+                                       </HBox.margin>
+                                    </Label>
                                  </children>
-                              </VBox>
+                              </HBox>
                            </children>
-                        </HBox>
-                     </top>
-                  </BorderPane>
-               </children>
-            </AnchorPane>
-        </items>
-      </SplitPane>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </top>
+            </BorderPane>
+         </center>
+      </BorderPane>
    </center>
    
 </BorderPane>

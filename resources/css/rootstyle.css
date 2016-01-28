@@ -107,6 +107,10 @@
 	-fx-graphic: none;	
 }
 
+#tableInfoHBox {
+	-fx-background-color: rgb(243, 243, 243);
+}
+
 #trackTable, .scroll-pane {
     -fx-background-color: transparent, transparent, transparent, white;
 }
