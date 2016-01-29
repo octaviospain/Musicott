@@ -36,6 +36,7 @@ import com.musicott.player.PlayerFacade;
 import com.musicott.player.TrackPlayer;
 import com.musicott.services.ServiceManager;
 import com.musicott.task.TaskPoolManager;
+import com.musicott.util.Utils;
 import com.musicott.view.custom.WaveformPanel;
 
 import javafx.beans.binding.Bindings;
@@ -150,17 +151,8 @@ public class RootController {
 		playlistTitleLabel.setText(playlist.getName());
 		playlistTracksNumberLabel.setText(playlist.getTracks().size()+ " songs");
 		if(!plTracks.isEmpty()) {
-			int totalBytes = plTracks.stream().mapToInt(p -> ml.getTrack(p).getSize()).sum();
-			String sizeText;
-			int kiloBytes = totalBytes/1024;
-			if(kiloBytes < 1024)
-				sizeText = kiloBytes+" KB";
-			else {
-				int megaBytes = kiloBytes/1024;
-				String strKiloBytes = ""+kiloBytes%1024;
-				sizeText = megaBytes+","+(strKiloBytes.length()>1 ? strKiloBytes.substring(0, 1) : strKiloBytes)+" MB";
-			}
-			playlistSizeLabel.setText(sizeText);
+			long totalBytes = plTracks.stream().mapToLong(p -> ml.getTrack(p).getSize()).sum();
+			playlistSizeLabel.setText(Utils.byteSizeString(totalBytes, 1));
 			playlistCover.setImage(new Image(new ByteArrayInputStream(ml.getTrack(plTracks.get(0)).getCoverBytes())));
 		}
 		else {

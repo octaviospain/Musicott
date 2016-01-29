@@ -56,9 +56,10 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 			selectedPlaylist = getSelectionModel().getSelectedItem().getValue();
 			if(selectedPlaylist.getName().equals("Recently Added"))
 				ml.setShowingPlaylist(null);
-			else
+			else {
 				ml.setShowingPlaylist(selectedPlaylist);
-			SceneManager.getInstance().getRootController().updatePlaylistInfo(selectedPlaylist);
+				SceneManager.getInstance().getRootController().updatePlaylistInfo(selectedPlaylist);
+			}
 		});
 		for(Playlist pl: ml.getPlaylists())
 			root.getChildren().add(new TreeItem<Playlist>(pl));

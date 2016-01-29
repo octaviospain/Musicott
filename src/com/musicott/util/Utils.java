@@ -25,7 +25,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Class that does some useful operations with files and directories
+ * Class that does some useful operations with files, directories, strings
+ * or other operations utilities to be used for the application
  * 
  * @author Octavio Calleya
  *
@@ -33,12 +34,12 @@ import java.util.List;
 public class Utils {
 	
 	/**
-	 * Retrieves a list with at most <tt>maxFiles</tt> files that are in a folder or
+	 * Retrieves a {@link List} with at most <tt>maxFiles</tt> files that are in a folder or
 	 * any of the subfolders in that folder satisfying a condition.
 	 * If <tt>maxFilesRequired</tt> is 0 all the files will be retrieved.
 	 * 
 	 * @param rootFolder The folder from within to find the files
-	 * @param filter The FileFilter condition
+	 * @param filter The {@link FileFilter} condition
 	 * @param maxFilesRequired Maximun number of files in the List. 0 indicates no maximum
 	 * @return The list containing all the files
 	 * @throws IllegalArgumentException Thrown if <tt>maxFilesRequired</tt> argument is less than zero
@@ -80,5 +81,33 @@ public class Utils {
 			}
 		}
 		return finalFiles;
+	}
+	
+	/**
+	 * Returns a {@link String} representing the given <tt>bytes</tt>, with a textual representation
+	 * depending if the given amount can be represented as KB, MB, GB or TB
+	 * 
+	 * @param bytes The <tt>bytes</tt> to be represented
+	 * @param numDecimals The number of decimals to be shown after the comma
+	 * @return The <tt>String</tt> that represents the given bytes
+	 * @throws IllegalArgumentException Thrown if <tt>bytes</tt> or <tt>numDecimals</tt> are negative
+	 */
+	public static String byteSizeString(long bytes, int numDecimals) throws IllegalArgumentException {
+		if(bytes < 0 || numDecimals < 0)
+			throw new IllegalArgumentException("Given bytes or number of decimals can't be less than zero");
+		String sizeText;
+		String[] bytesUnits = {"KB", "MB", "GB", "TB"};
+		long bytesAmount = bytes/1024;
+		short binRemainder;
+		float decRemainder = 0;
+		int unit;
+		for(unit = 0; bytesAmount > 1024 || unit < bytesUnits.length; unit++) {
+			binRemainder = (short) (bytesAmount%1024);
+			decRemainder += (((float) binRemainder)/1024)/((unit+1)*1000);
+			bytesAmount /= 1024;
+		}
+		String remainderStr = "" + decRemainder;
+		sizeText = bytesAmount + (numDecimals > 0 ? ","+remainderStr.substring(2, 2+numDecimals) : "") + " "+bytesUnits[unit];
+		return sizeText;
 	}
 }

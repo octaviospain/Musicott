@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Track;
 import com.musicott.player.PlayerFacade;
+import com.musicott.util.Utils;
 
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -178,16 +179,8 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 					super.updateItem(item, empty);
 					if(item == null)
 						setText("");	
-					else {
-						int kiloBytes = ((int) item)/1024;
-						if(kiloBytes < 1024)
-							setText(kiloBytes+" KB");
-						else {
-							int megaBytes = kiloBytes/1024;
-							String strKiloBytes = ""+kiloBytes%1024;
-							setText(megaBytes+","+(strKiloBytes.length()>1 ? strKiloBytes.substring(0, 1) : strKiloBytes)+" MB");
-						}
-					}
+					else
+						setText(Utils.byteSizeString(item.longValue(), 1));
 				}
 			};});
 		totalTimeCol = new TableColumn<>("Duration");
