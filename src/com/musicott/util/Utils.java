@@ -88,26 +88,57 @@ public class Utils {
 	 * depending if the given amount can be represented as KB, MB, GB or TB
 	 * 
 	 * @param bytes The <tt>bytes</tt> to be represented
-	 * @param numDecimals The number of decimals to be shown after the comma
+	 * @return The <tt>String</tt> that represents the given bytes
+	 * @throws IllegalArgumentException Thrown if <tt>bytes</tt> is negative
+	 */
+	public static String byteSizeString(long bytes) throws IllegalArgumentException {
+		if(bytes < 0)
+			throw new IllegalArgumentException("Given bytes can't be less than zero");
+		String sizeText;
+		String[] bytesUnits = {"B", "KB", "MB", "GB", "TB"};
+		long bytesAmount = bytes;
+		short binRemainder;
+		float decRemainder = 0;
+		int u;
+		for(u = 0; bytesAmount > 1024 && u < bytesUnits.length; u++) {
+			bytesAmount /= 1024;
+			binRemainder = (short) (bytesAmount%1024);
+			decRemainder += (((float) binRemainder)/1024);
+		}
+		String remainderStr = ("" + decRemainder).substring(2);
+		sizeText = bytesAmount + (remainderStr.equals("0") ? "" : ","+remainderStr) + " " + bytesUnits[u];
+		return sizeText;
+	}
+	
+	/**
+	 * Returns a {@link String} representing the given <tt>bytes</tt>, with a textual representation
+	 * depending if the given amount can be represented as KB, MB, GB or TB, limiting the number
+	 * of decimals, if there are any
+	 * 
+	 * @param bytes The <tt>bytes</tt> to be represented
+	 * @param numDecimals The maximum number of decimals to be shown after the comma
 	 * @return The <tt>String</tt> that represents the given bytes
 	 * @throws IllegalArgumentException Thrown if <tt>bytes</tt> or <tt>numDecimals</tt> are negative
 	 */
 	public static String byteSizeString(long bytes, int numDecimals) throws IllegalArgumentException {
-		if(bytes < 0 || numDecimals < 0)
-			throw new IllegalArgumentException("Given bytes or number of decimals can't be less than zero");
-		String sizeText;
-		String[] bytesUnits = {"KB", "MB", "GB", "TB"};
-		long bytesAmount = bytes/1024;
-		short binRemainder;
-		float decRemainder = 0;
-		int unit;
-		for(unit = 0; bytesAmount > 1024 || unit < bytesUnits.length; unit++) {
-			binRemainder = (short) (bytesAmount%1024);
-			decRemainder += (((float) binRemainder)/1024)/((unit+1)*1000);
-			bytesAmount /= 1024;
+		if(numDecimals < 0)
+			throw new IllegalArgumentException("Given number of decimals can't be less than zero");
+		String byteSizeString = byteSizeString(bytes);
+		int pos = byteSizeString.lastIndexOf(",");
+		int unitPos = byteSizeString.lastIndexOf(" ");
+		if(pos != -1 && numDecimals > 0) {
+			String abs = byteSizeString.substring(0, pos+1);
+			String rem = byteSizeString.substring(pos+1, unitPos);
+			int minPos = numDecimals < rem.length() ? numDecimals : rem.length();
+			short boundedRemainder = Short.valueOf(rem.substring(0, minPos));
+			if(boundedRemainder != 0)
+				byteSizeString = abs + boundedRemainder + byteSizeString.substring(unitPos);
+			else {
+				short nextDigit = Short.valueOf(rem.substring(minPos+1, minPos+2));
+				if(nextDigit > 5)
+					byteSizeString = abs + (boundedRemainder+1) + byteSizeString.substring(unitPos);
+			}
 		}
-		String remainderStr = "" + decRemainder;
-		sizeText = bytesAmount + (numDecimals > 0 ? ","+remainderStr.substring(2, 2+numDecimals) : "") + " "+bytesUnits[unit];
-		return sizeText;
+		return byteSizeString;
 	}
 }
