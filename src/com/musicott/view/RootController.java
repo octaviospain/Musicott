@@ -152,7 +152,7 @@ public class RootController {
 		playlistTracksNumberLabel.setText(playlist.getTracks().size()+ " songs");
 		if(!plTracks.isEmpty()) {
 			long totalBytes = plTracks.stream().mapToLong(p -> ml.getTrack(p).getSize()).sum();
-			playlistSizeLabel.setText(Utils.byteSizeString(totalBytes, 1));
+			playlistSizeLabel.setText(Utils.byteSizeString(totalBytes, 2));
 			playlistCover.setImage(new Image(new ByteArrayInputStream(ml.getTrack(plTracks.get(0)).getCoverBytes())));
 		}
 		else {

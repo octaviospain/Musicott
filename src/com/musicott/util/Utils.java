@@ -128,15 +128,17 @@ public class Utils {
 		int unitPos = byteSizeString.lastIndexOf(" ");
 		if(pos != -1 && numDecimals > 0) {
 			String abs = byteSizeString.substring(0, pos+1);
-			String rem = byteSizeString.substring(pos+1, unitPos);
-			int minPos = numDecimals < rem.length() ? numDecimals : rem.length();
-			short boundedRemainder = Short.valueOf(rem.substring(0, minPos));
-			if(boundedRemainder != 0)
-				byteSizeString = abs + boundedRemainder + byteSizeString.substring(unitPos);
-			else {
-				short nextDigit = Short.valueOf(rem.substring(minPos+1, minPos+2));
-				if(nextDigit > 5)
-					byteSizeString = abs + (boundedRemainder+1) + byteSizeString.substring(unitPos);
+			int rem = Integer.valueOf(byteSizeString.substring(pos+1, unitPos));
+			short numDigits = (short) (""+rem).length();
+			int remainderIndex = numDecimals < numDigits ? numDecimals : numDigits;
+			int magnitudeEsc = (int)Math.pow(10, (numDigits-remainderIndex));
+			int boundedRemainder = rem/magnitudeEsc; 
+			int remainderRem = rem%magnitudeEsc;
+			if(boundedRemainder != 0) {
+				int a = 5*magnitudeEsc/10;
+				if(remainderRem > a)
+					boundedRemainder ++;
+				byteSizeString = abs + (boundedRemainder%10 == 0 ? boundedRemainder/10 : boundedRemainder) + byteSizeString.substring(unitPos);
 			}
 		}
 		return byteSizeString;
