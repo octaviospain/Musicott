@@ -18,7 +18,7 @@
 
 .root,
 .menu-bar,
-.dialog-pane, #playerGridPane, #playlistTreeView {
+.dialog-pane, #playerGridPane, #playlistTreeView, .list-view {
     -fx-focus-color: rgb(73, 73, 73);
     -fx-faint-focus-color: transparent;
     -fx-background-color: transparent, transparent, transparent, -fx-body-color;
@@ -92,14 +92,20 @@
 
 }
 
-.tree-cell {
+.tree-cell, .list-cell {
 	-fx-background-color: rgb(243, 243, 243);
+}
+
+.tree-cell {
 	-fx-graphic: url('../icons/playlist-black-icon.png');
 }
 
-.tree-cell:selected {
+.list-cell:selected, .tree-cell:selected {	
 	-fx-background-color: black;
 	-fx-text-fill: white;
+}
+
+.tree-cell:selected {
 	-fx-graphic: url('../icons/playlist-white-icon.png');
 }
 

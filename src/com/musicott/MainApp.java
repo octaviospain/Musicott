@@ -143,6 +143,7 @@ public class MainApp extends Application {
 			BorderPane rootLayout = (BorderPane) rootLoader.load();
 			RootController rootController = (RootController) rootLoader.getController();
 			rootController.setStage(rootStage);
+//			rootController.showTableInfoPane(false);
 			sc.setRootController(rootController);
 			LOG.debug("Root layout loaded");
 			
@@ -265,7 +266,8 @@ public class MainApp extends Application {
 		}
 		else {
 			playlists = new ArrayList<Playlist>();
-			playlists.add(new Playlist("Recently Added"));
+			playlists.add(new Playlist("My Top 10"));
+			playlists.add(new Playlist("Favourites"));
 			playlists.add(new Playlist("Random"));
 		}
 		ml.setPlaylists(playlists);

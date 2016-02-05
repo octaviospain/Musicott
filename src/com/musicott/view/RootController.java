@@ -53,6 +53,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaPlayer.Status;
@@ -69,7 +70,7 @@ public class RootController {
 	private static final double VOLUME_AMOUNT = 0.05;
 
 	@FXML
-	private BorderPane rootBorderPane;
+	private BorderPane rootBorderPane, tableBorderPane;
 	@FXML
 	private ToggleButton playButton, playQueueButton;
 	@FXML
@@ -90,8 +91,11 @@ public class RootController {
 	private TextField searchTextField;
 	@FXML
 	private ProgressBar volumeProgressBar;
+	@FXML
+	private HBox tableInfoHBox;
 	private AnchorPane playQueuePane;
 	private StatusBar statusBar;
+	private Image defaultCoverImage;
 
 	private Stage rootStage;
 	private MusicLibrary ml;
@@ -120,6 +124,7 @@ public class RootController {
 		volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {if(!isChanging) volumeProgressBar.setProgress(volumeSlider.getValue());});
 		volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
 
+		defaultCoverImage = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
 		statusBar = new StatusBar();
 		statusBar.setMaxHeight(3.0);
 		statusBar.setText("");
@@ -156,7 +161,18 @@ public class RootController {
 			playlistCover.setImage(new Image(new ByteArrayInputStream(ml.getTrack(plTracks.get(0)).getCoverBytes())));
 		}
 		else {
+			playlistCover.setImage(defaultCoverImage);
 			playlistSizeLabel.setText("");
+		}
+	}
+	
+	public void showTableInfoPane(boolean show) {
+		if(show) {
+			if(!tableBorderPane.getChildren().contains(tableInfoHBox))
+			tableBorderPane.setTop(tableInfoHBox);
+		}
+		else if(tableBorderPane.getChildren().contains(tableInfoHBox)){
+			tableBorderPane.getChildren().remove(tableInfoHBox);
 		}
 	}
 	
@@ -180,7 +196,7 @@ public class RootController {
 		if(currentTrack.hasCover())
 			currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverBytes())));
 		else
-			currentCover.setImage(new Image(getClass().getResourceAsStream("/images/default-cover-image.png")));
+			currentCover.setImage(defaultCoverImage);
 	//	currentTrack.getHasCoverProperty().addListener(observable -> currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverBytes()))));
 	}
 	

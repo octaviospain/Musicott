@@ -22,6 +22,8 @@ import com.musicott.SceneManager;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Playlist;
 
+import javafx.collections.ObservableList;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -35,7 +37,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 	
 	private TreeItem<Playlist> root;
 	private MusicLibrary ml;
-	private Playlist selectedPlaylist;
+	private ObservableList<TreeItem<Playlist>> selectedPlaylist;
 	
 	public PlaylistTreeView() {
 		super();
@@ -52,21 +54,18 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		setPrefWidth(USE_COMPUTED_SIZE);
 		setId("playlistTreeView");
 		setCellFactory(p -> new PlaylistTreeCell());
+		getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+		selectedPlaylist = getSelectionModel().getSelectedItems();
 		getSelectionModel().selectedItemProperty().addListener(listener -> {
-			selectedPlaylist = getSelectionModel().getSelectedItem().getValue();
-			if(selectedPlaylist.getName().equals("Recently Added"))
-				ml.setShowingPlaylist(null);
-			else {
-				ml.setShowingPlaylist(selectedPlaylist);
-				SceneManager.getInstance().getRootController().updatePlaylistInfo(selectedPlaylist);
-			}
+			ml.showPlaylist(selectedPlaylist.get(0).getValue());
+			SceneManager.getInstance().getRootController().updatePlaylistInfo(getSelectedPlaylist());
 		});
 		for(Playlist pl: ml.getPlaylists())
 			root.getChildren().add(new TreeItem<Playlist>(pl));
 	}
 	
 	public Playlist getSelectedPlaylist() {
-		return this.selectedPlaylist;
+		return selectedPlaylist.get(0).getValue();
 	}
 	
 	private class PlaylistTreeCell extends TreeCell<Playlist> {

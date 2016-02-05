@@ -41,6 +41,12 @@ import com.musicott.util.Utils;
 import de.codecentric.centerdevice.MenuToolkit;
 import javafx.application.HostServices;
 import javafx.application.Platform;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -51,6 +57,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -65,6 +72,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -82,12 +90,19 @@ public class MusicottScene extends Scene {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
+	public static final String ALL_MODE = "Show all";
+	
 	private SceneManager sc;
 	private MusicLibrary ml;
 	private Stage rootStage;
 	private HostServices hostServices;
 	
 	private BorderPane rootLayout, contentBorderLayout, tableBorderPane;
+	private VBox leftPaneVBox;
+	private ListView<String> showMenuListView;
+	private ListProperty<String> selectedMenuProperty;
+	private ObservableList<String> selectedMenu;
+	private ObservableList<Map.Entry<Integer, Track>> trackSelection;
 	private PlaylistTreeView playlistTreeView;
 	private TrackTableView trackTable;
 
@@ -104,23 +119,49 @@ public class MusicottScene extends Scene {
 		this.rootLayout = (BorderPane) rootLayout;
 		this.hostServices = hostServices;
 		sc = SceneManager.getInstance();
-		ml = MusicLibrary.getInstance();
+		ml = MusicLibrary.getInstance();		
 		
 		rootStage = sc.getMainStage();
+		playlistTreeView = new PlaylistTreeView();
+		showMenuListView = new ListView<String>();
+		leftPaneVBox = new VBox();
+		trackTable = new TrackTableView();
+		trackSelection = trackTable.getSelectionModel().getSelectedItems();
+
+		contentBorderLayout = (BorderPane) this.rootLayout.getCenter();	
+		contentBorderLayout.setLeft(leftPaneVBox);
+		
+		// Show menu list
+		showMenuListView.setPrefHeight(200);
+		showMenuListView.setPrefWidth(150);
+		showMenuListView.setItems(FXCollections.observableArrayList(ALL_MODE));
+		selectedMenu = showMenuListView.getSelectionModel().getSelectedItems();
+		selectedMenuProperty = new SimpleListProperty<>();
+		selectedMenuProperty.bind(new SimpleObjectProperty<>(selectedMenu));
+		showMenuListView.getSelectionModel().selectedItemProperty().addListener(listener -> {
+			if(selectedMenu.get(0).equals(ALL_MODE))
+				ml.showMode(ALL_MODE);;
+			sc.getRootController().showTableInfoPane(false);
+			playlistTreeView.getSelectionModel().clearAndSelect(-1);
+		});
 		
 		// Playlists pane
-		playlistTreeView = new PlaylistTreeView();
 		playlistTreeView.setPrefWidth(200);
-		contentBorderLayout = (BorderPane) this.rootLayout.getCenter();	
-		contentBorderLayout.setLeft(playlistTreeView);
+		playlistTreeView.getSelectionModel().selectedItemProperty().addListener(listener -> {
+			showMenuListView.getSelectionModel().clearAndSelect(-1);
+			sc.getRootController().showTableInfoPane(true);
+		});
+		leftPaneVBox.getChildren().addAll(showMenuListView, playlistTreeView);
+		VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
+		VBox.setMargin(showMenuListView, new Insets(15, 0, 0, 15));
 				
 		// Table
 		tableBorderPane = (BorderPane) contentBorderLayout.getCenter();
-		trackTable = new TrackTableView();
 		tableBorderPane.setCenter(trackTable);	
 
 		buildMenu();
 		buildContentMenu();
+		showMenuListView.getSelectionModel().clearAndSelect(0);
 	}	
 
 	/**
@@ -152,14 +193,6 @@ public class MusicottScene extends Scene {
 		rootLayout.setOnMouseClicked(event -> {if(playQueuePane.isVisible()) {playQueuePane.setVisible(false); playQueueButton.setSelected(false);}});
 		trackTable.setOnMouseClicked(event -> {if(playQueuePane.isVisible()) {playQueuePane.setVisible(false); playQueueButton.setSelected(false);}});
 		LOG.debug("Configured play queue pane to close if the user click outside it");
-	}
-	
-	public void setTableInfoVisible(boolean visible) {
-		
-	}
-	
-	public void setPlaylistLeftPaneVisible(boolean visible) {
-		
 	}
 	
 	/**
@@ -321,9 +354,8 @@ public class MusicottScene extends Scene {
 	private void buildContentMenu() {
 		MenuItem cmPlay = new MenuItem("Play");
 		cmPlay.setOnAction(event -> {
-			List<Map.Entry<Integer, Track>> selection = trackTable.getSelectionModel().getSelectedItems();
-			if(!selection.isEmpty())
-				PlayerFacade.getInstance().addTracks(selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), true);
+			if(!trackSelection.isEmpty())
+				PlayerFacade.getInstance().addTracks(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), true);
 		});
 		MenuItem cmEdit = new MenuItem("Edit");
 		cmEdit.setOnAction(event -> doEdit());
@@ -331,29 +363,16 @@ public class MusicottScene extends Scene {
 		cmDelete.setOnAction(event -> doDelete());
 		MenuItem cmAddToQueue = new MenuItem("Add to Play Queue");
 		cmAddToQueue.setOnAction(event -> {
-			List<Map.Entry<Integer, Track>> selection = trackTable.getSelectionModel().getSelectedItems();
-			if(!selection.isEmpty())
-				PlayerFacade.getInstance().addTracks(selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), false);
+			if(!trackSelection.isEmpty())
+				PlayerFacade.getInstance().addTracks(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), false);
 		});
 		MenuItem cmDeleteFromPlaylist = new MenuItem("Delete from playlist");
+		cmDeleteFromPlaylist.disableProperty().bind(selectedMenuProperty.emptyProperty().not());
 		cmDeleteFromPlaylist.setOnAction(event -> {
-			List<Map.Entry<Integer, Track>> selection = trackTable.getSelectionModel().getSelectedItems();
-			if(!selection.isEmpty())
-				ml.removeFromPlaylist(playlistTreeView.getSelectedPlaylist(), selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+			if(!trackSelection.isEmpty())
+				ml.removeFromPlaylist(playlistTreeView.getSelectedPlaylist(), trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
 		});
 		Menu cmAddToPlaylist = new Menu("Add to Playlist");
-		List<MenuItem> playlistsMI = new ArrayList<>();
-		for(Playlist pl: ml.getPlaylists()) {
-			String playListName = pl.getName();
-			MenuItem playlistItem = new MenuItem(playListName);
-			playlistItem.setOnAction(event -> {
-				List<Map.Entry<Integer, Track>> selection = trackTable.getSelectionModel().getSelectedItems();
-				if(!selection.isEmpty())
-					ml.addToPlaylist(playListName, selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
-			});
-			playlistsMI.add(playlistItem);
-		}
-		cmAddToPlaylist.getItems().addAll(playlistsMI);
 		
 		ContextMenu cm = new ContextMenu();
 		cm.getItems().addAll(cmPlay, cmEdit, cmDelete, cmAddToQueue, new SeparatorMenuItem(), cmDeleteFromPlaylist, cmAddToPlaylist);
@@ -361,6 +380,19 @@ public class MusicottScene extends Scene {
 		// Right click on row = show ContextMenu
 		trackTable.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
 			if(event.getButton() == MouseButton.SECONDARY) {
+				// Updates the playlists everytime
+				List<MenuItem> playlistsMI = new ArrayList<>();
+				for(Playlist pl: ml.getPlaylists()) {
+					String playListName = pl.getName();
+					MenuItem playlistItem = new MenuItem(playListName);
+					playlistItem.setOnAction(e -> {
+						if(!trackSelection.isEmpty())
+							ml.addToPlaylist(playListName, trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+					});
+					playlistsMI.add(playlistItem);
+				}
+				cmAddToPlaylist.getItems().clear();
+				cmAddToPlaylist.getItems().addAll(playlistsMI);
 				cm.show(trackTable,event.getScreenX(),event.getScreenY());
 				LOG.debug("Showing context menu");
 			}
@@ -388,20 +420,19 @@ public class MusicottScene extends Scene {
 	 * Handles edit action
 	 */
 	private void doEdit() {
-		List<Map.Entry<Integer, Track>> selection = trackTable.getSelectionModel().getSelectedItems();
-		if(selection != null & !selection.isEmpty()) {
-			if(selection.size() > 1) {
+		if(trackSelection != null & !trackSelection.isEmpty()) {
+			if(trackSelection.size() > 1) {
 				Alert alert = createAlert("", "Are you sure you want to edit multiple files?", "", AlertType.CONFIRMATION);
 				Optional<ButtonType> result = alert.showAndWait();
 				if (result.get() == ButtonType.OK) {
-					sc.openEditScene(selection.stream().map(Map.Entry::getValue).collect(Collectors.toList()));
+					sc.openEditScene(trackSelection.stream().map(Map.Entry::getValue).collect(Collectors.toList()));
 					LOG.debug("Opened edit stage for various tracks");
 				}
 				else
 					alert.close();
 			}
 			else {
-				sc.openEditScene(selection.stream().map(Map.Entry::getValue).collect(Collectors.toList()));
+				sc.openEditScene(trackSelection.stream().map(Map.Entry::getValue).collect(Collectors.toList()));
 				LOG.debug("Opened edit stage for a single track");
 			}
 		}
@@ -411,14 +442,13 @@ public class MusicottScene extends Scene {
 	 * Handles delete action
 	 */
 	private void doDelete() {
-		List<Map.Entry<Integer, Track>> selection = trackTable.getSelectionModel().getSelectedItems();
-		if(selection != null && !selection.isEmpty()) {
-			int numDeletedTracks = selection.size();
+		if(trackSelection != null && !trackSelection.isEmpty()) {
+			int numDeletedTracks = trackSelection.size();
 			Alert alert = createAlert("", "Delete "+numDeletedTracks+" files from Musicott?", "", AlertType.CONFIRMATION);
 			Optional<ButtonType> result = alert.showAndWait();
 			if (result.get() == ButtonType.OK) {
 				new Thread(() -> {
-					ml.removeTracks(selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+					ml.removeTracks(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
 					Platform.runLater(() -> sc.closeIndeterminatedProgressScene());
 				}).start();
 				sc.openIndeterminatedProgressScene();

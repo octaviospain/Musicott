@@ -21,6 +21,7 @@ package com.musicott.model;
 import static com.musicott.MainApp.PLAYLISTS_PERSISTENCE_FILE;
 import static com.musicott.MainApp.TRACKS_PERSISTENCE_FILE;
 import static com.musicott.MainApp.WAVEFORMS_PERSISTENCE_FILE;
+import static com.musicott.view.custom.MusicottScene.ALL_MODE;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -93,10 +94,10 @@ public class MusicLibrary {
 		        }
 				else if (c.wasRemoved()) {
 		          	Track removed = c.getValueRemoved();
-		          	waveforms.remove(c.getKey());
-					PlayerFacade.getInstance().removeTrack(c.getKey());
+		          	waveforms.remove(removed.getTrackID());
+					PlayerFacade.getInstance().removeTrack(removed.getTrackID());
 		          	showingTracks.remove(new AbstractMap.SimpleEntry<Integer, Track>(removed.getTrackID(), removed));
-		          	playlists.removeIf(p -> p.getTracks().contains(removed.getTrackID()));
+		          	playlists.forEach(p -> p.getTracks().remove(Integer.valueOf(removed.getTrackID())));
 					LOG.info("Deleted track: {}", removed);
 				}
 				saveLibrary(true, true, true);
@@ -120,18 +121,32 @@ public class MusicLibrary {
 		return this.showingTracks;
 	}
 	
-	public void setShowingPlaylist(Playlist playlist) {
-		showingTracks.clear();
-		synchronized(tracks) {
-			if(playlist != null) {
-				for(Integer id: playlist.getTracks()) {
-					Map.Entry<Integer, Track> entry = new AbstractMap.SimpleEntry<Integer, Track>(id, tracks.get(id));
-					showingTracks.add(entry);
-				}
-			} else
-				showingTracks.addAll(tracks.entrySet());
+	public void showMode(String mode) {
+		switch(mode) {
+			case ALL_MODE:
+				new Thread(() -> {
+					showingTracks.clear();
+					synchronized(tracks) {
+						showingTracks.addAll(tracks.entrySet());
+					}
+				}).start();
+				break;
 		}
 	}
+	
+	public void showPlaylist(Playlist playlist) {
+		new Thread(() -> {
+			showingTracks.clear();
+			synchronized(tracks) {
+				if(playlist != null)
+					for(Integer id: playlist.getTracks()) {
+						Map.Entry<Integer, Track> entry = new AbstractMap.SimpleEntry<Integer, Track>(id, tracks.get(id));
+						showingTracks.add(entry);
+					}
+			}
+		}).start();
+	}
+	
 	
 	public void addTracks(Map<Integer, Track> newTracks) {
 		synchronized(tracks) {
@@ -152,6 +167,7 @@ public class MusicLibrary {
 		}
 	}
 	
+	
 	public float[] getWaveform(int trackID) {
 		return waveforms.get(trackID);
 	}
@@ -167,6 +183,7 @@ public class MusicLibrary {
 			waveforms.put(trackID, waveform);
 		}
 	}
+	
 	
 	public boolean containsWaveform(int trackID) {
 		synchronized(waveforms) {
@@ -193,6 +210,7 @@ public class MusicLibrary {
 		}
 		saveLibrary(false, false, true);
 	}
+	
 	
 	public void removeFromPlaylist(Playlist playlist, List<Integer> tracksIDs) {
 		synchronized(playlists) {
