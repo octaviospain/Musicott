@@ -19,7 +19,6 @@
 package com.musicott.view;
 
 import java.io.ByteArrayInputStream;
-import java.util.List;
 
 import javax.swing.SwingUtilities;
 
@@ -28,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.musicott.model.MusicLibrary;
-import com.musicott.model.Playlist;
 import com.musicott.model.Track;
 import com.musicott.player.FlacPlayer;
 import com.musicott.player.NativePlayer;
@@ -36,7 +34,6 @@ import com.musicott.player.PlayerFacade;
 import com.musicott.player.TrackPlayer;
 import com.musicott.services.ServiceManager;
 import com.musicott.task.TaskPoolManager;
-import com.musicott.util.Utils;
 import com.musicott.view.custom.WaveformPanel;
 
 import javafx.beans.binding.Bindings;
@@ -55,6 +52,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaPlayer.Status;
 import javafx.stage.Stage;
@@ -68,9 +66,10 @@ public class RootController {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private static final double VOLUME_AMOUNT = 0.05;
+	public final Image DEFAULT_COVER_IMAGE = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
 
 	@FXML
-	private BorderPane rootBorderPane, tableBorderPane;
+	private BorderPane rootBorderPane, tableBorderPane, contentBorderLayout;
 	@FXML
 	private ToggleButton playButton, playQueueButton;
 	@FXML
@@ -82,7 +81,7 @@ public class RootController {
 	@FXML
 	private StackPane playerStackPane;
 	@FXML
-	private Label titleLabel, artistAlbumLabel, currentTimeLabel, remainingTimeLabel, playlistTitleLabel, playlistTracksNumberLabel, playlistSizeLabel;
+	private Label titleLabel, artistAlbumLabel, currentTimeLabel, remainingTimeLabel, playlistTracksNumberLabel, playlistSizeLabel;
 	@FXML
 	private Slider trackSlider, volumeSlider;
 	@FXML
@@ -93,9 +92,10 @@ public class RootController {
 	private ProgressBar volumeProgressBar;
 	@FXML
 	private HBox tableInfoHBox;
+	@FXML
+	private VBox navigationPaneVBox;
 	private AnchorPane playQueuePane;
 	private StatusBar statusBar;
-	private Image defaultCoverImage;
 
 	private Stage rootStage;
 	private MusicLibrary ml;
@@ -124,7 +124,6 @@ public class RootController {
 		volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {if(!isChanging) volumeProgressBar.setProgress(volumeSlider.getValue());});
 		volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
 
-		defaultCoverImage = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
 		statusBar = new StatusBar();
 		statusBar.setMaxHeight(3.0);
 		statusBar.setText("");
@@ -151,29 +150,18 @@ public class RootController {
 		statusBar.setProgress(progress);
 	}
 	
-	public void updatePlaylistInfo(Playlist playlist) {
-		List<Integer> plTracks = playlist.getTracks();
-		playlistTitleLabel.setText(playlist.getName());
-		playlistTracksNumberLabel.setText(playlist.getTracks().size()+ " songs");
-		if(!plTracks.isEmpty()) {
-			long totalBytes = plTracks.stream().mapToLong(p -> ml.getTrack(p).getSize()).sum();
-			playlistSizeLabel.setText(Utils.byteSizeString(totalBytes, 2));
-			playlistCover.setImage(new Image(new ByteArrayInputStream(ml.getTrack(plTracks.get(0)).getCoverBytes())));
-		}
-		else {
-			playlistCover.setImage(defaultCoverImage);
-			playlistSizeLabel.setText("");
-		}
+	public void showTableInfoPane(boolean show) {
+		if(show && !tableBorderPane.getChildren().contains(tableInfoHBox))
+			tableBorderPane.setTop(tableInfoHBox);
+		else if(!show && tableBorderPane.getChildren().contains(tableInfoHBox))
+			tableBorderPane.getChildren().remove(tableInfoHBox);
 	}
 	
-	public void showTableInfoPane(boolean show) {
-		if(show) {
-			if(!tableBorderPane.getChildren().contains(tableInfoHBox))
-			tableBorderPane.setTop(tableInfoHBox);
-		}
-		else if(tableBorderPane.getChildren().contains(tableInfoHBox)){
-			tableBorderPane.getChildren().remove(tableInfoHBox);
-		}
+	public void showNavigationPane(boolean show) {
+		if(show && !contentBorderLayout.getChildren().contains(navigationPaneVBox))
+			contentBorderLayout.setLeft(navigationPaneVBox);
+		else if(!show && contentBorderLayout.getChildren().contains(navigationPaneVBox))
+			contentBorderLayout.getChildren().remove(navigationPaneVBox);
 	}
 	
 	public void updatePlayerInfo(TrackPlayer currentPlayer, Track currentTrack) {
@@ -196,7 +184,7 @@ public class RootController {
 		if(currentTrack.hasCover())
 			currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverBytes())));
 		else
-			currentCover.setImage(defaultCoverImage);
+			currentCover.setImage(DEFAULT_COVER_IMAGE);
 	//	currentTrack.getHasCoverProperty().addListener(observable -> currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverBytes()))));
 	}
 	

@@ -18,7 +18,6 @@
 
 package com.musicott.view.custom;
 
-import com.musicott.SceneManager;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Playlist;
 
@@ -56,16 +55,17 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		setCellFactory(p -> new PlaylistTreeCell());
 		getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 		selectedPlaylist = getSelectionModel().getSelectedItems();
-		getSelectionModel().selectedItemProperty().addListener(listener -> {
-			ml.showPlaylist(selectedPlaylist.get(0).getValue());
-			SceneManager.getInstance().getRootController().updatePlaylistInfo(getSelectedPlaylist());
-		});
+		getSelectionModel().selectedItemProperty().addListener(listener -> ml.showPlaylist(getSelectedPlaylist()));
 		for(Playlist pl: ml.getPlaylists())
 			root.getChildren().add(new TreeItem<Playlist>(pl));
 	}
 	
 	public Playlist getSelectedPlaylist() {
-		return selectedPlaylist.get(0).getValue();
+		return selectedPlaylist.get(0) == null ? null : selectedPlaylist.get(0).getValue();
+	}
+	
+	public void addPlaylistItem(TreeItem<Playlist> playlistItem) {
+		root.getChildren().add(playlistItem);
 	}
 	
 	private class PlaylistTreeCell extends TreeCell<Playlist> {
@@ -74,9 +74,11 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		public void updateItem(Playlist p, boolean empty) {
 			super.updateItem(p, empty);
 			if(!empty) {
-				setText(p.getName());
-			} else {
-				setText(null);
+				textProperty().bind(p.nameProperty());
+			}
+			else {
+				textProperty().unbind();
+				setText("");
 			}
 		}
 	}

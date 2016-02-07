@@ -18,10 +18,16 @@
 
 package com.musicott.model;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
-import com.musicott.MainPreferences;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.scene.image.Image;
 
 /**
  * @author Octavio Calleya
@@ -29,22 +35,20 @@ import com.musicott.MainPreferences;
  */
 public class Playlist {
 
-	private int playlistID;
 	private String name;
 	private List<Integer> tracksID;
 	
+	private StringProperty nameProperty;
+	private ObjectProperty<Image> playlistCoverProperty;
+	
+	private Image DEFAULT_COVER_IMAGE = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
+	
 	public Playlist(String name) {
 		this.name = name;
-		playlistID = MainPreferences.getInstance().getPlaylistSequence();
 		tracksID = new ArrayList<>();
-	}
-	
-	public int getPlaylistID() {
-		return this.playlistID;
-	}
-	
-	public void setPlaylistId(int playlistID) {
-		this.playlistID = playlistID;
+		nameProperty = new SimpleStringProperty(this.name);
+		nameProperty.addListener((obs, oldVal, newVal) -> setName(newVal));
+		playlistCoverProperty = new SimpleObjectProperty<Image>(DEFAULT_COVER_IMAGE);
 	}
 	
 	public String getName() {
@@ -53,6 +57,7 @@ public class Playlist {
 	
 	public void setName(String name) {
 		this.name = name;
+		nameProperty.setValue(this.name);
 	}
 	
 	public List<Integer> getTracks() {
@@ -61,6 +66,29 @@ public class Playlist {
 	
 	public void setTracks(List<Integer> tracks) {
 		tracksID = tracks;
+	}
+	
+	public void changePlaylistCover() {
+		if(!tracksID.isEmpty()) {
+			Random r = new Random();
+			Track rt = MusicLibrary.getInstance().getTrack(tracksID.get(r.nextInt(tracksID.size())));
+			if(rt.hasCover())
+				playlistCoverProperty.set(new Image(new ByteArrayInputStream(rt.getCoverBytes())));
+			else
+				playlistCoverProperty.set(DEFAULT_COVER_IMAGE);
+		}
+		else
+			playlistCoverProperty.set(DEFAULT_COVER_IMAGE);
+	}
+	
+	public StringProperty nameProperty() {
+		return nameProperty;
+	}
+	
+	public ObjectProperty<Image> playlistCoverProperty() {
+		if(playlistCoverProperty.get().equals(DEFAULT_COVER_IMAGE) && !tracksID.isEmpty())
+			changePlaylistCover();
+		return playlistCoverProperty;
 	}
 	
 	@Override

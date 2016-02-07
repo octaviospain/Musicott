@@ -21,7 +21,7 @@ package com.musicott.model;
 import static com.musicott.MainApp.PLAYLISTS_PERSISTENCE_FILE;
 import static com.musicott.MainApp.TRACKS_PERSISTENCE_FILE;
 import static com.musicott.MainApp.WAVEFORMS_PERSISTENCE_FILE;
-import static com.musicott.view.custom.MusicottScene.ALL_MODE;
+import static com.musicott.view.custom.MusicottScene.ALL_SONGS_MODE;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -43,6 +43,7 @@ import com.musicott.ErrorHandler;
 import com.musicott.MainPreferences;
 import com.musicott.SceneManager;
 import com.musicott.player.PlayerFacade;
+import com.musicott.view.custom.PlaylistTreeView;
 
 import javafx.application.Platform;
 import javafx.beans.property.ListProperty;
@@ -67,7 +68,7 @@ public class MusicLibrary {
 	private ObservableList<Map.Entry<Integer, Track>> showingTracks;
 	private Map<Integer,float[]> waveforms;
 	private List<Playlist> playlists;
-	private ListProperty<Map.Entry<Integer, Track>> tracksListProperty;
+	private ListProperty<Map.Entry<Integer, Track>> showingTracksProperty;
 	private SaveLibraryTask saveLibraryTask;
 	private Semaphore saveSemaphore;
 	
@@ -85,19 +86,24 @@ public class MusicLibrary {
 		synchronized(tracks) {
 			this.tracks = tracks;
 			this.showingTracks = FXCollections.observableArrayList(tracks.entrySet());
-			this.tracksListProperty = new SimpleListProperty<>();
-			this.tracksListProperty.bind(new SimpleObjectProperty<>(showingTracks));
+			this.showingTracksProperty = new SimpleListProperty<>();
+			this.showingTracksProperty.bind(new SimpleObjectProperty<>(showingTracks));
 			this.tracks.addListener((MapChangeListener.Change<? extends Integer, ? extends Track> c) -> {
 				if(c.wasAdded()) {
 					Track added = c.getValueAdded();
-					showingTracks.add(new AbstractMap.SimpleEntry<Integer, Track>(added.getTrackID(), added));
-		        }
+					PlaylistTreeView ptv = (PlaylistTreeView) SceneManager.getInstance().getMainStage().getScene().lookup("#playlistTreeView");
+					if(ptv.getSelectionModel().selectedItemProperty().get() == null)
+						Platform.runLater(() -> showingTracks.add(new AbstractMap.SimpleEntry<Integer, Track>(added.getTrackID(), added)));
+				}
 				else if (c.wasRemoved()) {
 		          	Track removed = c.getValueRemoved();
 		          	waveforms.remove(removed.getTrackID());
 					PlayerFacade.getInstance().removeTrack(removed.getTrackID());
 		          	showingTracks.remove(new AbstractMap.SimpleEntry<Integer, Track>(removed.getTrackID(), removed));
-		          	playlists.forEach(p -> p.getTracks().remove(Integer.valueOf(removed.getTrackID())));
+		          	playlists.forEach(p -> {
+		          		if(p.getTracks().remove((Integer)(removed.getTrackID())))
+		          			p.changePlaylistCover();
+		          	});
 					LOG.info("Deleted track: {}", removed);
 				}
 				saveLibrary(true, true, true);
@@ -121,32 +127,35 @@ public class MusicLibrary {
 		return this.showingTracks;
 	}
 	
+	public ListProperty<Map.Entry<Integer, Track>> getShowingTracksProperty(){
+		return showingTracksProperty;
+	}
+	
 	public void showMode(String mode) {
 		switch(mode) {
-			case ALL_MODE:
-				new Thread(() -> {
-					showingTracks.clear();
-					synchronized(tracks) {
-						showingTracks.addAll(tracks.entrySet());
-					}
-				}).start();
+			case ALL_SONGS_MODE:
+				showingTracks.clear();
+				showingTracks.addAll(tracks.entrySet());
 				break;
 		}
 	}
 	
 	public void showPlaylist(Playlist playlist) {
-		new Thread(() -> {
-			showingTracks.clear();
-			synchronized(tracks) {
-				if(playlist != null)
-					for(Integer id: playlist.getTracks()) {
-						Map.Entry<Integer, Track> entry = new AbstractMap.SimpleEntry<Integer, Track>(id, tracks.get(id));
-						showingTracks.add(entry);
-					}
-			}
-		}).start();
+		showingTracks.clear();
+		synchronized(tracks) {
+			if(playlist != null)
+				for(Integer id: playlist.getTracks()) {
+					Map.Entry<Integer, Track> entry = new AbstractMap.SimpleEntry<Integer, Track>(id, tracks.get(id));
+					showingTracks.add(entry);
+				}
+		}
 	}
 	
+	public void clearShowingTracks() {
+		synchronized(showingTracks) {
+			showingTracks.clear();
+		}
+	}
 	
 	public void addTracks(Map<Integer, Track> newTracks) {
 		synchronized(tracks) {
@@ -156,7 +165,8 @@ public class MusicLibrary {
 	
 	public void removeTracks(List<Integer> selection) {
 		synchronized(tracks) {
-			tracks.keySet().removeAll(selection);
+			if(!Platform.isFxApplicationThread())
+				Platform.runLater(() -> tracks.keySet().removeAll(selection));
 		}
 		Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Removed "+selection.size()+" tracks"));
 	}
@@ -166,7 +176,6 @@ public class MusicLibrary {
 			this.waveforms = waveforms;
 		}
 	}
-	
 	
 	public float[] getWaveform(int trackID) {
 		return waveforms.get(trackID);
@@ -183,8 +192,7 @@ public class MusicLibrary {
 			waveforms.put(trackID, waveform);
 		}
 	}
-	
-	
+
 	public boolean containsWaveform(int trackID) {
 		synchronized(waveforms) {
 			return waveforms.containsKey(trackID);
@@ -203,25 +211,44 @@ public class MusicLibrary {
 		}
 	}
 	
-	public void addToPlaylist(String playlistName, List<Integer> tracksIDs) {
+	public boolean containsPlaylist(String playlistName) {
+		return playlists.stream().anyMatch(playlist -> playlistName.equals(playlist.getName()));
+	}
+	
+	public void addPlaylist(Playlist playlist) {
 		synchronized(playlists) {
-			Playlist pl = playlists.stream().filter(p -> p.getName().equalsIgnoreCase(playlistName)).findFirst().get();
-			pl.getTracks().addAll(tracksIDs);
+			playlists.add(playlist);
 		}
 		saveLibrary(false, false, true);
 	}
 	
+	public void removePlaylist(Playlist playlist) {
+		synchronized(playlists) {
+			playlists.remove(playlist);
+		}
+		saveLibrary(false, false, true);
+	}
+	
+	public void addToPlaylist(String playlistName, List<Integer> tracksIDs) {
+		synchronized(playlists) {
+			Playlist pl = playlists.stream().filter(p -> p.getName().equalsIgnoreCase(playlistName)).findFirst().get();
+			pl.getTracks().addAll(tracksIDs);
+			pl.changePlaylistCover();
+		}
+		saveLibrary(false, false, true);
+	}
 	
 	public void removeFromPlaylist(Playlist playlist, List<Integer> tracksIDs) {
 		synchronized(playlists) {
 			playlist.getTracks().removeAll(tracksIDs);
 			showingTracks.removeIf(f -> tracksIDs.contains(f.getKey()));
+			playlist.changePlaylistCover();
 		}
 		saveLibrary(false, false, true);
 	}
 	
 	public ListProperty<Map.Entry<Integer, Track>> trackslistProperty() {
-		return this.tracksListProperty;
+		return this.showingTracksProperty;
 	}
 	
 	public void playRandomPlaylist(){
@@ -285,7 +312,7 @@ public class MusicLibrary {
 
 		private String musicottUserPath;
 		private File tracksFile, waveformsFile, playlistsFile;
-		private Map<String,Object> args;
+		private Map<String,Object> tracksArgs, playlistArgs;
 		private FileOutputStream tracksFOS, waveformsFOS, playlistsFOS;
 		private JsonWriter tracksJSW, waveformsJSW, playlistsJSW;
 		private volatile boolean saveTracks, saveWaveforms, savePlaylists;
@@ -294,41 +321,52 @@ public class MusicLibrary {
 			setName("Save Library Thread");
 			musicottUserPath = "";
 			
-			args = new HashMap<>();
-			Map<Class<?>,List<String>> fields = new HashMap<>();
-			args.put(JsonWriter.FIELD_SPECIFIERS, fields);
-			args.put(JsonWriter.PRETTY_PRINT, true);
+			tracksArgs = new HashMap<>();
+			Map<Class<?>,List<String>> trFields = new HashMap<>();
+			tracksArgs.put(JsonWriter.FIELD_SPECIFIERS, trFields);
+			tracksArgs.put(JsonWriter.PRETTY_PRINT, true);
 			
-			List<String> fieldNames = new ArrayList<>();
-			fieldNames.add("trackID");
-			fieldNames.add("fileFolder");
-			fieldNames.add("fileName");
-			fieldNames.add("name");
-			fieldNames.add("artist");
-			fieldNames.add("album");
-			fieldNames.add("genre");
-			fieldNames.add("comments");
-			fieldNames.add("albumArtist");
-			fieldNames.add("label");
-			fieldNames.add("size");
-			fieldNames.add("totalTime");
-			fieldNames.add("bitRate");
-			fieldNames.add("playCount");
-			fieldNames.add("trackNumber");
-			fieldNames.add("discNumber");
-			fieldNames.add("year");
-			fieldNames.add("bpm");
-			fieldNames.add("inDisk");
-			fieldNames.add("isCompilation");
-			fieldNames.add("dateModified");
-			fieldNames.add("dateAdded");
-			fieldNames.add("fileFormat");
-			fieldNames.add("hasCover");
-			fieldNames.add("isVariableBitRate");
-			fieldNames.add("encoder");
-			fieldNames.add("encoding");
+			List<String> trackAtributes = new ArrayList<>();
+			trackAtributes.add("trackID");
+			trackAtributes.add("fileFolder");
+			trackAtributes.add("fileName");
+			trackAtributes.add("name");
+			trackAtributes.add("artist");
+			trackAtributes.add("album");
+			trackAtributes.add("genre");
+			trackAtributes.add("comments");
+			trackAtributes.add("albumArtist");
+			trackAtributes.add("label");
+			trackAtributes.add("size");
+			trackAtributes.add("totalTime");
+			trackAtributes.add("bitRate");
+			trackAtributes.add("playCount");
+			trackAtributes.add("trackNumber");
+			trackAtributes.add("discNumber");
+			trackAtributes.add("year");
+			trackAtributes.add("bpm");
+			trackAtributes.add("inDisk");
+			trackAtributes.add("isCompilation");
+			trackAtributes.add("dateModified");
+			trackAtributes.add("dateAdded");
+			trackAtributes.add("fileFormat");
+			trackAtributes.add("hasCover");
+			trackAtributes.add("isVariableBitRate");
+			trackAtributes.add("encoder");
+			trackAtributes.add("encoding");
 			
-			fields.put(Track.class,fieldNames);
+			trFields.put(Track.class, trackAtributes);
+			
+			playlistArgs = new HashMap<>();
+			Map<Class<?>, List<String>> plFields = new HashMap<>();
+			playlistArgs.put(JsonWriter.FIELD_SPECIFIERS, plFields);
+			playlistArgs.put(JsonWriter.PRETTY_PRINT, true);
+			
+			List<String> playlistAttribues = new ArrayList<>();
+			playlistAttribues.add("name");
+			playlistAttribues.add("tracksID");
+			
+			plFields.put(Playlist.class, playlistAttribues);
 		}
 		
 		@Override
@@ -340,7 +378,8 @@ public class MusicLibrary {
 					if(saveTracks) {
 						LOG.debug("Saving list of tracks in {}", tracksFile);
 						tracksFOS = new FileOutputStream(tracksFile);
-						tracksJSW = new JsonWriter(tracksFOS, args);
+						tracksJSW = new JsonWriter(tracksFOS, tracksArgs);
+						saveTracks = false;
 						synchronized(tracks) {
 							tracksJSW.write(tracks);
 						}
@@ -352,6 +391,7 @@ public class MusicLibrary {
 						LOG.debug("Saving waveform images in {}", waveformsFile);
 						waveformsFOS = new FileOutputStream(waveformsFile);
 						waveformsJSW = new JsonWriter(waveformsFOS);
+						saveWaveforms = false;
 						synchronized(waveforms) {
 							waveformsJSW.write(waveforms);
 						}
@@ -362,7 +402,8 @@ public class MusicLibrary {
 					if(savePlaylists) {
 						LOG.debug("Saving playlists in {}", playlistsFile);
 						playlistsFOS = new FileOutputStream(playlistsFile);
-						playlistsJSW = new JsonWriter(playlistsFOS);
+						playlistsJSW = new JsonWriter(playlistsFOS, playlistArgs);
+						savePlaylists = false;
 						synchronized(playlists){
 							playlistsJSW.write(playlists);
 						}

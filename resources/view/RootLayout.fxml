@@ -150,9 +150,9 @@
                               <Image url="@../images/default-cover-image.png" />
                            </image>
                         </ImageView>
-                        <VBox>
+                        <VBox fx:id="playlistInfoVBox">
                            <children>
-                              <Label fx:id="playlistTitleLabel">
+                              <Label fx:id="playlistTitleLabel" maxHeight="-Infinity" prefHeight="25.0">
                                  <font>
                                     <Font size="20.0" />
                                  </font>
@@ -184,6 +184,13 @@
                </top>
             </BorderPane>
          </center>
+         <left>
+            <VBox fx:id="navigationPaneVBox" alignment="BOTTOM_LEFT" BorderPane.alignment="CENTER">
+               <children>
+                  <Button fx:id="newPlaylistButton" mnemonicParsing="false" />
+               </children>
+            </VBox>
+         </left>
       </BorderPane>
    </center>
    

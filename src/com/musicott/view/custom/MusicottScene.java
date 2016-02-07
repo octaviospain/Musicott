@@ -41,12 +41,14 @@ import com.musicott.util.Utils;
 import de.codecentric.centerdevice.MenuToolkit;
 import javafx.application.HostServices;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -62,7 +64,9 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -74,6 +78,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
+import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
@@ -90,15 +96,23 @@ public class MusicottScene extends Scene {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
-	public static final String ALL_MODE = "Show all";
+	public static final String ALL_SONGS_MODE = "All songs";
 	
 	private SceneManager sc;
 	private MusicLibrary ml;
 	private Stage rootStage;
 	private HostServices hostServices;
 	
+	private Menu fileMN, editMN, controlsMN, viewMN, aboutMN;
+	private MenuItem openFileMI, importFolderMI, importItunesMI, preferencesMI, editMI, deleteMI, prevMI, nextMI, volIncrMI, volDecrMI, selCurrMI, aboutMI;
+	private MenuItem newPlaylistMI, showHideNavigationPaneMI, showHideTableInfoPaneMI;
+	
 	private BorderPane rootLayout, contentBorderLayout, tableBorderPane;
-	private VBox leftPaneVBox;
+	private VBox navigationPaneVBox, playlistInfoVBox;
+	private Button newPlaylistButton;
+	private TextField playlistTitleTextField;
+	private Label playlistTitleLabel, playlistTracksNumberLabel, playlistSizeLabel;
+	private ImageView playlistCover;
 	private ListView<String> showMenuListView;
 	private ListProperty<String> selectedMenuProperty;
 	private ObservableList<String> selectedMenu;
@@ -121,26 +135,73 @@ public class MusicottScene extends Scene {
 		sc = SceneManager.getInstance();
 		ml = MusicLibrary.getInstance();		
 		
+		contentBorderLayout = (BorderPane) this.rootLayout.getCenter();
+		tableBorderPane = (BorderPane) contentBorderLayout.getCenter();
+		navigationPaneVBox = (VBox) contentBorderLayout.getLeft();
+		playlistInfoVBox = (VBox) this.rootLayout.lookup("#playlistInfoVBox");
+		playlistTitleLabel = (Label) this.rootLayout.lookup("#playlistTitleLabel");
+		playlistTracksNumberLabel = (Label) this.rootLayout.lookup("#playlistTracksNumberLabel");
+		playlistSizeLabel = (Label) this.rootLayout.lookup("#playlistSizeLabel");
+		playlistCover = (ImageView) this.rootLayout.lookup("#playlistCover");
+		newPlaylistButton = (Button) navigationPaneVBox.getChildren().get(0);
+		newPlaylistButton.setOnMouseClicked(e -> {
+			sc.getRootController().showTableInfoPane(true);
+			doAddNewPlaylist();
+			playlistTreeView.getSelectionModel().clearAndSelect(-1);
+		});
+		
+		playlistTracksNumberLabel.textProperty().bind(Bindings.createStringBinding(() -> ml.getShowingTracksProperty().sizeProperty().get()+" songs", ml.getShowingTracksProperty()));
+		playlistSizeLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+			String sizeString = Utils.byteSizeString(ml.getShowingTracksProperty().stream().mapToLong(t -> (long)t.getValue().getSize()).sum(), 2);
+			if(sizeString.equals("0 B"))
+				sizeString = "";
+			return sizeString; 
+		},  ml.getShowingTracksProperty()));
+		playlistTitleLabel.setOnMouseClicked(event -> {
+			if(event.getClickCount() == 2) {	// 2 clicks = edit playlist name
+				setPlaylistTitleEdit(true);
+				playlistTitleTextField.setOnKeyPressed(e -> {
+					Playlist playlist = playlistTreeView.getSelectedPlaylist();
+					String newTitle = playlistTitleTextField.getText();
+					if(e.getCode() == KeyCode.ENTER && newTitle.equals(playlist.getName())) {
+						setPlaylistTitleEdit(false);
+						event.consume();
+					} else if(e.getCode() == KeyCode.ENTER && !newTitle.equals("") && !ml.containsPlaylist(newTitle)) {
+						playlist.setName(newTitle);
+						ml.saveLibrary(false, false, true);
+						setPlaylistTitleEdit(false);
+						event.consume();
+					}
+				});
+			}
+		});
+		
+		playlistTitleTextField = new TextField();
+		playlistTitleTextField.setPrefWidth(150);
+		playlistTitleTextField.setPrefHeight(25);
+		playlistTitleTextField.setPadding(new Insets(-10, 0, -10, 0));
+		playlistTitleTextField.setFont(new Font("System", 20));
+		playlistTitleLabel.textProperty().bind(playlistTitleTextField.textProperty());
+		VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
+		
 		rootStage = sc.getMainStage();
 		playlistTreeView = new PlaylistTreeView();
 		showMenuListView = new ListView<String>();
-		leftPaneVBox = new VBox();
 		trackTable = new TrackTableView();
 		trackSelection = trackTable.getSelectionModel().getSelectedItems();
-
-		contentBorderLayout = (BorderPane) this.rootLayout.getCenter();	
-		contentBorderLayout.setLeft(leftPaneVBox);
+		tableBorderPane.setCenter(trackTable);	
 		
-		// Show menu list
+		// Show menu mode list
 		showMenuListView.setPrefHeight(200);
 		showMenuListView.setPrefWidth(150);
-		showMenuListView.setItems(FXCollections.observableArrayList(ALL_MODE));
+		showMenuListView.setItems(FXCollections.observableArrayList(ALL_SONGS_MODE));
 		selectedMenu = showMenuListView.getSelectionModel().getSelectedItems();
 		selectedMenuProperty = new SimpleListProperty<>();
 		selectedMenuProperty.bind(new SimpleObjectProperty<>(selectedMenu));
 		showMenuListView.getSelectionModel().selectedItemProperty().addListener(listener -> {
-			if(selectedMenu.get(0).equals(ALL_MODE))
-				ml.showMode(ALL_MODE);;
+			if(selectedMenu.get(0).equals(ALL_SONGS_MODE))
+				ml.showMode(ALL_SONGS_MODE);
+			showHideTableInfoPaneMI.setDisable(true);
 			sc.getRootController().showTableInfoPane(false);
 			playlistTreeView.getSelectionModel().clearAndSelect(-1);
 		});
@@ -150,19 +211,41 @@ public class MusicottScene extends Scene {
 		playlistTreeView.getSelectionModel().selectedItemProperty().addListener(listener -> {
 			showMenuListView.getSelectionModel().clearAndSelect(-1);
 			sc.getRootController().showTableInfoPane(true);
+			showHideTableInfoPaneMI.setDisable(false);
+			showHideTableInfoPaneMI.setText(showHideTableInfoPaneMI.getText().replaceFirst("Show", "Hide"));
+			if(playlistTreeView.getSelectedPlaylist() != null) {
+				playlistTitleTextField.setText(playlistTreeView.getSelectedPlaylist().getName());
+				setPlaylistTitleEdit(false);
+				playlistCover.imageProperty().bind(playlistTreeView.getSelectedPlaylist().playlistCoverProperty());
+			}
 		});
-		leftPaneVBox.getChildren().addAll(showMenuListView, playlistTreeView);
+		
+		VBox playlistVBox = new VBox();
+		Label playlistsLabel = new Label("Playlists");
+		playlistsLabel.setTextFill(Paint.valueOf("rgb(158, 158, 158)"));
+		Font labelFont = new Font("System", 10);
+		playlistsLabel.setFont(labelFont);
+		playlistVBox.getChildren().addAll(playlistsLabel, playlistTreeView);
+		VBox.setMargin(playlistsLabel, new Insets(10, 0, 5, 15));
+		
+		VBox showMenuVBox = new VBox();
+		showMenuVBox.setAlignment(Pos.TOP_LEFT);
+		Label showMenuLabel = new Label("Musicott library");
+		showMenuLabel.setTextFill(Paint.valueOf("rgb(158, 158, 158)"));
+		showMenuLabel.setFont(labelFont);
+		showMenuVBox.getChildren().addAll(showMenuLabel, showMenuListView);
+		VBox.setMargin(showMenuLabel, new Insets(5, 0, 5, 15));
+		
+		navigationPaneVBox.getChildren().add(0, playlistVBox);
+		navigationPaneVBox.getChildren().add(0, showMenuVBox);
 		VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
-		VBox.setMargin(showMenuListView, new Insets(15, 0, 0, 15));
-				
-		// Table
-		tableBorderPane = (BorderPane) contentBorderLayout.getCenter();
-		tableBorderPane.setCenter(trackTable);	
-
+		VBox.setVgrow(showMenuVBox, Priority.ALWAYS);
+		
 		buildMenu();
-		buildContentMenu();
+		buildContextMenu();
+		buildPlaylistContextMenu();
 		showMenuListView.getSelectionModel().clearAndSelect(0);
-	}	
+	}
 
 	/**
 	 * Creates the play queue pane and configures it
@@ -176,7 +259,7 @@ public class MusicottScene extends Scene {
 		ToggleButton playQueueButton = (ToggleButton) rootLayout.lookup("#playQueueButton");
 		playQueuePane.setLayoutY(playQueueButton.getLayoutY()+50);
 		playQueuePane.setLayoutX(playQueueButton.getLayoutX()-150+(playQueueButton.getWidth()/2));
-		LOG.debug("Play queue placed");
+		LOG.debug("Play queue placed"); 
 		
 		// The play queue pane moves if the window is resized
 		rootStage.widthProperty().addListener((observable, oldValue, newValue) -> {
@@ -203,18 +286,18 @@ public class MusicottScene extends Scene {
 		Modifier keyModifierOS = os != null && os.startsWith ("Mac") ? KeyCodeCombination.META_DOWN : KeyCodeCombination.CONTROL_DOWN;
 		
 		MenuBar menuBar = new MenuBar();
-		Menu fileMN, editMN, controlsMN, aboutMN;
-		MenuItem openFileMI, importFolderMI, importItunesMI, preferencesMI, editMI, deleteMI, prevMI, nextMI, volIncrMI, volDecrMI, selCurrMI, aboutMI;
 
-		fileMN = new Menu("File"); editMN = new Menu("Menu"); controlsMN = new Menu("Controls"); aboutMN = new Menu("About");
+		fileMN = new Menu("File"); editMN = new Menu("Menu"); controlsMN = new Menu("Controls"); viewMN = new Menu("View"); aboutMN = new Menu("About");
 		openFileMI = new MenuItem("Open File(s)..."); importFolderMI = new MenuItem("Import Folder..."); importItunesMI = new MenuItem("Import from iTunes Library...");
 		preferencesMI = new MenuItem("Preferences"); editMI = new MenuItem("Edit"); deleteMI = new MenuItem("Delete"); prevMI = new MenuItem("Previous");
 		nextMI = new MenuItem("Next"); volIncrMI = new MenuItem("Increase volume"); volDecrMI = new MenuItem("Decrease volume");
-		selCurrMI = new MenuItem("Select Current Track"); aboutMI = new MenuItem("About");
+		selCurrMI = new MenuItem("Select Current Track"); aboutMI = new MenuItem("About"); newPlaylistMI = new MenuItem("Add new playlist");
+		showHideNavigationPaneMI = new MenuItem("Hide navigation pane"); showHideTableInfoPaneMI = new MenuItem("Hide table info pane");
 		
 		fileMN.getItems().addAll(openFileMI, importFolderMI, importItunesMI);
-		editMN.getItems().addAll(editMI, deleteMI);
+		editMN.getItems().addAll(editMI, deleteMI, new SeparatorMenuItem(), newPlaylistMI);
 		controlsMN.getItems().addAll(prevMI, nextMI, new SeparatorMenuItem(), volIncrMI, volDecrMI, new SeparatorMenuItem(), selCurrMI);
+		viewMN.getItems().addAll(showHideNavigationPaneMI, showHideTableInfoPaneMI);
 		aboutMN.getItems().add(aboutMI);		
 
 		// Key acceleratos. Command down for os x and control down for windows and linux
@@ -229,6 +312,9 @@ public class MusicottScene extends Scene {
 		volIncrMI.setAccelerator(new KeyCodeCombination(KeyCode.UP, keyModifierOS));
 		volDecrMI.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, keyModifierOS));
 		selCurrMI.setAccelerator(new KeyCodeCombination(KeyCode.L, keyModifierOS));
+		newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, keyModifierOS));
+		showHideNavigationPaneMI.setAccelerator(new KeyCodeCombination(KeyCode.R, keyModifierOS, KeyCodeCombination.SHIFT_DOWN));
+		showHideTableInfoPaneMI.setAccelerator(new KeyCodeCombination(KeyCode.U, keyModifierOS, KeyCodeCombination.SHIFT_DOWN));
 		
 		// actions and bindings for the menus
 		openFileMI.setOnAction(e -> {
@@ -319,6 +405,25 @@ public class MusicottScene extends Scene {
 			alert.showAndWait();
 			LOG.debug("Showing about window");
 		});
+		newPlaylistMI.setOnAction(e -> doAddNewPlaylist());
+		showHideNavigationPaneMI.setOnAction(e -> {
+			if(showHideNavigationPaneMI.getText().startsWith("Show")) {
+				sc.getRootController().showNavigationPane(true);
+				showHideNavigationPaneMI.setText(showHideNavigationPaneMI.getText().replaceFirst("Show", "Hide"));
+			} else if(showHideNavigationPaneMI.getText().startsWith("Hide")) {
+				sc.getRootController().showNavigationPane(false);
+				showHideNavigationPaneMI.setText(showHideNavigationPaneMI.getText().replaceFirst("Hide", "Show"));				
+			}
+		});
+		showHideTableInfoPaneMI.setOnAction(e -> {
+			if(showHideTableInfoPaneMI.getText().startsWith("Show")) {
+				sc.getRootController().showTableInfoPane(true);
+				showHideTableInfoPaneMI.setText(showHideTableInfoPaneMI.getText().replaceFirst("Show", "Hide"));
+			} else if(showHideTableInfoPaneMI.getText().startsWith("Hide")) {
+				sc.getRootController().showTableInfoPane(false);
+				showHideTableInfoPaneMI.setText(showHideTableInfoPaneMI.getText().replaceFirst("Hide", "Show"));				
+			}
+		});
 		
 		if (os != null && os.startsWith ("Mac")) {
 			MenuToolkit tk = MenuToolkit.toolkit();
@@ -330,7 +435,7 @@ public class MusicottScene extends Scene {
 			new SeparatorMenuItem(), tk.createBringAllToFrontItem());
 			
 			tk.setApplicationMenu(appMenu);
-			menuBar.getMenus().addAll(appMenu, fileMN, editMN, controlsMN, windowMenu, aboutMN);
+			menuBar.getMenus().addAll(appMenu, fileMN, editMN, controlsMN, viewMN, windowMenu, aboutMN);
 			tk.autoAddWindowMenuItems(windowMenu);
 			tk.setGlobalMenuBar(menuBar);
 			LOG.debug("OS X native menubar created");
@@ -341,7 +446,7 @@ public class MusicottScene extends Scene {
 			closeMI.setOnAction(event -> {LOG.info("Exiting Musicott"); System.exit(0);});
 			fileMN.getItems().addAll(new SeparatorMenuItem(), preferencesMI, new SeparatorMenuItem(), closeMI);
 			
-			menuBar.getMenus().addAll(fileMN, editMN, controlsMN, aboutMN);
+			menuBar.getMenus().addAll(fileMN, editMN, controlsMN, viewMN, aboutMN);
 			VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
 			headerVBox.getChildren().add(0, menuBar);
 			LOG.debug("Default menubar created");
@@ -351,7 +456,7 @@ public class MusicottScene extends Scene {
 	/**
 	 * Builds the content menu to be shown on the table
 	 */
-	private void buildContentMenu() {
+	private void buildContextMenu() {
 		MenuItem cmPlay = new MenuItem("Play");
 		cmPlay.setOnAction(event -> {
 			if(!trackSelection.isEmpty())
@@ -400,6 +505,34 @@ public class MusicottScene extends Scene {
 				cm.hide();
 		});
 	}	
+
+	/**
+	 * Builds the context menu to be shown on the playlist pane
+	 * to add or delete playlists
+	 */
+	private void buildPlaylistContextMenu() {
+		ContextMenu cm = new ContextMenu();
+		MenuItem addPlaylist = new MenuItem("Add new playlist");
+		MenuItem deletePlaylist = new MenuItem("Delete playlist");
+		addPlaylist.setOnAction(e -> doAddNewPlaylist());
+		deletePlaylist.setOnAction(e -> {
+			ml.removePlaylist(playlistTreeView.getSelectedPlaylist());
+			Playlist selected = playlistTreeView.getSelectedPlaylist();
+			if(selected != null) {
+				int playlistToDeleteIndex = playlistTreeView.getSelectionModel().getSelectedIndex();
+				if(playlistToDeleteIndex == 0 && playlistTreeView.getRoot().getChildren().size() == 1) {
+					SceneManager.getInstance().getRootController().showTableInfoPane(false);
+					ml.showMode(ALL_SONGS_MODE);
+				}
+				else {
+					playlistTreeView.getSelectionModel().selectFirst();
+				}
+				playlistTreeView.getRoot().getChildren().removeIf(treeItem -> treeItem.getValue().equals(selected));
+			}
+		});
+		cm.getItems().addAll(addPlaylist, deletePlaylist);
+		playlistTreeView.setContextMenu(cm);
+	}
 	
 	/**
 	 * Auxiliary function to create an Alert
@@ -414,6 +547,46 @@ public class MusicottScene extends Scene {
 		alert.initModality(Modality.APPLICATION_MODAL);
 		alert.initOwner(rootStage);
 		return alert;
+	}
+	
+	/**
+	 * Handles the creation of a new playlist
+	 */
+	private void doAddNewPlaylist() {
+		ml.clearShowingTracks();
+		Playlist newPlaylist = new Playlist("");
+		playlistTitleTextField.setText("");
+		setPlaylistTitleEdit(true);
+		playlistCover.imageProperty().bind(newPlaylist.playlistCoverProperty());
+		playlistTitleTextField.setOnKeyPressed(event -> {
+			String newTitle = playlistTitleTextField.getText();
+			if(event.getCode() == KeyCode.ENTER && !newTitle.equals("") && !ml.containsPlaylist(newTitle)) {
+				newPlaylist.setName(newTitle);
+				ml.addPlaylist(newPlaylist);
+				TreeItem<Playlist> playListItem = new TreeItem<>(newPlaylist);
+				playlistTreeView.addPlaylistItem(playListItem);
+				setPlaylistTitleEdit(false);
+				event.consume();
+			}
+		});
+	}
+	
+	/**
+	 * Puts a text field to edit the name of the playlist if <tt>editPlaylistTitle</tt> is true,
+	 * otherwise shows the label with the title of the selected or entered playlist
+	 * 
+	 * @param editPlaylistTitle
+	 */
+	private void setPlaylistTitleEdit(boolean editPlaylistTitle) {
+		sc.getRootController().showTableInfoPane(true);
+		if(editPlaylistTitle && !playlistInfoVBox.getChildren().contains(playlistTitleTextField)) {
+			playlistInfoVBox.getChildren().remove(playlistTitleLabel);
+			playlistInfoVBox.getChildren().add(0, playlistTitleTextField);
+			playlistTitleTextField.requestFocus();
+		} else if(!editPlaylistTitle && !playlistInfoVBox.getChildren().contains(playlistTitleLabel)) {
+			playlistInfoVBox.getChildren().remove(playlistTitleTextField);
+			playlistInfoVBox.getChildren().add(0, playlistTitleLabel);			
+		}
 	}
 	
 	/**

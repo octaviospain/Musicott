@@ -143,7 +143,6 @@ public class MainApp extends Application {
 			BorderPane rootLayout = (BorderPane) rootLoader.load();
 			RootController rootController = (RootController) rootLoader.getController();
 			rootController.setStage(rootStage);
-//			rootController.showTableInfoPane(false);
 			sc.setRootController(rootController);
 			LOG.debug("Root layout loaded");
 			
@@ -206,7 +205,6 @@ public class MainApp extends Application {
 				LOG.info("Loaded tracks from {}", tracksFile);
 			} catch (IOException | JsonIoException e) {
 				LOG.error("Error loading track library", e);
-				eh.showErrorDialog("Error loading track library", null, e);
 			}
 		}
 		if(map != null)
@@ -234,7 +232,6 @@ public class MainApp extends Application {
 				LOG.info("Loaded waveform images from {}", waveformsFile);
 			} catch(IOException e) {
 				LOG.error("Error loading waveform thumbnails", e);
-				eh.showErrorDialog("Error loading waveforms thumbnails", null, e);
 			}
 		}
 		else
@@ -258,6 +255,8 @@ public class MainApp extends Application {
 				playlists = (List<Playlist>) jsr.readObject();
 				jsr.close();
 				fis.close();
+				for(Playlist p: playlists)
+					p.nameProperty().setValue(p.getName());
 				LOG.info("Loaded playlists from {}", playlistsFile);
 			} catch(IOException e) {
 				LOG.error("Error loading playlists", e);
@@ -268,7 +267,7 @@ public class MainApp extends Application {
 			playlists = new ArrayList<Playlist>();
 			playlists.add(new Playlist("My Top 10"));
 			playlists.add(new Playlist("Favourites"));
-			playlists.add(new Playlist("Random"));
+			playlists.add(new Playlist("To play later"));
 		}
 		ml.setPlaylists(playlists);
 	}

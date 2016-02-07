@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.musicott.ErrorHandler;
+import com.musicott.SceneManager;
 import com.musicott.model.Track;
 import com.musicott.model.TrackField;
 import com.musicott.task.UpdateMetadataTask;
@@ -79,15 +80,14 @@ public class EditController {
 	
 	private Map<TrackField,TextInputControl> editFieldsMap;
 	private File newCoverImage;
-	private Image defaultImage;
 	private Stage editStage;
 	private List<Track> trackSelection;
+	private Image defaultImage = SceneManager.getInstance().getRootController().DEFAULT_COVER_IMAGE;
 	
 	public EditController() {}
 	
 	@FXML
 	private void initialize() {
-		defaultImage = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
 		editFieldsMap = new HashMap<>();
 		editFieldsMap.put(TrackField.NAME, name);
 		editFieldsMap.put(TrackField.ARTIST, artist);
