@@ -92,7 +92,7 @@ public class WaveformTask extends Thread {
 						SwingUtilities.invokeLater(() -> sc.getRootController().setWaveform(track));
 					LOG.debug("Waveform of track {} completed", track);
 					Platform.runLater(() -> sc.getRootController().setStatusMessage(""));
-					ml.saveLibrary(false, true);
+					ml.saveLibrary(false, true, false);
 				}
 				else
 					Platform.runLater(() -> sc.getRootController().setStatusMessage("Fail processing waveform of "+track.getName()));
