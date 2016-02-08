@@ -106,11 +106,11 @@
 	-fx-background-color: rgb(243, 243, 243);
 }
 
-.list-cell {
+#showMenuListView .list-cell {
 	-fx-graphic: url('../icons/menusongs-black-icon.png');
 }
 
-.list-cell:selected {
+#showMenuListView .list-cell:selected {
 	-fx-graphic: url('../icons/menusongs-white-icon.png');
 }
 
@@ -127,7 +127,7 @@
 	-fx-graphic: url('../icons/playlist-white-icon.png');
 }
 
-.tree-cell:empty, .list-cell:empty {
+.tree-cell:empty, #showMenuListView .list-cell:empty {
 	-fx-graphic: none;	
 }
 

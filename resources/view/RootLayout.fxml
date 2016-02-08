@@ -39,9 +39,9 @@
          <children>
             <HBox alignment="CENTER_LEFT" minHeight="50.0" minWidth="-Infinity" prefHeight="50.0" GridPane.columnIndex="0">
                <children>
-                  <Button fx:id="prevButton" ellipsisString="" mnemonicParsing="false" />
+                  <Button fx:id="prevButton" disable="true" ellipsisString="" mnemonicParsing="false" />
                   <ToggleButton fx:id="playButton" ellipsisString="" mnemonicParsing="false" onAction="#doPlayPause" />
-                  <Button fx:id="nextButton" ellipsisString="" mnemonicParsing="false" />
+                  <Button fx:id="nextButton" disable="true" ellipsisString="" mnemonicParsing="false" />
                </children>
                <GridPane.margin>
                   <Insets />
@@ -84,7 +84,7 @@
                                     </Label>
                                  </center>
                                  <top>
-                                    <Label fx:id="titleLabel" BorderPane.alignment="CENTER">
+                                    <Label fx:id="songTitleLabel" BorderPane.alignment="CENTER">
                                        <BorderPane.margin>
                                           <Insets top="3.0" />
                                        </BorderPane.margin>
@@ -98,7 +98,7 @@
                                           <Insets bottom="-1.0" />
                                        </StackPane.margin>
                                     </ProgressBar>
-                                    <Slider fx:id="trackSlider" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="5.0" prefWidth="520.0" StackPane.alignment="CENTER">
+                                    <Slider fx:id="trackSlider" disable="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="5.0" prefWidth="520.0" StackPane.alignment="CENTER">
                                        <StackPane.margin>
                                           <Insets bottom="-1.0" />
                                        </StackPane.margin>
@@ -123,8 +123,8 @@
              <ToggleButton fx:id="playQueueButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#doShowHidePlayQueue" prefHeight="15.0" prefWidth="15.0" GridPane.columnIndex="3" GridPane.halignment="CENTER" GridPane.hgrow="NEVER" />
             <StackPane GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.hgrow="NEVER">
                <children>
-                  <ProgressBar fx:id="volumeProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="10.0" prefWidth="105.0" progress="0.0" StackPane.alignment="CENTER" />
-                  <Slider fx:id="volumeSlider" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="110.0" StackPane.alignment="CENTER" />
+                  <ProgressBar fx:id="volumeProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="10.0" prefWidth="105.0" progress="1.0" StackPane.alignment="CENTER" />
+                  <Slider fx:id="volumeSlider" blockIncrement="0.05" max="1.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="110.0" value="1.0" StackPane.alignment="CENTER" />
                </children>
             </StackPane>
             <TextField fx:id="searchTextField" alignment="CENTER_LEFT" GridPane.columnIndex="4">
@@ -185,8 +185,32 @@
             </BorderPane>
          </center>
          <left>
-            <VBox fx:id="navigationPaneVBox" alignment="BOTTOM_LEFT" BorderPane.alignment="CENTER">
+            <VBox fx:id="navigationPaneVBox" alignment="BOTTOM_LEFT" maxWidth="-Infinity" prefWidth="200.0" BorderPane.alignment="CENTER">
                <children>
+                  <VBox fx:id="navigationVBox">
+                     <children>
+                        <Label text="Musicott library" textFill="#9e9e9e">
+                           <font>
+                              <Font size="10.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets bottom="5.0" left="15.0" top="5.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+                  <VBox fx:id="playlistsVBox">
+                     <children>
+                        <Label text="Playlists" textFill="#9e9e9e">
+                           <font>
+                              <Font size="10.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets bottom="5.0" left="15.0" top="5.0" />
+                           </VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
                   <Button fx:id="newPlaylistButton" mnemonicParsing="false" />
                </children>
             </VBox>

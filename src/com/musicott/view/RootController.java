@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.musicott.model.MusicLibrary;
+import com.musicott.model.Playlist;
 import com.musicott.model.Track;
 import com.musicott.player.FlacPlayer;
 import com.musicott.player.NativePlayer;
@@ -34,11 +35,14 @@ import com.musicott.player.PlayerFacade;
 import com.musicott.player.TrackPlayer;
 import com.musicott.services.ServiceManager;
 import com.musicott.task.TaskPoolManager;
+import com.musicott.util.Utils;
+import com.musicott.view.custom.MusicottScene;
 import com.musicott.view.custom.WaveformPanel;
 
 import javafx.beans.binding.Bindings;
 import javafx.embed.swing.SwingNode;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -47,6 +51,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
@@ -55,6 +60,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaPlayer.Status;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -81,7 +87,7 @@ public class RootController {
 	@FXML
 	private StackPane playerStackPane;
 	@FXML
-	private Label titleLabel, artistAlbumLabel, currentTimeLabel, remainingTimeLabel, playlistTracksNumberLabel, playlistSizeLabel;
+	private Label songTitleLabel, artistAlbumLabel, currentTimeLabel, remainingTimeLabel, playlistTracksNumberLabel, playlistSizeLabel, playlistTitleLabel;
 	@FXML
 	private Slider trackSlider, volumeSlider;
 	@FXML
@@ -93,11 +99,13 @@ public class RootController {
 	@FXML
 	private HBox tableInfoHBox;
 	@FXML
-	private VBox navigationPaneVBox;
+	private VBox navigationPaneVBox, playlistInfoVBox;
+	private TextField playlistTitleTextField;
 	private AnchorPane playQueuePane;
 	private StatusBar statusBar;
 
 	private Stage rootStage;
+	private MusicottScene musicottScene;
 	private MusicLibrary ml;
 	private ServiceManager services;
 	private PlayerFacade player;
@@ -110,23 +118,51 @@ public class RootController {
 		ml = MusicLibrary.getInstance();
 		services = ServiceManager.getInstance();
 		
+		playlistTitleTextField = new TextField();
+		playlistTitleTextField.setPrefWidth(150);
+		playlistTitleTextField.setPrefHeight(25);
+		playlistTitleTextField.setPadding(new Insets(-10, 0, -10, 0));
+		playlistTitleTextField.setFont(new Font("System", 20));
+		
+		VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
+		
 		playButton.disableProperty().bind(ml.trackslistProperty().emptyProperty());
-		prevButton.setDisable(true);
 		prevButton.setOnAction(e -> player.previous());
-		nextButton.setDisable(true);
 		nextButton.setOnAction(e -> player.next());
-		trackSlider.setDisable(true);
-		trackSlider.setValue(0.0);
-		volumeSlider.setMin(0.0);
-		volumeSlider.setMax(1.0);
-		volumeSlider.setValue(1.0);
-		volumeProgressBar.setProgress(1.0);
 		volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {if(!isChanging) volumeProgressBar.setProgress(volumeSlider.getValue());});
 		volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
 
+		playlistTracksNumberLabel.textProperty().bind(Bindings.createStringBinding(() -> ml.getShowingTracksProperty().sizeProperty().get()+" songs", ml.getShowingTracksProperty()));
+		playlistSizeLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+			String sizeString = Utils.byteSizeString(ml.getShowingTracksProperty().stream().mapToLong(t -> (long)t.getValue().getSize()).sum(), 2);
+			if(sizeString.equals("0 B"))
+				sizeString = "";
+			return sizeString; 
+		},  ml.getShowingTracksProperty()));
+		playlistTitleLabel.setOnMouseClicked(event -> {
+			if(event.getClickCount() == 2) {	// 2 clicks = edit playlist name
+				setPlaylistTitleEdit(true);
+				playlistTitleTextField.setOnKeyPressed(e -> {
+					Playlist playlist = musicottScene.getSelectedPlaylist();
+					String newTitle = playlistTitleTextField.getText();
+					if(e.getCode() == KeyCode.ENTER && newTitle.equals(playlist.getName())) {
+						setPlaylistTitleEdit(false);
+						event.consume();
+					} else if(e.getCode() == KeyCode.ENTER && !newTitle.equals("") && !ml.containsPlaylist(newTitle)) {
+						playlist.setName(newTitle);
+						ml.saveLibrary(false, false, true);
+						setPlaylistTitleEdit(false);
+						event.consume();
+					}
+				});
+			}
+		});
+		playlistTitleLabel.textProperty().bind(playlistTitleTextField.textProperty());
+		
+		
 		statusBar = new StatusBar();
-		statusBar.setMaxHeight(3.0);
-		statusBar.setText("");
+//		statusBar.setMaxHeight(3.0);
+//		statusBar.setText("");
 //		rootBorderPane.setBottom(statusBar);
 		SwingUtilities.invokeLater(() -> {
 			mainWaveformPane = new WaveformPanel(520, 50);
@@ -139,6 +175,7 @@ public class RootController {
 	
 	public void setStage(Stage stage) {
 		rootStage = stage;
+		musicottScene = (MusicottScene) rootStage.getScene();
 		rootStage.setOnCloseRequest(event -> {LOG.info("Exiting Musicott");	System.exit(0);});
 	}
 	
@@ -177,7 +214,7 @@ public class RootController {
 			setUpPlayer((FlacPlayer) currentPlayer);
 		
 		SwingUtilities.invokeLater(() -> mainWaveformPane.setTrack(currentTrack));
-		titleLabel.textProperty().bind(currentTrack.getNameProperty());;
+		songTitleLabel.textProperty().bind(currentTrack.getNameProperty());;
 		artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
 				() -> currentTrack.getArtistProperty().get()+" - "+currentTrack.getAlbumProperty().get(), currentTrack.getArtistProperty(), currentTrack.getAlbumProperty())
 		);
@@ -197,8 +234,8 @@ public class RootController {
 		trackSlider.setDisable(true);
 		nextButton.setDisable(true);
 		prevButton.setDisable(true);
-		titleLabel.textProperty().unbind();
-		titleLabel.setText("");
+		songTitleLabel.textProperty().unbind();
+		songTitleLabel.setText("");
 		artistAlbumLabel.textProperty().unbind();
 		artistAlbumLabel.setText("");
 		currentCover.setVisible(false);
@@ -225,6 +262,28 @@ public class RootController {
 			player.decreaseVolume(VOLUME_AMOUNT);
 		volumeSlider.setValue(volumeSlider.getValue()-VOLUME_AMOUNT);
 		LOG.trace("Volume decreased "+volumeSlider.getValue());
+	}
+	
+	public void setPlaylistTitle(String playlistTitle) {
+		playlistTitleTextField.setText(playlistTitle);
+	}
+
+	/**
+	 * Puts a text field to edit the name of the playlist if <tt>editPlaylistTitle</tt> is true,
+	 * otherwise shows the label with the title of the selected or entered playlist
+	 * 
+	 * @param editPlaylistTitle
+	 */
+	public void setPlaylistTitleEdit(boolean editPlaylistTitle) {
+		showTableInfoPane(true);
+		if(editPlaylistTitle && !playlistInfoVBox.getChildren().contains(playlistTitleTextField)) {
+			playlistInfoVBox.getChildren().remove(playlistTitleLabel);
+			playlistInfoVBox.getChildren().add(0, playlistTitleTextField);
+			playlistTitleTextField.requestFocus();
+		} else if(!editPlaylistTitle && !playlistInfoVBox.getChildren().contains(playlistTitleLabel)) {
+			playlistInfoVBox.getChildren().remove(playlistTitleTextField);
+			playlistInfoVBox.getChildren().add(0, playlistTitleLabel);			
+		}
 	}
 	
 	private void setUpPlayer(MediaPlayer mediaPlayer) {
@@ -266,6 +325,28 @@ public class RootController {
 				
 				player.setCurrentTrackScrobbled(true);
 				services.udpateAndScrobbleLastFM(player.getCurrentTrack());
+			}
+		});
+	}
+	
+	/**
+	 * Handles the creation of a new playlist
+	 */
+	public void setNewPlaylistMode() {
+		ml.clearShowingTracks();
+		showTableInfoPane(true);
+		setPlaylistTitleEdit(true);
+		Playlist newPlaylist = new Playlist("");
+		playlistTitleTextField.setText("");
+		playlistCover.imageProperty().bind(newPlaylist.playlistCoverProperty());
+		playlistTitleTextField.setOnKeyPressed(event -> {
+			String newTitle = playlistTitleTextField.getText();
+			if(event.getCode() == KeyCode.ENTER && !newTitle.equals("") && !ml.containsPlaylist(newTitle)) {
+				newPlaylist.setName(newTitle);
+				ml.addPlaylist(newPlaylist);
+				musicottScene.addPlaylist(newPlaylist);
+				setPlaylistTitleEdit(false);
+				event.consume();
 			}
 		});
 	}

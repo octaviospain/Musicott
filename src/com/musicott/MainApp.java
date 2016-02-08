@@ -148,6 +148,7 @@ public class MainApp extends Application {
 			
 			AnchorPane playQueuePane = (AnchorPane) playQueueLoader.load();
 			PlayQueueController pqc = (PlayQueueController) playQueueLoader.getController();
+			rootLayout.getChildren().add(playQueuePane);
 			sc.setPlayQueueController(pqc);
 			LOG.debug("Playqueue layout loaded");
 
@@ -157,7 +158,7 @@ public class MainApp extends Application {
 			rootStage.setMinHeight(790);
 			rootStage.setMaxWidth(1800);
 			MusicottScene mainScene = new MusicottScene(rootLayout, 1200, 775, getHostServices());
-			mainScene.buildPlayQueuePane(playQueuePane);
+			mainScene.buildPlayQueuePane();
 			rootStage.setScene(mainScene);
 			rootStage.show();
 		} catch (IOException | RuntimeException e) {
@@ -302,9 +303,11 @@ public class MainApp extends Application {
 					DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss :nnnnnnnnn");
 					str.append(rec.getLoggerName()+" "+rec.getSourceMethodName()+" "+LocalDateTime.now().format(dateFormatter)+"\n");
 					str.append(rec.getSequenceNumber()+"\t"+rec.getLevel()+":"+rec.getMessage()+"\n");
-					if(rec.getThrown() != null)
+					if(rec.getThrown() != null) {
+						str.append(rec.getThrown()+"\n");
 						for(StackTraceElement ste: rec.getThrown().getStackTrace())
 							str.append(ste+"\n");
+					}
 					return str.toString();
 				}
 			});
