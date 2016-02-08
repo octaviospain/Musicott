@@ -220,11 +220,6 @@
 	-fx-control-inner-background: rgb(182,182,182);
 }
 
-#newPlaylistButton {	
-	-fx-graphic: url('../icons/newplaylist-button.png');
-	-fx-background-color: transparent;
-}
-
 #playlistTitleTextField {
 	-fx-border-radius: 0em;
-}
+} 

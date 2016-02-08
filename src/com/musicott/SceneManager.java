@@ -20,18 +20,29 @@ package com.musicott;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.musicott.model.MusicLibrary;
+import com.musicott.model.Track;
 import com.musicott.view.EditController;
+import com.musicott.view.NavigationController;
 import com.musicott.view.PlayQueueController;
 import com.musicott.view.PreferencesController;
 import com.musicott.view.RootController;
-import com.musicott.model.Track;
 
+import javafx.application.HostServices;
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -43,8 +54,10 @@ import javafx.stage.Stage;
 public class SceneManager {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+	
 	protected static final String LAYOUTS_PATH = "/view/";
 	protected static final String ROOT_LAYOUT = "RootLayout.fxml";
+	protected static final String NAVIGATION_LAYOUT = "NavigationLayout.fxml";
 	protected static final String PRELOADER_LAYOUT = "PreloaderPromptLayout.fxml";
 	protected static final String EDIT_LAYOUT = "EditLayout.fxml";
 	protected static final String PLAYQUEUE_LAYOUT = "PlayQueueLayout.fxml";
@@ -55,11 +68,14 @@ public class SceneManager {
 	
 	private EditController editController;
 	private RootController rootController;
+	private NavigationController navigationController;
 	private PlayQueueController playQueueController;
 	private PreferencesController preferencesController;
 	
 	private static volatile SceneManager instance;
 	private static ErrorHandler errorHandler;
+	private MusicLibrary ml = MusicLibrary.getInstance();
+	private HostServices hostServices;
 	
 	private List<Track> tracksToEdit;
 	
@@ -94,21 +110,71 @@ public class SceneManager {
 		return rootController;
 	}
 	
+	protected void setNavigationController(NavigationController navigationController) {
+		this.navigationController = navigationController;
+	}
+	
+	public NavigationController getNavigationController() {
+		return navigationController;
+	}
+	
 	protected void setPlayQueueController(PlayQueueController playQueueController) {
 		this.playQueueController = playQueueController;
 	}
 	
 	public PlayQueueController getPlayQueueController() {
-		return this.playQueueController;
+		return playQueueController;
 	}
 	
 	public PreferencesController getPreferencesController() {
-		return this.preferencesController;
+		return preferencesController;
 	}
 	
-	public void openEditScene(List<Track> selection) {
-		tracksToEdit = selection;
-		openStage(EDIT_LAYOUT);
+	public void setApplicationHostServices(HostServices hostServices) {
+		this.hostServices= hostServices;
+	}
+	
+	public HostServices getApplicationHostServices() {
+		return hostServices;
+	}
+	
+	public void editTracks() {
+		ObservableList<Map.Entry<Integer, Track>> trackSelection = rootController.getSelectedItems();
+		if(trackSelection != null & !trackSelection.isEmpty()) {
+			tracksToEdit = trackSelection.stream().map(Map.Entry::getValue).collect(Collectors.toList());
+			if(trackSelection.size() > 1) {
+				Alert alert = createAlert("", "Are you sure you want to edit multiple files?", "", AlertType.CONFIRMATION);
+				Optional<ButtonType> result = alert.showAndWait();
+				if (result.get() == ButtonType.OK) {
+					openStage(EDIT_LAYOUT);
+					LOG.debug("Opened edit stage for various tracks");
+				}
+				else
+					alert.close();
+			}
+			else {
+				openStage(EDIT_LAYOUT);
+				LOG.debug("Opened edit stage for a single track");
+			}
+		}
+	}
+	
+	public void deleteTracks() {
+		ObservableList<Map.Entry<Integer, Track>> trackSelection = rootController.getSelectedItems();
+		if(trackSelection != null && !trackSelection.isEmpty()) {
+			int numDeletedTracks = trackSelection.size();
+			Alert alert = createAlert("", "Delete "+numDeletedTracks+" files from Musicott?", "", AlertType.CONFIRMATION);
+			Optional<ButtonType> result = alert.showAndWait();
+			if (result.get() == ButtonType.OK) {
+				new Thread(() -> {
+					ml.removeTracks(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+					Platform.runLater(() -> closeIndeterminatedProgressScene());
+				}).start();
+				openIndeterminatedProgressScene();
+			}
+			else
+				alert.close();
+		}
 	}
 
 	public void openPreferencesScene() {
@@ -121,6 +187,17 @@ public class SceneManager {
 	
 	public void closeIndeterminatedProgressScene() {
 		progressStage.close();
+	}
+	
+	public Alert createAlert(String title, String header, String content, AlertType type) {
+		Alert alert = new Alert(AlertType.CONFIRMATION);
+		alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
+		alert.setTitle(title);
+		alert.setHeaderText(header);
+		alert.setContentText(content);
+		alert.initModality(Modality.APPLICATION_MODAL);
+		alert.initOwner(mainStage);
+		return alert;
 	}
 	
 	private void openStage(String layout) {

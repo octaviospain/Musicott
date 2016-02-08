@@ -18,6 +18,8 @@
 
 package com.musicott.view.custom;
 
+import com.musicott.SceneManager;
+
 import javafx.scene.control.ListView;
 
 /**
@@ -26,17 +28,16 @@ import javafx.scene.control.ListView;
  */
 public class NavigationMenuListView extends ListView<String> {
 
-	private MusicottScene musicottScene;
+	private SceneManager sc = SceneManager.getInstance();
 	
-	public NavigationMenuListView(MusicottScene scene) {
+	public NavigationMenuListView() {
 		super();
-		musicottScene = scene;
 		setId("showMenuListView");
 		setPrefHeight(200);
-		setPrefWidth(150);
+		setPrefWidth(USE_COMPUTED_SIZE);
 		getSelectionModel().selectedItemProperty().addListener(listener -> {
 			String selectedMenu = getSelectionModel().getSelectedItem();
-			if(selectedMenu != null) musicottScene.showMode(selectedMenu);
+			if(selectedMenu != null) sc.getNavigationController().showMode(selectedMenu);
 		});
 	}
 }

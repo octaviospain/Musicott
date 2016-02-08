@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox fx:id="navigationPaneVBox" alignment="BOTTOM_LEFT" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@../css/navigation.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.NavigationController">
+<children>
+   <VBox fx:id="navigationVBox">
+	   <children>
+	      <Label text="Musicott library" textFill="#9e9e9e">
+	         <font>
+	            <Font size="10.0" />
+	         </font>
+	         <VBox.margin>
+	            <Insets bottom="5.0" left="15.0" top="5.0" />
+	         </VBox.margin></Label>
+	   </children>
+   </VBox>
+   <VBox fx:id="playlistsVBox">
+	   <children>
+	      <Label text="Playlists" textFill="#9e9e9e">
+	         <font>
+	            <Font size="10.0" />
+	         </font>
+	         <VBox.margin>
+	            <Insets bottom="5.0" left="15.0" top="5.0" />
+	         </VBox.margin>
+	      </Label>
+	   </children>
+   </VBox>
+   <Button fx:id="newPlaylistButton" mnemonicParsing="false" />
+</children>
+</VBox>

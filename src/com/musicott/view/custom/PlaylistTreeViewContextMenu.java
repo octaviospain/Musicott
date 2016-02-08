@@ -31,21 +31,19 @@ import javafx.scene.control.MenuItem;
  */
 public class PlaylistTreeViewContextMenu extends ContextMenu {
 	
-	private MusicottScene musicottScene;
 	private SceneManager sc = SceneManager.getInstance();
 	
 	private MenuItem addPlaylist;
 	private MenuItem deletePlaylist;
 
-	public PlaylistTreeViewContextMenu(MusicottScene scene) {
+	public PlaylistTreeViewContextMenu() {
 		super();
-		musicottScene = scene;
 		
 		addPlaylist = new MenuItem("Add new playlist");		
 		addPlaylist.setOnAction(e -> sc.getRootController().setNewPlaylistMode());
 
 		deletePlaylist = new MenuItem("Delete playlist");
-		deletePlaylist.setOnAction(e -> musicottScene.deletePlaylist());
+		deletePlaylist.setOnAction(e -> sc.getNavigationController().deleteSelectedPlaylist());
 		getItems().addAll(addPlaylist, deletePlaylist);
 	}
 }

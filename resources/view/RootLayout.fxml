@@ -184,38 +184,6 @@
                </top>
             </BorderPane>
          </center>
-         <left>
-            <VBox fx:id="navigationPaneVBox" alignment="BOTTOM_LEFT" maxWidth="-Infinity" prefWidth="200.0" BorderPane.alignment="CENTER">
-               <children>
-                  <VBox fx:id="navigationVBox">
-                     <children>
-                        <Label text="Musicott library" textFill="#9e9e9e">
-                           <font>
-                              <Font size="10.0" />
-                           </font>
-                           <VBox.margin>
-                              <Insets bottom="5.0" left="15.0" top="5.0" />
-                           </VBox.margin>
-                        </Label>
-                     </children>
-                  </VBox>
-                  <VBox fx:id="playlistsVBox">
-                     <children>
-                        <Label text="Playlists" textFill="#9e9e9e">
-                           <font>
-                              <Font size="10.0" />
-                           </font>
-                           <VBox.margin>
-                              <Insets bottom="5.0" left="15.0" top="5.0" />
-                           </VBox.margin>
-                        </Label>
-                     </children>
-                  </VBox>
-                  <Button fx:id="newPlaylistButton" mnemonicParsing="false" />
-               </children>
-            </VBox>
-         </left>
       </BorderPane>
    </center>
-   
 </BorderPane>

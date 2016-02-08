@@ -35,7 +35,6 @@ import com.musicott.task.TaskPoolManager;
 import com.musicott.util.Utils;
 
 import de.codecentric.centerdevice.MenuToolkit;
-import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -68,17 +67,19 @@ public class MusicottMenuBar extends MenuBar {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
-	private MusicottScene musicottScene;
 	private SceneManager sc = SceneManager.getInstance();
 	
 	private Menu fileMN, editMN, controlsMN, viewMN, aboutMN;
 	private MenuItem openFileMI, importFolderMI, importItunesMI, preferencesMI, editMI, deleteMI, prevMI, nextMI, volIncrMI, volDecrMI, selCurrMI, aboutMI;
 	private MenuItem newPlaylistMI, showHideNavigationPaneMI, showHideTableInfoPaneMI;
+	private Button prevButton, nextButton;
+	private VBox headerVBox;
 	
-	public MusicottMenuBar(MusicottScene scene, HostServices hostServices ) {
+	public MusicottMenuBar(Button previousTrackButton, Button nextTrackButton, VBox headerMenuBarVBox) {
 		super();
-		musicottScene = scene;
-		
+		prevButton = previousTrackButton;
+		nextButton = nextTrackButton;
+		headerVBox = headerMenuBarVBox;
 		String os = System.getProperty ("os.name");
 		// Key acceleratos. Command down for os x and control down for windows and linux
 		Modifier keyModifierOS = os != null && os.startsWith ("Mac") ? KeyCodeCombination.META_DOWN : KeyCodeCombination.CONTROL_DOWN;
@@ -93,11 +94,11 @@ public class MusicottMenuBar extends MenuBar {
 		setViewMenuActions();
 		
 		aboutMI.setOnAction(e -> {
-			Alert alert = musicottScene.createAlert("About Musicott", "Musicott", "", AlertType.INFORMATION);
+			Alert alert = sc.createAlert("About Musicott", "Musicott", "", AlertType.INFORMATION);
 			Label text = new Label(" Version 0.8.0\n\n Copyright © 2015 Octavio Calleya.");
 			Label text2 = new Label(" Licensed under GNU GPLv3. This product includes\n software developed by other open source projects.");
 			Hyperlink githubLink = new Hyperlink("https://github.com/octaviospain/Musicott/");
-			githubLink.setOnAction(event -> hostServices.showDocument(githubLink.getText()));
+			githubLink.setOnAction(event -> sc.getApplicationHostServices().showDocument(githubLink.getText()));
 			FlowPane fp = new FlowPane();
 			fp.getChildren().addAll(text, githubLink, text2);
 			alert.getDialogPane().contentProperty().set(fp);
@@ -131,13 +132,12 @@ public class MusicottMenuBar extends MenuBar {
 			
 			getMenus().addAll(fileMN, editMN, controlsMN, viewMN, aboutMN);
 	
-			VBox headerVBox = (VBox) musicottScene.lookup("#headerVBox");
 			headerVBox.getChildren().add(0, this);
 			LOG.debug("Default menubar created");
 		}
 	}
 
-	protected MenuItem getShowHideTableInfoPaneMI() {
+	public MenuItem getShowHideTableInfoPaneMI() {
 		return showHideTableInfoPaneMI;
 	}
 	
@@ -214,12 +214,12 @@ public class MusicottMenuBar extends MenuBar {
 					List<File> files = Utils.getAllFilesInFolder(folder, MainPreferences.getInstance().getExtensionsFileFilter(), 0);
 					Platform.runLater(() -> {
 						if(files.isEmpty()) {
-							Alert alert = musicottScene.createAlert("Import", "No files", "There are no valid files to import on the selected folder."
+							Alert alert = sc.createAlert("Import", "No files", "There are no valid files to import on the selected folder."
 									+ "Change the folder or the import options in preferences", AlertType.WARNING);
 							alert.showAndWait();
 						}
 						else {
-							Alert alert = musicottScene.createAlert("Import", "Import " + files.size() + " files?", "", AlertType.CONFIRMATION);
+							Alert alert = sc.createAlert("Import", "Import " + files.size() + " files?", "", AlertType.CONFIRMATION);
 							Optional<ButtonType> result = alert.showAndWait();
 							if(result.isPresent() && result.get().equals(ButtonType.OK)) {
 								TaskPoolManager.getInstance().parseFiles(files, false);
@@ -244,23 +244,24 @@ public class MusicottMenuBar extends MenuBar {
 	}
 	
 	private void setEditMenuActions() {
-		editMI.setOnAction(e -> musicottScene.doEdit());
-		deleteMI.setOnAction(e -> musicottScene.doDelete());
+		editMI.setOnAction(e -> sc.editTracks());
+		deleteMI.setOnAction(e -> sc.deleteTracks());
 		newPlaylistMI.setOnAction(e -> sc.getRootController().setNewPlaylistMode());
 	}
 	
 	private void setControlsMenuActions() {
-		Button prevButton = (Button) musicottScene.lookup("#prevButton");
 		prevMI.disableProperty().bind(prevButton.disableProperty());
 		prevMI.setOnAction(e -> PlayerFacade.getInstance().previous());
-		Button nextButton = (Button) musicottScene.lookup("#nextButton");
+		
 		nextMI.disableProperty().bind(nextButton.disableProperty());
 		nextMI.setOnAction(e -> PlayerFacade.getInstance().next());
+		
 		volIncrMI.setOnAction(e -> sc.getRootController().doIncreaseVolume());
 		volDecrMI.setOnAction(e -> sc.getRootController().doDecreaseVolume());
+		
 		selCurrMI.setOnAction(e -> {
 			Track currentTrack = PlayerFacade.getInstance().getCurrentTrack();
-			TrackTableView trackTable = (TrackTableView) musicottScene.lookup("trackTable");
+			TrackTableView trackTable = (TrackTableView) sc.getMainStage().getScene().lookup("#trackTable");
 			trackTable.getSelectionModel().clearSelection();
 			if(currentTrack != null) {
 				Map.Entry<Integer, Track> currentEntry = new AbstractMap.SimpleEntry<Integer, Track>(currentTrack.getTrackID(), currentTrack);
@@ -287,8 +288,8 @@ public class MusicottMenuBar extends MenuBar {
 				showHideTableInfoPaneMI.setText(showHideTableInfoPaneMI.getText().replaceFirst("Show", "Hide"));
 			} else if(showHideTableInfoPaneMI.getText().startsWith("Hide")) {
 				sc.getRootController().showTableInfoPane(false);
-				showHideTableInfoPaneMI.setText(showHideTableInfoPaneMI.getText().replaceFirst("Hide", "Show"));				
-			}
+				showHideTableInfoPaneMI.setText(showHideTableInfoPaneMI.getText().replaceFirst("Hide", "Show"));	
+}
 		});
 		
 	}

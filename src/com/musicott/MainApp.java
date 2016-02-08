@@ -19,8 +19,10 @@
 package com.musicott;
 
 import static com.musicott.SceneManager.LAYOUTS_PATH;
+import static com.musicott.SceneManager.NAVIGATION_LAYOUT;
 import static com.musicott.SceneManager.PLAYQUEUE_LAYOUT;
 import static com.musicott.SceneManager.ROOT_LAYOUT;
+import static com.musicott.view.NavigationController.ALL_SONGS_MODE;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,9 +50,9 @@ import com.musicott.model.Playlist;
 import com.musicott.model.Track;
 import com.musicott.services.ServiceManager;
 import com.musicott.util.ObservableMapWrapperCreator;
+import com.musicott.view.NavigationController;
 import com.musicott.view.PlayQueueController;
 import com.musicott.view.RootController;
-import com.musicott.view.custom.MusicottScene;
 import com.sun.javafx.application.LauncherImpl;
 import com.sun.javafx.collections.ObservableMapWrapper;
 
@@ -59,9 +61,11 @@ import javafx.application.Preloader.PreloaderNotification;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 /**
@@ -85,13 +89,13 @@ public class MainApp extends Application {
 	private MusicLibrary ml;
 	private MainPreferences pf;
 	private Stage rootStage;
-	private FXMLLoader rootLoader, playQueueLoader;
+	private FXMLLoader rootLoader, playQueueLoader, navigationLoader;
 	private int totalPreloadSteps;
 	
 	public MainApp() {
 		pf = MainPreferences.getInstance();
-		eh = ErrorHandler.getInstance();
 		sc = SceneManager.getInstance();
+		eh = ErrorHandler.getInstance();
 		ml = MusicLibrary.getInstance();
 	}
 
@@ -104,7 +108,7 @@ public class MainApp extends Application {
 	public void init() throws Exception {
 		if(pf.getMusicottUserFolder() == null || !new File(pf.getMusicottUserFolder()).exists())
 			LauncherImpl.notifyPreloader(this, new CustomProgressNotification(0, FIRST_USE_EVENT));
-		eh.setApplicationHostServices(getHostServices());
+		sc.setApplicationHostServices(getHostServices());
 		loadConfigProperties();
 		loadWaveforms();
 		loadLayout();
@@ -116,6 +120,7 @@ public class MainApp extends Application {
 	public void start(Stage primaryStage) throws IOException {
 		sc.setMainStage(primaryStage);
 		rootStage = primaryStage;
+		rootStage.setOnCloseRequest(event -> {LOG.info("Exiting Musicott");	System.exit(0);});
 		loadStage();
 		LOG.debug("Showing root stage");
 	}
@@ -129,9 +134,13 @@ public class MainApp extends Application {
 	    rootLoader = new FXMLLoader();
 		rootLoader.setLocation(getClass().getResource(LAYOUTS_PATH+ROOT_LAYOUT));		
 		
-		// Set the dropdown play queue 
+		// Dropdown play queue 
 		playQueueLoader = new FXMLLoader();
 		playQueueLoader.setLocation(getClass().getResource(LAYOUTS_PATH+PLAYQUEUE_LAYOUT));
+		
+		// Navigation layout
+		navigationLoader = new FXMLLoader();
+		navigationLoader.setLocation(getClass().getResource(LAYOUTS_PATH+NAVIGATION_LAYOUT));
 	}
 	
 	/**
@@ -141,25 +150,32 @@ public class MainApp extends Application {
 		try {
 			LOG.info("Building application");
 			BorderPane rootLayout = (BorderPane) rootLoader.load();
-			RootController rootController = (RootController) rootLoader.getController();
-			rootController.setStage(rootStage);
-			sc.setRootController(rootController);
-			LOG.debug("Root layout loaded");
-			
-			AnchorPane playQueuePane = (AnchorPane) playQueueLoader.load();
-			PlayQueueController pqc = (PlayQueueController) playQueueLoader.getController();
-			rootLayout.getChildren().add(playQueuePane);
-			sc.setPlayQueueController(pqc);
-			LOG.debug("Playqueue layout loaded");
-
+			Scene mainScene = new Scene(rootLayout, 1200, 775);
+			rootStage.setScene(mainScene);
 			rootStage.setTitle("Musicott");
 			rootStage.getIcons().add(new Image(getClass().getResourceAsStream("/images/musicotticon.png")));
 			rootStage.setMinWidth(1200);
 			rootStage.setMinHeight(790);
 			rootStage.setMaxWidth(1800);
-			MusicottScene mainScene = new MusicottScene(rootLayout, 1200, 775, getHostServices());
-			mainScene.buildPlayQueuePane();
-			rootStage.setScene(mainScene);
+			RootController rootController = (RootController) rootLoader.getController();
+			sc.setRootController(rootController);
+			LOG.debug("Root layout loaded");
+			
+			VBox navigationLayout = (VBox) navigationLoader.load();
+			NavigationController navigationController = (NavigationController) navigationLoader.getController();
+			sc.setNavigationController(navigationController);
+			BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
+			contentBorderLayout.setLeft(navigationLayout);
+			rootController.bindShowHideTableInfoMenuItem();
+			LOG.debug("Navigation layout loaded");
+			
+			AnchorPane playQueuePane = (AnchorPane) playQueueLoader.load();
+			PlayQueueController pqc = (PlayQueueController) playQueueLoader.getController();
+			rootController.setPlayQueuePane(playQueuePane);
+			sc.setPlayQueueController(pqc);			
+			LOG.debug("Playqueue layout loaded");
+			
+			sc.getNavigationController().showMode(ALL_SONGS_MODE);
 			rootStage.show();
 		} catch (IOException | RuntimeException e) {
 			LOG.error("Error", e);

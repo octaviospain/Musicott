@@ -19,13 +19,14 @@
 package com.musicott.view;
 
 import java.io.ByteArrayInputStream;
+import java.util.Map;
 
 import javax.swing.SwingUtilities;
 
-import org.controlsfx.control.StatusBar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.musicott.SceneManager;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Playlist;
 import com.musicott.model.Track;
@@ -36,15 +37,21 @@ import com.musicott.player.TrackPlayer;
 import com.musicott.services.ServiceManager;
 import com.musicott.task.TaskPoolManager;
 import com.musicott.util.Utils;
-import com.musicott.view.custom.MusicottScene;
+import com.musicott.view.custom.MusicottMenuBar;
+import com.musicott.view.custom.TrackTableView;
 import com.musicott.view.custom.WaveformPanel;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ListProperty;
+import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingNode;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
@@ -61,7 +68,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaPlayer.Status;
 import javafx.scene.text.Font;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 
 /**
@@ -72,8 +78,9 @@ public class RootController {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private static final double VOLUME_AMOUNT = 0.05;
+	public static final String ALL_SONGS_MODE = "All songs";
 	public final Image DEFAULT_COVER_IMAGE = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
-
+	
 	@FXML
 	private BorderPane rootBorderPane, tableBorderPane, contentBorderLayout;
 	@FXML
@@ -99,25 +106,24 @@ public class RootController {
 	@FXML
 	private HBox tableInfoHBox;
 	@FXML
-	private VBox navigationPaneVBox, playlistInfoVBox;
-	private TextField playlistTitleTextField;
+	private VBox playlistInfoVBox, headerVBox;
+	private VBox navigationPaneVBox;
 	private AnchorPane playQueuePane;
-	private StatusBar statusBar;
-
-	private Stage rootStage;
-	private MusicottScene musicottScene;
-	private MusicLibrary ml;
-	private ServiceManager services;
-	private PlayerFacade player;
+	private MenuItem showHideTableInfoPaneMI;
+	private TrackTableView trackTable;
+	private TextField playlistTitleTextField;
 	private WaveformPanel mainWaveformPane;
+	private MusicottMenuBar menuBar;
+
+	private SceneManager sc = SceneManager.getInstance();
+	private MusicLibrary ml = MusicLibrary.getInstance();
+	private ServiceManager services = ServiceManager.getInstance();
+	private PlayerFacade player = PlayerFacade.getInstance();
 	
 	public RootController() {}
 	
 	@FXML
-	public void initialize() {
-		ml = MusicLibrary.getInstance();
-		services = ServiceManager.getInstance();
-		
+	public void initialize() {		
 		playlistTitleTextField = new TextField();
 		playlistTitleTextField.setPrefWidth(150);
 		playlistTitleTextField.setPrefHeight(25);
@@ -125,7 +131,6 @@ public class RootController {
 		playlistTitleTextField.setFont(new Font("System", 20));
 		
 		VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
-		
 		playButton.disableProperty().bind(ml.trackslistProperty().emptyProperty());
 		prevButton.setOnAction(e -> player.previous());
 		nextButton.setOnAction(e -> player.next());
@@ -143,7 +148,7 @@ public class RootController {
 			if(event.getClickCount() == 2) {	// 2 clicks = edit playlist name
 				setPlaylistTitleEdit(true);
 				playlistTitleTextField.setOnKeyPressed(e -> {
-					Playlist playlist = musicottScene.getSelectedPlaylist();
+					Playlist playlist = sc.getNavigationController().getSelectedPlaylist();
 					String newTitle = playlistTitleTextField.getText();
 					if(e.getCode() == KeyCode.ENTER && newTitle.equals(playlist.getName())) {
 						setPlaylistTitleEdit(false);
@@ -159,39 +164,62 @@ public class RootController {
 		});
 		playlistTitleLabel.textProperty().bind(playlistTitleTextField.textProperty());
 		
+		trackTable = new TrackTableView();
+		tableBorderPane.setCenter(trackTable);	
 		
-		statusBar = new StatusBar();
-//		statusBar.setMaxHeight(3.0);
-//		statusBar.setText("");
-//		rootBorderPane.setBottom(statusBar);
+		menuBar = new MusicottMenuBar(prevButton, nextButton, headerVBox);
+		navigationPaneVBox = (VBox) contentBorderLayout.getLeft();
+	
 		SwingUtilities.invokeLater(() -> {
 			mainWaveformPane = new WaveformPanel(520, 50);
             waveformSwingNode.setContent(mainWaveformPane);
 		});
 		playerStackPane.getChildren().add(0, waveformSwingNode);
-	
-		player = PlayerFacade.getInstance();
 	}
 	
-	public void setStage(Stage stage) {
-		rootStage = stage;
-		musicottScene = (MusicottScene) rootStage.getScene();
-		rootStage.setOnCloseRequest(event -> {LOG.info("Exiting Musicott");	System.exit(0);});
+	public ObservableList<Map.Entry<Integer, Track>> getSelectedItems() {
+		return trackTable.getSelectionModel().getSelectedItems();
 	}
 	
 	public void setStatusMessage(String message) {
-		statusBar.setText(message);
+
 	}
 	
 	public void setStatusProgress(double progress) {
-		statusBar.setProgress(progress);
+
 	}
 	
 	public void showTableInfoPane(boolean show) {
-		if(show && !tableBorderPane.getChildren().contains(tableInfoHBox))
+		if(show && !tableBorderPane.getChildren().contains(tableInfoHBox)) {
 			tableBorderPane.setTop(tableInfoHBox);
-		else if(!show && tableBorderPane.getChildren().contains(tableInfoHBox))
+			showHideTableInfoPaneMI.setText(showHideTableInfoPaneMI.getText().replaceFirst("Show", "Hide"));
+		} else if(!show && tableBorderPane.getChildren().contains(tableInfoHBox)) {
 			tableBorderPane.getChildren().remove(tableInfoHBox);
+			showHideTableInfoPaneMI.setText(showHideTableInfoPaneMI.getText().replaceFirst("Hide", "Show"));
+		}
+		
+	}	
+	
+	public void setPlayQueuePane(AnchorPane pane) {
+		playQueuePane = pane;
+		rootBorderPane.getChildren().add(playQueuePane);
+		playQueuePane.setVisible(false);
+		playQueuePane.setLayoutY(playQueueButton.getLayoutY()+50);
+		playQueuePane.setLayoutX(playQueueButton.getLayoutX()-150+(playQueueButton.getWidth()/2));
+		// The play queue pane moves if the window is resized
+		sc.getMainStage().widthProperty().addListener((observable, oldValue, newValue) -> {
+			playQueuePane.setLayoutX(playQueueButton.getLayoutX()-150+(playQueueButton.getWidth()/2));
+			playQueuePane.setLayoutY(playQueueButton.getLayoutY()+50);
+		});
+		sc.getMainStage().heightProperty().addListener((observable, oldValue, newValue) -> {
+			playQueuePane.setLayoutX(playQueueButton.getLayoutX()-150+(playQueueButton.getWidth()/2));
+			playQueuePane.setLayoutY(playQueueButton.getLayoutY()+50);
+		});
+		EventHandler<Event> hidePlayQueueAction = event -> {if(playQueuePane.isVisible()) {playQueuePane.setVisible(false); playQueueButton.setSelected(false);}};
+		sc.getMainStage().getScene().setOnMouseClicked(hidePlayQueueAction);
+		rootBorderPane.setOnMouseClicked(hidePlayQueueAction);
+		trackTable.setOnMouseClicked(hidePlayQueueAction);
+		playButton.setOnMouseClicked(hidePlayQueueAction);
 	}
 	
 	public void showNavigationPane(boolean show) {
@@ -264,8 +292,10 @@ public class RootController {
 		LOG.trace("Volume decreased "+volumeSlider.getValue());
 	}
 	
-	public void setPlaylistTitle(String playlistTitle) {
-		playlistTitleTextField.setText(playlistTitle);
+	public void updatePlaylistInfo(Playlist playlist) {
+		playlistTitleTextField.setText(playlist.getName());
+		playlistCover.imageProperty().bind(playlist.playlistCoverProperty());
+		setPlaylistTitleEdit(false);
 	}
 
 	/**
@@ -344,7 +374,7 @@ public class RootController {
 			if(event.getCode() == KeyCode.ENTER && !newTitle.equals("") && !ml.containsPlaylist(newTitle)) {
 				newPlaylist.setName(newTitle);
 				ml.addPlaylist(newPlaylist);
-				musicottScene.addPlaylist(newPlaylist);
+				sc.getNavigationController().addPlaylist(newPlaylist);
 				setPlaylistTitleEdit(false);
 				event.consume();
 			}
@@ -368,6 +398,12 @@ public class RootController {
 		remainingTimeLabel.setText("-"+((int)total.toHours()>0 ? remainingHours+":" : "")+(remainingMins<10 ? "0"+remainingMins : remainingMins)+":"+(remainingSecs<10 ? "0"+remainingSecs : remainingSecs));
 	}
 	
+	public void bindShowHideTableInfoMenuItem() {
+		showHideTableInfoPaneMI = menuBar.getShowHideTableInfoPaneMI();
+		ListProperty<String> selectedMenu = sc.getNavigationController().selectedMenuProperty();
+		showHideTableInfoPaneMI.disableProperty().bind(Bindings.createBooleanBinding(() -> !selectedMenu.isEmpty(), selectedMenu));
+	}
+	
 	private void setPlaying() {
 		playButton.setSelected(true);
 		trackSlider.setDisable(false);
@@ -378,13 +414,10 @@ public class RootController {
 	
 	@FXML
 	private void doShowHidePlayQueue() {
-		if(playQueuePane == null)
-			playQueuePane = (AnchorPane) rootStage.getScene().lookup("#playQueuePane");
 		if(playQueuePane.isVisible())
 			playQueuePane.setVisible(false);
 		else
 			playQueuePane.setVisible(true);
-		LOG.trace("Play queue show/hide");
 	}
 	
 	@FXML

@@ -18,8 +18,9 @@
 
 package com.musicott.view.custom;
 
-import static com.musicott.view.custom.MusicottScene.ALL_SONGS_MODE;
+import static com.musicott.view.NavigationController.ALL_SONGS_MODE;
 
+import com.musicott.SceneManager;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Playlist;
 
@@ -28,7 +29,6 @@ import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.scene.layout.AnchorPane;
 
 /**
  * @author Octavio Calleya
@@ -36,24 +36,19 @@ import javafx.scene.layout.AnchorPane;
  */
 public class PlaylistTreeView extends TreeView<Playlist> {
 	
-	private MusicottScene musicottScene;
+	private SceneManager sc = SceneManager.getInstance();
 	private MusicLibrary ml = MusicLibrary.getInstance();
 	
 	private TreeItem<Playlist> root;
 	private PlaylistTreeViewContextMenu contextMenu;
 	private ObservableList<TreeItem<Playlist>> selectedPlaylist;
 	
-	public PlaylistTreeView(MusicottScene scene) {
+	public PlaylistTreeView() {
 		super();
-		musicottScene = scene;
 		root = new TreeItem<Playlist>();
 		setRoot(root);
 		setShowRoot(false);
 		setEditable(true);
-		AnchorPane.setTopAnchor(this, 0.0);
-		AnchorPane.setRightAnchor(this, 0.0);
-		AnchorPane.setBottomAnchor(this, 0.0);
-		AnchorPane.setLeftAnchor(this, 0.0);
 		setPrefHeight(USE_COMPUTED_SIZE);
 		setPrefWidth(USE_COMPUTED_SIZE);
 		setId("playlistTreeView");
@@ -62,7 +57,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		selectedPlaylist = getSelectionModel().getSelectedItems();
 		getSelectionModel().selectedItemProperty().addListener(listener -> ml.showPlaylist(getSelectedPlaylist()));
 		
-		contextMenu = new PlaylistTreeViewContextMenu(musicottScene);
+		contextMenu = new PlaylistTreeViewContextMenu();
 		setContextMenu(contextMenu);
 		
 		for(Playlist pl: ml.getPlaylists())
@@ -73,20 +68,20 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		return selectedPlaylist.get(0) == null ? null : selectedPlaylist.get(0).getValue();
 	}
 	
-	protected void addPlaylist(Playlist newPlaylist) {
+	public void addPlaylist(Playlist newPlaylist) {
 		TreeItem<Playlist> newItem = new TreeItem<>(newPlaylist);
 		root.getChildren().add(newItem);
 		getSelectionModel().select(newItem);
 	}
 	
-	protected void deletePlaylist() {
+	public void deletePlaylist() {
 		Playlist selected = getSelectedPlaylist();
 		if(selected != null) {
 			ml.removePlaylist(getSelectedPlaylist());
 			int playlistToDeleteIndex = getSelectionModel().getSelectedIndex();
 			root.getChildren().removeIf(treeItem -> treeItem.getValue().equals(selected));
 			if(playlistToDeleteIndex == 0 && root.getChildren().size() == 0)
-				musicottScene.showMode(ALL_SONGS_MODE);
+				sc.getNavigationController().showMode(ALL_SONGS_MODE);
 			else
 				getSelectionModel().selectFirst();
 		}

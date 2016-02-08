@@ -21,7 +21,7 @@ package com.musicott.model;
 import static com.musicott.MainApp.PLAYLISTS_PERSISTENCE_FILE;
 import static com.musicott.MainApp.TRACKS_PERSISTENCE_FILE;
 import static com.musicott.MainApp.WAVEFORMS_PERSISTENCE_FILE;
-import static com.musicott.view.custom.MusicottScene.ALL_SONGS_MODE;
+import static com.musicott.view.NavigationController.ALL_SONGS_MODE;
 
 import java.io.File;
 import java.io.FileNotFoundException;

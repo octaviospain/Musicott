@@ -41,6 +41,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.util.Callback;
@@ -58,6 +60,7 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 	private TableColumn<Map.Entry<Integer, Track>, Duration> totalTimeCol;
 	private TableColumn<Map.Entry<Integer, Track>, Boolean> coverCol;
 
+	private TrackTableViewContextMenu trackTableCM;
 	private ObservableList<Map.Entry<Integer, Track>> tracks;
 	private List<Map.Entry<Integer, Track>> selection;
 	
@@ -111,6 +114,16 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 			}
 		});
 		setItems(tracks);
+		trackTableCM = new TrackTableViewContextMenu(getSelectionModel().getSelectedItems());
+		setContextMenu(trackTableCM);
+		addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+			if(event.getButton() == MouseButton.SECONDARY)
+				trackTableCM.show(this, event.getScreenX(), event.getScreenY());
+			else if(event.getButton() == MouseButton.PRIMARY && trackTableCM.isShowing())
+				trackTableCM.hide();
+		});
+//		trackTableCM.getDeleteFromPlaylistMI().disableProperty().bind(sc.getNavigationController().selectedMenuProperty().emptyProperty().not());
+		
 	}
 	
 	private void initColumns() {

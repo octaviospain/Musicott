@@ -24,16 +24,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
@@ -47,7 +46,6 @@ import javafx.stage.Stage;
 public class ErrorHandler {
 
 	private static ErrorHandler instance;
-	private HostServices hostServices;
 	private Stage mainStage, preferencesStage;
 	private Alert alert;
 	private FlowPane helpContentTextFP;
@@ -57,7 +55,7 @@ public class ErrorHandler {
 	private ErrorHandler() {
 		Label text = new Label("Help Musicott to fix this kind of bugs. Report this error at");
 		Hyperlink githubIssuesLink = new Hyperlink("https://github.com/octaviospain/Musicott/issues");
-		githubIssuesLink.setOnAction(event -> hostServices.showDocument(githubIssuesLink.getText()));
+		githubIssuesLink.setOnAction(event -> SceneManager.getInstance().getApplicationHostServices().showDocument(githubIssuesLink.getText()));
 		helpContentTextFP = new FlowPane();
 		helpContentTextFP.getChildren().addAll(text, githubIssuesLink);
 	}
@@ -66,10 +64,6 @@ public class ErrorHandler {
 		if(instance == null)
 			instance = new ErrorHandler();
 		return instance;
-	}
-	
-	public void setApplicationHostServices(HostServices hostServices) {
-		this.hostServices= hostServices;
 	}
 	
 	public synchronized void showErrorDialog(String message) {

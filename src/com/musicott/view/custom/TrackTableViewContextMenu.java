@@ -23,10 +23,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.musicott.SceneManager;
 import com.musicott.model.MusicLibrary;
 import com.musicott.model.Playlist;
+import com.musicott.model.Track;
 import com.musicott.player.PlayerFacade;
 
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
@@ -41,37 +44,44 @@ import javafx.scene.control.SeparatorMenuItem;
  */
 public class TrackTableViewContextMenu extends ContextMenu {
 	
-	private MusicottScene musicottScene;
+	private SceneManager sc = SceneManager.getInstance();
 	private MusicLibrary ml = MusicLibrary.getInstance();
 	
 	private Menu cmAddToPlaylist;
 	private MenuItem cmPlay, cmEdit, cmDelete, cmAddToQueue, cmDeleteFromPlaylist;
-//	private ObservableList<Map.Entry<Integer, Track>> trackSelection;
+	private ObservableList<Map.Entry<Integer, Track>> trackSelection;
 	
-	public TrackTableViewContextMenu(MusicottScene scene) {
-		super();
-		musicottScene = scene;
-		
+	public TrackTableViewContextMenu(ObservableList<Map.Entry<Integer, Track>> tableSelection) {
+		super();		
+		trackSelection = tableSelection;
 		cmPlay = new MenuItem("Play");
 		cmPlay.setOnAction(event -> {
-			if(!musicottScene.getTrackSelection().isEmpty())
-				PlayerFacade.getInstance().addTracks(musicottScene.getTrackSelection().stream().map(Map.Entry::getKey).collect(Collectors.toList()), true);
+			if(!trackSelection.isEmpty())
+				PlayerFacade.getInstance().addTracks(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), true);
 		});
 		cmEdit = new MenuItem("Edit");
-		cmEdit.setOnAction(event -> musicottScene.doEdit());
+		cmEdit.setOnAction(event -> sc.editTracks());
 		cmDelete = new MenuItem("Delete");
-		cmDelete.setOnAction(event -> musicottScene.doDelete());
+		cmDelete.setOnAction(event -> sc.deleteTracks());
 		cmAddToQueue = new MenuItem("Add to Play Queue");
 		cmAddToQueue.setOnAction(event -> {
-			if(!musicottScene.getTrackSelection().isEmpty())
-				PlayerFacade.getInstance().addTracks(musicottScene.getTrackSelection().stream().map(Map.Entry::getKey).collect(Collectors.toList()), false);
+			if(!trackSelection.isEmpty())
+				PlayerFacade.getInstance().addTracks(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), false);
 		});
 		cmDeleteFromPlaylist = new MenuItem("Delete from playlist");
 		cmDeleteFromPlaylist.setId("cmDeleteFromPlaylist");
-		cmDeleteFromPlaylist.setOnAction(event -> musicottScene.deleteFromPlaylist());
+		cmDeleteFromPlaylist.setOnAction(event -> {
+			ObservableList<Map.Entry<Integer, Track>> trackSelection = sc.getRootController().getSelectedItems();
+			if(!trackSelection.isEmpty())
+				ml.removeFromPlaylist(sc.getNavigationController().getSelectedPlaylist(), trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+		});
 		cmAddToPlaylist = new Menu("Add to Playlist");
-		
+
 		getItems().addAll(cmPlay, cmEdit, cmDelete, cmAddToQueue, new SeparatorMenuItem(), cmDeleteFromPlaylist, cmAddToPlaylist);
+	}
+	
+	public MenuItem getDeleteFromPlaylistMI() {
+		return cmDeleteFromPlaylist;
 	}
 	
 	@Override
@@ -81,8 +91,8 @@ public class TrackTableViewContextMenu extends ContextMenu {
 			String playListName = pl.getName();
 			MenuItem playlistItem = new MenuItem(playListName);
 			playlistItem.setOnAction(e -> {
-				if(!musicottScene.getTrackSelection().isEmpty())
-					ml.addToPlaylist(playListName, musicottScene.getTrackSelection().stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+				if(!trackSelection.isEmpty())
+					ml.addToPlaylist(playListName, trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
 			});
 			playlistsMI.add(playlistItem);
 		}
