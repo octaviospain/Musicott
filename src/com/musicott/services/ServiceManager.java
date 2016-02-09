@@ -68,7 +68,7 @@ public class ServiceManager {
 	public void udpateAndScrobbleLastFM(Track track) {
 		if(usingLastFM()) {
 			if(lastfmTask == null || lastfmTask.isInterrupted()) {
-				lastfmTask = new LastFMTask("LastFM Thread", this);
+				lastfmTask = new LastFMTask("LastFM Thread");
 				lastfmTask.start();
 			}
 			lastfmTask.updateAndScrobble(track);
@@ -84,7 +84,7 @@ public class ServiceManager {
 	private void lastFMLogin() {
 		if(lastfmTask != null && lastfmTask.isAlive())
 			lastfmTask.interrupt();
-		lastfmTask = new LastFMTask("LastFM Thread", this);
+		lastfmTask = new LastFMTask("LastFM Thread");
 		lastfmTask.loginBefore();
 		lastfmTask.start();
 	}

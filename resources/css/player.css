@@ -1,0 +1,121 @@
+/*
+ * This file is part of Musicott software.
+ *
+ * Musicott software is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Musicott library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+ 
+.root, #playerGridPane, .list-view {
+    -fx-focus-color: rgb(73, 73, 73);
+    -fx-faint-focus-color: transparent;
+    -fx-background-color: transparent, transparent, transparent, -fx-body-color;
+    -fx-background-radius: 0, 0, 0, 0;
+    -fx-accent: black;
+}
+
+.text-field {
+	-fx-focus-color: rgb(73, 73, 73);
+    -fx-border-radius: 5, 5, 5, 5;
+	-fx-border-style: solid;
+	-fx-border-color: rgb(182,182,182);
+}
+
+.text-field:focused {
+	-fx-border-color: transparent;
+}
+
+.text-field {
+    -fx-highlight-text-fill: white;
+}
+
+#playButton {
+	-fx-graphic: url('../icons/play-button-icon.png');
+	-fx-background-color: transparent;
+}
+
+#playButton:disabled {
+	-fx-graphic: url('../icons/play-button-disabled-icon.png');
+	-fx-background-color: transparent;
+}
+
+#playButton:selected {	
+	-fx-graphic: url('../icons/pause-button-icon.png');
+	-fx-background-color: transparent;
+}
+
+#prevButton {
+	-fx-graphic: url('../icons/prev-button-icon.png');
+	-fx-background-color: transparent;
+}
+
+#prevButton:disabled {
+	-fx-graphic: url('../icons/prev-button-disabled-icon.png');
+	-fx-background-color: transparent;
+}
+
+#nextButton {
+	-fx-graphic: url('../icons/next-button-icon.png');
+	-fx-background-color: transparent;
+}
+
+#nextButton:disabled {
+	-fx-graphic: url('../icons/next-button-disabled-icon.png');
+	-fx-background-color: transparent;
+}
+
+#playQueueButton {
+	-fx-graphic: url('../icons/playqueue-button-icon.png');
+	-fx-background-color: transparent;
+}
+
+#playQueueButton:selected {
+	-fx-graphic: url('../icons/playqueue-button-selected-icon.png');
+ 	-fx-effect: dropshadow(gaussian, rgb(73, 73, 73), 15, 0.3, 0, 0);
+}
+
+#trackSlider .track {
+    -fx-background-color: null;
+	-fx-background-insets: 0 0 0 0;
+}
+
+#trackSlider .thumb {
+	-fx-background-color: null;
+	-fx-background-image: url('../icons/sliderthumb-icon.png');
+ 	-fx-background-repeat:no-repeat ;
+}
+
+#trackProgressBar .bar {
+	-fx-background-color: black;
+	-fx-background-insets: 0 0 1 0;
+	-fx-background-radius: null;
+}
+
+#trackProgressBar .track {
+	-fx-control-inner-background: rgb(182,182,182);
+	-fx-background-radius: null;
+}
+
+#volumeSlider .track {
+    -fx-background-color: null;
+}
+
+#volumeProgressBar .bar {
+	-fx-background-color: black;
+	-fx-background-insets: 1 1 2 1;
+	-fx-background-radius: 2;	
+}
+
+#volumeProgressBar .track {
+	-fx-control-inner-background: rgb(182,182,182);
+}

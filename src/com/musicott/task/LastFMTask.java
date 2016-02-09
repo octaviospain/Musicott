@@ -44,18 +44,16 @@ import javafx.application.Platform;
 public class LastFMTask extends Thread {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private ErrorHandler eh;
-	private ServiceManager sm;
+	private ErrorHandler eh = ErrorHandler.getInstance();
+	private ServiceManager sm = ServiceManager.getInstance();
 	private LastFMService lastfm;
 	private Semaphore semaphore;
 	private Track actualTrack;
 	private List<Map<Track, Integer>> tracksToScrobbleLater;
 	private boolean end, login;
 	
-	public LastFMTask(String id, ServiceManager services) {
+	public LastFMTask(String id) {
 		super(id);
-		eh = ErrorHandler.getInstance();
-		sm = services;
 		end = login = false;
 		lastfm = new LastFMService();
 		semaphore = new Semaphore(0);

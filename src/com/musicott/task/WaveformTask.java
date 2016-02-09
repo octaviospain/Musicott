@@ -89,7 +89,7 @@ public class WaveformTask extends Thread {
 					ml.addWaveform(track.getTrackID(), waveform);
 					Track currentTrack = PlayerFacade.getInstance().getCurrentTrack();
 					if(currentTrack != null && currentTrack.equals(track))
-						SwingUtilities.invokeLater(() -> sc.getRootController().setWaveform(track));
+						SwingUtilities.invokeLater(() -> sc.getPlayerController().setWaveform(track));
 					LOG.debug("Waveform of track {} completed", track);
 					Platform.runLater(() -> sc.getRootController().setStatusMessage(""));
 					ml.saveLibrary(false, true, false);

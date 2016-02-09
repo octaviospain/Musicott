@@ -238,7 +238,7 @@ public class PlayerFacade {
 			Platform.runLater(() -> sc.getRootController().setStatusMessage("Playing a random playlist"));
 		}
 		else
-			Platform.runLater(() -> sc.getRootController().setStopped());
+			Platform.runLater(() -> sc.getPlayerController().setStopped());
 	}
 	
 	public boolean isCurrentTrackScrobbled() {
@@ -276,6 +276,6 @@ public class PlayerFacade {
 		}
 		trackPlayer.setTrack(track);
 		LOG.debug("Created new player");
-		sc.getRootController().updatePlayerInfo(trackPlayer, currentTrack);
+		sc.getPlayerController().updatePlayerInfo(trackPlayer, currentTrack);
 	}
 }

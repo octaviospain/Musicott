@@ -36,6 +36,8 @@ import com.musicott.util.Utils;
 
 import de.codecentric.centerdevice.MenuToolkit;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ListProperty;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -135,10 +137,6 @@ public class MusicottMenuBar extends MenuBar {
 			headerVBox.getChildren().add(0, this);
 			LOG.debug("Default menubar created");
 		}
-	}
-
-	public MenuItem getShowHideTableInfoPaneMI() {
-		return showHideTableInfoPaneMI;
 	}
 	
 	private void createMenus() {
@@ -256,8 +254,8 @@ public class MusicottMenuBar extends MenuBar {
 		nextMI.disableProperty().bind(nextButton.disableProperty());
 		nextMI.setOnAction(e -> PlayerFacade.getInstance().next());
 		
-		volIncrMI.setOnAction(e -> sc.getRootController().doIncreaseVolume());
-		volDecrMI.setOnAction(e -> sc.getRootController().doDecreaseVolume());
+		volIncrMI.setOnAction(e -> sc.getPlayerController().doIncreaseVolume());
+		volDecrMI.setOnAction(e -> sc.getPlayerController().doDecreaseVolume());
 		
 		selCurrMI.setOnAction(e -> {
 			Track currentTrack = PlayerFacade.getInstance().getCurrentTrack();
@@ -273,15 +271,15 @@ public class MusicottMenuBar extends MenuBar {
 	}
 	
 	private void setViewMenuActions() {
-		showHideNavigationPaneMI.setOnAction(e -> {
-			if(showHideNavigationPaneMI.getText().startsWith("Show")) {
-				sc.getRootController().showNavigationPane(true);
-				showHideNavigationPaneMI.setText(showHideNavigationPaneMI.getText().replaceFirst("Show", "Hide"));
-			} else if(showHideNavigationPaneMI.getText().startsWith("Hide")) {
-				sc.getRootController().showNavigationPane(false);
-				showHideNavigationPaneMI.setText(showHideNavigationPaneMI.getText().replaceFirst("Hide", "Show"));				
-			}
-		});
+//		showHideNavigationPaneMI.setOnAction(e -> {
+//			if(showHideNavigationPaneMI.getText().startsWith("Show")) {
+//				sc.getRootController().showNavigationPane(true);
+//				showHideNavigationPaneMI.setText(showHideNavigationPaneMI.getText().replaceFirst("Show", "Hide"));
+//			} else if(showHideNavigationPaneMI.getText().startsWith("Hide")) {
+//				sc.getRootController().showNavigationPane(false);
+//				showHideNavigationPaneMI.setText(showHideNavigationPaneMI.getText().replaceFirst("Hide", "Show"));				
+//			}
+//		});
 		showHideTableInfoPaneMI.setOnAction(e -> {
 			if(showHideTableInfoPaneMI.getText().startsWith("Show")) {
 				sc.getRootController().showTableInfoPane(true);
@@ -289,8 +287,10 @@ public class MusicottMenuBar extends MenuBar {
 			} else if(showHideTableInfoPaneMI.getText().startsWith("Hide")) {
 				sc.getRootController().showTableInfoPane(false);
 				showHideTableInfoPaneMI.setText(showHideTableInfoPaneMI.getText().replaceFirst("Hide", "Show"));	
-}
+			}
 		});
-		
+
+		ListProperty<String> selectedMenu = sc.getNavigationController().selectedMenuProperty();
+		showHideTableInfoPaneMI.disableProperty().bind(Bindings.createBooleanBinding(() -> !selectedMenu.isEmpty(), selectedMenu));
 	}
 }

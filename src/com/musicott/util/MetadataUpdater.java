@@ -122,6 +122,7 @@ public class MetadataUpdater {
 		return succeeded;
 	}
 	
+	// Unused
 	public boolean searchCoverInFolder() {
 		boolean finded = false;
 		String[] mimeTypes = {"jpg","jpeg","png"};

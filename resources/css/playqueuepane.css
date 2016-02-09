@@ -15,6 +15,13 @@
  * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+.root, .list-view {
+    -fx-focus-color: rgb(73, 73, 73);
+    -fx-faint-focus-color: transparent;
+    -fx-background-color: transparent, transparent, transparent, -fx-body-color;
+    -fx-background-radius: 0, 0, 0, 0;
+    -fx-accent: black;
+}
 
 #playQueuePane {
 	-fx-background-image: url('../images/playqueue-background-image.png');
@@ -39,47 +46,13 @@
     -fx-fill: white !important;
 }
 
-/* The main scrollbar **track** CSS class  */
-#listView .scroll-bar:horizontal .track,
-#listView .scroll-bar:vertical .track {
-	-fx-background-color:transparent;
-	-fx-opacity: 0;
-	-fx-border-color:transparent;
-	-fx-background-radius: 0em;
-	-fx-border-radius:2em;
-}
-
-/* The increment and decrement button CSS class of scrollbar */
-#listView .scroll-bar:horizontal .increment-button ,
-#listView .scroll-bar:horizontal .decrement-button {
-    -fx-background-color:transparent;
-	-fx-background-radius: 0em;
-	-fx-padding:0 0 10 0;
-}
-
-/* The increment and decrement button CSS class of scrollbar */
-#listView .scroll-bar:vertical .increment-button ,
-#listView .scroll-bar:vertical .decrement-button {
-
-    -fx-background-color:transparent;
-	-fx-background-radius: 0em;
-	-fx-padding:0 10 0 0;
-
-}
-
+/* Scroll bars hided */
+#listView .scroll-bar .decrement-button,
+#listView .scroll-bar .increment-button,
 #listView .scroll-bar .increment-arrow,
 #listView .scroll-bar .decrement-arrow {
 	-fx-shape: " ";	
 	-fx-padding:0;
-}
-
-/* The main scrollbar **thumb** CSS class which we drag every time (movable) */
-#listView .scroll-bar:horizontal .thumb,
-#listView .scroll-bar:vertical .thumb {
-    -fx-background-color:derive(black,90%);
-	-fx-background-insets: 2, 0, 0;
-	-fx-background-radius: 2em;
-
 }
 
 #deleteButton-black {

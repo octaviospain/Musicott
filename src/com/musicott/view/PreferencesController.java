@@ -76,16 +76,14 @@ public class PreferencesController {
 	private final String ITUNES_INFO = "Itunes info";
 	private final String METADATA_INFO = "File metadata info";
 	
-	private ServiceManager serviceManager;
-	private MainPreferences preferences;
+	private ServiceManager serviceManager = ServiceManager.getInstance();
+	private MainPreferences preferences = MainPreferences.getInstance();
 	private Stage preferencesStage;
 
 	public PreferencesController () {}
 	
 	@FXML
-	public void initialize() {
-		preferences = MainPreferences.getInstance();
-		serviceManager = ServiceManager.getInstance();
+	public void initialize() {		
 		itunesImportPolicyCheckBox.setItems(FXCollections.observableArrayList(ITUNES_INFO, METADATA_INFO));
 		//	The login button is disabled if the fields are empty
 		lastfmLoginButton.disableProperty().bind(Bindings.createBooleanBinding(() -> {

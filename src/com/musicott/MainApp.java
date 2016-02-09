@@ -20,6 +20,7 @@ package com.musicott;
 
 import static com.musicott.SceneManager.LAYOUTS_PATH;
 import static com.musicott.SceneManager.NAVIGATION_LAYOUT;
+import static com.musicott.SceneManager.PLAYER_LAYOUT;
 import static com.musicott.SceneManager.PLAYQUEUE_LAYOUT;
 import static com.musicott.SceneManager.ROOT_LAYOUT;
 import static com.musicott.view.NavigationController.ALL_SONGS_MODE;
@@ -52,7 +53,9 @@ import com.musicott.services.ServiceManager;
 import com.musicott.util.ObservableMapWrapperCreator;
 import com.musicott.view.NavigationController;
 import com.musicott.view.PlayQueueController;
+import com.musicott.view.PlayerController;
 import com.musicott.view.RootController;
+import com.musicott.view.custom.MusicottMenuBar;
 import com.sun.javafx.application.LauncherImpl;
 import com.sun.javafx.collections.ObservableMapWrapper;
 
@@ -60,11 +63,16 @@ import javafx.application.Application;
 import javafx.application.Preloader.PreloaderNotification;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -74,7 +82,7 @@ import javafx.stage.Stage;
  * @author Octavio Calleya
  *
  */
-@SuppressWarnings({"restriction", "unchecked"})
+@SuppressWarnings({"restriction", "unchecked", "unused"})
 public class MainApp extends Application {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
@@ -89,7 +97,7 @@ public class MainApp extends Application {
 	private MusicLibrary ml;
 	private MainPreferences pf;
 	private Stage rootStage;
-	private FXMLLoader rootLoader, playQueueLoader, navigationLoader;
+	private FXMLLoader rootLoader, playQueueLoader, navigationLoader, playerLoader;
 	private int totalPreloadSteps;
 	
 	public MainApp() {
@@ -131,6 +139,7 @@ public class MainApp extends Application {
 	private void loadLayout() {
 		LOG.debug("Loading layouts");
 		notifyPreloader(1, 4, "Loading layout...");
+		// Root layout
 	    rootLoader = new FXMLLoader();
 		rootLoader.setLocation(getClass().getResource(LAYOUTS_PATH+ROOT_LAYOUT));		
 		
@@ -141,10 +150,14 @@ public class MainApp extends Application {
 		// Navigation layout
 		navigationLoader = new FXMLLoader();
 		navigationLoader.setLocation(getClass().getResource(LAYOUTS_PATH+NAVIGATION_LAYOUT));
+		
+		// Player Layout
+		playerLoader = new FXMLLoader();
+		playerLoader.setLocation(getClass().getResource(LAYOUTS_PATH+PLAYER_LAYOUT));
 	}
 	
 	/**
-	 * Builds the root stage and layout
+	 * Builds the root stage and layouts
 	 */
 	private void loadStage() {
 		try {
@@ -157,6 +170,7 @@ public class MainApp extends Application {
 			rootStage.setMinWidth(1200);
 			rootStage.setMinHeight(790);
 			rootStage.setMaxWidth(1800);
+			
 			RootController rootController = (RootController) rootLoader.getController();
 			sc.setRootController(rootController);
 			LOG.debug("Root layout loaded");
@@ -166,16 +180,30 @@ public class MainApp extends Application {
 			sc.setNavigationController(navigationController);
 			BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
 			contentBorderLayout.setLeft(navigationLayout);
-			rootController.bindShowHideTableInfoMenuItem();
+			navigationController.showMode(ALL_SONGS_MODE);
 			LOG.debug("Navigation layout loaded");
 			
+			GridPane playerGridPane = (GridPane) playerLoader.load();
+			PlayerController playerController = (PlayerController) playerLoader.getController();
+			sc.setPlayerController(playerController);
+			contentBorderLayout.setBottom(playerGridPane);
+			LOG.debug("Player layout loaded");
+			
 			AnchorPane playQueuePane = (AnchorPane) playQueueLoader.load();
-			PlayQueueController pqc = (PlayQueueController) playQueueLoader.getController();
-			rootController.setPlayQueuePane(playQueuePane);
-			sc.setPlayQueueController(pqc);			
+			PlayQueueController playQueueController = (PlayQueueController) playQueueLoader.getController();
+			playerController.setPlayQueuePane(playQueuePane);
+			sc.setPlayQueueController(playQueueController);			
 			LOG.debug("Playqueue layout loaded");
 			
-			sc.getNavigationController().showMode(ALL_SONGS_MODE);
+			Button prevButton = (Button) playerGridPane.lookup("#prevButton");
+			Button nextButton = (Button) playerGridPane.lookup("#nextButton");
+			ToggleButton playQueueButton = (ToggleButton) playerGridPane.lookup("#playQueueButton");
+			VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
+			MusicottMenuBar menuBar = new MusicottMenuBar(prevButton, nextButton, headerVBox);
+			
+			// Hide playqueue pane if click outside
+			navigationLayout.setOnMouseClicked(e -> playerController.showHidePlayQueue());
+			
 			rootStage.show();
 		} catch (IOException | RuntimeException e) {
 			LOG.error("Error", e);

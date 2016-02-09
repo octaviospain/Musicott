@@ -52,10 +52,10 @@ import javafx.util.Duration;
 public class ParseTask extends Task<Void> {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private SceneManager sc;
-	private MusicLibrary ml;
-	private ErrorHandler eh;
-	private PlayerFacade player;
+	private SceneManager sc = SceneManager.getInstance();
+	private MusicLibrary ml = MusicLibrary.getInstance();
+	private ErrorHandler eh = ErrorHandler.getInstance();
+	private PlayerFacade player = PlayerFacade.getInstance();
 
 	private Map<Integer, Track> tracks;
 	private Queue<File> files;
@@ -67,10 +67,6 @@ public class ParseTask extends Task<Void> {
 	private List<String> parseErrors;
 	
 	public ParseTask(List<File> filesToParse, boolean playFinally) {
-		sc = SceneManager.getInstance();
-		ml = MusicLibrary.getInstance();
-		eh = ErrorHandler.getInstance();
-		player = PlayerFacade.getInstance();
 		tracks = new HashMap<>();
 		files = new ArrayDeque<>();
 		parseErrors = new ArrayList<>();

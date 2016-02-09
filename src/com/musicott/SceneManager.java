@@ -32,6 +32,7 @@ import com.musicott.model.Track;
 import com.musicott.view.EditController;
 import com.musicott.view.NavigationController;
 import com.musicott.view.PlayQueueController;
+import com.musicott.view.PlayerController;
 import com.musicott.view.PreferencesController;
 import com.musicott.view.RootController;
 
@@ -63,6 +64,7 @@ public class SceneManager {
 	protected static final String PLAYQUEUE_LAYOUT = "PlayQueueLayout.fxml";
 	protected static final String PROGRESS_LAYOUT = "ProgressLayout.fxml";
 	protected static final String PREFERENCES_LAYOUT = "PreferencesLayout.fxml";
+	protected static final String PLAYER_LAYOUT ="PlayerLayout.fxml";
 	
 	private Stage mainStage, editStage, progressStage, preferencesStage;
 	
@@ -71,6 +73,7 @@ public class SceneManager {
 	private NavigationController navigationController;
 	private PlayQueueController playQueueController;
 	private PreferencesController preferencesController;
+	private PlayerController playerController;
 	
 	private static volatile SceneManager instance;
 	private static ErrorHandler errorHandler;
@@ -124,6 +127,14 @@ public class SceneManager {
 	
 	public PlayQueueController getPlayQueueController() {
 		return playQueueController;
+	}
+	
+	protected void setPlayerController(PlayerController playerController) {
+		this.playerController = playerController;
+	}
+	
+	public PlayerController getPlayerController() {
+		return playerController;
 	}
 	
 	public PreferencesController getPreferencesController() {

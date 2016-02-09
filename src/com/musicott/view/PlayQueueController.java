@@ -53,13 +53,12 @@ public class PlayQueueController {
 	
 	private ObservableList<TrackQueueRow> playQueueList;
 	private ObservableList<TrackQueueRow> historyQueueList;
-	private PlayerFacade player;
+	private PlayerFacade player = PlayerFacade.getInstance();
 	
 	public PlayQueueController () {}
 	
 	@FXML
-	public void initialize() {
-		player = PlayerFacade.getInstance();
+	public void initialize() {		
 		playQueueList = player.getPlayList();
 		historyQueueList = player.getHistorylist();
 		historyQueueButton.setId("historyQueueButton");
@@ -78,6 +77,7 @@ public class PlayQueueController {
 					player.playQueueIndex(playQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
 			}
 		});
+		
 	}
 	
 	public void removeTrackQueueRow(TrackQueueRow tqr) {

@@ -71,8 +71,8 @@ public class ItunesImportTask extends Task<Void> {
 	public static final int HOLD_METADATA_POLICY = 0;
 	public static final int HOLD_ITUNES_DATA_POLICY = 1;
 	
-	private SceneManager sc;
-	private MusicLibrary ml;
+	private SceneManager sc = SceneManager.getInstance();
+	private MusicLibrary ml = MusicLibrary.getInstance();
 	private ItunesLibrary itunesLibrary;
 	private Map<Integer, ItunesTrack> itunesItems;
 	private Map<Integer, Track> tracks;
@@ -85,8 +85,6 @@ public class ItunesImportTask extends Task<Void> {
 	private Semaphore waitConfirmationSemaphore;
 
 	public ItunesImportTask(String path) {
-		sc = SceneManager.getInstance();
-		ml = MusicLibrary.getInstance();
 		itunesLibraryXMLPath = path;
 		metadataPolicy = MainPreferences.getInstance().getItunesImportMetadataPolicy();
 		importPlaylists = MainPreferences.getInstance().getItunesImportPlaylists();
