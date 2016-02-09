@@ -37,7 +37,7 @@ import com.musicott.util.Utils;
 import de.codecentric.centerdevice.MenuToolkit;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ListProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -293,7 +293,7 @@ public class MusicottMenuBar extends MenuBar {
 			}
 		});
 
-		ListProperty<String> selectedMenu = sc.getNavigationController().selectedMenuProperty();
-		showHideTableInfoPaneMI.disableProperty().bind(Bindings.createBooleanBinding(() -> !selectedMenu.isEmpty(), selectedMenu));
+		ReadOnlyObjectProperty<String> selectedMenu = sc.getNavigationController().selectedMenuProperty();
+		showHideTableInfoPaneMI.disableProperty().bind(Bindings.createBooleanBinding(() -> selectedMenu.getValue() != null, selectedMenu));
 	}
 }

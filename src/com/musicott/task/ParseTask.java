@@ -132,7 +132,7 @@ public class ParseTask extends Task<Void> {
 			totalTime = System.currentTimeMillis() - startMillis;
 			Platform.runLater(() -> {
 				sc.closeIndeterminatedProgressScene();
-				sc.getNavigationController().setStatusMessage("Imported "+tracks.size()+" files in "+Duration.millis(totalTime).toSeconds()+" seconds");
+				sc.getNavigationController().setStatusMessage(tracks.size()+" files in "+Duration.millis(totalTime).toMinutes()+" mins");
 			});
 		}).start();
 		sc.openIndeterminatedProgressScene();

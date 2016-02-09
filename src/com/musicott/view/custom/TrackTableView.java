@@ -25,19 +25,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.musicott.model.MusicLibrary;
+import com.musicott.SceneManager;
+import com.musicott.model.Playlist;
 import com.musicott.model.Track;
 import com.musicott.player.PlayerFacade;
 import com.musicott.util.Utils;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.ObservableList;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TreeItem;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -61,18 +65,14 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 	private TableColumn<Map.Entry<Integer, Track>, Boolean> coverCol;
 
 	private TrackTableViewContextMenu trackTableCM;
-	private ObservableList<Map.Entry<Integer, Track>> tracks;
 	private List<Map.Entry<Integer, Track>> selection;
 	
-	private MusicLibrary ml;
 	private PlayerFacade player;
 	
 	@SuppressWarnings("unchecked")
 	public TrackTableView() {
 		super();
-		ml = MusicLibrary.getInstance();
 		player = PlayerFacade.getInstance();
-		tracks = ml.getShowingTracks();
 		selection = getSelectionModel().getSelectedItems();
 		setId("trackTable");
 		initColumns();
@@ -113,7 +113,7 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 					player.play(true);
 			}
 		});
-		setItems(tracks);
+		
 		trackTableCM = new TrackTableViewContextMenu(getSelectionModel().getSelectedItems());
 		setContextMenu(trackTableCM);
 		addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
@@ -121,10 +121,10 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 				trackTableCM.show(this, event.getScreenX(), event.getScreenY());
 			else if(event.getButton() == MouseButton.PRIMARY && trackTableCM.isShowing())
 				trackTableCM.hide();
-		});
-//		trackTableCM.getDeleteFromPlaylistMI().disableProperty().bind(sc.getNavigationController().selectedMenuProperty().emptyProperty().not());
-		
+		});		
 	}
+	
+	
 	
 	private void initColumns() {
 		Callback<TableColumn<Map.Entry<Integer, Track>,Number>, TableCell<Map.Entry<Integer, Track>,Number>> numericCellFactory = columns -> new TableCell<Map.Entry<Integer, Track>, Number>() {
@@ -258,5 +258,11 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 		bpmCol.setCellValueFactory(cellData -> cellData.getValue().getValue().bpmProperty());
 		bpmCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		bpmCol.setCellFactory(numericCellFactory);
+	}
+
+	public void bindDeleteFromPlaylistMenuItem() {
+		ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylist = SceneManager.getInstance().getNavigationController().selectedPlaylistProperty();
+		MenuItem cmDeleteFromPlaylist = trackTableCM.getDeleteFromPlaylistMI();
+		cmDeleteFromPlaylist.disableProperty().bind(Bindings.createBooleanBinding(() -> selectedPlaylist.getValue() == null, selectedPlaylist));
 	}
 }

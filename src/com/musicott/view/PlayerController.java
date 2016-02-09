@@ -36,6 +36,7 @@ import com.musicott.task.TaskPoolManager;
 import com.musicott.view.custom.WaveformPanel;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.StringProperty;
 import javafx.embed.swing.SwingNode;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -100,7 +101,7 @@ public class PlayerController {
 	
 	@FXML
 	public void initialize() {
-		playButton.disableProperty().bind(ml.trackslistProperty().emptyProperty());
+		playButton.disableProperty().bind(ml.allTracksProperty().emptyProperty());
 		prevButton.setOnAction(e -> player.previous());
 		nextButton.setOnAction(e -> player.next());
 		volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {if(!isChanging) volumeProgressBar.setProgress(volumeSlider.getValue());});
@@ -111,6 +112,10 @@ public class PlayerController {
             waveformSwingNode.setContent(mainWaveformPane);
 		});
 		playerStackPane.getChildren().add(0, waveformSwingNode);
+	}
+	
+	public StringProperty searchTextProperty() {
+		return searchTextField.textProperty();
 	}
 	
 	public void setWaveform(Track track) {

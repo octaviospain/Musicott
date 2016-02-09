@@ -32,6 +32,8 @@ import com.musicott.view.custom.TrackTableView;
 
 import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
@@ -51,7 +53,6 @@ import javafx.scene.text.Font;
 public class RootController {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	public static final String ALL_SONGS_MODE = "All songs";
 	public final Image DEFAULT_COVER_IMAGE = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
 	
 	@FXML
@@ -67,6 +68,7 @@ public class RootController {
 	private VBox navigationPaneVBox;
 	private TrackTableView trackTable;
 	private TextField playlistTitleTextField;
+	private FilteredList<Map.Entry<Integer, Track>> filteredTracks;
 
 	private SceneManager sc = SceneManager.getInstance();
 	private MusicLibrary ml = MusicLibrary.getInstance();
@@ -84,19 +86,19 @@ public class RootController {
 		playlistTitleTextField.setFont(new Font("System", 20));		
 		VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
 		
-		playlistTracksNumberLabel.textProperty().bind(Bindings.createStringBinding(() -> ml.getShowingTracksProperty().sizeProperty().get()+" songs", ml.getShowingTracksProperty()));
+		playlistTracksNumberLabel.textProperty().bind(Bindings.createStringBinding(() -> ml.showingTracksProperty().sizeProperty().get()+" songs", ml.showingTracksProperty()));
 		playlistSizeLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-			String sizeString = Utils.byteSizeString(ml.getShowingTracksProperty().stream().mapToLong(t -> (long)t.getValue().getSize()).sum(), 2);
+			String sizeString = Utils.byteSizeString(ml.showingTracksProperty().stream().mapToLong(t -> (long)t.getValue().getSize()).sum(), 2);
 			if(sizeString.equals("0 B"))
 				sizeString = "";
 			return sizeString; 
-		},  ml.getShowingTracksProperty()));
+		},  ml.showingTracksProperty()));
 		playlistTitleLabel.textProperty().bind(playlistTitleTextField.textProperty());
 		playlistTitleLabel.setOnMouseClicked(event -> {
 			if(event.getClickCount() == 2) {	// 2 clicks = edit playlist name
 				putPlaylistTextField(true);
 				playlistTitleTextField.setOnKeyPressed(e -> {
-					Playlist playlist = sc.getNavigationController().getSelectedPlaylist();
+					Playlist playlist = sc.getNavigationController().selectedPlaylistProperty().getValue().getValue();
 					String newTitle = playlistTitleTextField.getText();
 					if(e.getCode() == KeyCode.ENTER && newTitle.equals(playlist.getName())) {
 						putPlaylistTextField(false);
@@ -117,6 +119,35 @@ public class RootController {
 	
 	public ObservableList<Map.Entry<Integer, Track>> getSelectedItems() {
 		return trackTable.getSelectionModel().getSelectedItems();
+	}
+
+	public void bindAddToPlaylistMenuItem() {
+		trackTable.bindDeleteFromPlaylistMenuItem();
+	}
+	
+	public void bindSearchTextField(TextField searchTextField) {
+		ObservableList<Map.Entry<Integer, Track>> tracks = ml.showingTracksProperty().get();
+		filteredTracks = new FilteredList<>(tracks, predicate -> true);
+		searchTextField.textProperty().addListener((observable, oldText, newText) -> {
+			filteredTracks.setPredicate(trackEntry -> {
+				boolean result = true;
+				Track track = trackEntry.getValue();
+				if(newText != null && !newText.isEmpty()) {
+					if(track.getName().toLowerCase().contains(newText.toLowerCase()) ||
+					   track.getArtist().toLowerCase().contains(newText.toLowerCase()) ||
+					   track.getLabel().toLowerCase().contains(newText.toLowerCase()) ||
+					   track.getGenre().toLowerCase().contains(newText.toLowerCase()) ||
+					   track.getAlbum().toLowerCase().contains(newText.toLowerCase()))
+						result = true;
+					else	
+						result = false;
+				}
+				return result;
+			});
+		});
+		SortedList<Map.Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
+		sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
+		trackTable.setItems(sortedTracks);
 	}
 	
 	/**
@@ -141,7 +172,7 @@ public class RootController {
 		if(show && !contentBorderLayout.getChildren().contains(navigationPaneVBox)) {
 			contentBorderLayout.setLeft(navigationPaneVBox);
 			LOG.debug("Showing navigation pane");
-		} else if(!show && contentBorderLayout.getChildren().contains(navigationPaneVBox)) {
+		} else if(!show && contentBorderLayout.getLeft().equals(navigationPaneVBox)) {
 			contentBorderLayout.getChildren().remove(navigationPaneVBox);
 			LOG.debug("Showing navigation pane");
 		}

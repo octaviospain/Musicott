@@ -63,11 +63,12 @@ public class MusicLibrary {
 	private static int DEFAULT_RANDOMQUEUE_SIZE = 8;
 
 	private static MusicLibrary instance;
-	private ObservableMap<Integer, Track> tracks;
+	private ObservableMap<Integer, Track> musicottTracks;
 	private ObservableList<Map.Entry<Integer, Track>> showingTracks;
 	private Map<Integer,float[]> waveforms;
 	private List<Playlist> playlists;
 	private ListProperty<Map.Entry<Integer, Track>> showingTracksProperty;
+	private ListProperty<Map.Entry<Integer, Track>> allTracksProperty;
 	private SaveLibraryTask saveLibraryTask;
 	private Semaphore saveSemaphore;
 	
@@ -83,19 +84,31 @@ public class MusicLibrary {
 	
 	public void setTracks(ObservableMap<Integer, Track> tracks) {
 		synchronized(tracks) {
-			this.tracks = tracks;
-			this.showingTracks = FXCollections.observableArrayList(tracks.entrySet());
-			this.showingTracksProperty = new SimpleListProperty<>();
-			this.showingTracksProperty.bind(new SimpleObjectProperty<>(showingTracks));
-			this.tracks.addListener((MapChangeListener.Change<? extends Integer, ? extends Track> c) -> {
+			musicottTracks = tracks;
+			// Binds all the tracks in the library to a list property
+			ObservableList<Map.Entry<Integer, Track>> musicottTracksList = FXCollections.observableArrayList(musicottTracks.entrySet());
+			allTracksProperty = new SimpleListProperty<>();
+			allTracksProperty.bind(new SimpleObjectProperty<>(musicottTracksList));
+			
+			// Bindgs the showing tracks that must be shown on the table to a list property
+			showingTracks = FXCollections.observableArrayList(musicottTracks.entrySet());;
+			showingTracksProperty = new SimpleListProperty<>();
+			showingTracksProperty.bind(new SimpleObjectProperty<>(showingTracks));
+			
+			// Listen changes in the musicott library to add/remove in the showing tracks and playlists
+			musicottTracks.addListener((MapChangeListener.Change<? extends Integer, ? extends Track> c) -> {
 				if(c.wasAdded()) {
 					Track added = c.getValueAdded();
-					if(SceneManager.getInstance().getNavigationController().getSelectedPlaylist() == null)
-						Platform.runLater(() -> showingTracks.add(new AbstractMap.SimpleEntry<Integer, Track>(added.getTrackID(), added)));
+					Map.Entry<Integer, Track> addedEntry = new AbstractMap.SimpleEntry<Integer, Track>(added.getTrackID(), added);
+					musicottTracksList.add(addedEntry);
+					if(SceneManager.getInstance().getNavigationController().selectedPlaylistProperty() == null)
+						Platform.runLater(() -> showingTracks.add(addedEntry));
 				}
 				else if (c.wasRemoved()) {
 		          	Track removed = c.getValueRemoved();
+					Map.Entry<Integer, Track> removedEntry = new AbstractMap.SimpleEntry<Integer, Track>(removed.getTrackID(), removed);
 		          	waveforms.remove(removed.getTrackID());
+		          	musicottTracksList.remove(removedEntry);
 					PlayerFacade.getInstance().removeTrack(removed.getTrackID());
 		          	showingTracks.remove(new AbstractMap.SimpleEntry<Integer, Track>(removed.getTrackID(), removed));
 		          	playlists.forEach(p -> {
@@ -110,40 +123,40 @@ public class MusicLibrary {
 	}
 	
 	public Track getTrack(int trackID) {
-		synchronized(tracks) {
-			return tracks.get(trackID);
+		synchronized(musicottTracks) {
+			return musicottTracks.get(trackID);
 		}
 	}
 	
 	private ObservableMap<Integer, Track> getTracks(){
-		synchronized(tracks) {
-			return this.tracks;
+		synchronized(musicottTracks) {
+			return this.musicottTracks;
 		}
 	}
 	
-	public ObservableList<Map.Entry<Integer, Track>> getShowingTracks() {
-		return this.showingTracks;
+	public ListProperty<Map.Entry<Integer, Track>> showingTracksProperty() {
+		return showingTracksProperty;
 	}
 	
-	public ListProperty<Map.Entry<Integer, Track>> getShowingTracksProperty(){
-		return showingTracksProperty;
+	public ListProperty<Map.Entry<Integer, Track>> allTracksProperty() {
+		return allTracksProperty;
 	}
 	
 	public void showMode(String mode) {
 		switch(mode) {
 			case ALL_SONGS_MODE:
 				showingTracks.clear();
-				showingTracks.addAll(tracks.entrySet());
+				showingTracks.addAll(musicottTracks.entrySet());
 				break;
 		}
 	}
 	
 	public void showPlaylist(Playlist playlist) {
 		showingTracks.clear();
-		synchronized(tracks) {
+		synchronized(musicottTracks) {
 			if(playlist != null)
 				for(Integer id: playlist.getTracks()) {
-					Map.Entry<Integer, Track> entry = new AbstractMap.SimpleEntry<Integer, Track>(id, tracks.get(id));
+					Map.Entry<Integer, Track> entry = new AbstractMap.SimpleEntry<Integer, Track>(id, musicottTracks.get(id));
 					showingTracks.add(entry);
 				}
 		}
@@ -156,15 +169,15 @@ public class MusicLibrary {
 	}
 	
 	public void addTracks(Map<Integer, Track> newTracks) {
-		synchronized(tracks) {
-			tracks.putAll(newTracks);
+		synchronized(musicottTracks) {
+			musicottTracks.putAll(newTracks);
 		}
 	}
 	
 	public void removeTracks(List<Integer> selection) {
-		synchronized(tracks) {
+		synchronized(musicottTracks) {
 			if(!Platform.isFxApplicationThread())
-				Platform.runLater(() -> tracks.keySet().removeAll(selection));
+				Platform.runLater(() -> musicottTracks.keySet().removeAll(selection));
 		}
 		Platform.runLater(() -> SceneManager.getInstance().getNavigationController().setStatusMessage("Removed "+selection.size()+" tracks"));
 	}
@@ -259,13 +272,13 @@ public class MusicLibrary {
 	public void playRandomPlaylist(){
 		Thread randomPlaylistThread = new Thread(() -> {
 			List<Integer> randomPlaylist = new ArrayList<>();
-			synchronized(tracks) {
-				List<Integer> trackIDs = new ArrayList<>(tracks.keySet());
+			synchronized(musicottTracks) {
+				List<Integer> trackIDs = new ArrayList<>(musicottTracks.keySet());
 				Random randomGenerator = new Random();
 				do {
 					int rnd = randomGenerator.nextInt(trackIDs.size());
 					int randomTrackID = trackIDs.get(rnd);
-					Track randomTrack = tracks.get(randomTrackID);
+					Track randomTrack = musicottTracks.get(randomTrackID);
 					if(randomTrack.isPlayable())
 						randomPlaylist.add(randomTrackID);
 				} while(randomPlaylist.size() < DEFAULT_RANDOMQUEUE_SIZE);
@@ -289,9 +302,9 @@ public class MusicLibrary {
 	
 	public int hashCode() {
 		int hash = 71;
-		synchronized(tracks) {
+		synchronized(musicottTracks) {
 			synchronized(waveforms) {
-				hash = 73*hash + tracks.hashCode();
+				hash = 73*hash + musicottTracks.hashCode();
 				hash = 73*hash + waveforms.hashCode();
 			}
 		}
@@ -300,10 +313,10 @@ public class MusicLibrary {
 	
 	public boolean equals(Object o) {
 		boolean res;
-		synchronized(tracks) {
+		synchronized(musicottTracks) {
 			synchronized(waveforms) {
 				if(o instanceof MusicLibrary &&
-				   ((MusicLibrary)o).getTracks().equals(tracks) &&
+				   ((MusicLibrary)o).getTracks().equals(musicottTracks) &&
 				   ((MusicLibrary)o).getWaveforms().equals(waveforms))
 					res = true;
 				else
@@ -385,8 +398,8 @@ public class MusicLibrary {
 						tracksFOS = new FileOutputStream(tracksFile);
 						tracksJSW = new JsonWriter(tracksFOS, tracksArgs);
 						saveTracks = false;
-						synchronized(tracks) {
-							tracksJSW.write(tracks);
+						synchronized(musicottTracks) {
+							tracksJSW.write(musicottTracks);
 						}
 						tracksFOS.close();
 						tracksJSW.close();

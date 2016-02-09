@@ -78,9 +78,9 @@ public class ErrorHandler {
 		showErrorDialog(message, content, exception, getMainStage().getScene());
 	}
 	
-	public synchronized void showErrorDialog(String message, String content, Exception exception, Scene alertStage) {
+	public synchronized void showErrorDialog(String message, String content, Exception exception, Scene alertScene) {
 		Platform.runLater(() -> {
-			alert = createAlert(message, content, alertStage);
+			alert = createAlert(message, content, alertScene);
 			if(exception != null) {
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);

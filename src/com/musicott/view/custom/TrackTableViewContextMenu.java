@@ -72,15 +72,18 @@ public class TrackTableViewContextMenu extends ContextMenu {
 		cmDeleteFromPlaylist.setId("cmDeleteFromPlaylist");
 		cmDeleteFromPlaylist.setOnAction(event -> {
 			ObservableList<Map.Entry<Integer, Track>> trackSelection = sc.getRootController().getSelectedItems();
-			if(!trackSelection.isEmpty())
-				ml.removeFromPlaylist(sc.getNavigationController().getSelectedPlaylist(), trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+			if(!trackSelection.isEmpty()) {
+				Playlist selectedPlaylist = sc.getNavigationController().selectedPlaylistProperty().getValue().getValue();
+				ml.removeFromPlaylist(selectedPlaylist, trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+			}
 		});
+		
 		cmAddToPlaylist = new Menu("Add to Playlist");
 
 		getItems().addAll(cmPlay, cmEdit, cmDelete, cmAddToQueue, new SeparatorMenuItem(), cmDeleteFromPlaylist, cmAddToPlaylist);
 	}
 	
-	public MenuItem getDeleteFromPlaylistMI() {
+	protected MenuItem getDeleteFromPlaylistMI() {
 		return cmDeleteFromPlaylist;
 	}
 	

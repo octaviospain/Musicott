@@ -26,15 +26,13 @@ import com.musicott.view.custom.PlaylistTreeView;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.SimpleListProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TreeItem;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -63,8 +61,6 @@ public class NavigationController {
 	
 	private NavigationMenuListView navigationMenuListView;
 	private PlaylistTreeView playlistTreeView;
-	private ListProperty<String> selectedMenuProperty;
-	private ObservableList<String> selectedMenu;
 
 	public NavigationController() {}
 	
@@ -81,10 +77,6 @@ public class NavigationController {
 		navigationMenuListView = new NavigationMenuListView();
 		navigationMenuListView.setItems(FXCollections.observableArrayList(ALL_SONGS_MODE));
 		
-		selectedMenu = navigationMenuListView.getSelectionModel().getSelectedItems();
-		selectedMenuProperty = new SimpleListProperty<>();
-		selectedMenuProperty.bind(new SimpleObjectProperty<>(selectedMenu));
-		
 		newPlaylistButton.setOnMouseClicked(e -> {
 			sc.getRootController().setNewPlaylistMode();
 			playlistTreeView.getSelectionModel().clearAndSelect(-1);
@@ -98,29 +90,31 @@ public class NavigationController {
 		VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
 		VBox.setVgrow(navigationVBox, Priority.ALWAYS);
 	}	
-
-	public void setStatusProgress(double progress) {
-		taskProgressBar.setProgress(progress);
-	}	
 	
-	public void setStatusMessage(String message) {
-		statusLabel.setText(message);
+	public ReadOnlyObjectProperty<String> selectedMenuProperty() {
+		return navigationMenuListView.getSelectionModel().selectedItemProperty();
 	}
 	
-	public ListProperty<String> selectedMenuProperty() {
-		return selectedMenuProperty;
-	}
-	
-	public Playlist getSelectedPlaylist() {
-		return playlistTreeView.getSelectedPlaylist();
+	public ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylistProperty() {
+		return playlistTreeView.getSelectionModel().selectedItemProperty();
 	}
 	
 	public void deleteSelectedPlaylist() {
 		playlistTreeView.deletePlaylist();
 	}
 	
+	
 	public void addPlaylist(Playlist playlist) {
 		playlistTreeView.addPlaylist(playlist);
+	}
+
+	
+	public void setStatusProgress(double progress) {
+		taskProgressBar.setProgress(progress);
+	}	
+	
+	public void setStatusMessage(String message) {
+		statusLabel.setText(message);
 	}
 	
 	public void showMode(String mode) {

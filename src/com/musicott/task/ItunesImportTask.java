@@ -170,7 +170,7 @@ public class ItunesImportTask extends Task<Void> {
 			Playlist pl = new Playlist(itpls.getName());
 			List<ItunesTrack> itunesItems = itpls.getPlaylistItems();
 			for(ItunesTrack itks: itunesItems)
-				if(isValidItunesTrack(itks))
+				if(isValidItunesTrack(itks) && itunesIDtoMusicottIDMap.containsKey(itks.getTrackID()))
 					pl.getTracks().add(itunesIDtoMusicottIDMap.get(itks.getTrackID()));
 			if(!pl.getTracks().isEmpty())
 				playlists.add(pl);
@@ -293,7 +293,7 @@ public class ItunesImportTask extends Task<Void> {
 			Platform.runLater(() -> {
 				sc.closeIndeterminatedProgressScene();
 				sc.getNavigationController().setStatusProgress(0);
-				sc.getNavigationController().setStatusMessage("Imported "+tracks.size()+" files in "+Duration.millis(totalTime).toSeconds()+" seconds");
+				sc.getNavigationController().setStatusMessage(tracks.size()+" files in "+Duration.millis(totalTime).toMinutes()+" mins");
 			});
 		}).start();
 		sc.openIndeterminatedProgressScene();

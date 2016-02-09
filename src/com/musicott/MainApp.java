@@ -63,11 +63,10 @@ import javafx.application.Application;
 import javafx.application.Preloader.PreloaderNotification;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
-import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
@@ -120,8 +119,8 @@ public class MainApp extends Application {
 		loadConfigProperties();
 		loadWaveforms();
 		loadLayout();
-		loadTracks();
 		loadPlaylists();
+		loadTracks();
 	}	
 	
 	@Override
@@ -132,30 +131,7 @@ public class MainApp extends Application {
 		loadStage();
 		LOG.debug("Showing root stage");
 	}
-	
-	/**
-	 * Preloads the layouts in the preloader
-	 */
-	private void loadLayout() {
-		LOG.debug("Loading layouts");
-		notifyPreloader(1, 4, "Loading layout...");
-		// Root layout
-	    rootLoader = new FXMLLoader();
-		rootLoader.setLocation(getClass().getResource(LAYOUTS_PATH+ROOT_LAYOUT));		
-		
-		// Dropdown play queue 
-		playQueueLoader = new FXMLLoader();
-		playQueueLoader.setLocation(getClass().getResource(LAYOUTS_PATH+PLAYQUEUE_LAYOUT));
-		
-		// Navigation layout
-		navigationLoader = new FXMLLoader();
-		navigationLoader.setLocation(getClass().getResource(LAYOUTS_PATH+NAVIGATION_LAYOUT));
-		
-		// Player Layout
-		playerLoader = new FXMLLoader();
-		playerLoader.setLocation(getClass().getResource(LAYOUTS_PATH+PLAYER_LAYOUT));
-	}
-	
+
 	/**
 	 * Builds the root stage and layouts
 	 */
@@ -178,6 +154,7 @@ public class MainApp extends Application {
 			VBox navigationLayout = (VBox) navigationLoader.load();
 			NavigationController navigationController = (NavigationController) navigationLoader.getController();
 			sc.setNavigationController(navigationController);
+			rootController.bindAddToPlaylistMenuItem();
 			BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
 			contentBorderLayout.setLeft(navigationLayout);
 			navigationController.showMode(ALL_SONGS_MODE);
@@ -185,6 +162,8 @@ public class MainApp extends Application {
 			
 			GridPane playerGridPane = (GridPane) playerLoader.load();
 			PlayerController playerController = (PlayerController) playerLoader.getController();
+			TextField searchTextField = (TextField) playerGridPane.lookup("#searchTextField");
+			rootController.bindSearchTextField(searchTextField);
 			sc.setPlayerController(playerController);
 			contentBorderLayout.setBottom(playerGridPane);
 			LOG.debug("Player layout loaded");
@@ -211,6 +190,108 @@ public class MainApp extends Application {
 		}
 	}
 	
+	/**
+	 * Loads required configuration parameters from a properties file
+	 */
+	private void loadConfigProperties() {
+		Properties prop = new Properties();
+		try {
+			notifyPreloader(0, 4, "Loading configuration...");
+			prop.load(new FileInputStream(CONFIG_FILE));
+			String API_KEY = prop.getProperty("lastfm_api_key");
+			String API_SECRET = prop.getProperty("lastfm_api_secret");
+			ServiceManager.getInstance().getServicesPreferences().setAPISecret(API_SECRET);
+			ServiceManager.getInstance().getServicesPreferences().setAPIKey(API_KEY);		
+		} catch (IOException e) {}
+	}
+		
+	/**
+	 * Loads the waveforms map collection from a saved file formatted in JSON using Json-IO
+	 * 
+	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
+	 */
+	private void loadWaveforms() {
+		Map<Integer,float[]> waveformsMap = null;
+		File waveformsFile = new File(pf.getMusicottUserFolder()+File.separator+WAVEFORMS_PERSISTENCE_FILE);
+		if(waveformsFile.exists()) {
+			notifyPreloader(1, 4, "Loading waveforms...");
+			try {
+				FileInputStream fis = new FileInputStream(waveformsFile);
+				JsonReader jsr = new JsonReader(fis);
+				waveformsMap = (Map<Integer,float[]>) jsr.readObject();
+				jsr.close();
+				fis.close();
+				LOG.info("Loaded waveform images from {}", waveformsFile);
+			} catch(IOException e) {
+				LOG.error("Error loading waveform thumbnails", e);
+			}
+		}
+		else
+			waveformsMap = new HashMap<Integer, float[]>();
+		ml.setWaveforms(waveformsMap);
+	}
+	
+	/**
+	 * Preloads the layouts in the preloader
+	 */
+	private void loadLayout() {
+		LOG.debug("Loading layouts");
+		notifyPreloader(2, 4, "Loading layout...");
+		// Root layout
+	    rootLoader = new FXMLLoader();
+		rootLoader.setLocation(getClass().getResource(LAYOUTS_PATH+ROOT_LAYOUT));		
+		
+		// Dropdown play queue 
+		playQueueLoader = new FXMLLoader();
+		playQueueLoader.setLocation(getClass().getResource(LAYOUTS_PATH+PLAYQUEUE_LAYOUT));
+		
+		// Navigation layout
+		navigationLoader = new FXMLLoader();
+		navigationLoader.setLocation(getClass().getResource(LAYOUTS_PATH+NAVIGATION_LAYOUT));
+		
+		// Player Layout
+		playerLoader = new FXMLLoader();
+		playerLoader.setLocation(getClass().getResource(LAYOUTS_PATH+PLAYER_LAYOUT));
+	}
+	
+	
+	/**
+	 * Loads the playlists from a saved file formatted in JSON using Json-IO
+	 * 
+	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
+	 */
+	private void loadPlaylists() {
+		List<Playlist> playlists = null;
+		File playlistsFile = new File(pf.getMusicottUserFolder()+File.separator+PLAYLISTS_PERSISTENCE_FILE);
+		int totalPlaylists, step = 0;
+		if(playlistsFile.exists()) {
+			notifyPreloader(3, 4, "Loading playlists...");
+			try {
+				FileInputStream fis = new FileInputStream(playlistsFile);
+				JsonReader jsr = new JsonReader(fis);
+				playlists = (List<Playlist>) jsr.readObject();
+				totalPlaylists = playlists.size();
+				jsr.close();
+				fis.close();
+				for(Playlist p: playlists) {
+					p.nameProperty().setValue(p.getName());
+					notifyPreloader(++step, totalPlaylists, "Loading playlists...");
+				}
+				LOG.info("Loaded playlists from {}", playlistsFile);
+			} catch(IOException e) {
+				LOG.error("Error loading playlists", e);
+				eh.showErrorDialog("Error loading playlists", null, e);
+			}
+		}
+		else {
+			playlists = new ArrayList<Playlist>();
+			playlists.add(new Playlist("My Top 10"));
+			playlists.add(new Playlist("Favourites"));
+			playlists.add(new Playlist("To listen later"));
+		}
+		ml.setPlaylists(playlists);
+	}
+
 	/**
 	 * Loads the track map collection from a saved file formatted in JSON using Json-IO
 	 * 
@@ -256,79 +337,6 @@ public class MainApp extends Application {
 			MusicLibrary.getInstance().setTracks(map);
 		else
 			MusicLibrary.getInstance().setTracks(FXCollections.observableHashMap());
-	}
-	
-	/**
-	 * Loads the waveforms map collection from a saved file formatted in JSON using Json-IO
-	 * 
-	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
-	 */
-	private void loadWaveforms() {
-		Map<Integer,float[]> waveformsMap = null;
-		File waveformsFile = new File(pf.getMusicottUserFolder()+File.separator+WAVEFORMS_PERSISTENCE_FILE);
-		if(waveformsFile.exists()) {
-			notifyPreloader(0, 4, "Loading waveforms...");
-			try {
-				FileInputStream fis = new FileInputStream(waveformsFile);
-				JsonReader jsr = new JsonReader(fis);
-				waveformsMap = (Map<Integer,float[]>) jsr.readObject();
-				jsr.close();
-				fis.close();
-				LOG.info("Loaded waveform images from {}", waveformsFile);
-			} catch(IOException e) {
-				LOG.error("Error loading waveform thumbnails", e);
-			}
-		}
-		else
-			waveformsMap = new HashMap<Integer, float[]>();
-		ml.setWaveforms(waveformsMap);
-	}
-	
-	/**
-	 * Loads the playlists from a saved file formatted in JSON using Json-IO
-	 * 
-	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
-	 */
-	private void loadPlaylists() {
-		List<Playlist> playlists = null;
-		File playlistsFile = new File(pf.getMusicottUserFolder()+File.separator+PLAYLISTS_PERSISTENCE_FILE);
-		if(playlistsFile.exists()) {
-			notifyPreloader(3, 4, "Loading playlists...");
-			try {
-				FileInputStream fis = new FileInputStream(playlistsFile);
-				JsonReader jsr = new JsonReader(fis);
-				playlists = (List<Playlist>) jsr.readObject();
-				jsr.close();
-				fis.close();
-				for(Playlist p: playlists)
-					p.nameProperty().setValue(p.getName());
-				LOG.info("Loaded playlists from {}", playlistsFile);
-			} catch(IOException e) {
-				LOG.error("Error loading playlists", e);
-				eh.showErrorDialog("Error loading playlists", null, e);
-			}
-		}
-		else {
-			playlists = new ArrayList<Playlist>();
-			playlists.add(new Playlist("My Top 10"));
-			playlists.add(new Playlist("Favourites"));
-			playlists.add(new Playlist("To listen later"));
-		}
-		ml.setPlaylists(playlists);
-	}
-	
-	/**
-	 * Loads required configuration parameters from a properties file
-	 */
-	private void loadConfigProperties() {
-		Properties prop = new Properties();
-		try {
-			prop.load(new FileInputStream(CONFIG_FILE));
-			String API_KEY = prop.getProperty("lastfm_api_key");
-			String API_SECRET = prop.getProperty("lastfm_api_secret");
-			ServiceManager.getInstance().getServicesPreferences().setAPISecret(API_SECRET);
-			ServiceManager.getInstance().getServicesPreferences().setAPIKey(API_KEY);		
-		} catch (IOException e) {}
 	}
 	
 	/**
