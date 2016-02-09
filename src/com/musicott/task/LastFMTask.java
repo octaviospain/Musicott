@@ -96,7 +96,7 @@ public class LastFMTask extends Thread {
 						break;
 				}
 				Platform.runLater(() -> {
-					SceneManager.getInstance().getRootController().setStatusMessage("Track updated and scrobbled on LastFM");
+					SceneManager.getInstance().getNavigationController().setStatusMessage("LastFM: track scrobbled & updated");
 				});
 			} catch (InterruptedException e) {
 				LOG.warn("Lastfm thread error: {}", e);

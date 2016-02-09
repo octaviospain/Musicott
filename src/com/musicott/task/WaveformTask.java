@@ -91,11 +91,11 @@ public class WaveformTask extends Thread {
 					if(currentTrack != null && currentTrack.equals(track))
 						SwingUtilities.invokeLater(() -> sc.getPlayerController().setWaveform(track));
 					LOG.debug("Waveform of track {} completed", track);
-					Platform.runLater(() -> sc.getRootController().setStatusMessage(""));
+					Platform.runLater(() -> sc.getNavigationController().setStatusMessage(""));
 					ml.saveLibrary(false, true, false);
 				}
 				else
-					Platform.runLater(() -> sc.getRootController().setStatusMessage("Fail processing waveform of "+track.getName()));
+					Platform.runLater(() -> sc.getNavigationController().setStatusMessage("Fail processing waveform of "+track.getName()));
 			} catch (Exception e) {
 				LOG.warn("Waveform thread error: {}", e);
 			}

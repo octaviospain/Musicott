@@ -119,14 +119,6 @@ public class RootController {
 		return trackTable.getSelectionModel().getSelectedItems();
 	}
 	
-	public void setStatusMessage(String message) {
-
-	}
-	
-	public void setStatusProgress(double progress) {
-
-	}
-	
 	/**
 	 * Show/Hide the upper table info pane
 	 * @param show

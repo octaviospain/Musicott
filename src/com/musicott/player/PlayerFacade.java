@@ -235,7 +235,7 @@ public class PlayerFacade {
 						setCurrent();
 				});
 			}
-			Platform.runLater(() -> sc.getRootController().setStatusMessage("Playing a random playlist"));
+			Platform.runLater(() -> sc.getNavigationController().setStatusMessage("Playing a random playlist"));
 		}
 		else
 			Platform.runLater(() -> sc.getPlayerController().setStopped());

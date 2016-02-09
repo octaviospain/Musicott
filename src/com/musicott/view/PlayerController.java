@@ -120,9 +120,10 @@ public class PlayerController {
 	public void setPlayQueuePane(AnchorPane pane) {
 		playQueuePane = pane;
 		StackPane.setMargin(playQueuePane, new Insets(0, 0, 480, 0));
-		EventHandler<Event> hidePlayQueueAction = e -> showHidePlayQueue();
+		EventHandler<Event> hidePlayQueueAction = e -> showPlayQueue(false);
 		playerGridPane.setOnMouseClicked(hidePlayQueueAction);
 		playButton.setOnMouseClicked(hidePlayQueueAction);
+		playQueuePane.setVisible(false);
 		
 		playQueuePane.visibleProperty().addListener((obs, oldVal, newVal) -> {
 			if(newVal.booleanValue())
@@ -132,19 +133,22 @@ public class PlayerController {
 		});
 	}
 	
-	public void showHidePlayQueue() {
-		doShowHidePlayQueue();
+	public void showPlayQueue(boolean show) {
+		if(show && !playQueueStackPane.getChildren().contains(playQueuePane)) {
+			playQueueStackPane.getChildren().add(0, playQueuePane);
+			playQueuePane.setVisible(true);
+		} else if(!show && playQueueStackPane.getChildren().contains(playQueuePane)) {
+			playQueueStackPane.getChildren().remove(playQueuePane);
+			playQueuePane.setVisible(false);
+		}
 	}
 	
 	@FXML
 	private void doShowHidePlayQueue() {
-		if(!playQueueStackPane.getChildren().contains(playQueuePane)) {
-			playQueueStackPane.getChildren().add(0, playQueuePane);
-			playQueuePane.setVisible(true);
-		} else {
-			playQueueStackPane.getChildren().remove(playQueuePane);
-			playQueuePane.setVisible(false);
-		}
+		if(playQueuePane.isVisible())
+			showPlayQueue(false);
+		else
+			showPlayQueue(true);
 	}
 	
 	@FXML
@@ -215,9 +219,9 @@ public class PlayerController {
 			setUpPlayer((FlacPlayer) currentPlayer);
 		
 		SwingUtilities.invokeLater(() -> mainWaveformPane.setTrack(currentTrack));
-		songTitleLabel.textProperty().bind(currentTrack.getNameProperty());;
+		songTitleLabel.textProperty().bind(currentTrack.nameProperty());;
 		artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
-				() -> currentTrack.getArtistProperty().get()+" - "+currentTrack.getAlbumProperty().get(), currentTrack.getArtistProperty(), currentTrack.getAlbumProperty())
+				() -> currentTrack.artistProperty().get()+" - "+currentTrack.albumProperty().get(), currentTrack.artistProperty(), currentTrack.albumProperty())
 		);
 		if(currentTrack.hasCover())
 			currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverBytes())));

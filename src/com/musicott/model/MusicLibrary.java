@@ -43,7 +43,6 @@ import com.musicott.ErrorHandler;
 import com.musicott.MainPreferences;
 import com.musicott.SceneManager;
 import com.musicott.player.PlayerFacade;
-import com.musicott.view.custom.PlaylistTreeView;
 
 import javafx.application.Platform;
 import javafx.beans.property.ListProperty;
@@ -91,8 +90,7 @@ public class MusicLibrary {
 			this.tracks.addListener((MapChangeListener.Change<? extends Integer, ? extends Track> c) -> {
 				if(c.wasAdded()) {
 					Track added = c.getValueAdded();
-					PlaylistTreeView ptv = (PlaylistTreeView) SceneManager.getInstance().getMainStage().getScene().lookup("#playlistTreeView");
-					if(ptv.getSelectionModel().selectedItemProperty().get() == null)
+					if(SceneManager.getInstance().getNavigationController().getSelectedPlaylist() == null)
 						Platform.runLater(() -> showingTracks.add(new AbstractMap.SimpleEntry<Integer, Track>(added.getTrackID(), added)));
 				}
 				else if (c.wasRemoved()) {
@@ -168,7 +166,7 @@ public class MusicLibrary {
 			if(!Platform.isFxApplicationThread())
 				Platform.runLater(() -> tracks.keySet().removeAll(selection));
 		}
-		Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Removed "+selection.size()+" tracks"));
+		Platform.runLater(() -> SceneManager.getInstance().getNavigationController().setStatusMessage("Removed "+selection.size()+" tracks"));
 	}
 	
 	public void setWaveforms(Map<Integer,float[]> waveforms) {
@@ -218,6 +216,13 @@ public class MusicLibrary {
 	public void addPlaylist(Playlist playlist) {
 		synchronized(playlists) {
 			playlists.add(playlist);
+		}
+		saveLibrary(false, false, true);
+	}
+	
+	public void addPlaylists(List<Playlist> newPlaylists) {
+		synchronized(playlists) {
+			playlists.addAll(newPlaylists);
 		}
 		saveLibrary(false, false, true);
 	}

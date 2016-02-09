@@ -131,7 +131,7 @@ public class MainPreferences {
 	/**
 	 * This class implements <code>{@link java.io.FileFilter}</code> to
 	 * accept a file with some of the given extensions. If no extensions are given
-	 * the file is not accepted. The extensions mus be given without the dot.
+	 * the file is not accepted. The extensions must be given without the dot.
 	 * 
 	 * @author Octavio Calleya
 	 *

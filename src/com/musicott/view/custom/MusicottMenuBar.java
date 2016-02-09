@@ -199,7 +199,7 @@ public class MusicottMenuBar extends MenuBar {
 			List<File> files = chooser.showOpenMultipleDialog(sc.getMainStage());
 			if(files != null) {
 				TaskPoolManager.getInstance().parseFiles(files, true);
-				sc.getRootController().setStatusMessage("Opening files");
+				sc.getNavigationController().setStatusMessage("Opening files");
 			}
 		});
 		importFolderMI.setOnAction(e -> {
@@ -208,9 +208,12 @@ public class MusicottMenuBar extends MenuBar {
 			chooser.setTitle("Choose folder");
 			File folder = chooser.showDialog(sc.getMainStage());
 			if(folder != null) {
+				Platform.runLater(() -> {sc.getNavigationController().setStatusMessage("Scanning folders..."); sc.getNavigationController().setStatusProgress(-1);});
 				Thread countFilesThread = new Thread(() -> {
 					List<File> files = Utils.getAllFilesInFolder(folder, MainPreferences.getInstance().getExtensionsFileFilter(), 0);
 					Platform.runLater(() -> {
+						sc.getNavigationController().setStatusMessage("");
+						sc.getNavigationController().setStatusProgress(0);
 						if(files.isEmpty()) {
 							Alert alert = sc.createAlert("Import", "No files", "There are no valid files to import on the selected folder."
 									+ "Change the folder or the import options in preferences", AlertType.WARNING);
@@ -221,7 +224,7 @@ public class MusicottMenuBar extends MenuBar {
 							Optional<ButtonType> result = alert.showAndWait();
 							if(result.isPresent() && result.get().equals(ButtonType.OK)) {
 								TaskPoolManager.getInstance().parseFiles(files, false);
-								sc.getRootController().setStatusMessage("Importing files");
+								sc.getNavigationController().setStatusMessage("Importing files");
 							}
 						}
 					});

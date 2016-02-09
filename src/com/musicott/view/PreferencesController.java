@@ -67,7 +67,7 @@ public class PreferencesController {
 	@FXML
 	private ChoiceBox<String> itunesImportPolicyCheckBox;
 	@FXML
-	private CheckBox holdPlayCountCheckBox;
+	private CheckBox holdPlayCountCheckBox, importPlaylistsCheckBox;
 	private CheckComboBox<String> extensionsCheckComboBox;
 	private ObservableList<String> selectedExtensions;
 	private String[] importFilterExtensions;
@@ -122,7 +122,7 @@ public class PreferencesController {
 		else if(preferences.getItunesImportMetadataPolicy() == HOLD_METADATA_POLICY)
 			itunesImportPolicyCheckBox.getSelectionModel().select(METADATA_INFO);
 		holdPlayCountCheckBox.setSelected(preferences.getItunesImportHoldPlaycount());
-//		importPlaylistsCheckBox.setSelected(preferences.getItunesImportPlaylists());
+		importPlaylistsCheckBox.setSelected(preferences.getItunesImportPlaylists());
 		importFilterExtensions = preferences.getExtensionsFileFilter().getExtensions();
 		extensionsCheckComboBox.getCheckModel().clearChecks();
 		for(String extension: importFilterExtensions)
@@ -181,7 +181,7 @@ public class PreferencesController {
 		else if(policy.equals(METADATA_INFO))
 			preferences.setItunesImportMetadataPolicy(HOLD_METADATA_POLICY);
 		preferences.setItunesImportHoldPlaycount(holdPlayCountCheckBox.isSelected());
-//		preferences.setItunesImportPlaylists(importPlaylistsCheckBox.isSelected());
+		preferences.setItunesImportPlaylists(importPlaylistsCheckBox.isSelected());
 		ObservableList<String> checkedItems = extensionsCheckComboBox.getCheckModel().getCheckedItems();
 		String[] newExtensions;
 		if(checkedItems.isEmpty())

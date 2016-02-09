@@ -25,6 +25,7 @@ import com.musicott.view.custom.NavigationMenuListView;
 import com.musicott.view.custom.PlaylistTreeView;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -32,6 +33,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -50,6 +53,10 @@ public class NavigationController {
 	private VBox navigationPaneVBox, navigationVBox, playlistsVBox;
 	@FXML
 	private Button newPlaylistButton;
+	@FXML
+	private ProgressBar taskProgressBar;
+	@FXML
+	private Label statusLabel;
 	
 	private SceneManager sc = SceneManager.getInstance();
 	private MusicLibrary ml = MusicLibrary.getInstance();
@@ -85,9 +92,19 @@ public class NavigationController {
 
 		navigationVBox.getChildren().add(1, navigationMenuListView);
 		playlistsVBox.getChildren().add(1, playlistTreeView);
+		taskProgressBar.visibleProperty().bind(Bindings.createBooleanBinding(() -> taskProgressBar.progressProperty().isEqualTo(0).not().get(), taskProgressBar.progressProperty()));
+		taskProgressBar.setProgress(0);
 		
 		VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
 		VBox.setVgrow(navigationVBox, Priority.ALWAYS);
+	}	
+
+	public void setStatusProgress(double progress) {
+		taskProgressBar.setProgress(progress);
+	}	
+	
+	public void setStatusMessage(String message) {
+		statusLabel.setText(message);
 	}
 	
 	public ListProperty<String> selectedMenuProperty() {

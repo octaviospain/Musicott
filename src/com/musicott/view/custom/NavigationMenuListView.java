@@ -33,7 +33,7 @@ public class NavigationMenuListView extends ListView<String> {
 	public NavigationMenuListView() {
 		super();
 		setId("showMenuListView");
-		setPrefHeight(200);
+		setPrefHeight(USE_COMPUTED_SIZE);
 		setPrefWidth(USE_COMPUTED_SIZE);
 		getSelectionModel().selectedItemProperty().addListener(listener -> {
 			String selectedMenu = getSelectionModel().getSelectedItem();

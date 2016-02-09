@@ -85,11 +85,11 @@ public class TrackQueueRow extends GridPane {
  	private void placeLabels() {
 		nameLabel = new Label();
 		nameLabel.setId("nameLabel");
-		nameLabel.textProperty().bind(track.getNameProperty());
+		nameLabel.textProperty().bind(track.nameProperty());
 		artistAlbumLabel = new Label();
 		artistAlbumLabel.setId("artistAlbumLabel");
 		artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
-				() -> track.getArtistProperty().get()+" - "+track.getAlbumProperty().get(), track.getArtistProperty(), track.getAlbumProperty())
+				() -> track.artistProperty().get()+" - "+track.albumProperty().get(), track.artistProperty(), track.albumProperty())
 		);
 		labelBox = new VBox();
 		VBox.setMargin(nameLabel, new Insets(0, 0, 1, 0));

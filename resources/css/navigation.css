@@ -15,9 +15,20 @@
  * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+ 
+.root {
+    -fx-focus-color: rgb(73, 73, 73);
+    -fx-faint-focus-color: transparent;
+	-fx-background-color: transparent, transparent, transparent, -fx-body-color;
+    -fx-background-radius: 0, 0, 0, 0;
+    -fx-accent: black;
+}
+
+.progress-bar {
+    -fx-accent: rgb(99,255,109);
+}
 
 #newPlaylistButton {	
 	-fx-graphic: url('../icons/newplaylist-button.png');
 	-fx-background-color: transparent;
 }
- 

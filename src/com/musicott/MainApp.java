@@ -202,7 +202,7 @@ public class MainApp extends Application {
 			MusicottMenuBar menuBar = new MusicottMenuBar(prevButton, nextButton, headerVBox);
 			
 			// Hide playqueue pane if click outside
-			navigationLayout.setOnMouseClicked(e -> playerController.showHidePlayQueue());
+			navigationLayout.setOnMouseClicked(e -> playerController.showPlayQueue(false));
 			
 			rootStage.show();
 		} catch (IOException | RuntimeException e) {
@@ -231,20 +231,20 @@ public class MainApp extends Application {
 				jsr.close();
 				fis.close();
 				for(Track t: map.values()) {
-					t.getNameProperty().setValue(t.getName());
-					t.getArtistProperty().setValue(t.getArtist());
-					t.getAlbumProperty().setValue(t.getAlbum());
-					t.getGenreProperty().setValue(t.getGenre());
-					t.getCommentsProperty().setValue(t.getComments());
-					t.getAlbumArtistProperty().setValue(t.getAlbumArtist());
-					t.getLabelProperty().setValue(t.getLabel());
-					t.getTrackNumberProperty().setValue(t.getTrackNumber());
-					t.getYearProperty().setValue(t.getYear());
-					t.getDiscNumberProperty().setValue(t.getDiscNumber());
-					t.getBpmProperty().setValue(t.getBpm());
-					t.getHasCoverProperty().setValue(t.hasCover());
-					t.getDateModifiedProperty().setValue(t.getDateModified());
-					t.getPlayCountProperty().setValue(t.getPlayCount());
+					t.nameProperty().setValue(t.getName());
+					t.artistProperty().setValue(t.getArtist());
+					t.albumProperty().setValue(t.getAlbum());
+					t.genreProperty().setValue(t.getGenre());
+					t.commentsProperty().setValue(t.getComments());
+					t.albumArtistProperty().setValue(t.getAlbumArtist());
+					t.labelProperty().setValue(t.getLabel());
+					t.trackNumberProperty().setValue(t.getTrackNumber());
+					t.yearProperty().setValue(t.getYear());
+					t.discNumberProperty().setValue(t.getDiscNumber());
+					t.bpmProperty().setValue(t.getBpm());
+					t.hasCoverProperty().setValue(t.hasCover());
+					t.dateModifiedProperty().setValue(t.getDateModified());
+					t.playCountProperty().setValue(t.getPlayCount());
 					notifyPreloader(++step, totalTracks, "Loading tracks...");
 				}
 				LOG.info("Loaded tracks from {}", tracksFile);
@@ -312,7 +312,7 @@ public class MainApp extends Application {
 			playlists = new ArrayList<Playlist>();
 			playlists.add(new Playlist("My Top 10"));
 			playlists.add(new Playlist("Favourites"));
-			playlists.add(new Playlist("To play later"));
+			playlists.add(new Playlist("To listen later"));
 		}
 		ml.setPlaylists(playlists);
 	}

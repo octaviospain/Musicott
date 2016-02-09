@@ -100,8 +100,8 @@ public class ParseTask extends Task<Void> {
 				tracks.put(currentTrack.getTrackID(), currentTrack);
 			}
 			Platform.runLater(() -> {
-				sc.getRootController().setStatusMessage("Imported "+currentFiles+" of "+totalFiles);
-				sc.getRootController().setStatusProgress((double) ++currentFiles/totalFiles);
+				sc.getNavigationController().setStatusProgress((double) ++currentFiles/totalFiles);
+				sc.getNavigationController().setStatusMessage("Imported "+currentFiles+" of "+totalFiles);
 			});
 			synchronized(files) {
 				if(files.isEmpty())
@@ -126,14 +126,13 @@ public class ParseTask extends Task<Void> {
 	protected void succeeded() {
 		super.succeeded();
 		updateMessage("Parse succeeded");
-		sc.getRootController().setStatusProgress(-1);
+		sc.getNavigationController().setStatusProgress(0);
 		new Thread(() -> {
 			ml.addTracks(tracks);
 			totalTime = System.currentTimeMillis() - startMillis;
 			Platform.runLater(() -> {
 				sc.closeIndeterminatedProgressScene();
-				sc.getRootController().setStatusProgress(0.0);
-				sc.getRootController().setStatusMessage("Imported "+tracks.size()+" files in "+Duration.millis(totalTime).toSeconds()+" seconds");
+				sc.getNavigationController().setStatusMessage("Imported "+tracks.size()+" files in "+Duration.millis(totalTime).toSeconds()+" seconds");
 			});
 		}).start();
 		sc.openIndeterminatedProgressScene();

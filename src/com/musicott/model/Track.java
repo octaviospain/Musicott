@@ -211,7 +211,12 @@ public class Track {
 				playable = false;
 			}
 			else if(fileFormat.equals("flac") || encoding.startsWith("Apple") || encoder.startsWith("iTunes")) {
-				Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Musicott can't play .flac files or .m4a files encoded by Apple"));
+				Platform.runLater(() -> {
+					if(fileFormat.equals("flac"))
+						SceneManager.getInstance().getNavigationController().setStatusMessage("Can't play .flac files yet");
+					else
+						SceneManager.getInstance().getNavigationController().setStatusMessage("Can't play Apple's .m4a encoded files");
+				});
 				playable = false;
 			}
 		}
@@ -250,7 +255,7 @@ public class Track {
 		return fileFormat;
 	}
 
-	public StringProperty getNameProperty() {
+	public StringProperty nameProperty() {
 		return nameProperty;
 	}
 
@@ -263,7 +268,7 @@ public class Track {
 		nameProperty.setValue(this.name);
 	}
 
-	public StringProperty getArtistProperty() {
+	public StringProperty artistProperty() {
 		return artistProperty;
 	}
 	
@@ -276,7 +281,7 @@ public class Track {
 		artistProperty.setValue(this.artist);
 	}
 
-	public StringProperty getAlbumProperty() {
+	public StringProperty albumProperty() {
 		return albumProperty;
 	}
 
@@ -289,7 +294,7 @@ public class Track {
 		albumProperty.setValue(this.album);
 	}
 
-	public StringProperty getGenreProperty() {
+	public StringProperty genreProperty() {
 		return genreProperty;
 	}
 	
@@ -302,7 +307,7 @@ public class Track {
 		genreProperty.setValue(this.genre);
 	}
 
-	public StringProperty getCommentsProperty() {
+	public StringProperty commentsProperty() {
 		return commentsProperty;
 	}
 
@@ -315,7 +320,7 @@ public class Track {
 		commentsProperty.setValue(this.comments);
 	}
 
-	public StringProperty getAlbumArtistProperty() {
+	public StringProperty albumArtistProperty() {
 		return albumArtistProperty;
 	}
 
@@ -328,7 +333,7 @@ public class Track {
 		albumArtistProperty.setValue(this.albumArtist);
 	}
 
-	public StringProperty getLabelProperty() {
+	public StringProperty labelProperty() {
 		return labelProperty;
 	}
 	
@@ -373,7 +378,7 @@ public class Track {
 		this.totalTime = totalTime;
 	}
 
-	public IntegerProperty getTrackNumberProperty() {
+	public IntegerProperty trackNumberProperty() {
 		return trackNumberProperty;
 	}
 	
@@ -386,7 +391,7 @@ public class Track {
 		trackNumberProperty.setValue(this.trackNumber);
 	}
 
-	public IntegerProperty getYearProperty() {
+	public IntegerProperty yearProperty() {
 		return yearProperty;
 	}
 	
@@ -415,7 +420,7 @@ public class Track {
 		this.playCountProperty.setValue(playCount);
 	}
 	
-	public IntegerProperty getPlayCountProperty() {
+	public IntegerProperty playCountProperty() {
 		return this.playCountProperty;
 	}
 
@@ -424,7 +429,7 @@ public class Track {
 		this.playCountProperty.setValue(playCount);
 	}
 
-	public IntegerProperty getDiscNumberProperty() {
+	public IntegerProperty discNumberProperty() {
 		return discNumberProperty;
 	}
 	
@@ -437,7 +442,7 @@ public class Track {
 		discNumberProperty.setValue(this.discNumber);
 	}
 
-	public IntegerProperty getBpmProperty() {
+	public IntegerProperty bpmProperty() {
 		return bpmProperty;
 	}
 	
@@ -466,7 +471,7 @@ public class Track {
 		this.isCompilation = isCompilation;
 	}
 	
-	public ObjectProperty<LocalDateTime> getDateModifiedProperty() {
+	public ObjectProperty<LocalDateTime> dateModifiedProperty() {
 		return dateModifiedProperty;
 	}
 	
@@ -487,7 +492,7 @@ public class Track {
 		this.dateAdded = dateAdded;
 	}
 
-	public BooleanProperty getHasCoverProperty() {
+	public BooleanProperty hasCoverProperty() {
 		return hasCoverProperty;
 	}
 	
