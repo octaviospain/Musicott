@@ -19,7 +19,6 @@
 package com.musicott;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -80,10 +79,7 @@ public class SceneManager {
 	private MusicLibrary ml = MusicLibrary.getInstance();
 	private HostServices hostServices;
 	
-	private List<Track> tracksToEdit;
-	
-	private SceneManager() {
-	}
+	private SceneManager() {}
 	
 	public static SceneManager getInstance() {
 		if(instance == null) {
@@ -152,7 +148,6 @@ public class SceneManager {
 	public void editTracks() {
 		ObservableList<Map.Entry<Integer, Track>> trackSelection = rootController.getSelectedItems();
 		if(trackSelection != null & !trackSelection.isEmpty()) {
-			tracksToEdit = trackSelection.stream().map(Map.Entry::getValue).collect(Collectors.toList());
 			if(trackSelection.size() > 1) {
 				Alert alert = createAlert("", "Are you sure you want to edit multiple files?", "", AlertType.CONFIRMATION);
 				Optional<ButtonType> result = alert.showAndWait();
@@ -221,13 +216,8 @@ public class SceneManager {
 			case PROGRESS_LAYOUT:
 				stageToOpen = progressStage = progressStage == null ? initStage(layout, "") : progressStage; break;
 		}
-		if(stageToOpen != null) {
-			if(layout.equals(EDIT_LAYOUT))
-				editController.setSelection(tracksToEdit);
-			else if(layout.equals(PREFERENCES_LAYOUT))
-				preferencesController.load();
+		if(stageToOpen != null) 
 			stageToOpen.showAndWait();
-		}
 	}
 	
 	private Stage initStage(String layout, String title) {

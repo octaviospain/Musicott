@@ -176,8 +176,7 @@ public class MusicLibrary {
 	
 	public void removeTracks(List<Integer> selection) {
 		synchronized(musicottTracks) {
-			if(!Platform.isFxApplicationThread())
-				Platform.runLater(() -> musicottTracks.keySet().removeAll(selection));
+			Platform.runLater(() -> musicottTracks.keySet().removeAll(selection));
 		}
 		Platform.runLater(() -> SceneManager.getInstance().getNavigationController().setStatusMessage("Removed "+selection.size()+" tracks"));
 	}

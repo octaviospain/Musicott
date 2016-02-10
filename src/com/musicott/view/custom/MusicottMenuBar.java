@@ -40,7 +40,6 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -74,13 +73,10 @@ public class MusicottMenuBar extends MenuBar {
 	private Menu fileMN, editMN, controlsMN, viewMN, aboutMN;
 	private MenuItem openFileMI, importFolderMI, importItunesMI, preferencesMI, editMI, deleteMI, prevMI, nextMI, volIncrMI, volDecrMI, selCurrMI, aboutMI;
 	private MenuItem newPlaylistMI, showHideNavigationPaneMI, showHideTableInfoPaneMI;
-	private Button prevButton, nextButton;
 	private VBox headerVBox;
 	
-	public MusicottMenuBar(Button previousTrackButton, Button nextTrackButton, VBox headerMenuBarVBox) {
+	public MusicottMenuBar(VBox headerMenuBarVBox) {
 		super();
-		prevButton = previousTrackButton;
-		nextButton = nextTrackButton;
 		headerVBox = headerMenuBarVBox;
 		String os = System.getProperty ("os.name");
 		// Key acceleratos. Command down for os x and control down for windows and linux
@@ -251,10 +247,10 @@ public class MusicottMenuBar extends MenuBar {
 	}
 	
 	private void setControlsMenuActions() {
-		prevMI.disableProperty().bind(prevButton.disableProperty());
+		prevMI.disableProperty().bind(sc.getPlayerController().previousButtonDisableProperty());
 		prevMI.setOnAction(e -> PlayerFacade.getInstance().previous());
 		
-		nextMI.disableProperty().bind(nextButton.disableProperty());
+		nextMI.disableProperty().bind(sc.getPlayerController().nextButtonDisableProperty());
 		nextMI.setOnAction(e -> PlayerFacade.getInstance().next());
 		
 		volIncrMI.setOnAction(e -> sc.getPlayerController().doIncreaseVolume());

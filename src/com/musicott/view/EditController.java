@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,7 @@ import com.musicott.task.UpdateMetadataTask;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.StringProperty;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
@@ -54,8 +56,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Stage;
 
 /**
  * @author Octavio Calleya
@@ -141,12 +143,8 @@ public class EditController {
 	
 	public void setStage(Stage stage) {
 		editStage = stage;
-		editStage.setOnCloseRequest(event -> doCancel());
-	}
-	
-	public void setSelection(List<Track> selection) {
-		trackSelection = selection;
-		setFields();
+		editStage.setOnCloseRequest(e -> doCancel());
+		editStage.setOnShowing(e -> setFields());
 	}
 
 	@FXML
@@ -201,6 +199,8 @@ public class EditController {
 	}
 	
 	private void setFields() {
+		ObservableList<Map.Entry<Integer, Track>> selectionEntries = SceneManager.getInstance().getRootController().getSelectedItems();
+		trackSelection = selectionEntries.stream().map(Map.Entry::getValue).collect(Collectors.toList());
 		List<String> valuesList = new ArrayList<String>();
 		for(TrackField field: editFieldsMap.keySet()) {
 			for(Track t: trackSelection) {

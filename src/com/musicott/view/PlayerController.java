@@ -36,6 +36,7 @@ import com.musicott.task.TaskPoolManager;
 import com.musicott.view.custom.WaveformPanel;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.StringProperty;
 import javafx.embed.swing.SwingNode;
 import javafx.event.Event;
@@ -116,6 +117,14 @@ public class PlayerController {
 	
 	public StringProperty searchTextProperty() {
 		return searchTextField.textProperty();
+	}
+	
+	public ReadOnlyBooleanProperty previousButtonDisableProperty() {
+		return prevButton.disabledProperty();
+	}
+	
+	public ReadOnlyBooleanProperty nextButtonDisableProperty() {
+		return nextButton.disabledProperty();
 	}
 	
 	public void setWaveform(Track track) {

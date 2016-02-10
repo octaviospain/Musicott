@@ -114,21 +114,12 @@ public class RootController {
 		});
 		
 		trackTable = new TrackTableView();
-		tableBorderPane.setCenter(trackTable);		
-	}
-	
-	public ObservableList<Map.Entry<Integer, Track>> getSelectedItems() {
-		return trackTable.getSelectionModel().getSelectedItems();
-	}
-
-	public void bindAddToPlaylistMenuItem() {
-		trackTable.bindDeleteFromPlaylistMenuItem();
-	}
-	
-	public void bindSearchTextField(TextField searchTextField) {
+		tableBorderPane.setCenter(trackTable);	
+		
+		// Binds the text typed on the search text field to the items shown on the table
 		ObservableList<Map.Entry<Integer, Track>> tracks = ml.showingTracksProperty().get();
 		filteredTracks = new FilteredList<>(tracks, predicate -> true);
-		searchTextField.textProperty().addListener((observable, oldText, newText) -> {
+		sc.getPlayerController().searchTextProperty().addListener((observable, oldText, newText) -> {
 			filteredTracks.setPredicate(trackEntry -> {
 				boolean result = true;
 				Track track = trackEntry.getValue();
@@ -148,6 +139,10 @@ public class RootController {
 		SortedList<Map.Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
 		sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
 		trackTable.setItems(sortedTracks);
+	}
+	
+	public ObservableList<Map.Entry<Integer, Track>> getSelectedItems() {
+		return trackTable.getSelectionModel().getSelectedItems();
 	}
 	
 	/**

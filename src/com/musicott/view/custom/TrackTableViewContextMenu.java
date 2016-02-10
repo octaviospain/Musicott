@@ -29,12 +29,15 @@ import com.musicott.model.Playlist;
 import com.musicott.model.Track;
 import com.musicott.player.PlayerFacade;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.TreeItem;
 
 /**
  * Context menu to be shown on the track table
@@ -77,9 +80,11 @@ public class TrackTableViewContextMenu extends ContextMenu {
 				ml.removeFromPlaylist(selectedPlaylist, trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
 			}
 		});
-		
 		cmAddToPlaylist = new Menu("Add to Playlist");
-
+		
+		ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylist = SceneManager.getInstance().getNavigationController().selectedPlaylistProperty();
+		cmDeleteFromPlaylist.disableProperty().bind(Bindings.createBooleanBinding(() -> selectedPlaylist.getValue() == null, selectedPlaylist));
+	
 		getItems().addAll(cmPlay, cmEdit, cmDelete, cmAddToQueue, new SeparatorMenuItem(), cmDeleteFromPlaylist, cmAddToPlaylist);
 	}
 	

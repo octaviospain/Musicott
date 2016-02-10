@@ -109,13 +109,14 @@ public class PreferencesController {
 	
 	public void setStage(Stage stage) {
 		preferencesStage = stage;
+		preferencesStage.setOnShowing(e -> load());
 	}
 	
 	public void endLogin(boolean loginSuccesful) {
 		lastfmLoginButton.setText(loginSuccesful ? "Logout" : "Login");
 	}
 	
-	public void load() {;
+	private void load() {;
 		folderLocationTextField.setText(preferences.getMusicottUserFolder());
 		if(preferences.getItunesImportMetadataPolicy() == HOLD_ITUNES_DATA_POLICY)
 			itunesImportPolicyCheckBox.getSelectionModel().select(ITUNES_INFO);

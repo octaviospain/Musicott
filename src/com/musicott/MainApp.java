@@ -137,8 +137,39 @@ public class MainApp extends Application {
 	 */
 	private void loadStage() {
 		try {
-			LOG.info("Building application");
-			BorderPane rootLayout = (BorderPane) rootLoader.load();
+			LOG.info("Building application");			
+			VBox navigationLayout = (VBox) navigationLoader.load();
+			NavigationController navigationController = (NavigationController) navigationLoader.getController();
+			sc.setNavigationController(navigationController);
+			LOG.debug("Navigation layout loaded");
+			
+			GridPane playerGridPane = (GridPane) playerLoader.load();
+			PlayerController playerController = (PlayerController) playerLoader.getController();
+			sc.setPlayerController(playerController);
+			TextField searchTextField = (TextField) playerGridPane.lookup("#searchTextField");
+			LOG.debug("Player layout loaded");
+			
+			AnchorPane playQueuePane = (AnchorPane) playQueueLoader.load();
+			PlayQueueController playQueueController = (PlayQueueController) playQueueLoader.getController();
+			sc.setPlayQueueController(playQueueController);		
+			playerController.setPlayQueuePane(playQueuePane);	
+			LOG.debug("Playqueue layout loaded");
+			
+			// Hide playqueue pane if click outside
+			navigationLayout.setOnMouseClicked(e -> playerController.showPlayQueue(false));
+
+			BorderPane rootLayout = (BorderPane) rootLoader.load();			
+			RootController rootController = (RootController) rootLoader.getController();
+			sc.setRootController(rootController);
+			LOG.debug("Root layout loaded");
+			
+			BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
+			contentBorderLayout.setBottom(playerGridPane);
+			contentBorderLayout.setLeft(navigationLayout);
+			navigationController.showMode(ALL_SONGS_MODE);
+			VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
+			MusicottMenuBar menuBar = new MusicottMenuBar(headerVBox);
+			
 			Scene mainScene = new Scene(rootLayout, 1200, 775);
 			rootStage.setScene(mainScene);
 			rootStage.setTitle("Musicott");
@@ -146,43 +177,6 @@ public class MainApp extends Application {
 			rootStage.setMinWidth(1200);
 			rootStage.setMinHeight(790);
 			rootStage.setMaxWidth(1800);
-			
-			RootController rootController = (RootController) rootLoader.getController();
-			sc.setRootController(rootController);
-			LOG.debug("Root layout loaded");
-			
-			VBox navigationLayout = (VBox) navigationLoader.load();
-			NavigationController navigationController = (NavigationController) navigationLoader.getController();
-			sc.setNavigationController(navigationController);
-			rootController.bindAddToPlaylistMenuItem();
-			BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
-			contentBorderLayout.setLeft(navigationLayout);
-			navigationController.showMode(ALL_SONGS_MODE);
-			LOG.debug("Navigation layout loaded");
-			
-			GridPane playerGridPane = (GridPane) playerLoader.load();
-			PlayerController playerController = (PlayerController) playerLoader.getController();
-			TextField searchTextField = (TextField) playerGridPane.lookup("#searchTextField");
-			rootController.bindSearchTextField(searchTextField);
-			sc.setPlayerController(playerController);
-			contentBorderLayout.setBottom(playerGridPane);
-			LOG.debug("Player layout loaded");
-			
-			AnchorPane playQueuePane = (AnchorPane) playQueueLoader.load();
-			PlayQueueController playQueueController = (PlayQueueController) playQueueLoader.getController();
-			playerController.setPlayQueuePane(playQueuePane);
-			sc.setPlayQueueController(playQueueController);			
-			LOG.debug("Playqueue layout loaded");
-			
-			Button prevButton = (Button) playerGridPane.lookup("#prevButton");
-			Button nextButton = (Button) playerGridPane.lookup("#nextButton");
-			ToggleButton playQueueButton = (ToggleButton) playerGridPane.lookup("#playQueueButton");
-			VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
-			MusicottMenuBar menuBar = new MusicottMenuBar(prevButton, nextButton, headerVBox);
-			
-			// Hide playqueue pane if click outside
-			navigationLayout.setOnMouseClicked(e -> playerController.showPlayQueue(false));
-			
 			rootStage.show();
 		} catch (IOException | RuntimeException e) {
 			LOG.error("Error", e);
