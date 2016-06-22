@@ -17,28 +17,24 @@
  * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
-package com.musicott.view.custom;
-
-import com.musicott.*;
-import com.musicott.model.*;
-import javafx.scene.control.*;
+package com.musicott.view;
 
 /**
  * @author Octavio Calleya
- *
+ * @version 0.9
  */
-public class NavigationMenuListView extends ListView<NavigationMode> {
+public interface MusicottView {
 
-	private StageDemon stageDemon = StageDemon.getInstance();
-	
-	public NavigationMenuListView() {
-		super();
-		setId("showMenuListView");
-		setPrefHeight(USE_COMPUTED_SIZE);
-		setPrefWidth(USE_COMPUTED_SIZE);
-		getSelectionModel().selectedItemProperty().addListener((obs, oldMode, newMode) -> {
-			if(newMode != null)
-				stageDemon.getNavigationController().showMode(newMode);
-		});
-	}
+    String LAYOUTS_PATH = "/view/";
+
+    String ROOT_LAYOUT = LAYOUTS_PATH + "RootLayout.fxml";
+    String NAVIGATION_LAYOUT = LAYOUTS_PATH +  "NavigationLayout.fxml";
+    String PRELOADER_LAYOUT = LAYOUTS_PATH + "PreloaderPromptLayout.fxml";
+    String EDIT_LAYOUT = LAYOUTS_PATH + "EditLayout.fxml";
+    String PLAYQUEUE_LAYOUT = LAYOUTS_PATH + "PlayQueueLayout.fxml";
+    String PROGRESS_LAYOUT = LAYOUTS_PATH + "ProgressLayout.fxml";
+    String PREFERENCES_LAYOUT = LAYOUTS_PATH + "PreferencesLayout.fxml";
+    String PLAYER_LAYOUT = LAYOUTS_PATH + "PlayerLayout.fxml";
+
+    String DEFAULT_COVER_IMAGE = "/images/default-cover-image.png";
 }

@@ -14,18 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.view.custom;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
+import com.musicott.model.*;
 
-import javax.swing.JPanel;
-
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Track;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Octavio Calleya

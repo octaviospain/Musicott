@@ -14,44 +14,36 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.view.custom;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import com.musicott.model.Track;
-import com.musicott.player.PlayerFacade;
-import com.musicott.util.Utils;
-
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.CheckBoxTableCell;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
-import javafx.util.Callback;
+import com.musicott.model.*;
+import com.musicott.player.*;
+import com.musicott.util.*;
+import javafx.beans.property.*;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.*;
+import javafx.scene.input.*;
+import javafx.scene.layout.*;
+import javafx.util.*;
 import javafx.util.Duration;
+
+import java.time.*;
+import java.time.format.*;
+import java.util.*;
+import java.util.Map.*;
+import java.util.stream.*;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
-	
+public class TrackTableView extends TableView<Entry<Integer, Track>> {
+
+	private static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT;";
+
 	private TableColumn<Map.Entry<Integer, Track>, String> nameCol, artistCol, albumCol, genreCol, commentsCol, albumArtistCol, labelCol;
 	private TableColumn<Map.Entry<Integer, Track>, LocalDateTime> dateModifiedCol, dateAddedCol;
 	private TableColumn<Map.Entry<Integer, Track>, Number> sizeCol, yearCol, bitRateCol, playCountCol, discNumberCol, bpmCol, trackNumberCol;
@@ -78,7 +70,7 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 		setPrefHeight(USE_COMPUTED_SIZE);
 		setColumnResizePolicy(UNCONSTRAINED_RESIZE_POLICY);
 		getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-		getSelectionModel().selectedIndexProperty().addListener(((observable, oldValue, newValue) -> selection = getSelectionModel().getSelectedItems()));
+		getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> selection = getSelectionModel().getSelectedItems());
 		getSortOrder().add(dateAddedCol);
 		// Double click on row = play that track
 		setRowFactory(tv -> {
@@ -99,11 +91,11 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 			}
 			else if(event.getCode() == KeyCode.SPACE) {
 				String playerStatus = player.getTrackPlayer().getStatus();
-				if(playerStatus.equals("PLAYING"))
+				if("PLAYING".equals(playerStatus))
 					player.pause();
-				else if(playerStatus.equals("PAUSED"))
+				else if("PAUSED".equals(playerStatus))
 					player.resume();
-				else if(playerStatus.equals("STOPPED"))
+				else if("STOPPED".equals(playerStatus))
 					player.play(true);
 			}
 		});
@@ -121,7 +113,8 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 	
 	
 	private void initColumns() {
-		Callback<TableColumn<Map.Entry<Integer, Track>,Number>, TableCell<Map.Entry<Integer, Track>,Number>> numericCellFactory = columns -> new TableCell<Map.Entry<Integer, Track>, Number>() {
+		Callback<TableColumn<Entry<Integer, Track>,Number>, TableCell<Entry<Integer, Track>,Number>> numericCellFactory =
+				columns -> new TableCell<Map.Entry<Integer, Track>, Number>() {
 			@Override
 			protected void updateItem(Number item, boolean empty) {
 				super.updateItem(item, empty);
@@ -133,7 +126,8 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 						setText(""+item);
 			}
 		};
-		Callback<TableColumn<Map.Entry<Integer, Track>, LocalDateTime>, TableCell<Map.Entry<Integer, Track>, LocalDateTime>> dateCellFactory = column -> new TableCell<Map.Entry<Integer, Track>, LocalDateTime>() {
+		Callback<TableColumn<Map.Entry<Integer, Track>, LocalDateTime>, TableCell<Map.Entry<Integer, Track>, LocalDateTime>> dateCellFactory =
+				column -> new TableCell<Map.Entry<Integer, Track>, LocalDateTime>() {
 			@Override
 			protected void updateItem(LocalDateTime item, boolean empty) {
 				super.updateItem(item, empty);
@@ -168,19 +162,20 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 		dateModifiedCol = new TableColumn<>("Modified");
 		dateModifiedCol.setPrefWidth(110);
 		dateModifiedCol.setCellValueFactory(cellData -> cellData.getValue().getValue().dateModifiedProperty());
-		dateModifiedCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		dateModifiedCol.setStyle(CENTER_RIGHT_STYLE);
 		dateModifiedCol.setCellFactory(dateCellFactory);
 		dateAddedCol = new TableColumn<>("Added");
 		dateAddedCol.setPrefWidth(110);
-		dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<LocalDateTime>(cellData.getValue().getValue().getDateAdded()));
-		dateAddedCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+		dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<> (cellData.getValue().getValue().getDateAdded()));
+		dateAddedCol.setStyle(CENTER_RIGHT_STYLE);
 		dateAddedCol.setSortType(TableColumn.SortType.DESCENDING); 	// Default sort of the table
 		dateAddedCol.setCellFactory(dateCellFactory);
 		sizeCol = new TableColumn<>("Size");
 		sizeCol.setPrefWidth(64);
 		sizeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getValue().getSize()));
-		sizeCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		sizeCol.setCellFactory(column -> {return new TableCell<Map.Entry<Integer, Track>,Number>() {
+		sizeCol.setStyle(CENTER_RIGHT_STYLE);
+		sizeCol.setCellFactory(column ->
+			new TableCell<Map.Entry<Integer, Track>,Number>() {
 				@Override
 				protected void updateItem(Number item, boolean empty) {
 					super.updateItem(item, empty);
@@ -189,25 +184,28 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 					else
 						setText(Utils.byteSizeString(item.longValue(), 1));
 				}
-			};});
+			}
+		);
 		totalTimeCol = new TableColumn<>("Duration");
 		totalTimeCol.setPrefWidth(60);
-		totalTimeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<Duration>(cellData.getValue().getValue().getTotalTime()));
+		totalTimeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getValue().getTotalTime()));
 		totalTimeCol.setStyle("-fx-alignment: CENTER-RIGHT;");
-		totalTimeCol.setCellFactory(column -> {return new TableCell<Map.Entry<Integer, Track>, Duration>() {
+		totalTimeCol.setCellFactory(column ->
+			new TableCell<Map.Entry<Integer, Track>, Duration>() {
 				@Override
 				protected void updateItem(Duration item, boolean empty) {
 					super.updateItem(item, empty);
-					if(item == null)
+					if (item == null)
 						setText("");
 					else {
-						int hours = (int)item.toHours();
-						int mins = (int)item.subtract(Duration.hours(hours)).toMinutes();
-						int secs = (int)item.subtract(Duration.minutes(mins)).subtract(Duration.hours(hours)).toSeconds();
-						setText((hours>0 ? hours+":" : "")+(mins<10 ? "0"+mins : mins)+":"+(secs<10 ? "0"+secs : secs));
+						int hours = (int) item.toHours();
+						int mins = (int) item.subtract(Duration.hours(hours)).toMinutes();
+						int secs = (int) item.subtract(Duration.minutes(mins)).subtract(Duration.hours(hours)).toSeconds();
+						setText((hours > 0 ? hours + ":" : "") + (mins < 10 ? "0" + mins : mins) + ":" + (secs < 10 ? "0" + secs : secs));
 					}
 				}
-			};});
+			}
+		);
 		yearCol = new TableColumn<>("Year");
 		yearCol.setPrefWidth(60);
 		yearCol.setCellValueFactory(cellData -> cellData.getValue().getValue().yearProperty());
@@ -230,18 +228,20 @@ public class TrackTableView extends TableView<Map.Entry<Integer, Track>> {
 		bitRateCol = new TableColumn<>("BitRate");
 		bitRateCol.setPrefWidth(60);
 		bitRateCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getValue().getBitRate()));
-		bitRateCol.setCellFactory(columns -> new TableCell<Map.Entry<Integer, Track>, Number>() {
-			@Override
-			protected void updateItem(Number item, boolean empty) {
-				super.updateItem(item, empty);
-				if(empty || item == null)
-					setText("");
-				else if(((int) item) == 0)
+		bitRateCol.setCellFactory(columns ->
+			new TableCell<Map.Entry<Integer, Track>, Number>() {
+				@Override
+				protected void updateItem(Number item, boolean empty) {
+					super.updateItem(item, empty);
+					if (empty || item == null)
+						setText("");
+					else if (((int) item) == 0)
 						setText("");
 					else
-						setText(""+item);
+						setText("" + item);
+				}
 			}
-		});
+		);
 		bitRateCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 		coverCol = new TableColumn<>("Cover");
 		coverCol.setPrefWidth(50);

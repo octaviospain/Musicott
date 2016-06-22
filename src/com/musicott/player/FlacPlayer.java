@@ -14,11 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.player;
 
-import com.musicott.model.Track;
+import com.musicott.model.*;
 
 /**
  * @author Octavio Calleya

@@ -14,20 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.model;
 
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import com.musicott.*;
+import javafx.beans.property.*;
+import javafx.scene.image.*;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.scene.image.Image;
+import java.io.*;
+import java.util.*;
 
 /**
  * @author Octavio Calleya
@@ -37,18 +34,27 @@ public class Playlist {
 
 	private String name;
 	private List<Integer> tracksID;
+	private List<Integer> containedTracksID;
+	private List<Playlist> containedPlaylists;
+	private final boolean isFolder;
 	
 	private StringProperty nameProperty;
 	private ObjectProperty<Image> playlistCoverProperty;
+	private BooleanProperty folderProperty;
+
+	private MusicLibrary musicLibrary =  MusicLibrary.getInstance();
+
+	private Image defaultImage = StageDemon.getInstance().getDefaultCoverImage();
 	
-	private Image DEFAULT_COVER_IMAGE = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
-	
-	public Playlist(String name) {
+	public Playlist(String name, boolean isFolder) {
 		this.name = name;
+		this.isFolder = isFolder;
 		tracksID = new ArrayList<>();
+		containedPlaylists = new ArrayList<>();
 		nameProperty = new SimpleStringProperty(this.name);
-		nameProperty.addListener((obs, oldVal, newVal) -> setName(newVal));
-		playlistCoverProperty = new SimpleObjectProperty<Image>(DEFAULT_COVER_IMAGE);
+		nameProperty.addListener((obs, oldName, newName) -> setName(newName));
+		playlistCoverProperty = new SimpleObjectProperty<>(defaultImage);
+		folderProperty = new SimpleBooleanProperty(this.isFolder);
 	}
 	
 	public String getName() {
@@ -59,55 +65,84 @@ public class Playlist {
 		this.name = name;
 		nameProperty.setValue(this.name);
 	}
-	
-	public List<Integer> getTracks() {
-		return this.tracksID;
-	}
-	
+
 	public void setTracks(List<Integer> tracks) {
 		tracksID = tracks;
 	}
-	
-	public void changePlaylistCover() {
-		if(!tracksID.isEmpty()) {
-			Random r = new Random();
-			Track rt = MusicLibrary.getInstance().getTrack(tracksID.get(r.nextInt(tracksID.size())));
-			if(rt.hasCover())
-				playlistCoverProperty.set(new Image(new ByteArrayInputStream(rt.getCoverBytes())));
+
+	public List<Integer> getTracks() {
+		List<Integer> tracksInContainedPlaylists;
+		if(!isFolder)
+			tracksInContainedPlaylists = tracksID;
+		else {
+			if(containedTracksID == null)
+				containedTracksID = new ArrayList<>();
 			else
-				playlistCoverProperty.set(DEFAULT_COVER_IMAGE);
+				containedTracksID.clear();
+			for(Playlist playlist: containedPlaylists)
+				containedTracksID.addAll(playlist.getTracks());
+			tracksInContainedPlaylists = containedTracksID;
 		}
-		else
-			playlistCoverProperty.set(DEFAULT_COVER_IMAGE);
+		return tracksInContainedPlaylists;
 	}
 	
+	public List<Playlist> getContainedPlaylists() {
+		return containedPlaylists;
+	}
+
+
 	public StringProperty nameProperty() {
 		return nameProperty;
 	}
-	
+
 	public ObjectProperty<Image> playlistCoverProperty() {
-		if(playlistCoverProperty.get().equals(DEFAULT_COVER_IMAGE) && !tracksID.isEmpty())
+		if(playlistCoverProperty.get().equals(defaultImage) && !tracksID.isEmpty())
 			changePlaylistCover();
 		return playlistCoverProperty;
 	}
+
+	public BooleanProperty folderProperty() {
+		return folderProperty;
+	}
+
+	public void addPlaylistChild(Playlist playlistChild) {
+		containedPlaylists.add(playlistChild);
+	}
 	
+	public boolean isFolder() {
+		return isFolder;
+	}
+	
+	public void changePlaylistCover() {
+		if(!getTracks().isEmpty()) {
+			Random random = new Random();
+			Track randomTrack = musicLibrary.getTrack(getTracks().get(random.nextInt(tracksID.size())));
+			if(randomTrack.hasCover())
+				playlistCoverProperty.set(new Image(new ByteArrayInputStream(randomTrack.getCoverBytes())));
+			else
+				playlistCoverProperty.set(defaultImage);
+		}
+		else
+			playlistCoverProperty.set(defaultImage);
+	}
+
 	@Override
 	public int hashCode() {
 		int hash = 71;
-		hash = 73*hash + name.hashCode();		
+		hash = 73 * hash + name.hashCode();
 		return hash;
 	}
 	
 	@Override
 	public boolean equals(Object o) {
 		boolean equals = false;
-		if((o instanceof Playlist) && ((Playlist)o).getName().equals(this.name))
+		if((o instanceof Playlist) && ((Playlist) o).getName().equals(this.name))
 			equals = true;
 		return equals;
 	}
 	
 	@Override
 	public String toString() {
-		return name+"["+tracksID.size()+"]";
+		return name + "[" + tracksID.size() + "]";
 	}
 }

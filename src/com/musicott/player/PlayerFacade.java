@@ -14,28 +14,21 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.player;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.view.*;
+import com.musicott.view.custom.*;
+import javafx.application.*;
+import javafx.collections.*;
+import org.slf4j.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.SceneManager;
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Track;
-import com.musicott.view.PlayQueueController;
-import com.musicott.view.custom.TrackQueueRow;
-
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import java.util.*;
+import java.util.stream.*;
 
 /**
  * @author Octavio Calleya
@@ -46,8 +39,8 @@ public class PlayerFacade {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
 	private static	PlayerFacade instance;
-	private SceneManager sc;
-	private MusicLibrary ml;
+	private StageDemon stageDemon = StageDemon.getInstance();
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private PlayQueueController playQueueController;
 	private Track currentTrack;
 	private TrackPlayer trackPlayer;
@@ -55,9 +48,7 @@ public class PlayerFacade {
 	private ObservableList<TrackQueueRow> historyList;
 	private boolean random, played, scrobbled;
 
-	private PlayerFacade() {
-		sc = SceneManager.getInstance();
-		ml = MusicLibrary.getInstance();
+	private PlayerFacade() {		
 		playList = FXCollections.observableArrayList();
 		historyList = FXCollections.observableArrayList();
 		random = false;
@@ -74,7 +65,7 @@ public class PlayerFacade {
 	public void incrementCurentTrackPlayCount() {
 		if(!played) {
 			currentTrack.incrementPlayCount();
-			ml.saveLibrary(true, false, false);
+			musicLibrary.saveLibrary(true, false, false);
 			played = true;
 		}
 	}
@@ -100,7 +91,7 @@ public class PlayerFacade {
 			Thread playableTracksThread = new Thread(() -> {
 				List<Integer> playableTracks = new ArrayList<>();
 				playableTracks.addAll(tracks.stream().filter(trackID -> {
-					Track track = ml.getTrack(trackID);
+					Track track = musicLibrary.getTrack(trackID);
 					return track != null && track.isPlayable();
 				}).collect(Collectors.toList()));
 				Platform.runLater(() -> addPlayableTracks(playableTracks, placeFirst));
@@ -108,10 +99,10 @@ public class PlayerFacade {
 			playableTracksThread.start();
 		}
 	}
-	
+
 	private void addPlayableTracks(List<Integer> playableTracks, boolean placeFirst) {
 		if(playQueueController == null)
-			playQueueController = sc.getPlayQueueController();
+			playQueueController = stageDemon.getPlayQueueController();
 		if(random) {
 			playList.clear();
 			playableTracks.forEach(trackID -> playList.add(new TrackQueueRow(trackID)));
@@ -146,24 +137,24 @@ public class PlayerFacade {
 			if(tqrIt.next().getRepresentedTrackID() == trackID)
 				tqrIt.remove();
 	}
-	
-	public void play(boolean playRandom) {	
+
+	public void play(boolean playRandom) {
 		if(trackPlayer == null || (trackPlayer != null && trackPlayer.getStatus().equals("STOPPED"))) {
 			if(!playList.isEmpty())
 				setCurrent();
 			else if(playRandom)
-				ml.playRandomPlaylist();
+				musicLibrary.playRandomPlaylist();
 		}
 		else {
 			if(trackPlayer.getStatus().equals("PLAYING")) {
 				if(playList.isEmpty())
 					stop();
-				else 
+				else
 					setCurrent();
 			}
 		}
 	}
-	
+
 	public void pause() {
 		if(trackPlayer != null && trackPlayer.getStatus().equals("PLAYING")) {
 			trackPlayer.pause();
@@ -223,7 +214,7 @@ public class PlayerFacade {
 
 	public void setRandomList(List<Integer> randomTrackIDs) {
 		if(playQueueController == null)
-			playQueueController = sc.getPlayQueueController();
+			playQueueController = stageDemon.getPlayQueueController();
 		if(!randomTrackIDs.isEmpty()) {
 			LOG.info("Created random list of tracks");
 			random = true;
@@ -235,10 +226,10 @@ public class PlayerFacade {
 						setCurrent();
 				});
 			}
-			Platform.runLater(() -> sc.getNavigationController().setStatusMessage("Playing a random playlist"));
+			Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Playing a random playlist"));
 		}
 		else
-			Platform.runLater(() -> sc.getPlayerController().setStopped());
+			Platform.runLater(() -> stageDemon.getPlayerController().setStopped());
 	}
 	
 	public boolean isCurrentTrackScrobbled() {
@@ -258,7 +249,7 @@ public class PlayerFacade {
 	}
 
 	private void setPlayer(int trackID) {
-		Track track = ml.getTrack(trackID);
+		Track track = musicLibrary.getTrack(trackID);
 		currentTrack = track;
 		scrobbled = false;
 		played = false;
@@ -276,6 +267,6 @@ public class PlayerFacade {
 		}
 		trackPlayer.setTrack(track);
 		LOG.debug("Created new player");
-		sc.getPlayerController().updatePlayerInfo(trackPlayer, currentTrack);
+		stageDemon.getPlayerController().updatePlayerInfo(trackPlayer, currentTrack);
 	}
 }

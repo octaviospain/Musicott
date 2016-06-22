@@ -14,57 +14,40 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import com.musicott.model.*;
+import com.musicott.view.*;
+import javafx.application.*;
+import javafx.collections.*;
+import javafx.fxml.*;
+import javafx.scene.*;
+import javafx.scene.control.*;
+import javafx.scene.control.Alert.*;
+import javafx.scene.image.*;
+import javafx.scene.layout.*;
+import javafx.stage.*;
+import org.slf4j.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.*;
+import java.util.*;
+import java.util.Map.*;
+import java.util.stream.*;
 
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Track;
-import com.musicott.view.EditController;
-import com.musicott.view.NavigationController;
-import com.musicott.view.PlayQueueController;
-import com.musicott.view.PlayerController;
-import com.musicott.view.PreferencesController;
-import com.musicott.view.RootController;
-
-import javafx.application.HostServices;
-import javafx.application.Platform;
-import javafx.collections.ObservableList;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
-import javafx.scene.layout.AnchorPane;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
+import static com.musicott.view.MusicottView.*;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class SceneManager {
+public class StageDemon {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	
-	protected static final String LAYOUTS_PATH = "/view/";
-	protected static final String ROOT_LAYOUT = "RootLayout.fxml";
-	protected static final String NAVIGATION_LAYOUT = "NavigationLayout.fxml";
-	protected static final String PRELOADER_LAYOUT = "PreloaderPromptLayout.fxml";
-	protected static final String EDIT_LAYOUT = "EditLayout.fxml";
-	protected static final String PLAYQUEUE_LAYOUT = "PlayQueueLayout.fxml";
-	protected static final String PROGRESS_LAYOUT = "ProgressLayout.fxml";
-	protected static final String PREFERENCES_LAYOUT = "PreferencesLayout.fxml";
-	protected static final String PLAYER_LAYOUT ="PlayerLayout.fxml";
-	
+	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
+
 	private Stage mainStage, editStage, progressStage, preferencesStage;
 	
 	private EditController editController;
@@ -74,17 +57,17 @@ public class SceneManager {
 	private PreferencesController preferencesController;
 	private PlayerController playerController;
 	
-	private static volatile SceneManager instance;
-	private static ErrorHandler errorHandler;
-	private MusicLibrary ml = MusicLibrary.getInstance();
+	private static StageDemon instance;
+	private static ErrorDemon errorDemon;
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private HostServices hostServices;
 	
-	private SceneManager() {}
+	private StageDemon() {}
 	
-	public static SceneManager getInstance() {
+	public static StageDemon getInstance() {
 		if(instance == null) {
-			instance = new SceneManager();
-			errorHandler = ErrorHandler.getInstance();
+			instance = new StageDemon();
+			errorDemon = ErrorDemon.getInstance();
 		}
 		return instance;
 	}
@@ -144,9 +127,13 @@ public class SceneManager {
 	public HostServices getApplicationHostServices() {
 		return hostServices;
 	}
-	
+
+	public Image getDefaultCoverImage() {
+		return COVER_IMAGE;
+	}
+
 	public void editTracks() {
-		ObservableList<Map.Entry<Integer, Track>> trackSelection = rootController.getSelectedItems();
+		ObservableList<Entry<Integer, Track>> trackSelection = rootController.getSelectedItems();
 		if(trackSelection != null & !trackSelection.isEmpty()) {
 			if(trackSelection.size() > 1) {
 				Alert alert = createAlert("", "Are you sure you want to edit multiple files?", "", AlertType.CONFIRMATION);
@@ -173,7 +160,7 @@ public class SceneManager {
 			Optional<ButtonType> result = alert.showAndWait();
 			if (result.get() == ButtonType.OK) {
 				new Thread(() -> {
-					ml.removeTracks(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+					musicLibrary.removeTracks(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
 					Platform.runLater(() -> closeIndeterminatedProgressScene());
 				}).start();
 				openIndeterminatedProgressScene();
@@ -225,9 +212,9 @@ public class SceneManager {
 		try {
 			newStage = new Stage();
 			newStage.setTitle(title);
-			FXMLLoader loader = new FXMLLoader();
-			loader.setLocation(getClass().getResource(LAYOUTS_PATH + layout));
-			AnchorPane baseLayout = (AnchorPane) loader.load();
+			FXMLLoader loader = new FXMLLoader ();
+			loader.setLocation(getClass().getResource(layout));
+			AnchorPane baseLayout = loader.load();
 			
 			if(layout.equals(PROGRESS_LAYOUT))
 				newStage.setOnCloseRequest(event -> event.consume());
@@ -246,7 +233,7 @@ public class SceneManager {
 			newStage.setResizable(false);
 		} catch(IOException e) {
 			LOG.error("Error opening " + layout, e);
-			errorHandler.showErrorDialog("Error opening " + layout, null, e);
+			errorDemon.showErrorDialog("Error opening " + layout, null, e);
 			newStage = null;
 		}
 		return newStage;

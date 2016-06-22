@@ -14,32 +14,33 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.services;
 
-import java.util.prefs.Preferences;
+import com.musicott.model.*;
+import com.musicott.tasks.*;
 
-import com.musicott.model.Track;
-import com.musicott.task.LastFMTask;
+import java.util.prefs.*;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class ServiceManager {
+public class Services {
 
-	private static ServiceManager instance;
+	private static Services instance;
 	private ServicesPreferences servicesPreferences;
 	private LastFMTask lastfmTask;
 	
-	private ServiceManager() {
+	private Services() {
 		servicesPreferences = new ServicesPreferences();
 	}
 	
-	public static ServiceManager getInstance() {
+	public static Services getInstance() {
 		if(instance == null)
-			instance = new ServiceManager();
+			instance = new Services();
 		return instance;
 	}
 	

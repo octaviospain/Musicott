@@ -14,37 +14,29 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.view;
 
-import com.musicott.SceneManager;
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Playlist;
-import com.musicott.view.custom.NavigationMenuListView;
-import com.musicott.view.custom.PlaylistTreeView;
-
-import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.collections.FXCollections;
-import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TreeItem;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.view.custom.*;
+import javafx.application.*;
+import javafx.beans.binding.*;
+import javafx.beans.property.*;
+import javafx.collections.*;
+import javafx.fxml.*;
+import javafx.scene.control.*;
+import javafx.scene.input.*;
+import javafx.scene.input.KeyCombination.*;
+import javafx.scene.layout.*;
 
 /**
  * @author Octavio Calleya
- *
  */
 public class NavigationController {
 
-	public static final String ALL_SONGS_MODE = "All songs";
-	
 	@FXML
 	private AnchorPane rootAnchorPane;
 	@FXML
@@ -55,9 +47,10 @@ public class NavigationController {
 	private ProgressBar taskProgressBar;
 	@FXML
 	private Label statusLabel;
+	private ContextMenu newPlaylistContextMenu;
 	
-	private SceneManager sc = SceneManager.getInstance();
-	private MusicLibrary ml = MusicLibrary.getInstance();
+	private StageDemon stageDemon = StageDemon.getInstance();
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	
 	private NavigationMenuListView navigationMenuListView;
 	private PlaylistTreeView playlistTreeView;
@@ -69,19 +62,39 @@ public class NavigationController {
 		playlistTreeView = new PlaylistTreeView();
 		playlistTreeView.getSelectionModel().selectedItemProperty().addListener(listener -> {
 			navigationMenuListView.getSelectionModel().clearAndSelect(-1);
-			sc.getRootController().showTableInfoPane(true);
+			stageDemon.getRootController().showTableInfoPane();
 			if(playlistTreeView.getSelectedPlaylist() != null)
-				sc.getRootController().updatePlaylistInfo(playlistTreeView.getSelectedPlaylist());				
+				stageDemon.getRootController().updatePlaylistInfo(playlistTreeView.getSelectedPlaylist());				
 		});
 		
 		navigationMenuListView = new NavigationMenuListView();
-		navigationMenuListView.setItems(FXCollections.observableArrayList(ALL_SONGS_MODE));
+		navigationMenuListView.setItems(FXCollections.observableArrayList(NavigationMode.values()));
 		
-		newPlaylistButton.setOnMouseClicked(e -> {
-			sc.getRootController().setNewPlaylistMode();
+		newPlaylistContextMenu = new ContextMenu();
+		
+		String os = System.getProperty ("os.name");
+		// Key accelerator. Command down for os x and control down for windows and linux
+		Modifier keyModifierOS = os != null && os.startsWith ("Mac") ? KeyCodeCombination.META_DOWN : KeyCodeCombination.CONTROL_DOWN;
+		MenuItem newPlaylistMI, newFolderPlaylistMI;
+		newPlaylistMI = new MenuItem("New Playlist");
+		newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, keyModifierOS));
+		newPlaylistMI.setOnAction(e -> {
+			stageDemon.getRootController().setNewPlaylistMode(false);
 			playlistTreeView.getSelectionModel().clearAndSelect(-1);
 		});
-
+		newFolderPlaylistMI = new MenuItem("New Playlist Folder");
+		newFolderPlaylistMI.setOnAction(e -> {
+			stageDemon.getRootController().setNewPlaylistMode(true);
+			playlistTreeView.getSelectionModel().clearAndSelect(-1);
+		});
+		newPlaylistContextMenu.getItems().addAll(newPlaylistMI, newFolderPlaylistMI);
+		newPlaylistButton.setContextMenu(newPlaylistContextMenu);
+		
+		newPlaylistButton.addEventFilter(MouseEvent.MOUSE_CLICKED, e ->
+			newPlaylistContextMenu.show(newPlaylistButton, newPlaylistButton.getLayoutX()+150, newPlaylistButton.getLayoutY())
+		);
+		newPlaylistButton.setContextMenu(newPlaylistContextMenu);
+		
 		navigationVBox.getChildren().add(1, navigationMenuListView);
 		playlistsVBox.getChildren().add(1, playlistTreeView);
 		taskProgressBar.visibleProperty().bind(Bindings.createBooleanBinding(() -> taskProgressBar.progressProperty().isEqualTo(0).not().get(), taskProgressBar.progressProperty()));
@@ -91,24 +104,33 @@ public class NavigationController {
 		VBox.setVgrow(navigationVBox, Priority.ALWAYS);
 	}	
 	
-	public ReadOnlyObjectProperty<String> selectedMenuProperty() {
+	public ReadOnlyObjectProperty<NavigationMode> selectedMenuProperty() {
 		return navigationMenuListView.getSelectionModel().selectedItemProperty();
 	}
 	
 	public ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylistProperty() {
 		return playlistTreeView.getSelectionModel().selectedItemProperty();
 	}
+
+	public void addNewPlaylist(Playlist newPlaylist) {
+		TreeItem<Playlist> selectedPlaylistItem = playlistTreeView.getSelectionModel().selectedItemProperty().get();
+		if(selectedPlaylistItem == null)
+			playlistTreeView.addPlaylist(newPlaylist);
+		else {
+			Playlist selectedPlaylist = selectedPlaylistItem.getValue();
+			if(selectedPlaylist.isFolder())
+				playlistTreeView.addPlaylistChild(selectedPlaylist, newPlaylist);
+			else {
+				playlistTreeView.addPlaylist(newPlaylist);
+				musicLibrary.addPlaylist(newPlaylist);
+			}
+		}
+	}
 	
 	public void deleteSelectedPlaylist() {
 		playlistTreeView.deletePlaylist();
-	}
-	
-	
-	public void addPlaylist(Playlist playlist) {
-		playlistTreeView.addPlaylist(playlist);
-	}
+	}	
 
-	
 	public void setStatusProgress(double progress) {
 		taskProgressBar.setProgress(progress);
 	}	
@@ -117,11 +139,16 @@ public class NavigationController {
 		statusLabel.setText(message);
 	}
 	
-	public void showMode(String mode) {
-		if(mode.equals(ALL_SONGS_MODE))
-			ml.showMode(ALL_SONGS_MODE);
-		Platform.runLater(() -> sc.getRootController().showTableInfoPane(false));
+	public void showMode(NavigationMode mode) {
+		if(mode.equals(NavigationMode.ALL_SONGS_MODE))
+			musicLibrary.showMode(NavigationMode.ALL_SONGS_MODE);
+		Platform.runLater(() -> stageDemon.getRootController().hideTableInfoPane());
 		playlistTreeView.getSelectionModel().clearAndSelect(-1);
 		navigationMenuListView.getSelectionModel().select(mode);
+	}
+
+	public NavigationMode getShowingMode() {
+
+		return null;
 	}
 }

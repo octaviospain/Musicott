@@ -14,25 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.util;
 
-import java.io.File;
-import java.io.IOException;
+import com.musicott.model.*;
+import javafx.util.*;
+import org.jaudiotagger.audio.*;
+import org.jaudiotagger.audio.exceptions.*;
+import org.jaudiotagger.tag.*;
 
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.audio.exceptions.CannotReadException;
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
-import org.jaudiotagger.tag.FieldKey;
-import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.TagException;
-
-import com.musicott.model.Track;
-
-import javafx.util.Duration;
+import java.io.*;
 
 /**
  * @author Octavio Calleya

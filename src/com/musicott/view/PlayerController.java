@@ -14,50 +14,34 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.view;
 
-import java.io.ByteArrayInputStream;
-
-import javax.swing.SwingUtilities;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.model.MusicLibrary;
+import com.musicott.model.*;
 import com.musicott.model.Track;
-import com.musicott.player.FlacPlayer;
-import com.musicott.player.NativePlayer;
-import com.musicott.player.PlayerFacade;
-import com.musicott.player.TrackPlayer;
-import com.musicott.services.ServiceManager;
-import com.musicott.task.TaskPoolManager;
-import com.musicott.view.custom.WaveformPanel;
+import com.musicott.player.*;
+import com.musicott.services.*;
+import com.musicott.tasks.*;
+import com.musicott.view.custom.*;
+import javafx.beans.binding.*;
+import javafx.beans.property.*;
+import javafx.embed.swing.*;
+import javafx.event.*;
+import javafx.fxml.*;
+import javafx.geometry.*;
+import javafx.scene.control.*;
+import javafx.scene.image.*;
+import javafx.scene.input.*;
+import javafx.scene.layout.*;
+import javafx.scene.media.*;
+import javafx.scene.media.MediaPlayer.*;
+import javafx.util.*;
+import org.slf4j.*;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.StringProperty;
-import javafx.embed.swing.SwingNode;
-import javafx.event.Event;
-import javafx.event.EventHandler;
-import javafx.fxml.FXML;
-import javafx.geometry.Insets;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.media.MediaPlayer;
-import javafx.scene.media.MediaPlayer.Status;
-import javafx.util.Duration;
+import javax.swing.*;
+import java.io.*;
 
 /**
  * @author Octavio Calleya
@@ -66,8 +50,8 @@ import javafx.util.Duration;
 public class PlayerController {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	public final Image DEFAULT_COVER_IMAGE = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
 	private static final double VOLUME_AMOUNT = 0.05;
+	public final Image DEFAULT_COVER_IMAGE = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
 	
 	@FXML
 	private GridPane playerGridPane;
@@ -94,15 +78,15 @@ public class PlayerController {
 	private AnchorPane playQueuePane;
 	private WaveformPanel mainWaveformPane;
 	
-	private MusicLibrary ml = MusicLibrary.getInstance();
-	private ServiceManager services = ServiceManager.getInstance();
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+	private Services services = Services.getInstance();
 	private PlayerFacade player = PlayerFacade.getInstance();
 	
 	public PlayerController() {}
 	
 	@FXML
 	public void initialize() {
-		playButton.disableProperty().bind(ml.allTracksProperty().emptyProperty());
+		playButton.disableProperty().bind(musicLibrary.allTracksProperty().emptyProperty());
 		prevButton.setOnAction(e -> player.previous());
 		nextButton.setOnAction(e -> player.next());
 		volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {if(!isChanging) volumeProgressBar.setProgress(volumeSlider.getValue());});
@@ -133,7 +117,7 @@ public class PlayerController {
 	
 	public void setPlayQueuePane(AnchorPane pane) {
 		playQueuePane = pane;
-		StackPane.setMargin(playQueuePane, new Insets(0, 0, 480, 0));
+		StackPane.setMargin(playQueuePane, new Insets (0, 0, 480, 0));
 		EventHandler<Event> hidePlayQueueAction = e -> showPlayQueue(false);
 		playerGridPane.setOnMouseClicked(hidePlayQueueAction);
 		playButton.setOnMouseClicked(hidePlayQueueAction);
@@ -223,10 +207,10 @@ public class PlayerController {
 	public void updatePlayerInfo(TrackPlayer currentPlayer, Track currentTrack) {
 		// Set up the player and the view related to it
 		LOG.debug("Setting up player and view for track {}", currentTrack);
-		if(ml.containsWaveform(currentTrack.getTrackID()))
+		if(musicLibrary.containsWaveform(currentTrack.getTrackID()))
 			setWaveform(currentTrack);
 		else if (currentTrack.getFileFormat().equals("wav") || currentTrack.getFileFormat().equals("mp3") || currentTrack.getFileFormat().equals("m4a")) 
-			TaskPoolManager.getInstance().addTrackToProcess(currentTrack);
+			TaskDemon.getInstance().addTrackToProcess(currentTrack);
 		if(currentPlayer instanceof NativePlayer)
 			setUpPlayer(((NativePlayer) currentPlayer).getMediaPlayer());
 		else if(currentPlayer instanceof FlacPlayer)
@@ -238,7 +222,7 @@ public class PlayerController {
 				() -> currentTrack.artistProperty().get()+" - "+currentTrack.albumProperty().get(), currentTrack.artistProperty(), currentTrack.albumProperty())
 		);
 		if(currentTrack.hasCover())
-			currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverBytes())));
+			currentCover.setImage(new Image(new ByteArrayInputStream (currentTrack.getCoverBytes())));
 		else
 			currentCover.setImage(DEFAULT_COVER_IMAGE);
 	//	currentTrack.getHasCoverProperty().addListener(observable -> currentCover.setImage(new Image(new ByteArrayInputStream(currentTrack.getCoverBytes()))));

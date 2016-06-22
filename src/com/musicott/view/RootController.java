@@ -14,37 +14,29 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.view;
 
-import java.util.Map;
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.util.*;
+import com.musicott.view.custom.*;
+import javafx.beans.binding.*;
+import javafx.collections.*;
+import javafx.collections.transformation.*;
+import javafx.fxml.*;
+import javafx.geometry.*;
+import javafx.scene.control.*;
+import javafx.scene.image.*;
+import javafx.scene.input.*;
+import javafx.scene.layout.*;
+import javafx.scene.text.*;
+import org.slf4j.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.SceneManager;
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Playlist;
-import com.musicott.model.Track;
-import com.musicott.util.Utils;
-import com.musicott.view.custom.TrackTableView;
-
-import javafx.beans.binding.Bindings;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
-import javafx.fxml.FXML;
-import javafx.geometry.Insets;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
+import java.util.*;
+import java.util.Map.*;
 
 /**
  * @author Octavio Calleya
@@ -53,8 +45,7 @@ import javafx.scene.text.Font;
 public class RootController {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	public final Image DEFAULT_COVER_IMAGE = new Image(getClass().getResourceAsStream("/images/default-cover-image.png"));
-	
+
 	@FXML
 	private BorderPane rootBorderPane, tableBorderPane, contentBorderLayout;
 	@FXML
@@ -68,10 +59,10 @@ public class RootController {
 	private VBox navigationPaneVBox;
 	private TrackTableView trackTable;
 	private TextField playlistTitleTextField;
-	private FilteredList<Map.Entry<Integer, Track>> filteredTracks;
+	private FilteredList<Entry<Integer, Track>> filteredTracks;
 
-	private SceneManager sc = SceneManager.getInstance();
-	private MusicLibrary ml = MusicLibrary.getInstance();
+	private StageDemon stageDemon = StageDemon.getInstance();
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	
 	public RootController() {}
 	
@@ -82,31 +73,31 @@ public class RootController {
 		playlistTitleTextField = new TextField();
 		playlistTitleTextField.setPrefWidth(150);
 		playlistTitleTextField.setPrefHeight(25);
-		playlistTitleTextField.setPadding(new Insets(-10, 0, -10, 0));
-		playlistTitleTextField.setFont(new Font("System", 20));		
+		playlistTitleTextField.setPadding(new Insets (-10, 0, -10, 0));
+		playlistTitleTextField.setFont(new Font ("System", 20));
 		VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
 		
-		playlistTracksNumberLabel.textProperty().bind(Bindings.createStringBinding(() -> ml.showingTracksProperty().sizeProperty().get()+" songs", ml.showingTracksProperty()));
+		playlistTracksNumberLabel.textProperty().bind(Bindings.createStringBinding(() -> musicLibrary.showingTracksProperty().sizeProperty().get()+" songs", musicLibrary.showingTracksProperty()));
 		playlistSizeLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-			String sizeString = Utils.byteSizeString(ml.showingTracksProperty().stream().mapToLong(t -> (long)t.getValue().getSize()).sum(), 2);
+			String sizeString = Utils.byteSizeString(musicLibrary.showingTracksProperty().stream().mapToLong(t -> (long)t.getValue().getSize()).sum(), 2);
 			if(sizeString.equals("0 B"))
 				sizeString = "";
 			return sizeString; 
-		},  ml.showingTracksProperty()));
+		},  musicLibrary.showingTracksProperty()));
 		playlistTitleLabel.textProperty().bind(playlistTitleTextField.textProperty());
 		playlistTitleLabel.setOnMouseClicked(event -> {
 			if(event.getClickCount() == 2) {	// 2 clicks = edit playlist name
-				putPlaylistTextField(true);
+				putPlaylistTextField();
 				playlistTitleTextField.setOnKeyPressed(e -> {
-					Playlist playlist = sc.getNavigationController().selectedPlaylistProperty().getValue().getValue();
+					Playlist playlist = stageDemon.getNavigationController().selectedPlaylistProperty().getValue().getValue();
 					String newTitle = playlistTitleTextField.getText();
 					if(e.getCode() == KeyCode.ENTER && newTitle.equals(playlist.getName())) {
-						putPlaylistTextField(false);
+						removePlaylistTextField();
 						event.consume();
-					} else if(e.getCode() == KeyCode.ENTER && !newTitle.equals("") && !ml.containsPlaylist(newTitle)) {
+					} else if(e.getCode() == KeyCode.ENTER && !newTitle.equals("") && !musicLibrary.containsPlaylist(newTitle)) {
 						playlist.setName(newTitle);
-						ml.saveLibrary(false, false, true);
-						putPlaylistTextField(false);
+						musicLibrary.saveLibrary(false, false, true);
+						removePlaylistTextField();
 						event.consume();
 					}
 				});
@@ -117,9 +108,9 @@ public class RootController {
 		tableBorderPane.setCenter(trackTable);	
 		
 		// Binds the text typed on the search text field to the items shown on the table
-		ObservableList<Map.Entry<Integer, Track>> tracks = ml.showingTracksProperty().get();
+		ObservableList<Entry<Integer, Track>> tracks = musicLibrary.showingTracksProperty().get();
 		filteredTracks = new FilteredList<>(tracks, predicate -> true);
-		sc.getPlayerController().searchTextProperty().addListener((observable, oldText, newText) -> {
+		stageDemon.getPlayerController().searchTextProperty().addListener((observable, oldText, newText) -> {
 			filteredTracks.setPredicate(trackEntry -> {
 				boolean result = true;
 				Track track = trackEntry.getValue();
@@ -144,83 +135,105 @@ public class RootController {
 	public ObservableList<Map.Entry<Integer, Track>> getSelectedItems() {
 		return trackTable.getSelectionModel().getSelectedItems();
 	}
-	
+
 	/**
-	 * Show/Hide the upper table info pane
-	 * @param show
-	 */
-	public void showTableInfoPane(boolean show) {
-		if(show && !tableBorderPane.getChildren().contains(tableInfoHBox)) {
-			tableBorderPane.setTop(tableInfoHBox);
-			LOG.debug("Showing info pane");
-		} else if(!show && tableBorderPane.getChildren().contains(tableInfoHBox)) {
-			tableBorderPane.getChildren().remove(tableInfoHBox);
-			LOG.debug("Hiding info pane");
-		}
-	}
-	
-	/**
-	 * Show/Hide the left navigation pane
-	 * @param show
-	 */
-	public void showNavigationPane(boolean show) {
-		if(show && !contentBorderLayout.getChildren().contains(navigationPaneVBox)) {
-			contentBorderLayout.setLeft(navigationPaneVBox);
-			LOG.debug("Showing navigation pane");
-		} else if(!show && contentBorderLayout.getLeft().equals(navigationPaneVBox)) {
-			contentBorderLayout.getChildren().remove(navigationPaneVBox);
-			LOG.debug("Showing navigation pane");
-		}
-	}
-	
-	/**
-	 * Updates the view with the selected playlist info
+	 * Updates the view with the selected playlist info in the table info pane
+	 *
 	 * @param playlist
 	 */
 	public void updatePlaylistInfo(Playlist playlist) {
 		playlistTitleTextField.setText(playlist.getName());
 		playlistCover.imageProperty().bind(playlist.playlistCoverProperty());
-		putPlaylistTextField(false);
+		removePlaylistTextField();
 	}
 
 	/**
 	 * Handles the creation of a new playlist
+	 *
+	 * @param isFolder
 	 */
-	public void setNewPlaylistMode() {
+	public void setNewPlaylistMode(boolean isFolder) {
 		LOG.debug("Editing playlist name");
-		ml.clearShowingTracks();
-		showTableInfoPane(true);
-		putPlaylistTextField(true);
-		Playlist newPlaylist = new Playlist("");
+		musicLibrary.clearShowingTracks();
+		putPlaylistTextField();
+		Playlist newPlaylist = new Playlist("", isFolder);
 		playlistTitleTextField.setText("");
 		playlistCover.imageProperty().bind(newPlaylist.playlistCoverProperty());
+
 		playlistTitleTextField.setOnKeyPressed(event -> {
 			String newTitle = playlistTitleTextField.getText();
-			if(event.getCode() == KeyCode.ENTER && !newTitle.equals("") && !ml.containsPlaylist(newTitle)) {
+
+			if(event.getCode() == KeyCode.ENTER && !newTitle.isEmpty() && !musicLibrary.containsPlaylist(newTitle)) {
 				newPlaylist.setName(newTitle);
-				ml.addPlaylist(newPlaylist);
-				sc.getNavigationController().addPlaylist(newPlaylist);
-				putPlaylistTextField(false);
+
+				stageDemon.getNavigationController().addNewPlaylist(newPlaylist);
+
+				removePlaylistTextField();
 				event.consume();
 			}
 		});
 	}
 	
 	/**
-	 * Puts a text field to edit the name of the playlist if <tt>editPlaylistTitle</tt> is true,
-	 * otherwise shows the label with the title of the selected or entered playlist
-	 * 
-	 * @param editPlaylistTitle
+	 * Shows the upper table info pane
 	 */
-	private void putPlaylistTextField(boolean editPlaylistTitle) {
-		showTableInfoPane(true);
-		if(editPlaylistTitle && !playlistInfoVBox.getChildren().contains(playlistTitleTextField)) {
+	public void showTableInfoPane() {
+		if(!tableBorderPane.getChildren().contains(tableInfoHBox)) {
+			tableBorderPane.setTop(tableInfoHBox);
+			LOG.debug("Showing info pane");
+		}
+	}
+
+	/**
+	 * Hides the upper table info pane
+	 */
+	public void hideTableInfoPane() {
+		if(tableBorderPane.getChildren().contains(tableInfoHBox)) {
+			tableBorderPane.getChildren().remove(tableInfoHBox);
+			LOG.debug("Hiding info pane");
+		}
+	}
+	
+	/**
+	 * Shows the left navigation pane
+	 */
+	public void showNavigationPane() {
+		if(!contentBorderLayout.getChildren().contains(navigationPaneVBox)) {
+			contentBorderLayout.setLeft(navigationPaneVBox);
+			LOG.debug("Showing navigation pane");
+		}
+	}
+
+	/**
+	 * Hides the left navigation pane
+	 */
+	public void hideNavigationPane() {
+		if(contentBorderLayout.getLeft().equals(navigationPaneVBox)) {
+			contentBorderLayout.getChildren().remove(navigationPaneVBox);
+			LOG.debug("Showing navigation pane");
+		}
+	}
+	
+	/**
+	 * Puts a text field to edit the name of the playlist
+	 */
+	private void putPlaylistTextField() {
+		showTableInfoPane();
+		if(!playlistInfoVBox.getChildren().contains(playlistTitleTextField)) {
 			playlistInfoVBox.getChildren().remove(playlistTitleLabel);
 			playlistInfoVBox.getChildren().add(0, playlistTitleTextField);
 			playlistTitleTextField.requestFocus();
-		} else if(!editPlaylistTitle && !playlistInfoVBox.getChildren().contains(playlistTitleLabel)) {
+		}
+	}
+
+	/**
+	 * Removes the text field and shows the label with the title of the selected or entered playlist
+	 */
+	private void removePlaylistTextField() {
+		showTableInfoPane();
+		if(!playlistInfoVBox.getChildren().contains(playlistTitleLabel)) {
 			playlistInfoVBox.getChildren().remove(playlistTitleTextField);
-			playlistInfoVBox.getChildren().add(0, playlistTitleLabel);			
+			playlistInfoVBox.getChildren().add(0, playlistTitleLabel);
 		}
 	}
 }

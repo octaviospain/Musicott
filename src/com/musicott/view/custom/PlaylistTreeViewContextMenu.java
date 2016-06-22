@@ -14,14 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.view.custom;
 
-import com.musicott.SceneManager;
-
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
+import com.musicott.*;
+import javafx.scene.control.*;
 
 /**
  * Context menu to be shown on the playlist pane
@@ -31,7 +30,7 @@ import javafx.scene.control.MenuItem;
  */
 public class PlaylistTreeViewContextMenu extends ContextMenu {
 	
-	private SceneManager sc = SceneManager.getInstance();
+	private StageDemon stageDemon = StageDemon.getInstance();
 	
 	private MenuItem addPlaylist;
 	private MenuItem deletePlaylist;
@@ -40,10 +39,10 @@ public class PlaylistTreeViewContextMenu extends ContextMenu {
 		super();
 		
 		addPlaylist = new MenuItem("Add new playlist");		
-		addPlaylist.setOnAction(e -> sc.getRootController().setNewPlaylistMode());
+		addPlaylist.setOnAction(e -> stageDemon.getRootController().setNewPlaylistMode(false));
 
 		deletePlaylist = new MenuItem("Delete playlist");
-		deletePlaylist.setOnAction(e -> sc.getNavigationController().deleteSelectedPlaylist());
+		deletePlaylist.setOnAction(e -> stageDemon.getNavigationController().deleteSelectedPlaylist());
 		getItems().addAll(addPlaylist, deletePlaylist);
 	}
 }

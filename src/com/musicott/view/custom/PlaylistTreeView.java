@@ -14,54 +14,62 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.view.custom;
 
-import static com.musicott.view.NavigationController.ALL_SONGS_MODE;
+import com.musicott.*;
+import com.musicott.model.*;
+import javafx.collections.*;
+import javafx.scene.control.*;
 
-import com.musicott.SceneManager;
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Playlist;
-
-import javafx.collections.ObservableList;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.TreeCell;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
+import java.util.*;
 
 /**
  * @author Octavio Calleya
- *
  */
 public class PlaylistTreeView extends TreeView<Playlist> {
 	
-	private SceneManager sc = SceneManager.getInstance();
-	private MusicLibrary ml = MusicLibrary.getInstance();
+	private StageDemon stageDemon = StageDemon.getInstance();
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	
 	private TreeItem<Playlist> root;
 	private PlaylistTreeViewContextMenu contextMenu;
 	private ObservableList<TreeItem<Playlist>> selectedPlaylist;
-	
+
 	public PlaylistTreeView() {
 		super();
-		root = new TreeItem<Playlist>();
+		root = new TreeItem<>();
 		setRoot(root);
 		setShowRoot(false);
 		setEditable(true);
 		setPrefHeight(USE_COMPUTED_SIZE);
 		setPrefWidth(USE_COMPUTED_SIZE);
 		setId("playlistTreeView");
-		setCellFactory(p -> new PlaylistTreeCell());
+		setCellFactory(treeView -> new PlaylistTreeCell());
+
 		getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 		selectedPlaylist = getSelectionModel().getSelectedItems();
-		getSelectionModel().selectedItemProperty().addListener(listener -> ml.showPlaylist(getSelectedPlaylist()));
+		getSelectionModel().selectedItemProperty().addListener(l -> musicLibrary.showPlaylist(getSelectedPlaylist()));
 		
 		contextMenu = new PlaylistTreeViewContextMenu();
 		setContextMenu(contextMenu);
-		
-		for(Playlist pl: ml.getPlaylists())
-			root.getChildren().add(new TreeItem<Playlist>(pl));
+		List<Playlist> allChilds = new ArrayList<>();
+		for(Playlist playlist: musicLibrary.getPlaylists()) {
+			if(playlist.isFolder()) {
+				List<Playlist> childPlaylists = playlist.getContainedPlaylists();
+				allChilds.addAll(childPlaylists);
+				TreeItem<Playlist> folderItem = new TreeItem<>(playlist);
+
+				for(Playlist childPlaylist: childPlaylists)
+					folderItem.getChildren().add(new TreeItem<>(childPlaylist));
+				root.getChildren().add(folderItem);
+			}
+			else {
+				root.getChildren().add(new TreeItem<>(playlist));
+			}
+		}
 	}
 	
 	public Playlist getSelectedPlaylist() {
@@ -74,31 +82,28 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		getSelectionModel().select(newItem);
 	}
 	
+	public void addPlaylistChild(Playlist folder, Playlist newPlaylistChild) {
+		TreeItem<Playlist> newPlaylistItem = null;
+		for(TreeItem<Playlist> playlistTreeItem: root.getChildren()) {
+			if(playlistTreeItem.getValue().equals(folder)) {
+				newPlaylistItem  = new TreeItem<>(newPlaylistChild);
+				playlistTreeItem.getChildren().add(newPlaylistItem);
+			}
+		}
+		folder.getContainedPlaylists().add(newPlaylistChild);
+		getSelectionModel().select(newPlaylistItem);
+	}
+	
 	public void deletePlaylist() {
 		Playlist selected = getSelectedPlaylist();
 		if(selected != null) {
-			ml.removePlaylist(getSelectedPlaylist());
+			musicLibrary.removePlaylist(getSelectedPlaylist());
 			int playlistToDeleteIndex = getSelectionModel().getSelectedIndex();
 			root.getChildren().removeIf(treeItem -> treeItem.getValue().equals(selected));
-			if(playlistToDeleteIndex == 0 && root.getChildren().size() == 0)
-				sc.getNavigationController().showMode(ALL_SONGS_MODE);
+			if(playlistToDeleteIndex == 0 && root.getChildren().isEmpty())
+				stageDemon.getNavigationController().showMode(NavigationMode.ALL_SONGS_MODE);
 			else
 				getSelectionModel().selectFirst();
-		}
-	}
-	
-	private class PlaylistTreeCell extends TreeCell<Playlist> {
-		
-		@Override
-		public void updateItem(Playlist p, boolean empty) {
-			super.updateItem(p, empty);
-			if(!empty) {
-				textProperty().bind(p.nameProperty());
-			}
-			else {
-				textProperty().unbind();
-				setText("");
-			}
 		}
 	}
 }

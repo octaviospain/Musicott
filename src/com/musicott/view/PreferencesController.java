@@ -14,39 +14,28 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.view;
 
-import javafx.beans.binding.Bindings;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.Stage;
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.services.*;
+import javafx.beans.binding.*;
+import javafx.collections.*;
+import javafx.fxml.*;
+import javafx.scene.*;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.*;
+import org.controlsfx.control.*;
+import org.controlsfx.tools.*;
 
-import com.musicott.MainPreferences;
-import com.musicott.model.MusicLibrary;
-import com.musicott.services.ServiceManager;
+import java.io.*;
 
-import static com.musicott.MainApp.TRACKS_PERSISTENCE_FILE;
-import static com.musicott.MainApp.WAVEFORMS_PERSISTENCE_FILE;
-import static com.musicott.task.ItunesImportTask.HOLD_ITUNES_DATA_POLICY;
-import static com.musicott.task.ItunesImportTask.HOLD_METADATA_POLICY;
-
-import java.io.File;
-
-import org.controlsfx.control.CheckComboBox;
-import org.controlsfx.tools.Borders;
+import static com.musicott.MainApp.*;
+import static com.musicott.tasks.ItunesImportTask.*;
 
 /**
  * @author Octavio Calleya
@@ -76,7 +65,7 @@ public class PreferencesController {
 	private final String ITUNES_INFO = "Itunes info";
 	private final String METADATA_INFO = "File metadata info";
 	
-	private ServiceManager serviceManager = ServiceManager.getInstance();
+	private Services services = Services.getInstance();
 	private MainPreferences preferences = MainPreferences.getInstance();
 	private Stage preferencesStage;
 
@@ -118,9 +107,9 @@ public class PreferencesController {
 	
 	private void load() {;
 		folderLocationTextField.setText(preferences.getMusicottUserFolder());
-		if(preferences.getItunesImportMetadataPolicy() == HOLD_ITUNES_DATA_POLICY)
+		if(preferences.getItunesImportMetadataPolicy() == TUNES_DATA_POLICY)
 			itunesImportPolicyCheckBox.getSelectionModel().select(ITUNES_INFO);
-		else if(preferences.getItunesImportMetadataPolicy() == HOLD_METADATA_POLICY)
+		else if(preferences.getItunesImportMetadataPolicy() == METADATA_POLICY)
 			itunesImportPolicyCheckBox.getSelectionModel().select(METADATA_INFO);
 		holdPlayCountCheckBox.setSelected(preferences.getItunesImportHoldPlaycount());
 		importPlaylistsCheckBox.setSelected(preferences.getItunesImportPlaylists());
@@ -128,11 +117,11 @@ public class PreferencesController {
 		extensionsCheckComboBox.getCheckModel().clearChecks();
 		for(String extension: importFilterExtensions)
 			extensionsCheckComboBox.getCheckModel().check(extension);
-		String lfmUserName = serviceManager.getLastFMUsername();
-		String lfmPassword = serviceManager.getLastFMPassword();
+		String lfmUserName = services.getLastFMUsername();
+		String lfmPassword = services.getLastFMPassword();
 		lastfmUsernameTextField.setText(lfmUserName == null ? "" : lfmUserName);
 		lastfmPasswordField.setText(lfmPassword == null ? "" : lfmPassword);
-		if(serviceManager.usingLastFM())
+		if(services.usingLastFM())
 			lastfmLoginButton.setText("Logout");
 		else
 			lastfmLoginButton.setText("Login");
@@ -141,10 +130,10 @@ public class PreferencesController {
 	private void changeMusicottUserFolder() {
 		String musicottUserPath = preferences.getMusicottUserFolder();
 		if(!musicottUserPath.equals(folderLocationTextField.getText())) {
-			File tracksFile = new File(musicottUserPath+File.pathSeparator+TRACKS_PERSISTENCE_FILE);
+			File tracksFile = new File(musicottUserPath + File.pathSeparator + TRACKS_PERSISTENCE_FILE);
 			if(tracksFile.exists())
 				tracksFile.delete();
-			File waveformsFile = new File(musicottUserPath+File.pathSeparator+WAVEFORMS_PERSISTENCE_FILE);
+			File waveformsFile = new File(musicottUserPath + File.pathSeparator + WAVEFORMS_PERSISTENCE_FILE);
 			if(waveformsFile.exists())
 				waveformsFile.delete();
 			preferences.setMusicottUserFolder(folderLocationTextField.getText());
@@ -164,10 +153,10 @@ public class PreferencesController {
 	@FXML
 	private void doLastFMLoginLogout() {
 		if(lastfmLoginButton.getText().equals("Login")) {
-			serviceManager.lastFMLogIn(lastfmUsernameTextField.getText(), lastfmPasswordField.getText());
+			services.lastFMLogIn(lastfmUsernameTextField.getText(), lastfmPasswordField.getText());
 		}
 		else {
-			serviceManager.lastFMLogOut();
+			services.lastFMLogOut();
 			lastfmPasswordField.clear();
 			lastfmLoginButton.setText("Login");
 		}
@@ -178,9 +167,9 @@ public class PreferencesController {
 		changeMusicottUserFolder();
 		String policy = itunesImportPolicyCheckBox.getSelectionModel().getSelectedItem();
 		if(policy.equals(ITUNES_INFO))
-			preferences.setItunesImportMetadataPolicy(HOLD_ITUNES_DATA_POLICY);
+			preferences.setItunesImportMetadataPolicy(TUNES_DATA_POLICY);
 		else if(policy.equals(METADATA_INFO))
-			preferences.setItunesImportMetadataPolicy(HOLD_METADATA_POLICY);
+			preferences.setItunesImportMetadataPolicy(METADATA_POLICY);
 		preferences.setItunesImportHoldPlaycount(holdPlayCountCheckBox.isSelected());
 		preferences.setItunesImportPlaylists(importPlaylistsCheckBox.isSelected());
 		ObservableList<String> checkedItems = extensionsCheckComboBox.getCheckModel().getCheckedItems();

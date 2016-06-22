@@ -14,36 +14,24 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
-package com.musicott.task;
+package com.musicott.tasks;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.player.*;
+import com.musicott.util.*;
+import javafx.application.*;
+import javafx.concurrent.*;
+import javafx.util.*;
+import org.jaudiotagger.audio.exceptions.*;
+import org.jaudiotagger.tag.*;
+import org.slf4j.*;
 
-import org.jaudiotagger.audio.exceptions.CannotReadException;
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
-import org.jaudiotagger.tag.TagException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.ErrorHandler;
-import com.musicott.SceneManager;
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Track;
-import com.musicott.player.PlayerFacade;
-import com.musicott.util.MetadataParser;
-
-import javafx.application.Platform;
-import javafx.concurrent.Task;
-import javafx.util.Duration;
+import java.io.*;
+import java.util.*;
 
 /**
  * @author Octavio Calleya
@@ -52,9 +40,10 @@ import javafx.util.Duration;
 public class ParseTask extends Task<Void> {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private SceneManager sc = SceneManager.getInstance();
-	private MusicLibrary ml = MusicLibrary.getInstance();
-	private ErrorHandler eh = ErrorHandler.getInstance();
+	
+	private StageDemon stageDemon = StageDemon.getInstance();
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private PlayerFacade player = PlayerFacade.getInstance();
 
 	private Map<Integer, Track> tracks;
@@ -100,8 +89,8 @@ public class ParseTask extends Task<Void> {
 				tracks.put(currentTrack.getTrackID(), currentTrack);
 			}
 			Platform.runLater(() -> {
-				sc.getNavigationController().setStatusProgress((double) ++currentFiles/totalFiles);
-				sc.getNavigationController().setStatusMessage("Imported "+currentFiles+" of "+totalFiles);
+				stageDemon.getNavigationController().setStatusProgress((double) ++currentFiles/totalFiles);
+				stageDemon.getNavigationController().setStatusMessage("Imported "+currentFiles+" of "+totalFiles);
 			});
 			synchronized(files) {
 				if(files.isEmpty())
@@ -126,18 +115,18 @@ public class ParseTask extends Task<Void> {
 	protected void succeeded() {
 		super.succeeded();
 		updateMessage("Parse succeeded");
-		sc.getNavigationController().setStatusProgress(0);
+		stageDemon.getNavigationController().setStatusProgress(0);
 		new Thread(() -> {
-			ml.addTracks(tracks);
+			musicLibrary.addTracks(tracks);
 			totalTime = System.currentTimeMillis() - startMillis;
 			Platform.runLater(() -> {
-				sc.closeIndeterminatedProgressScene();
-				sc.getNavigationController().setStatusMessage(tracks.size()+" files in "+Duration.millis(totalTime).toMinutes()+" mins");
+				stageDemon.closeIndeterminatedProgressScene();
+				stageDemon.getNavigationController().setStatusMessage(tracks.size()+" ("+ Duration.millis(totalTime).toSeconds()+") secs");
 			});
 		}).start();
-		sc.openIndeterminatedProgressScene();
+		stageDemon.openIndeterminatedProgressScene();
 		if(!parseErrors.isEmpty())
-			eh.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
+			errorDemon.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
 		if(play)
 			player.addTracks(tracks.keySet(), true);
 		LOG.info("Parse task completed");

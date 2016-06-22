@@ -14,20 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.util;
 
-import com.cedarsoftware.util.io.JsonReader.ClassFactory;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableMap;
+import com.cedarsoftware.util.io.*;
+import javafx.collections.*;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class ObservableMapWrapperCreator implements ClassFactory {
+public class ObservableMapWrapperCreator implements JsonReader.ClassFactory {
 
 	@SuppressWarnings("rawtypes")
 	@Override

@@ -14,30 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.services;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import com.musicott.model.*;
+import com.musicott.services.lastfm.*;
+import com.sun.jersey.api.client.*;
+import com.sun.jersey.core.util.*;
+import org.slf4j.*;
 
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.*;
+import java.security.*;
+import java.util.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.model.Track;
-import com.musicott.services.ServiceManager.ServicesPreferences;
-import com.musicott.services.lastfm.LastFMError;
-import com.musicott.services.lastfm.LastFMResponse;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
+import static javax.ws.rs.HttpMethod.*;
 
 /**
  * @author Octavio Calleya
@@ -59,7 +51,7 @@ public class LastFMService {
 	private final String API_ROOT_URL = "https://ws.audioscrobbler.com/2.0/";
 	private final String USERNAME;
 	private final String PASSWORD;
-	private ServicesPreferences servicePreferences;
+	private Services.ServicesPreferences servicesPreferences;
 	private String sessionKey;
 	private Client client;
 	private WebResource resource;
@@ -67,12 +59,12 @@ public class LastFMService {
 	public LastFMService() {
 		client = Client.create();
 		resource = client.resource(API_ROOT_URL);
-		servicePreferences = ServiceManager.getInstance().getServicesPreferences();
-		USERNAME = servicePreferences.getLastFMUsername();
-		PASSWORD = servicePreferences.getLastFMPassword();
-		sessionKey = servicePreferences.getLastFMSessionKey();
-		API_KEY = servicePreferences.getAPIKey();
-		API_SECRET = servicePreferences.getAPISecret();
+		servicesPreferences = Services.getInstance().getServicesPreferences();
+		USERNAME = servicesPreferences.getLastFMUsername();
+		PASSWORD = servicesPreferences.getLastFMPassword();
+		sessionKey = servicesPreferences.getLastFMSessionKey();
+		API_KEY = servicesPreferences.getAPIKey();
+		API_SECRET = servicesPreferences.getAPISecret();
 	}
 	
 	public LastFMResponse updateNowPlaying(Track track) {
@@ -86,7 +78,7 @@ public class LastFMService {
         queryParams.add("password", PASSWORD);
         queryParams.add("username", USERNAME);
         queryParams.add("api_sig", buildSignature(queryParams));
-        return makeRequest(queryParams, HttpMethod.POST);
+        return makeRequest(queryParams, POST);
 	}
 	
 	public LastFMResponse scrobble(Track track) {
@@ -100,7 +92,7 @@ public class LastFMService {
         queryParams.add("password", PASSWORD);
         queryParams.add("username", USERNAME);
         queryParams.add("api_sig", buildSignature(queryParams));
-    	return makeRequest(queryParams, HttpMethod.POST);
+    	return makeRequest(queryParams, POST);
 	}
 	
 	public LastFMResponse scrobbleBatch(Map<Track, Integer> trackBatch) {
@@ -118,7 +110,7 @@ public class LastFMService {
         queryParams.add("password", PASSWORD);
         queryParams.add("username", USERNAME);
         queryParams.add("api_sig", buildSignature(queryParams));
-    	return makeRequest(queryParams, HttpMethod.POST);
+    	return makeRequest(queryParams, POST);
 	}
 	
 	public LastFMResponse getSession() {
@@ -130,10 +122,10 @@ public class LastFMService {
 	        queryParams.add("password", PASSWORD);
 	        queryParams.add("username", USERNAME);
 	        queryParams.add("api_sig", buildSignature(queryParams));
-	        lfm = makeRequest(queryParams, HttpMethod.POST);
+	        lfm = makeRequest(queryParams, POST);
 	        if(lfm.getStatus().equals("ok")) {
 	        	sessionKey = lfm.getSession().getSessionKey();
-	        	servicePreferences.setLastFMSessionkey(sessionKey);
+	        	servicesPreferences.setLastFMSessionkey(sessionKey);
 	        }
 		}
 		else {
@@ -151,9 +143,9 @@ public class LastFMService {
 		LastFMResponse lfmResponse = null;
     	ClientResponse response = null;
         try {
-        	if(method.equals(HttpMethod.GET))
+        	if(method.equals(GET))
 	        		response = resource.queryParams(params).get(ClientResponse.class);
-	        else if(method.equals(HttpMethod.POST))
+	        else if(method.equals(POST))
 	        		response = resource.queryParams(params).post(ClientResponse.class);			
 	     	LOG.debug("LastFM API GET petition status: {}", response.getStatus());
 	     	lfmResponse = response.getEntity(LastFMResponse.class);

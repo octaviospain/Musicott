@@ -14,39 +14,26 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
-package com.musicott.task;
+package com.musicott.tasks;
 
-import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import be.tarsos.transcoder.*;
+import be.tarsos.transcoder.ffmpeg.*;
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.player.*;
+import javafx.application.*;
+import org.slf4j.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.CopyOption;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.concurrent.Semaphore;
+import javax.sound.sampled.*;
+import javax.swing.*;
+import java.io.*;
+import java.nio.file.*;
+import java.util.concurrent.*;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.SwingUtilities;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.SceneManager;
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Track;
-import com.musicott.player.PlayerFacade;
-
-import be.tarsos.transcoder.DefaultAttributes;
-import be.tarsos.transcoder.Transcoder;
-import be.tarsos.transcoder.ffmpeg.EncoderException;
-import javafx.application.Platform;
+import static java.nio.file.StandardCopyOption.*;
 
 /**
  * @author Octavio Calleya
@@ -57,18 +44,18 @@ public class WaveformTask extends Thread {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private final double HEIGHT_COEFICIENT = 4.2; // This fits the waveform to the swingnode height
 	
-	private MusicLibrary ml;
-	private SceneManager sc;
-	private TaskPoolManager tpm;
+	private MusicLibrary musicLibrary;
+	private StageDemon stageDemon;
+	private TaskDemon taskDemon;
 	private Track track;
 	private float[] waveform;
 	private Semaphore taskSemaphore;
 	
-	public WaveformTask(String id, Semaphore taskSemaphore, TaskPoolManager taskPoolManager) {
+	public WaveformTask(String id, Semaphore taskSemaphore, TaskDemon taskPoolManager) {
 		super(id);
-		sc = SceneManager.getInstance();
-		ml = MusicLibrary.getInstance();
-		tpm = taskPoolManager;
+		stageDemon = StageDemon.getInstance();
+		musicLibrary = MusicLibrary.getInstance();
+		taskDemon = taskPoolManager;
 		this.taskSemaphore = taskSemaphore;
 	}
 	
@@ -77,7 +64,7 @@ public class WaveformTask extends Thread {
 		while(true) {
 			try {
 				taskSemaphore.acquire();
-				track = tpm.getTrackToProcess();
+				track = taskDemon.getTrackToProcess();
 				LOG.debug("Processing waveform of track {}", track);
 				String fileFormat = track.getFileFormat();
 				if(fileFormat.equals("wav"))
@@ -86,16 +73,16 @@ public class WaveformTask extends Thread {
 					waveform = processNoWav(fileFormat);
 				
 				if(waveform != null) {
-					ml.addWaveform(track.getTrackID(), waveform);
+					musicLibrary.addWaveform(track.getTrackID(), waveform);
 					Track currentTrack = PlayerFacade.getInstance().getCurrentTrack();
 					if(currentTrack != null && currentTrack.equals(track))
-						SwingUtilities.invokeLater(() -> sc.getPlayerController().setWaveform(track));
+						SwingUtilities.invokeLater(() -> stageDemon.getPlayerController().setWaveform(track));
 					LOG.debug("Waveform of track {} completed", track);
-					Platform.runLater(() -> sc.getNavigationController().setStatusMessage(""));
-					ml.saveLibrary(false, true, false);
+					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage(""));
+					musicLibrary.saveLibrary(false, true, false);
 				}
 				else
-					Platform.runLater(() -> sc.getNavigationController().setStatusMessage("Fail processing waveform of "+track.getName()));
+					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Fail processing waveform of "+track.getName()));
 			} catch (Exception e) {
 				LOG.warn("Waveform thread error: {}", e);
 			}

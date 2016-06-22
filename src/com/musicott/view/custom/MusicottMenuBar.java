@@ -14,49 +14,34 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.view.custom;
 
-import java.io.File;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.player.*;
+import com.musicott.tasks.*;
+import com.musicott.util.*;
+import de.codecentric.centerdevice.*;
+import javafx.application.*;
+import javafx.beans.binding.*;
+import javafx.beans.property.*;
+import javafx.scene.control.*;
+import javafx.scene.control.Alert.*;
+import javafx.scene.image.*;
+import javafx.scene.input.*;
+import javafx.scene.input.KeyCombination.*;
+import javafx.scene.layout.*;
+import javafx.stage.*;
+import javafx.stage.FileChooser.*;
+import org.slf4j.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.*;
+import java.util.*;
 
-import com.musicott.MainPreferences;
-import com.musicott.SceneManager;
-import com.musicott.model.Track;
-import com.musicott.player.PlayerFacade;
-import com.musicott.task.TaskPoolManager;
-import com.musicott.util.Utils;
-
-import de.codecentric.centerdevice.MenuToolkit;
-import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Hyperlink;
-import javafx.scene.control.Label;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination.Modifier;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
-import javafx.stage.FileChooser.ExtensionFilter;
+import static javafx.scene.input.KeyCodeCombination.ALT_DOWN;
 
 /**
  * Creates a MenuBar or a native OS X menu bar for Musicott
@@ -68,7 +53,7 @@ public class MusicottMenuBar extends MenuBar {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
-	private SceneManager sc = SceneManager.getInstance();
+	private StageDemon stageDemon = StageDemon.getInstance();
 	
 	private Menu fileMN, editMN, controlsMN, viewMN, aboutMN;
 	private MenuItem openFileMI, importFolderMI, importItunesMI, preferencesMI, editMI, deleteMI, prevMI, nextMI, volIncrMI, volDecrMI, selCurrMI, aboutMI;
@@ -92,11 +77,11 @@ public class MusicottMenuBar extends MenuBar {
 		setViewMenuActions();
 		
 		aboutMI.setOnAction(e -> {
-			Alert alert = sc.createAlert("About Musicott", "Musicott", "", AlertType.INFORMATION);
+			Alert alert = stageDemon.createAlert("About Musicott", "Musicott", "", AlertType.INFORMATION);
 			Label text = new Label(" Version 0.8.0\n\n Copyright © 2015 Octavio Calleya.");
 			Label text2 = new Label(" Licensed under GNU GPLv3. This product includes\n software developed by other open source projects.");
 			Hyperlink githubLink = new Hyperlink("https://github.com/octaviospain/Musicott/");
-			githubLink.setOnAction(event -> sc.getApplicationHostServices().showDocument(githubLink.getText()));
+			githubLink.setOnAction(event -> stageDemon.getApplicationHostServices().showDocument(githubLink.getText()));
 			FlowPane fp = new FlowPane();
 			fp.getChildren().addAll(text, githubLink, text2);
 			alert.getDialogPane().contentProperty().set(fp);
@@ -124,7 +109,7 @@ public class MusicottMenuBar extends MenuBar {
 		}
 		else {	// Default MenuBar
 			MenuItem closeMI = new MenuItem("Close");
-			closeMI.setAccelerator(new KeyCodeCombination(KeyCode.F4, KeyCodeCombination.ALT_DOWN));
+			closeMI.setAccelerator(new KeyCodeCombination (KeyCode.F4, ALT_DOWN));
 			closeMI.setOnAction(event -> {LOG.info("Exiting Musicott"); System.exit(0);});
 			fileMN.getItems().addAll(new SeparatorMenuItem(), preferencesMI, new SeparatorMenuItem(), closeMI);
 			
@@ -187,40 +172,40 @@ public class MusicottMenuBar extends MenuBar {
 			FileChooser chooser = new FileChooser();
 			chooser.setTitle("Open file(s)...");
 			chooser.getExtensionFilters().addAll(
-					new ExtensionFilter("All Supported (*.mp3, *.flac, *.wav, *.m4a)","*.mp3", "*.flac", "*.wav", "*.m4a"),
+					new ExtensionFilter ("All Supported (*.mp3, *.flac, *.wav, *.m4a)","*.mp3", "*.flac", "*.wav", "*.m4a"),
 					new ExtensionFilter("mp3 files (*.mp3)", "*.mp3"),
 					new ExtensionFilter("flac files (*.flac)","*.flac"),
 					new ExtensionFilter("wav files (*.wav)", "*.wav"),
 					new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
-			List<File> files = chooser.showOpenMultipleDialog(sc.getMainStage());
+			List<File> files = chooser.showOpenMultipleDialog(stageDemon.getMainStage());
 			if(files != null) {
-				TaskPoolManager.getInstance().parseFiles(files, true);
-				sc.getNavigationController().setStatusMessage("Opening files");
+				TaskDemon.getInstance().parseFiles(files, true);
+				stageDemon.getNavigationController().setStatusMessage("Opening files");
 			}
 		});
 		importFolderMI.setOnAction(e -> {
 			LOG.debug("Choosing folder to being imported");
 			DirectoryChooser chooser = new DirectoryChooser();
 			chooser.setTitle("Choose folder");
-			File folder = chooser.showDialog(sc.getMainStage());
+			File folder = chooser.showDialog(stageDemon.getMainStage());
 			if(folder != null) {
-				Platform.runLater(() -> {sc.getNavigationController().setStatusMessage("Scanning folders..."); sc.getNavigationController().setStatusProgress(-1);});
+				Platform.runLater(() -> {stageDemon.getNavigationController().setStatusMessage("Scanning folders..."); stageDemon.getNavigationController().setStatusProgress(-1);});
 				Thread countFilesThread = new Thread(() -> {
 					List<File> files = Utils.getAllFilesInFolder(folder, MainPreferences.getInstance().getExtensionsFileFilter(), 0);
 					Platform.runLater(() -> {
-						sc.getNavigationController().setStatusMessage("");
-						sc.getNavigationController().setStatusProgress(0);
+						stageDemon.getNavigationController().setStatusMessage("");
+						stageDemon.getNavigationController().setStatusProgress(0);
 						if(files.isEmpty()) {
-							Alert alert = sc.createAlert("Import", "No files", "There are no valid files to import on the selected folder."
+							Alert alert = stageDemon.createAlert("Import", "No files", "There are no valid files to import on the selected folder."
 									+ "Change the folder or the import options in preferences", AlertType.WARNING);
 							alert.showAndWait();
 						}
 						else {
-							Alert alert = sc.createAlert("Import", "Import " + files.size() + " files?", "", AlertType.CONFIRMATION);
+							Alert alert = stageDemon.createAlert("Import", "Import " + files.size() + " files?", "", AlertType.CONFIRMATION);
 							Optional<ButtonType> result = alert.showAndWait();
 							if(result.isPresent() && result.get().equals(ButtonType.OK)) {
-								TaskPoolManager.getInstance().parseFiles(files, false);
-								sc.getNavigationController().setStatusMessage("Importing files");
+								TaskDemon.getInstance().parseFiles(files, false);
+								stageDemon.getNavigationController().setStatusMessage("Importing files");
 							}
 						}
 					});
@@ -233,32 +218,32 @@ public class MusicottMenuBar extends MenuBar {
 			FileChooser chooser = new FileChooser();
 			chooser.setTitle("Select 'iTunes Music Library.xml' file");
 			chooser.getExtensionFilters().add(new ExtensionFilter("xml files (*.xml)", "*.xml"));
-			File xmlFile = chooser.showOpenDialog(sc.getMainStage());
+			File xmlFile = chooser.showOpenDialog(stageDemon.getMainStage());
 			if(xmlFile != null) 
-				TaskPoolManager.getInstance().parseItunesLibrary(xmlFile.getAbsolutePath());
+				TaskDemon.getInstance().parseItunesLibrary(xmlFile.getAbsolutePath());
 		});
-		preferencesMI.setOnAction(e -> sc.openPreferencesScene());
+		preferencesMI.setOnAction(e -> stageDemon.openPreferencesScene());
 	}
 	
 	private void setEditMenuActions() {
-		editMI.setOnAction(e -> sc.editTracks());
-		deleteMI.setOnAction(e -> sc.deleteTracks());
-		newPlaylistMI.setOnAction(e -> sc.getRootController().setNewPlaylistMode());
+		editMI.setOnAction(e -> stageDemon.editTracks());
+		deleteMI.setOnAction(e -> stageDemon.deleteTracks());
+		newPlaylistMI.setOnAction(e -> stageDemon.getRootController().setNewPlaylistMode(false));
 	}
 	
 	private void setControlsMenuActions() {
-		prevMI.disableProperty().bind(sc.getPlayerController().previousButtonDisableProperty());
+		prevMI.disableProperty().bind(stageDemon.getPlayerController().previousButtonDisableProperty());
 		prevMI.setOnAction(e -> PlayerFacade.getInstance().previous());
 		
-		nextMI.disableProperty().bind(sc.getPlayerController().nextButtonDisableProperty());
+		nextMI.disableProperty().bind(stageDemon.getPlayerController().nextButtonDisableProperty());
 		nextMI.setOnAction(e -> PlayerFacade.getInstance().next());
 		
-		volIncrMI.setOnAction(e -> sc.getPlayerController().doIncreaseVolume());
-		volDecrMI.setOnAction(e -> sc.getPlayerController().doDecreaseVolume());
+		volIncrMI.setOnAction(e -> stageDemon.getPlayerController().doIncreaseVolume());
+		volDecrMI.setOnAction(e -> stageDemon.getPlayerController().doDecreaseVolume());
 		
 		selCurrMI.setOnAction(e -> {
 			Track currentTrack = PlayerFacade.getInstance().getCurrentTrack();
-			TrackTableView trackTable = (TrackTableView) sc.getMainStage().getScene().lookup("#trackTable");
+			TrackTableView trackTable = (TrackTableView) stageDemon.getMainStage().getScene().lookup("#trackTable");
 			trackTable.getSelectionModel().clearSelection();
 			if(currentTrack != null) {
 				Map.Entry<Integer, Track> currentEntry = new AbstractMap.SimpleEntry<Integer, Track>(currentTrack.getTrackID(), currentTrack);
@@ -281,15 +266,15 @@ public class MusicottMenuBar extends MenuBar {
 //		});
 		showHideTableInfoPaneMI.setOnAction(e -> {
 			if(showHideTableInfoPaneMI.getText().startsWith("Show")) {
-				sc.getRootController().showTableInfoPane(true);
+				stageDemon.getRootController().showTableInfoPane();
 				showHideTableInfoPaneMI.setText(showHideTableInfoPaneMI.getText().replaceFirst("Show", "Hide"));
 			} else if(showHideTableInfoPaneMI.getText().startsWith("Hide")) {
-				sc.getRootController().showTableInfoPane(false);
+				stageDemon.getRootController().hideTableInfoPane();
 				showHideTableInfoPaneMI.setText(showHideTableInfoPaneMI.getText().replaceFirst("Hide", "Show"));	
 			}
 		});
 
-		ReadOnlyObjectProperty<String> selectedMenu = sc.getNavigationController().selectedMenuProperty();
+		ReadOnlyObjectProperty<NavigationMode> selectedMenu = stageDemon.getNavigationController().selectedMenuProperty();
 		showHideTableInfoPaneMI.disableProperty().bind(Bindings.createBooleanBinding(() -> selectedMenu.getValue() != null, selectedMenu));
 	}
 }

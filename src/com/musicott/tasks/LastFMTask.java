@@ -14,28 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
-package com.musicott.task;
+package com.musicott.tasks;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.concurrent.Semaphore;
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.services.*;
+import com.musicott.services.lastfm.*;
+import javafx.application.*;
+import org.slf4j.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.ErrorHandler;
-import com.musicott.SceneManager;
-import com.musicott.model.Track;
-import com.musicott.services.LastFMService;
-import com.musicott.services.ServiceManager;
-import com.musicott.services.lastfm.LastFMError;
-import com.musicott.services.lastfm.LastFMResponse;
-
-import javafx.application.Platform;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author Octavio Calleya
@@ -44,8 +36,8 @@ import javafx.application.Platform;
 public class LastFMTask extends Thread {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private ErrorHandler eh = ErrorHandler.getInstance();
-	private ServiceManager sm = ServiceManager.getInstance();
+	private ErrorDemon errorDemon = ErrorDemon.getInstance();
+	private Services services = Services.getInstance();
 	private LastFMService lastfm;
 	private Semaphore semaphore;
 	private Track actualTrack;
@@ -65,15 +57,15 @@ public class LastFMTask extends Thread {
 		while(!isInterrupted()) {
 			if(login) {
 				if(!lastfm.isValidAPIConfig()) {
-					eh.showLastFMErrorDialog("LastFM error", "LastFM API Key or Secret are invalid");
-					sm.lastFMLogOut();
+					errorDemon.showLastFMErrorDialog("LastFM error", "LastFM API Key or Secret are invalid");
+					services.lastFMLogOut();
 					break;
 				}	
 				lfm = lastfm.getSession();
 				if(lfm.getStatus().equals("failed"))
 					handleLastFMError(lfm.getError());
 				Platform.runLater(() -> {
-					SceneManager.getInstance().getPreferencesController().endLogin(!end);
+					StageDemon.getInstance().getPreferencesController().endLogin(!end);
 				});			
 				login = false;	
 				if(end)
@@ -96,7 +88,7 @@ public class LastFMTask extends Thread {
 						break;
 				}
 				Platform.runLater(() -> {
-					SceneManager.getInstance().getNavigationController().setStatusMessage("LastFM: track scrobbled & updated");
+					StageDemon.getInstance().getNavigationController().setStatusMessage("LastFM: track scrobbled & updated");
 				});
 			} catch (InterruptedException e) {
 				LOG.warn("Lastfm thread error: {}", e);
@@ -145,8 +137,8 @@ public class LastFMTask extends Thread {
 				errorMessage = error.getMessage();
 		}
 		LOG.info("LastFM error: {}", error.getMessage());
-		eh.showLastFMErrorDialog(errorTitle, errorMessage);
-		sm.lastFMLogOut();
+		errorDemon.showLastFMErrorDialog(errorTitle, errorMessage);
+		services.lastFMLogOut();
 		end = true;
 	}
 }

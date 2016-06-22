@@ -14,52 +14,48 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
-package com.musicott.task;
+package com.musicott.tasks;
 
+import com.musicott.*;
+import com.musicott.model.*;
+import org.slf4j.*;
 
-import java.io.File;
-import java.util.ArrayDeque;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.Semaphore;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.ErrorHandler;
-import com.musicott.model.Track;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author Octavio Calleya
  *
  */
-public class TaskPoolManager {
+public class TaskDemon {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
-	private volatile static TaskPoolManager instance;
+	private volatile static TaskDemon instance;
 	private ParseTask parseTask;
 	private ItunesImportTask itunesImportTask;
 	private Semaphore waveformSemaphore;
 	private Queue<Track> tracksToProcessQueue;
 	private WaveformTask waveformTask;
 	
-	private TaskPoolManager() {
+	private TaskDemon() {
 		tracksToProcessQueue = new ArrayDeque<>();
 		waveformSemaphore = new Semaphore(0);
 	}
 	
-	public static TaskPoolManager getInstance() {
+	public static TaskDemon getInstance() {
 		if(instance == null)
-			instance = new TaskPoolManager();
+			instance = new TaskDemon();
 		return instance;
 	}
 	
 	public void parseItunesLibrary(String path) {
 		if((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning()))
-			ErrorHandler.getInstance().showErrorDialog("There is already an import task running.");
+			ErrorDemon.getInstance().showErrorDialog("There is already an import task running.");
 		else {
 			itunesImportTask = new ItunesImportTask(path);
 			Thread itunesThread = new Thread(itunesImportTask, "Parse Itunes Task");
@@ -71,7 +67,7 @@ public class TaskPoolManager {
 
 	public void parseFiles(List<File> filesToParse, boolean playFinally) {
 		if((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning())) 
-			ErrorHandler.getInstance().showErrorDialog("There is already an import task running.");
+			ErrorDemon.getInstance().showErrorDialog("There is already an import task running.");
 		else {
 			parseTask = new ParseTask(filesToParse, playFinally);
 			Thread parseThread = new Thread(parseTask, "Parse Files Task");

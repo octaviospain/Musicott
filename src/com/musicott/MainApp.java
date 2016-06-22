@@ -14,66 +14,38 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott;
 
-import static com.musicott.SceneManager.LAYOUTS_PATH;
-import static com.musicott.SceneManager.NAVIGATION_LAYOUT;
-import static com.musicott.SceneManager.PLAYER_LAYOUT;
-import static com.musicott.SceneManager.PLAYQUEUE_LAYOUT;
-import static com.musicott.SceneManager.ROOT_LAYOUT;
-import static com.musicott.view.NavigationController.ALL_SONGS_MODE;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
-import java.util.logging.SimpleFormatter;
-
+import com.cedarsoftware.util.io.*;
+import com.musicott.model.*;
+import com.musicott.services.*;
+import com.musicott.util.*;
+import com.musicott.view.*;
+import com.musicott.view.custom.*;
+import com.sun.javafx.application.*;
+import com.sun.javafx.collections.*;
+import javafx.application.*;
+import javafx.application.Preloader.*;
+import javafx.collections.*;
+import javafx.fxml.*;
+import javafx.scene.*;
+import javafx.scene.control.*;
+import javafx.scene.image.*;
+import javafx.scene.layout.*;
+import javafx.stage.*;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
-import com.cedarsoftware.util.io.JsonIoException;
-import com.cedarsoftware.util.io.JsonReader;
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Playlist;
-import com.musicott.model.Track;
-import com.musicott.services.ServiceManager;
-import com.musicott.util.ObservableMapWrapperCreator;
-import com.musicott.view.NavigationController;
-import com.musicott.view.PlayQueueController;
-import com.musicott.view.PlayerController;
-import com.musicott.view.RootController;
-import com.musicott.view.custom.MusicottMenuBar;
-import com.sun.javafx.application.LauncherImpl;
-import com.sun.javafx.collections.ObservableMapWrapper;
+import java.io.*;
+import java.time.*;
+import java.time.format.*;
+import java.util.*;
+import java.util.logging.*;
 
-import javafx.application.Application;
-import javafx.application.Preloader.PreloaderNotification;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableMap;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.image.Image;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
+import static com.musicott.view.MusicottView.*;
 
 /**
  * Creates and launch Musicott
@@ -88,22 +60,23 @@ public class MainApp extends Application {
 	private final String CONFIG_FILE = "resources/config/config.properties";
 	protected static final String FIRST_USE_EVENT = "first_use";
 	private static final String LOGGING_PROPERTIES = "resources/config/logging.properties";
+	private static final String LOG_FILE = "Musicott-main-log.txt";
 	public static final String TRACKS_PERSISTENCE_FILE = "Musicott-tracks.json";
 	public static final String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
 	public static final String PLAYLISTS_PERSISTENCE_FILE = "Musicott-playlists.json";
-	private ErrorHandler eh;
-	private SceneManager sc;
-	private MusicLibrary ml;
-	private MainPreferences pf;
+	private ErrorDemon errorDemon;
+	private StageDemon stageDemon;
+	private MusicLibrary musicLibrary;
+	private MainPreferences preferences;
 	private Stage rootStage;
 	private FXMLLoader rootLoader, playQueueLoader, navigationLoader, playerLoader;
 	private int totalPreloadSteps;
 	
 	public MainApp() {
-		pf = MainPreferences.getInstance();
-		sc = SceneManager.getInstance();
-		eh = ErrorHandler.getInstance();
-		ml = MusicLibrary.getInstance();
+		preferences = MainPreferences.getInstance();
+		stageDemon = StageDemon.getInstance();
+		errorDemon = ErrorDemon.getInstance();
+		musicLibrary = MusicLibrary.getInstance();
 	}
 
 	public static void main(String[] args) {
@@ -113,9 +86,9 @@ public class MainApp extends Application {
 	
 	@Override
 	public void init() throws Exception {
-		if(pf.getMusicottUserFolder() == null || !new File(pf.getMusicottUserFolder()).exists())
+		if(preferences.getMusicottUserFolder() == null || !new File (preferences.getMusicottUserFolder()).exists())
 			LauncherImpl.notifyPreloader(this, new CustomProgressNotification(0, FIRST_USE_EVENT));
-		sc.setApplicationHostServices(getHostServices());
+		stageDemon.setApplicationHostServices(getHostServices());
 		loadConfigProperties();
 		loadWaveforms();
 		loadLayout();
@@ -125,7 +98,7 @@ public class MainApp extends Application {
 	
 	@Override
 	public void start(Stage primaryStage) throws IOException {
-		sc.setMainStage(primaryStage);
+		stageDemon.setMainStage(primaryStage);
 		rootStage = primaryStage;
 		rootStage.setOnCloseRequest(event -> {LOG.info("Exiting Musicott");	System.exit(0);});
 		loadStage();
@@ -138,42 +111,42 @@ public class MainApp extends Application {
 	private void loadStage() {
 		try {
 			LOG.info("Building application");			
-			VBox navigationLayout = (VBox) navigationLoader.load();
+			VBox navigationLayout = navigationLoader.load();
 			NavigationController navigationController = (NavigationController) navigationLoader.getController();
-			sc.setNavigationController(navigationController);
+			stageDemon.setNavigationController(navigationController);
 			LOG.debug("Navigation layout loaded");
 			
-			GridPane playerGridPane = (GridPane) playerLoader.load();
-			PlayerController playerController = (PlayerController) playerLoader.getController();
-			sc.setPlayerController(playerController);
+			GridPane playerGridPane = playerLoader.load();
+			PlayerController playerController = playerLoader.getController();
+			stageDemon.setPlayerController(playerController);
 			TextField searchTextField = (TextField) playerGridPane.lookup("#searchTextField");
 			LOG.debug("Player layout loaded");
 			
-			AnchorPane playQueuePane = (AnchorPane) playQueueLoader.load();
-			PlayQueueController playQueueController = (PlayQueueController) playQueueLoader.getController();
-			sc.setPlayQueueController(playQueueController);		
+			AnchorPane playQueuePane = playQueueLoader.load();
+			PlayQueueController playQueueController = playQueueLoader.getController();
+			stageDemon.setPlayQueueController(playQueueController);		
 			playerController.setPlayQueuePane(playQueuePane);	
 			LOG.debug("Playqueue layout loaded");
 			
 			// Hide playqueue pane if click outside
 			navigationLayout.setOnMouseClicked(e -> playerController.showPlayQueue(false));
 
-			BorderPane rootLayout = (BorderPane) rootLoader.load();			
-			RootController rootController = (RootController) rootLoader.getController();
-			sc.setRootController(rootController);
+			BorderPane rootLayout = rootLoader.load();
+			RootController rootController = rootLoader.getController();
+			stageDemon.setRootController(rootController);
 			LOG.debug("Root layout loaded");
 			
 			BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
 			contentBorderLayout.setBottom(playerGridPane);
 			contentBorderLayout.setLeft(navigationLayout);
-			navigationController.showMode(ALL_SONGS_MODE);
+			navigationController.showMode(NavigationMode.ALL_SONGS_MODE);
 			VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
 			MusicottMenuBar menuBar = new MusicottMenuBar(headerVBox);
 			
 			Scene mainScene = new Scene(rootLayout, 1200, 775);
 			rootStage.setScene(mainScene);
 			rootStage.setTitle("Musicott");
-			rootStage.getIcons().add(new Image(getClass().getResourceAsStream("/images/musicotticon.png")));
+			rootStage.getIcons().add(new Image (getClass().getResourceAsStream("/images/musicotticon.png")));
 			rootStage.setMinWidth(1200);
 			rootStage.setMinHeight(790);
 			rootStage.setMaxWidth(1800);
@@ -188,14 +161,14 @@ public class MainApp extends Application {
 	 * Loads required configuration parameters from a properties file
 	 */
 	private void loadConfigProperties() {
-		Properties prop = new Properties();
+		Properties prop = new Properties ();
 		try {
 			notifyPreloader(0, 4, "Loading configuration...");
 			prop.load(new FileInputStream(CONFIG_FILE));
 			String API_KEY = prop.getProperty("lastfm_api_key");
 			String API_SECRET = prop.getProperty("lastfm_api_secret");
-			ServiceManager.getInstance().getServicesPreferences().setAPISecret(API_SECRET);
-			ServiceManager.getInstance().getServicesPreferences().setAPIKey(API_KEY);		
+			Services.getInstance().getServicesPreferences().setAPISecret(API_SECRET);
+			Services.getInstance().getServicesPreferences().setAPIKey(API_KEY);		
 		} catch (IOException e) {}
 	}
 		
@@ -206,7 +179,7 @@ public class MainApp extends Application {
 	 */
 	private void loadWaveforms() {
 		Map<Integer,float[]> waveformsMap = null;
-		File waveformsFile = new File(pf.getMusicottUserFolder()+File.separator+WAVEFORMS_PERSISTENCE_FILE);
+		File waveformsFile = new File(preferences.getMusicottUserFolder()+File.separator+WAVEFORMS_PERSISTENCE_FILE);
 		if(waveformsFile.exists()) {
 			notifyPreloader(1, 4, "Loading waveforms...");
 			try {
@@ -222,7 +195,7 @@ public class MainApp extends Application {
 		}
 		else
 			waveformsMap = new HashMap<Integer, float[]>();
-		ml.setWaveforms(waveformsMap);
+		musicLibrary.setWaveforms(waveformsMap);
 	}
 	
 	/**
@@ -233,19 +206,19 @@ public class MainApp extends Application {
 		notifyPreloader(2, 4, "Loading layout...");
 		// Root layout
 	    rootLoader = new FXMLLoader();
-		rootLoader.setLocation(getClass().getResource(LAYOUTS_PATH+ROOT_LAYOUT));		
+		rootLoader.setLocation(getClass().getResource(ROOT_LAYOUT));
 		
 		// Dropdown play queue 
 		playQueueLoader = new FXMLLoader();
-		playQueueLoader.setLocation(getClass().getResource(LAYOUTS_PATH+PLAYQUEUE_LAYOUT));
+		playQueueLoader.setLocation(getClass().getResource(PLAYQUEUE_LAYOUT));
 		
 		// Navigation layout
 		navigationLoader = new FXMLLoader();
-		navigationLoader.setLocation(getClass().getResource(LAYOUTS_PATH+NAVIGATION_LAYOUT));
+		navigationLoader.setLocation(getClass().getResource(NAVIGATION_LAYOUT));
 		
 		// Player Layout
 		playerLoader = new FXMLLoader();
-		playerLoader.setLocation(getClass().getResource(LAYOUTS_PATH+PLAYER_LAYOUT));
+		playerLoader.setLocation(getClass().getResource(PLAYER_LAYOUT));
 	}
 	
 	
@@ -256,7 +229,7 @@ public class MainApp extends Application {
 	 */
 	private void loadPlaylists() {
 		List<Playlist> playlists = null;
-		File playlistsFile = new File(pf.getMusicottUserFolder()+File.separator+PLAYLISTS_PERSISTENCE_FILE);
+		File playlistsFile = new File(preferences.getMusicottUserFolder()+File.separator+PLAYLISTS_PERSISTENCE_FILE);
 		int totalPlaylists, step = 0;
 		if(playlistsFile.exists()) {
 			notifyPreloader(3, 4, "Loading playlists...");
@@ -267,23 +240,26 @@ public class MainApp extends Application {
 				totalPlaylists = playlists.size();
 				jsr.close();
 				fis.close();
-				for(Playlist p: playlists) {
-					p.nameProperty().setValue(p.getName());
+				for(Playlist playlist: playlists) {
+					if(playlist.isFolder())
+						playlist.getContainedPlaylists().forEach(
+								childPlaylist -> childPlaylist.nameProperty().setValue(childPlaylist.getName()));
+					playlist.nameProperty().setValue(playlist.getName());
 					notifyPreloader(++step, totalPlaylists, "Loading playlists...");
 				}
 				LOG.info("Loaded playlists from {}", playlistsFile);
 			} catch(IOException e) {
 				LOG.error("Error loading playlists", e);
-				eh.showErrorDialog("Error loading playlists", null, e);
+				errorDemon.showErrorDialog("Error loading playlists", null, e);
 			}
 		}
 		else {
-			playlists = new ArrayList<Playlist>();
-			playlists.add(new Playlist("My Top 10"));
-			playlists.add(new Playlist("Favourites"));
-			playlists.add(new Playlist("To listen later"));
+			playlists = new ArrayList<>();
+			playlists.add(new Playlist("My Top 10", false));
+			playlists.add(new Playlist("Favourites", false));
+			playlists.add(new Playlist("Listen later", false));
 		}
-		ml.setPlaylists(playlists);
+		musicLibrary.setPlaylists(playlists);
 	}
 
 	/**
@@ -293,14 +269,14 @@ public class MainApp extends Application {
 	 */
 	private void loadTracks() {
 		ObservableMap<Integer, Track> map = null;
-		File tracksFile = new File(pf.getMusicottUserFolder()+File.separator+TRACKS_PERSISTENCE_FILE);
+		File tracksFile = new File(preferences.getMusicottUserFolder()+File.separator+TRACKS_PERSISTENCE_FILE);
 		int totalTracks, step = 0;
 		if(tracksFile.exists()) {
 			notifyPreloader(-1, 0, "Loading tracks...");
 			try {
 				FileInputStream fis = new FileInputStream(tracksFile);
 				JsonReader jsr = new JsonReader(fis);
-				JsonReader.assignInstantiator(ObservableMapWrapper.class, new ObservableMapWrapperCreator());
+				JsonReader.assignInstantiator(ObservableMapWrapper.class, new ObservableMapWrapperCreator ());
 				map = (ObservableMap<Integer, Track>) jsr.readObject();
 				totalTracks = map.size();
 				jsr.close();
@@ -342,12 +318,12 @@ public class MainApp extends Application {
 		Handler rootHandler = logger.getHandlers()[0];
 		try {
 			LogManager.getLogManager().readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
-			baseFileHandler = new FileHandler("Musicott-main-log.txt");
+			baseFileHandler = new FileHandler(LOG_FILE);
 			baseFileHandler.setFormatter(new SimpleFormatter() {
 				public String format(LogRecord rec) {
 					StringBuffer str = new StringBuffer();
 					DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss :nnnnnnnnn");
-					str.append(rec.getLoggerName()+" "+rec.getSourceMethodName()+" "+LocalDateTime.now().format(dateFormatter)+"\n");
+					str.append(rec.getLoggerName()+" "+rec.getSourceMethodName()+" "+ LocalDateTime.now().format(dateFormatter)+"\n");
 					str.append(rec.getSequenceNumber()+"\t"+rec.getLevel()+":"+rec.getMessage()+"\n");
 					if(rec.getThrown() != null) {
 						str.append(rec.getThrown()+"\n");

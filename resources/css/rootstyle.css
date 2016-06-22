@@ -12,8 +12,9 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 .root,
@@ -45,7 +46,7 @@
     -fx-highlight-text-fill: white;
 }
 
-.table-row-cell:fillled:focused:selected {
+.table-row-cell:filled:focused:selected {
 	-fx-text-fill: white;
 }
 
@@ -53,28 +54,37 @@
 	-fx-background-color: rgb(243, 243, 243);
 }
 
-.tree-cell {
+.tree-cell:playlist {
 	-fx-graphic: url('../icons/playlist-black-icon.png');
 }
 
-.list-cell:selected, .tree-cell:selected {	
+.tree-cell:playlist-selected {
+	-fx-graphic: url('../icons/playlist-white-icon.png');
+}
+
+.tree-cell:folder {
+	-fx-graphic: url('../icons/playlist-folder-black-icon.png');
+}
+
+.tree-cell:folder-selected {
+	-fx-graphic: url('../icons/playlist-folder-white-icon.png');
+}
+
+.tree-cell:playlist-selected, .tree-cell:folder-selected,
+.list-cell:selected, .tree-cell:selected{
 	-fx-background-color: black;
 	-fx-text-fill: white;
 }
 
-.tree-cell:selected {
-	-fx-graphic: url('../icons/playlist-white-icon.png');
-}
-
 .tree-cell:empty, #showMenuListView .list-cell:empty {
-	-fx-graphic: none;	
+	-fx-graphic: none;
 }
 
 /* The main scrollbar **track** CSS class  */
 #trackTable .scroll-bar:horizontal .track,
 #trackTable .scroll-bar:vertical .track,
 #playlistTreeView  .scroll-bar:horizontal .track,
-#playlistTreeView  .scroll-bar:vertifal .track {
+#playlistTreeView  .scroll-bar:vertical .track {
 	-fx-background-color:transparent;
 	-fx-opacity: 0;
 	-fx-border-color:transparent;
@@ -117,7 +127,7 @@
 #trackTable .scroll-bar:vertical .thumb,
 #playlistTreeView  .scroll-bar:horizontal .thumb,
 #playlistTreeView  .scroll-bar:vertical .thumb	 {
-    -fx-background-color:derive(black,90%);
+    -fx-background-color: derive(black,50%);
 	-fx-background-insets: 2, 0, 0;
 	-fx-background-radius: 2em;
 

@@ -14,28 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.view.custom;
 
-import java.io.ByteArrayInputStream;
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.view.*;
+import javafx.beans.binding.*;
+import javafx.geometry.*;
+import javafx.scene.*;
+import javafx.scene.control.*;
+import javafx.scene.image.*;
+import javafx.scene.layout.*;
 
-import com.musicott.SceneManager;
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Track;
-import com.musicott.view.PlayQueueController;
-
-import javafx.beans.binding.Bindings;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.CacheHint;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import java.io.*;
 
 /**
  * @author Octavio Calleya
@@ -56,14 +50,14 @@ public class TrackQueueRow extends GridPane {
 	public TrackQueueRow(int trackID) {
 		super();
 		this.track = MusicLibrary.getInstance().getTrack(trackID);
-		playQueueController = SceneManager.getInstance().getPlayQueueController();
+		playQueueController = StageDemon.getInstance().getPlayQueueController();
 		placeCover();
 		placeLabels();
 		placeDeleteHoverButton();
 		ColumnConstraints cc1 = new ColumnConstraints(50);
 		ColumnConstraints cc2 = new ColumnConstraints(200);
 		getColumnConstraints().addAll(cc1,cc2);
-		GridPane.setMargin(deleteTrackQueueRowButton, new Insets(1,1,1,200));
+		GridPane.setMargin(deleteTrackQueueRowButton, new Insets (1,1,1,200));
 		GridPane.setMargin(coverImage, new Insets(0,0,0,0));
 		GridPane.setMargin(labelBox, new Insets(1,1,1,5));
 		setOnMouseMoved(event -> deleteTrackQueueRowButton.setVisible(true));
@@ -114,7 +108,7 @@ public class TrackQueueRow extends GridPane {
 		coverImage.setFitHeight(40.0);
 		coverImage.setFitHeight(40.0);
 		if(track.hasCover()) {
-			coverImage.setImage(new Image(new ByteArrayInputStream(track.getCoverBytes())));
+			coverImage.setImage(new Image(new ByteArrayInputStream (track.getCoverBytes())));
 		}
 		else
 			coverImage.setId("coverImage");

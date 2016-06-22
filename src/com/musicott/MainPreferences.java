@@ -14,16 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.util.Arrays;
-import java.util.prefs.Preferences;
+import java.io.*;
+import java.util.*;
+import java.util.prefs.*;
 
-import static com.musicott.task.ItunesImportTask.HOLD_ITUNES_DATA_POLICY;
+import static com.musicott.tasks.ItunesImportTask.*;
 
 /**
  * @author Octavio Calleya
@@ -93,7 +93,7 @@ public class MainPreferences {
 	}
 	
 	public int getItunesImportMetadataPolicy() {
-		return preferences.getInt(ITUNES_IMPORT_METADATA_POLICY, HOLD_ITUNES_DATA_POLICY);
+		return preferences.getInt(ITUNES_IMPORT_METADATA_POLICY, TUNES_DATA_POLICY);
 	}
 	
 	public void setItunesImportHoldPlaycount(boolean holdPlayCount) {

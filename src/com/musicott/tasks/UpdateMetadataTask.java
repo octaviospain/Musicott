@@ -14,31 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
-package com.musicott.task;
+package com.musicott.tasks;
 
-import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import com.musicott.*;
+import com.musicott.model.*;
+import org.jaudiotagger.audio.exceptions.*;
+import org.jaudiotagger.tag.*;
+import org.slf4j.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.CopyOption;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 
-import org.jaudiotagger.audio.exceptions.CannotReadException;
-import org.jaudiotagger.audio.exceptions.CannotWriteException;
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
-import org.jaudiotagger.tag.TagException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.ErrorHandler;
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Track;
+import static java.nio.file.StandardCopyOption.*;
 
 /**
  * @author Octavio Calleya
@@ -83,7 +74,7 @@ public class UpdateMetadataTask extends Thread {
 			}
 		MusicLibrary.getInstance().saveLibrary(true, false, false);
 		if(!updateErrors.isEmpty())
-			ErrorHandler.getInstance().showExpandableErrorsDialog("Errors writing metadata on some tracks", "", updateErrors);
+			ErrorDemon.getInstance().showExpandableErrorsDialog("Errors writing metadata on some tracks", "", updateErrors);
 	}
 	
 	private File makeBackup(Track track) {
@@ -94,7 +85,7 @@ public class UpdateMetadataTask extends Thread {
 			Files.copy(original.toPath(), backup.toPath(), options);
 		} catch (IOException e) {
 			LOG.error("Error creating the backup file: "+e.getMessage(), e);
-			ErrorHandler.getInstance().showErrorDialog("Error creating the backup file", null, e);
+			ErrorDemon.getInstance().showErrorDialog("Error creating the backup file", null, e);
 		}	
 		return backup;
 	}
@@ -106,7 +97,7 @@ public class UpdateMetadataTask extends Thread {
 			Files.move(backup.toPath(), original.toPath(), options);
 		} catch (IOException e) {
 			LOG.error("Error restoring the backup file: "+e.getMessage(), e);
-			ErrorHandler.getInstance().showErrorDialog("Error restoring the backup file", null, e);
+			ErrorDemon.getInstance().showErrorDialog("Error restoring the backup file", null, e);
 		}
 	}
 }

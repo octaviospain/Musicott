@@ -14,15 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.worldsworstsoftware.itunes.parser.logging.ParserStatusUpdateLogger;
-import com.worldsworstsoftware.logging.StatusUpdateLogger;
+import com.worldsworstsoftware.itunes.parser.logging.*;
+import com.worldsworstsoftware.logging.*;
+import org.slf4j.*;
 
 /**
  * Class logger needed by com.worldworstsoftware library

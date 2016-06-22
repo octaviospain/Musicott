@@ -14,40 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.model;
 
-import java.io.File;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.audio.exceptions.CannotReadException;
-import org.jaudiotagger.audio.exceptions.CannotWriteException;
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
-import org.jaudiotagger.tag.TagException;
-
-import com.musicott.ErrorHandler;
-import com.musicott.MainPreferences;
-import com.musicott.SceneManager;
-import com.musicott.util.MetadataUpdater;
-
-import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.Property;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import com.musicott.*;
+import com.musicott.util.*;
+import javafx.application.*;
+import javafx.beans.property.*;
 import javafx.util.Duration;
+import org.jaudiotagger.audio.*;
+import org.jaudiotagger.audio.exceptions.*;
+import org.jaudiotagger.tag.*;
+
+import java.io.*;
+import java.time.*;
+import java.util.*;
 
 /**
  * @author Octavio Calleya
@@ -206,16 +189,16 @@ public class Track {
 		if(getInDisk()) {
 			File file = new File(fileFolder+"/"+fileName);
 			if(!file.exists()) {
-				ErrorHandler.getInstance().showErrorDialog(fileFolder+"/"+fileName+" not found");
+				ErrorDemon.getInstance().showErrorDialog(fileFolder+"/"+fileName+" not found");
 				setInDisk(false);
 				playable = false;
 			}
 			else if(fileFormat.equals("flac") || encoding.startsWith("Apple") || encoder.startsWith("iTunes")) {
 				Platform.runLater(() -> {
 					if(fileFormat.equals("flac"))
-						SceneManager.getInstance().getNavigationController().setStatusMessage("Can't play .flac files yet");
+						StageDemon.getInstance().getNavigationController().setStatusMessage("Can't play .flac files yet");
 					else
-						SceneManager.getInstance().getNavigationController().setStatusMessage("Can't play Apple's .m4a encoded files");
+						StageDemon.getInstance().getNavigationController().setStatusMessage("Can't play Apple's .m4a encoded files");
 				});
 				playable = false;
 			}

@@ -14,50 +14,32 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.view;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.tasks.*;
+import javafx.beans.property.*;
+import javafx.collections.*;
+import javafx.event.*;
+import javafx.fxml.*;
+import javafx.scene.*;
+import javafx.scene.control.*;
+import javafx.scene.image.*;
+import javafx.scene.input.*;
+import javafx.stage.*;
+import javafx.stage.FileChooser.*;
+import org.slf4j.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.ErrorHandler;
-import com.musicott.SceneManager;
-import com.musicott.model.Track;
-import com.musicott.model.TrackField;
-import com.musicott.task.UpdateMetadataTask;
-
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.Property;
-import javafx.beans.property.StringProperty;
-import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
-import javafx.fxml.FXML;
-import javafx.scene.CacheHint;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputControl;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyEvent;
-import javafx.stage.FileChooser;
-import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.stage.Stage;
+import java.io.*;
+import java.nio.file.*;
+import java.time.*;
+import java.util.*;
+import java.util.Map.*;
+import java.util.stream.*;
 
 /**
  * @author Octavio Calleya
@@ -84,8 +66,8 @@ public class EditController {
 	private File newCoverImage;
 	private Stage editStage;
 	private List<Track> trackSelection;
-	private Image defaultImage = SceneManager.getInstance().getRootController().DEFAULT_COVER_IMAGE;
-	
+	private Image defaultImage = StageDemon.getInstance().getDefaultCoverImage();
+
 	public EditController() {}
 	
 	@FXML
@@ -125,7 +107,7 @@ public class EditController {
 				LOG.debug("Choosing cover image");
 				FileChooser chooser = new FileChooser();
 				chooser.setTitle("Open file(s)...");
-				chooser.getExtensionFilters().addAll(new ExtensionFilter("Image files (*.png, *.jpg, *.jpeg)","*.png", "*.jpg", "*.jpeg"));
+				chooser.getExtensionFilters().addAll(new ExtensionFilter ("Image files (*.png, *.jpg, *.jpeg)","*.png", "*.jpg", "*.jpeg"));
 				newCoverImage = chooser.showOpenDialog(editStage);
 				byte[] newCoverBytes;
 				if(newCoverImage != null) {
@@ -134,7 +116,7 @@ public class EditController {
 						coverImage.setImage(new Image(new ByteArrayInputStream(newCoverBytes)));
 					} catch (IOException e) {
 						LOG.error("Error setting image", e);
-						ErrorHandler.getInstance().showErrorDialog("Error setting image", null, e, editStage.getScene());
+						ErrorDemon.getInstance().showErrorDialog("Error setting image", null, e, editStage.getScene());
 					}
 				}
 			}
@@ -180,7 +162,7 @@ public class EditController {
 				changed = true;
 			}
 			if(changed) {
-				track.setDateModified(LocalDateTime.now());				
+				track.setDateModified(LocalDateTime.now());
 				LOG.info("Track {} edited to {}", track.getTrackID(), track);
 			}
 		}
@@ -199,9 +181,9 @@ public class EditController {
 	}
 	
 	private void setFields() {
-		ObservableList<Map.Entry<Integer, Track>> selectionEntries = SceneManager.getInstance().getRootController().getSelectedItems();
+		ObservableList<Entry<Integer, Track>> selectionEntries = StageDemon.getInstance().getRootController().getSelectedItems();
 		trackSelection = selectionEntries.stream().map(Map.Entry::getValue).collect(Collectors.toList());
-		List<String> valuesList = new ArrayList<String>();
+		List<String> valuesList = new ArrayList<>();
 		for(TrackField field: editFieldsMap.keySet()) {
 			for(Track t: trackSelection) {
 				Map<TrackField, Property<?>> propertyMap = t.getPropertiesMap();

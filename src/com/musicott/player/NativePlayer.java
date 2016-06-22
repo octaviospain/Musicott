@@ -14,16 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2005, 2006 Octavio Calleya
  */
 
 package com.musicott.player;
 
-import java.io.File;
-
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
-
 import com.musicott.model.Track;
+import javafx.scene.media.*;
+
+import java.io.*;
 
 /**
  * @author Octavio Calleya
