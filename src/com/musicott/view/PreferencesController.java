@@ -41,7 +41,7 @@ import static com.musicott.tasks.ItunesImportTask.*;
  * @author Octavio Calleya
  *
  */
-public class PreferencesController implements MusicottController {
+public class PreferencesController {
 	
 	@FXML
 	private TextField folderLocationTextField, lastfmUsernameTextField;

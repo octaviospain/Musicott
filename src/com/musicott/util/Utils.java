@@ -27,7 +27,7 @@ import java.util.*;
  * or other operations utilities to be used for the application
  * 
  * @author Octavio Calleya
- *
+ * @version 0.9
  */
 public class Utils {
 	
@@ -140,5 +140,88 @@ public class Utils {
 			}
 		}
 		return byteSizeString;
+	}
+
+	/**
+	 * This class implements <code>{@link java.io.FileFilter}</code> to
+	 * accept a file with some of the given extensions. If no extensions are given
+	 * the file is not accepted. The extensions must be given without the dot.
+	 *
+	 * @author Octavio Calleya
+	 */
+	public static class ExtensionFileFilter implements FileFilter {
+
+		private String[] extensions;
+		private int numExtensions;
+
+		public ExtensionFileFilter(String... extensions) {
+			this.extensions = extensions;
+			numExtensions = extensions.length;
+		}
+
+		public ExtensionFileFilter() {
+			extensions = new String[] {};
+			numExtensions = 0;
+		}
+
+		public void addExtension(String ext) {
+			boolean contains = false;
+			for(String e: extensions)
+				if(e != null && ext.equals(e))
+					contains = true;
+			if(!contains) {
+				ensureArrayLength();
+				extensions[numExtensions++] = ext;
+			}
+		}
+
+		public void removeExtension(String ext) {
+			for(int i=0; i<extensions.length; i++)
+				if(extensions[i].equals(ext)) {
+					extensions[i] = null;
+					numExtensions--;
+				}
+			extensions = Arrays.copyOf(extensions, numExtensions);
+		}
+
+		public boolean hasExtension(String ext) {
+			for(String e: extensions)
+				if(ext.equals(e))
+					return true;
+			return false;
+		}
+
+		public void setExtensions(String... extensions) {
+			if(extensions == null)
+				this.extensions = new String[] {};
+			else
+				this.extensions = extensions;
+			numExtensions = this.extensions.length;
+		}
+
+		public String[] getExtensions() {
+			return extensions;
+		}
+
+		private void ensureArrayLength() {
+			if(numExtensions == extensions.length)
+				extensions = Arrays.copyOf(extensions, numExtensions == 0 ? 1 : 2*numExtensions);
+
+		}
+
+		@Override
+		public boolean accept(File pathname) {
+			boolean res = false;
+			if(!pathname.isDirectory() && !pathname.isHidden()) {
+				int pos = pathname.getName().lastIndexOf(".");
+				if(pos != -1) {
+					String extension = pathname.getName().substring(pos+1);
+					for(String requiredExtension: extensions)
+						if(extension.equals(requiredExtension))
+							res = true;
+				}
+			}
+			return res;
+		}
 	}
 }

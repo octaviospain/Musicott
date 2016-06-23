@@ -35,28 +35,31 @@ import static com.musicott.MainApp.*;
 import static com.musicott.view.MusicottController.*;
 
 /**
- * @author Octavio Calleya
+ * Preloader of the application. Shows the progress of the tasks of
+ * loading the tracks, the playlists, and the waveforms.
+ * If it is the first use of the application a prompt dialog asks the user
+ * to enter the location of the application folder.
  *
+ * @author Octavio Calleya
+ * @version 0.9
  */
 public class MainPreloader extends Preloader {
 
-	private MainPreferences preferences;
+	private static final int SCENE_WIDTH = 450;
+	private static final int SCENE_HEIGTH = 120;
+
+	private ErrorDemon errorDemon = ErrorDemon.getInstance();
+	private MainPreferences preferences = MainPreferences.getInstance();
 	private Stage preloaderStage;
 	private Scene preloaderScene;
-	private Image musicottIcon;
-	private ImageView musicottImageView;
+	private Image musicottIcon = new Image (getClass().getResourceAsStream(MUSICOTT_ICON));
+	private ImageView musicottImageView = new ImageView(musicottIcon);
 	private Label infoLabel;
 	private ProgressBar preloaderProgressBar;
-	
-	public MainPreloader() {
-		preferences = MainPreferences.getInstance();
-	}
-	
+
 	@Override
     public void init() throws Exception {
         Platform.runLater(() -> {
-        	musicottIcon = new Image("file:resources/images/musicotticon.png");
-        	musicottImageView = new ImageView(musicottIcon);
         	infoLabel = new Label();
             preloaderProgressBar = new ProgressBar();
             preloaderProgressBar.setPrefSize(300, 20.0);
@@ -83,12 +86,12 @@ public class MainPreloader extends Preloader {
 	
 	@Override
 	public void handleApplicationNotification(PreloaderNotification info) {
-		CustomProgressNotification pn = (CustomProgressNotification) info;
-		if(pn.getDetails().equals(FIRST_USE_EVENT))
+		CustomProgressNotification progressNotification = (CustomProgressNotification) info;
+		if(progressNotification.getDetails().equals(FIRST_USE_EVENT))
 			openFirstUseDialog();
 		else {
-			preloaderProgressBar.setProgress(pn.getProgress());
-			infoLabel.setText(pn.getDetails());
+			preloaderProgressBar.setProgress(progressNotification.getProgress());
+			infoLabel.setText(progressNotification.getDetails());
 		}
 	}
 	
@@ -109,33 +112,38 @@ public class MainPreloader extends Preloader {
                 break;
         }
     }
-    
-    private void openFirstUseDialog() {
+
+	/**
+	 * Shows a window asking the user to enter the location of the application folder.
+	 * The default location is <tt>~/Music/Musicott</tt>
+	 */
+	private void openFirstUseDialog() {
     	try {
 			Stage promptStage = new Stage();
-        	FXMLLoader loader = new FXMLLoader ();
-        	loader.setLocation(getClass().getResource(PRELOADER_LAYOUT));
-			AnchorPane pane = (AnchorPane) loader.load();
-			Button openButton = (Button) pane.lookup("#openButton");
-			Button okButton = (Button) pane.lookup("#okButton");
-			TextField musicottFolderTextField = (TextField) pane.lookup("#musicottFolderTextField");
-			
-			String defaultMusicottLocation = System.getProperty("user.home")+File.separator+"Music"+File.separator+"Musicott";
+			AnchorPane preloaderPane = FXMLLoader.load(getClass().getResource(PRELOADER_LAYOUT));
+			Button openButton = (Button) preloaderPane.lookup("#openButton");
+			Button okButton = (Button) preloaderPane.lookup("#okButton");
+			TextField musicottFolderTextField = (TextField) preloaderPane.lookup("#musicottFolderTextField");
+
+			String sep = File.separator;
+			String userHome =  System.getProperty("user.home");
+			String defaultMusicottLocation = userHome + sep + "Music" + sep +"Musicott";
 			musicottFolderTextField.setText(defaultMusicottLocation);
+
 			okButton.setOnMouseClicked(event -> {
 				preferences.setMusicottUserFolder(musicottFolderTextField.getText());
 				promptStage.close();
 			});
 			openButton.setOnMouseClicked(event -> {
 				DirectoryChooser chooser = new DirectoryChooser();
-				chooser.setInitialDirectory(new File (System.getProperty("user.home")));
+				chooser.setInitialDirectory(new File (userHome));
 				chooser.setTitle("Choose Musicott folder");
 				File folder = chooser.showDialog(promptStage);
 				if(folder != null)
 					musicottFolderTextField.setText(folder.toString());
 			});
 			
-			Scene promptScene = new Scene(pane, 450, 120);
+			Scene promptScene = new Scene(preloaderPane, SCENE_WIDTH, SCENE_HEIGTH);
 			promptStage.setOnCloseRequest(event -> preferences.setMusicottUserFolder(defaultMusicottLocation));
 			promptStage.initModality(Modality.APPLICATION_MODAL);
 			promptStage.initOwner(preloaderStage.getOwner());
@@ -143,7 +151,7 @@ public class MainPreloader extends Preloader {
 			promptStage.setScene(promptScene);
 			promptStage.showAndWait();
 		} catch (IOException e) {
-			ErrorDemon.getInstance().showErrorDialog("Error opening Musicott's folder selection", null, e);
+			errorDemon.showErrorDialog("Error opening Musicott's folder selection", null, e);
 		}
     }
 }

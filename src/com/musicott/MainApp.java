@@ -47,19 +47,21 @@ import java.util.logging.*;
 public class MainApp extends Application {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private final String CONFIG_FILE = "resources/config/config.properties";
-	protected static final String FIRST_USE_EVENT = "first_use";
+	private static final String CONFIG_FILE = "resources/config/config.properties";
 	private static final String LOGGING_PROPERTIES = "resources/config/logging.properties";
 	private static final String LOG_FILE = "Musicott-main-log.txt";
+	
 	public static final String TRACKS_PERSISTENCE_FILE = "Musicott-tracks.json";
 	public static final String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
 	public static final String PLAYLISTS_PERSISTENCE_FILE = "Musicott-playlists.json";
+	public static final String FIRST_USE_EVENT = "first_use";
+
 	private ErrorDemon errorDemon;
 	private StageDemon stageDemon;
 	private MusicLibrary musicLibrary;
 	private MainPreferences preferences;
 	private Stage rootStage;
-	private int totalPreloadSteps;
+	private int numPreloaderSteps;
 	
 	public MainApp() {
 		preferences = MainPreferences.getInstance();
@@ -69,7 +71,7 @@ public class MainApp extends Application {
 	}
 
 	public static void main(String[] args) {
-		prepareLogger();
+		initializeLogger();
 		LauncherImpl.launchApplication(MainApp.class, MainPreloader.class, args);
 	}
 	
@@ -103,11 +105,13 @@ public class MainApp extends Application {
 		try {
 			notifyPreloader(0, 4, "Loading configuration...");
 			prop.load(new FileInputStream(CONFIG_FILE));
-			String API_KEY = prop.getProperty("lastfm_api_key");
-			String API_SECRET = prop.getProperty("lastfm_api_secret");
-			Services.getInstance().getServicesPreferences().setAPISecret(API_SECRET);
-			Services.getInstance().getServicesPreferences().setAPIKey(API_KEY);		
-		} catch (IOException e) {}
+			String apiKey = prop.getProperty("lastfm_api_key");
+			String apiSecret = prop.getProperty("lastfm_api_secret");
+			Services.getInstance().getServicesPreferences().setAPISecret(apiSecret);
+			Services.getInstance().getServicesPreferences().setAPIKey(apiKey);
+		} catch (IOException e) {
+			errorDemon.showErrorDialog("Error", "Error loading Musicott", e);
+		}
 	}
 		
 	/**
@@ -116,7 +120,7 @@ public class MainApp extends Application {
 	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
 	 */
 	private void loadWaveforms() {
-		Map<Integer,float[]> waveformsMap = null;
+		Map<Integer, float[]> waveformsMap = null;
 		File waveformsFile = new File(preferences.getMusicottUserFolder()+File.separator+WAVEFORMS_PERSISTENCE_FILE);
 		if(waveformsFile.exists()) {
 			notifyPreloader(1, 4, "Loading waveforms...");
@@ -132,41 +136,20 @@ public class MainApp extends Application {
 			}
 		}
 		else
-			waveformsMap = new HashMap<Integer, float[]>();
+			waveformsMap = new HashMap<>();
 		musicLibrary.setWaveforms(waveformsMap);
 	}
 	
 	/**
-	 * Loads the playlists from a saved file formatted in JSON using Json-IO
-	 * 
-	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
+	 * Loads the playlists from a file or created a predefined ones
 	 */
 	private void loadPlaylists() {
-		List<Playlist> playlists = null;
-		File playlistsFile = new File(preferences.getMusicottUserFolder()+File.separator+PLAYLISTS_PERSISTENCE_FILE);
-		int totalPlaylists, step = 0;
-		if(playlistsFile.exists()) {
-			notifyPreloader(3, 4, "Loading playlists...");
-			try {
-				FileInputStream fis = new FileInputStream(playlistsFile);
-				JsonReader jsr = new JsonReader(fis);
-				playlists = (List<Playlist>) jsr.readObject();
-				totalPlaylists = playlists.size();
-				jsr.close();
-				fis.close();
-				for(Playlist playlist: playlists) {
-					if(playlist.isFolder())
-						playlist.getContainedPlaylists().forEach(
-								childPlaylist -> childPlaylist.nameProperty().setValue(childPlaylist.getName()));
-					playlist.nameProperty().setValue(playlist.getName());
-					notifyPreloader(++step, totalPlaylists, "Loading playlists...");
-				}
-				LOG.info("Loaded playlists from {}", playlistsFile);
-			} catch(IOException e) {
-				LOG.error("Error loading playlists", e);
-				errorDemon.showErrorDialog("Error loading playlists", null, e);
-			}
-		}
+		String applicationFolder = preferences.getMusicottUserFolder();
+		String playlistsPath = applicationFolder + File.separator+PLAYLISTS_PERSISTENCE_FILE;
+		File playlistsFile = new File(playlistsPath);
+		List<Playlist> playlists;
+		if(playlistsFile.exists())
+			playlists = parsePlaylistFromJsonFile(playlistsFile);
 		else {
 			playlists = new ArrayList<>();
 			playlists.add(new Playlist("My Top 10", false));
@@ -177,6 +160,40 @@ public class MainApp extends Application {
 	}
 
 	/**
+	 * Loads the playlists from a saved file formatted in JSON using Json-IO
+	 *
+	 * @param playlistsFile The JSON formatted file of the playlists
+	 * @return a <tt>List</tt> of playlists or null if an error was found
+	 */
+	private List<Playlist> parsePlaylistFromJsonFile(File playlistsFile) {
+		notifyPreloader(3, 4, "Loading playlists...");
+		List<Playlist> playlists;
+		int totalPlaylists;
+		int step = 0;
+		try {
+			FileInputStream fis = new FileInputStream(playlistsFile);
+			JsonReader jsr = new JsonReader(fis);
+			playlists = (List<Playlist>) jsr.readObject();
+			totalPlaylists = playlists.size();
+			jsr.close();
+			fis.close();
+			for(Playlist playlist: playlists) {
+				if(playlist.isFolder())
+					playlist.getContainedPlaylists().forEach(
+							childPlaylist -> childPlaylist.nameProperty().setValue(childPlaylist.getName()));
+				playlist.nameProperty().setValue(playlist.getName());
+				notifyPreloader(++step, totalPlaylists, "Loading playlists...");
+			}
+			LOG.info("Loaded playlists from {}", playlistsFile);
+		} catch(IOException e) {
+			playlists = null;
+			LOG.error("Error loading playlists", e);
+			errorDemon.showErrorDialog("Error loading playlists", null, e);
+		}
+		return playlists;
+	}
+
+	/**
 	 * Loads the track map collection from a saved file formatted in JSON using Json-IO
 	 * 
 	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
@@ -184,9 +201,12 @@ public class MainApp extends Application {
 	private void loadTracks() {
 		ObservableMap<Integer, Track> map = null;
 		File tracksFile = new File(preferences.getMusicottUserFolder()+File.separator+TRACKS_PERSISTENCE_FILE);
-		int totalTracks, step = 0;
+		int totalTracks;
+		int step = 0;
+
 		if(tracksFile.exists()) {
 			notifyPreloader(-1, 0, "Loading tracks...");
+
 			try {
 				FileInputStream fis = new FileInputStream(tracksFile);
 				JsonReader jsr = new JsonReader(fis);
@@ -226,17 +246,19 @@ public class MainApp extends Application {
 	/**
 	 * Builds and sets the logger to a file in the root of the application folder
 	 */
-	private static void prepareLogger() {
+	private static void initializeLogger() {
 		Handler baseFileHandler;
 		java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
 		Handler rootHandler = logger.getHandlers()[0];
+
 		try {
 			LogManager.getLogManager().readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
 			baseFileHandler = new FileHandler(LOG_FILE);
 			baseFileHandler.setFormatter(new SimpleFormatter() {
+
 				@Override
 				public String format(LogRecord rec) {
-					StringBuffer str = new StringBuffer();
+					StringBuilder str = new StringBuilder();
 					DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss :nnnnnnnnn");
 					str.append(rec.getLoggerName()+" "+rec.getSourceMethodName()+" "+ LocalDateTime.now().format(dateFormatter)+"\n");
 					str.append(rec.getSequenceNumber()+"\t"+rec.getLevel()+":"+rec.getMessage()+"\n");
@@ -248,10 +270,12 @@ public class MainApp extends Application {
 					return str.toString();
 				}
 			});
+
 			LogManager.getLogManager().getLogger("").removeHandler(rootHandler);
 			LogManager.getLogManager().getLogger("").addHandler(baseFileHandler);
-		} catch (SecurityException | IOException e) {
-			e.printStackTrace();
+		} catch (SecurityException | IOException exception) {
+			System.err.println("Error iniciating logger");
+			exception.printStackTrace();
 		}
 	}
 	
@@ -259,22 +283,21 @@ public class MainApp extends Application {
 	 * Handles a notification to be shown in the preloader stage
 	 * 
 	 * @param step The step number of the preloader process
-	 * @param totalWork The total numer of steps of the preloader process
+	 * @param totalSteps The total number of steps of the preloader process
 	 * @param detailMessage A notification message to be shown in the preloader
 	 */
-	private void notifyPreloader(int step, int totalWork, String detailMessage) {
-		if(totalWork != 0)
-			this.totalPreloadSteps = totalWork;
+	private void notifyPreloader(int step, int totalSteps, String detailMessage) {
+		if(totalSteps != 0)
+			numPreloaderSteps = totalSteps;
 		else
-			this.totalPreloadSteps = 3;
-		double progress = (double) step/this.totalPreloadSteps;
+			numPreloaderSteps = 3;
+		double progress = (double) step/numPreloaderSteps;
 		LauncherImpl.notifyPreloader(this, new CustomProgressNotification(progress, detailMessage));
 	}
 	
 	/**
 	 * Extends from {@link PreloaderNotification} to encapsulate progress and message
 	 * of a preloader application process
-	 *
 	 */
 	class CustomProgressNotification implements PreloaderNotification {
 		
