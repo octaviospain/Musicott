@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2005, 2006 Octavio Calleya
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.view;
@@ -40,9 +40,9 @@ import java.util.Map.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @version 0.9
  */
-public class RootController {
+public class RootController implements MusicottController {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 

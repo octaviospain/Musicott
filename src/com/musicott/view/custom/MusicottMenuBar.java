@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2005, 2006 Octavio Calleya
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.view.custom;
@@ -44,10 +44,10 @@ import java.util.*;
 import static javafx.scene.input.KeyCodeCombination.ALT_DOWN;
 
 /**
- * Creates a MenuBar or a native OS X menu bar for Musicott
+ * Creates a MenuBar or a native OS X menu bar
  * 
  * @author Octavio Calleya
- *
+ * @version 0.9
  */
 public class MusicottMenuBar extends MenuBar {
 	
@@ -58,11 +58,9 @@ public class MusicottMenuBar extends MenuBar {
 	private Menu fileMN, editMN, controlsMN, viewMN, aboutMN;
 	private MenuItem openFileMI, importFolderMI, importItunesMI, preferencesMI, editMI, deleteMI, prevMI, nextMI, volIncrMI, volDecrMI, selCurrMI, aboutMI;
 	private MenuItem newPlaylistMI, showHideNavigationPaneMI, showHideTableInfoPaneMI;
-	private VBox headerVBox;
 	
-	public MusicottMenuBar(VBox headerMenuBarVBox) {
+	public MusicottMenuBar(VBox headerVBox) {
 		super();
-		headerVBox = headerMenuBarVBox;
 		String os = System.getProperty ("os.name");
 		// Key acceleratos. Command down for os x and control down for windows and linux
 		Modifier keyModifierOS = os != null && os.startsWith ("Mac") ? KeyCodeCombination.META_DOWN : KeyCodeCombination.CONTROL_DOWN;
@@ -114,7 +112,7 @@ public class MusicottMenuBar extends MenuBar {
 			fileMN.getItems().addAll(new SeparatorMenuItem(), preferencesMI, new SeparatorMenuItem(), closeMI);
 			
 			getMenus().addAll(fileMN, editMN, controlsMN, viewMN, aboutMN);
-	
+
 			headerVBox.getChildren().add(0, this);
 			LOG.debug("Default menubar created");
 		}
@@ -222,7 +220,7 @@ public class MusicottMenuBar extends MenuBar {
 			if(xmlFile != null) 
 				TaskDemon.getInstance().parseItunesLibrary(xmlFile.getAbsolutePath());
 		});
-		preferencesMI.setOnAction(e -> stageDemon.openPreferencesScene());
+		preferencesMI.setOnAction(e -> stageDemon.showPreferences());
 	}
 	
 	private void setEditMenuActions() {

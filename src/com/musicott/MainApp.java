@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2005, 2006 Octavio Calleya
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott;
@@ -23,18 +23,11 @@ import com.cedarsoftware.util.io.*;
 import com.musicott.model.*;
 import com.musicott.services.*;
 import com.musicott.util.*;
-import com.musicott.view.*;
-import com.musicott.view.custom.*;
 import com.sun.javafx.application.*;
 import com.sun.javafx.collections.*;
 import javafx.application.*;
 import javafx.application.Preloader.*;
 import javafx.collections.*;
-import javafx.fxml.*;
-import javafx.scene.*;
-import javafx.scene.control.*;
-import javafx.scene.image.*;
-import javafx.scene.layout.*;
 import javafx.stage.*;
 import org.slf4j.Logger;
 import org.slf4j.*;
@@ -45,13 +38,10 @@ import java.time.format.*;
 import java.util.*;
 import java.util.logging.*;
 
-import static com.musicott.view.MusicottView.*;
-
 /**
  * Creates and launch Musicott
  * 
  * @author Octavio Calleya
- *
  */
 @SuppressWarnings({"restriction", "unchecked", "unused"})
 public class MainApp extends Application {
@@ -69,7 +59,6 @@ public class MainApp extends Application {
 	private MusicLibrary musicLibrary;
 	private MainPreferences preferences;
 	private Stage rootStage;
-	private FXMLLoader rootLoader, playQueueLoader, navigationLoader, playerLoader;
 	private int totalPreloadSteps;
 	
 	public MainApp() {
@@ -91,70 +80,19 @@ public class MainApp extends Application {
 		stageDemon.setApplicationHostServices(getHostServices());
 		loadConfigProperties();
 		loadWaveforms();
-		loadLayout();
 		loadPlaylists();
 		loadTracks();
 	}	
 	
 	@Override
 	public void start(Stage primaryStage) throws IOException {
-		stageDemon.setMainStage(primaryStage);
 		rootStage = primaryStage;
-		rootStage.setOnCloseRequest(event -> {LOG.info("Exiting Musicott");	System.exit(0);});
-		loadStage();
-		LOG.debug("Showing root stage");
-	}
-
-	/**
-	 * Builds the root stage and layouts
-	 */
-	private void loadStage() {
-		try {
-			LOG.info("Building application");			
-			VBox navigationLayout = navigationLoader.load();
-			NavigationController navigationController = (NavigationController) navigationLoader.getController();
-			stageDemon.setNavigationController(navigationController);
-			LOG.debug("Navigation layout loaded");
-			
-			GridPane playerGridPane = playerLoader.load();
-			PlayerController playerController = playerLoader.getController();
-			stageDemon.setPlayerController(playerController);
-			TextField searchTextField = (TextField) playerGridPane.lookup("#searchTextField");
-			LOG.debug("Player layout loaded");
-			
-			AnchorPane playQueuePane = playQueueLoader.load();
-			PlayQueueController playQueueController = playQueueLoader.getController();
-			stageDemon.setPlayQueueController(playQueueController);		
-			playerController.setPlayQueuePane(playQueuePane);	
-			LOG.debug("Playqueue layout loaded");
-			
-			// Hide playqueue pane if click outside
-			navigationLayout.setOnMouseClicked(e -> playerController.showPlayQueue(false));
-
-			BorderPane rootLayout = rootLoader.load();
-			RootController rootController = rootLoader.getController();
-			stageDemon.setRootController(rootController);
-			LOG.debug("Root layout loaded");
-			
-			BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
-			contentBorderLayout.setBottom(playerGridPane);
-			contentBorderLayout.setLeft(navigationLayout);
-			navigationController.showMode(NavigationMode.ALL_SONGS_MODE);
-			VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
-			MusicottMenuBar menuBar = new MusicottMenuBar(headerVBox);
-			
-			Scene mainScene = new Scene(rootLayout, 1200, 775);
-			rootStage.setScene(mainScene);
-			rootStage.setTitle("Musicott");
-			rootStage.getIcons().add(new Image (getClass().getResourceAsStream("/images/musicotticon.png")));
-			rootStage.setMinWidth(1200);
-			rootStage.setMinHeight(790);
-			rootStage.setMaxWidth(1800);
-			rootStage.show();
-		} catch (IOException | RuntimeException e) {
-			LOG.error("Error", e);
+		rootStage.setOnCloseRequest(event -> {
+			LOG.info("Exiting Musicott");
 			System.exit(0);
-		}
+		});
+		stageDemon.showMusicott(primaryStage);
+		LOG.debug("Showing root stage");
 	}
 	
 	/**
@@ -197,30 +135,6 @@ public class MainApp extends Application {
 			waveformsMap = new HashMap<Integer, float[]>();
 		musicLibrary.setWaveforms(waveformsMap);
 	}
-	
-	/**
-	 * Preloads the layouts in the preloader
-	 */
-	private void loadLayout() {
-		LOG.debug("Loading layouts");
-		notifyPreloader(2, 4, "Loading layout...");
-		// Root layout
-	    rootLoader = new FXMLLoader();
-		rootLoader.setLocation(getClass().getResource(ROOT_LAYOUT));
-		
-		// Dropdown play queue 
-		playQueueLoader = new FXMLLoader();
-		playQueueLoader.setLocation(getClass().getResource(PLAYQUEUE_LAYOUT));
-		
-		// Navigation layout
-		navigationLoader = new FXMLLoader();
-		navigationLoader.setLocation(getClass().getResource(NAVIGATION_LAYOUT));
-		
-		// Player Layout
-		playerLoader = new FXMLLoader();
-		playerLoader.setLocation(getClass().getResource(PLAYER_LAYOUT));
-	}
-	
 	
 	/**
 	 * Loads the playlists from a saved file formatted in JSON using Json-IO
@@ -320,6 +234,7 @@ public class MainApp extends Application {
 			LogManager.getLogManager().readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
 			baseFileHandler = new FileHandler(LOG_FILE);
 			baseFileHandler.setFormatter(new SimpleFormatter() {
+				@Override
 				public String format(LogRecord rec) {
 					StringBuffer str = new StringBuffer();
 					DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss :nnnnnnnnn");

@@ -14,12 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2005, 2006 Octavio Calleya
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.model;
 
-import com.musicott.*;
+import com.musicott.view.*;
 import javafx.beans.property.*;
 import javafx.scene.image.*;
 
@@ -32,6 +32,8 @@ import java.util.*;
  */
 public class Playlist {
 
+	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(MusicottController.DEFAULT_COVER_IMAGE));
+
 	private String name;
 	private List<Integer> tracksID;
 	private List<Integer> containedTracksID;
@@ -43,8 +45,6 @@ public class Playlist {
 	private BooleanProperty folderProperty;
 
 	private MusicLibrary musicLibrary =  MusicLibrary.getInstance();
-
-	private Image defaultImage = StageDemon.getInstance().getDefaultCoverImage();
 	
 	public Playlist(String name, boolean isFolder) {
 		this.name = name;
@@ -53,7 +53,7 @@ public class Playlist {
 		containedPlaylists = new ArrayList<>();
 		nameProperty = new SimpleStringProperty(this.name);
 		nameProperty.addListener((obs, oldName, newName) -> setName(newName));
-		playlistCoverProperty = new SimpleObjectProperty<>(defaultImage);
+		playlistCoverProperty = new SimpleObjectProperty<>(COVER_IMAGE);
 		folderProperty = new SimpleBooleanProperty(this.isFolder);
 	}
 	
@@ -96,7 +96,7 @@ public class Playlist {
 	}
 
 	public ObjectProperty<Image> playlistCoverProperty() {
-		if(playlistCoverProperty.get().equals(defaultImage) && !tracksID.isEmpty())
+		if(playlistCoverProperty.get().equals(COVER_IMAGE) && !tracksID.isEmpty())
 			changePlaylistCover();
 		return playlistCoverProperty;
 	}
@@ -120,10 +120,10 @@ public class Playlist {
 			if(randomTrack.hasCover())
 				playlistCoverProperty.set(new Image(new ByteArrayInputStream(randomTrack.getCoverBytes())));
 			else
-				playlistCoverProperty.set(defaultImage);
+				playlistCoverProperty.set(COVER_IMAGE);
 		}
 		else
-			playlistCoverProperty.set(defaultImage);
+			playlistCoverProperty.set(COVER_IMAGE);
 	}
 
 	@Override

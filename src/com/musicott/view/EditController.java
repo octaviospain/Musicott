@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2005, 2006 Octavio Calleya
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.view;
@@ -45,9 +45,10 @@ import java.util.stream.*;
  * @author Octavio Calleya
  *
  */
-public class EditController {
+public class EditController implements MusicottController {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
 
 	@FXML
 	private TextField name, artist, album, albumArtist, genre, label, year, bpm, trackNum, discNum;
@@ -66,7 +67,6 @@ public class EditController {
 	private File newCoverImage;
 	private Stage editStage;
 	private List<Track> trackSelection;
-	private Image defaultImage = StageDemon.getInstance().getDefaultCoverImage();
 
 	public EditController() {}
 	
@@ -100,7 +100,7 @@ public class EditController {
 		year.addEventFilter(KeyEvent.KEY_TYPED, nonNumericFilter);
 		year.addEventFilter(KeyEvent.KEY_TYPED, event -> {if(year.getText().length() == 4) event.consume();});
 		
-		coverImage.setImage(defaultImage);
+		coverImage.setImage(COVER_IMAGE);
 		coverImage.setCacheHint(CacheHint.QUALITY);
 		coverImage.setOnMouseClicked(event -> {
 			if(event.getClickCount() <= 2) {
@@ -207,7 +207,7 @@ public class EditController {
 		if(commonCover != null)
 			coverImage.setImage(new Image(new ByteArrayInputStream(commonCover)));
 		else
-			coverImage.setImage(defaultImage);
+			coverImage.setImage(COVER_IMAGE);
 
 		if(!matchCommonCompilation())
 			isCompilationCheckBox.setIndeterminate(true);

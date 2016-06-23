@@ -14,13 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2005, 2006 Octavio Calleya
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott;
 
 import com.musicott.model.*;
 import com.musicott.view.*;
+import com.musicott.view.custom.*;
 import javafx.application.*;
 import javafx.collections.*;
 import javafx.fxml.*;
@@ -37,29 +38,33 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
-import static com.musicott.view.MusicottView.*;
+import static com.musicott.view.MusicottController.*;
 
 /**
- * @author Octavio Calleya
+ * Singleton class that isolates the creation of the view's components,
+ * the access to their controllers and the handling of showing/hiding views
  *
+ * @author Octavio Calleya
+ * @version 0.9
  */
 public class StageDemon {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
 
-	private Stage mainStage, editStage, progressStage, preferencesStage;
-	
-	private EditController editController;
-	private RootController rootController;
-	private NavigationController navigationController;
-	private PlayQueueController playQueueController;
-	private PreferencesController preferencesController;
-	private PlayerController playerController;
-	
 	private static StageDemon instance;
 	private static ErrorDemon errorDemon;
-	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+	private static MusicLibrary musicLibrary = MusicLibrary.getInstance();
+
+	private Stage mainStage;
+	private Stage editStage;
+	private Stage progressStage;
+	private Stage preferencesStage;
+
+	/**
+	 * Stores the controllers of each layout view
+	 */
+	private Map<String, MusicottController> controllers = new HashMap<>();
+
 	private HostServices hostServices;
 	
 	private StageDemon() {}
@@ -72,10 +77,6 @@ public class StageDemon {
 		return instance;
 	}
 	
-	protected void setMainStage(Stage mainStage) {
-		this.mainStage = mainStage;
-	}
-	
 	public Stage getMainStage() {
 		return mainStage;
 	}
@@ -83,107 +84,180 @@ public class StageDemon {
 	protected Stage getPreferencesStage() {
 		return preferencesStage;
 	}
-	
-	protected void setRootController(RootController rootController) {
-		this.rootController = rootController;
-	}
-	
-	public RootController getRootController() {
-		return rootController;
-	}
-	
-	protected void setNavigationController(NavigationController navigationController) {
-		this.navigationController = navigationController;
-	}
-	
-	public NavigationController getNavigationController() {
-		return navigationController;
-	}
-	
-	protected void setPlayQueueController(PlayQueueController playQueueController) {
-		this.playQueueController = playQueueController;
-	}
-	
-	public PlayQueueController getPlayQueueController() {
-		return playQueueController;
-	}
-	
-	protected void setPlayerController(PlayerController playerController) {
-		this.playerController = playerController;
-	}
-	
-	public PlayerController getPlayerController() {
-		return playerController;
-	}
-	
-	public PreferencesController getPreferencesController() {
-		return preferencesController;
-	}
-	
+
 	public void setApplicationHostServices(HostServices hostServices) {
 		this.hostServices= hostServices;
 	}
-	
+
 	public HostServices getApplicationHostServices() {
 		return hostServices;
 	}
 
-	public Image getDefaultCoverImage() {
-		return COVER_IMAGE;
+	public RootController getRootController() {
+		return (RootController) controllers.get(ROOT_LAYOUT);
 	}
 
+	public EditController getEditController() {
+		return (EditController) controllers.get(EDIT_LAYOUT);
+	}
+
+	public NavigationController getNavigationController() {
+		return (NavigationController) controllers.get(NAVIGATION_LAYOUT);
+	}
+
+	public PlayQueueController getPlayQueueController() {
+		return (PlayQueueController) controllers.get(PLAYQUEUE_LAYOUT);
+	}
+
+	public PlayerController getPlayerController() {
+		return (PlayerController) controllers.get(PLAYER_LAYOUT);
+	}
+	
+	public PreferencesController getPreferencesController() {
+		return (PreferencesController) controllers.get(PREFERENCES_LAYOUT);
+	}
+
+	/**
+	 * Shows the edit window. If the size of track selection is greater than 1,
+	 * an <tt>Alert</tt> is opened asking for a confirmation of the user.
+	 */
 	public void editTracks() {
-		ObservableList<Entry<Integer, Track>> trackSelection = rootController.getSelectedItems();
+		ObservableList<Entry<Integer, Track>> trackSelection = getRootController().getSelectedItems();
 		if(trackSelection != null & !trackSelection.isEmpty()) {
+			boolean[] edit = {true};
 			if(trackSelection.size() > 1) {
-				Alert alert = createAlert("", "Are you sure you want to edit multiple files?", "", AlertType.CONFIRMATION);
+				String alertHeader = "Are you sure you want to edit multiple files?";
+				Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
 				Optional<ButtonType> result = alert.showAndWait();
-				if (result.get() == ButtonType.OK) {
-					openStage(EDIT_LAYOUT);
-					LOG.debug("Opened edit stage for various tracks");
-				}
-				else
-					alert.close();
+
+				result.ifPresent(value -> {
+					if(value.getButtonData().isCancelButton())
+						edit[0] = false;
+				});
 			}
-			else {
-				openStage(EDIT_LAYOUT);
-				LOG.debug("Opened edit stage for a single track");
+
+			if(edit[0]) {
+				if(editStage == null) {
+					editStage = initStage(EDIT_LAYOUT, "Edit");
+					getEditController().setStage(editStage);
+				}
+
+				showStage(editStage);
+				LOG.debug("Showing edit stage");
 			}
 		}
 	}
-	
+
+	/**
+	 * Deletes the tracks selected in the table. If the size of the track selection
+	 * is greater than 1, an <tt>Alert</tt> is opened asking for a confirmation of the user.
+	 */
 	public void deleteTracks() {
-		ObservableList<Map.Entry<Integer, Track>> trackSelection = rootController.getSelectedItems();
+		ObservableList<Map.Entry<Integer, Track>> trackSelection = getRootController().getSelectedItems();
+
 		if(trackSelection != null && !trackSelection.isEmpty()) {
 			int numDeletedTracks = trackSelection.size();
-			Alert alert = createAlert("", "Delete "+numDeletedTracks+" files from Musicott?", "", AlertType.CONFIRMATION);
+			String alertHeader = "Delete " + numDeletedTracks + " files from Musicott?";
+			Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
 			Optional<ButtonType> result = alert.showAndWait();
-			if (result.get() == ButtonType.OK) {
-				new Thread(() -> {
-					musicLibrary.removeTracks(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
-					Platform.runLater(() -> closeIndeterminatedProgressScene());
-				}).start();
-				openIndeterminatedProgressScene();
-			}
-			else
-				alert.close();
+
+			result.ifPresent(a -> {
+				boolean delete = a.getButtonData().isDefaultButton();
+
+				if (delete) {
+					new Thread(() -> {
+						List<Integer> tracksToDelete = trackSelection.stream()
+								.map(Map.Entry::getKey)
+								.collect(Collectors.toList());
+						musicLibrary.removeTracks(tracksToDelete);
+						Platform.runLater(this::closeIndeterminateProgress);
+					}).start();
+					showIndeterminateProgress();
+				} else
+					alert.close();
+			});
 		}
 	}
 
-	public void openPreferencesScene() {
-		openStage(PREFERENCES_LAYOUT);
-	}	
-	
-	public void openIndeterminatedProgressScene() {
-		openStage(PROGRESS_LAYOUT);
+	/**
+	 * Constructs the main view of the application and shows it
+	 *
+	 * @param mainStage The primary Stage given in the launched application
+	 * @throws IOException If any resource was not found
+	 */
+	protected void showMusicott(Stage mainStage) throws IOException {
+		VBox navigationLayout = (VBox) loadLayout(NAVIGATION_LAYOUT);
+		LOG.debug("Navigation layout loaded");
+		GridPane playerGridPane = (GridPane) loadLayout(PLAYER_LAYOUT);
+		LOG.debug("Player layout loaded");
+		AnchorPane playQueuePane = (AnchorPane) loadLayout(PLAYQUEUE_LAYOUT);
+		getPlayerController().setPlayQueuePane(playQueuePane);
+		LOG.debug("Playqueue layout loaded");
+		BorderPane rootLayout = (BorderPane) loadLayout(ROOT_LAYOUT);
+		LOG.debug("Root layout loaded");
+
+		BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
+		contentBorderLayout.setBottom(playerGridPane);
+		contentBorderLayout.setLeft(navigationLayout);
+		getNavigationController().showMode(NavigationMode.ALL_SONGS_MODE);
+
+		VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
+		new MusicottMenuBar(headerVBox);
+
+		// Hide play queue pane clicking outside of it
+		navigationLayout.setOnMouseClicked(e -> getPlayerController().showPlayQueue(false));
+		contentBorderLayout.setOnMouseClicked(e -> getPlayerController().showPlayQueue(false));
+		rootLayout.setOnMouseClicked(e -> getPlayerController().showPlayQueue(false));
+
+		Scene mainScene = new Scene(rootLayout, 1200, 775);
+		mainStage.setScene(mainScene);
+		mainStage.setTitle("Musicott");
+		mainStage.getIcons().add(new Image (getClass().getResourceAsStream(MUSICOTT_ICON)));
+		mainStage.setMinWidth(1200);
+		mainStage.setMinHeight(790);
+		mainStage.setMaxWidth(1800);
+		mainStage.show();
+		this.mainStage = mainStage;
 	}
-	
-	public void closeIndeterminatedProgressScene() {
+
+	/**
+	 * Shows the preferences window
+	 */
+	public void showPreferences() {
+		if(preferencesStage == null)
+			preferencesStage = initStage(PREFERENCES_LAYOUT, "Preferences");
+		showStage(preferencesStage);
+	}
+
+	/**
+	 * Places a window in front of all the others showing an indeterminate progress.
+	 * The user is unable to interact with the application until the background task finishes.
+	 */
+	public void showIndeterminateProgress() {
+		if(progressStage == null)
+				progressStage = initStage(PROGRESS_LAYOUT, "");
+		showStage(progressStage);
+	}
+
+	/**
+	 * Closes the window with the indeterminate progress
+	 */
+	public void closeIndeterminateProgress() {
 		progressStage.close();
 	}
-	
+
+	/**
+	 * Creates an {@link Alert} given a title, a header text, the content to be shown
+	 * in the description, and the {@link AlertType} of the requested <tt>Alert</tt>
+	 *
+	 * @param title The title of the <tt>Alert</tt> stage
+	 * @param header The header text of the <tt>Alert</tt>
+	 * @param content The content text of the <tt>Alert</tt>
+	 * @param type The type of the <tt>Alert</tt>
+	 * @return
+	 */
 	public Alert createAlert(String title, String header, String content, AlertType type) {
-		Alert alert = new Alert(AlertType.CONFIRMATION);
+		Alert alert = new Alert(type);
 		alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
 		alert.setTitle(title);
 		alert.setHeaderText(header);
@@ -192,50 +266,58 @@ public class StageDemon {
 		alert.initOwner(mainStage);
 		return alert;
 	}
-	
-	private void openStage(String layout) {
-		Stage stageToOpen = null;
-		switch(layout) {
-			case EDIT_LAYOUT:
-				stageToOpen = editStage = editStage == null ? initStage(layout, "Edit") : editStage; break;
-			case PREFERENCES_LAYOUT:
-				stageToOpen = preferencesStage = preferencesStage == null ? initStage(layout, "Preferences") : preferencesStage; break; 
-			case PROGRESS_LAYOUT:
-				stageToOpen = progressStage = progressStage == null ? initStage(layout, "") : progressStage; break;
-		}
-		if(stageToOpen != null) 
-			stageToOpen.showAndWait();
+
+	/**
+	 * Shows the given stage and centers it on the screen
+	 *
+	 * @param stageToShow The Stage to be shown
+	 */
+	private void showStage(Stage stageToShow) {
+		if(stageToShow.equals(mainStage))
+			stageToShow.show();
+		else if(!stageToShow.isShowing())
+			stageToShow.showAndWait();
+		stageToShow.centerOnScreen();
 	}
-	
+
+	/**
+	 * Loads a given layout resource and sets it into a new <tt>Stage</tt> and <tt>Scene</tt>
+	 *
+	 * @param layout The <tt>*.fxml</tt> source to be loaded
+	 * @return The <tt>Stage</tt> with the layout
+	 */
 	private Stage initStage(String layout, String title) {
 		Stage newStage;
 		try {
 			newStage = new Stage();
 			newStage.setTitle(title);
-			FXMLLoader loader = new FXMLLoader ();
-			loader.setLocation(getClass().getResource(layout));
-			AnchorPane baseLayout = loader.load();
-			
-			if(layout.equals(PROGRESS_LAYOUT))
-				newStage.setOnCloseRequest(event -> event.consume());
-			else if(layout.equals(EDIT_LAYOUT)) {
-				editController = (EditController) loader.getController();
-				editController.setStage(newStage);
-			} else if(layout.equals(PREFERENCES_LAYOUT)) {
-				preferencesController = (PreferencesController) loader.getController();
-				preferencesController.setStage(newStage);
-			}
-			
-			Scene newScene = new Scene(baseLayout);
+			Parent nodeLayout = loadLayout(layout);
+			Scene scene = new Scene(nodeLayout);
+
 			newStage.initModality(Modality.APPLICATION_MODAL);
-			newStage.initOwner(newScene.getWindow());
-			newStage.setScene(newScene);
+			newStage.setScene(scene);
 			newStage.setResizable(false);
-		} catch(IOException e) {
-			LOG.error("Error opening " + layout, e);
-			errorDemon.showErrorDialog("Error opening " + layout, null, e);
+		}
+		catch (IOException e) {
+			LOG.error("Error initiating stage of layout " + layout, e);
+			errorDemon.showErrorDialog("Error initiating stage of layout " + layout, null, e);
 			newStage = null;
 		}
 		return newStage;
+	}
+
+	/**
+	 * Loads the given layout resource
+	 *
+	 * @param layout The <tt>*.fxml</tt> source to be loaded
+	 * @return The {@link Parent} object that is the root of the layout
+	 * @throws IOException thrown if the <tt>*.fxml</tt> file wasn't found
+	 */
+	private Parent loadLayout(String layout) throws IOException {
+		FXMLLoader loader = new FXMLLoader();
+		loader.setLocation(getClass().getResource(layout));
+		Parent nodeLayout = loader.load();
+		controllers.put(layout, loader.getController());
+		return nodeLayout;
 	}
 }
