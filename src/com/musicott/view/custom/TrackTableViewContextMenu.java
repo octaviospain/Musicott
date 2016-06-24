@@ -73,7 +73,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
 			ObservableList<Map.Entry<Integer, Track>> trackSelection = stageDemon.getRootController().getSelectedItems();
 			if(!trackSelection.isEmpty()) {
 				Playlist selectedPlaylist = stageDemon.getNavigationController().selectedPlaylistProperty().getValue().getValue();
-				musicLibrary.removeFromPlaylist(selectedPlaylist, trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+				musicLibrary.deleteFromPlaylist(selectedPlaylist, trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
 			}
 		});
 		cmAddToPlaylist = new Menu("Add to Playlist");

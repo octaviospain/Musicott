@@ -123,7 +123,7 @@ public class StageDemon {
 	 */
 	public void editTracks() {
 		ObservableList<Entry<Integer, Track>> trackSelection = getRootController().getSelectedItems();
-		if(trackSelection != null & !trackSelection.isEmpty()) {
+		if(!trackSelection.isEmpty()) {
 			boolean[] edit = {true};
 			if(trackSelection.size() > 1) {
 				String alertHeader = "Are you sure you want to edit multiple files?";
@@ -155,7 +155,7 @@ public class StageDemon {
 	public void deleteTracks() {
 		ObservableList<Map.Entry<Integer, Track>> trackSelection = getRootController().getSelectedItems();
 
-		if(trackSelection != null && !trackSelection.isEmpty()) {
+		if(!trackSelection.isEmpty()) {
 			int numDeletedTracks = trackSelection.size();
 			String alertHeader = "Delete " + numDeletedTracks + " files from Musicott?";
 			Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
@@ -169,7 +169,7 @@ public class StageDemon {
 						List<Integer> tracksToDelete = trackSelection.stream()
 								.map(Map.Entry::getKey)
 								.collect(Collectors.toList());
-						musicLibrary.removeTracks(tracksToDelete);
+						musicLibrary.deleteTracks(tracksToDelete);
 						Platform.runLater(this::closeIndeterminateProgress);
 					}).start();
 					showIndeterminateProgress();

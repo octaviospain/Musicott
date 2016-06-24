@@ -24,6 +24,7 @@ import com.musicott.model.*;
 import com.musicott.util.*;
 import com.musicott.view.custom.*;
 import javafx.beans.binding.*;
+import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.collections.transformation.*;
 import javafx.fxml.*;
@@ -37,8 +38,11 @@ import org.slf4j.*;
 
 import java.util.*;
 import java.util.Map.*;
+import java.util.function.*;
 
 /**
+ * Controller class of the root layout of the whole application.
+ *
  * @author Octavio Calleya
  * @version 0.9
  */
@@ -47,89 +51,137 @@ public class RootController implements MusicottController {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	@FXML
-	private BorderPane rootBorderPane, tableBorderPane, contentBorderLayout;
+	private BorderPane tableBorderPane;
+	@FXML
+	private BorderPane contentBorderLayout;
 	@FXML
 	private ImageView playlistCover;
 	@FXML
-	private Label playlistTracksNumberLabel, playlistSizeLabel, playlistTitleLabel;
+	private Label playlistTracksNumberLabel;
+	@FXML
+	private Label playlistSizeLabel;
+	@FXML
+	private Label playlistTitleLabel;
 	@FXML
 	private HBox tableInfoHBox;
 	@FXML
-	private VBox playlistInfoVBox, headerVBox;
+	private VBox playlistInfoVBox;
 	private VBox navigationPaneVBox;
 	private TrackTableView trackTable;
 	private TextField playlistTitleTextField;
 	private FilteredList<Entry<Integer, Track>> filteredTracks;
+	private ListProperty<Map.Entry<Integer, Track>> showingTracksProperty;
+	private ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylistProperty;
 
 	private StageDemon stageDemon = StageDemon.getInstance();
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-	
-	public RootController() {}
-	
+
 	@FXML
 	public void initialize() {		
 		navigationPaneVBox = (VBox) contentBorderLayout.getLeft();
-		
-		playlistTitleTextField = new TextField();
-		playlistTitleTextField.setPrefWidth(150);
-		playlistTitleTextField.setPrefHeight(25);
-		playlistTitleTextField.setPadding(new Insets (-10, 0, -10, 0));
-		playlistTitleTextField.setFont(new Font ("System", 20));
-		VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
-		
-		playlistTracksNumberLabel.textProperty().bind(Bindings.createStringBinding(() -> musicLibrary.showingTracksProperty().sizeProperty().get()+" songs", musicLibrary.showingTracksProperty()));
-		playlistSizeLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-			String sizeString = Utils.byteSizeString(musicLibrary.showingTracksProperty().stream().mapToLong(t -> (long)t.getValue().getSize()).sum(), 2);
-			if(sizeString.equals("0 B"))
-				sizeString = "";
-			return sizeString; 
-		},  musicLibrary.showingTracksProperty()));
-		playlistTitleLabel.textProperty().bind(playlistTitleTextField.textProperty());
-		playlistTitleLabel.setOnMouseClicked(event -> {
-			if(event.getClickCount() == 2) {	// 2 clicks = edit playlist name
-				putPlaylistTextField();
-				playlistTitleTextField.setOnKeyPressed(e -> {
-					Playlist playlist = stageDemon.getNavigationController().selectedPlaylistProperty().getValue().getValue();
-					String newTitle = playlistTitleTextField.getText();
-					if(e.getCode() == KeyCode.ENTER && newTitle.equals(playlist.getName())) {
-						removePlaylistTextField();
-						event.consume();
-					} else if(e.getCode() == KeyCode.ENTER && !newTitle.equals("") && !musicLibrary.containsPlaylist(newTitle)) {
-						playlist.setName(newTitle);
-						musicLibrary.saveLibrary(false, false, true);
-						removePlaylistTextField();
-						event.consume();
-					}
-				});
-			}
+		showingTracksProperty = musicLibrary.showingTracksProperty();
+		selectedPlaylistProperty = stageDemon.getNavigationController().selectedPlaylistProperty();
+		selectedPlaylistProperty.addListener((obs, oldSelected, newSelected) -> {
+					if(newSelected != null)
+						updateShowingInfoWithPlaylist(newSelected.getValue());
 		});
+
+		initializeInfoPaneFields();
 		
 		trackTable = new TrackTableView();
 		tableBorderPane.setCenter(trackTable);	
 		
-		// Binds the text typed on the search text field to the items shown on the table
-		ObservableList<Entry<Integer, Track>> tracks = musicLibrary.showingTracksProperty().get();
+		// Binding of the text typed on the search text field to the items shown on the table
+		ObservableList<Entry<Integer, Track>> tracks = showingTracksProperty.get();
 		filteredTracks = new FilteredList<>(tracks, predicate -> true);
-		stageDemon.getPlayerController().searchTextProperty().addListener((observable, oldText, newText) -> {
-			filteredTracks.setPredicate(trackEntry -> {
-				boolean result = true;
-				Track track = trackEntry.getValue();
-				if(newText != null && !newText.isEmpty()) {
-					if(track.getName().toLowerCase().contains(newText.toLowerCase()) ||
-					   track.getArtist().toLowerCase().contains(newText.toLowerCase()) ||
-					   track.getLabel().toLowerCase().contains(newText.toLowerCase()) ||
-					   track.getGenre().toLowerCase().contains(newText.toLowerCase()) ||
-					   track.getAlbum().toLowerCase().contains(newText.toLowerCase()))
-						result = true;
-					else	
-						result = false;
-				}
-				return result;
-			});
-		});
+
+		StringProperty searchTextProperty = stageDemon.getPlayerController().searchTextProperty();
+		searchTextProperty.addListener((observable, oldText, newText) ->
+				filteredTracks.setPredicate(findTracksContainingTextPredicate(newText)));
+
 		SortedList<Map.Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
 		sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
 		trackTable.setItems(sortedTracks);
+	}
+
+	private void initializeInfoPaneFields() {
+		initializePlaylistTitleTextField();
+
+		playlistTracksNumberLabel.textProperty().bind(Bindings.createStringBinding(
+				() -> showingTracksProperty.sizeProperty().get() + " songs", showingTracksProperty));
+
+		playlistSizeLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+			long sizeOfAllShowingTracks = showingTracksProperty.stream()
+					.mapToLong(trackEntry -> (long) trackEntry.getValue().getSize()).sum();
+
+			String sizeString = Utils.byteSizeString(sizeOfAllShowingTracks, 2);
+			if("0 B".equals(sizeString))
+				sizeString = "";
+			return sizeString;
+		},  showingTracksProperty));
+
+		playlistTitleLabel.textProperty().bind(playlistTitleTextField.textProperty());
+
+		playlistTitleLabel.setOnMouseClicked(event -> {
+			if(event.getClickCount() == 2)	// double click for edit the playlist name
+				putPlaylistTextField();
+		});
+	}
+
+	private void initializePlaylistTitleTextField() {
+		playlistTitleTextField = new TextField();
+		playlistTitleTextField.setPrefWidth(150);
+		playlistTitleTextField.setPrefHeight(25);
+		playlistTitleTextField.setPadding(new Insets(-10, 0, -10, 0));
+		playlistTitleTextField.setFont(new Font("System", 20));
+		VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
+		playlistTitleTextField.setOnKeyPressed(event -> {
+			KeyCode keyPressed = event.getCode();
+			Playlist playlist = selectedPlaylistProperty.getValue().getValue();
+			String newTitle = playlistTitleTextField.getText();
+
+			if(keyPressed == KeyCode.ENTER && newTitle.equals(playlist.getName())) {
+				removePlaylistTextField();
+				event.consume();
+			}
+			else if(keyPressed == KeyCode.ENTER && !newTitle.isEmpty() && !musicLibrary.containsPlaylist(newTitle)) {
+				playlist.setName(newTitle);
+				musicLibrary.saveLibrary(false, false, true);
+				removePlaylistTextField();
+				event.consume();
+			}
+		});
+	}
+
+	/**
+	 * Returns a {@link Predicate} that evaluates the match of a given <tt>String</tt> to a given track {@link Entry}
+	 *
+	 * @param string The <tt>String</tt> to match against the track
+	 * @return The <tt>Predicate</tt>
+	 */
+	private Predicate<Entry<Integer, Track>> findTracksContainingTextPredicate(String string) {
+		return trackEntry -> {
+			boolean result = string == null || string.isEmpty();
+			if(!result)
+				result = trackMatchesString(trackEntry.getValue(), string);
+			return result;
+		};
+	}
+
+	/**
+	 * Determines if a track matches a given string by its name, artist, label, genre or album.
+	 *
+	 * @param track The {@link Track} to match
+	 * @param string The string to match against the <tt>Track</tt>
+	 * @return <tt>true</tt> if the <tt>Track matches</tt>, <tt>false</tt> otherwise
+	 */
+	private boolean trackMatchesString(Track track, String string) {
+		boolean matchesName = track.getName().toLowerCase().contains(string.toLowerCase());
+		boolean matchesArtist = track.getArtist().toLowerCase().contains(string.toLowerCase());
+		boolean matchesLabel = track.getLabel().toLowerCase().contains(string.toLowerCase());
+		boolean matchesGenre = track.getGenre().toLowerCase().contains(string.toLowerCase());
+		boolean matchesAlbum = track.getAlbum().toLowerCase().contains(string.toLowerCase());
+		return matchesName || matchesArtist || matchesLabel || matchesGenre || matchesAlbum;
 	}
 	
 	public ObservableList<Map.Entry<Integer, Track>> getSelectedItems() {
@@ -137,22 +189,23 @@ public class RootController implements MusicottController {
 	}
 
 	/**
-	 * Updates the view with the selected playlist info in the table info pane
+	 * Updates the information pane with the selected {@link Playlist}
 	 *
-	 * @param playlist
+	 * @param playlist The selected <tt>Playlist</tt>
 	 */
-	public void updatePlaylistInfo(Playlist playlist) {
+	public void updateShowingInfoWithPlaylist(Playlist playlist) {
 		playlistTitleTextField.setText(playlist.getName());
 		playlistCover.imageProperty().bind(playlist.playlistCoverProperty());
 		removePlaylistTextField();
 	}
 
 	/**
-	 * Handles the creation of a new playlist
+	 * Handles the naming of a new playlist placing a {@link TextField} on top
+	 * of the playlist label asking the user for the name.
 	 *
-	 * @param isFolder
+	 * @param isFolder <tt>true</tt> if the new {@link Playlist} is a folder, <tt>false</tt> otherwise
 	 */
-	public void setNewPlaylistMode(boolean isFolder) {
+	public void enterNewPlaylistName(boolean isFolder) {
 		LOG.debug("Editing playlist name");
 		musicLibrary.clearShowingTracks();
 		putPlaylistTextField();
@@ -165,9 +218,7 @@ public class RootController implements MusicottController {
 
 			if(event.getCode() == KeyCode.ENTER && !newTitle.isEmpty() && !musicLibrary.containsPlaylist(newTitle)) {
 				newPlaylist.setName(newTitle);
-
 				stageDemon.getNavigationController().addNewPlaylist(newPlaylist);
-
 				removePlaylistTextField();
 				event.consume();
 			}

@@ -39,7 +39,7 @@ public class PlaylistTreeViewContextMenu extends ContextMenu {
 		super();
 		
 		addPlaylist = new MenuItem("Add new playlist");		
-		addPlaylist.setOnAction(e -> stageDemon.getRootController().setNewPlaylistMode(false));
+		addPlaylist.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
 
 		deletePlaylist = new MenuItem("Delete playlist");
 		deletePlaylist.setOnAction(e -> stageDemon.getNavigationController().deleteSelectedPlaylist());

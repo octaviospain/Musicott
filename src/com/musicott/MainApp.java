@@ -42,6 +42,8 @@ import java.util.logging.*;
  * Creates and launch Musicott
  * 
  * @author Octavio Calleya
+ * @version 0.9
+ * @see <a href="https://octaviospain.github.io/Musicott">Musicott</a>
  */
 @SuppressWarnings({"restriction", "unchecked", "unused"})
 public class MainApp extends Application {
@@ -50,17 +52,18 @@ public class MainApp extends Application {
 	private static final String CONFIG_FILE = "resources/config/config.properties";
 	private static final String LOGGING_PROPERTIES = "resources/config/logging.properties";
 	private static final String LOG_FILE = "Musicott-main-log.txt";
-	
+	protected static final String FIRST_USE_EVENT = "first_use";
+
 	public static final String TRACKS_PERSISTENCE_FILE = "Musicott-tracks.json";
 	public static final String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
 	public static final String PLAYLISTS_PERSISTENCE_FILE = "Musicott-playlists.json";
-	public static final String FIRST_USE_EVENT = "first_use";
 
 	private ErrorDemon errorDemon;
 	private StageDemon stageDemon;
 	private MusicLibrary musicLibrary;
 	private MainPreferences preferences;
 	private Stage rootStage;
+	private String applicationFolder;
 	private int numPreloaderSteps;
 	
 	public MainApp() {
@@ -80,6 +83,7 @@ public class MainApp extends Application {
 		if(preferences.getMusicottUserFolder() == null || !new File (preferences.getMusicottUserFolder()).exists())
 			LauncherImpl.notifyPreloader(this, new CustomProgressNotification(0, FIRST_USE_EVENT));
 		stageDemon.setApplicationHostServices(getHostServices());
+		applicationFolder = preferences.getMusicottUserFolder();
 		loadConfigProperties();
 		loadWaveforms();
 		loadPlaylists();
@@ -98,41 +102,45 @@ public class MainApp extends Application {
 	}
 	
 	/**
-	 * Loads required configuration parameters from a properties file
+	 * Loads required configuration parameters from a <tt>.properties</tt> file
 	 */
 	private void loadConfigProperties() {
-		Properties prop = new Properties ();
+		Properties properties = new Properties ();
 		try {
 			notifyPreloader(0, 4, "Loading configuration...");
-			prop.load(new FileInputStream(CONFIG_FILE));
-			String apiKey = prop.getProperty("lastfm_api_key");
-			String apiSecret = prop.getProperty("lastfm_api_secret");
+			properties.load(new FileInputStream(CONFIG_FILE));
+			String apiKey = properties.getProperty("lastfm_api_key");
+			String apiSecret = properties.getProperty("lastfm_api_secret");
 			Services.getInstance().getServicesPreferences().setAPISecret(apiSecret);
 			Services.getInstance().getServicesPreferences().setAPIKey(apiKey);
-		} catch (IOException e) {
-			errorDemon.showErrorDialog("Error", "Error loading Musicott", e);
+		}
+		catch (IOException exception) {
+			LOG.warn("Error loading configuration properties", exception);
+			errorDemon.showErrorDialog("Error", "Error when loading configuration properties", exception);
 		}
 	}
-		
+
 	/**
-	 * Loads the waveforms map collection from a saved file formatted in JSON using Json-IO
+	 * Loads the waveforms map from a saved file formatted in JSON using Json-IO
 	 * 
 	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
 	 */
 	private void loadWaveforms() {
+		notifyPreloader(1, 4, "Loading waveforms...");
 		Map<Integer, float[]> waveformsMap = null;
-		File waveformsFile = new File(preferences.getMusicottUserFolder()+File.separator+WAVEFORMS_PERSISTENCE_FILE);
+		File waveformsFile = new File(applicationFolder + File.separator + WAVEFORMS_PERSISTENCE_FILE);
 		if(waveformsFile.exists()) {
-			notifyPreloader(1, 4, "Loading waveforms...");
 			try {
-				FileInputStream fis = new FileInputStream(waveformsFile);
-				JsonReader jsr = new JsonReader(fis);
-				waveformsMap = (Map<Integer,float[]>) jsr.readObject();
-				jsr.close();
-				fis.close();
+				FileInputStream fileInputStream = new FileInputStream(waveformsFile);
+				JsonReader jsonReader = new JsonReader(fileInputStream);
+				waveformsMap = (Map<Integer, float[]>) jsonReader.readObject();
+				jsonReader.close();
+				fileInputStream.close();
 				LOG.info("Loaded waveform images from {}", waveformsFile);
-			} catch(IOException e) {
-				LOG.error("Error loading waveform thumbnails", e);
+			}
+			catch(IOException exception) {
+				LOG.error("Error loading waveform thumbnails", exception);
+				errorDemon.showErrorDialog("Error", "Error when loading waveform thumbnails", exception);
 			}
 		}
 		else
@@ -141,11 +149,11 @@ public class MainApp extends Application {
 	}
 	
 	/**
-	 * Loads the playlists from a file or created a predefined ones
+	 * Loads the saved playlists or creates some predefined ones
 	 */
 	private void loadPlaylists() {
-		String applicationFolder = preferences.getMusicottUserFolder();
-		String playlistsPath = applicationFolder + File.separator+PLAYLISTS_PERSISTENCE_FILE;
+		notifyPreloader(3, 4, "Loading playlists...");
+		String playlistsPath = applicationFolder + File.separator + PLAYLISTS_PERSISTENCE_FILE;
 		File playlistsFile = new File(playlistsPath);
 		List<Playlist> playlists;
 		if(playlistsFile.exists())
@@ -164,19 +172,20 @@ public class MainApp extends Application {
 	 *
 	 * @param playlistsFile The JSON formatted file of the playlists
 	 * @return a <tt>List</tt> of playlists or null if an error was found
+	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
 	 */
 	private List<Playlist> parsePlaylistFromJsonFile(File playlistsFile) {
-		notifyPreloader(3, 4, "Loading playlists...");
 		List<Playlist> playlists;
 		int totalPlaylists;
 		int step = 0;
 		try {
-			FileInputStream fis = new FileInputStream(playlistsFile);
-			JsonReader jsr = new JsonReader(fis);
-			playlists = (List<Playlist>) jsr.readObject();
+			FileInputStream fileInputStream = new FileInputStream(playlistsFile);
+			JsonReader jsonReader = new JsonReader(fileInputStream);
+			playlists = (List<Playlist>) jsonReader.readObject();
 			totalPlaylists = playlists.size();
-			jsr.close();
-			fis.close();
+			jsonReader.close();
+			fileInputStream.close();
+
 			for(Playlist playlist: playlists) {
 				if(playlist.isFolder())
 					playlist.getContainedPlaylists().forEach(
@@ -185,10 +194,11 @@ public class MainApp extends Application {
 				notifyPreloader(++step, totalPlaylists, "Loading playlists...");
 			}
 			LOG.info("Loaded playlists from {}", playlistsFile);
-		} catch(IOException e) {
+		}
+		catch(IOException exception) {
 			playlists = null;
-			LOG.error("Error loading playlists", e);
-			errorDemon.showErrorDialog("Error loading playlists", null, e);
+			LOG.error("Error loading playlists", exception);
+			errorDemon.showErrorDialog("Error loading playlists", null, exception);
 		}
 		return playlists;
 	}
@@ -200,7 +210,7 @@ public class MainApp extends Application {
 	 */
 	private void loadTracks() {
 		ObservableMap<Integer, Track> map = null;
-		File tracksFile = new File(preferences.getMusicottUserFolder()+File.separator+TRACKS_PERSISTENCE_FILE);
+		File tracksFile = new File(applicationFolder + File.separator + TRACKS_PERSISTENCE_FILE);
 		int totalTracks;
 		int step = 0;
 
@@ -216,25 +226,12 @@ public class MainApp extends Application {
 				jsr.close();
 				fis.close();
 				for(Track t: map.values()) {
-					t.nameProperty().setValue(t.getName());
-					t.artistProperty().setValue(t.getArtist());
-					t.albumProperty().setValue(t.getAlbum());
-					t.genreProperty().setValue(t.getGenre());
-					t.commentsProperty().setValue(t.getComments());
-					t.albumArtistProperty().setValue(t.getAlbumArtist());
-					t.labelProperty().setValue(t.getLabel());
-					t.trackNumberProperty().setValue(t.getTrackNumber());
-					t.yearProperty().setValue(t.getYear());
-					t.discNumberProperty().setValue(t.getDiscNumber());
-					t.bpmProperty().setValue(t.getBpm());
-					t.hasCoverProperty().setValue(t.hasCover());
-					t.dateModifiedProperty().setValue(t.getDateModified());
-					t.playCountProperty().setValue(t.getPlayCount());
+					setTrackProperties(t);
 					notifyPreloader(++step, totalTracks, "Loading tracks...");
 				}
 				LOG.info("Loaded tracks from {}", tracksFile);
-			} catch (IOException | JsonIoException e) {
-				LOG.error("Error loading track library", e);
+			} catch (IOException | JsonIoException exception) {
+				LOG.error("Error loading track library", exception);
 			}
 		}
 		if(map != null)
@@ -242,41 +239,91 @@ public class MainApp extends Application {
 		else
 			MusicLibrary.getInstance().setTracks(FXCollections.observableHashMap());
 	}
+
+	/**
+	 * Sets the values of the {@link Track}'s properties, because those are
+	 * not stored on the <tt>json</tt> file when deserialized
+	 *
+	 * @param track The track to the value of its properties
+	 */
+	private void setTrackProperties(Track track) {
+		track.nameProperty().setValue(track.getName());
+		track.artistProperty().setValue(track.getArtist());
+		track.albumProperty().setValue(track.getAlbum());
+		track.genreProperty().setValue(track.getGenre());
+		track.commentsProperty().setValue(track.getComments());
+		track.albumArtistProperty().setValue(track.getAlbumArtist());
+		track.labelProperty().setValue(track.getLabel());
+		track.trackNumberProperty().setValue(track.getTrackNumber());
+		track.yearProperty().setValue(track.getYear());
+		track.discNumberProperty().setValue(track.getDiscNumber());
+		track.bpmProperty().setValue(track.getBpm());
+		track.hasCoverProperty().setValue(track.hasCover());
+		track.dateModifiedProperty().setValue(track.getDateModified());
+		track.playCountProperty().setValue(track.getPlayCount());
+	}
 	
 	/**
-	 * Builds and sets the logger to a file in the root of the application folder
+	 * Initializes a {@link Logger} that stores the log entries on a file
+	 *
+	 * @see <a href=http://www.slf4j.org/>slf4j</href>
 	 */
 	private static void initializeLogger() {
 		Handler baseFileHandler;
-		java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
+		LogManager logManager = LogManager.getLogManager();
+		java.util.logging.Logger logger = logManager.getLogger("");
 		Handler rootHandler = logger.getHandlers()[0];
 
 		try {
-			LogManager.getLogManager().readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
+			logManager.readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
 			baseFileHandler = new FileHandler(LOG_FILE);
 			baseFileHandler.setFormatter(new SimpleFormatter() {
 
 				@Override
-				public String format(LogRecord rec) {
-					StringBuilder str = new StringBuilder();
-					DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss :nnnnnnnnn");
-					str.append(rec.getLoggerName()+" "+rec.getSourceMethodName()+" "+ LocalDateTime.now().format(dateFormatter)+"\n");
-					str.append(rec.getSequenceNumber()+"\t"+rec.getLevel()+":"+rec.getMessage()+"\n");
-					if(rec.getThrown() != null) {
-						str.append(rec.getThrown()+"\n");
-						for(StackTraceElement ste: rec.getThrown().getStackTrace())
-							str.append(ste+"\n");
-					}
-					return str.toString();
+				public String format(LogRecord record) {
+					return logTextString(record);
 				}
 			});
 
-			LogManager.getLogManager().getLogger("").removeHandler(rootHandler);
-			LogManager.getLogManager().getLogger("").addHandler(baseFileHandler);
-		} catch (SecurityException | IOException exception) {
+			logManager.getLogger("").removeHandler(rootHandler);
+			logManager.getLogger("").addHandler(baseFileHandler);
+		}
+		catch (SecurityException | IOException exception) {
 			System.err.println("Error iniciating logger");
 			exception.printStackTrace();
 		}
+	}
+
+	/**
+	 * Constructs a log message given a {@link LogRecord}
+	 *
+	 * @param record The <tt>LogRecord</tt> instance
+	 * @return The formatted string of a log entries
+	 */
+	private static String logTextString(LogRecord record) {
+		StringBuilder stringBuilder = new StringBuilder();
+		String dateTimePattern = "dd/MM/yy HH:mm:ss :nnnnnnnnn";
+		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateTimePattern);
+
+		String logDate = LocalDateTime.now().format(dateFormatter);
+		String loggerName = record.getLoggerName();
+		String sourceMethod = record.getSourceMethodName();
+		String firstLine = loggerName + " " + sourceMethod + " " + logDate + "\n";
+
+		String sequenceNumber = String.valueOf(record.getSequenceNumber());
+		String loggerLevel = record.getLevel().toString();
+		String message = record.getMessage();
+		String secondLine = sequenceNumber + "\t" + loggerLevel + ":" + message +"\n";
+
+		stringBuilder.append(firstLine);
+		stringBuilder.append(secondLine);
+
+		if(record.getThrown() != null) {
+			stringBuilder.append(record.getThrown() + "\n");
+			for(StackTraceElement stackTraceElement: record.getThrown().getStackTrace())
+				stringBuilder.append(stackTraceElement + "\n");
+		}
+		return stringBuilder.toString();
 	}
 	
 	/**

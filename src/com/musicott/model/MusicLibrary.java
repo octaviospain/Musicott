@@ -27,6 +27,7 @@ import javafx.collections.*;
 import org.slf4j.*;
 
 import java.util.*;
+import java.util.stream.*;
 
 /**
  * @author Octavio Calleya
@@ -40,7 +41,7 @@ public class MusicLibrary {
 	private static MusicLibrary instance;
 
 	private ObservableMap<Integer, Track> musicottTracks;
-	private Map<Integer,float[]> waveforms;
+	private Map<Integer, float[]> waveforms;
 	private List<Playlist> playlists;
 
 	private ObservableList<Map.Entry<Integer, Track>> showingTracks;
@@ -127,7 +128,7 @@ public class MusicLibrary {
 		}
 	}
 
-	public void removeTracks(List<Integer> selection) {
+	public void deleteTracks(List<Integer> selection) {
 		synchronized(musicottTracks) {
 			Platform.runLater(() -> musicottTracks.keySet().removeAll(selection));
 		}
@@ -187,34 +188,44 @@ public class MusicLibrary {
 		saveLibrary(false, false, true);
 	}
 
-	public void addPlaylists(List<Playlist> newPlaylists) {
-		synchronized(playlists) {
-			playlists.addAll(newPlaylists);
-		}
-		saveLibrary(false, false, true);
-	}
-
-	public void removePlaylist(Playlist playlist) {
+	public void deletePlaylist(Playlist playlistToDelete) {
 		synchronized (playlists) {
-			playlists.remove(playlist);
+			boolean removed = playlists.remove(playlistToDelete);
+			if(!removed) // deletes the playlist that is on a folder
+				playlists.stream().filter(playlist -> playlist.isFolder())
+					.forEach(playlist -> playlist.getContainedPlaylists().remove(playlistToDelete));
 		}
 		saveLibrary(false, false, true);
 	}
 
 	public boolean containsPlaylist(String playlistName) {
-		return playlists.stream().anyMatch(playlist -> playlistName.equals(playlist.getName()));
+		synchronized (playlists) {
+			List<Playlist> allPlaylists = new ArrayList<>(playlists);
+			playlists.stream().filter(playlist -> playlist.isFolder())
+					.forEach(folder -> allPlaylists.addAll(folder.getContainedPlaylists()));
+			return allPlaylists.stream().anyMatch(playlist -> playlistName.equals(playlist.getName()));
+		}
 	}
 
-	public void addToPlaylist(String playlistName, List<Integer> tracksIDs) {
+	public void addToPlaylist(String folderPlaylistName, List<Integer> tracksIDs) {
 		synchronized(playlists) {
-			Playlist pl = playlists.stream().filter(p -> p.getName().equalsIgnoreCase(playlistName)).findFirst().get();
-			pl.getTracks().addAll(tracksIDs);
-			pl.changePlaylistCover();
+			List<Playlist> notFolderPlaylistsAndChilds = playlists.stream()
+					.filter(playlist -> !playlist.isFolder())
+					.collect(Collectors.toList());
+
+			playlists.stream().filter(playlist -> playlist.isFolder())
+					.forEach(folder -> notFolderPlaylistsAndChilds.addAll(folder.getContainedPlaylists()));
+
+			Playlist folderPlaylist = notFolderPlaylistsAndChilds.stream()
+					.filter(p -> p.getName().equalsIgnoreCase(folderPlaylistName)).findFirst().get();
+
+			folderPlaylist.getTracks().addAll(tracksIDs);
+			folderPlaylist.changePlaylistCover();
 		}
 		saveLibrary(false, false, true);
 	}
 
-	public void removeFromPlaylist(Playlist playlist, List<Integer> tracksIDs) {
+	public void deleteFromPlaylist(Playlist playlist, List<Integer> tracksIDs) {
 		synchronized(playlists) {
 			playlist.getTracks().removeAll(tracksIDs);
 			showingTracks.removeIf(f -> tracksIDs.contains(f.getKey()));
@@ -226,11 +237,10 @@ public class MusicLibrary {
 	public void showPlaylist(Playlist playlist) {
 		showingTracks.clear();
 		synchronized(musicottTracks) {
-			if(playlist != null)
-				for(Integer id: playlist.getTracks()) {
-					Map.Entry<Integer, Track> entry = new AbstractMap.SimpleEntry<>(id, musicottTracks.get(id));
-					showingTracks.add(entry);
-				}
+			for(Integer id: playlist.getTracks()) {
+				Map.Entry<Integer, Track> entry = new AbstractMap.SimpleEntry<>(id, musicottTracks.get(id));
+				showingTracks.add(entry);
+			}
 		}
 	}
 

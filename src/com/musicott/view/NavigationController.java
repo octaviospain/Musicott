@@ -55,16 +55,12 @@ public class NavigationController implements MusicottController {
 	private NavigationMenuListView navigationMenuListView;
 	private PlaylistTreeView playlistTreeView;
 
-	public NavigationController() {}
-	
 	@FXML
 	public void initialize() {
 		playlistTreeView = new PlaylistTreeView();
 		playlistTreeView.getSelectionModel().selectedItemProperty().addListener(listener -> {
 			navigationMenuListView.getSelectionModel().clearAndSelect(-1);
 			stageDemon.getRootController().showTableInfoPane();
-			if(playlistTreeView.getSelectedPlaylist() != null)
-				stageDemon.getRootController().updatePlaylistInfo(playlistTreeView.getSelectedPlaylist());				
 		});
 		
 		navigationMenuListView = new NavigationMenuListView();
@@ -79,12 +75,12 @@ public class NavigationController implements MusicottController {
 		newPlaylistMI = new MenuItem("New Playlist");
 		newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, keyModifierOS));
 		newPlaylistMI.setOnAction(e -> {
-			stageDemon.getRootController().setNewPlaylistMode(false);
+			stageDemon.getRootController().enterNewPlaylistName(false);
 			playlistTreeView.getSelectionModel().clearAndSelect(-1);
 		});
 		newFolderPlaylistMI = new MenuItem("New Playlist Folder");
 		newFolderPlaylistMI.setOnAction(e -> {
-			stageDemon.getRootController().setNewPlaylistMode(true);
+			stageDemon.getRootController().enterNewPlaylistName(true);
 			playlistTreeView.getSelectionModel().clearAndSelect(-1);
 		});
 		newPlaylistContextMenu.getItems().addAll(newPlaylistMI, newFolderPlaylistMI);
@@ -114,16 +110,17 @@ public class NavigationController implements MusicottController {
 
 	public void addNewPlaylist(Playlist newPlaylist) {
 		TreeItem<Playlist> selectedPlaylistItem = playlistTreeView.getSelectionModel().selectedItemProperty().get();
-		if(selectedPlaylistItem == null)
-			playlistTreeView.addPlaylist(newPlaylist);
-		else {
+
+		if(selectedPlaylistItem != null && selectedPlaylistItem.getValue().isFolder()) {
 			Playlist selectedPlaylist = selectedPlaylistItem.getValue();
-			if(selectedPlaylist.isFolder())
+			if(selectedPlaylist.isFolder()) {
 				playlistTreeView.addPlaylistChild(selectedPlaylist, newPlaylist);
-			else {
-				playlistTreeView.addPlaylist(newPlaylist);
-				musicLibrary.addPlaylist(newPlaylist);
+				musicLibrary.saveLibrary(false, false, true);
 			}
+		}
+		else {
+			playlistTreeView.addPlaylist(newPlaylist);
+			musicLibrary.addPlaylist(newPlaylist);
 		}
 	}
 	

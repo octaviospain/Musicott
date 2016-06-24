@@ -226,7 +226,7 @@ public class MusicottMenuBar extends MenuBar {
 	private void setEditMenuActions() {
 		editMI.setOnAction(e -> stageDemon.editTracks());
 		deleteMI.setOnAction(e -> stageDemon.deleteTracks());
-		newPlaylistMI.setOnAction(e -> stageDemon.getRootController().setNewPlaylistMode(false));
+		newPlaylistMI.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
 	}
 	
 	private void setControlsMenuActions() {

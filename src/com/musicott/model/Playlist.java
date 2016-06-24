@@ -108,11 +108,11 @@ public class Playlist {
 	public void addPlaylistChild(Playlist playlistChild) {
 		containedPlaylists.add(playlistChild);
 	}
-	
+
 	public boolean isFolder() {
 		return isFolder;
 	}
-	
+
 	public void changePlaylistCover() {
 		if(!getTracks().isEmpty()) {
 			Random random = new Random();
