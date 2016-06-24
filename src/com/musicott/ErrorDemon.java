@@ -41,6 +41,9 @@ import static com.musicott.view.MusicottController.*;
  */
 public class ErrorDemon {
 
+	private static final double ALERT_WIDTH = 800;
+	private static final double ALERT_HEIGHT = 300;
+
 	private static ErrorDemon instance;
 	private Stage mainStage;
 	private Stage preferencesStage;
@@ -63,25 +66,53 @@ public class ErrorDemon {
 		return instance;
 	}
 
+	/**
+	 * Shows an error dialog with a message
+	 *
+	 * @param message The message to be shown
+	 */
 	public synchronized void showErrorDialog(String message) {
 		showErrorDialog(message, "");
 	}
 
+	/**
+	 * Shows an error dialog with a message and a content text
+	 * @param message The message to be shown
+	 * @param content The content text of the error dialog
+	 */
 	public synchronized void showErrorDialog(String message, String content) {
 		showErrorDialog(message, content, null);
 	}
 
+	/**
+	 * Shows an error dialog with a message, a content text,
+	 * and the stack trace of a exception
+	 *
+	 * @param message The message to be shown
+	 * @param content The content text of the error dialog
+	 * @param exception The exception error
+	 */
 	public synchronized void showErrorDialog(String message, String content, Exception exception) {
 		showErrorDialog(message, content, exception, getMainStage().getScene());
 	}
 
+	/**
+	 * Shows an error dialog with a message, a content text,
+	 * and the stack trace of a exception. The {@link Dialog} will be
+	 * placed on a given {@link Scene}.
+	 *
+	 * @param message The message to be shown
+	 * @param content The content text of the error dialog
+	 * @param exception The exception error
+	 * @param alertScene The <tt>Scene</tt> where the <tt>Dialog</tt> will be placed
+	 */
 	public synchronized void showErrorDialog(String message, String content, Exception exception, Scene alertScene) {
 		Platform.runLater(() -> {
-			alert = createAlert(message, content, alertScene);
+			alert = createErrorAlert(message, content, alertScene);
 			if(exception != null) {
 				StringWriter string = new StringWriter();
-				PrintWriter prin = new PrintWriter(string);
-				exception.printStackTrace(prin);
+				PrintWriter printWriter = new PrintWriter(string);
+				exception.printStackTrace(printWriter);
 				List<String> singleErrorList = new ArrayList<>();
 				singleErrorList.add(string.toString());
 				addExpandableErrorMessages(singleErrorList);
@@ -90,49 +121,29 @@ public class ErrorDemon {
 		});
 	}
 
+	/**
+	 * Shows an error dialog with a message and a content text, and a collection of
+	 * error messages inside an expandable text area.
+	 *
+	 * @param message The message to be shown
+	 * @param content The content text of the error dialog
+	 * @param errors The collection of error messages to be shown in the expandable area
+	 */
 	public synchronized void showExpandableErrorsDialog(String message, String content, Collection<String> errors) {
 		Platform.runLater(() -> {
-			alert = createAlert(message, content, getMainStage().getScene());
+			alert = createErrorAlert(message, content, getMainStage().getScene());
 			if(errors != null)
 				addExpandableErrorMessages(errors);
 			alert.showAndWait();
 		});
 	}
 
-	public synchronized void showLastFMErrorDialog(String message, String content) {
-		Platform.runLater(() -> {
-			preferencesStage = StageDemon.getInstance().getPreferencesStage();
-			Scene sceneWhereShow = preferencesStage != null && preferencesStage.isShowing() ? preferencesStage.getScene() : getMainStage().getScene();
-			alert = createAlert(message, content, sceneWhereShow);
-			alert.setGraphic(new ImageView (new Image(getClass().getResourceAsStream(LASTFM_LOGO))));
-			alert.show();
-		});
-	}
-
-	private Stage getMainStage() {
-		if(mainStage == null)
-			mainStage = StageDemon.getInstance().getMainStage();
-		return mainStage;
-	}
-
-	private Alert createAlert(String message, String content, Scene ownerScene) {
-		alert = new Alert(AlertType.ERROR);
-		alert.setTitle("Error");
-		alert.setHeaderText(message == null ? "Error" : message);
-		alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
-		if(content == null)
-			alert.getDialogPane().contentProperty().set(helpContentTextFP);
-		else
-			alert.setContentText(content);
-		if(ownerScene != null)
-			alert.initOwner(ownerScene.getWindow());
-		else {
-			Scene errorScene = new Scene(new AnchorPane(), 800, 300);
-			alert.initOwner(errorScene.getWindow());
-		}
-		return alert;
-	}
-
+	/**
+	 * Inserts an expandable {@link TextArea} with a collection of <tt>String</tt> messages
+	 * to the error dialog
+	 *
+	 * @param messages The collection of messages
+	 */
 	private void addExpandableErrorMessages(Collection<String> messages) {
 		textArea = new TextArea();
 		textArea.setEditable(false);
@@ -146,5 +157,60 @@ public class ErrorDemon {
 		GridPane.setVgrow(textArea, Priority.ALWAYS);
 		GridPane.setHgrow(textArea, Priority.ALWAYS);
 		alert.getDialogPane().setExpandableContent(expandableArea);
+	}
+
+	/**
+	 * Shows an error dialog with the logo of LastFM
+	 *
+	 * @param message The message of the error
+	 * @param content The content text of the error dialog
+	 */
+	public synchronized void showLastFMErrorDialog(String message, String content) {
+		Platform.runLater(() -> {
+			preferencesStage = StageDemon.getInstance().getPreferencesStage();
+			Scene sceneWhereShow = preferencesStage != null && preferencesStage.isShowing() ? preferencesStage.getScene() : getMainStage().getScene();
+			alert = createErrorAlert(message, content, sceneWhereShow);
+			alert.setGraphic(new ImageView (new Image(getClass().getResourceAsStream(LASTFM_LOGO))));
+			alert.show();
+		});
+	}
+
+	/**
+	 * Private getter to get the main {@link Stage} of the application,
+	 * where the error dialog would be shown unless other is specified.
+	 *
+	 * @return The primary <tt>Stage</tt> of the application
+	 */
+	private Stage getMainStage() {
+		if(mainStage == null)
+			mainStage = StageDemon.getInstance().getMainStage();
+		return mainStage;
+	}
+
+	/**
+	 * Creates an error {@link Alert} given a message and the content text to be shown
+	 * in the description.  The {@link Dialog} will be placed on a given {@link Scene}.
+	 *
+	 * @param message The message of the error
+	 * @param content The content text of the error dialog
+	 * @param ownerScene The <tt>Scene</tt> where the <tt>Dialog</tt> will be placed
+	 * @return An {@link Alert} object
+	 */
+	private Alert createErrorAlert(String message, String content, Scene ownerScene) {
+		alert = new Alert(AlertType.ERROR);
+		alert.setTitle("Error");
+		alert.setHeaderText(message == null ? "Error" : message);
+		alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
+		if(content == null)
+			alert.getDialogPane().contentProperty().set(helpContentTextFP);
+		else
+			alert.setContentText(content);
+		if(ownerScene != null)
+			alert.initOwner(ownerScene.getWindow());
+		else {
+			Scene errorScene = new Scene(new AnchorPane(), ALERT_WIDTH, ALERT_HEIGHT);
+			alert.initOwner(errorScene.getWindow());
+		}
+		return alert;
 	}
 }
