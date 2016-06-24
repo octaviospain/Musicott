@@ -1,7 +1,12 @@
 package com.musicott.view;
 
 /**
+ * Interface that represent a controller of the Musicott application.
+ * Stores constants of layout files, logos, and css stylesheets.
+ *
  * @author Octavio Calleya
+ * @version 0.9
+ * @since 0.9
  */
 public interface MusicottController {
 
@@ -17,5 +22,8 @@ public interface MusicottController {
 	String PLAYER_LAYOUT = LAYOUTS_PATH + "PlayerLayout.fxml";
 
 	String DEFAULT_COVER_IMAGE = "/images/default-cover-image.png";
+	String LASTFM_LOGO = "/images/lastfm-logo.png";
 	String MUSICOTT_ICON = "/images/musicotticon.png";
+
+	String DIALOG_STYLE = "/css/dialog.css";
 }

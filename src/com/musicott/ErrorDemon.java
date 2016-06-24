@@ -30,13 +30,20 @@ import javafx.stage.*;
 import java.io.*;
 import java.util.*;
 
+import static com.musicott.view.MusicottController.*;
+
 /**
+ * Singleton class that handles the exceptions, showing an error message,
+ * the stack trace, or a text area with several error messages
+ *
  * @author Octavio Calleya
+ * @version 0.9
  */
 public class ErrorDemon {
 
 	private static ErrorDemon instance;
-	private Stage mainStage, preferencesStage;
+	private Stage mainStage;
+	private Stage preferencesStage;
 	private Alert alert;
 	private FlowPane helpContentTextFP;
 	private TextArea textArea;
@@ -72,11 +79,11 @@ public class ErrorDemon {
 		Platform.runLater(() -> {
 			alert = createAlert(message, content, alertScene);
 			if(exception != null) {
-				StringWriter sw = new StringWriter();
-				PrintWriter pw = new PrintWriter(sw);
-				exception.printStackTrace(pw);
-				List<String> singleErrorList = new ArrayList<String>();
-				singleErrorList.add(sw.toString());
+				StringWriter string = new StringWriter();
+				PrintWriter prin = new PrintWriter(string);
+				exception.printStackTrace(prin);
+				List<String> singleErrorList = new ArrayList<>();
+				singleErrorList.add(string.toString());
 				addExpandableErrorMessages(singleErrorList);
 			}
 			alert.showAndWait();
@@ -97,7 +104,7 @@ public class ErrorDemon {
 			preferencesStage = StageDemon.getInstance().getPreferencesStage();
 			Scene sceneWhereShow = preferencesStage != null && preferencesStage.isShowing() ? preferencesStage.getScene() : getMainStage().getScene();
 			alert = createAlert(message, content, sceneWhereShow);
-			alert.setGraphic(new ImageView (new Image(getClass().getResourceAsStream("/images/lastfm-logo.png"))));
+			alert.setGraphic(new ImageView (new Image(getClass().getResourceAsStream(LASTFM_LOGO))));
 			alert.show();
 		});
 	}
@@ -109,10 +116,10 @@ public class ErrorDemon {
 	}
 
 	private Alert createAlert(String message, String content, Scene ownerScene) {
-		Alert alert = new Alert(AlertType.ERROR);
+		alert = new Alert(AlertType.ERROR);
 		alert.setTitle("Error");
 		alert.setHeaderText(message == null ? "Error" : message);
-		alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
+		alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
 		if(content == null)
 			alert.getDialogPane().contentProperty().set(helpContentTextFP);
 		else
