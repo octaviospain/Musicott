@@ -17,10 +17,11 @@
  * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
-package com.musicott.model;
+package com.musicott.tasks;
 
 import com.cedarsoftware.util.io.*;
 import com.musicott.*;
+import com.musicott.model.*;
 import javafx.application.*;
 import javafx.collections.*;
 import org.slf4j.*;

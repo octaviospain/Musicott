@@ -36,13 +36,15 @@ import java.util.concurrent.*;
 public class LastFMTask extends Thread {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private ErrorDemon errorDemon = ErrorDemon.getInstance();
-	private Services services = Services.getInstance();
+
 	private LastFMService lastfm;
 	private Semaphore semaphore;
 	private Track actualTrack;
 	private List<Map<Track, Integer>> tracksToScrobbleLater;
 	private boolean end, login;
+	private ErrorDemon errorDemon = ErrorDemon.getInstance();
+	private Services services = Services.getInstance();
+	private StageDemon stageDemon = StageDemon.getInstance();
 	
 	public LastFMTask(String id) {
 		super(id);
@@ -65,8 +67,11 @@ public class LastFMTask extends Thread {
 				if(lfm.getStatus().equals("failed"))
 					handleLastFMError(lfm.getError());
 				Platform.runLater(() -> {
-					StageDemon.getInstance().getPreferencesController().endLogin(!end);
-				});			
+					if(end)
+						stageDemon.getPreferencesController().setLoginTextOnLoginButton();
+					else
+						stageDemon.getPreferencesController().setLogoutTextOnLoginButton();
+				});
 				login = false;	
 				if(end)
 					break;
@@ -87,9 +92,7 @@ public class LastFMTask extends Thread {
 					if(end)
 						break;
 				}
-				Platform.runLater(() -> {
-					StageDemon.getInstance().getNavigationController().setStatusMessage("LastFM: track scrobbled & updated");
-				});
+				Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("LastFM: track scrobbled & updated"));
 			} catch (InterruptedException e) {
 				LOG.warn("Lastfm thread error: {}", e);
 				break;

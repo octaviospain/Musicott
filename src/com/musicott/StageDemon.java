@@ -80,7 +80,7 @@ public class StageDemon {
 	public Stage getMainStage() {
 		return mainStage;
 	}
-	
+
 	protected Stage getPreferencesStage() {
 		return preferencesStage;
 	}
@@ -182,10 +182,11 @@ public class StageDemon {
 	/**
 	 * Constructs the main view of the application and shows it
 	 *
-	 * @param mainStage The primary Stage given in the launched application
+	 * @param primaryStage The primary Stage given in the launched application
 	 * @throws IOException If any resource was not found
 	 */
-	protected void showMusicott(Stage mainStage) throws IOException {
+	protected void showMusicott(Stage primaryStage) throws IOException {
+		mainStage = primaryStage;
 		VBox navigationLayout = (VBox) loadLayout(NAVIGATION_LAYOUT);
 		LOG.debug("Navigation layout loaded");
 		GridPane playerGridPane = (GridPane) loadLayout(PLAYER_LAYOUT);
@@ -194,6 +195,7 @@ public class StageDemon {
 		getPlayerController().setPlayQueuePane(playQueuePane);
 		LOG.debug("Playqueue layout loaded");
 		BorderPane rootLayout = (BorderPane) loadLayout(ROOT_LAYOUT);
+		getRootController().setNavigationPaneVBox(navigationLayout);
 		LOG.debug("Root layout loaded");
 
 		BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
@@ -201,8 +203,15 @@ public class StageDemon {
 		contentBorderLayout.setLeft(navigationLayout);
 		getNavigationController().showMode(NavigationMode.ALL_SONGS_MODE);
 
-		VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
-		new MusicottMenuBar(headerVBox);
+		MusicottMenuBar menuBar = new MusicottMenuBar();
+		String os = System.getProperty ("os.name");
+		if(os != null && os.startsWith ("Mac"))
+			menuBar.macMenuBar();
+		else {
+			menuBar.defaultMenuBar();
+			VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
+			headerVBox.getChildren().add(0, menuBar);
+		}
 
 		// Hide play queue pane clicking outside of it
 		navigationLayout.setOnMouseClicked(e -> getPlayerController().showPlayQueue(false));
@@ -217,15 +226,17 @@ public class StageDemon {
 		mainStage.setMinHeight(790);
 		mainStage.setMaxWidth(1800);
 		mainStage.show();
-		this.mainStage = mainStage;
 	}
 
 	/**
 	 * Shows the preferences window
 	 */
 	public void showPreferences() {
-		if(preferencesStage == null)
+		if(preferencesStage == null) {
 			preferencesStage = initStage(PREFERENCES_LAYOUT, "Preferences");
+			PreferencesController preferencesController = (PreferencesController) controllers.get(PREFERENCES_LAYOUT);
+			preferencesController.setStage(preferencesStage);
+		}
 		showStage(preferencesStage);
 	}
 
@@ -289,11 +300,10 @@ public class StageDemon {
 	private Stage initStage(String layout, String title) {
 		Stage newStage;
 		try {
-			newStage = new Stage();
-			newStage.setTitle(title);
 			Parent nodeLayout = loadLayout(layout);
 			Scene scene = new Scene(nodeLayout);
-
+			newStage = new Stage();
+			newStage.setTitle(title);
 			newStage.initModality(Modality.APPLICATION_MODAL);
 			newStage.setScene(scene);
 			newStage.setResizable(false);

@@ -66,6 +66,7 @@ public class RootController implements MusicottController {
 	private HBox tableInfoHBox;
 	@FXML
 	private VBox playlistInfoVBox;
+	@FXML
 	private VBox navigationPaneVBox;
 	private TrackTableView trackTable;
 	private TextField playlistTitleTextField;
@@ -77,8 +78,7 @@ public class RootController implements MusicottController {
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
 	@FXML
-	public void initialize() {		
-		navigationPaneVBox = (VBox) contentBorderLayout.getLeft();
+	public void initialize() {
 		showingTracksProperty = musicLibrary.showingTracksProperty();
 		selectedPlaylistProperty = stageDemon.getNavigationController().selectedPlaylistProperty();
 		selectedPlaylistProperty.addListener((obs, oldSelected, newSelected) -> {
@@ -102,6 +102,10 @@ public class RootController implements MusicottController {
 		SortedList<Map.Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
 		sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
 		trackTable.setItems(sortedTracks);
+	}
+
+	public void setNavigationPaneVBox(VBox navigationPaneVBox) {
+		this.navigationPaneVBox = navigationPaneVBox;
 	}
 
 	private void initializeInfoPaneFields() {
@@ -249,7 +253,7 @@ public class RootController implements MusicottController {
 	 * Shows the left navigation pane
 	 */
 	public void showNavigationPane() {
-		if(!contentBorderLayout.getChildren().contains(navigationPaneVBox)) {
+		if(!contentBorderLayout.getChildren().equals(navigationPaneVBox)) {
 			contentBorderLayout.setLeft(navigationPaneVBox);
 			LOG.debug("Showing navigation pane");
 		}
@@ -259,7 +263,7 @@ public class RootController implements MusicottController {
 	 * Hides the left navigation pane
 	 */
 	public void hideNavigationPane() {
-		if(contentBorderLayout.getLeft().equals(navigationPaneVBox)) {
+		if(contentBorderLayout.getChildren().contains(navigationPaneVBox)) {
 			contentBorderLayout.getChildren().remove(navigationPaneVBox);
 			LOG.debug("Showing navigation pane");
 		}

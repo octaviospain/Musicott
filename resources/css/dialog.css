@@ -1,4 +1,4 @@
-/*/*
+/*
  * This file is part of Musicott software.
  *
  * Musicott software is free software: you can redistribute it and/or modify
@@ -35,7 +35,7 @@
     -fx-text-fill: white;
 }
 
-.button:default:hover, .button:default:pressed {
+.button:default:hover, .button:pressed {
     -fx-background-color: black;
     -fx-text-fill: white;
 }

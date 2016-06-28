@@ -51,7 +51,7 @@ public class ItunesImportTask extends Task<Void> {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	public static final int METADATA_POLICY = 0;
-	public static final int TUNES_DATA_POLICY = 1;
+	public static final int ITUNES_DATA_POLICY = 1;
 	
 	private StageDemon stageDemon = StageDemon.getInstance();
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
@@ -129,7 +129,7 @@ public class ItunesImportTask extends Task<Void> {
 			if(isValidItunesTrack(it)) {
 				if(metadataPolicy == METADATA_POLICY)
 					track = parseTrack(it);
-				else if(metadataPolicy == TUNES_DATA_POLICY)
+				else if(metadataPolicy == ITUNES_DATA_POLICY)
 					track = convertTrack(it);
 				if(track != null) {
 					itunesIDtoMusicottIDMap.put(it.getTrackID(), track.getTrackID());

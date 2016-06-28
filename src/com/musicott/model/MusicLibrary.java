@@ -21,6 +21,7 @@ package com.musicott.model;
 
 import com.musicott.*;
 import com.musicott.player.*;
+import com.musicott.tasks.*;
 import javafx.application.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
@@ -110,7 +111,7 @@ public class MusicLibrary {
 		showingTracksProperty.bind(new SimpleObjectProperty<>(showingTracks));
 	}
 
-	protected ObservableMap<Integer, Track> getTracks(){
+	public ObservableMap<Integer, Track> getTracks(){
 		synchronized(musicottTracks) {
 			return this.musicottTracks;
 		}
@@ -147,7 +148,7 @@ public class MusicLibrary {
 		}
 	}
 
-	protected Map<Integer,float[]> getWaveforms() {
+	public Map<Integer,float[]> getWaveforms() {
 		synchronized(waveforms) {
 			return this.waveforms;
 		}

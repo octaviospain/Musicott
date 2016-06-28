@@ -20,6 +20,8 @@
 package com.musicott.util;
 
 import java.io.*;
+import java.math.*;
+import java.text.*;
 import java.util.*;
 
 /**
@@ -30,6 +32,11 @@ import java.util.*;
  * @version 0.9
  */
 public class Utils {
+
+	/**
+	 * Private constructor to hide the implicit public one.
+	 */
+	private Utils() {}
 	
 	/**
 	 * Retrieves a {@link List} with at most <tt>maxFiles</tt> files that are in a folder or
@@ -42,7 +49,7 @@ public class Utils {
 	 * @return The list containing all the files
 	 * @throws IllegalArgumentException Thrown if <tt>maxFilesRequired</tt> argument is less than zero
 	 */
-	public static List<File> getAllFilesInFolder(File rootFolder, FileFilter filter, int maxFilesRequired) throws IllegalArgumentException {
+	public static List<File> getAllFilesInFolder(File rootFolder, FileFilter filter, int maxFilesRequired) {
 		List<File> finalFiles = new ArrayList<>();
 		if(!Thread.currentThread().isInterrupted()) {
 			if(maxFilesRequired < 0)
@@ -61,11 +68,11 @@ public class Utils {
 				}
 				else if (subFiles.length > 0) {
 						finalFiles.addAll(Arrays.asList(subFiles));	// Add all valid files
-						remainingFiles -= finalFiles.size();		// If remainingFiles == 0, end;
+						remainingFiles -= finalFiles.size();
 					}
 			
 			if(maxFilesRequired == 0 || remainingFiles > 0) {
-				File[] rootSubFolders = rootFolder.listFiles(file -> {return file.isDirectory();});
+				File[] rootSubFolders = rootFolder.listFiles(File::isDirectory);
 				int sbFldrsCount = 0;
 				while((sbFldrsCount < rootSubFolders.length) && !Thread.currentThread().isInterrupted()) {
 					File subFolder = rootSubFolders[sbFldrsCount++];
@@ -80,18 +87,19 @@ public class Utils {
 		}
 		return finalFiles;
 	}
-	
+
 	/**
 	 * Returns a {@link String} representing the given <tt>bytes</tt>, with a textual representation
 	 * depending if the given amount can be represented as KB, MB, GB or TB
-	 * 
+	 *
 	 * @param bytes The <tt>bytes</tt> to be represented
 	 * @return The <tt>String</tt> that represents the given bytes
 	 * @throws IllegalArgumentException Thrown if <tt>bytes</tt> is negative
 	 */
-	public static String byteSizeString(long bytes) throws IllegalArgumentException {
+	public static String byteSizeString(long bytes) {
 		if(bytes < 0)
 			throw new IllegalArgumentException("Given bytes can't be less than zero");
+
 		String sizeText;
 		String[] bytesUnits = {"B", "KB", "MB", "GB", "TB"};
 		long bytesAmount = bytes;
@@ -100,45 +108,40 @@ public class Utils {
 		int u;
 		for(u = 0; bytesAmount > 1024 && u < bytesUnits.length; u++) {
 			bytesAmount /= 1024;
-			binRemainder = (short) (bytesAmount%1024);
-			decRemainder += (((float) binRemainder)/1024);
+			binRemainder = (short) (bytesAmount % 1024);
+			decRemainder += Float.valueOf((float) binRemainder / 1024);
 		}
-		String remainderStr = ("" + decRemainder).substring(2);
-		sizeText = bytesAmount + (remainderStr.equals("0") ? "" : ","+remainderStr) + " " + bytesUnits[u];
+		String remainderStr = String.format("%f", decRemainder).substring(2);
+		sizeText = bytesAmount + ("0".equals(remainderStr) ? "" : "," + remainderStr) + " " + bytesUnits[u];
 		return sizeText;
 	}
-	
+
 	/**
 	 * Returns a {@link String} representing the given <tt>bytes</tt>, with a textual representation
 	 * depending if the given amount can be represented as KB, MB, GB or TB, limiting the number
 	 * of decimals, if there are any
-	 * 
+	 *
 	 * @param bytes The <tt>bytes</tt> to be represented
 	 * @param numDecimals The maximum number of decimals to be shown after the comma
 	 * @return The <tt>String</tt> that represents the given bytes
 	 * @throws IllegalArgumentException Thrown if <tt>bytes</tt> or <tt>numDecimals</tt> are negative
 	 */
-	public static String byteSizeString(long bytes, int numDecimals) throws IllegalArgumentException {
+	public static String byteSizeString(long bytes, int numDecimals) {
 		if(numDecimals < 0)
 			throw new IllegalArgumentException("Given number of decimals can't be less than zero");
+
 		String byteSizeString = byteSizeString(bytes);
-		int pos = byteSizeString.lastIndexOf(",");
-		int unitPos = byteSizeString.lastIndexOf(" ");
-		if(pos != -1 && numDecimals > 0) {
-			String abs = byteSizeString.substring(0, pos+1);
-			int rem = Integer.valueOf(byteSizeString.substring(pos+1, unitPos));
-			short numDigits = (short) (""+rem).length();
-			int remainderIndex = numDecimals < numDigits ? numDecimals : numDigits;
-			int magnitudeEsc = (int)Math.pow(10, (numDigits-remainderIndex));
-			int boundedRemainder = rem/magnitudeEsc; 
-			int remainderRem = rem%magnitudeEsc;
-			if(boundedRemainder != 0) {
-				int a = 5*magnitudeEsc/10;
-				if(remainderRem > a)
-					boundedRemainder ++;
-				byteSizeString = abs + (boundedRemainder%10 == 0 ? boundedRemainder/10 : boundedRemainder) + byteSizeString.substring(unitPos);
-			}
-		}
+		String decimalSharps = "";
+		for(int n = 0; n < numDecimals; n++)
+			decimalSharps += "#";
+		DecimalFormat decimalFormat = new DecimalFormat("#." + decimalSharps);
+		decimalFormat.setRoundingMode(RoundingMode.CEILING);
+
+		int unitPos = byteSizeString.lastIndexOf(' ');
+		String stringValue = byteSizeString.substring(0, unitPos);
+		stringValue = stringValue.replace(',', '.');
+		float floatValue = Float.parseFloat(stringValue);
+		byteSizeString = decimalFormat.format(floatValue) + byteSizeString.substring(unitPos);
 		return byteSizeString;
 	}
 
@@ -213,7 +216,7 @@ public class Utils {
 		public boolean accept(File pathname) {
 			boolean res = false;
 			if(!pathname.isDirectory() && !pathname.isHidden()) {
-				int pos = pathname.getName().lastIndexOf(".");
+				int pos = pathname.getName().lastIndexOf('.');
 				if(pos != -1) {
 					String extension = pathname.getName().substring(pos+1);
 					for(String requiredExtension: extensions)
