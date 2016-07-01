@@ -41,7 +41,7 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 /**
- * Controller class for the window that edit the information of tracks
+ * Controller class of the window that edits the information of tracks
  *
  * @author Octavio Calleya
  * @version 0.9

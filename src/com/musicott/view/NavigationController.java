@@ -23,7 +23,6 @@ import com.musicott.model.*;
 import com.musicott.view.custom.*;
 import javafx.application.*;
 import javafx.beans.binding.*;
-import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
@@ -32,44 +31,72 @@ import javafx.scene.input.KeyCombination.*;
 import javafx.scene.layout.*;
 
 /**
+ * Controller class of the left pane that contains the playlists, the
+ * music library menus, and the status progress and status messages.
+ *
  * @author Octavio Calleya
+ * @version 0.9
  */
 public class NavigationController implements MusicottController {
 
 	@FXML
 	private AnchorPane rootAnchorPane;
 	@FXML
-	private VBox navigationPaneVBox, navigationVBox, playlistsVBox;
+	private VBox navigationPaneVBox;
+	@FXML
+	private VBox navigationVBox;
+	@FXML
+	private VBox playlistsVBox;
 	@FXML
 	private Button newPlaylistButton;
 	@FXML
 	private ProgressBar taskProgressBar;
 	@FXML
 	private Label statusLabel;
-	private ContextMenu newPlaylistContextMenu;
 
 	private NavigationMenuListView navigationMenuListView;
 	private PlaylistTreeView playlistTreeView;
+	private NavigationMode showingMode;
 
 	@FXML
 	public void initialize() {
 		playlistTreeView = new PlaylistTreeView();
 		playlistTreeView.getSelectionModel().selectedItemProperty().addListener(listener -> {
+			showingMode = NavigationMode.PLAYLIST;
 			navigationMenuListView.getSelectionModel().clearAndSelect(-1);
 			stageDemon.getRootController().showTableInfoPane();
 		});
 		
 		navigationMenuListView = new NavigationMenuListView();
 		navigationMenuListView.setItems(FXCollections.observableArrayList(NavigationMode.values()));
+
+		ContextMenu newPlaylistButtonContextMenu = newPlaylistButtonContextMenu();
+
+		newPlaylistButton.setContextMenu(newPlaylistButtonContextMenu);
+		newPlaylistButton.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
+			double newPlaylistButtonX = newPlaylistButton.getLayoutX() + 150;
+			double newPlaylistButtonY = newPlaylistButton.getLayoutY();
+			newPlaylistButtonContextMenu.show(newPlaylistButton, newPlaylistButtonX, newPlaylistButtonY);
+		});
 		
-		newPlaylistContextMenu = new ContextMenu();
+		navigationVBox.getChildren().add(1, navigationMenuListView);
+		playlistsVBox.getChildren().add(1, playlistTreeView);
+		taskProgressBar.visibleProperty().bind(
+				Bindings.createBooleanBinding(
+						() -> taskProgressBar.progressProperty().isEqualTo(0).not().get(),
+						taskProgressBar.progressProperty()));
+		taskProgressBar.setProgress(0);
 		
-		String os = System.getProperty ("os.name");
-		// Key accelerator. Command down for os x and control down for windows and linux
-		Modifier keyModifierOS = os != null && os.startsWith ("Mac") ? KeyCodeCombination.META_DOWN : KeyCodeCombination.CONTROL_DOWN;
-		MenuItem newPlaylistMI, newFolderPlaylistMI;
+		VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
+		VBox.setVgrow(navigationVBox, Priority.ALWAYS);
+	}
+
+	public ContextMenu newPlaylistButtonContextMenu() {
+		ContextMenu contextMenu = new ContextMenu();;
+		MenuItem newPlaylistMI;
+		MenuItem newFolderPlaylistMI;
 		newPlaylistMI = new MenuItem("New Playlist");
-		newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, keyModifierOS));
+		newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier()));
 		newPlaylistMI.setOnAction(e -> {
 			stageDemon.getRootController().enterNewPlaylistName(false);
 			playlistTreeView.getSelectionModel().clearAndSelect(-1);
@@ -79,29 +106,23 @@ public class NavigationController implements MusicottController {
 			stageDemon.getRootController().enterNewPlaylistName(true);
 			playlistTreeView.getSelectionModel().clearAndSelect(-1);
 		});
-		newPlaylistContextMenu.getItems().addAll(newPlaylistMI, newFolderPlaylistMI);
-		newPlaylistButton.setContextMenu(newPlaylistContextMenu);
-		
-		newPlaylistButton.addEventFilter(MouseEvent.MOUSE_CLICKED, e ->
-			newPlaylistContextMenu.show(newPlaylistButton, newPlaylistButton.getLayoutX()+150, newPlaylistButton.getLayoutY())
-		);
-		newPlaylistButton.setContextMenu(newPlaylistContextMenu);
-		
-		navigationVBox.getChildren().add(1, navigationMenuListView);
-		playlistsVBox.getChildren().add(1, playlistTreeView);
-		taskProgressBar.visibleProperty().bind(Bindings.createBooleanBinding(() -> taskProgressBar.progressProperty().isEqualTo(0).not().get(), taskProgressBar.progressProperty()));
-		taskProgressBar.setProgress(0);
-		
-		VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
-		VBox.setVgrow(navigationVBox, Priority.ALWAYS);
-	}	
-	
-	public ReadOnlyObjectProperty<NavigationMode> selectedMenuProperty() {
-		return navigationMenuListView.getSelectionModel().selectedItemProperty();
+		contextMenu.getItems().addAll(newPlaylistMI, newFolderPlaylistMI);
+		return contextMenu;
 	}
-	
-	public ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylistProperty() {
-		return playlistTreeView.getSelectionModel().selectedItemProperty();
+
+	/**
+	 * Returns the key acceletator for the applicaton. Command for os x and control down for windows and linux.
+	 *
+	 * @return
+	 */
+	private Modifier systemModifier() {
+		String os = System.getProperty ("os.name");
+		Modifier keyModifierOS;
+		if (os != null && os.startsWith("Mac"))
+			keyModifierOS = KeyCodeCombination.META_DOWN;
+		else
+			keyModifierOS = KeyCodeCombination.CONTROL_DOWN;
+		return keyModifierOS;
 	}
 
 	public void addNewPlaylist(Playlist newPlaylist) {
@@ -131,17 +152,24 @@ public class NavigationController implements MusicottController {
 	public void setStatusMessage(String message) {
 		statusLabel.setText(message);
 	}
-	
-	public void showMode(NavigationMode mode) {
-		if(mode.equals(NavigationMode.ALL_SONGS_MODE))
-			musicLibrary.showMode(NavigationMode.ALL_SONGS_MODE);
-		Platform.runLater(() -> stageDemon.getRootController().hideTableInfoPane());
+
+	/**
+	 * Changes the view depending of the choose {@link NavigationMode}
+	 *
+	 * @param mode The <tt>NavigationMode</tt> that the user choose
+	 */
+	public void setNavigationMode(NavigationMode mode) {
+		showingMode = mode;
+		switch(mode) {
+			case ALL_TRACKS:
+				musicLibrary.showMode(mode);
+				Platform.runLater(() -> stageDemon.getRootController().hideTableInfoPane());
+				break;
+		}
 		playlistTreeView.getSelectionModel().clearAndSelect(-1);
-		navigationMenuListView.getSelectionModel().select(mode);
 	}
 
 	public NavigationMode getShowingMode() {
-
-		return null;
+		return showingMode;
 	}
 }

@@ -161,7 +161,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 	private void selectFirstPlaylistOrAllSongsMode() {
 		int playlistToDeleteIndex = getSelectionModel().getSelectedIndex();
 		if(playlistToDeleteIndex == 0 && root.getChildren().isEmpty())
-			stageDemon.getNavigationController().showMode(NavigationMode.ALL_SONGS_MODE);
+			stageDemon.getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
 		else
 			getSelectionModel().selectFirst();
 	}

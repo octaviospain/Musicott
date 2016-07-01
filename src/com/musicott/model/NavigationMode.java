@@ -1,12 +1,22 @@
 package com.musicott.model;
 
 /**
- * @author Octavio Calleya
+ * Class enum that represents a showing mode of the application
  *
+ * @author Octavio Calleya
+ * @version 0.9
  */
 public enum NavigationMode {
 
-	ALL_SONGS_MODE("All songs");
+	/**
+	 * All tracks in Musicott are shown on the table
+	 */
+	ALL_TRACKS("All songs"),
+
+	/**
+	 * The tracks of a selected {@link Playlist} are shown on the table
+	 */
+	PLAYLIST("PLaylist");
 
 	String name;
 

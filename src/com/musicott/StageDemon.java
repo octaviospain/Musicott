@@ -201,7 +201,7 @@ public class StageDemon {
 		BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
 		contentBorderLayout.setBottom(playerGridPane);
 		contentBorderLayout.setLeft(navigationLayout);
-		getNavigationController().showMode(NavigationMode.ALL_SONGS_MODE);
+		getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
 
 		MusicottMenuBar menuBar = new MusicottMenuBar();
 		String os = System.getProperty ("os.name");

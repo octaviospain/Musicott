@@ -24,8 +24,10 @@ import com.musicott.model.*;
 import javafx.scene.control.*;
 
 /**
- * @author Octavio Calleya
+ * ListView for the application navigation showing modes.
  *
+ * @author Octavio Calleya
+ * @vesion 0.9
  */
 public class NavigationMenuListView extends ListView<NavigationMode> {
 
@@ -38,7 +40,7 @@ public class NavigationMenuListView extends ListView<NavigationMode> {
 		setPrefWidth(USE_COMPUTED_SIZE);
 		getSelectionModel().selectedItemProperty().addListener((obs, oldMode, newMode) -> {
 			if(newMode != null)
-				stageDemon.getNavigationController().showMode(newMode);
+				stageDemon.getNavigationController().setNavigationMode(newMode);
 		});
 	}
 }

@@ -37,7 +37,7 @@ import static com.musicott.MainApp.*;
 import static com.musicott.tasks.ItunesImportTask.*;
 
 /**
- * Controller class of the preferences window
+ * Controller class of the preferences window.
  *
  * @author Octavio Calleya
  * @version 0.9

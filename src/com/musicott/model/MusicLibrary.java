@@ -75,7 +75,7 @@ public class MusicLibrary {
 					Track added = c.getValueAdded();
 					Map.Entry<Integer, Track> addedEntry = new AbstractMap.SimpleEntry<>(added.getTrackID(), added);
 					allTracks.add(addedEntry);
-					if(StageDemon.getInstance().getNavigationController().selectedPlaylistProperty() == null)
+					if(StageDemon.getInstance().getNavigationController().getShowingMode() == NavigationMode.ALL_TRACKS)
 						Platform.runLater(() -> showingTracks.add(addedEntry));
 				}
 				else if (c.wasRemoved()) {
@@ -255,7 +255,7 @@ public class MusicLibrary {
 
 	public void showMode(NavigationMode mode) {
 		switch(mode) {
-			case ALL_SONGS_MODE:
+			case ALL_TRACKS:
 				showingTracks.clear();
 				showingTracks.addAll(musicottTracks.entrySet());
 				break;
