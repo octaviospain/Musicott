@@ -19,7 +19,6 @@
 
 package com.musicott.view;
 
-import com.musicott.*;
 import com.musicott.model.*;
 import com.musicott.view.custom.*;
 import javafx.application.*;
@@ -48,10 +47,7 @@ public class NavigationController implements MusicottController {
 	@FXML
 	private Label statusLabel;
 	private ContextMenu newPlaylistContextMenu;
-	
-	private StageDemon stageDemon = StageDemon.getInstance();
-	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-	
+
 	private NavigationMenuListView navigationMenuListView;
 	private PlaylistTreeView playlistTreeView;
 

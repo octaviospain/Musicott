@@ -19,10 +19,8 @@
 
 package com.musicott.view;
 
-import com.musicott.model.*;
 import com.musicott.model.Track;
 import com.musicott.player.*;
-import com.musicott.services.*;
 import com.musicott.tasks.*;
 import com.musicott.view.custom.*;
 import javafx.beans.binding.*;
@@ -77,11 +75,7 @@ public class PlayerController implements MusicottController {
 	private ProgressBar volumeProgressBar;
 	private AnchorPane playQueuePane;
 	private WaveformPanel mainWaveformPane;
-	
-	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-	private Services services = Services.getInstance();
-	private PlayerFacade player = PlayerFacade.getInstance();
-	
+
 	public PlayerController() {}
 	
 	@FXML

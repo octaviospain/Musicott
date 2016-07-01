@@ -1,5 +1,10 @@
 package com.musicott.view;
 
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.player.*;
+import com.musicott.services.*;
+
 /**
  * Interface that represent a controller of the Musicott application.
  * Stores constants of layout files, logos, and css stylesheets.
@@ -26,4 +31,11 @@ public interface MusicottController {
 	String MUSICOTT_ICON = "/images/musicotticon.png";
 
 	String DIALOG_STYLE = "/css/dialog.css";
+
+	MusicLibrary musicLibrary = MusicLibrary.getInstance();
+	MainPreferences preferences = MainPreferences.getInstance();
+	PlayerFacade player = PlayerFacade.getInstance();
+	Services services = Services.getInstance();
+	StageDemon stageDemon = StageDemon.getInstance();
+	ErrorDemon errorDemon = ErrorDemon.getInstance();
 }

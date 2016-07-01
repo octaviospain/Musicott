@@ -19,7 +19,6 @@
 
 package com.musicott.view;
 
-import com.musicott.player.*;
 import com.musicott.view.custom.*;
 import javafx.collections.*;
 import javafx.fxml.*;
@@ -48,10 +47,7 @@ public class PlayQueueController implements MusicottController {
 	
 	private ObservableList<TrackQueueRow> playQueueList;
 	private ObservableList<TrackQueueRow> historyQueueList;
-	private PlayerFacade player = PlayerFacade.getInstance();
-	
-	public PlayQueueController () {}
-	
+
 	@FXML
 	public void initialize() {		
 		playQueueList = player.getPlayList();

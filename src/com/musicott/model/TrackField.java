@@ -20,8 +20,11 @@
 package com.musicott.model;
 
 /**
- * @author Octavio Calleya
+ * Enum class that defines the the different track attributes that are shown,
+ * (and most of them editable) on the table.
  *
+ * @author Octavio Calleya
+ * @version 0.9
  */
 public enum TrackField {
 	TRACK_ID,
@@ -47,5 +50,18 @@ public enum TrackField {
 	IS_IN_DISK,
 	IS_COMPILATION,
 	DATE_MODIFIED,
-	DATE_ADDED
+	DATE_ADDED;
+
+	/**
+	 * Checks if a given <tt>TrackField</tt> is an integer numeric field type
+	 *
+	 * @param trackField The <tt>TrackField</tt>
+	 * @return <tt>true</tt> if is an integer numeric field type, <tt>false</tt> otherwise
+	 */
+	public static boolean isIntegerField(TrackField trackField) {
+		return trackField == TrackField.TRACK_NUMBER ||
+				trackField == TrackField.DISC_NUMBER ||
+				trackField == TrackField.YEAR ||
+				trackField == TrackField.BPM;
+	}
 }

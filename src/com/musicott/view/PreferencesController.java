@@ -19,9 +19,7 @@
 
 package com.musicott.view;
 
-import com.musicott.*;
 import com.musicott.model.*;
-import com.musicott.services.*;
 import javafx.beans.binding.*;
 import javafx.collections.*;
 import javafx.fxml.*;
@@ -44,7 +42,7 @@ import static com.musicott.tasks.ItunesImportTask.*;
  * @author Octavio Calleya
  * @version 0.9
  */
-public class PreferencesController {
+public class PreferencesController implements MusicottController {
 
 	private static final String[] EXTENSIONS = {"mp3", "m4a", "wav", "flac"};
 	private static final String ITUNES_INFO = "Itunes library";
@@ -79,9 +77,7 @@ public class PreferencesController {
 	private CheckComboBox<String> extensionsCheckComboBox;
 	private ObservableList<String> selectedExtensions;
 	private Set<String> importFilterExtensions;
-	
-	private Services services = Services.getInstance();
-	private MainPreferences preferences = MainPreferences.getInstance();
+
 	private Stage preferencesStage;
 	
 	@FXML

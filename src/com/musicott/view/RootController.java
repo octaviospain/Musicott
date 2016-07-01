@@ -19,7 +19,6 @@
 
 package com.musicott.view;
 
-import com.musicott.*;
 import com.musicott.model.*;
 import com.musicott.util.*;
 import com.musicott.view.custom.*;
@@ -73,9 +72,6 @@ public class RootController implements MusicottController {
 	private FilteredList<Entry<Integer, Track>> filteredTracks;
 	private ListProperty<Map.Entry<Integer, Track>> showingTracksProperty;
 	private ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylistProperty;
-
-	private StageDemon stageDemon = StageDemon.getInstance();
-	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
 	@FXML
 	public void initialize() {
