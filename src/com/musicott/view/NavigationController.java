@@ -23,6 +23,7 @@ import com.musicott.model.*;
 import com.musicott.view.custom.*;
 import javafx.application.*;
 import javafx.beans.binding.*;
+import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
@@ -68,7 +69,8 @@ public class NavigationController implements MusicottController {
 		});
 		
 		navigationMenuListView = new NavigationMenuListView();
-		navigationMenuListView.setItems(FXCollections.observableArrayList(NavigationMode.values()));
+		NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS};
+		navigationMenuListView.setItems(FXCollections.observableArrayList(navigationModes));
 
 		ContextMenu newPlaylistButtonContextMenu = newPlaylistButtonContextMenu();
 
@@ -123,6 +125,14 @@ public class NavigationController implements MusicottController {
 		else
 			keyModifierOS = KeyCodeCombination.CONTROL_DOWN;
 		return keyModifierOS;
+	}
+
+	public ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylistProperty() {
+		return playlistTreeView.getSelectionModel().selectedItemProperty();
+	}
+
+	public ReadOnlyObjectProperty<NavigationMode> selectedMenuProperty() {
+		return navigationMenuListView.getSelectionModel().selectedItemProperty();
 	}
 
 	public void addNewPlaylist(Playlist newPlaylist) {

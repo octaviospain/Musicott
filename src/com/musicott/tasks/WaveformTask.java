@@ -31,6 +31,7 @@ import javax.sound.sampled.*;
 import javax.swing.*;
 import java.io.*;
 import java.nio.file.*;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static java.nio.file.StandardCopyOption.*;
@@ -64,7 +65,7 @@ public class WaveformTask extends Thread {
 		while(true) {
 			try {
 				taskSemaphore.acquire();
-				track = taskDemon.getTrackToProcess();
+				track = taskDemon.getNextTrackToAnalyze();
 				LOG.debug("Processing waveform of track {}", track);
 				String fileFormat = track.getFileFormat();
 				if(fileFormat.equals("wav"))
@@ -74,10 +75,11 @@ public class WaveformTask extends Thread {
 				
 				if(waveform != null) {
 					musicLibrary.addWaveform(track.getTrackID(), waveform);
-					Track currentTrack = PlayerFacade.getInstance().getCurrentTrack();
-					if(currentTrack != null && currentTrack.equals(track))
-						SwingUtilities.invokeLater(() -> stageDemon.getPlayerController().setWaveform(track));
-					LOG.debug("Waveform of track {} completed", track);
+					Optional<Track> currentTrack = PlayerFacade.getInstance().getCurrentTrack();
+					currentTrack.ifPresent(currentTrk -> {
+						if(currentTrk.equals(track))
+							SwingUtilities.invokeLater(() -> stageDemon.getPlayerController().setWaveform(track));
+					});
 					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage(""));
 					musicLibrary.saveLibrary(false, true, false);
 				}

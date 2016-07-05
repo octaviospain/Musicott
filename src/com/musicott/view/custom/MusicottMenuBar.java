@@ -199,7 +199,7 @@ public class MusicottMenuBar extends MenuBar {
 					new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
 			List<File> files = chooser.showOpenMultipleDialog(stageDemon.getMainStage());
 			if(files != null) {
-				TaskDemon.getInstance().parseFiles(files, true);
+				TaskDemon.getInstance().importFiles(files, true);
 				stageDemon.getNavigationController().setStatusMessage("Opening files");
 			}
 		});
@@ -218,7 +218,7 @@ public class MusicottMenuBar extends MenuBar {
 			chooser.getExtensionFilters().add(new ExtensionFilter("xml files (*.xml)", "*.xml"));
 			File xmlFile = chooser.showOpenDialog(stageDemon.getMainStage());
 			if(xmlFile != null) 
-				TaskDemon.getInstance().parseItunesLibrary(xmlFile.getAbsolutePath());
+				TaskDemon.getInstance().importFromItunesLibrary(xmlFile.getAbsolutePath());
 		});
 		preferencesMenuItem.setOnAction(e -> stageDemon.showPreferences());
 	}
@@ -261,7 +261,7 @@ public class MusicottMenuBar extends MenuBar {
 			Alert alert = stageDemon.createAlert("Import", alertContentText, "", AlertType.CONFIRMATION);
 			Optional<ButtonType> result = alert.showAndWait();
 			result.ifPresent(event -> {
-				TaskDemon.getInstance().parseFiles(filesToImport, false);
+				TaskDemon.getInstance().importFiles(filesToImport, false);
 				stageDemon.getNavigationController().setStatusMessage("Importing files");
 			});
 		});
@@ -274,25 +274,25 @@ public class MusicottMenuBar extends MenuBar {
 	}
 	
 	private void setControlsMenuActions() {
-		previousMenuItem.disableProperty().bind(stageDemon.getPlayerController().previousButtonDisableProperty());
+		previousMenuItem.disableProperty().bind(stageDemon.getPlayerController().previousButtonDisabledProperty());
 		previousMenuItem.setOnAction(e -> playerFacade.previous());
 		
-		nextMenuItem.disableProperty().bind(stageDemon.getPlayerController().nextButtonDisableProperty());
+		nextMenuItem.disableProperty().bind(stageDemon.getPlayerController().nextButtonDisabledProperty());
 		nextMenuItem.setOnAction(e -> playerFacade.next());
 		
-		increaseVolumeMenuItem.setOnAction(e -> stageDemon.getPlayerController().doIncreaseVolume());
-		decreaseVolumeMenuItem.setOnAction(e -> stageDemon.getPlayerController().doDecreaseVolume());
+		increaseVolumeMenuItem.setOnAction(e -> stageDemon.getPlayerController().increaseVolume());
+		decreaseVolumeMenuItem.setOnAction(e -> stageDemon.getPlayerController().decreaseVolume());
 		
 		selectCurrentTrackMenuItem.setOnAction(e -> {
-			Track currentTrack = playerFacade.getCurrentTrack();
+			Optional<Track> currentTrack = playerFacade.getCurrentTrack();
 			TrackTableView trackTable = (TrackTableView) stageDemon.getMainStage().getScene().lookup("#trackTable");
 			trackTable.getSelectionModel().clearSelection();
-			if(currentTrack != null) {
-				int currentTrackId = currentTrack.getTrackID();
-				Map.Entry<Integer, Track> currentEntry = new AbstractMap.SimpleEntry<>(currentTrackId, currentTrack);
+			currentTrack.ifPresent(track -> {
+				int currentTrackId = track.getTrackID();
+				Map.Entry<Integer, Track> currentEntry = new AbstractMap.SimpleEntry<>(currentTrackId, track);
 				trackTable.getSelectionModel().select(currentEntry);
 				trackTable.scrollTo(currentEntry);
-			}
+			});
 			LOG.debug("Current track in the player selected in the table");
 		});
 	}
@@ -321,6 +321,7 @@ public class MusicottMenuBar extends MenuBar {
 			}
 		});
 
+		// Disables the show/hide table info menu item if a playlist is shown
 		ReadOnlyObjectProperty<NavigationMode> selectedMenu = stageDemon.getNavigationController().selectedMenuProperty();
 		showHideTableInfoPaneMenuItem.disableProperty().bind(
 				Bindings.createBooleanBinding(() -> selectedMenu.getValue() != null, selectedMenu));

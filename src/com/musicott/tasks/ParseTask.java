@@ -128,7 +128,7 @@ public class ParseTask extends Task<Void> {
 		if(!parseErrors.isEmpty())
 			errorDemon.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
 		if(play)
-			player.addTracks(tracks.keySet(), true);
+			player.addTracksToPlayQueue(tracks.keySet(), true);
 		LOG.info("Parse task completed");
 	}
 	

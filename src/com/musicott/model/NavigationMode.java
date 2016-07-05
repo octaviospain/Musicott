@@ -16,7 +16,7 @@ public enum NavigationMode {
 	/**
 	 * The tracks of a selected {@link Playlist} are shown on the table
 	 */
-	PLAYLIST("PLaylist");
+	PLAYLIST("Playlist");
 
 	String name;
 

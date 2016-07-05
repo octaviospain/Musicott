@@ -79,7 +79,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 				if(event.getClickCount() == 2 && !row.isEmpty()) {
 					List<Integer> singleTrackIDList = new ArrayList<>();
 					singleTrackIDList.add(row.getItem().getKey());
-					player.addTracks(singleTrackIDList, true);
+					player.addTracksToPlayQueue(singleTrackIDList, true);
 				}
 			});
 			return row;
@@ -87,10 +87,10 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 		// Enter key pressed = play; Space key = pause/resume
 		addEventHandler(KeyEvent.KEY_PRESSED, event -> {
 			if(event.getCode() == KeyCode.ENTER) {
-				player.addTracks(selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), true);
+				player.addTracksToPlayQueue(selection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), true);
 			}
 			else if(event.getCode() == KeyCode.SPACE) {
-				String playerStatus = player.getTrackPlayer().getStatus();
+				String playerStatus = player.getPlayerStatus();
 				if("PLAYING".equals(playerStatus))
 					player.pause();
 				else if("PAUSED".equals(playerStatus))

@@ -28,19 +28,26 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * @author Octavio Calleya
+ * Singleton class that isolates the creation and the information
+ * flow between concurrent task threads in the application.
  *
+ * @author Octavio Calleya
+ * @version 0.9
  */
 public class TaskDemon {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
-	private volatile static TaskDemon instance;
+	private static TaskDemon instance;
 	private ParseTask parseTask;
 	private ItunesImportTask itunesImportTask;
 	private Semaphore waveformSemaphore;
 	private Queue<Track> tracksToProcessQueue;
 	private WaveformTask waveformTask;
+	private String alreadyImportingErrorMessage = "There is already an import task running." +
+												  "Wait for it to perform another import task.";
+
+	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	
 	private TaskDemon() {
 		tracksToProcessQueue = new ArrayDeque<>();
@@ -52,41 +59,54 @@ public class TaskDemon {
 			instance = new TaskDemon();
 		return instance;
 	}
-	
-	public void parseItunesLibrary(String path) {
+
+	/**
+	 * Creates a new {@link Thread} that analyzes and imports the contents
+	 * of an iTunes library to the application.
+	 *
+	 * @param itunesLibraryPath The path where the <tt>iTunes Music Library.xml</tt> file is located.
+	 */
+	public void importFromItunesLibrary(String itunesLibraryPath) {
 		if((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning()))
-			ErrorDemon.getInstance().showErrorDialog("There is already an import task running.");
+			errorDemon.showErrorDialog(alreadyImportingErrorMessage);
 		else {
-			itunesImportTask = new ItunesImportTask(path);
+			itunesImportTask = new ItunesImportTask(itunesLibraryPath);
 			Thread itunesThread = new Thread(itunesImportTask, "Parse Itunes Task");
 			itunesThread.setDaemon(true);
 			itunesThread.start();
-			LOG.debug("Parsing Itunes Library: {}", path);
+			LOG.debug("Importing Itunes Library: {}", itunesLibraryPath);
 		}
 	}
 
-	public void parseFiles(List<File> filesToParse, boolean playFinally) {
-		if((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning())) 
-			ErrorDemon.getInstance().showErrorDialog("There is already an import task running.");
+	/**
+	 * Creates a new {@link Thread} that analyzes and import several audio files
+	 * to the application.
+	 *
+	 * @param filesToImport The {@link List} of the files to import.
+	 * @param playAtTheEnd Specifies whether the application should play music at the end of the importation.
+	 */
+	public void importFiles(List<File> filesToImport, boolean playAtTheEnd) {
+		if((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning()))
+			errorDemon.showErrorDialog(alreadyImportingErrorMessage);
 		else {
-			parseTask = new ParseTask(filesToParse, playFinally);
+			parseTask = new ParseTask(filesToImport, playAtTheEnd);
 			Thread parseThread = new Thread(parseTask, "Parse Files Task");
 			parseThread.setDaemon(true);
 			parseThread.start();
 		}
 	}
 	
-	public synchronized void addTrackToProcess(Track track) {
+	public synchronized void analyzeTrackWaveform(Track trackToAnalyze) {
 		if(waveformTask == null) {
 			waveformTask = new WaveformTask("Waveform task ", waveformSemaphore, this);
 			waveformTask.start();
 		}
-		tracksToProcessQueue.add(track);
+		tracksToProcessQueue.add(trackToAnalyze);
 		waveformSemaphore.release();
-		LOG.debug("Added track {} to waveform process queue", track);
+		LOG.debug("Added track {} to waveform analyze queue", trackToAnalyze);
 	}
 	
-	protected synchronized Track getTrackToProcess() {
+	protected synchronized Track getNextTrackToAnalyze() {
 		return tracksToProcessQueue.poll();
 	}
 }

@@ -83,7 +83,7 @@ public class MusicLibrary {
 					Map.Entry<Integer, Track> removedEntry = new AbstractMap.SimpleEntry<>(removed.getTrackID(), removed);
 		          	waveforms.remove(removed.getTrackID());
 					allTracks.remove(removedEntry);
-					PlayerFacade.getInstance().removeTrack(removed.getTrackID());
+					PlayerFacade.getInstance().deleteTrackFromQueues(removed.getTrackID());
 		          	showingTracks.remove(new AbstractMap.SimpleEntry<>(removed.getTrackID(), removed));
 		          	playlists.forEach(p -> {
 		          		if(p.getTracks().remove((Integer) removed.getTrackID()))
@@ -117,9 +117,9 @@ public class MusicLibrary {
 		}
 	}
 
-	public Track getTrack(int trackID) {
+	public Optional<Track> getTrack(int trackID) {
 		synchronized(musicottTracks) {
-			return musicottTracks.get(trackID);
+			return Optional.ofNullable(musicottTracks.get(trackID));
 		}
 	}
 
@@ -262,7 +262,7 @@ public class MusicLibrary {
 		}
 	}
 
-	public void playRandomPlaylist(){
+	public void getRandomPlaylist(){
 		Thread randomPlaylistThread = new Thread(() -> {
 			List<Integer> randomPlaylist = new ArrayList<>();
 			synchronized(musicottTracks) {

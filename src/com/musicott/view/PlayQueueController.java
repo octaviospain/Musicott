@@ -27,8 +27,10 @@ import javafx.scene.layout.*;
 import org.slf4j.*;
 
 /**
- * @author Octavio Calleya
+ * Controller class of the play queue pane.
  *
+ * @author Octavio Calleya
+ * @version 0.9
  */
 public class PlayQueueController implements MusicottController {
 	
@@ -68,38 +70,51 @@ public class PlayQueueController implements MusicottController {
 					player.playQueueIndex(playQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
 			}
 		});
-		
+		deleteAllButton.setOnAction(event -> {
+			if(historyQueueButton.isSelected() && !historyQueueList.isEmpty())
+				clearPlayQueue();
+			else
+				clearHistoryQueue();
+		});
+		historyQueueButton.setOnAction(event -> {
+			if(historyQueueButton.isSelected())
+				showHistoryQueue();
+			else
+				showPlayQueue();
+		});
 	}
-	
-	public void removeTrackQueueRow(TrackQueueRow tqr) {
+
+	/**
+	 * Removes a {@link TrackQueueRow} from the play queue pane
+	 *
+	 * @param trackQueueRow The <tt>TrackQueueRow</tt> the track queue row to remove
+	 */
+	public void removeTrackQueueRow(TrackQueueRow trackQueueRow) {
 		if(historyQueueButton.isSelected())
-			historyQueueList.remove(tqr);
+			historyQueueList.remove(trackQueueRow);
 		else
-			playQueueList.remove(tqr);
+			playQueueList.remove(trackQueueRow);
 	}
-	
-	@FXML
-	public void doDeleteAll() {
-		if(historyQueueButton.isSelected() && !historyQueueList.isEmpty()) {
-			historyQueueList.clear();
-			LOG.trace("History queue cleared");
-		}
-		else if(!playQueueList.isEmpty()) {
-			playQueueList.clear();
-			LOG.trace("Play queue cleared");
-		}
+
+	public void clearHistoryQueue() {
+		historyQueueList.clear();
+		LOG.trace("History queue cleared");
 	}
-	
-	@FXML
-	public void doHistoryQueueButton() {
-		if(historyQueueButton.isSelected()) {
-			listView.setItems(historyQueueList);
-			titleQueueLabel.setText("Recently played");
-		}
-		else {
-			listView.setItems(playQueueList);
-			titleQueueLabel.setText("Play Queue");
-		}
-		LOG.trace("Changed between play and history queue");
+
+	public void clearPlayQueue() {
+		playQueueList.clear();
+		LOG.trace("Play queue cleared");
+	}
+
+	public void showHistoryQueue() {
+		listView.setItems(historyQueueList);
+		titleQueueLabel.setText("Recently played");
+		LOG.trace("Showing history queue on the pane");
+	}
+
+	public void showPlayQueue() {
+		listView.setItems(playQueueList);
+		titleQueueLabel.setText("Play Queue");
+		LOG.trace("Showing play queue on the pane");
 	}
 }

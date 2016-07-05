@@ -214,9 +214,9 @@ public class StageDemon {
 		}
 
 		// Hide play queue pane clicking outside of it
-		navigationLayout.setOnMouseClicked(e -> getPlayerController().showPlayQueue(false));
-		contentBorderLayout.setOnMouseClicked(e -> getPlayerController().showPlayQueue(false));
-		rootLayout.setOnMouseClicked(e -> getPlayerController().showPlayQueue(false));
+		navigationLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
+		contentBorderLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
+		rootLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
 
 		Scene mainScene = new Scene(rootLayout, 1200, 775);
 		mainStage.setScene(mainScene);

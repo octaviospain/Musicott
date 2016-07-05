@@ -116,11 +116,13 @@ public class Playlist {
 	public void changePlaylistCover() {
 		if(!getTracks().isEmpty()) {
 			Random random = new Random();
-			Track randomTrack = musicLibrary.getTrack(getTracks().get(random.nextInt(tracksID.size())));
-			if(randomTrack.hasCover())
-				playlistCoverProperty.set(new Image(new ByteArrayInputStream(randomTrack.getCoverBytes())));
-			else
-				playlistCoverProperty.set(COVER_IMAGE);
+			Optional<Track> randomTrack = musicLibrary.getTrack(getTracks().get(random.nextInt(tracksID.size())));
+			randomTrack.ifPresent(track -> {
+				if(track.hasCover())
+					playlistCoverProperty.set(new Image(new ByteArrayInputStream(track.getCoverBytes())));
+				else
+					playlistCoverProperty.set(COVER_IMAGE);
+			});
 		}
 		else
 			playlistCoverProperty.set(COVER_IMAGE);

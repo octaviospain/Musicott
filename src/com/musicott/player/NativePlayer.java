@@ -21,6 +21,7 @@ package com.musicott.player;
 
 import com.musicott.model.Track;
 import javafx.scene.media.*;
+import javafx.util.*;
 
 import java.io.*;
 
@@ -70,6 +71,11 @@ public class NativePlayer implements TrackPlayer {
 		Media media = new Media(mp3File.toURI().toString());
 		mediaPlayer = new MediaPlayer(media);
 		mediaPlayer.setOnEndOfMedia(() -> PlayerFacade.getInstance().next());
+	}
+
+	@Override
+	public void seek(double seekValue) {
+		mediaPlayer.seek(Duration.millis(seekValue));
 	}
 
 	@Override

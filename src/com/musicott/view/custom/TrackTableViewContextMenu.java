@@ -56,7 +56,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
 		cmPlay = new MenuItem("Play");
 		cmPlay.setOnAction(event -> {
 			if(!trackSelection.isEmpty())
-				PlayerFacade.getInstance().addTracks(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), true);
+				PlayerFacade.getInstance().addTracksToPlayQueue(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), true);
 		});
 		cmEdit = new MenuItem("Edit");
 		cmEdit.setOnAction(event -> stageDemon.editTracks());
@@ -65,7 +65,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
 		cmAddToQueue = new MenuItem("Add to Play Queue");
 		cmAddToQueue.setOnAction(event -> {
 			if(!trackSelection.isEmpty())
-				PlayerFacade.getInstance().addTracks(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), false);
+				PlayerFacade.getInstance().addTracksToPlayQueue(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), false);
 		});
 		cmDeleteFromPlaylist = new MenuItem("Delete from playlist");
 		cmDeleteFromPlaylist.setId("cmDeleteFromPlaylist");

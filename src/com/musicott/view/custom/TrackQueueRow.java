@@ -49,7 +49,7 @@ public class TrackQueueRow extends GridPane {
 
 	public TrackQueueRow(int trackID) {
 		super();
-		this.track = MusicLibrary.getInstance().getTrack(trackID);
+		track = MusicLibrary.getInstance().getTrack(trackID).get();
 		playQueueController = StageDemon.getInstance().getPlayQueueController();
 		placeCover();
 		placeLabels();

@@ -45,6 +45,10 @@ public class FlacPlayer implements TrackPlayer {
 	}
 
 	@Override
+	public void seek(double seekValue) {
+	}
+
+	@Override
 	public void play() {
 	}
 

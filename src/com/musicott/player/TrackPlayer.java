@@ -32,6 +32,8 @@ public interface TrackPlayer {
 	void setTrack(Track track);
 
 	void setVolume(double value);
+
+	void seek(double seekValue);
 	
 	void play();
 	
