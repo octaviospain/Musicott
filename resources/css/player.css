@@ -20,7 +20,7 @@
 .root, #playerGridPane, .list-view {
     -fx-focus-color: rgb(73, 73, 73);
     -fx-faint-focus-color: transparent;
-    -fx-background-color: transparent, transparent, transparent, -fx-body-color;
+    -fx-background-color: transparent, transparent, transparent, rgb(243, 243, 243);
     -fx-background-radius: 0, 0, 0, 0;
     -fx-accent: black;
 }

@@ -95,7 +95,7 @@ public class UpdateMetadataTask extends Thread {
 		try {
 			backup = File.createTempFile(track.getName(), "");
 			Files.move(backup.toPath(), original.toPath(), options);
-		} catch (IOException e) {
+		} catch (IOException | UnsupportedOperationException e) {
 			LOG.error("Error restoring the backup file: "+e.getMessage(), e);
 			ErrorDemon.getInstance().showErrorDialog("Error restoring the backup file", null, e);
 		}

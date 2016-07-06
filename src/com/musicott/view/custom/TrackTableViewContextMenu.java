@@ -22,6 +22,7 @@ package com.musicott.view.custom;
 import com.musicott.*;
 import com.musicott.model.*;
 import com.musicott.player.*;
+import com.musicott.view.*;
 import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
@@ -33,73 +34,76 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 /**
- * Context menu to be shown on the track table
+ * Context menu to be shown on the {@link TrackTableView}.
  * 
  * @author Octavio Calleya
- *
+ * @version 0.9
  */
 public class TrackTableViewContextMenu extends ContextMenu {
 	
 	private StageDemon stageDemon = StageDemon.getInstance();
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	
-	private Menu cmAddToPlaylist;
-	private MenuItem cmPlay, cmEdit, cmDelete, cmAddToQueue, cmDeleteFromPlaylist;
+	private Menu addToPlaylistMenu;
+	private MenuItem playMenuItem;
+	private MenuItem editMenuItem;
+	private MenuItem deleteMenuItem;
+	private MenuItem addToQueueMenuItem;
+	private MenuItem deleteFromPlaylistMenuItem;
 	private ObservableList<Entry<Integer, Track>> trackSelection;
 
 	private List<MenuItem> playlistsInMenu;
 	
-	public TrackTableViewContextMenu(ObservableList<Map.Entry<Integer, Track>> tableSelection) {
+	public TrackTableViewContextMenu(ObservableList<Entry<Integer, Track>> tableSelection) {
 		super();
 		playlistsInMenu = new ArrayList<>();
 		trackSelection = tableSelection;
-		cmPlay = new MenuItem("Play");
-		cmPlay.setOnAction(event -> {
+		playMenuItem = new MenuItem("Play");
+		playMenuItem.setOnAction(event -> {
 			if(!trackSelection.isEmpty())
-				PlayerFacade.getInstance().addTracksToPlayQueue(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), true);
+				PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(), true);
 		});
-		cmEdit = new MenuItem("Edit");
-		cmEdit.setOnAction(event -> stageDemon.editTracks());
-		cmDelete = new MenuItem("Delete");
-		cmDelete.setOnAction(event -> stageDemon.deleteTracks());
-		cmAddToQueue = new MenuItem("Add to Play Queue");
-		cmAddToQueue.setOnAction(event -> {
+		editMenuItem = new MenuItem("Edit");
+		editMenuItem.setOnAction(event -> stageDemon.editTracks());
+		deleteMenuItem = new MenuItem("Delete");
+		deleteMenuItem.setOnAction(event -> stageDemon.deleteTracks());
+		addToQueueMenuItem = new MenuItem("Add to Play Queue");
+		addToQueueMenuItem.setOnAction(event -> {
 			if(!trackSelection.isEmpty())
-				PlayerFacade.getInstance().addTracksToPlayQueue(trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()), false);
+				PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(), false);
 		});
-		cmDeleteFromPlaylist = new MenuItem("Delete from playlist");
-		cmDeleteFromPlaylist.setId("cmDeleteFromPlaylist");
-		cmDeleteFromPlaylist.setOnAction(event -> {
-			ObservableList<Map.Entry<Integer, Track>> trackSelection = stageDemon.getRootController().getSelectedItems();
+		deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
+		deleteFromPlaylistMenuItem.setId("deleteFromPlaylistMenuItem");
+		NavigationController navigationController = stageDemon.getNavigationController();
+		deleteFromPlaylistMenuItem.setOnAction(event -> {
 			if(!trackSelection.isEmpty()) {
-				Playlist selectedPlaylist = stageDemon.getNavigationController().selectedPlaylistProperty().getValue().getValue();
-				musicLibrary.deleteFromPlaylist(selectedPlaylist, trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+				Playlist selectedPlaylist = navigationController.selectedPlaylistProperty().getValue().getValue();
+				musicLibrary.deleteFromPlaylist(selectedPlaylist, trackSelectionIds());
 			}
 		});
-		cmAddToPlaylist = new Menu("Add to Playlist");
+		addToPlaylistMenu = new Menu("Add to Playlist");
 		
-		ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylist = StageDemon.getInstance().getNavigationController().selectedPlaylistProperty();
-		cmDeleteFromPlaylist.disableProperty().bind(Bindings.createBooleanBinding(() -> selectedPlaylist.getValue() == null, selectedPlaylist));
+		ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylist = navigationController.selectedPlaylistProperty();
+		deleteFromPlaylistMenuItem.disableProperty().bind
+				(Bindings.createBooleanBinding(() -> selectedPlaylist.getValue() == null, selectedPlaylist));
 	
-		getItems().addAll(cmPlay, cmEdit, cmDelete, cmAddToQueue, new SeparatorMenuItem(), cmDeleteFromPlaylist, cmAddToPlaylist);
+		getItems().addAll(playMenuItem, editMenuItem, deleteMenuItem, addToQueueMenuItem, new SeparatorMenuItem());
+		getItems().addAll(deleteFromPlaylistMenuItem, addToPlaylistMenu);
 	}
-	
-	protected MenuItem getDeleteFromPlaylistMI() {
-		return cmDeleteFromPlaylist;
-	}
-	
+
 	@Override
 	public void show(Node anchor, double screenX, double screenY) {
 		playlistsInMenu.clear();
 
-		for(Playlist playlist: musicLibrary.getPlaylists())
+		musicLibrary.getPlaylists().forEach(playlist -> {
 			if(!playlist.isFolder())
 				addPlaylistToMenuList(playlist);
 			else
-				playlist.getContainedPlaylists().forEach(childPlaylist -> addPlaylistToMenuList(childPlaylist));
+				playlist.getContainedPlaylists().forEach(this::addPlaylistToMenuList);
+		});
 
-		cmAddToPlaylist.getItems().clear();
-		cmAddToPlaylist.getItems().addAll(playlistsInMenu);
+		addToPlaylistMenu.getItems().clear();
+		addToPlaylistMenu.getItems().addAll(playlistsInMenu);
 		super.show(anchor, screenX, screenY);
 	}
 
@@ -108,8 +112,12 @@ public class TrackTableViewContextMenu extends ContextMenu {
 		MenuItem playlistItem = new MenuItem(playListName);
 		playlistItem.setOnAction(e -> {
 			if(!trackSelection.isEmpty())
-				musicLibrary.addToPlaylist(playListName, trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+				musicLibrary.addToPlaylist(playListName, trackSelectionIds());
 		});
 		playlistsInMenu.add(playlistItem);
+	}
+
+	private List<Integer> trackSelectionIds() {
+		return trackSelection.stream().map(Entry::getKey).collect(Collectors.toList());
 	}
 }

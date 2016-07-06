@@ -32,12 +32,18 @@ import javafx.scene.layout.*;
 import java.io.*;
 
 /**
- * @author Octavio Calleya
+ * Class that represents a single {@link Track} in the playqueue or the history queue.
+ * It contains labels showing the artist and track names, the cover image, and a button
+ * to remove the <tt>TrakQueueRow</tt> from his list.
  *
+ * @author Octavio Calleya
+ * @version 0.9
  */
 public class TrackQueueRow extends GridPane {
 	
-	private final double COVER_SIZE = 42.0;
+	private static final double COVER_SIZE = 42.0;
+	private static final String DELETE_BUTTON_BLACK_STYLE = "deleteButton-black";
+	private static final String DELETE_BUTTON_WHITE_STYLE = "deleteButton-white";
 	
 	private PlayQueueController playQueueController;
 	private Track track;
@@ -57,9 +63,9 @@ public class TrackQueueRow extends GridPane {
 		ColumnConstraints cc1 = new ColumnConstraints(50);
 		ColumnConstraints cc2 = new ColumnConstraints(200);
 		getColumnConstraints().addAll(cc1,cc2);
-		GridPane.setMargin(deleteTrackQueueRowButton, new Insets (1,1,1,200));
-		GridPane.setMargin(coverImage, new Insets(0,0,0,0));
-		GridPane.setMargin(labelBox, new Insets(1,1,1,5));
+		GridPane.setMargin(deleteTrackQueueRowButton, new Insets (1, 1, 1, 200));
+		GridPane.setMargin(coverImage, new Insets(0, 0, 0, 0));
+		GridPane.setMargin(labelBox, new Insets(1, 1, 1, 5));
 		setOnMouseMoved(event -> deleteTrackQueueRowButton.setVisible(true));
 		setOnMouseExited(event -> deleteTrackQueueRowButton.setVisible(false));
 		setAlignment(Pos.CENTER_LEFT);
@@ -70,12 +76,12 @@ public class TrackQueueRow extends GridPane {
 	}
 	
 	public void changeRemoveButtonColor() {
-		if(deleteTrackQueueRowButton.getId().equals("deleteButton-black"))
-			deleteTrackQueueRowButton.setId("deleteButton-white");
+		if(DELETE_BUTTON_BLACK_STYLE.equals(deleteTrackQueueRowButton.getId()))
+			deleteTrackQueueRowButton.setId(DELETE_BUTTON_WHITE_STYLE);
 		else
-			deleteTrackQueueRowButton.setId("deleteButton-black");
+			deleteTrackQueueRowButton.setId(DELETE_BUTTON_BLACK_STYLE);
 	}
-	
+
  	private void placeLabels() {
 		nameLabel = new Label();
 		nameLabel.setId("nameLabel");
@@ -83,7 +89,8 @@ public class TrackQueueRow extends GridPane {
 		artistAlbumLabel = new Label();
 		artistAlbumLabel.setId("artistAlbumLabel");
 		artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
-				() -> track.artistProperty().get()+" - "+track.albumProperty().get(), track.artistProperty(), track.albumProperty())
+				() -> track.artistProperty().get() + " - " + track.albumProperty().get(),
+				track.artistProperty(), track.albumProperty())
 		);
 		labelBox = new VBox();
 		VBox.setMargin(nameLabel, new Insets(0, 0, 1, 0));
@@ -96,7 +103,7 @@ public class TrackQueueRow extends GridPane {
 
 	private void placeDeleteHoverButton() {
 		deleteTrackQueueRowButton = new Button();
-		deleteTrackQueueRowButton.setId("deleteButton-black");
+		deleteTrackQueueRowButton.setId(DELETE_BUTTON_BLACK_STYLE);
 		deleteTrackQueueRowButton.setPrefSize(3, 3);
 		deleteTrackQueueRowButton.setVisible(false);
 		deleteTrackQueueRowButton.setOnAction(event -> playQueueController.removeTrackQueueRow(this));
