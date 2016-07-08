@@ -23,15 +23,18 @@ import com.cedarsoftware.util.io.*;
 import javafx.collections.*;
 
 /**
- * @author Octavio Calleya
+ * Class needed by the <tt>Json-io</tt> library in order to serialize an {@link ObservableMap}.
  *
+ * @author Octavio Calleya
+ * @version 0.9
+ * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
  */
 public class ObservableMapWrapperCreator implements JsonReader.ClassFactory {
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Object newInstance(Class c) {
-		ObservableMap ol = FXCollections.observableHashMap();
-		return ol;
+		ObservableMap observableMap = FXCollections.observableHashMap();
+		return observableMap;
 	}
 }

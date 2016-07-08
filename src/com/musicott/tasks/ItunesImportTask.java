@@ -242,9 +242,9 @@ public class ItunesImportTask extends Task<Void> {
 			MetadataParser parser = new MetadataParser(itunesFile);
 			try {
 				newTrack = parser.createTrack();
-			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException e) {
-				LOG.error("Error parsing "+itunesFile, e);
-				parseErrors.add(itunesFile+e.getMessage());
+			} catch (TrackParseException e) {
+				LOG.error("Error parsing " + itunesFile, e);
+				parseErrors.add(itunesFile + e.getMessage());
 			}
 			if(newTrack != null && holdPlayCount)
 				newTrack.setPlayCount(iTrack.getPlayCount() < 1 ? 0 : iTrack.getPlayCount());

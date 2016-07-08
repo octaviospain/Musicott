@@ -26,8 +26,6 @@ import com.musicott.util.*;
 import javafx.application.*;
 import javafx.concurrent.*;
 import javafx.util.*;
-import org.jaudiotagger.audio.exceptions.*;
-import org.jaudiotagger.tag.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -104,9 +102,9 @@ public class ParseTask extends Task<Void> {
 		Track newTrack = null;
 		try {
 			newTrack = parser.createTrack();
-		} catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException e) {
-			LOG.error("Error parsing file "+file+": ", e);
-			parseErrors.add(file+": "+e.getMessage());
+		} catch (TrackParseException e) {
+			LOG.error("Error parsing file " + file + ": ", e);
+			parseErrors.add(file + ": " + e.getMessage());
 		}
 		return newTrack;
 	}

@@ -28,8 +28,11 @@ import org.jaudiotagger.tag.*;
 import java.io.*;
 
 /**
- * @author Octavio Calleya
+ * Performs the operation of parsing an audio file to a {@link Track} instance.
  *
+ * @author Octavio Calleya
+ * @version 0.9
+ * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
 public class MetadataParser {
 	
@@ -39,24 +42,29 @@ public class MetadataParser {
 		this.fileToParse = file;
 	}
 
-	public Track createTrack() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException {
+	public Track createTrack() throws TrackParseException {
 		Track track = new Track();
-		AudioFile audioFile = AudioFileIO.read(fileToParse);
-		track.setFileFolder(fileToParse.getParent().toString());
-		track.setFileName(fileToParse.getName());
-		track.setInDisk(true);
-		track.setSize((int) (fileToParse.length()));
-		track.setTotalTime(Duration.seconds(audioFile.getAudioHeader().getTrackLength()));
-		track.setEncoding(audioFile.getAudioHeader().getEncodingType());
-		String bitRate = audioFile.getAudioHeader().getBitRate();
-		if(bitRate.substring(0, 1).equals("~")) {
-			track.setIsVariableBitRate(true);
-			bitRate = bitRate.substring(1);
+		try {
+			AudioFile audioFile = AudioFileIO.read(fileToParse);
+			track.setFileFolder(fileToParse.getParent());
+			track.setFileName(fileToParse.getName());
+			track.setInDisk(true);
+			track.setSize((int) (fileToParse.length()));
+			track.setTotalTime(Duration.seconds(audioFile.getAudioHeader().getTrackLength()));
+			track.setEncoding(audioFile.getAudioHeader().getEncodingType());
+			String bitRate = audioFile.getAudioHeader().getBitRate();
+			if ("~".equals(bitRate.substring(0, 1))) {
+				track.setIsVariableBitRate(true);
+				bitRate = bitRate.substring(1);
+			}
+			track.setBitRate(Integer.parseInt(bitRate));
+			Tag tag = audioFile.getTag();
+			parseBaseMetadata(track, tag);
+			checkCoverImage(track, tag);
+		} catch (IOException | CannotReadException | ReadOnlyFileException |
+				TagException | InvalidAudioFrameException e) {
+			throw new TrackParseException("Error parsing the file " + fileToParse, e);
 		}
-		track.setBitRate(Integer.parseInt(bitRate));
-		Tag tag = audioFile.getTag();
-		parseBaseMetadata(track, tag);
-		checkCoverImage(track, tag);
 		return track;
 	}
 	
@@ -78,30 +86,38 @@ public class MetadataParser {
 		if(tag.hasField(FieldKey.ENCODER))
 			track.setEncoder(tag.getFirst(FieldKey.ENCODER));
 		if(tag.hasField(FieldKey.IS_COMPILATION))
-			if(track.getFileFormat().equals("m4a"))
-				track.setCompilation(tag.getFirst(FieldKey.IS_COMPILATION).equals("1") ? true : false);
+			if("m4a".equals(track.getFileFormat()))
+				track.setCompilation("1".equals(tag.getFirst(FieldKey.IS_COMPILATION)) ? true : false);
 			else
-				track.setCompilation(tag.getFirst(FieldKey.IS_COMPILATION).equals("true") ? true : false);
+				track.setCompilation("true".equals(tag.getFirst(FieldKey.IS_COMPILATION)) ? true : false);
 		if(tag.hasField(FieldKey.BPM))
 			try {
 				int bpm = Integer.parseInt(tag.getFirst(FieldKey.BPM));
 				track.setBpm(bpm < 1 ? 0 : bpm);
-			} catch (NumberFormatException e) {}
+			} catch (NumberFormatException e) {
+
+			}
 		if(tag.hasField(FieldKey.DISC_NO))
 			try {
 				int dn = Integer.parseInt(tag.getFirst(FieldKey.DISC_NO));
 				track.setDiscNumber(dn < 1 ? 0 : dn);
-			} catch (NumberFormatException e) {}
+			} catch (NumberFormatException e) {
+
+			}
 		if(tag.hasField(FieldKey.TRACK))
 			try {
-				int tn = Integer.parseInt(tag.getFirst(FieldKey.TRACK));
-				track.setTrackNumber(tn < 1 ? 0 : tn);
-			} catch (NumberFormatException e) {}
+				int trackNumber = Integer.parseInt(tag.getFirst(FieldKey.TRACK));
+				track.setTrackNumber(trackNumber < 1 ? 0 : trackNumber);
+			} catch (NumberFormatException e) {
+
+			}
 		if(tag.hasField(FieldKey.YEAR))
 			try {
 				int year = Integer.parseInt(tag.getFirst(FieldKey.YEAR));
 				track.setYear(year < 1 ? 0 : year);
-			} catch (NumberFormatException e) {}
+			} catch (NumberFormatException e) {
+
+			}
 	}
 	
 	public static void checkCoverImage(Track track, Tag tag) {

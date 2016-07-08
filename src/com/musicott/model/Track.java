@@ -161,7 +161,7 @@ public class Track {
     }
     
     public boolean updateMetadata() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException {
-    	return updater.updateMetadata();
+    	return updater.writeAudioMetadata();
     }
     
     public boolean updateCover(File coverFile) {
