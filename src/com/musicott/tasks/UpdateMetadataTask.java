@@ -21,8 +21,6 @@ package com.musicott.tasks;
 
 import com.musicott.*;
 import com.musicott.model.*;
-import org.jaudiotagger.audio.exceptions.*;
-import org.jaudiotagger.tag.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -32,72 +30,69 @@ import java.util.*;
 import static java.nio.file.StandardCopyOption.*;
 
 /**
- * @author Octavio Calleya
+ * Class that extends from {@link Thread} that performs the operation of
+ * updating the metadata of the audio files.
  *
+ * @author Octavio Calleya
+ * @version 0.9
  */
 public class UpdateMetadataTask extends Thread {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	
 	private List<Track> tracks;
-	private File imageFile;
 	private CopyOption[] options;
 	private List<String> updateErrors;
 
-	public UpdateMetadataTask(List<Track> tracks, File imageFile) {
+	private ErrorDemon errorDemon = ErrorDemon.getInstance();
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+
+	public UpdateMetadataTask(List<Track> tracks) {
 		this.tracks = tracks;
-		this.imageFile = imageFile;
 		options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
 		updateErrors = new ArrayList<>();
 	}
 	
 	@Override
 	public void run() {
-		boolean updated = false, coverChanged = false;
-		if(imageFile == null)
-			coverChanged = true;
-		for(Track track : tracks)
+		boolean updated;
+		for(Track track: tracks)
 			if(track.getInDisk()) {
-				LOG.debug("Updating metadata of {}", track.getFileFolder()+"/"+track.getFileName());
 				File backup = makeBackup(track);
-				try {
-					updated = track.updateMetadata();
-				} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
-						| InvalidAudioFrameException | CannotWriteException e) {
-					LOG.warn("Error writing metadata of "+track, e);
-					updateErrors.add(track.getArtist()+" - "+track.getName()+": "+e.getMessage());
-				}
-				if(imageFile != null)
-					coverChanged = track.updateCover(imageFile);
-				if((!updated || !coverChanged) && backup != null)
+				updated = track.writeMetadata();
+				if(!updated && backup != null)
 					restoreBackup(track, backup);
+
+				if(updated)
+					LOG.debug("Updating metadata of {}", track.getFileFolder()+"/"+track.getFileName());
+				else
+					LOG.debug("Updating metadata of {}", track.getFileFolder()+"/"+track.getFileName());
 			}
-		MusicLibrary.getInstance().saveLibrary(true, false, false);
+		musicLibrary.saveLibrary(true, false, false);
 		if(!updateErrors.isEmpty())
-			ErrorDemon.getInstance().showExpandableErrorsDialog("Errors writing metadata on some tracks", "", updateErrors);
+			errorDemon.showExpandableErrorsDialog("Errors writing metadata on some tracks", "", updateErrors);
 	}
 	
 	private File makeBackup(Track track) {
-		File original, backup = null;
-		original = new File(track.getFileFolder()+"/"+track.getFileName());
+		File original = new File(track.getFileFolder() + "/" + track.getFileName());
+		File backup = null;
 		try {
 			backup = File.createTempFile(track.getName(), "");
 			Files.copy(original.toPath(), backup.toPath(), options);
-		} catch (IOException e) {
-			LOG.error("Error creating the backup file: "+e.getMessage(), e);
-			ErrorDemon.getInstance().showErrorDialog("Error creating the backup file", null, e);
-		}	
+		} catch (IOException exception) {
+			LOG.error("Error creating the backup file: " + exception.getMessage(), exception);
+			errorDemon.showErrorDialog("Error creating the backup file", "", exception);
+		}
 		return backup;
 	}
 	
 	private void restoreBackup(Track track, File backup) {
-		File original = new File(track.getFileFolder()+"/"+track.getFileName());
+		File original = new File(track.getFileFolder() + "/" + track.getFileName());
 		try {
-			backup = File.createTempFile(track.getName(), "");
 			Files.move(backup.toPath(), original.toPath(), options);
-		} catch (IOException | UnsupportedOperationException e) {
-			LOG.error("Error restoring the backup file: "+e.getMessage(), e);
-			ErrorDemon.getInstance().showErrorDialog("Error restoring the backup file", null, e);
+		} catch (IOException | UnsupportedOperationException exception) {
+			LOG.error("Error restoring the backup file: " + exception.getMessage(), exception);
+			errorDemon.showErrorDialog("Error restoring the backup file", "", exception);
 		}
 	}
 }

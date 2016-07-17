@@ -18,29 +18,19 @@
 
 package tests.unit;
 
+import com.musicott.model.*;
+import com.musicott.util.*;
+import javafx.beans.property.*;
+import javafx.util.*;
+import org.jaudiotagger.audio.*;
+import org.jaudiotagger.tag.*;
+import org.jaudiotagger.tag.mp4.*;
+import org.junit.*;
+
+import java.nio.file.*;
+import java.util.*;
+
 import static org.junit.Assert.*;
-
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
-
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.audio.AudioHeader;
-import org.jaudiotagger.tag.FieldKey;
-import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.mp4.Mp4FieldKey;
-import org.jaudiotagger.tag.mp4.Mp4Tag;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.musicott.model.Track;
-import com.musicott.model.TrackField;
-import com.musicott.util.MetadataParser;
-
-import javafx.beans.property.Property;
-import javafx.util.Duration;
 
 /**
  * @author Octavio Calleya
@@ -67,7 +57,7 @@ public class ParseUpdateTest extends AudioBaseTest {
 		expectedTest.setDiscNumber(5);
 		expectedTest.setYear(2222);
 		expectedTest.setBpm(125);
-		expectedTest.setCompilation(true);
+		expectedTest.setIsPartOfCompilation(true);
 	}
 	
 	@Test
@@ -122,9 +112,10 @@ public class ParseUpdateTest extends AudioBaseTest {
 		testPath = FileSystems.getDefault().getPath(fileFolder, expectedTest.getFileName());
 		expectedTest.setTotalTime(Duration.seconds(AudioFileIO.read(testPath.toFile()).getAudioHeader().getTrackLength()));
 		expectedTest.setSize((int)testPath.toFile().length());
-		
-		assertTrue(expectedTest.updateMetadata());
-		assertTrue(expectedTest.updateCover(cover.toFile()));
+		expectedTest.setCoverImage(cover.toFile());
+
+		assertTrue(expectedTest.writeMetadata());
+		assertTrue(expectedTest.getCoverImage().isPresent());
 		
 		AudioFile audioFile = AudioFileIO.read(testPath.toFile());
 		Tag tag = audioFile.getTag();
@@ -140,9 +131,9 @@ public class ParseUpdateTest extends AudioBaseTest {
 		assertEquals(expectedTest.getDiscNumber(), Integer.parseInt(tag.getFirst(FieldKey.DISC_NO)));
 		assertEquals(expectedTest.getYear(), Integer.parseInt(tag.getFirst(FieldKey.YEAR)));
 		if(type == M4A)	// if is testing m4a
-			assertEquals(expectedTest.getIsCompilation(), ((Mp4Tag)tag).getFirst(Mp4FieldKey.COMPILATION).equals("1") ? true : false);
+			assertEquals(expectedTest.isPartOfCompilation(), ((Mp4Tag)tag).getFirst(Mp4FieldKey.COMPILATION).equals("1") ? true : false);
 		else
-			assertEquals(expectedTest.getIsCompilation(), tag.getFirst(FieldKey.IS_COMPILATION).equals("true") ? true : false);
+			assertEquals(expectedTest.isPartOfCompilation(), tag.getFirst(FieldKey.IS_COMPILATION).equals("true") ? true : false);
 		assertTrue(!tag.getArtworkList().isEmpty());
 	}
 
@@ -174,7 +165,7 @@ public class ParseUpdateTest extends AudioBaseTest {
 		assertEquals(expectedTest.getDiscNumber(), tested.getDiscNumber());
 		assertEquals(expectedTest.getYear(), tested.getYear());
 		assertEquals(expectedTest.getBpm(), tested.getBpm());
-		assertEquals(expectedTest.getIsCompilation(), tested.getIsCompilation());
+		assertEquals(expectedTest.isPartOfCompilation(), tested.isPartOfCompilation());
 		assertEquals(mimeTypes[type], tested.getFileFormat());
 		assertEquals(fileFolder, tested.getFileFolder());
 		assertEquals(expectedTest.getFileName(), tested.getFileName());
@@ -182,11 +173,11 @@ public class ParseUpdateTest extends AudioBaseTest {
 //		assertEquals(1, tested.getTrackID()); 	// can't be tested because the ID is stored in the JVM config
 		assertEquals(expectedTest.getInDisk(), tested.getInDisk());
 		assertEquals(expectedTest, tested);
-		Map<TrackField, Property<?>> expectedMap = expectedTest.getPropertiesMap();
-		Map<TrackField, Property<?>> testedMap = expectedTest.getPropertiesMap();
+		Map<TrackField, Property> expectedMap = expectedTest.getPropertyMap();
+		Map<TrackField, Property> testedMap = expectedTest.getPropertyMap();
 		for(TrackField tf: TrackField.values())
 			assertEquals(expectedMap.get(tf), testedMap.get(tf));
-		assertTrue(tested.hasCover());
+		assertTrue(tested.getCoverImage().isPresent());
 		assertEquals(expectedTest.getTotalTime(), tested.getTotalTime());
 		assertEquals(expectedTest, tested);
 	}

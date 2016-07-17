@@ -19,16 +19,20 @@
 
 package com.musicott.model;
 
+import com.musicott.util.*;
 import com.musicott.view.*;
 import javafx.beans.property.*;
 import javafx.scene.image.*;
 
-import java.io.*;
 import java.util.*;
 
 /**
- * @author Octavio Calleya
+ * Represents a Playlist of tracks. A <tt>Playlist</tt> can contain another playlists,
+ * if so, an instance is a folder. One cover image of the contained tracks
+ * is used when showing a {@link Playlist} on the application.
  *
+ * @author Octavio Calleya
+ * @version 0.9
  */
 public class Playlist {
 
@@ -90,7 +94,6 @@ public class Playlist {
 		return containedPlaylists;
 	}
 
-
 	public StringProperty nameProperty() {
 		return nameProperty;
 	}
@@ -118,8 +121,10 @@ public class Playlist {
 			Random random = new Random();
 			Optional<Track> randomTrack = musicLibrary.getTrack(getTracks().get(random.nextInt(tracksID.size())));
 			randomTrack.ifPresent(track -> {
-				if(track.hasCover())
-					playlistCoverProperty.set(new Image(new ByteArrayInputStream(track.getCoverBytes())));
+				if(track.getCoverImage().isPresent()) {
+					Optional<Image> coverImage = Utils.getImageFromFile(track.getCoverImage().get());
+					coverImage.ifPresent(playlistCoverProperty::set);
+				}
 				else
 					playlistCoverProperty.set(COVER_IMAGE);
 			});

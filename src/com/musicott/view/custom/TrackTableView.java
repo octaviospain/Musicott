@@ -183,7 +183,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
 		dateModifiedCol = new TableColumn<>("Modified");
 		dateModifiedCol.setPrefWidth(110);
-		dateModifiedCol.setCellValueFactory(cellData -> cellData.getValue().getValue().dateModifiedProperty());
+		dateModifiedCol.setCellValueFactory(cellData -> cellData.getValue().getValue().lastDateModifiedProperty());
 		dateModifiedCol.setStyle(CENTER_RIGHT_STYLE);
 		dateModifiedCol.setCellFactory(dateCellFactory);
 
@@ -237,7 +237,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
 		coverCol = new TableColumn<>("Cover");
 		coverCol.setPrefWidth(50);
-		coverCol.setCellValueFactory(cellData -> cellData.getValue().getValue().hasCoverProperty());
+		coverCol.setCellValueFactory(cellData -> new SimpleBooleanProperty(cellData.getValue().getValue().getCoverImage().isPresent()));
 		coverCol.setCellFactory(CheckBoxTableCell.forTableColumn(coverCol));
 
 		bpmCol = new TableColumn<>("BPM");

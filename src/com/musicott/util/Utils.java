@@ -19,8 +19,12 @@
 
 package com.musicott.util;
 
+import com.musicott.*;
+import javafx.scene.image.*;
+
 import java.io.*;
 import java.math.*;
+import java.nio.file.*;
 import java.text.*;
 import java.util.*;
 
@@ -143,6 +147,23 @@ public class Utils {
 		float floatValue = Float.parseFloat(stringValue);
 		byteSizeString = decimalFormat.format(floatValue) + byteSizeString.substring(unitPos);
 		return byteSizeString;
+	}
+
+	/**
+	 * Returns an {@link Image} from an image {@link File}.
+	 *
+	 * @param imageFile The image.
+	 * @return An {@link Optional} with the <tt>image</tt> or not.
+	 */
+	public static Optional<Image> getImageFromFile(File imageFile) {
+		Optional<Image> optionalImage = Optional.empty();
+		try {
+			byte[] coverBytes = Files.readAllBytes(Paths.get(imageFile.getPath()));
+			optionalImage = Optional.of(new Image(new ByteArrayInputStream(coverBytes)));
+		} catch (IOException exception) {
+			ErrorDemon.getInstance().showErrorDialog("Error getting Image from image file", "", exception);
+		}
+		return optionalImage;
 	}
 
 	/**

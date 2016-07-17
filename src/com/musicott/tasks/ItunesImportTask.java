@@ -206,19 +206,18 @@ public class ItunesImportTask extends Task<Void> {
 			newTrack.setAlbumArtist(iTrack.getAlbumArtist() == null ? "" : iTrack.getAlbumArtist());
 			newTrack.setGenre(iTrack.getGenre() == null ? "" : iTrack.getGenre());
 			newTrack.setLabel(iTrack.getGrouping() == null ? "" : iTrack.getGrouping());
-			newTrack.setCompilation(false);
+			newTrack.setIsPartOfCompilation(false);
 			newTrack.setBpm(iTrack.getBPM() < 1 ? 0 : iTrack.getBPM());
 			newTrack.setDiscNumber(iTrack.getDiscNumber() < 1 ? 0 : iTrack.getDiscNumber());
 			newTrack.setTrackNumber(iTrack.getTrackNumber() < 1 ? 0 : iTrack.getTrackNumber());
 			newTrack.setYear(iTrack.getYear() < 1 ? 0 : iTrack.getYear());
 			if(holdPlayCount)
 				newTrack.setPlayCount(iTrack.getPlayCount() < 1 ? 0 : iTrack.getPlayCount());
-			AudioFile audioFile;
 			try {
-				audioFile = AudioFileIO.read(itunesFile);
+				AudioFile audioFile = AudioFileIO.read(itunesFile);
 				newTrack.setEncoding(audioFile.getAudioHeader().getEncodingType());
 				newTrack.setEncoder(audioFile.getTag().getFirst(FieldKey.ENCODER));
-				MetadataParser.checkCoverImage(newTrack, audioFile.getTag());
+				MetadataParser.getCoverImage(newTrack, audioFile.getTag());
 				String bitRate = audioFile.getAudioHeader().getBitRate();
 				if(bitRate.substring(0, 1).equals("~")) {
 					newTrack.setIsVariableBitRate(true);

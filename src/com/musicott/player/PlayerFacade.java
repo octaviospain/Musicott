@@ -67,6 +67,7 @@ public class PlayerFacade {
 		playingRandom = false;
 		played = false;
 		scrobbled = false;
+		currentTrack = Optional.empty();
 	}
 	
 	public static PlayerFacade getInstance() {

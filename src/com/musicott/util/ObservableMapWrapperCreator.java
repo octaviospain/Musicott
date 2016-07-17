@@ -34,7 +34,6 @@ public class ObservableMapWrapperCreator implements JsonReader.ClassFactory {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Object newInstance(Class c) {
-		ObservableMap observableMap = FXCollections.observableHashMap();
-		return observableMap;
+		return FXCollections.observableHashMap();
 	}
 }

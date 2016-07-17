@@ -101,37 +101,36 @@ public class SaveMusicLibraryTask extends Thread {
 	}
 
 	private void buildTracksJsonArguments() {
-		List<String> trackAtributes = new ArrayList<>();
-		trackAtributes.add("trackID");
-		trackAtributes.add("fileFolder");
-		trackAtributes.add("fileName");
-		trackAtributes.add("name");
-		trackAtributes.add("artist");
-		trackAtributes.add("album");
-		trackAtributes.add("genre");
-		trackAtributes.add("comments");
-		trackAtributes.add("albumArtist");
-		trackAtributes.add("label");
-		trackAtributes.add("size");
-		trackAtributes.add("totalTime");
-		trackAtributes.add("bitRate");
-		trackAtributes.add("playCount");
-		trackAtributes.add("trackNumber");
-		trackAtributes.add("discNumber");
-		trackAtributes.add("year");
-		trackAtributes.add("bpm");
-		trackAtributes.add("inDisk");
-		trackAtributes.add("isCompilation");
-		trackAtributes.add("dateModified");
-		trackAtributes.add("dateAdded");
-		trackAtributes.add("fileFormat");
-		trackAtributes.add("hasCover");
-		trackAtributes.add("isVariableBitRate");
-		trackAtributes.add("encoder");
-		trackAtributes.add("encoding");
+		List<String> trackAttributes = new ArrayList<>();
+		trackAttributes.add("trackID");
+		trackAttributes.add("fileFolder");
+		trackAttributes.add("fileName");
+		trackAttributes.add("name");
+		trackAttributes.add("artist");
+		trackAttributes.add("album");
+		trackAttributes.add("genre");
+		trackAttributes.add("comments");
+		trackAttributes.add("albumArtist");
+		trackAttributes.add("label");
+		trackAttributes.add("size");
+		trackAttributes.add("totalTime");
+		trackAttributes.add("bitRate");
+		trackAttributes.add("playCount");
+		trackAttributes.add("trackNumber");
+		trackAttributes.add("discNumber");
+		trackAttributes.add("year");
+		trackAttributes.add("bpm");
+		trackAttributes.add("inDisk");
+		trackAttributes.add("isPartOfCompilation");
+		trackAttributes.add("lastDateModified");
+		trackAttributes.add("dateAdded");
+		trackAttributes.add("fileFormat");
+		trackAttributes.add("isVariableBitRate");
+		trackAttributes.add("encoder");
+		trackAttributes.add("encoding");
 
 		Map<Class<?>,List<String>> trackFields = new HashMap<>();
-		trackFields.put(Track.class, trackAtributes);
+		trackFields.put(Track.class, trackAttributes);
 
 		tracksArgs.put(JsonWriter.FIELD_SPECIFIERS, trackFields);
 		tracksArgs.put(JsonWriter.PRETTY_PRINT, true);

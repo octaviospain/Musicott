@@ -45,6 +45,7 @@ import java.nio.file.*;
 public class MetadataUpdater {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+	
 	private boolean succeeded;
 	private Track track;
 
@@ -60,7 +61,7 @@ public class MetadataUpdater {
 	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
 	 * @throws TrackUpdateException if something went bad in the operation.
 	 */
-	public boolean writeAudioMetadata() throws TrackUpdateException {
+	public boolean writeAudioMetadata() {
 		succeeded = false;
 		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
 		try {
@@ -72,7 +73,7 @@ public class MetadataUpdater {
 				wavTag.setInfoTag(new WavInfoTag());
 				audio.setTag(wavTag);
 			}
-			baseMetadataWrite(audio.getTag());
+			setTrackFieldsToTag(audio.getTag());
 			audio.commit();
 		} catch (IOException | CannotReadException | ReadOnlyFileException |
 				TagException | CannotWriteException | InvalidAudioFrameException exception) {
@@ -84,7 +85,7 @@ public class MetadataUpdater {
 		return succeeded;
 	}
 	
-	private void baseMetadataWrite(Tag tag) throws FieldDataInvalidException {
+	private void setTrackFieldsToTag(Tag tag) throws FieldDataInvalidException {
 	//	tag.setEncoding(Charset.forName("UTF-8"));	//TODO when jaudiotagger supports it
 		tag.setField(FieldKey.TITLE, track.getName());
 		tag.setField(FieldKey.ALBUM, track.getAlbum());
@@ -100,35 +101,34 @@ public class MetadataUpdater {
 		tag.setField(FieldKey.YEAR, Integer.toString(track.getYear()));
 		tag.setField(FieldKey.BPM, Integer.toString(track.getBpm()));
 		if("m4a".equals(track.getFileFormat()))
-			((Mp4Tag) tag).setField(Mp4FieldKey.COMPILATION, track.getIsCompilation() ? "1" : "0");
-		tag.setField(FieldKey.IS_COMPILATION, Boolean.toString(track.getIsCompilation()));
+			((Mp4Tag) tag).setField(Mp4FieldKey.COMPILATION, track.isPartOfCompilation() ? "1" : "0");
+		tag.setField(FieldKey.IS_COMPILATION, Boolean.toString(track.isPartOfCompilation()));
 	}
 
 	/**
 	 * Saves the cover image to an audio file metadata.
 	 *
-	 * @param coverFile The {@link File} of the cover image
 	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
 	 */
-	public boolean updateCover(File coverFile) {
+	public boolean updateCover() {
 		succeeded = false;
 		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
-		try {
-			AudioFile audioFile = AudioFileIO.read(trackPath.toFile());
-			Tag tag = audioFile.getTag();
-			Artwork cover = ArtworkFactory.createArtworkFromFile(coverFile);
-			tag.deleteArtworkField();
-			tag.addField(cover);
-			audioFile.commit();
-			succeeded = true;
-		} catch (IOException | CannotReadException | ReadOnlyFileException |
-				TagException | CannotWriteException | InvalidAudioFrameException exception) {
-			LOG.warn("Error saving cover image of {}", track, exception);
-			String errorText = "Error saving cover image of " + track.getArtist() + " - " + track.getName();
-			errorDemon.showErrorDialog(errorText, "", exception);
-		}
-		if(succeeded)
-			track.setHasCover(true);
+			track.getCoverImage().ifPresent(coverFile -> {
+				try {
+					AudioFile audioFile = AudioFileIO.read(trackPath.toFile());
+					Tag tag = audioFile.getTag();
+					Artwork cover = ArtworkFactory.createArtworkFromFile(coverFile);
+					tag.deleteArtworkField();
+					tag.addField(cover);
+					audioFile.commit();
+					succeeded = true;
+				} catch (IOException | TagException | CannotWriteException | CannotReadException |
+						InvalidAudioFrameException | ReadOnlyFileException exception) {
+					LOG.warn("Error saving cover image of {}", track, exception);
+					String errorText = "Error saving cover image of " + track.getArtist() + " - " + track.getName();
+					errorDemon.showErrorDialog(errorText, "", exception);
+				}
+			});
 		return succeeded;
 	}
 
@@ -150,8 +150,10 @@ public class MetadataUpdater {
 				break;
 			}
 		}
-		if(coverFile != null)
-			found = updateCover(coverFile);
+		if(coverFile != null) {
+			track.setCoverImage(coverFile);
+			found = updateCover();
+		}
 		return found;
 	}
 }

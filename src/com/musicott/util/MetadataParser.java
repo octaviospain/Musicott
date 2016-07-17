@@ -60,7 +60,7 @@ public class MetadataParser {
 			track.setBitRate(Integer.parseInt(bitRate));
 			Tag tag = audioFile.getTag();
 			parseBaseMetadata(track, tag);
-			checkCoverImage(track, tag);
+			getCoverImage(track, tag);
 		} catch (IOException | CannotReadException | ReadOnlyFileException |
 				TagException | InvalidAudioFrameException e) {
 			throw new TrackParseException("Error parsing the file " + fileToParse, e);
@@ -87,41 +87,41 @@ public class MetadataParser {
 			track.setEncoder(tag.getFirst(FieldKey.ENCODER));
 		if(tag.hasField(FieldKey.IS_COMPILATION))
 			if("m4a".equals(track.getFileFormat()))
-				track.setCompilation("1".equals(tag.getFirst(FieldKey.IS_COMPILATION)) ? true : false);
+				track.setIsPartOfCompilation("1".equals(tag.getFirst(FieldKey.IS_COMPILATION)) ? true : false);
 			else
-				track.setCompilation("true".equals(tag.getFirst(FieldKey.IS_COMPILATION)) ? true : false);
+				track.setIsPartOfCompilation("true".equals(tag.getFirst(FieldKey.IS_COMPILATION)) ? true : false);
 		if(tag.hasField(FieldKey.BPM))
 			try {
 				int bpm = Integer.parseInt(tag.getFirst(FieldKey.BPM));
 				track.setBpm(bpm < 1 ? 0 : bpm);
-			} catch (NumberFormatException e) {
-
-			}
+			} catch (NumberFormatException e) {}
 		if(tag.hasField(FieldKey.DISC_NO))
 			try {
 				int dn = Integer.parseInt(tag.getFirst(FieldKey.DISC_NO));
 				track.setDiscNumber(dn < 1 ? 0 : dn);
-			} catch (NumberFormatException e) {
-
-			}
+			} catch (NumberFormatException e) {}
 		if(tag.hasField(FieldKey.TRACK))
 			try {
 				int trackNumber = Integer.parseInt(tag.getFirst(FieldKey.TRACK));
 				track.setTrackNumber(trackNumber < 1 ? 0 : trackNumber);
-			} catch (NumberFormatException e) {
-
-			}
+			} catch (NumberFormatException e) {}
 		if(tag.hasField(FieldKey.YEAR))
 			try {
 				int year = Integer.parseInt(tag.getFirst(FieldKey.YEAR));
 				track.setYear(year < 1 ? 0 : year);
-			} catch (NumberFormatException e) {
-
-			}
+			} catch (NumberFormatException e) {}
 	}
 	
-	public static void checkCoverImage(Track track, Tag tag) {
-		if(!tag.getArtworkList().isEmpty())
-			track.setHasCover(true);
+	public static void getCoverImage(Track track, Tag tag) {
+		if(!tag.getArtworkList().isEmpty()) {
+			try {
+				File imageFile = File.createTempFile(track.getName() + "_cover", "");
+				byte[] imageBytes = tag.getArtworkList().get(0).getBinaryData();
+				FileOutputStream fileOuputStream = new FileOutputStream(imageFile.getAbsolutePath());
+				fileOuputStream.write(imageBytes);
+				fileOuputStream.close();
+				track.setCoverImage(imageFile);
+			} catch (IOException e) {}
+		}
 	}
 }

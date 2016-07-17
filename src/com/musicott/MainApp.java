@@ -258,8 +258,7 @@ public class MainApp extends Application {
 		track.yearProperty().setValue(track.getYear());
 		track.discNumberProperty().setValue(track.getDiscNumber());
 		track.bpmProperty().setValue(track.getBpm());
-		track.hasCoverProperty().setValue(track.hasCover());
-		track.dateModifiedProperty().setValue(track.getDateModified());
+		track.lastDateModifiedProperty().setValue(track.getLastDateModified());
 		track.playCountProperty().setValue(track.getPlayCount());
 	}
 	

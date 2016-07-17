@@ -19,8 +19,10 @@
 
 package com.musicott.view;
 
+import com.musicott.*;
 import com.musicott.model.*;
 import com.musicott.tasks.*;
+import com.musicott.util.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.event.*;
@@ -185,7 +187,7 @@ public class EditController implements MusicottController {
 		if(!commonCompilation())
 			isCompilationCheckBox.setIndeterminate(true);
 		else
-			isCompilationCheckBox.setSelected(trackSelection.get(0).getIsCompilation());
+			isCompilationCheckBox.setSelected(trackSelection.get(0).isPartOfCompilation());
 	}
 
 	/**
@@ -212,7 +214,7 @@ public class EditController implements MusicottController {
 	 * @return
 	 */
 	private String getTrackPropertyValue(TrackField trackField, Track trackToEdit) {
-		Map<TrackField, Property<?>> propertyMap = trackToEdit.getPropertiesMap();
+		Map<TrackField, Property> propertyMap = trackToEdit.getPropertyMap();
 		Property<?> trackProperty = propertyMap.get(trackField);
 		
 		String value;
@@ -233,10 +235,10 @@ public class EditController implements MusicottController {
 	 */
 	private void editAndClose() {
 		trackSelection.forEach(this::editTrack);
-		UpdateMetadataTask updateTask = new UpdateMetadataTask(trackSelection, newCoverImage);
+		newCoverImage = null;
+		UpdateMetadataTask updateTask = new UpdateMetadataTask(trackSelection);
 		updateTask.setDaemon(true);
 		updateTask.start();
-		newCoverImage = null;
 		editStage.close();
 	}
 
@@ -247,20 +249,23 @@ public class EditController implements MusicottController {
 	 * @param track The <tt>Track</tt> to edit
 	 */
 	private void editTrack(Track track) {
-		Map<TrackField, Property<?>> trackPropertiesMap = track.getPropertiesMap();
+		Map<TrackField, Property> trackPropertiesMap = track.getPropertyMap();
 		final boolean[] changed = {false};
 
 		editFieldsMap.entrySet().forEach(entry -> {
-			Property<?> property = trackPropertiesMap.get(entry.getKey());
+			Property property = trackPropertiesMap.get(entry.getKey());
 			changed[0] = editTrackTrackField(entry, property);
 		});
 
 		if(!isCompilationCheckBox.isIndeterminate()) {
-			track.setCompilation(isCompilationCheckBox.isSelected());
+			track.setIsPartOfCompilation(isCompilationCheckBox.isSelected());
 			changed[0] = true;
 		}
+
+		track.setCoverImage(newCoverImage);
+
 		if(changed[0]) {
-			track.setDateModified(LocalDateTime.now());
+			track.setLastDateModified(LocalDateTime.now());
 			LOG.info("Track {} edited to {}", track.getTrackID(), track);
 		}
 	}
@@ -286,9 +291,7 @@ public class EditController implements MusicottController {
 					ip.setValue(newNumericValue);
 					changed = true;
 				}
-			} catch (NumberFormatException e) {
-
-			}
+			} catch (NumberFormatException e) {}
 		}
 		else {
 			StringProperty sp = (StringProperty) trackProperty;
@@ -311,15 +314,9 @@ public class EditController implements MusicottController {
 		ExtensionFilter filter = new ExtensionFilter ("Image files (*.png, *.jpg, *.jpeg)","*.png", "*.jpg", "*.jpeg");
 		chooser.getExtensionFilters().addAll(filter);
 		newCoverImage = chooser.showOpenDialog(editStage);
-		byte[] newCoverBytes;
 		if(newCoverImage != null) {
-			try {
-				newCoverBytes = Files.readAllBytes(Paths.get(newCoverImage.getPath()));
-				coverImage.setImage(new Image(new ByteArrayInputStream(newCoverBytes)));
-			} catch (IOException exception) {
-				LOG.error("Error setting image", exception);
-				errorDemon.showErrorDialog("Error setting image", "", exception, editStage.getScene());
-			}
+			Optional<Image> newImage = Utils.getImageFromFile(newCoverImage);
+			newImage.ifPresent(coverImage::setImage);
 		}
 	}
 
@@ -329,14 +326,22 @@ public class EditController implements MusicottController {
 	 * @return The <tt>byte</tt>s of the common cover image, or an empty <tt>Optional</tt>
 	 */
 	private Optional<byte[]> commonCover() {
-		Optional<byte[]>[] coverBytes = new Optional[]{Optional.empty()};
+		Optional<byte[]>[] optionalCoverBytes = new Optional[]{Optional.empty()};
 		Optional<String> sameAlbum = commonAlbum();
 		sameAlbum.ifPresent(trackAlbum ->
-			trackSelection.stream().filter(Track::hasCover)
+			trackSelection.stream().filter(track -> track.getCoverImage().isPresent())
 					.findFirst()
-					.ifPresent(track -> coverBytes[0] = Optional.of(track.getCoverBytes()))
+					.ifPresent(track -> {
+						try {
+							byte[] coverBytes = Files.readAllBytes(Paths.get(track.getCoverImage().get().getPath()));
+							optionalCoverBytes[0] = Optional.of(coverBytes);
+						} catch (IOException exception) {
+							LOG.error("Error obtaining bytes from image: " + exception.getMessage(), exception);
+							ErrorDemon.getInstance().showErrorDialog("Error obtaining bytes from image", "", exception);
+						}
+					})
 		);
-		return coverBytes[0];
+		return optionalCoverBytes[0];
 	}
 
 	/**
@@ -355,8 +360,8 @@ public class EditController implements MusicottController {
 	 * @return <tt>true</tt> if al the tracks have the same compilation value, <tt>false</tt> otherwise.
 	 */
 	private boolean commonCompilation() {
-		Boolean isCommon = trackSelection.get(0).getIsCompilation();
-		return trackSelection.stream().allMatch(t -> isCommon.equals(t.getIsCompilation()));
+		Boolean isCommon = trackSelection.get(0).isPartOfCompilation();
+		return trackSelection.stream().allMatch(t -> isCommon.equals(t.isPartOfCompilation()));
 	}
 
 	/**
