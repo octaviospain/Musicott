@@ -98,7 +98,7 @@ public class TaskDemon {
 	
 	public synchronized void analyzeTrackWaveform(Track trackToAnalyze) {
 		if(waveformTask == null) {
-			waveformTask = new WaveformTask("Waveform task ", waveformSemaphore, this);
+			waveformTask = new WaveformTask(waveformSemaphore);
 			waveformTask.start();
 		}
 		tracksToProcessQueue.add(trackToAnalyze);
@@ -106,7 +106,7 @@ public class TaskDemon {
 		LOG.debug("Added track {} to waveform analyze queue", trackToAnalyze);
 	}
 	
-	protected synchronized Track getNextTrackToAnalyze() {
+	protected synchronized Track getNextTrackToAnalyzeWaveform() {
 		return tracksToProcessQueue.poll();
 	}
 }

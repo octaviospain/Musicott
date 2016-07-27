@@ -106,30 +106,37 @@ public class MetadataUpdater {
 	}
 
 	/**
-	 * Saves the cover image to an audio file metadata.
+	 * Saves a new cover image to the audio file metadata of the {@link Track}
 	 *
+	 * @param coverFile The {@link File} of the new cover image to save
 	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
 	 */
-	public boolean updateCover() {
-		succeeded = false;
+	public boolean updateCover(File coverFile) {
 		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
-			track.getCoverImage().ifPresent(coverFile -> {
-				try {
-					AudioFile audioFile = AudioFileIO.read(trackPath.toFile());
-					Tag tag = audioFile.getTag();
-					Artwork cover = ArtworkFactory.createArtworkFromFile(coverFile);
-					tag.deleteArtworkField();
-					tag.addField(cover);
-					audioFile.commit();
-					succeeded = true;
-				} catch (IOException | TagException | CannotWriteException | CannotReadException |
-						InvalidAudioFrameException | ReadOnlyFileException exception) {
-					LOG.warn("Error saving cover image of {}", track, exception);
-					String errorText = "Error saving cover image of " + track.getArtist() + " - " + track.getName();
-					errorDemon.showErrorDialog(errorText, "", exception);
-				}
-			});
-		return succeeded;
+		File trackFile = trackPath.toFile();
+		boolean result = updateCoverOnTag(trackFile, coverFile);
+		if(result)
+			track.hasCoverProperty().set(true);
+		return result;
+	}
+
+	private boolean updateCoverOnTag(File trackFile, File coverFile) {
+		boolean result = false;
+		try {
+			AudioFile audioFile = AudioFileIO.read(trackFile);
+			Artwork cover = ArtworkFactory.createArtworkFromFile(coverFile);
+			Tag tag = audioFile.getTag();
+			tag.deleteArtworkField();
+			tag.addField(cover);
+			audioFile.commit();
+			result = true;
+		} catch (IOException | TagException | CannotWriteException | CannotReadException |
+				InvalidAudioFrameException | ReadOnlyFileException exception) {
+			LOG.warn("Error saving cover image of {}", track, exception);
+			String errorText = "Error saving cover image of " + track.getArtist() + " - " + track.getName();
+			errorDemon.showErrorDialog(errorText, "", exception);
+		}
+		return result;
 	}
 
 	/**
@@ -152,7 +159,7 @@ public class MetadataUpdater {
 		}
 		if(coverFile != null) {
 			track.setCoverImage(coverFile);
-			found = updateCover();
+			found = updateCover(coverFile);
 		}
 		return found;
 	}

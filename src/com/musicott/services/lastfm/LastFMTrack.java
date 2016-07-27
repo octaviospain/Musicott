@@ -23,10 +23,10 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @version 0.9
  */
 @XmlRootElement(name = "track")
-public class LastFMTrack {
+public class LastFmTrack {
 
 	private String corrected;
 	private String value;
@@ -35,6 +35,7 @@ public class LastFMTrack {
 	public String getCorrected() {
 		return corrected;
 	}
+
 	public void setCorrected(String corrected) {
 		this.corrected = corrected;
 	}

@@ -19,7 +19,6 @@
 
 package com.musicott.view;
 
-import com.musicott.*;
 import com.musicott.model.*;
 import com.musicott.tasks.*;
 import com.musicott.util.*;
@@ -36,7 +35,6 @@ import javafx.stage.FileChooser.*;
 import org.slf4j.*;
 
 import java.io.*;
-import java.nio.file.*;
 import java.time.*;
 import java.util.*;
 import java.util.Map.*;
@@ -331,15 +329,7 @@ public class EditController implements MusicottController {
 		sameAlbum.ifPresent(trackAlbum ->
 			trackSelection.stream().filter(track -> track.getCoverImage().isPresent())
 					.findFirst()
-					.ifPresent(track -> {
-						try {
-							byte[] coverBytes = Files.readAllBytes(Paths.get(track.getCoverImage().get().getPath()));
-							optionalCoverBytes[0] = Optional.of(coverBytes);
-						} catch (IOException exception) {
-							LOG.error("Error obtaining bytes from image: " + exception.getMessage(), exception);
-							ErrorDemon.getInstance().showErrorDialog("Error obtaining bytes from image", "", exception);
-						}
-					})
+					.ifPresent(track -> optionalCoverBytes[0] = Optional.of(track.getCoverImage().get()))
 		);
 		return optionalCoverBytes[0];
 	}

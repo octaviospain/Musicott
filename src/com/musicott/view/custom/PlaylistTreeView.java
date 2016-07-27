@@ -57,8 +57,10 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 		selectedItemProperty = getSelectionModel().selectedItemProperty();
 		selectedItemProperty.addListener((obs, oldSelected, newSelected) -> {
-			if(newSelected != null)
+			if(newSelected != null) {
 				musicLibrary.showPlaylist(newSelected.getValue());
+				stageDemon.getNavigationController().setNavigationMode(NavigationMode.PLAYLIST);
+			}
 		});
 		
 		contextMenu = new PlaylistTreeViewContextMenu();
@@ -159,8 +161,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 	 * changes the view to show all the songs.
 	 */
 	private void selectFirstPlaylistOrAllSongsMode() {
-		int playlistToDeleteIndex = getSelectionModel().getSelectedIndex();
-		if(playlistToDeleteIndex == 0 && root.getChildren().isEmpty())
+		if(root.getChildren().isEmpty())
 			stageDemon.getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
 		else
 			getSelectionModel().selectFirst();

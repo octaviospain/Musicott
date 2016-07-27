@@ -21,6 +21,7 @@ package com.musicott;
 
 import com.musicott.MainApp.*;
 import javafx.application.*;
+import javafx.event.*;
 import javafx.fxml.*;
 import javafx.geometry.*;
 import javafx.scene.*;
@@ -37,8 +38,10 @@ import static com.musicott.view.MusicottController.*;
 /**
  * Preloader of the application. Shows the progress of the tasks of
  * loading the tracks, the playlists, and the waveforms.
+ * <p>
  * If it is the first use of the application a prompt dialog asks the user
  * to enter the location of the application folder.
+ *</p>
  *
  * @author Octavio Calleya
  * @version 0.9
@@ -46,7 +49,7 @@ import static com.musicott.view.MusicottController.*;
 public class MainPreloader extends Preloader {
 
 	private static final int SCENE_WIDTH = 450;
-	private static final int SCENE_HEIGTH = 120;
+	private static final int SCENE_HEIGHT = 120;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private MainPreferences preferences = MainPreferences.getInstance();
@@ -76,11 +79,12 @@ public class MainPreloader extends Preloader {
 	public void start(Stage primaryStage) throws Exception {
 		// Set preloader scene and show stage.
         preloaderStage = primaryStage;
-        preloaderStage.setOnCloseRequest(event -> event.consume());
+        preloaderStage.setOnCloseRequest(Event::consume);
         preloaderStage.setTitle("Musicott");
         preloaderStage.getIcons().add(musicottIcon);
         preloaderStage.setScene(preloaderScene);
         preloaderStage.setResizable(false);
+		preloaderStage.initStyle(StageStyle.UNDECORATED);
         preloaderStage.show();
 	}
 	
@@ -143,12 +147,13 @@ public class MainPreloader extends Preloader {
 					musicottFolderTextField.setText(folder.toString());
 			});
 			
-			Scene promptScene = new Scene(preloaderPane, SCENE_WIDTH, SCENE_HEIGTH);
+			Scene promptScene = new Scene(preloaderPane, SCENE_WIDTH, SCENE_HEIGHT);
 			promptStage.setOnCloseRequest(event -> preferences.setMusicottUserFolder(defaultMusicottLocation));
 			promptStage.initModality(Modality.APPLICATION_MODAL);
 			promptStage.initOwner(preloaderStage.getOwner());
 			promptStage.setResizable(false);
 			promptStage.setScene(promptScene);
+			promptStage.initStyle(StageStyle.UNDECORATED);
 			promptStage.showAndWait();
 		} catch (IOException e) {
 			errorDemon.showErrorDialog("Error opening Musicott's folder selection", null, e);

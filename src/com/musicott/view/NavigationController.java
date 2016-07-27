@@ -58,16 +58,14 @@ public class NavigationController implements MusicottController {
 	private NavigationMenuListView navigationMenuListView;
 	private PlaylistTreeView playlistTreeView;
 	private NavigationMode showingMode;
+	private ObjectProperty<NavigationMode> navigationModeProperty;
 
 	@FXML
 	public void initialize() {
+		navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", showingMode);
+		navigationModeProperty.addListener((obs, oldMode, newMode) -> setNavigationMode(newMode));
+
 		playlistTreeView = new PlaylistTreeView();
-		playlistTreeView.getSelectionModel().selectedItemProperty().addListener(listener -> {
-			showingMode = NavigationMode.PLAYLIST;
-			navigationMenuListView.getSelectionModel().clearAndSelect(-1);
-			stageDemon.getRootController().showTableInfoPane();
-		});
-		
 		navigationMenuListView = new NavigationMenuListView();
 		NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS};
 		navigationMenuListView.setItems(FXCollections.observableArrayList(navigationModes));
@@ -127,12 +125,37 @@ public class NavigationController implements MusicottController {
 		return keyModifierOS;
 	}
 
-	public ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylistProperty() {
-		return playlistTreeView.getSelectionModel().selectedItemProperty();
+	/**
+	 * Changes the view depending of the choose {@link NavigationMode}
+	 *
+	 * @param mode The <tt>NavigationMode</tt> that the user choose
+	 */
+	public void setNavigationMode(NavigationMode mode) {
+		showingMode = mode;
+		navigationModeProperty.setValue(mode);
+		switch(mode) {
+			case ALL_TRACKS:
+				musicLibrary.showMode(mode);
+				playlistTreeView.getSelectionModel().clearAndSelect(-1);
+				Platform.runLater(() -> stageDemon.getRootController().hideTableInfoPane());
+				break;
+			case PLAYLIST:
+				navigationMenuListView.getSelectionModel().clearAndSelect(-1);
+				Platform.runLater(() -> stageDemon.getRootController().showTableInfoPane());
+				break;
+		}
 	}
 
-	public ReadOnlyObjectProperty<NavigationMode> selectedMenuProperty() {
-		return navigationMenuListView.getSelectionModel().selectedItemProperty();
+	public NavigationMode getNavigationMode() {
+		return showingMode;
+	}
+
+	public ObjectProperty<NavigationMode> navigationModeProperty() {
+		return navigationModeProperty;
+	}
+
+	public ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylistProperty() {
+		return playlistTreeView.getSelectionModel().selectedItemProperty();
 	}
 
 	public void addNewPlaylist(Playlist newPlaylist) {
@@ -161,25 +184,5 @@ public class NavigationController implements MusicottController {
 	
 	public void setStatusMessage(String message) {
 		statusLabel.setText(message);
-	}
-
-	/**
-	 * Changes the view depending of the choose {@link NavigationMode}
-	 *
-	 * @param mode The <tt>NavigationMode</tt> that the user choose
-	 */
-	public void setNavigationMode(NavigationMode mode) {
-		showingMode = mode;
-		switch(mode) {
-			case ALL_TRACKS:
-				musicLibrary.showMode(mode);
-				Platform.runLater(() -> stageDemon.getRootController().hideTableInfoPane());
-				break;
-		}
-		playlistTreeView.getSelectionModel().clearAndSelect(-1);
-	}
-
-	public NavigationMode getShowingMode() {
-		return showingMode;
 	}
 }

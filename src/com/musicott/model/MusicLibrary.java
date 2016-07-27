@@ -75,7 +75,7 @@ public class MusicLibrary {
 					Track added = c.getValueAdded();
 					Map.Entry<Integer, Track> addedEntry = new AbstractMap.SimpleEntry<>(added.getTrackID(), added);
 					allTracks.add(addedEntry);
-					if(StageDemon.getInstance().getNavigationController().getShowingMode() == NavigationMode.ALL_TRACKS)
+					if(StageDemon.getInstance().getNavigationController().getNavigationMode() == NavigationMode.ALL_TRACKS)
 						Platform.runLater(() -> showingTracks.add(addedEntry));
 				}
 				else if (c.wasRemoved()) {
@@ -290,7 +290,7 @@ public class MusicLibrary {
 		saveMusicLibraryTask.setSaveTracks(saveTracks);
 		saveMusicLibraryTask.setSaveWaveforms(saveWaveforms);
 		saveMusicLibraryTask.setSavePlaylists(savePlaylists);
-		saveMusicLibraryTask.save();
+		saveMusicLibraryTask.saveMusicLibrary();
 	}
 
 	@Override

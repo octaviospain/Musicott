@@ -22,11 +22,13 @@ package com.musicott.tasks;
 import com.musicott.*;
 import com.musicott.model.*;
 import com.musicott.util.*;
+import com.musicott.view.*;
 import com.worldsworstsoftware.itunes.*;
 import com.worldsworstsoftware.itunes.parser.*;
 import javafx.application.*;
 import javafx.concurrent.*;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.*;
 import javafx.stage.*;
 import javafx.util.*;
 import org.jaudiotagger.audio.*;
@@ -43,8 +45,11 @@ import java.util.regex.*;
 import java.util.stream.*;
 
 /**
- * @author Octavio Calleya
+ * Extends from {@link Task} to perform the operation of import a
+ * <tt>iTunes</tt> library to the {@link MusicLibrary} of the application.
  *
+ * @author Octavio Calleya
+ * @version 0.9
  */
 public class ItunesImportTask extends Task<Void> {
 	
@@ -52,234 +57,340 @@ public class ItunesImportTask extends Task<Void> {
 
 	public static final int METADATA_POLICY = 0;
 	public static final int ITUNES_DATA_POLICY = 1;
-	
-	private StageDemon stageDemon = StageDemon.getInstance();
-	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-	private ItunesLibrary itunesLibrary;
-	private Map<Integer, ItunesTrack> itunesItems;
-	private Map<Integer, Track> tracks;
-	private List<Playlist> playlists;
-	private final String itunesLibraryXMLPath;
+	private static final String DIALOG_STYLE = "/css/dialog.css";
+
+	private final String itunesLibraryXmlPath;
 	private final int metadataPolicy;
-	private boolean importPlaylists, holdPlayCount;
-	private int currentItems, totalItems, numPlaylists;
-	private List<String> notFoundFiles, parseErrors;
-	private List<ItunesPlaylist> itunesPlaylists;
-	private Map<Integer, Integer> itunesIDtoMusicottIDMap;
-	private long startMillis, totalTime;
+
 	private Semaphore waitConfirmationSemaphore;
 
+	private Map<Integer, Integer> itunesIdToMusicottIdMap;
+	private Map<Integer, ItunesTrack> itunesTracks;
+	private List<ItunesPlaylist> itunesPlaylists;
+	private Map<Integer, Track> tracks;
+	private List<Playlist> playlists;
+
+	private List<String> notFoundFiles;
+	private List<String> parseErrors;
+
+	private boolean importPlaylists;
+	private boolean holdPlayCount;
+	private int currentItunesTracks;
+	private int totalItunesTracks;
+	private int currentPlaylists;
+	private int totalTracks;
+	private long startMillis;
+	private String playlistsAlertText;
+
+	private NavigationController navigationController;
+	private StageDemon stageDemon = StageDemon.getInstance();
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+	private ErrorDemon errorDemon = ErrorDemon.getInstance();
+
 	public ItunesImportTask(String path) {
-		itunesLibraryXMLPath = path;
-		metadataPolicy = MainPreferences.getInstance().getItunesImportMetadataPolicy();
-		importPlaylists = MainPreferences.getInstance().getItunesImportPlaylists();
-		holdPlayCount = MainPreferences.getInstance().getItunesImportHoldPlaycount();
+		super();
+		itunesLibraryXmlPath = path;
+		MainPreferences mainPreferences = MainPreferences.getInstance();
+		metadataPolicy = mainPreferences.getItunesImportMetadataPolicy();
+		importPlaylists = mainPreferences.getItunesImportPlaylists();
+		holdPlayCount = mainPreferences.getItunesImportHoldPlaycount();
+		navigationController = stageDemon.getNavigationController();
+		itunesIdToMusicottIdMap = new HashMap<>();
+		itunesTracks = new HashMap<>();
+		playlists = new ArrayList<>();
 		tracks = new HashMap<>();
 		notFoundFiles = new ArrayList<>();
 		parseErrors = new ArrayList<>();
-		itunesItems = new HashMap<>();
-		playlists = new ArrayList<>();
-		itunesIDtoMusicottIDMap = new HashMap<>();
 		waitConfirmationSemaphore = new Semaphore(0);
-		currentItems = 0;
+		currentItunesTracks = 0;
+		currentPlaylists = 0;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected Void call() throws Exception {
-		if(isValidItunesXML()) {
-			Platform.runLater(() -> {stageDemon.getNavigationController().setStatusMessage("Scanning itunes library..."); stageDemon.getNavigationController().setStatusProgress(-1);});
-			startMillis = System.currentTimeMillis();
-			ItunesParserLogger iLogger = new ItunesParserLogger();
-			itunesLibrary = ItunesLibraryParser.parseLibrary(itunesLibraryXMLPath, iLogger);
-			itunesItems = itunesLibrary.getTracks();
-			totalItems = itunesItems.size();
-			itunesPlaylists = ((List<ItunesPlaylist>) itunesLibrary.getPlaylists());
-			itunesPlaylists = itunesPlaylists.stream().filter(pl -> !pl.getName().equals("####!####") && pl.isAllItems() && !pl.getPlaylistItems().isEmpty()).collect(Collectors.toList());
-			
-			numPlaylists = itunesPlaylists.size();
-			Platform.runLater(() -> {
-				Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-				alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
-				alert.setTitle("Import");
-				alert.setHeaderText("Import " + totalItems + " tracks"+(importPlaylists ? " and "+numPlaylists+" playlists" : "")+" from itunes?");
-				alert.initModality(Modality.APPLICATION_MODAL);
-				Optional<ButtonType> result = alert.showAndWait();
-				if(result.isPresent() && result.get().equals(ButtonType.OK)) {
-					waitConfirmationSemaphore.release();
-					stageDemon.getNavigationController().setStatusMessage("Importing files");
-				}
-				else
-					cancel();
-			});
-		} else {
-			ErrorDemon.getInstance().showErrorDialog("The seleted xml file is not valid");
+		if(isValidItunesXML())
+			askForUserConfirmation();
+		else {
+			errorDemon.showErrorDialog("The selected xml file is not valid");
 			cancel();
 		}
 		waitConfirmationSemaphore.acquire();
+
+		startMillis = System.currentTimeMillis();
 		parseItunesLibrary();
+
 		if(importPlaylists)
 			parsePlaylists();
 		return null;
 	}
-	
+
+	/**
+	 * Calculates the total number of tracks and playlists to import
+	 * and ask the user for a confirmation to continue.
+	 */
+	@SuppressWarnings("unchecked")
+	private void askForUserConfirmation() {
+		Platform.runLater(() -> {
+			navigationController.setStatusMessage("Scanning itunes library...");
+			navigationController.setStatusProgress(-1);
+		});
+		ItunesParserLogger itunesLogger = new ItunesParserLogger();
+		ItunesLibrary itunesLibrary = ItunesLibraryParser.parseLibrary(itunesLibraryXmlPath, itunesLogger);
+		itunesTracks = itunesLibrary.getTracks();
+		totalItunesTracks = itunesTracks.size();
+
+		playlistsAlertText = "";
+		if(importPlaylists) {
+			itunesPlaylists = (List<ItunesPlaylist>) itunesLibrary.getPlaylists();
+			itunesPlaylists = itunesPlaylists.stream()
+					.filter(this::isValidItunesPlaylist)
+					.collect(Collectors.toList());
+
+			totalTracks = itunesPlaylists.size();
+			playlistsAlertText += "and " + Integer.toString(totalTracks) + " playlists ";
+		}
+		Platform.runLater(this::showConfirmationAlert);
+	}
+
+	private void showConfirmationAlert() {
+		String itunesTracksString = Integer.toString(totalItunesTracks);
+		String headerText = "Import " + itunesTracksString + " tracks " + playlistsAlertText + "from itunes?";
+
+		Alert alert = new Alert(AlertType.CONFIRMATION);
+		alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
+		alert.setTitle("Import");
+		alert.initModality(Modality.APPLICATION_MODAL);
+		alert.setHeaderText(headerText);
+
+		Optional<ButtonType> result = alert.showAndWait();
+		if(result.isPresent() && result.get().equals(ButtonType.OK)) {
+			waitConfirmationSemaphore.release();
+			navigationController.setStatusMessage("Importing files");
+		}
+		else
+			cancel();
+	}
+
 	private void parseItunesLibrary() {
-		for(ItunesTrack it: itunesItems.values()) {
-			Track track = null;
-			if(isValidItunesTrack(it)) {
+		itunesTracks.values().forEach(itunesTrack -> {
+			Optional<Track> newTrack = Optional.empty();
+			if(isValidItunesTrack(itunesTrack)) {
 				if(metadataPolicy == METADATA_POLICY)
-					track = parseTrack(it);
+					newTrack = createTrackFromFileMetadata(itunesTrack);
 				else if(metadataPolicy == ITUNES_DATA_POLICY)
-					track = convertTrack(it);
-				if(track != null) {
-					itunesIDtoMusicottIDMap.put(it.getTrackID(), track.getTrackID());
+					newTrack = createTrackFromItunesData(itunesTrack);
+
+				newTrack.ifPresent(track -> {
+					itunesIdToMusicottIdMap.put(itunesTrack.getTrackID(), track.getTrackID());
 					tracks.put(track.getTrackID(), track);
-				}
+				});
 			}
-			Platform.runLater(() -> {
-				stageDemon.getNavigationController().setStatusProgress((double) ++currentItems/totalItems);
-				stageDemon.getNavigationController().setStatusMessage("Imported "+currentItems+" of "+totalItems);
-			});
+
+			double progress = (double) ++currentItunesTracks / totalItunesTracks;
+			String progressMessage = Integer.toString(currentItunesTracks) + " / " + Integer.toString(totalItunesTracks);
+			Platform.runLater(() -> updateTaskProgressOnView(progress, progressMessage));
+		});
+	}
+
+	/**
+	 * Creates a {@link Track} instance from the audio file metadata
+	 *
+	 * @param itunesTrack The {@link ItunesTrack} object
+	 * @return The <tt>Track</tt> instance if the parse was successful
+	 */
+	private Optional<Track> createTrackFromFileMetadata(ItunesTrack itunesTrack) {
+		File itunesFile = Paths.get(URI.create(itunesTrack.getLocation())).toFile();
+		Optional<Track> parsedTrack = Optional.empty();
+		if(itunesFile.exists()) {
+			try {
+				parsedTrack = Optional.of(MetadataParser.createTrack(itunesFile));
+			} catch (TrackParseException exception) {
+				LOG.error("Error parsing {}", itunesFile, exception.getCause());
+				parseErrors.add(itunesFile + exception.getMessage());
+			}
+			if(parsedTrack.isPresent() && holdPlayCount)
+				parsedTrack.get().setPlayCount(itunesTrack.getPlayCount() < 1 ? 0 : itunesTrack.getPlayCount());
+		}
+		else
+			notFoundFiles.add(itunesFile.toString());
+		return parsedTrack;
+	}
+
+	/**
+	 * Creates a {@link Track} instance from the data stored on the <tt>iTunes</tt> library
+	 *
+	 * @param itunesTrack The {@link ItunesTrack} object
+	 * @return The <tt>Track</tt> instance if the parse was successful
+	 */
+	private Optional<Track> createTrackFromItunesData(ItunesTrack itunesTrack) {
+		Path itunesPath = Paths.get(URI.create(itunesTrack.getLocation()));
+		File itunesFile = itunesPath.toFile();
+		Optional<Track> newTrack = Optional.empty();
+		if(itunesFile.exists()) {
+			Track track = parseItunesFieldsToTrackFields(itunesTrack, itunesPath);
+			newTrack = Optional.of(track);
+		}
+		else
+			notFoundFiles.add(itunesFile.toString());
+		return newTrack;
+	}
+
+	private Track parseItunesFieldsToTrackFields(ItunesTrack itunesTrack, Path itunesPath) {
+		String fileFolder = itunesPath.getParent().toString();
+		String fileName = itunesPath.getName(itunesPath.getNameCount() - 1).toString();
+		Track newTrack = new Track();
+		newTrack.setFileFolder(fileFolder);
+		newTrack.setFileName(fileName);
+		newTrack.setInDisk(true);
+		newTrack.setSize(itunesTrack.getSize());
+		newTrack.setTotalTime(Duration.millis(itunesTrack.getTotalTime()));
+		newTrack.setName(itunesTrack.getName() == null ? "" : itunesTrack.getName());
+		newTrack.setAlbum(itunesTrack.getAlbum() == null ? "" : itunesTrack.getAlbum());
+		newTrack.setArtist(itunesTrack.getArtist() == null ? "" : itunesTrack.getArtist());
+		newTrack.setAlbumArtist(itunesTrack.getAlbumArtist() == null ? "" : itunesTrack.getAlbumArtist());
+		newTrack.setGenre(itunesTrack.getGenre() == null ? "" : itunesTrack.getGenre());
+		newTrack.setLabel(itunesTrack.getGrouping() == null ? "" : itunesTrack.getGrouping());
+		newTrack.setIsPartOfCompilation(false);
+		newTrack.setBpm(itunesTrack.getBPM() < 1 ? 0 : itunesTrack.getBPM());
+		newTrack.setDiscNumber(itunesTrack.getDiscNumber() < 1 ? 0 : itunesTrack.getDiscNumber());
+		newTrack.setTrackNumber(itunesTrack.getTrackNumber() < 1 ? 0 : itunesTrack.getTrackNumber());
+		newTrack.setYear(itunesTrack.getYear() < 1 ? 0 : itunesTrack.getYear());
+
+		if(holdPlayCount)
+			newTrack.setPlayCount(itunesTrack.getPlayCount() < 1 ? 0 : itunesTrack.getPlayCount());
+		setEncoderAndBitRateToTrack(itunesPath.toFile(), newTrack);
+		return newTrack;
+	}
+
+ 	private void setEncoderAndBitRateToTrack(File trackFile, Track track) {
+		try {
+			AudioFile audioFile = AudioFileIO.read(trackFile);
+			track.setEncoding(audioFile.getAudioHeader().getEncodingType());
+			track.setEncoder(audioFile.getTag().getFirst(FieldKey.ENCODER));
+			String bitRate = audioFile.getAudioHeader().getBitRate();
+			if("~".equals(bitRate.substring(0, 1))) {
+				track.setIsVariableBitRate(true);
+				bitRate = bitRate.substring(1);
+			}
+			track.setBitRate(Integer.parseInt(bitRate));
+		} catch (CannotReadException | IOException | TagException |
+				ReadOnlyFileException | InvalidAudioFrameException exception) {
+			LOG.warn("Error getting encoder or bitrate from track {}:", track.getTrackID(), exception);
 		}
 	}
 
+	/**
+	 * Parse the itunes playlists into {@link Playlist} objects.
+	 */
 	@SuppressWarnings("unchecked")
 	private void parsePlaylists() {
-		for(ItunesPlaylist itpls: itunesPlaylists) {
-			Playlist pl = new Playlist(itpls.getName(), false);
-			List<ItunesTrack> itunesItems = itpls.getPlaylistItems();
-			for(ItunesTrack itks: itunesItems)
-				if(isValidItunesTrack(itks) && itunesIDtoMusicottIDMap.containsKey(itks.getTrackID()))
-					pl.getTracks().add(itunesIDtoMusicottIDMap.get(itks.getTrackID()));
-			if(!pl.getTracks().isEmpty())
-				playlists.add(pl);
-		}
+		itunesPlaylists.forEach(itunesPlaylist -> {
+			Playlist playlist = new Playlist(itunesPlaylist.getName(), false);
+			List<ItunesTrack> itunesTracksList = itunesPlaylist.getPlaylistItems();
+			List<Integer> playlistTracksIds = getTracksAlreadyParsed(itunesTracksList);
+			playlist.getTracks().addAll(playlistTracksIds);
+
+			double progress = (double) ++currentPlaylists / totalTracks;
+			String progressMessage = Integer.toString(currentPlaylists) + " / " + Integer.toString(totalTracks);
+			Platform.runLater(() -> updateTaskProgressOnView(progress, progressMessage));
+
+			if(!playlist.getTracks().isEmpty())
+				playlists.add(playlist);
+		});
 	}
-	
+
+	/**
+	 * Retrieves a {@link List} of identification integers of {@link Track}
+	 * instances that have been already parsed, if so.
+	 *
+	 * @param itunesTracks The <tt>List</tt> of {@link ItunesTrack} instances
+	 * @return The <tt>List</tt> of integers that are the ids of the <tt>tracks</tt>
+	 */
+	private List<Integer> getTracksAlreadyParsed(List<ItunesTrack> itunesTracks) {
+		return itunesTracks.stream()
+				.filter(itunesTrack ->
+						isValidItunesTrack(itunesTrack) && itunesIdToMusicottIdMap.containsKey(itunesTrack.getTrackID()))
+				.map(itunesTrack -> itunesIdToMusicottIdMap.get(itunesTrack.getTrackID()))
+				.collect(Collectors.toList());
+	}
+
 	private boolean isValidItunesXML() {
 		boolean valid = true;
-		Scanner scnr;
+		Scanner scanner;
+		String itunesXmlSampleLine = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+		String itunesPlistSampleLine = "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" " +
+				"\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">";
 		try {
-			scnr = new Scanner(new File(itunesLibraryXMLPath));
-			scnr.useDelimiter(Pattern.compile(">"));
-			if(!(scnr.hasNextLine() && scnr.nextLine().contains("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")))
-					valid = false;
-			if(!(scnr.hasNextLine() && scnr.nextLine().contains("<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">")))
-					valid = false;
-			scnr.close();
-		} catch (FileNotFoundException e) {
+			scanner = new Scanner(new File(itunesLibraryXmlPath));
+			scanner.useDelimiter(Pattern.compile(">"));
+			if(!(scanner.hasNextLine() && scanner.nextLine().contains(itunesXmlSampleLine)))
+				valid = false;
+			if(!(scanner.hasNextLine() && scanner.nextLine().contains(itunesPlistSampleLine)))
+				valid = false;
+			scanner.close();
+		} catch (FileNotFoundException exception) {
+			LOG.info("Error accessing to the itunes xml: ", exception);
+			errorDemon.showErrorDialog("Error opening the iTunes Library file", "", exception);
 			valid = false;
 		}
 		return valid;
 	}
-	
-	private boolean isValidItunesTrack(ItunesTrack iTrack) {
+
+	private boolean isValidItunesTrack(ItunesTrack itunesTrack) {
 		boolean valid = true;
-		if(iTrack.getTrackType().equals("URL") || iTrack.getTrackType().equals("Remote"))
+		if("URL".equals(itunesTrack.getTrackType()) || "Remote".equals(itunesTrack.getTrackType()))
 			valid = false;
 		else {
-			File itunesFile = Paths.get(URI.create(iTrack.getLocation())).toFile();
-			int index = itunesFile.toString().lastIndexOf(".");
-			String fileExtension = itunesFile.toString().substring(index+1);
-			 if(!(fileExtension.equals("mp3") || fileExtension.equals("m4a") || fileExtension.equals("wav")))
-					valid = false;
+			File itunesFile = Paths.get(URI.create(itunesTrack.getLocation())).toFile();
+			int index = itunesFile.toString().lastIndexOf('.');
+			String fileExtension = itunesFile.toString().substring(index + 1);
+			if(!("mp3".equals(fileExtension) || "m4a".equals(fileExtension) || "wav".equals(fileExtension)))
+				valid = false;
 		}
 		return valid;
 	}
-	
-	private Track convertTrack(ItunesTrack iTrack) {
-		File itunesFile = Paths.get(URI.create(iTrack.getLocation())).toFile();
-		int index = itunesFile.toString().lastIndexOf(File.separator);
-		String fileFolder = itunesFile.toString().substring(0, index);
-		String fileName = itunesFile.toString().substring(index+1);
-		Track newTrack = null;
-		if(itunesFile.exists()) {
-			newTrack = new Track();
-			newTrack.setFileFolder(fileFolder);
-			newTrack.setFileName(fileName);
-			newTrack.setInDisk(itunesFile.exists());
-			newTrack.setSize(iTrack.getSize());
-			newTrack.setTotalTime(Duration.millis(iTrack.getTotalTime()));
-			newTrack.setName(iTrack.getName() == null ? "" : iTrack.getName());
-			newTrack.setAlbum(iTrack.getAlbum() == null ? "" : iTrack.getAlbum());
-			newTrack.setArtist(iTrack.getArtist() == null ? "" : iTrack.getArtist());
-			newTrack.setAlbumArtist(iTrack.getAlbumArtist() == null ? "" : iTrack.getAlbumArtist());
-			newTrack.setGenre(iTrack.getGenre() == null ? "" : iTrack.getGenre());
-			newTrack.setLabel(iTrack.getGrouping() == null ? "" : iTrack.getGrouping());
-			newTrack.setIsPartOfCompilation(false);
-			newTrack.setBpm(iTrack.getBPM() < 1 ? 0 : iTrack.getBPM());
-			newTrack.setDiscNumber(iTrack.getDiscNumber() < 1 ? 0 : iTrack.getDiscNumber());
-			newTrack.setTrackNumber(iTrack.getTrackNumber() < 1 ? 0 : iTrack.getTrackNumber());
-			newTrack.setYear(iTrack.getYear() < 1 ? 0 : iTrack.getYear());
-			if(holdPlayCount)
-				newTrack.setPlayCount(iTrack.getPlayCount() < 1 ? 0 : iTrack.getPlayCount());
-			try {
-				AudioFile audioFile = AudioFileIO.read(itunesFile);
-				newTrack.setEncoding(audioFile.getAudioHeader().getEncodingType());
-				newTrack.setEncoder(audioFile.getTag().getFirst(FieldKey.ENCODER));
-				MetadataParser.getCoverImage(newTrack, audioFile.getTag());
-				String bitRate = audioFile.getAudioHeader().getBitRate();
-				if(bitRate.substring(0, 1).equals("~")) {
-					newTrack.setIsVariableBitRate(true);
-					bitRate = bitRate.substring(1);
-				}
-				newTrack.setBitRate(Integer.parseInt(bitRate));
-			} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
-					| InvalidAudioFrameException e) {
-				LOG.warn("Error getting encoder or bitrate from track {}: {}", newTrack.getTrackID(), e.getMessage());
-			}
-		}
-		else
-			notFoundFiles.add(itunesFile.toString());
-		return newTrack;
+
+	private boolean isValidItunesPlaylist(ItunesPlaylist itunesPlaylist) {
+		return !"####!####".equals(itunesPlaylist.getName()) &&
+				itunesPlaylist.isAllItems() &&
+				!itunesPlaylist.getPlaylistItems().isEmpty();
 	}
-	
-	private Track parseTrack(ItunesTrack iTrack) {
-		File itunesFile = Paths.get(URI.create(iTrack.getLocation())).toFile();
-		Track newTrack = null;
-		if(itunesFile.exists()) {
-			MetadataParser parser = new MetadataParser(itunesFile);
-			try {
-				newTrack = parser.createTrack();
-			} catch (TrackParseException e) {
-				LOG.error("Error parsing " + itunesFile, e);
-				parseErrors.add(itunesFile + e.getMessage());
-			}
-			if(newTrack != null && holdPlayCount)
-				newTrack.setPlayCount(iTrack.getPlayCount() < 1 ? 0 : iTrack.getPlayCount());
-		}
-		else
-			notFoundFiles.add(itunesFile.toString());
-		return newTrack;
+
+	/**
+	 * Updates on the view the progress and a message of the task.
+	 * Should be called on the JavaFX Application Thread.
+	 */
+	private void updateTaskProgressOnView(double progress, String message) {
+		navigationController.setStatusProgress(progress);
+		navigationController.setStatusMessage(message);
 	}
-	
+
 	@Override
 	protected void succeeded() {
 		super.succeeded();
 		updateMessage("Itunes import succeeded");
-		new Thread(() -> {
-			musicLibrary.addTracks(tracks);
-			int i = 0;
-			for(Playlist p: playlists) {
-				musicLibrary.addPlaylist(p);				
-				Platform.runLater(() -> {
-					stageDemon.getNavigationController().setStatusProgress((double) i / playlists.size());
-					stageDemon.getNavigationController().addNewPlaylist(p);
-				});
-			}
-			totalTime = System.currentTimeMillis() - startMillis;
-			Platform.runLater(() -> {
-				stageDemon.closeIndeterminateProgress();
-				stageDemon.getNavigationController().setStatusProgress(0);
-				stageDemon.getNavigationController().setStatusMessage(tracks.size()+" ("+Duration.millis(totalTime).toMinutes()+") mins");
-			});
-		}).start();
-		stageDemon.showIndeterminateProgress();
-		if(!notFoundFiles.isEmpty())
-			ErrorDemon.getInstance().showExpandableErrorsDialog("Some files were not found", "", notFoundFiles);
-		if(!parseErrors.isEmpty())
-			ErrorDemon.getInstance().showExpandableErrorsDialog("Errors importing files", "", parseErrors);
 		LOG.info("Itunes import task completed");
+
+		Thread addTracksAndPlaylistToMusicLibrary = new Thread(this::addTracksAndPlaylistsToMusicLibrary);
+		addTracksAndPlaylistToMusicLibrary.start();
+		stageDemon.showIndeterminateProgress();
+
+		if(!notFoundFiles.isEmpty())
+			errorDemon.showExpandableErrorsDialog("Some files were not found", "", notFoundFiles);
+		if(!parseErrors.isEmpty())
+			errorDemon.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
+	}
+
+	private void addTracksAndPlaylistsToMusicLibrary() {
+		Platform.runLater(() -> updateTaskProgressOnView(-1, ""));
+		playlists.forEach(playlist -> Platform.runLater(() -> navigationController.addNewPlaylist(playlist)));
+		musicLibrary.addTracks(tracks);
+		Platform.runLater(stageDemon::closeIndeterminateProgress);
+
+		long endMillis = System.currentTimeMillis() - startMillis;
+		double totalTaskTime = Duration.millis(endMillis).toMinutes();
+		String statusMessage = tracks.size() + " in (" + totalTaskTime + ") mins";
+		Platform.runLater(() -> updateTaskProgressOnView(0.0, statusMessage));
 	}
 	
 	@Override

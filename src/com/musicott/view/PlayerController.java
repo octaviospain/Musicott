@@ -21,7 +21,6 @@ package com.musicott.view;
 
 import com.musicott.model.*;
 import com.musicott.tasks.*;
-import com.musicott.util.*;
 import com.musicott.view.custom.*;
 import javafx.beans.binding.*;
 import javafx.beans.property.*;
@@ -122,8 +121,8 @@ public class PlayerController implements MusicottController {
 
 	private void playPause() {
 		LOG.trace("Play/pause button clicked");
-		if(playButton.isSelected()) {
-			if(player.getCurrentTrack() != null)
+		if (playButton.isSelected()) {
+			if (player.getCurrentTrack().isPresent())
 				player.resume();
 			else
 				player.play(true);
@@ -259,8 +258,9 @@ public class PlayerController implements MusicottController {
 				currentTrack.artistProperty(), currentTrack.albumProperty())
 		);
 		if(currentTrack.getCoverImage().isPresent()) {
-			File coverFile = currentTrack.getCoverImage().get();
-			Utils.getImageFromFile(coverFile).ifPresent(currentCover::setImage);
+			byte[] coverBytes = currentTrack.getCoverImage().get();
+			Image image = new Image(new ByteArrayInputStream(coverBytes));
+			currentCover.setImage(image);
 		}
 		else
 			currentCover.setImage(COVER_IMAGE);

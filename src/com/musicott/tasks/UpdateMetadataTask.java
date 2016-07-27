@@ -64,9 +64,9 @@ public class UpdateMetadataTask extends Thread {
 					restoreBackup(track, backup);
 
 				if(updated)
-					LOG.debug("Updating metadata of {}", track.getFileFolder()+"/"+track.getFileName());
+					LOG.debug("Updating metadata of {}", track.getFileFolder() + "/" + track.getFileName());
 				else
-					LOG.debug("Updating metadata of {}", track.getFileFolder()+"/"+track.getFileName());
+					LOG.debug("Updating metadata of {}", track.getFileFolder() + "/" + track.getFileName());
 			}
 		musicLibrary.saveLibrary(true, false, false);
 		if(!updateErrors.isEmpty())
@@ -80,7 +80,7 @@ public class UpdateMetadataTask extends Thread {
 			backup = File.createTempFile(track.getName(), "");
 			Files.copy(original.toPath(), backup.toPath(), options);
 		} catch (IOException exception) {
-			LOG.error("Error creating the backup file: " + exception.getMessage(), exception);
+			LOG.error("Error creating the backup file: ", exception.getCause());
 			errorDemon.showErrorDialog("Error creating the backup file", "", exception);
 		}
 		return backup;
@@ -91,7 +91,7 @@ public class UpdateMetadataTask extends Thread {
 		try {
 			Files.move(backup.toPath(), original.toPath(), options);
 		} catch (IOException | UnsupportedOperationException exception) {
-			LOG.error("Error restoring the backup file: " + exception.getMessage(), exception);
+			LOG.error("Error restoring the backup file: ", exception.getCause());
 			errorDemon.showErrorDialog("Error restoring the backup file", "", exception);
 		}
 	}

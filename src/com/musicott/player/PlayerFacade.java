@@ -57,9 +57,10 @@ public class PlayerFacade {
 	private boolean playingRandom;
 	private boolean played;
 	private boolean scrobbled;
+
 	private StageDemon stageDemon = StageDemon.getInstance();
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-	private Services services = Services.getInstance();
+	private ServiceDemon services = ServiceDemon.getInstance();
 
 	private PlayerFacade() {		
 		playList = FXCollections.observableArrayList();
@@ -106,8 +107,9 @@ public class PlayerFacade {
 				Optional<Track> track = musicLibrary.getTrack(trackID);
 				boolean[] isPlayable = new boolean[1];
 				track.ifPresent(t ->  isPlayable[0] = t.isPlayable());
-
-				return track.isPresent() && isPlayable[0];
+				if(!isPlayable[0])
+					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Unplayable file"));
+				return isPlayable[0];
 			}).collect(Collectors.toList());
 
 			Platform.runLater(() -> addPlayableTracksToPlayQueue(playableTracks, placeFirstInPlayQueue));
@@ -327,7 +329,8 @@ public class PlayerFacade {
 				incrementCurrentTrackPlayCount();
 			if(isCurrentTrackValidToScrobble(mediaPlayer, newTime)) {
 				scrobbled = true;
-				services.udpateAndScrobbleLastFM(currentTrack.get());
+				if (services.usingLastFm())
+					services.updateAndScrobbleTrack(currentTrack.get());
 			}
 		});
 
@@ -377,7 +380,7 @@ public class PlayerFacade {
 
 	private void incrementCurrentTrackPlayCount() {
 		if(!played) {
-			currentTrack.ifPresent(track -> track.incrementPlayCount());
+			currentTrack.ifPresent(Track::incrementPlayCount);
 			musicLibrary.saveLibrary(true, false, false);
 			played = true;
 		}

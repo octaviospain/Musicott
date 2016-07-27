@@ -33,24 +33,35 @@ import java.util.concurrent.*;
 import static com.musicott.MainApp.*;
 
 /**
- * @author Octavio Calleya
+ * Extends from {@link Thread} to perform the operation of save data
+ * of the {@link MusicLibrary} in the filesystem. It waits for a {@link Semaphore}
+ * to perform the task in a endless loop, instead of finishing the execution
+ * for each save request.
  *
+ * @author Octavio Calleya
+ * @version 0.9
  */
 public class SaveMusicLibraryTask extends Thread {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
+	private String musicottUserPath;
+	private File tracksFile;
+	private File waveformsFile;
+	private File playlistsFile;
+	private Map<String, Object> tracksArgs;
+	private Map<String, Object> playlistArgs;
+	private Semaphore saveSemaphore;
+	private volatile boolean saveTracks;
+	private volatile boolean saveWaveforms;
+	private volatile boolean savePlaylists;
+
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
 	private ObservableMap<Integer, Track> musicottTracks = musicLibrary.getTracks();
-	private Map<Integer,float[]> waveforms = musicLibrary.getWaveforms();
+	private Map<Integer, float[]> waveforms = musicLibrary.getWaveforms();
 	private List<Playlist> playlists = musicLibrary.getPlaylists();
-
-	private String musicottUserPath;
-	private File tracksFile, waveformsFile, playlistsFile;
-	private Map<String,Object> tracksArgs, playlistArgs;
-	private Semaphore saveSemaphore;
-	private volatile boolean saveTracks, saveWaveforms, savePlaylists;
 
 	public SaveMusicLibraryTask() {
 		setName("Save Library Thread");
@@ -67,7 +78,7 @@ public class SaveMusicLibraryTask extends Thread {
 		try {
 			while(true) {
 				saveSemaphore.acquire();
-				checkMusicottFiles();
+				checkMusicottUserPathChanged();
 
 				if(saveTracks)
 					serializeTracks();
@@ -76,15 +87,15 @@ public class SaveMusicLibraryTask extends Thread {
 				if(savePlaylists)
 					serializePlaylists();
 			}
-		} catch (IOException | RuntimeException | InterruptedException e) {
+		} catch (IOException | RuntimeException | InterruptedException exception) {
 			Platform.runLater(() -> {
-				LOG.error("Error saving music library", e);
-				ErrorDemon.getInstance().showErrorDialog("Error saving music library", null, e);
+				LOG.error("Error saving music library", exception.getCause());
+				errorDemon.showErrorDialog("Error saving music library", "", exception);
 			});
 		}
 	}
 
-	public void save() {
+	public void saveMusicLibrary() {
 		saveSemaphore.release();
 	}
 
@@ -137,62 +148,63 @@ public class SaveMusicLibraryTask extends Thread {
 	}
 
 	private void buildPlaylistsJsonArguments() {
-		List<String> playlistAttribues = new ArrayList<>();
-		playlistAttribues.add("name");
-		playlistAttribues.add("tracksID");
-		playlistAttribues.add("containedPlaylists");
-		playlistAttribues.add("isFolder");
+		List<String> playlistAttributes = new ArrayList<>();
+		playlistAttributes.add("name");
+		playlistAttributes.add("tracksIds");
+		playlistAttributes.add("containedPlaylists");
+		playlistAttributes.add("isFolder");
 
 		Map<Class<?>, List<String>> playlistsFields = new HashMap<>();
-		playlistsFields.put(Playlist.class, playlistAttribues);
+		playlistsFields.put(Playlist.class, playlistAttributes);
 
 		playlistArgs.put(JsonWriter.FIELD_SPECIFIERS, playlistsFields);
 		playlistArgs.put(JsonWriter.PRETTY_PRINT, true);
 	}
 
-	private void checkMusicottFiles() throws FileNotFoundException {
-		String newPath = MainPreferences.getInstance().getMusicottUserFolder();
-		if(!newPath.equals(musicottUserPath)) {
-			tracksFile = new File(newPath + File.separator + TRACKS_PERSISTENCE_FILE);
-			waveformsFile = new File(newPath + File.separator + WAVEFORMS_PERSISTENCE_FILE);
-			playlistsFile = new File(newPath + File.separator + PLAYLISTS_PERSISTENCE_FILE);
-			musicottUserPath = newPath;
+	private void checkMusicottUserPathChanged() throws FileNotFoundException {
+		String applicationPath = MainPreferences.getInstance().getMusicottUserFolder();
+		if(!applicationPath.equals(musicottUserPath)) {
+			String sep = File.separator;
+			tracksFile = new File(applicationPath + sep + TRACKS_PERSISTENCE_FILE);
+			waveformsFile = new File(applicationPath + sep + WAVEFORMS_PERSISTENCE_FILE);
+			playlistsFile = new File(applicationPath + sep + PLAYLISTS_PERSISTENCE_FILE);
+			musicottUserPath = applicationPath;
 		}
 	}
 
 	private void serializeTracks() throws IOException {
-		LOG.debug("Saving list of tracks in {}", tracksFile);
-		FileOutputStream tracksFOS = new FileOutputStream(tracksFile);
-		JsonWriter tracksJSW = new JsonWriter(tracksFOS, tracksArgs);
+		FileOutputStream tracksFileOutputStream = new FileOutputStream(tracksFile);
+		JsonWriter tracksJsonWriter = new JsonWriter(tracksFileOutputStream, tracksArgs);
 		saveTracks = false;
 		synchronized(musicottTracks) {
-			tracksJSW.write(musicottTracks);
+			tracksJsonWriter.write(musicottTracks);
 		}
-		tracksFOS.close();
-		tracksJSW.close();
+		LOG.debug("Saved list of tracks in {}", tracksFile);
+		tracksFileOutputStream.close();
+		tracksJsonWriter.close();
 	}
 
 	private void serializeWaveforms() throws IOException {
-		LOG.debug("Saving waveform images in {}", waveformsFile);
-		FileOutputStream waveformsFOS = new FileOutputStream(waveformsFile);
-		JsonWriter waveformsJSW = new JsonWriter(waveformsFOS);
+		FileOutputStream waveformsFileOutputStream = new FileOutputStream(waveformsFile);
+		JsonWriter waveformsJsonWriter = new JsonWriter(waveformsFileOutputStream);
 		saveWaveforms = false;
 		synchronized(waveforms) {
-			waveformsJSW.write(waveforms);
+			waveformsJsonWriter.write(waveforms);
 		}
-		waveformsFOS.close();
-		waveformsJSW.close();
+		LOG.debug("Saved waveform images in {}", waveformsFile);
+		waveformsFileOutputStream.close();
+		waveformsJsonWriter.close();
 	}
 
 	private void serializePlaylists() throws IOException {
-		LOG.debug("Saving playlists in {}", playlistsFile);
-		FileOutputStream playlistsFOS = new FileOutputStream(playlistsFile);
-		JsonWriter playlistsJSW = new JsonWriter(playlistsFOS, playlistArgs);
+		FileOutputStream playlistsFileOutputStream = new FileOutputStream(playlistsFile);
+		JsonWriter playlistsJsonWriter = new JsonWriter(playlistsFileOutputStream, playlistArgs);
 		savePlaylists = false;
-		synchronized(playlists){
-			playlistsJSW.write(playlists);
+		synchronized(playlists) {
+			playlistsJsonWriter.write(playlists);
 		}
-		playlistsFOS.close();
-		playlistsJSW.close();
+		LOG.debug("Saved playlists in {}", playlistsFile);
+		playlistsFileOutputStream.close();
+		playlistsJsonWriter.close();
 	}
 }

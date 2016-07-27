@@ -114,8 +114,8 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 		TableRow<Entry<Integer, Track>> row = new TableRow<>();
 		row.setOnMouseClicked(event -> {
 			if(event.getClickCount() == 2 && !row.isEmpty()) {
-				List<Integer> singleTrackIDList = Collections.singletonList(row.getItem().getKey());
-				player.addTracksToPlayQueue(singleTrackIDList, true);
+				List<Integer> singleTrackIdList = Collections.singletonList(row.getItem().getKey());
+				player.addTracksToPlayQueue(singleTrackIdList, true);
 			}
 		});
 		return row;
@@ -237,7 +237,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
 		coverCol = new TableColumn<>("Cover");
 		coverCol.setPrefWidth(50);
-		coverCol.setCellValueFactory(cellData -> new SimpleBooleanProperty(cellData.getValue().getValue().getCoverImage().isPresent()));
+		coverCol.setCellValueFactory(cellData -> cellData.getValue().getValue().hasCoverProperty());
 		coverCol.setCellFactory(CheckBoxTableCell.forTableColumn(coverCol));
 
 		bpmCol = new TableColumn<>("BPM");

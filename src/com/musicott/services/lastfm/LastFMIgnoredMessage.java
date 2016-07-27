@@ -23,10 +23,10 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @version 0.9
  */
 @XmlRootElement(name = "ignoredmessage")
-public class LastFMIgnoredMessage {
+public class LastFmIgnoredMessage {
 
 	@XmlAttribute
 	private String code;

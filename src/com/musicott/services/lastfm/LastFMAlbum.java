@@ -23,10 +23,10 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @version 0.9
  */
 @XmlRootElement(name = "album")
-public class LastFMAlbum {
+public class LastFmAlbum {
 
 	@XmlAttribute
 	private String corrected;

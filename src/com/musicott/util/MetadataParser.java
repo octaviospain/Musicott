@@ -26,6 +26,7 @@ import org.jaudiotagger.audio.exceptions.*;
 import org.jaudiotagger.tag.*;
 
 import java.io.*;
+import java.util.*;
 
 /**
  * Performs the operation of parsing an audio file to a {@link Track} instance.
@@ -35,14 +36,10 @@ import java.io.*;
  * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
 public class MetadataParser {
-	
-	private File fileToParse;
-	
-	public MetadataParser(File file) {
-		this.fileToParse = file;
-	}
 
-	public Track createTrack() throws TrackParseException {
+	private MetadataParser() {}
+
+	public static Track createTrack(File fileToParse) throws TrackParseException {
 		Track track = new Track();
 		try {
 			AudioFile audioFile = AudioFileIO.read(fileToParse);
@@ -60,15 +57,15 @@ public class MetadataParser {
 			track.setBitRate(Integer.parseInt(bitRate));
 			Tag tag = audioFile.getTag();
 			parseBaseMetadata(track, tag);
-			getCoverImage(track, tag);
+			getCoverBytes(tag).ifPresent(coverBytes -> track.hasCoverProperty().set(true));
 		} catch (IOException | CannotReadException | ReadOnlyFileException |
-				TagException | InvalidAudioFrameException e) {
-			throw new TrackParseException("Error parsing the file " + fileToParse, e);
+				TagException | InvalidAudioFrameException exception) {
+			throw new TrackParseException("Error parsing the file " + fileToParse, exception);
 		}
 		return track;
 	}
 	
-	private void parseBaseMetadata(Track track, Tag tag) {
+	private static void parseBaseMetadata(Track track, Tag tag) {
 		if(tag.hasField(FieldKey.TITLE))
 			track.setName(tag.getFirst(FieldKey.TITLE));
 		if(tag.hasField(FieldKey.ALBUM))
@@ -87,9 +84,9 @@ public class MetadataParser {
 			track.setEncoder(tag.getFirst(FieldKey.ENCODER));
 		if(tag.hasField(FieldKey.IS_COMPILATION))
 			if("m4a".equals(track.getFileFormat()))
-				track.setIsPartOfCompilation("1".equals(tag.getFirst(FieldKey.IS_COMPILATION)) ? true : false);
+				track.setIsPartOfCompilation("1".equals(tag.getFirst(FieldKey.IS_COMPILATION)));
 			else
-				track.setIsPartOfCompilation("true".equals(tag.getFirst(FieldKey.IS_COMPILATION)) ? true : false);
+				track.setIsPartOfCompilation("true".equals(tag.getFirst(FieldKey.IS_COMPILATION)));
 		if(tag.hasField(FieldKey.BPM))
 			try {
 				int bpm = Integer.parseInt(tag.getFirst(FieldKey.BPM));
@@ -111,17 +108,25 @@ public class MetadataParser {
 				track.setYear(year < 1 ? 0 : year);
 			} catch (NumberFormatException e) {}
 	}
-	
-	public static void getCoverImage(Track track, Tag tag) {
-		if(!tag.getArtworkList().isEmpty()) {
-			try {
-				File imageFile = File.createTempFile(track.getName() + "_cover", "");
-				byte[] imageBytes = tag.getArtworkList().get(0).getBinaryData();
-				FileOutputStream fileOuputStream = new FileOutputStream(imageFile.getAbsolutePath());
-				fileOuputStream.write(imageBytes);
-				fileOuputStream.close();
-				track.setCoverImage(imageFile);
-			} catch (IOException e) {}
+
+	public static Optional<Tag> getAudioTag(File file) {
+		Optional<Tag> optionalTag;
+		try {
+			AudioFile audioFile = AudioFileIO.read(file);
+			optionalTag = Optional.ofNullable(audioFile.getTag());
+		} catch (IOException | CannotReadException | ReadOnlyFileException |
+				TagException | InvalidAudioFrameException exception) {
+			optionalTag = Optional.empty();
 		}
+		return optionalTag;
+	}
+
+	public static Optional<byte[]> getCoverBytes(Tag tag) {
+		Optional<byte[]> coverBytes;
+		if(!tag.getArtworkList().isEmpty())
+			coverBytes = Optional.ofNullable(tag.getFirstArtwork().getBinaryData());
+		else
+			coverBytes = Optional.empty();
+		return coverBytes;
 	}
 }

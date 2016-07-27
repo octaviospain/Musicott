@@ -22,6 +22,7 @@ package com.musicott;
 import com.cedarsoftware.util.io.*;
 import com.musicott.model.*;
 import com.musicott.services.*;
+import com.musicott.services.lastfm.*;
 import com.musicott.util.*;
 import com.sun.javafx.application.*;
 import com.sun.javafx.collections.*;
@@ -111,8 +112,9 @@ public class MainApp extends Application {
 			properties.load(new FileInputStream(CONFIG_FILE));
 			String apiKey = properties.getProperty("lastfm_api_key");
 			String apiSecret = properties.getProperty("lastfm_api_secret");
-			Services.getInstance().getServicesPreferences().setAPISecret(apiSecret);
-			Services.getInstance().getServicesPreferences().setAPIKey(apiKey);
+			LastFmPreferences servicePreferences = ServiceDemon.getInstance().getLastFmPreferences();
+			servicePreferences.setApiSecret(apiSecret);
+			servicePreferences.setApiKey(apiKey);
 		}
 		catch (IOException exception) {
 			LOG.warn("Error loading configuration properties", exception);
@@ -139,8 +141,8 @@ public class MainApp extends Application {
 				LOG.info("Loaded waveform images from {}", waveformsFile);
 			}
 			catch(IOException exception) {
-				LOG.error("Error loading waveform thumbnails", exception);
-				errorDemon.showErrorDialog("Error", "Error when loading waveform thumbnails", exception);
+				LOG.error("Error loading waveform thumbnails: ", exception.getCause());
+				errorDemon.showErrorDialog("Error", "Error when loading waveform thumbnails: ", exception);
 			}
 		}
 		else
@@ -171,7 +173,7 @@ public class MainApp extends Application {
 	 * Loads the playlists from a saved file formatted in JSON using Json-IO
 	 *
 	 * @param playlistsFile The JSON formatted file of the playlists
-	 * @return a <tt>List</tt> of playlists or null if an error was found
+	 * @return a <tt>List</tt> of playlists or null if an error occurred
 	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
 	 */
 	private List<Playlist> parsePlaylistFromJsonFile(File playlistsFile) {
@@ -197,8 +199,8 @@ public class MainApp extends Application {
 		}
 		catch(IOException exception) {
 			playlists = null;
-			LOG.error("Error loading playlists", exception);
-			errorDemon.showErrorDialog("Error loading playlists", null, exception);
+			LOG.error("Error loading playlists: ", exception.getCause());
+			errorDemon.showErrorDialog("Error loading playlists: ", "", exception);
 		}
 		return playlists;
 	}
@@ -231,7 +233,7 @@ public class MainApp extends Application {
 				}
 				LOG.info("Loaded tracks from {}", tracksFile);
 			} catch (IOException | JsonIoException exception) {
-				LOG.error("Error loading track library", exception);
+				LOG.error("Error loading track library {}", exception.getCause());
 			}
 		}
 		if(map != null)
@@ -260,6 +262,7 @@ public class MainApp extends Application {
 		track.bpmProperty().setValue(track.getBpm());
 		track.lastDateModifiedProperty().setValue(track.getLastDateModified());
 		track.playCountProperty().setValue(track.getPlayCount());
+		track.getCoverImage().ifPresent(coverBytes -> track.hasCoverProperty().set(true));
 	}
 	
 	/**
@@ -288,7 +291,7 @@ public class MainApp extends Application {
 			logManager.getLogger("").addHandler(baseFileHandler);
 		}
 		catch (SecurityException | IOException exception) {
-			System.err.println("Error iniciating logger");
+			System.err.println("Error initiating logger");
 			exception.printStackTrace();
 		}
 	}

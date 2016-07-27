@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @deprecated
  */
 public class ParseUpdateTest extends AudioBaseTest {
 	
@@ -151,9 +151,8 @@ public class ParseUpdateTest extends AudioBaseTest {
 		expectedTest.setBitRate(Integer.parseInt(bitRate));
 		writeMetadata(expectedTest, testPath);
 		updateCover(testPath, cover);
-		
-		MetadataParser parser = new MetadataParser(testPath.toFile());
-		Track tested = parser.createTrack();
+
+		Track tested = MetadataParser.createTrack(testPath.toFile());
 		assertEquals(expectedTest.getName(), tested.getName());
 		assertEquals(expectedTest.getAlbum(), tested.getAlbum());
 		assertEquals(expectedTest.getAlbumArtist(), tested.getAlbumArtist());

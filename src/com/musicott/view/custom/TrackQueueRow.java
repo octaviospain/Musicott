@@ -21,7 +21,6 @@ package com.musicott.view.custom;
 
 import com.musicott.*;
 import com.musicott.model.*;
-import com.musicott.util.*;
 import com.musicott.view.*;
 import javafx.beans.binding.*;
 import javafx.geometry.*;
@@ -30,7 +29,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
 
-import java.util.*;
+import java.io.*;
 
 /**
  * Class that represents a single {@link Track} in the playqueue or the history queue.
@@ -116,8 +115,9 @@ public class TrackQueueRow extends GridPane {
 		coverImage.setFitHeight(40.0);
 		coverImage.setFitHeight(40.0);
 		if(track.getCoverImage().isPresent()) {
-			Optional<Image> optionalCoverImage = Utils.getImageFromFile(track.getCoverImage().get());
-			optionalCoverImage.ifPresent(coverImage::setImage);
+			byte[] coverBytes = track.getCoverImage().get();
+			Image image = new Image(new ByteArrayInputStream(coverBytes));
+			coverImage.setImage(image);
 		}
 		else
 			coverImage.setId("coverImage");

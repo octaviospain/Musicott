@@ -23,59 +23,59 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @version 0.9
  */
 @XmlRootElement(name = "nowplaying")
-public class LastFMNowPlaying {
+public class LastFmNowPlaying {
 
 	@XmlElement
-	private LastFMTrack track;
+	private LastFmTrack track;
 	@XmlElement
-	private LastFMArtist artist;
+	private LastFmArtist artist;
 	@XmlElement
-	private LastFMAlbum album;
+	private LastFmAlbum album;
 	@XmlElement
-	private LastFMAlbumArtist albumArtist;
+	private LastFmAlbumArtist albumArtist;
 	@XmlElement
-	private LastFMIgnoredMessage ignoredMessage;
+	private LastFmIgnoredMessage ignoredMessage;
 	
-	public LastFMTrack getTrack() {
+	public LastFmTrack getTrack() {
 		return track;
 	}
 	
-	public void setTrack(LastFMTrack track) {
+	public void setTrack(LastFmTrack track) {
 		this.track = track;
 	}
 	
-	public LastFMArtist getArtist() {
+	public LastFmArtist getArtist() {
 		return artist;
 	}
 	
-	public void setArtist(LastFMArtist artist) {
+	public void setArtist(LastFmArtist artist) {
 		this.artist = artist;
 	}
 	
-	public LastFMAlbum getAlbum() {
+	public LastFmAlbum getAlbum() {
 		return album;
 	}
 	
-	public void setAlbum(LastFMAlbum album) {
+	public void setAlbum(LastFmAlbum album) {
 		this.album = album;
 	}
 	
-	public LastFMAlbumArtist getAlbumArtist() {
+	public LastFmAlbumArtist getAlbumArtist() {
 		return albumArtist;
 	}
 	
-	public void setAlbumArtist(LastFMAlbumArtist albumArtist) {
+	public void setAlbumArtist(LastFmAlbumArtist albumArtist) {
 		this.albumArtist = albumArtist;
 	}
 
-	public LastFMIgnoredMessage getIgnoredMessage() {
+	public LastFmIgnoredMessage getIgnoredMessage() {
 		return ignoredMessage;
 	}
 	
-	public void setIgnoredMessage(LastFMIgnoredMessage ignoredMessage) {
+	public void setIgnoredMessage(LastFmIgnoredMessage ignoredMessage) {
 		this.ignoredMessage = ignoredMessage;
 	}	
 }

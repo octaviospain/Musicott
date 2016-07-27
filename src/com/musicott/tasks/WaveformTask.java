@@ -28,6 +28,7 @@ import javafx.application.*;
 import org.slf4j.*;
 
 import javax.sound.sampled.*;
+import javax.sound.sampled.AudioFormat.*;
 import javax.swing.*;
 import java.io.*;
 import java.nio.file.*;
@@ -37,26 +38,38 @@ import java.util.concurrent.*;
 import static java.nio.file.StandardCopyOption.*;
 
 /**
- * @author Octavio Calleya
+ * Class that extends from {@link Thread} that performs the operation of processing
+ * an audio file to get the waveform image. It waits for a {@link Semaphore} to process
+ * a new {@link Track} in an endless loop, instead of terminating the execution for
+ * each <tt>track</tt> process.
+ * <p>
+ * If the audio file is not WAV, is converted into WAV before get
+ * the wav amplitudes from the audio file.
+ * </p><p>
+ * This way is rudimentary, an inefficient. It should be improved.
+ * </p>
  *
+ * @author Octavio Calleya
+ * @version 0.9
+ * @see <a href="https://github.com/JorenSix/TarsosTranscoder">Tarsos Transcoder</a>
  */
 public class WaveformTask extends Thread {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private final double HEIGHT_COEFICIENT = 4.2; // This fits the waveform to the swingnode height
-	
-	private MusicLibrary musicLibrary;
-	private StageDemon stageDemon;
-	private TaskDemon taskDemon;
-	private Track track;
-	private float[] waveform;
+	private static final double WAVEFORM_HEIGHT_COEFFICIENT = 4.2; // This fits the resultingWaveform to the swingnode height
+	private static final double WAVEFORM_WIDTH = 520.0;
+	private static final CopyOption[] options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
+
+	private Track trackToAnalyze;
+	private float[] resultingWaveform;
 	private Semaphore taskSemaphore;
+
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+	private StageDemon stageDemon = StageDemon.getInstance();
+	private TaskDemon taskDemon = TaskDemon.getInstance();
 	
-	public WaveformTask(String id, Semaphore taskSemaphore, TaskDemon taskPoolManager) {
-		super(id);
-		stageDemon = StageDemon.getInstance();
-		musicLibrary = MusicLibrary.getInstance();
-		taskDemon = taskPoolManager;
+	public WaveformTask(Semaphore taskSemaphore) {
+		super("Waveform task");
 		this.taskSemaphore = taskSemaphore;
 	}
 	
@@ -65,109 +78,101 @@ public class WaveformTask extends Thread {
 		while(true) {
 			try {
 				taskSemaphore.acquire();
-				track = taskDemon.getNextTrackToAnalyze();
-				LOG.debug("Processing waveform of track {}", track);
-				String fileFormat = track.getFileFormat();
-				if(fileFormat.equals("wav"))
-					waveform = processWav();
-				else if(fileFormat.equals("mp3") || fileFormat.equals("m4a"))
-					waveform = processNoWav(fileFormat);
+				trackToAnalyze = taskDemon.getNextTrackToAnalyzeWaveform();
+				LOG.debug("Processing resultingWaveform of trackToAnalyze {}", trackToAnalyze);
+				String fileFormat = trackToAnalyze.getFileFormat();
+				if("wav".equals(fileFormat))
+						resultingWaveform = processFromWavFile();
+				else if("mp3".equals(fileFormat) || "m4a".equals(fileFormat))
+					resultingWaveform = processFromNoWavFile(fileFormat);
 				
-				if(waveform != null) {
-					musicLibrary.addWaveform(track.getTrackID(), waveform);
+				if(resultingWaveform != null) {
+					musicLibrary.addWaveform(trackToAnalyze.getTrackID(), resultingWaveform);
 					Optional<Track> currentTrack = PlayerFacade.getInstance().getCurrentTrack();
-					currentTrack.ifPresent(currentTrk -> {
-						if(currentTrk.equals(track))
-							SwingUtilities.invokeLater(() -> stageDemon.getPlayerController().setWaveform(track));
-					});
+					currentTrack.ifPresent(this::checkAnalyzedTrackIsCurrentPlaying);
 					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage(""));
 					musicLibrary.saveLibrary(false, true, false);
 				}
-				else
-					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Fail processing waveform of "+track.getName()));
-			} catch (Exception e) {
-				LOG.warn("Waveform thread error: {}", e);
+			} catch (IOException | UnsupportedAudioFileException | EncoderException | InterruptedException exception) {
+				LOG.warn("Error processing audio resultingWaveform of {}: " + exception.getMessage(), trackToAnalyze);
+				stageDemon.getNavigationController().setStatusMessage("Waveform not processed successfully");
 			}
 		}
 	}
 
-	private float[] processNoWav(String fileFormat) {
-		float[] waveData = null;
-		int trackID = track.getTrackID();
-		Path trackPath = FileSystems.getDefault().getPath(track.getFileFolder(), track.getFileName());
-		File temporalDecodedFile;
-		File temporalCoppiedFile;
-		try {
-			temporalDecodedFile = File.createTempFile("decoded_" + trackID, ".wav");
-			temporalCoppiedFile = File.createTempFile("original_" + trackID, "."+fileFormat);
-			CopyOption[] options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING}; 
-			Files.copy(trackPath, temporalCoppiedFile.toPath(), options);
-			try {
-				Transcoder.transcode(temporalCoppiedFile.toString(), temporalDecodedFile.toString(), DefaultAttributes.WAV_PCM_S16LE_STEREO_44KHZ.getAttributes());
-				waveData = processAmplitudes(getWavAmplitudes(temporalDecodedFile));
-			} catch (EncoderException e) {
-				if(e.getMessage().startsWith("Source and target should"))
-					waveData = processAmplitudes(getWavAmplitudes(temporalDecodedFile));
-				else
-					LOG.warn("Error processing audio waveform of {}: "+e.getMessage(), track);
-			}
-		} catch (IOException | UnsupportedAudioFileException e) {
-			LOG.warn("Error processing audio waveform of {}: "+e.getMessage(), track);
-		}
-		return waveData;
+	private void checkAnalyzedTrackIsCurrentPlaying(Track currentPlayingTrack) {
+		if(currentPlayingTrack.equals(trackToAnalyze))
+			SwingUtilities.invokeLater(() -> stageDemon.getPlayerController().setWaveform(trackToAnalyze));
 	}
-	
-	private float[] processWav() {
-		float[] waveData;
-		String trackPath = track.getFileFolder()+"/"+track.getFileName();
+
+	private float[] processFromNoWavFile(String fileFormat) throws IOException, UnsupportedAudioFileException, EncoderException {
+		int trackID = trackToAnalyze.getTrackID();
+		Path trackPath = FileSystems.getDefault().getPath(trackToAnalyze.getFileFolder(), trackToAnalyze.getFileName());
+		File temporalDecodedFile = File.createTempFile("decoded_" + trackID, ".wav");
+		File temporalCopiedFile = File.createTempFile("original_" + trackID, "." + fileFormat);
+
+		Files.copy(trackPath, temporalCopiedFile.toPath(), options);
+		transcodeToWav(temporalCopiedFile, temporalDecodedFile);
+		return processAmplitudes(getWavAmplitudes(temporalDecodedFile));
+	}
+
+	private void transcodeToWav(File sourceFile, File destinationFile) throws EncoderException {
+		Attributes attributes = DefaultAttributes.WAV_PCM_S16LE_STEREO_44KHZ.getAttributes();
+		try {
+			Transcoder.transcode(sourceFile.toString(), destinationFile.toString(), attributes);
+		} catch (EncoderException exception) {
+			if(exception.getMessage().startsWith("Source and target should"))
+				;// even with this error message the library does the conversion, who knows why
+			else
+				throw exception;
+		}
+	}
+
+	private float[] processFromWavFile() throws IOException, UnsupportedAudioFileException {
+		String trackPath = trackToAnalyze.getFileFolder() + "/" + trackToAnalyze.getFileName();
 		File trackFile = new File(trackPath);
-		try {
-			waveData = processAmplitudes(getWavAmplitudes(trackFile));
-		} catch (UnsupportedAudioFileException | IOException e) {
-			LOG.warn("Error processing audio waveform of {}: "+e.getMessage(), track);
-			waveData = null;
+		return processAmplitudes(getWavAmplitudes(trackFile));
+	}
+
+	private float[] processAmplitudes(int[] sourcePcmData) {
+		int width = (int) WAVEFORM_WIDTH;	// the width of the resultingWaveform panel
+		float[] waveData = new float[width];
+		int	samplesPerPixel = sourcePcmData.length / width;
+
+		for (int w = 0; w < width; w++) {
+			float nValue = 0.0f;
+
+			for (int s = 0; s < samplesPerPixel; s++) {
+				nValue += (Math.abs(sourcePcmData[w * samplesPerPixel + s]) / 65536.0f);
+			}
+			nValue /= samplesPerPixel;
+			waveData[w] = nValue;
 		}
 		return waveData;
 	}
-	
+
 	private int[] getWavAmplitudes(File file) throws UnsupportedAudioFileException, IOException {
-		int[] amp = null;
 		AudioInputStream input = AudioSystem.getAudioInputStream(file);
 		AudioFormat baseFormat = input.getFormat();
-		AudioFormat decodedFormat = new AudioFormat(AudioFormat.Encoding.PCM_UNSIGNED, 
-		                                            baseFormat.getSampleRate(),
-		                                            16,
-		                                            baseFormat.getChannels(),
-		                                            baseFormat.getChannels() * 2,
-		                                            baseFormat.getSampleRate(),
-		                                            false);
-		AudioInputStream pcmDecodedInput = AudioSystem.getAudioInputStream(decodedFormat, input);			
+
+		Encoding encoding = AudioFormat.Encoding.PCM_UNSIGNED;
+		float sampleRate = baseFormat.getSampleRate();
+		int numChannels = baseFormat.getChannels();
+
+		AudioFormat decodedFormat = new AudioFormat(encoding, sampleRate, 16, numChannels, numChannels * 2, sampleRate, false);
+		AudioInputStream pcmDecodedInput = AudioSystem.getAudioInputStream(decodedFormat, input);
+
 		int available = input.available();
-		amp = new int[available];
+		int[] amplitudes = new int[available];
 		byte[] buffer = new byte[available];
 		pcmDecodedInput.read(buffer, 0, available);
-		for(int i=0; i<available-1 ; i+=2) {
-			amp[i] = ((buffer[i+1] << 8) | buffer[i]) << 16;
-			amp[i] /= 32767;
-			amp[i] *= HEIGHT_COEFICIENT;
+		for (int i = 0; i < available - 1; i += 2) {
+			amplitudes[i] = ((buffer[i + 1] << 8) | buffer[i] & 0xff) << 16;
+			amplitudes[i] /= 32767;
+			amplitudes[i] *= WAVEFORM_HEIGHT_COEFFICIENT;
 		}
 		input.close();
 		pcmDecodedInput.close();
-		return amp;
-	}
-	
-	private float[] processAmplitudes(int[] sourcePCMData) {
-		int width = 520;	// the width of th waveform panel
-		float[] waveData = new float[width];
-		int	nSamplesPerPixel = sourcePCMData.length / width;
-		for (int i = 0; i<width; i++) {
-			float nValue = 0.0f;
-			for (int j = 0; j<nSamplesPerPixel; j++) {
-				nValue += (float) (Math.abs(sourcePCMData[i * nSamplesPerPixel + j]) / 65536.0f);
-			}
-			nValue /= nSamplesPerPixel;
-			waveData[i] = nValue;
-		}
-		return waveData;
+		return amplitudes;
 	}
 }

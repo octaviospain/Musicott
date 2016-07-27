@@ -42,7 +42,7 @@ import static org.testfx.matcher.base.NodeMatchers.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @deprecated
  */
 public class SystemApplicationTest extends ApplicationTest {
 
@@ -229,8 +229,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		List<Track> list = new ArrayList<Track>();
 		for(File f:new File(mp3FilePath).getParentFile().listFiles())
 			if(f.getName().substring(f.getName().length()-3).equals("mp3")) {
-				MetadataParser parser = new MetadataParser(f);
-				list.add(parser.createTrack());
+				list.add(MetadataParser.createTrack(f));
 			}
 		clickOn("#menuFile");
 		clickOn("#menuItemImport");		// Because the Filechooser is not selectable with testFX, I set the correct folder
@@ -323,8 +322,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	
 	@Test
 	public void showCorrectFieldsEditViewOneTrackTest() throws Exception {
-		MetadataParser parser = new MetadataParser(new File(mp3FilePath));
-		Track t = parser.createTrack();
+		Track t = MetadataParser.createTrack(new File(mp3FilePath));
 		clickOn("#menuFile");
 		clickOn("#menuItemOpen");
 		press(KeyCode.DIGIT0);		// Because the Filechooser is not moveable with testFX, I set the correct folder

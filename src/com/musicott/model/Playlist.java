@@ -19,11 +19,11 @@
 
 package com.musicott.model;
 
-import com.musicott.util.*;
 import com.musicott.view.*;
 import javafx.beans.property.*;
 import javafx.scene.image.*;
 
+import java.io.*;
 import java.util.*;
 
 /**
@@ -39,7 +39,7 @@ public class Playlist {
 	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(MusicottController.DEFAULT_COVER_IMAGE));
 
 	private String name;
-	private List<Integer> tracksID;
+	private List<Integer> tracksIds;
 	private List<Integer> containedTracksID;
 	private List<Playlist> containedPlaylists;
 	private final boolean isFolder;
@@ -53,7 +53,7 @@ public class Playlist {
 	public Playlist(String name, boolean isFolder) {
 		this.name = name;
 		this.isFolder = isFolder;
-		tracksID = new ArrayList<>();
+		tracksIds = new ArrayList<>();
 		containedPlaylists = new ArrayList<>();
 		nameProperty = new SimpleStringProperty(this.name);
 		nameProperty.addListener((obs, oldName, newName) -> setName(newName));
@@ -71,13 +71,13 @@ public class Playlist {
 	}
 
 	public void setTracks(List<Integer> tracks) {
-		tracksID = tracks;
+		tracksIds = tracks;
 	}
 
 	public List<Integer> getTracks() {
 		List<Integer> tracksInContainedPlaylists;
 		if(!isFolder)
-			tracksInContainedPlaylists = tracksID;
+			tracksInContainedPlaylists = tracksIds;
 		else {
 			if(containedTracksID == null)
 				containedTracksID = new ArrayList<>();
@@ -99,7 +99,7 @@ public class Playlist {
 	}
 
 	public ObjectProperty<Image> playlistCoverProperty() {
-		if(playlistCoverProperty.get().equals(COVER_IMAGE) && !tracksID.isEmpty())
+		if(playlistCoverProperty.get().equals(COVER_IMAGE) && !tracksIds.isEmpty())
 			changePlaylistCover();
 		return playlistCoverProperty;
 	}
@@ -119,11 +119,12 @@ public class Playlist {
 	public void changePlaylistCover() {
 		if(!getTracks().isEmpty()) {
 			Random random = new Random();
-			Optional<Track> randomTrack = musicLibrary.getTrack(getTracks().get(random.nextInt(tracksID.size())));
+			Optional<Track> randomTrack = musicLibrary.getTrack(getTracks().get(random.nextInt(tracksIds.size())));
 			randomTrack.ifPresent(track -> {
 				if(track.getCoverImage().isPresent()) {
-					Optional<Image> coverImage = Utils.getImageFromFile(track.getCoverImage().get());
-					coverImage.ifPresent(playlistCoverProperty::set);
+					byte[] coverBytes = track.getCoverImage().get();
+					Image image = new Image(new ByteArrayInputStream(coverBytes));
+					playlistCoverProperty.set(image);
 				}
 				else
 					playlistCoverProperty.set(COVER_IMAGE);
@@ -150,6 +151,6 @@ public class Playlist {
 	
 	@Override
 	public String toString() {
-		return name + "[" + tracksID.size() + "]";
+		return name + "[" + tracksIds.size() + "]";
 	}
 }

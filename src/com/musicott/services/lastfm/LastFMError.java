@@ -23,15 +23,15 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @version 0.9
  */
 @XmlRootElement(name = "error")
-public class LastFMError {
+public class LastFmError {
 
 	private String code;
 	private String message;
 	
-	public LastFMError() {
+	public LastFmError() {
 	}
 
 	@XmlValue

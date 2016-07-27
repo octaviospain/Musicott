@@ -21,7 +21,6 @@ package com.musicott.model;
 
 import com.musicott.*;
 import com.musicott.util.*;
-import javafx.application.*;
 import javafx.beans.property.*;
 import javafx.util.Duration;
 
@@ -81,6 +80,7 @@ public class Track {
 	private IntegerProperty playCountProperty;
 
 	private ObjectProperty<LocalDateTime> dateModifiedProperty;
+	private BooleanProperty hasCoverProperty;
 
 	/**
 	 * Map of the properties that are editable in the application
@@ -88,7 +88,7 @@ public class Track {
 	private Map<TrackField, Property> propertyMap;
 
 	private String fileFormat;
-	private Optional<File> coverFile;
+	private File coverFileToUpdate;
 	private MetadataUpdater updater;
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private StageDemon stageDemon = StageDemon.getInstance();
@@ -120,7 +120,6 @@ public class Track {
     	isVariableBitRate = false;
     	lastDateModified = LocalDateTime.now();
     	dateAdded = LocalDateTime.now();
-		coverFile = Optional.empty();
     	updater = new MetadataUpdater(this);
     	
     	nameProperty = new SimpleStringProperty(this, "name", name);
@@ -148,7 +147,9 @@ public class Track {
     	dateModifiedProperty = new SimpleObjectProperty<>(this, "date modified", lastDateModified);
     	dateModifiedProperty.addListener((observable, oldDate, newDate) -> setLastDateModified(newDate));
     	playCountProperty = new SimpleIntegerProperty(this, "play count", playCount);
-    	
+		hasCoverProperty = new SimpleBooleanProperty(this, "cover bytes", false);
+		getCoverImage().ifPresent(coverBytes -> hasCoverProperty.set(true));
+
     	propertyMap = new EnumMap<>(TrackField.class);
     	propertyMap.put(TrackField.NAME, nameProperty);
     	propertyMap.put(TrackField.ALBUM, albumProperty);
@@ -267,8 +268,12 @@ public class Track {
 		return dateAdded;
 	}
 
-	public Optional<File> getCoverImage() {
-		return coverFile;
+	public Optional<byte[]> getCoverImage() {
+		File trackFile = new File(fileFolder + "/" + fileName);
+		Optional<byte[]>[] coverBytes = new Optional[]{Optional.empty()};
+		MetadataParser.getAudioTag(trackFile)
+				.ifPresent(tag -> coverBytes[0] = MetadataParser.getCoverBytes(tag));
+		return coverBytes[0];
 	}
 
 	public Map<TrackField, Property> getPropertyMap() {
@@ -390,7 +395,7 @@ public class Track {
 	}
 
 	public void setCoverImage(File cover) {
-		coverFile = Optional.ofNullable(cover);
+		coverFileToUpdate = cover;
 	}
 
 	public StringProperty nameProperty() {
@@ -445,8 +450,12 @@ public class Track {
 		return dateModifiedProperty;
 	}
 
+	public BooleanProperty hasCoverProperty() {
+		return hasCoverProperty;
+	}
+
 	public boolean writeMetadata() {
-		return updater.writeAudioMetadata() && updater.updateCover();
+		return updater.writeAudioMetadata() && updater.updateCover(coverFileToUpdate);
 	}
 
 	public boolean isPlayable() {
@@ -458,15 +467,8 @@ public class Track {
 				setInDisk(false);
 				playable = false;
 			}
-			else if("flac".equals(fileFormat) || "Apple".startsWith(encoding) || "iTunes".startsWith(encoder)) {
-				Platform.runLater(() -> {
-					if("flac".equals(fileFormat))
-						stageDemon.getNavigationController().setStatusMessage("Can't play .flac files yet");
-					else
-						stageDemon.getNavigationController().setStatusMessage("Can't play Apple's .m4a encoded files");
-				});
+			else if("flac".equals(fileFormat) || encoding.startsWith("Apple") || encoder.startsWith("iTunes"))
 				playable = false;
-			}
 		}
 		else
 			playable = false;

@@ -20,7 +20,10 @@
 package com.musicott.view;
 
 import com.musicott.model.*;
+import com.musicott.services.*;
+import com.musicott.services.lastfm.*;
 import javafx.beans.binding.*;
+import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.fxml.*;
 import javafx.scene.*;
@@ -53,15 +56,15 @@ public class PreferencesController implements MusicottController {
 	@FXML
 	private TextField folderLocationTextField;
 	@FXML
-	private TextField lastfmUsernameTextField;
+	private TextField lastFmUsernameTextField;
 	@FXML
-	private PasswordField lastfmPasswordField;
+	private PasswordField lastFmPasswordField;
 	@FXML
 	private Button chooseApplicationFolderButton;
 	@FXML
 	private Button okButton;
 	@FXML
-	private Button lastfmLoginButton;
+	private Button lastFmLoginButton;
 	@FXML
 	private HBox fileFormatsHBox;
 	@FXML
@@ -77,16 +80,19 @@ public class PreferencesController implements MusicottController {
 	private CheckComboBox<String> extensionsCheckComboBox;
 	private ObservableList<String> selectedExtensions;
 	private Set<String> importFilterExtensions;
+	private LastFmPreferences lastFmPreferences;
 
-	private Stage preferencesStage;
-	
+	private ReadOnlyBooleanProperty usingLastFmProperty = ServiceDemon.getInstance().usingLastFmProperty();
+
 	@FXML
-	public void initialize() {		
+	public void initialize() {
+		lastFmPreferences = serviceDemon.getLastFmPreferences();
 		itunesImportPolicyCheckBox.setItems(FXCollections.observableArrayList(ITUNES_INFO, METADATA_INFO));
 
-		lastfmLoginButton.disableProperty().bind(lastfmLoginButtonBinding());
-		lastfmUsernameTextField.disableProperty().bind(lastfmUsernameFieldBinding());
-		lastfmPasswordField.disableProperty().bind(lastfmPasswordFieldBinding());
+		lastFmLoginButton.disableProperty().bind(lastFmLoginButtonDisableBinding());
+		lastFmLoginButton.textProperty().bind(lastFmLoginButtonTextBinding());
+		lastFmUsernameTextField.disableProperty().bind(usingLastFmProperty);
+		lastFmPasswordField.disableProperty().bind(usingLastFmProperty);
 
 		wrapItunesSectionWithBorder();
 
@@ -98,7 +104,9 @@ public class PreferencesController implements MusicottController {
 
 		chooseApplicationFolderButton.setOnAction(event -> chooseMusicottFolder());
 		okButton.setOnAction(event -> saveAndClose());
-		lastfmLoginButton.setOnAction(event -> lastfmLoginOrLogout());
+		lastFmLoginButton.setOnAction(event -> lastfmLoginOrLogout());
+
+		checkLastFmLoginAtStart();
 	}
 
 	/**
@@ -106,33 +114,27 @@ public class PreferencesController implements MusicottController {
 	 *
 	 * @return The {@link BooleanBinding}
 	 */
-	private BooleanBinding lastfmLoginButtonBinding() {
+	private BooleanBinding lastFmLoginButtonDisableBinding() {
 		return Bindings.createBooleanBinding(
-				() -> lastfmUsernameTextField.textProperty().get().isEmpty() ||
-						lastfmPasswordField.textProperty().get().isEmpty(),
-				lastfmUsernameTextField.textProperty(), lastfmPasswordField.textProperty());
+				() -> lastFmUsernameTextField.textProperty().get().isEmpty() ||
+						lastFmPasswordField.textProperty().get().isEmpty(),
+				lastFmUsernameTextField.textProperty(),
+				lastFmPasswordField.textProperty());
 	}
 
 	/**
-	 * Binds the lastFM username field to be disabled when the user is already loged in,
-	 * until he or she logs out.
+	 * Binds the text of the lastFM login button whenever the application is using the service
 	 *
-	 * @return The {@link BooleanBinding}
+	 * @return The {@link StringBinding}
 	 */
-	private BooleanBinding lastfmUsernameFieldBinding() {
-		return Bindings.createBooleanBinding(
-				() -> lastfmLoginButton.textProperty().get().equals(LOGOUT), lastfmLoginButton.textProperty());
-	}
-
-	/**
-	 * Binds the lastFM password field to be disabled when the user is already loged in,
-	 * until he or she logs out.
-	 *
-	 * @return The {@link BooleanBinding}
-	 */
-	private BooleanBinding lastfmPasswordFieldBinding() {
-		return Bindings.createBooleanBinding(
-				() -> lastfmLoginButton.textProperty().get().equals(LOGOUT), lastfmLoginButton.textProperty());
+	private StringBinding lastFmLoginButtonTextBinding() {
+		return Bindings.createStringBinding(() -> {
+					if (usingLastFmProperty.get())
+						return LOGOUT;
+					else
+						return LOGIN;
+				},
+				usingLastFmProperty);
 	}
 
 	/**
@@ -146,20 +148,7 @@ public class PreferencesController implements MusicottController {
 		parentVBox.getChildren().add(itunesSectionBorder);
 	}
 
-	public void setStage(Stage stage) {
-		preferencesStage = stage;
-		preferencesStage.setOnShowing(event -> loadUserPreferences());
-	}
-
-	public void setLoginTextOnLoginButton() {
-		lastfmLoginButton.setText(LOGIN);
-	}
-
-	public void setLogoutTextOnLoginButton() {
-		lastfmLoginButton.setText(LOGOUT);
-	}
-	
-	private void loadUserPreferences() {
+	public void loadUserPreferences() {
 		folderLocationTextField.setText(preferences.getMusicottUserFolder());
 		loadImportPreferences();
 		loadLastFmSettings();
@@ -181,35 +170,39 @@ public class PreferencesController implements MusicottController {
 	}
 
 	private void loadLastFmSettings() {
-		String lastfmUsername = services.getLastFMUsername();
-		String lastfmPassword = services.getLastFMPassword();
-		lastfmUsernameTextField.setText(lastfmUsername == null ? "" : lastfmUsername);
-		lastfmPasswordField.setText(lastfmPassword == null ? "" : lastfmPassword);
-		if(services.usingLastFM())
-			lastfmLoginButton.setText(LOGOUT);
-		else
-			lastfmLoginButton.setText(LOGIN);
+		String lastfmUsername = lastFmPreferences.getLastFmUsername();
+		String lastfmPassword = lastFmPreferences.getLastFmPassword();
+		lastFmUsernameTextField.setText(lastfmUsername == null ? "" : lastfmUsername);
+		lastFmPasswordField.setText(lastfmPassword == null ? "" : lastfmPassword);
 	}
 
 	private void chooseMusicottFolder() {
 		DirectoryChooser chooser = new DirectoryChooser();
 		chooser.setTitle("Choose Musicott folder location");
-		File folder = chooser.showDialog(preferencesStage);
+		Window preferencesWindow = okButton.getScene().getWindow();
+		File folder = chooser.showDialog(preferencesWindow);
 		if(folder != null)
 			folderLocationTextField.setText(folder.getAbsolutePath());
 	}
 
 	private void lastfmLoginOrLogout() {
-		if(lastfmLoginButton.getText().equals(LOGIN)) {
-			String lastfmUsername = lastfmUsernameTextField.getText();
-			String lastfmPassword = lastfmUsernameTextField.getText();
-			services.lastFMLogIn(lastfmUsername, lastfmPassword);
+		if(lastFmLoginButton.getText().equals(LOGIN)) {
+			String lastfmUsername = lastFmUsernameTextField.getText();
+			String lastfmPassword = lastFmPasswordField.getText();
+			stageDemon.showIndeterminateProgress();
+			serviceDemon.lastFmLogIn(lastfmUsername, lastfmPassword);
 		}
 		else {
-			services.lastFMLogOut();
-			lastfmPasswordField.clear();
-			lastfmLoginButton.setText(LOGOUT);
+			serviceDemon.lastFmLogOut();
+			lastFmPasswordField.clear();
 		}
+	}
+
+	private void checkLastFmLoginAtStart() {
+		String lastfmUsername = lastFmPreferences.getLastFmUsername();
+		String lastfmPassword = lastFmPreferences.getLastFmPassword();
+		if (lastfmUsername != null && lastfmPassword != null)
+			serviceDemon.lastFmLogIn(lastfmUsername, lastfmPassword);
 	}
 
 	/**
@@ -235,7 +228,7 @@ public class PreferencesController implements MusicottController {
 		preferences.setImportFilterExtensions(newExtensions);
 		preferences.setItunesImportHoldPlaycount(holdPlayCountCheckBox.isSelected());
 		preferences.setItunesImportPlaylists(importPlaylistsCheckBox.isSelected());
-		preferencesStage.close();
+		okButton.getScene().getWindow().hide();
 	}
 
 	/**

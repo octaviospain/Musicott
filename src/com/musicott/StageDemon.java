@@ -235,7 +235,7 @@ public class StageDemon {
 		if(preferencesStage == null) {
 			preferencesStage = initStage(PREFERENCES_LAYOUT, "Preferences");
 			PreferencesController preferencesController = (PreferencesController) controllers.get(PREFERENCES_LAYOUT);
-			preferencesController.setStage(preferencesStage);
+			preferencesStage.setOnShowing(event -> preferencesController.loadUserPreferences());
 		}
 		showStage(preferencesStage);
 	}
@@ -245,8 +245,10 @@ public class StageDemon {
 	 * The user is unable to interact with the application until the background task finishes.
 	 */
 	public void showIndeterminateProgress() {
-		if(progressStage == null)
-				progressStage = initStage(PROGRESS_LAYOUT, "");
+		if(progressStage == null) {
+			progressStage = initStage(PROGRESS_LAYOUT, "");
+			progressStage.initStyle(StageStyle.UNDECORATED);
+		}
 		showStage(progressStage);
 	}
 
@@ -254,7 +256,8 @@ public class StageDemon {
 	 * Closes the window with the indeterminate progress
 	 */
 	public void closeIndeterminateProgress() {
-		progressStage.close();
+		if(progressStage != null)
+			progressStage.close();
 	}
 
 	/**
@@ -284,7 +287,7 @@ public class StageDemon {
 	 * @param stageToShow The Stage to be shown
 	 */
 	private void showStage(Stage stageToShow) {
-		if(stageToShow.equals(mainStage))
+		if(stageToShow.equals(mainStage) || stageToShow.equals(progressStage))
 			stageToShow.show();
 		else if(!stageToShow.isShowing())
 			stageToShow.showAndWait();
@@ -308,9 +311,9 @@ public class StageDemon {
 			newStage.setScene(scene);
 			newStage.setResizable(false);
 		}
-		catch (IOException e) {
-			LOG.error("Error initiating stage of layout " + layout, e);
-			errorDemon.showErrorDialog("Error initiating stage of layout " + layout, null, e);
+		catch (IOException exception) {
+			LOG.error("Error initiating stage of layout " + layout, exception.getCause());
+			errorDemon.showErrorDialog("Error initiating stage of layout " + layout + ":", "", exception);
 			newStage = null;
 		}
 		return newStage;

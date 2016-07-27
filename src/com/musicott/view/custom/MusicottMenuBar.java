@@ -25,6 +25,7 @@ import com.musicott.player.*;
 import com.musicott.tasks.*;
 import com.musicott.util.*;
 import com.musicott.util.Utils.*;
+import com.musicott.view.*;
 import de.codecentric.centerdevice.*;
 import javafx.application.*;
 import javafx.beans.binding.*;
@@ -62,6 +63,8 @@ public class MusicottMenuBar extends MenuBar {
 	
 	private StageDemon stageDemon = StageDemon.getInstance();
 	private PlayerFacade playerFacade = PlayerFacade.getInstance();
+	private RootController rootController = stageDemon.getRootController();
+	private NavigationController navigationController = stageDemon.getNavigationController();
 	
 	private Menu fileMenu;
 	private Menu editMenu;
@@ -94,6 +97,9 @@ public class MusicottMenuBar extends MenuBar {
 		setControlsMenuActions();
 		setViewMenuActions();
 		setAboutMenuActions();
+		showHideTableInfoDisableBinding();
+		showHideNavigationPaneTextBinding();
+		showHideTableInfoPaneTextBinding();
 	}
 
 	/**
@@ -200,7 +206,7 @@ public class MusicottMenuBar extends MenuBar {
 			List<File> files = chooser.showOpenMultipleDialog(stageDemon.getMainStage());
 			if(files != null) {
 				TaskDemon.getInstance().importFiles(files, true);
-				stageDemon.getNavigationController().setStatusMessage("Opening files");
+				navigationController.setStatusMessage("Opening files");
 			}
 		});
 		importFolderMenuItem.setOnAction(e -> {
@@ -225,25 +231,27 @@ public class MusicottMenuBar extends MenuBar {
 
 	private void countFilesToImport(File folder) {
 		Platform.runLater(() -> {
-			stageDemon.getNavigationController().setStatusMessage("Scanning folders...");
-			stageDemon.getNavigationController().setStatusProgress(-1);
+			navigationController.setStatusMessage("Scanning folders...");
+			navigationController.setStatusProgress(-1);
 		});
 
-		Thread countFilesThread = new Thread(() -> {
-			Set<String> extensions = MainPreferences.getInstance().getImportFilterExtensions();
-			ExtensionFileFilter filter = new ExtensionFileFilter();
-			extensions.stream().forEach(filter::addExtension);
-			Platform.runLater(() -> {
-				stageDemon.getNavigationController().setStatusMessage("");
-				stageDemon.getNavigationController().setStatusProgress(0);
-			});
-			List<File> files = Utils.getAllFilesInFolder(folder, filter, 0);
-			if(files.isEmpty())
-				showNoFilesToImportAlert();
-			else
-				showImportConfirmationAlert(files);
-		});
+		Thread countFilesThread = new Thread(() -> countFilesToImportTask(folder));
 		countFilesThread.start();
+	}
+
+	private void countFilesToImportTask(File folder) {
+		Set<String> extensions = MainPreferences.getInstance().getImportFilterExtensions();
+		ExtensionFileFilter filter = new ExtensionFileFilter();
+		extensions.stream().forEach(filter::addExtension);
+		Platform.runLater(() -> {
+			navigationController.setStatusMessage("");
+			navigationController.setStatusProgress(0);
+		});
+		List<File> files = Utils.getAllFilesInFolder(folder, filter, 0);
+		if(files.isEmpty())
+			showNoFilesToImportAlert();
+		else
+			showImportConfirmationAlert(files);
 	}
 
 	private void showNoFilesToImportAlert() {
@@ -260,10 +268,10 @@ public class MusicottMenuBar extends MenuBar {
 		Platform.runLater(() -> {
 			Alert alert = stageDemon.createAlert("Import", alertContentText, "", AlertType.CONFIRMATION);
 			Optional<ButtonType> result = alert.showAndWait();
-			result.ifPresent(event -> {
+			if (result.isPresent() && result.get().equals(ButtonType.OK)) {
 				TaskDemon.getInstance().importFiles(filesToImport, false);
 				stageDemon.getNavigationController().setStatusMessage("Importing files");
-			});
+			}
 		});
 	}
 	
@@ -299,32 +307,17 @@ public class MusicottMenuBar extends MenuBar {
 	
 	private void setViewMenuActions() {
 		showHideNavigationPaneMenuItem.setOnAction(e -> {
-			String showHideMenuItemText = showHideNavigationPaneMenuItem.getText();
-			if(showHideNavigationPaneMenuItem.getText().startsWith("Show")) {
-				showHideNavigationPaneMenuItem.setText(showHideMenuItemText.replaceFirst("Show", "Hide"));
-				stageDemon.getRootController().showNavigationPane();
-			}
-			else if(showHideNavigationPaneMenuItem.getText().startsWith("Hide")) {
-				showHideNavigationPaneMenuItem.setText(showHideMenuItemText.replaceFirst("Hide", "Show"));
-				stageDemon.getRootController().hideNavigationPane();
-			}
+			if(showHideNavigationPaneMenuItem.getText().startsWith("Show"))
+				rootController.showNavigationPane();
+			else if(showHideNavigationPaneMenuItem.getText().startsWith("Hide"))
+				rootController.hideNavigationPane();
 		});
 		showHideTableInfoPaneMenuItem.setOnAction(e -> {
-			String showHideMenuItemText = showHideTableInfoPaneMenuItem.getText();
-			if(showHideTableInfoPaneMenuItem.getText().startsWith("Show")) {
-				showHideTableInfoPaneMenuItem.setText(showHideMenuItemText.replaceFirst("Show", "Hide"));
-				stageDemon.getRootController().showTableInfoPane();
-			}
-			else if(showHideTableInfoPaneMenuItem.getText().startsWith("Hide")) {
-				showHideTableInfoPaneMenuItem.setText(showHideMenuItemText.replaceFirst("Hide", "Show"));
-				stageDemon.getRootController().hideTableInfoPane();
-			}
+			if(showHideTableInfoPaneMenuItem.getText().startsWith("Show"))
+				rootController.showTableInfoPane();
+			else if(showHideTableInfoPaneMenuItem.getText().startsWith("Hide"))
+				rootController.hideTableInfoPane();
 		});
-
-		// Disables the show/hide table info menu item if a playlist is shown
-		ReadOnlyObjectProperty<NavigationMode> selectedMenu = stageDemon.getNavigationController().selectedMenuProperty();
-		showHideTableInfoPaneMenuItem.disableProperty().bind(
-				Bindings.createBooleanBinding(() -> selectedMenu.getValue() != null, selectedMenu));
 	}
 
 	private void setAboutMenuActions() {
@@ -341,5 +334,51 @@ public class MusicottMenuBar extends MenuBar {
 			alert.showAndWait();
 			LOG.debug("Showing about window");
 		});
+	}
+
+	/**
+	 * Binds the show/hide table info pane menu item
+	 * to be disabled if a playlist is shown
+	 */
+	private void showHideTableInfoDisableBinding() {
+		ReadOnlyObjectProperty<NavigationMode> selectedMenu = navigationController.navigationModeProperty();
+		showHideTableInfoPaneMenuItem.disableProperty().bind(
+				Bindings.createBooleanBinding(() -> selectedMenu.getValue().equals(NavigationMode.PLAYLIST), selectedMenu).not());
+	}
+
+	/**
+	 * Binds the show/hide navigation pane menu item to change
+	 * his text if the pane is showing or not
+	 */
+	private void showHideNavigationPaneTextBinding() {
+		ReadOnlyBooleanProperty showingNavigationPaneProperty = rootController.showNavigationPaneProperty();
+		showHideNavigationPaneMenuItem.textProperty().bind(
+				Bindings.createStringBinding(() -> {
+							String menuText = "";
+							if (showingNavigationPaneProperty.get())
+								menuText = "Hide navigation pane";
+							else
+								menuText = "Show navigation pane";
+							return menuText;
+						},
+						showingNavigationPaneProperty));
+	}
+
+	/**
+	 * Binds the show/hide table info pane menu item to change
+	 * his text if the pane is showing or not
+	 */
+	private void showHideTableInfoPaneTextBinding() {
+		ReadOnlyBooleanProperty showingTableInfoPaneProperty = rootController.showTableInfoPaneProperty();
+		showHideTableInfoPaneMenuItem.textProperty().bind(
+				Bindings.createStringBinding(() -> {
+							String menuText = "";
+							if(showingTableInfoPaneProperty.get())
+								menuText = "Hide table information pane";
+							else
+								menuText = "Show table information pane";
+							return menuText;
+						},
+						showingTableInfoPaneProperty));
 	}
 }

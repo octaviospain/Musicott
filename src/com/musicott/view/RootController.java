@@ -73,6 +73,9 @@ public class RootController implements MusicottController {
 	private ListProperty<Map.Entry<Integer, Track>> showingTracksProperty;
 	private ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylistProperty;
 
+	private BooleanProperty showingNavigationPaneProperty;
+	private BooleanProperty showingTableInfoPaneProperty;
+
 	@FXML
 	public void initialize() {
 		showingTracksProperty = musicLibrary.showingTracksProperty();
@@ -82,6 +85,8 @@ public class RootController implements MusicottController {
 						updateShowingInfoWithPlaylist(newSelected.getValue());
 		});
 
+		showingNavigationPaneProperty = new SimpleBooleanProperty(this, "showing navigation pane", true);
+		showingTableInfoPaneProperty = new SimpleBooleanProperty(this, "showing table info pane", true);
 		initializeInfoPaneFields();
 		
 		trackTable = new TrackTableView();
@@ -231,6 +236,7 @@ public class RootController implements MusicottController {
 	public void showTableInfoPane() {
 		if(!tableBorderPane.getChildren().contains(tableInfoHBox)) {
 			tableBorderPane.setTop(tableInfoHBox);
+			showingTableInfoPaneProperty.set(true);
 			LOG.debug("Showing info pane");
 		}
 	}
@@ -241,6 +247,7 @@ public class RootController implements MusicottController {
 	public void hideTableInfoPane() {
 		if(tableBorderPane.getChildren().contains(tableInfoHBox)) {
 			tableBorderPane.getChildren().remove(tableInfoHBox);
+			showingTableInfoPaneProperty.set(false);
 			LOG.debug("Hiding info pane");
 		}
 	}
@@ -251,6 +258,7 @@ public class RootController implements MusicottController {
 	public void showNavigationPane() {
 		if(!contentBorderLayout.getChildren().equals(navigationPaneVBox)) {
 			contentBorderLayout.setLeft(navigationPaneVBox);
+			showingNavigationPaneProperty.set(true);
 			LOG.debug("Showing navigation pane");
 		}
 	}
@@ -261,8 +269,17 @@ public class RootController implements MusicottController {
 	public void hideNavigationPane() {
 		if(contentBorderLayout.getChildren().contains(navigationPaneVBox)) {
 			contentBorderLayout.getChildren().remove(navigationPaneVBox);
+			showingNavigationPaneProperty.set(false);
 			LOG.debug("Showing navigation pane");
 		}
+	}
+
+	public ReadOnlyBooleanProperty showNavigationPaneProperty() {
+		return showingNavigationPaneProperty;
+	}
+
+	public ReadOnlyBooleanProperty showTableInfoPaneProperty() {
+		return showingTableInfoPaneProperty;
 	}
 	
 	/**

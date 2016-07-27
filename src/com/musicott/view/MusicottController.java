@@ -7,7 +7,8 @@ import com.musicott.services.*;
 
 /**
  * Interface that represent a controller of the Musicott application.
- * Stores constants of layout files, logos, and css stylesheets.
+ * Stores constants of layout files, logos, css stylesheets and
+ * references to the singleton classes.
  *
  * @author Octavio Calleya
  * @version 0.9
@@ -16,6 +17,7 @@ import com.musicott.services.*;
 public interface MusicottController {
 
 	String LAYOUTS_PATH = "/view/";
+	String IMAGES_PATH = "/images/";
 
 	String ROOT_LAYOUT = LAYOUTS_PATH + "RootLayout.fxml";
 	String NAVIGATION_LAYOUT = LAYOUTS_PATH +  "NavigationLayout.fxml";
@@ -26,16 +28,16 @@ public interface MusicottController {
 	String PREFERENCES_LAYOUT = LAYOUTS_PATH + "PreferencesLayout.fxml";
 	String PLAYER_LAYOUT = LAYOUTS_PATH + "PlayerLayout.fxml";
 
-	String DEFAULT_COVER_IMAGE = "/images/default-cover-image.png";
-	String LASTFM_LOGO = "/images/lastfm-logo.png";
-	String MUSICOTT_ICON = "/images/musicotticon.png";
+	String DEFAULT_COVER_IMAGE = IMAGES_PATH + "default-cover-image.png";
+	String LASTFM_LOGO = IMAGES_PATH + "lastfm-logo.png";
+	String MUSICOTT_ICON = IMAGES_PATH + "musicotticon.png";
 
 	String DIALOG_STYLE = "/css/dialog.css";
 
 	MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	MainPreferences preferences = MainPreferences.getInstance();
 	PlayerFacade player = PlayerFacade.getInstance();
-	Services services = Services.getInstance();
+	ServiceDemon serviceDemon = ServiceDemon.getInstance();
 	StageDemon stageDemon = StageDemon.getInstance();
 	ErrorDemon errorDemon = ErrorDemon.getInstance();
 }

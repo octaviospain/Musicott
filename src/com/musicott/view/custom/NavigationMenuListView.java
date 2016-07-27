@@ -38,7 +38,7 @@ public class NavigationMenuListView extends ListView<NavigationMode> {
 		setId("showMenuListView");
 		setPrefHeight(USE_COMPUTED_SIZE);
 		setPrefWidth(USE_COMPUTED_SIZE);
-		getSelectionModel().selectedItemProperty().addListener((obs, oldMode, newMode) -> {
+		getSelectionModel().selectedItemProperty().addListener((obs, oldMenu, newMode) -> {
 			if(newMode != null)
 				stageDemon.getNavigationController().setNavigationMode(newMode);
 		});
