@@ -36,7 +36,7 @@ import java.util.*;
  */
 public class Track {
 
-	private int trackID;
+	private int trackId;
 	private String fileFolder;
 	private String fileName;
 	private String name;
@@ -91,10 +91,9 @@ public class Track {
 	private File coverFileToUpdate;
 	private MetadataUpdater updater;
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
-	private StageDemon stageDemon = StageDemon.getInstance();
 	
     public Track() {
-    	trackID = MainPreferences.getInstance().getTrackSequence();
+    	trackId = MainPreferences.getInstance().getTrackSequence();
     	fileFolder = "";
     	fileName = "";
     	fileFormat = "";
@@ -164,8 +163,8 @@ public class Track {
     	propertyMap.put(TrackField.BPM, bpmProperty);
     }
 
-	public int getTrackID() {
-		return trackID;
+	public int getTrackId() {
+		return trackId;
 	}
 
 	public String getFileFolder() {
@@ -280,8 +279,8 @@ public class Track {
 		return propertyMap;
 	}
 
-	public void setTrackID(int trackID) {
-		this.trackID = trackID;
+	public void setTrackId(int trackId) {
+		this.trackId = trackId;
 	}
 
 	public void setFileFolder(String fileFolder) {
@@ -455,7 +454,8 @@ public class Track {
 	}
 
 	public boolean writeMetadata() {
-		return updater.writeAudioMetadata() && updater.updateCover(coverFileToUpdate);
+		boolean updatedCover = coverFileToUpdate == null || updater.updateCover(coverFileToUpdate);
+		return updater.writeAudioMetadata() && updatedCover;
 	}
 
 	public boolean isPlayable() {

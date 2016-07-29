@@ -181,8 +181,8 @@ public class ItunesImportTask extends Task<Void> {
 					newTrack = createTrackFromItunesData(itunesTrack);
 
 				newTrack.ifPresent(track -> {
-					itunesIdToMusicottIdMap.put(itunesTrack.getTrackID(), track.getTrackID());
-					tracks.put(track.getTrackID(), track);
+					itunesIdToMusicottIdMap.put(itunesTrack.getTrackID(), track.getTrackId());
+					tracks.put(track.getTrackId(), track);
 				});
 			}
 
@@ -275,7 +275,7 @@ public class ItunesImportTask extends Task<Void> {
 			track.setBitRate(Integer.parseInt(bitRate));
 		} catch (CannotReadException | IOException | TagException |
 				ReadOnlyFileException | InvalidAudioFrameException exception) {
-			LOG.warn("Error getting encoder or bitrate from track {}:", track.getTrackID(), exception);
+			LOG.warn("Error getting encoder or bitrate from track {}:", track.getTrackId(), exception);
 		}
 	}
 
@@ -288,13 +288,13 @@ public class ItunesImportTask extends Task<Void> {
 			Playlist playlist = new Playlist(itunesPlaylist.getName(), false);
 			List<ItunesTrack> itunesTracksList = itunesPlaylist.getPlaylistItems();
 			List<Integer> playlistTracksIds = getTracksAlreadyParsed(itunesTracksList);
-			playlist.getTracks().addAll(playlistTracksIds);
+			playlist.addTracks(playlistTracksIds);
 
 			double progress = (double) ++currentPlaylists / totalTracks;
 			String progressMessage = Integer.toString(currentPlaylists) + " / " + Integer.toString(totalTracks);
 			Platform.runLater(() -> updateTaskProgressOnView(progress, progressMessage));
 
-			if(!playlist.getTracks().isEmpty())
+			if(!playlist.isEmpty())
 				playlists.add(playlist);
 		});
 	}

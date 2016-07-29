@@ -46,18 +46,16 @@ public class ErrorDemon {
 
 	private static ErrorDemon instance;
 	private Stage mainStage;
-	private Stage preferencesStage;
 	private Alert alert;
-	private FlowPane helpContentTextFP;
-	private TextArea textArea;
-	private GridPane expandableArea;
+	private FlowPane helpContentTextFlowPane;
 
 	private ErrorDemon() {
 		Label text = new Label("Help Musicott to fix this kind of bugs. Report this error at");
 		Hyperlink githubIssuesLink = new Hyperlink("https://github.com/octaviospain/Musicott/issues");
-		githubIssuesLink.setOnAction(event -> StageDemon.getInstance().getApplicationHostServices().showDocument(githubIssuesLink.getText()));
-		helpContentTextFP = new FlowPane ();
-		helpContentTextFP.getChildren().addAll(text, githubIssuesLink);
+		HostServices hostServices = StageDemon.getInstance().getApplicationHostServices();
+		githubIssuesLink.setOnAction(event -> hostServices.showDocument(githubIssuesLink.getText()));
+		helpContentTextFlowPane = new FlowPane ();
+		helpContentTextFlowPane.getChildren().addAll(text, githubIssuesLink);
 	}
 
 	public static ErrorDemon getInstance() {
@@ -145,12 +143,12 @@ public class ErrorDemon {
 	 * @param messages The collection of messages
 	 */
 	private void addExpandableErrorMessages(Collection<String> messages) {
-		textArea = new TextArea();
+		TextArea textArea = new TextArea();
 		textArea.setEditable(false);
 		textArea.setWrapText(true);
 		for(String s: messages)
 			textArea.appendText(s + "\n");
-		expandableArea = new GridPane();
+		GridPane expandableArea = new GridPane();
 		expandableArea.setMaxWidth(Double.MAX_VALUE);
 		expandableArea.add(new Label("The exception stacktrace was:"), 0, 0);
 		expandableArea.add(textArea, 0, 1);
@@ -165,10 +163,9 @@ public class ErrorDemon {
 	 * @param message The message of the error
 	 * @param content The content text of the error dialog
 	 */
-	public synchronized void showLastFMErrorDialog(String message, String content) {
+	public synchronized void showLastFmErrorDialog(String message, String content) {
 		Platform.runLater(() -> {
-			preferencesStage = StageDemon.getInstance().getPreferencesStage();
-			Scene sceneWhereShow = preferencesStage != null && preferencesStage.isShowing() ? preferencesStage.getScene() : getMainStage().getScene();
+			Scene sceneWhereShow = getMainStage().getScene();
 			alert = createErrorAlert(message, content, sceneWhereShow);
 			alert.setGraphic(new ImageView (new Image(getClass().getResourceAsStream(LASTFM_LOGO))));
 			alert.show();
@@ -202,7 +199,7 @@ public class ErrorDemon {
 		alert.setHeaderText(message == null ? "Error" : message);
 		alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
 		if(content == null)
-			alert.getDialogPane().contentProperty().set(helpContentTextFP);
+			alert.getDialogPane().contentProperty().set(helpContentTextFlowPane);
 		else
 			alert.setContentText(content);
 		if(ownerScene != null)

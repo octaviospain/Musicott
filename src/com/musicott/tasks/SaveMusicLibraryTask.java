@@ -56,15 +56,19 @@ public class SaveMusicLibraryTask extends Thread {
 	private volatile boolean saveWaveforms;
 	private volatile boolean savePlaylists;
 
-	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+	private ObservableMap<Integer, Track> musicottTracks;
+	private Map<Integer, float[]> trackWaveforms;
+	private List<Playlist> musicottPlaylists;
+
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
-	private ObservableMap<Integer, Track> musicottTracks = musicLibrary.getTracks();
-	private Map<Integer, float[]> waveforms = musicLibrary.getWaveforms();
-	private List<Playlist> playlists = musicLibrary.getPlaylists();
-
-	public SaveMusicLibraryTask() {
+	public SaveMusicLibraryTask(ObservableMap<Integer, Track> tracks,
+								Map<Integer, float[]> waveforms,
+								List<Playlist> playlists) {
 		setName("Save Library Thread");
+		musicottTracks = tracks;
+		trackWaveforms = waveforms;
+		musicottPlaylists = playlists;
 		musicottUserPath = "";
 		saveSemaphore = new Semaphore(0);
 		tracksArgs = new HashMap<>();
@@ -73,47 +77,9 @@ public class SaveMusicLibraryTask extends Thread {
 		buildPlaylistsJsonArguments();
 	}
 
-	@Override
-	public void run() {
-		try {
-			while(true) {
-				saveSemaphore.acquire();
-				checkMusicottUserPathChanged();
-
-				if(saveTracks)
-					serializeTracks();
-				if(saveWaveforms)
-					serializeWaveforms();
-				if(savePlaylists)
-					serializePlaylists();
-			}
-		} catch (IOException | RuntimeException | InterruptedException exception) {
-			Platform.runLater(() -> {
-				LOG.error("Error saving music library", exception.getCause());
-				errorDemon.showErrorDialog("Error saving music library", "", exception);
-			});
-		}
-	}
-
-	public void saveMusicLibrary() {
-		saveSemaphore.release();
-	}
-
-	public void setSaveTracks(boolean saveTracks) {
-		this.saveTracks = saveTracks;
-	}
-
-	public void setSaveWaveforms(boolean saveWaveforms) {
-		this.saveWaveforms = saveWaveforms;
-	}
-
-	public void setSavePlaylists(boolean savePlaylists) {
-		this.savePlaylists = savePlaylists;
-	}
-
 	private void buildTracksJsonArguments() {
 		List<String> trackAttributes = new ArrayList<>();
-		trackAttributes.add("trackID");
+		trackAttributes.add("trackId");
 		trackAttributes.add("fileFolder");
 		trackAttributes.add("fileName");
 		trackAttributes.add("name");
@@ -150,7 +116,7 @@ public class SaveMusicLibraryTask extends Thread {
 	private void buildPlaylistsJsonArguments() {
 		List<String> playlistAttributes = new ArrayList<>();
 		playlistAttributes.add("name");
-		playlistAttributes.add("tracksIds");
+		playlistAttributes.add("playlistTrackIds");
 		playlistAttributes.add("containedPlaylists");
 		playlistAttributes.add("isFolder");
 
@@ -159,6 +125,35 @@ public class SaveMusicLibraryTask extends Thread {
 
 		playlistArgs.put(JsonWriter.FIELD_SPECIFIERS, playlistsFields);
 		playlistArgs.put(JsonWriter.PRETTY_PRINT, true);
+	}
+
+	public void saveMusicLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
+		this.saveTracks = saveTracks;
+		this.saveWaveforms = saveWaveforms;
+		this.savePlaylists = savePlaylists;
+		saveSemaphore.release();
+	}
+
+	@Override
+	public void run() {
+		try {
+			while(true) {
+				saveSemaphore.acquire();
+				checkMusicottUserPathChanged();
+
+				if(saveTracks)
+					serializeTracks();
+				if(saveWaveforms)
+					serializeWaveforms();
+				if(savePlaylists)
+					serializePlaylists();
+			}
+		} catch (IOException | RuntimeException | InterruptedException exception) {
+			Platform.runLater(() -> {
+				LOG.error("Error saving music library", exception.getCause());
+				errorDemon.showErrorDialog("Error saving music library", "", exception);
+			});
+		}
 	}
 
 	private void checkMusicottUserPathChanged() throws FileNotFoundException {
@@ -173,38 +168,34 @@ public class SaveMusicLibraryTask extends Thread {
 	}
 
 	private void serializeTracks() throws IOException {
-		FileOutputStream tracksFileOutputStream = new FileOutputStream(tracksFile);
-		JsonWriter tracksJsonWriter = new JsonWriter(tracksFileOutputStream, tracksArgs);
 		saveTracks = false;
 		synchronized(musicottTracks) {
-			tracksJsonWriter.write(musicottTracks);
+			writeObjectToJsonFile(musicottTracks, tracksFile, tracksArgs);
 		}
 		LOG.debug("Saved list of tracks in {}", tracksFile);
-		tracksFileOutputStream.close();
-		tracksJsonWriter.close();
 	}
 
 	private void serializeWaveforms() throws IOException {
-		FileOutputStream waveformsFileOutputStream = new FileOutputStream(waveformsFile);
-		JsonWriter waveformsJsonWriter = new JsonWriter(waveformsFileOutputStream);
 		saveWaveforms = false;
-		synchronized(waveforms) {
-			waveformsJsonWriter.write(waveforms);
+		synchronized(trackWaveforms) {
+			writeObjectToJsonFile(trackWaveforms, waveformsFile, null);
 		}
 		LOG.debug("Saved waveform images in {}", waveformsFile);
-		waveformsFileOutputStream.close();
-		waveformsJsonWriter.close();
 	}
 
 	private void serializePlaylists() throws IOException {
-		FileOutputStream playlistsFileOutputStream = new FileOutputStream(playlistsFile);
-		JsonWriter playlistsJsonWriter = new JsonWriter(playlistsFileOutputStream, playlistArgs);
 		savePlaylists = false;
-		synchronized(playlists) {
-			playlistsJsonWriter.write(playlists);
+		synchronized(musicottPlaylists) {
+			writeObjectToJsonFile(musicottPlaylists, playlistsFile, playlistArgs);
 		}
 		LOG.debug("Saved playlists in {}", playlistsFile);
-		playlistsFileOutputStream.close();
-		playlistsJsonWriter.close();
+	}
+
+	private void writeObjectToJsonFile(Object object, File jsonFile, Map<String, Object> args) throws IOException {
+		FileOutputStream outputStream = new FileOutputStream(jsonFile);
+		JsonWriter jsonWriter = new JsonWriter(outputStream, args);
+		jsonWriter.write(object);
+		outputStream.close();
+		jsonWriter.close();
 	}
 }

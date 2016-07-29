@@ -70,7 +70,7 @@ public class LastFmTask extends Thread {
 	private boolean loginToLastFmApi() {
 		boolean loginResult = true;
 		if(!lastFmService.isApiConfigurationPresent()) {
-			errorDemon.showLastFMErrorDialog("LastFM error", "LastFM API Key or Secret are invalid");
+			errorDemon.showLastFmErrorDialog("LastFM error", "LastFM API Key or Secret are invalid");
 			loginResult = false;
 		}
 
@@ -180,6 +180,6 @@ public class LastFmTask extends Thread {
 				errorMessage = error.getMessage();
 		}
 		LOG.info("LastFM error: {}", error.getMessage());
-		errorDemon.showLastFMErrorDialog(errorTitle, errorMessage);
+		errorDemon.showLastFmErrorDialog(errorTitle, errorMessage);
 	}
 }

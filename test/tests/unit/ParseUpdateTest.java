@@ -43,7 +43,7 @@ public class ParseUpdateTest extends AudioBaseTest {
 	@Before
 	public void setUp() {
 		expectedTest = new Track();
-		expectedTest.setTrackID(0);
+		expectedTest.setTrackId(0);
 		expectedTest.setInDisk(true);
 		expectedTest.setFileFolder(fileFolder);
 		expectedTest.setName("Temazo!");
@@ -169,7 +169,7 @@ public class ParseUpdateTest extends AudioBaseTest {
 		assertEquals(fileFolder, tested.getFileFolder());
 		assertEquals(expectedTest.getFileName(), tested.getFileName());
 		assertEquals(expectedTest.getBitRate(), tested.getBitRate());
-//		assertEquals(1, tested.getTrackID()); 	// can't be tested because the ID is stored in the JVM config
+//		assertEquals(1, tested.getTrackId()); 	// can't be tested because the ID is stored in the JVM config
 		assertEquals(expectedTest.getInDisk(), tested.getInDisk());
 		assertEquals(expectedTest, tested);
 		Map<TrackField, Property> expectedMap = expectedTest.getPropertyMap();

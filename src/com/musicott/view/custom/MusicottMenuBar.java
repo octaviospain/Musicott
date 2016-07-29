@@ -65,7 +65,9 @@ public class MusicottMenuBar extends MenuBar {
 	private PlayerFacade playerFacade = PlayerFacade.getInstance();
 	private RootController rootController = stageDemon.getRootController();
 	private NavigationController navigationController = stageDemon.getNavigationController();
-	
+
+	private Stage primaryStage;
+
 	private Menu fileMenu;
 	private Menu editMenu;
 	private Menu controlsMenu;
@@ -89,8 +91,9 @@ public class MusicottMenuBar extends MenuBar {
 	private Image musicottIcon = new Image (getClass().getResourceAsStream(MUSICOTT_ICON));
 	private ImageView musicottImageView = new ImageView(musicottIcon);
 	
-	public MusicottMenuBar() {
+	public MusicottMenuBar(Stage primaryStage) {
 		super();
+		this.primaryStage = primaryStage;
 		initializeMenus();
 		setFileMenuActions();
 		setEditMenuActions();
@@ -140,7 +143,7 @@ public class MusicottMenuBar extends MenuBar {
 		fileMenu.getItems().addAll(new SeparatorMenuItem(), preferencesMenuItem, new SeparatorMenuItem(), closeMI);
 		getMenus().addAll(fileMenu, editMenu, controlsMenu, viewMenu, aboutMenu);
 		setAccelerators(KeyCodeCombination.CONTROL_DOWN);
-		LOG.debug("Default menubar created");
+		LOG.debug("Default menu bar created");
 	}
 	
 	private void initializeMenus() {
@@ -203,7 +206,7 @@ public class MusicottMenuBar extends MenuBar {
 					new ExtensionFilter("flac files (*.flac)","*.flac"),
 					new ExtensionFilter("wav files (*.wav)", "*.wav"),
 					new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
-			List<File> files = chooser.showOpenMultipleDialog(stageDemon.getMainStage());
+			List<File> files = chooser.showOpenMultipleDialog(primaryStage);
 			if(files != null) {
 				TaskDemon.getInstance().importFiles(files, true);
 				navigationController.setStatusMessage("Opening files");
@@ -213,7 +216,7 @@ public class MusicottMenuBar extends MenuBar {
 			LOG.debug("Choosing folder to being imported");
 			DirectoryChooser chooser = new DirectoryChooser();
 			chooser.setTitle("Choose folder");
-			File folder = chooser.showDialog(stageDemon.getMainStage());
+			File folder = chooser.showDialog(primaryStage);
 			if(folder != null)
 				countFilesToImport(folder);
 		});
@@ -222,7 +225,7 @@ public class MusicottMenuBar extends MenuBar {
 			FileChooser chooser = new FileChooser();
 			chooser.setTitle("Select 'iTunes Music Library.xml' file");
 			chooser.getExtensionFilters().add(new ExtensionFilter("xml files (*.xml)", "*.xml"));
-			File xmlFile = chooser.showOpenDialog(stageDemon.getMainStage());
+			File xmlFile = chooser.showOpenDialog(primaryStage);
 			if(xmlFile != null) 
 				TaskDemon.getInstance().importFromItunesLibrary(xmlFile.getAbsolutePath());
 		});
@@ -293,10 +296,10 @@ public class MusicottMenuBar extends MenuBar {
 		
 		selectCurrentTrackMenuItem.setOnAction(e -> {
 			Optional<Track> currentTrack = playerFacade.getCurrentTrack();
-			TrackTableView trackTable = (TrackTableView) stageDemon.getMainStage().getScene().lookup("#trackTable");
+			TrackTableView trackTable = (TrackTableView) primaryStage.getScene().lookup("#trackTable");
 			trackTable.getSelectionModel().clearSelection();
 			currentTrack.ifPresent(track -> {
-				int currentTrackId = track.getTrackID();
+				int currentTrackId = track.getTrackId();
 				Map.Entry<Integer, Track> currentEntry = new AbstractMap.SimpleEntry<>(currentTrackId, track);
 				trackTable.getSelectionModel().select(currentEntry);
 				trackTable.scrollTo(currentEntry);

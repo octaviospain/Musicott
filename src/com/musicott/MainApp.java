@@ -40,38 +40,36 @@ import java.util.*;
 import java.util.logging.*;
 
 /**
- * Creates and launch Musicott
+ * Creates and launch Musicott.
  * 
  * @author Octavio Calleya
  * @version 0.9
  * @see <a href="https://octaviospain.github.io/Musicott">Musicott</a>
  */
-@SuppressWarnings({"restriction", "unchecked", "unused"})
 public class MainApp extends Application {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+
 	private static final String CONFIG_FILE = "resources/config/config.properties";
 	private static final String LOGGING_PROPERTIES = "resources/config/logging.properties";
 	private static final String LOG_FILE = "Musicott-main-log.txt";
-	protected static final String FIRST_USE_EVENT = "first_use";
+	static final String FIRST_USE_EVENT = "first_use";
 
 	public static final String TRACKS_PERSISTENCE_FILE = "Musicott-tracks.json";
 	public static final String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
 	public static final String PLAYLISTS_PERSISTENCE_FILE = "Musicott-playlists.json";
 
-	private ErrorDemon errorDemon;
-	private StageDemon stageDemon;
 	private MusicLibrary musicLibrary;
 	private MainPreferences preferences;
-	private Stage rootStage;
+	private ErrorDemon errorDemon;
+	private StageDemon stageDemon;
 	private String applicationFolder;
-	private int numPreloaderSteps;
 	
 	public MainApp() {
-		preferences = MainPreferences.getInstance();
-		stageDemon = StageDemon.getInstance();
-		errorDemon = ErrorDemon.getInstance();
 		musicLibrary = MusicLibrary.getInstance();
+		preferences = MainPreferences.getInstance();
+		errorDemon = ErrorDemon.getInstance();
+		stageDemon = StageDemon.getInstance();
 	}
 
 	public static void main(String[] args) {
@@ -93,8 +91,7 @@ public class MainApp extends Application {
 	
 	@Override
 	public void start(Stage primaryStage) throws IOException {
-		rootStage = primaryStage;
-		rootStage.setOnCloseRequest(event -> {
+		primaryStage.setOnCloseRequest(event -> {
 			LOG.info("Exiting Musicott");
 			System.exit(0);
 		});
@@ -123,130 +120,91 @@ public class MainApp extends Application {
 	}
 
 	/**
-	 * Loads the waveforms map from a saved file formatted in JSON using Json-IO
-	 * 
-	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
+	 * Loads the waveforms or creates a new collection
 	 */
 	private void loadWaveforms() {
 		notifyPreloader(1, 4, "Loading waveforms...");
-		Map<Integer, float[]> waveformsMap = null;
 		File waveformsFile = new File(applicationFolder + File.separator + WAVEFORMS_PERSISTENCE_FILE);
-		if(waveformsFile.exists()) {
-			try {
-				FileInputStream fileInputStream = new FileInputStream(waveformsFile);
-				JsonReader jsonReader = new JsonReader(fileInputStream);
-				waveformsMap = (Map<Integer, float[]>) jsonReader.readObject();
-				jsonReader.close();
-				fileInputStream.close();
-				LOG.info("Loaded waveform images from {}", waveformsFile);
-			}
-			catch(IOException exception) {
-				LOG.error("Error loading waveform thumbnails: ", exception.getCause());
-				errorDemon.showErrorDialog("Error", "Error when loading waveform thumbnails: ", exception);
-			}
-		}
+		Map<Integer, float[]> waveformsMap;
+		if(waveformsFile.exists())
+			waveformsMap = parseWaveformsFromJsonFile(waveformsFile);
 		else
 			waveformsMap = new HashMap<>();
-		musicLibrary.setWaveforms(waveformsMap);
-	}
-	
-	/**
-	 * Loads the saved playlists or creates some predefined ones
-	 */
-	private void loadPlaylists() {
-		notifyPreloader(3, 4, "Loading playlists...");
-		String playlistsPath = applicationFolder + File.separator + PLAYLISTS_PERSISTENCE_FILE;
-		File playlistsFile = new File(playlistsPath);
-		List<Playlist> playlists;
-		if(playlistsFile.exists())
-			playlists = parsePlaylistFromJsonFile(playlistsFile);
-		else {
-			playlists = new ArrayList<>();
-			playlists.add(new Playlist("My Top 10", false));
-			playlists.add(new Playlist("Favourites", false));
-			playlists.add(new Playlist("Listen later", false));
-		}
-		musicLibrary.setPlaylists(playlists);
+		musicLibrary.addWaveforms(waveformsMap);
 	}
 
 	/**
-	 * Loads the playlists from a saved file formatted in JSON using Json-IO
+	 * Loads the waveforms from a saved file formatted in JSON
 	 *
-	 * @param playlistsFile The JSON formatted file of the playlists
-	 * @return a <tt>List</tt> of playlists or null if an error occurred
-	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
+	 * @param waveformsFile The JSON formatted file of the tracks
+	 * @return an {@link Map} of the waveforms, where the key is the track id of the
+	 *			waveform and the value the and array of values representing the amplitudes of
+	 *			the audio {@link Track}
 	 */
-	private List<Playlist> parsePlaylistFromJsonFile(File playlistsFile) {
-		List<Playlist> playlists;
-		int totalPlaylists;
-		int step = 0;
+	@SuppressWarnings("unchecked")
+	private Map<Integer, float[]> parseWaveformsFromJsonFile(File waveformsFile) {
+		Map<Integer, float[]> waveformsMap;
 		try {
-			FileInputStream fileInputStream = new FileInputStream(playlistsFile);
-			JsonReader jsonReader = new JsonReader(fileInputStream);
-			playlists = (List<Playlist>) jsonReader.readObject();
-			totalPlaylists = playlists.size();
-			jsonReader.close();
-			fileInputStream.close();
-
-			for(Playlist playlist: playlists) {
-				if(playlist.isFolder())
-					playlist.getContainedPlaylists().forEach(
-							childPlaylist -> childPlaylist.nameProperty().setValue(childPlaylist.getName()));
-				playlist.nameProperty().setValue(playlist.getName());
-				notifyPreloader(++step, totalPlaylists, "Loading playlists...");
-			}
-			LOG.info("Loaded playlists from {}", playlistsFile);
+			waveformsMap = (Map<Integer, float[]>) parseJsonFile(waveformsFile);
+			LOG.info("Loaded waveform images from {}", waveformsFile);
 		}
 		catch(IOException exception) {
-			playlists = null;
-			LOG.error("Error loading playlists: ", exception.getCause());
-			errorDemon.showErrorDialog("Error loading playlists: ", "", exception);
+			waveformsMap = new HashMap<>();
+			LOG.error("Error loading waveform thumbnails: ", exception.getCause());
+			errorDemon.showErrorDialog("Error", "Error when loading waveform thumbnails: ", exception);
 		}
-		return playlists;
+		return waveformsMap;
 	}
 
 	/**
-	 * Loads the track map collection from a saved file formatted in JSON using Json-IO
-	 * 
-	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
+	 * Loads save tracks or creates a new collection
 	 */
 	private void loadTracks() {
-		ObservableMap<Integer, Track> map = null;
+		notifyPreloader(-1, 0, "Loading tracks...");
 		File tracksFile = new File(applicationFolder + File.separator + TRACKS_PERSISTENCE_FILE);
-		int totalTracks;
-		int step = 0;
-
-		if(tracksFile.exists()) {
-			notifyPreloader(-1, 0, "Loading tracks...");
-
-			try {
-				FileInputStream fis = new FileInputStream(tracksFile);
-				JsonReader jsr = new JsonReader(fis);
-				JsonReader.assignInstantiator(ObservableMapWrapper.class, new ObservableMapWrapperCreator ());
-				map = (ObservableMap<Integer, Track>) jsr.readObject();
-				totalTracks = map.size();
-				jsr.close();
-				fis.close();
-				for(Track t: map.values()) {
-					setTrackProperties(t);
-					notifyPreloader(++step, totalTracks, "Loading tracks...");
-				}
-				LOG.info("Loaded tracks from {}", tracksFile);
-			} catch (IOException | JsonIoException exception) {
-				LOG.error("Error loading track library {}", exception.getCause());
-			}
-		}
-		if(map != null)
-			MusicLibrary.getInstance().setTracks(map);
+		ObservableMap<Integer, Track> tracksMap;
+		if(tracksFile.exists())
+			tracksMap = parseTracksFromJsonFile(tracksFile);
 		else
-			MusicLibrary.getInstance().setTracks(FXCollections.observableHashMap());
+			tracksMap = FXCollections.observableHashMap();
+		musicLibrary.addTracks(tracksMap);
 	}
 
 	/**
-	 * Sets the values of the {@link Track}'s properties, because those are
-	 * not stored on the <tt>json</tt> file when deserialized
+	 * Loads the tracks from a saved file formatted in JSON
 	 *
-	 * @param track The track to the value of its properties
+	 * @param tracksFile The JSON formatted file of the tracks
+	 * @return an {@link ObservableMap} of the tracks, where the key is the track
+	 * 			id and the value the {@link Track} object
+	 */
+	@SuppressWarnings("unchecked")
+	private ObservableMap<Integer, Track> parseTracksFromJsonFile(File tracksFile) {
+		ObservableMap<Integer, Track> tracksMap;
+		int totalTracks;
+		int step = 0;
+		try {
+			JsonReader.assignInstantiator(ObservableMapWrapper.class, new ObservableMapWrapperCreator());
+			tracksMap = (ObservableMap<Integer, Track>) parseJsonFile(tracksFile);
+			totalTracks = tracksMap.size();
+
+			for(Track track: tracksMap.values()) {
+				setTrackProperties(track);
+				notifyPreloader(++step, totalTracks, "Loading tracks...");
+			}
+			LOG.info("Loaded tracks from {}", tracksFile);
+		} catch (IOException exception) {
+			tracksMap = FXCollections.observableHashMap();
+			LOG.error("Error loading track library {}", exception.getCause());
+			errorDemon.showErrorDialog("Error loading tracks: ", "", exception);
+		}
+		return tracksMap;
+	}
+
+	/**
+	 * Sets the values of the properties of a {@link Track} object,
+	 * because they are not restored on the <tt>json</tt> file when deserialized
+	 *
+	 * @param track The track to set its properties values
 	 */
 	private void setTrackProperties(Track track) {
 		track.nameProperty().setValue(track.getName());
@@ -264,7 +222,88 @@ public class MainApp extends Application {
 		track.playCountProperty().setValue(track.getPlayCount());
 		track.getCoverImage().ifPresent(coverBytes -> track.hasCoverProperty().set(true));
 	}
-	
+
+	/**
+	 * Loads saved playlists or creates some predefined ones
+	 */
+	private void loadPlaylists() {
+		notifyPreloader(3, 4, "Loading playlists...");
+		String playlistsPath = applicationFolder + File.separator + PLAYLISTS_PERSISTENCE_FILE;
+		File playlistsFile = new File(playlistsPath);
+		List<Playlist> playlists;
+		if(playlistsFile.exists())
+			playlists = parsePlaylistFromJsonFile(playlistsFile);
+		else {
+			playlists = new ArrayList<>();
+			playlists.add(new Playlist("My Top 10", false));
+			playlists.add(new Playlist("Favourites", false));
+			playlists.add(new Playlist("Listen later", false));
+		}
+		musicLibrary.addPlaylists(playlists);
+	}
+
+	/**
+	 * Loads the playlists from a saved file formatted in JSON
+	 *
+	 * @param playlistsFile The JSON formatted file of the playlists
+	 * @return a {@link List} of {@link Playlist} objects
+	 */
+	@SuppressWarnings("unchecked")
+	private List<Playlist> parsePlaylistFromJsonFile(File playlistsFile) {
+		List<Playlist> playlists;
+		int totalPlaylists;
+		int step = 0;
+		try {
+			JsonReader.assignInstantiator(ObservableListWrapper.class, new ObservableListWrapperCreator());
+			playlists = (List<Playlist>) parseJsonFile(playlistsFile);
+			totalPlaylists = playlists.size();
+
+			for(Playlist playlist: playlists) {
+				if(playlist.isFolder())
+					playlist.getContainedPlaylists()
+							.forEach(this::setPlaylistProperties);
+				setPlaylistProperties(playlist);
+				notifyPreloader(++step, totalPlaylists, "Loading playlists...");
+			}
+
+			LOG.info("Loaded playlists from {}", playlistsFile);
+		}
+		catch (IOException exception) {
+			playlists = new ArrayList<>();
+			LOG.error("Error loading playlists: ", exception.getCause());
+			errorDemon.showErrorDialog("Error loading playlists: ", "", exception);
+		}
+		return playlists;
+	}
+
+	/**
+	 * Sets the values of the properties of a {@link Playlist} object,
+	 * because those are not restored on the <tt>json</tt> file when deserialized
+	 *
+	 * @param playlist The track to set its properties values
+	 */
+	private void setPlaylistProperties(Playlist playlist) {
+		playlist.nameProperty().setValue(playlist.getName());
+		playlist.isFolderProperty().setValue(playlist.isFolder());
+	}
+
+	/**
+	 * Parses an <tt>Object</tt> of a previously serialized instance using Json-IO
+	 *
+	 * @param jsonFormattedFile A JSON formatted {@link File}
+	 * @return The parsed <tt>Object</tt>
+	 * @throws IOException If something went bad
+	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
+	 */
+	private Object parseJsonFile(File jsonFormattedFile) throws IOException {
+		FileInputStream fileInputStream = new FileInputStream(jsonFormattedFile);
+		JsonReader jsonReader = new JsonReader(fileInputStream);
+		Object parsedObject = jsonReader.readObject();
+		jsonReader.close();
+		fileInputStream.close();
+		return parsedObject;
+	}
+
 	/**
 	 * Initializes a {@link Logger} that stores the log entries on a file
 	 *
@@ -280,7 +319,6 @@ public class MainApp extends Application {
 			logManager.readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
 			baseFileHandler = new FileHandler(LOG_FILE);
 			baseFileHandler.setFormatter(new SimpleFormatter() {
-
 				@Override
 				public String format(LogRecord record) {
 					return logTextString(record);
@@ -336,6 +374,7 @@ public class MainApp extends Application {
 	 * @param detailMessage A notification message to be shown in the preloader
 	 */
 	private void notifyPreloader(int step, int totalSteps, String detailMessage) {
+		int numPreloaderSteps;
 		if(totalSteps != 0)
 			numPreloaderSteps = totalSteps;
 		else
@@ -352,11 +391,7 @@ public class MainApp extends Application {
 		
 		private final double progress;
         private final String details;
-        
-        public CustomProgressNotification(double progress) {
-            this(progress, "");
-        }
-        
+
         public CustomProgressNotification(double progress, String details) {
             this.progress = progress;
             this.details = details;

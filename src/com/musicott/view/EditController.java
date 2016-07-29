@@ -264,7 +264,7 @@ public class EditController implements MusicottController {
 
 		if(changed[0]) {
 			track.setLastDateModified(LocalDateTime.now());
-			LOG.info("Track {} edited to {}", track.getTrackID(), track);
+			LOG.info("Track {} edited to {}", track.getTrackId(), track);
 		}
 	}
 

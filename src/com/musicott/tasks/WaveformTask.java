@@ -87,7 +87,7 @@ public class WaveformTask extends Thread {
 					resultingWaveform = processFromNoWavFile(fileFormat);
 				
 				if(resultingWaveform != null) {
-					musicLibrary.addWaveform(trackToAnalyze.getTrackID(), resultingWaveform);
+					musicLibrary.addWaveform(trackToAnalyze.getTrackId(), resultingWaveform);
 					Optional<Track> currentTrack = PlayerFacade.getInstance().getCurrentTrack();
 					currentTrack.ifPresent(this::checkAnalyzedTrackIsCurrentPlaying);
 					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage(""));
@@ -106,7 +106,7 @@ public class WaveformTask extends Thread {
 	}
 
 	private float[] processFromNoWavFile(String fileFormat) throws IOException, UnsupportedAudioFileException, EncoderException {
-		int trackID = trackToAnalyze.getTrackID();
+		int trackID = trackToAnalyze.getTrackId();
 		Path trackPath = FileSystems.getDefault().getPath(trackToAnalyze.getFileFolder(), trackToAnalyze.getFileName());
 		File temporalDecodedFile = File.createTempFile("decoded_" + trackID, ".wav");
 		File temporalCopiedFile = File.createTempFile("original_" + trackID, "." + fileFormat);

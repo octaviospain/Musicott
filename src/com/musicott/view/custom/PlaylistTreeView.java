@@ -38,7 +38,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 
 	private TreeItem<Playlist> root;
 	private PlaylistTreeViewContextMenu contextMenu;
-	private ReadOnlyObjectProperty<TreeItem<Playlist>> selectedItemProperty;
+	private ObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
 	private StageDemon stageDemon = StageDemon.getInstance();
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
@@ -54,14 +54,21 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		setId("playlistTreeView");
 		setCellFactory(treeView -> new PlaylistTreeCell());
 
+		selectedPlaylistProperty = new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
 		getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-		selectedItemProperty = getSelectionModel().selectedItemProperty();
-		selectedItemProperty.addListener((obs, oldSelected, newSelected) -> {
-			if(newSelected != null) {
-				musicLibrary.showPlaylist(newSelected.getValue());
+		getSelectionModel().selectedItemProperty().addListener(
+				(obs, oldItem, newItem) -> {
+					if(newItem != null)
+						selectedPlaylistProperty.set(Optional.of(newItem.getValue()));
+					else
+						selectedPlaylistProperty.set(Optional.empty());
+				});
+		selectedPlaylistProperty.addListener((obs, oldSelectedPlaylist, newSelectedPlaylist) ->
+			newSelectedPlaylist.ifPresent(playlist -> {
+				playlist.showTracksOnTable();
 				stageDemon.getNavigationController().setNavigationMode(NavigationMode.PLAYLIST);
-			}
-		});
+			})
+		);
 		
 		contextMenu = new PlaylistTreeViewContextMenu();
 		setContextMenu(contextMenu);
@@ -72,26 +79,19 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 	 * Initializes the {@link TreeView} with all the playlists.
 	 */
 	private void createPlaylistsItems() {
-		musicLibrary.getPlaylists().forEach(playlist -> {
-			if(playlist.isFolder()) {
-				TreeItem<Playlist> folderItem = new TreeItem<>(playlist);
-				playlist.getContainedPlaylists().forEach(childPlaylist ->
-					folderItem.getChildren().add(new TreeItem<>(childPlaylist)));
+		synchronized (musicLibrary.getPlaylists()) {
+			musicLibrary.getPlaylists().forEach(playlist -> {
+				if (playlist.isFolder()) {
+					TreeItem<Playlist> folderItem = new TreeItem<>(playlist);
+					playlist.getContainedPlaylists().forEach(childPlaylist -> folderItem.getChildren().add(new TreeItem<>(childPlaylist)));
 
-				root.getChildren().add(folderItem);
-			}
-			else {
-				root.getChildren().add(new TreeItem<>(playlist));
-			}
-		});
-	}
-
-	public Optional<Playlist> getSelectedPlaylist() {
-		TreeItem<Playlist> selectedPlaylistTreeItem = selectedItemProperty.getValue();
-		if(selectedPlaylistTreeItem == null)
-			return Optional.empty();
-		else
-			return Optional.of(selectedPlaylistTreeItem.getValue());
+					root.getChildren().add(folderItem);
+				}
+				else {
+					root.getChildren().add(new TreeItem<>(playlist));
+				}
+			});
+		}
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		TreeItem<Playlist> newPlaylistItem = new TreeItem<>(newPlaylistChild);
 		folderTreeItem.getChildren().add(newPlaylistItem);
 
-		folder.addPlaylistChild(newPlaylistChild);
+		folder.getContainedPlaylists().add(newPlaylistChild);
 		getSelectionModel().select(newPlaylistItem);
 	}
 
@@ -128,8 +128,8 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 	 * Deletes the {@link TreeItem} that has the value of the selected {@link Playlist}
 	 */
 	public void deletePlaylist() {
-		Optional<Playlist> selected = getSelectedPlaylist();
-		selected.ifPresent(selectedPlaylist -> {
+		Optional<Playlist> selectedItem = selectedPlaylistProperty.getValue();
+		selectedItem.ifPresent(selectedPlaylist -> {
 			musicLibrary.deletePlaylist(selectedPlaylist);
 			boolean removed = root.getChildren().removeIf(treeItem -> treeItem.getValue().equals(selectedPlaylist));
 
@@ -165,5 +165,9 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 			stageDemon.getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
 		else
 			getSelectionModel().selectFirst();
+	}
+
+	public ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
+		return selectedPlaylistProperty;
 	}
 }

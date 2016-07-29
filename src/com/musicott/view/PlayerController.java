@@ -47,7 +47,7 @@ public class PlayerController implements MusicottController {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private static final double VOLUME_AMOUNT = 0.05;
-	public final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
+	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
 	
 	@FXML
 	private GridPane playerGridPane;
@@ -90,7 +90,7 @@ public class PlayerController implements MusicottController {
 	
 	@FXML
 	public void initialize() {
-		playButton.disableProperty().bind(musicLibrary.allTracksProperty().emptyProperty());
+		playButton.disableProperty().bind(musicLibrary.emptyLibraryProperty());
 		playButton.setOnAction(event -> playPause());
 		prevButton.setOnAction(e -> player.previous());
 		nextButton.setOnAction(e -> player.next());
@@ -114,7 +114,6 @@ public class PlayerController implements MusicottController {
 				showPlayQueue();
 		});
 
-		// Hide play queue pane clicking outside of it
 		playerGridPane.setOnMouseClicked(event -> hidePlayQueue());
 		playButton.setOnMouseClicked(event -> hidePlayQueue());
 	}
@@ -180,7 +179,7 @@ public class PlayerController implements MusicottController {
 		playQueuePane = pane;
 		playQueuePane.setVisible(false);
 		playQueuePane.visibleProperty().addListener((observable, oldValue, newValue) -> {
-			if(newValue.booleanValue())
+			if(newValue)
 				playQueueButton.setSelected(true);
 			else
 				playQueueButton.setSelected(false);
@@ -246,7 +245,7 @@ public class PlayerController implements MusicottController {
 	public void updatePlayer(Track currentTrack) {
 		LOG.debug("Setting up player and view for track {}", currentTrack);
 		String fileFormat = currentTrack.getFileFormat();
-		if(musicLibrary.containsWaveform(currentTrack.getTrackID()))
+		if(musicLibrary.containsWaveform(currentTrack.getTrackId()))
 			setWaveform(currentTrack);
 		else if ("wav".equals(fileFormat) || "mp3".equals(fileFormat) || "m4a".equals(fileFormat))
 			TaskDemon.getInstance().analyzeTrackWaveform(currentTrack);
@@ -287,7 +286,7 @@ public class PlayerController implements MusicottController {
 		int currentSecs = (int) elapsed.subtract(Duration.minutes(currentMins))
 				.subtract(Duration.hours(currentHours)).toSeconds();
 
-		String currentTimeText = getCurrentTimeText(currentHours, currentMins, currentSecs, (int) total.toHours());
+		String currentTimeText = getFormattedTimeString(currentHours, currentMins, currentSecs, (int) total.toHours());
 		currentTimeLabel.setText(currentTimeText);
 
 		Duration remaining = total.subtract(elapsed);
@@ -296,41 +295,24 @@ public class PlayerController implements MusicottController {
 		int remainingSecs = (int) remaining.subtract(Duration.minutes(remainingMins))
 				.subtract(Duration.hours(remainingHours)).toSeconds();
 
-		String remainingTimeText = getRemainingTimeText(remainingHours, remainingMins, remainingSecs, (int) total.toHours());
+		String remainingTimeText = getFormattedTimeString(remainingHours, remainingMins, remainingSecs, (int) total.toHours());
 		remainingTimeLabel.setText(remainingTimeText);
 	}
 
-	private String getCurrentTimeText(int currentHours, int currentMins, int currentSecs, int totalHours) {
-		String currentTimeText = "";
+	private String getFormattedTimeString(int currentHours, int currentMins, int currentSecs, int totalHours) {
+		String formattedTime = "";
 		if(totalHours > 0)
-			currentTimeText = Integer.toString(currentHours) + ":";
+			formattedTime += Integer.toString(currentHours) + ":";
 
 		if(currentMins < 10)
-			currentTimeText += "0" + currentMins;
+			formattedTime += "0" + currentMins;
 		else
-			currentTimeText += Integer.toString(currentMins);
-		currentTimeText += ":";
+			formattedTime += Integer.toString(currentMins);
+		formattedTime += ":";
 		if(currentSecs < 10)
-			currentTimeText += "0" + Integer.toString(currentSecs);
+			formattedTime += "0" + Integer.toString(currentSecs);
 		else
-			currentTimeText += Integer.toString(currentSecs);
-		return currentTimeText;
-	}
-
-	private String getRemainingTimeText(int remainingHours, int remainingMins, int remainingSecs, int totalHours) {
-		String remainingTimeText = "-";
-		if(totalHours > 0)
-			remainingTimeText += Integer.toString(remainingHours) + ":";
-
-		if(remainingMins < 10)
-			remainingTimeText += "0" + Integer.toString(remainingMins);
-		else
-			remainingTimeText += Integer.toString(remainingMins);
-		remainingTimeText += ":";
-		if(remainingSecs < 10)
-			remainingTimeText += "0" + Integer.toString(remainingSecs);
-		else
-			remainingTimeText += Integer.toString(remainingSecs);
-		return remainingTimeText;
+			formattedTime += Integer.toString(currentSecs);
+		return formattedTime;
 	}
 }

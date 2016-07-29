@@ -26,6 +26,7 @@ import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.collections.transformation.*;
+import javafx.event.*;
 import javafx.fxml.*;
 import javafx.geometry.*;
 import javafx.scene.control.*;
@@ -46,7 +47,7 @@ import java.util.function.*;
  * @version 0.9
  */
 public class RootController implements MusicottController {
-	
+
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	@FXML
@@ -71,27 +72,27 @@ public class RootController implements MusicottController {
 	private TextField playlistTitleTextField;
 	private FilteredList<Entry<Integer, Track>> filteredTracks;
 	private ListProperty<Map.Entry<Integer, Track>> showingTracksProperty;
-	private ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylistProperty;
+	private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
 	private BooleanProperty showingNavigationPaneProperty;
 	private BooleanProperty showingTableInfoPaneProperty;
+
+	private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler = changePlaylistNameTextFieldHandler();
 
 	@FXML
 	public void initialize() {
 		showingTracksProperty = musicLibrary.showingTracksProperty();
 		selectedPlaylistProperty = stageDemon.getNavigationController().selectedPlaylistProperty();
-		selectedPlaylistProperty.addListener((obs, oldSelected, newSelected) -> {
-					if(newSelected != null)
-						updateShowingInfoWithPlaylist(newSelected.getValue());
-		});
+		selectedPlaylistProperty.addListener(
+				(obs, oldSelected, newSelected) -> newSelected.ifPresent(this::updateShowingInfoWithPlaylist));
 
 		showingNavigationPaneProperty = new SimpleBooleanProperty(this, "showing navigation pane", true);
 		showingTableInfoPaneProperty = new SimpleBooleanProperty(this, "showing table info pane", true);
 		initializeInfoPaneFields();
-		
+
 		trackTable = new TrackTableView();
-		tableBorderPane.setCenter(trackTable);	
-		
+		tableBorderPane.setCenter(trackTable);
+
 		// Binding of the text typed on the search text field to the items shown on the table
 		ObservableList<Entry<Integer, Track>> tracks = showingTracksProperty.get();
 		filteredTracks = new FilteredList<>(tracks, predicate -> true);
@@ -105,8 +106,15 @@ public class RootController implements MusicottController {
 		trackTable.setItems(sortedTracks);
 	}
 
-	public void setNavigationPaneVBox(VBox navigationPaneVBox) {
-		this.navigationPaneVBox = navigationPaneVBox;
+	/**
+	 * Updates the information pane with the selected {@link Playlist}
+	 *
+	 * @param playlist The selected <tt>Playlist</tt>
+	 */
+	private void updateShowingInfoWithPlaylist(Playlist playlist) {
+		playlistTitleTextField.setText(playlist.getName());
+		playlistCover.imageProperty().bind(playlist.playlistCoverProperty());
+		removePlaylistTextField();
 	}
 
 	private void initializeInfoPaneFields() {
@@ -129,7 +137,7 @@ public class RootController implements MusicottController {
 
 		playlistTitleLabel.setOnMouseClicked(event -> {
 			if(event.getClickCount() == 2)	// double click for edit the playlist name
-				putPlaylistTextField();
+				placePlaylistTextField();
 		});
 	}
 
@@ -140,22 +148,45 @@ public class RootController implements MusicottController {
 		playlistTitleTextField.setPadding(new Insets(-10, 0, -10, 0));
 		playlistTitleTextField.setFont(new Font("System", 20));
 		VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
-		playlistTitleTextField.setOnKeyPressed(event -> {
-			KeyCode keyPressed = event.getCode();
-			Playlist playlist = selectedPlaylistProperty.getValue().getValue();
-			String newTitle = playlistTitleTextField.getText();
+		playlistTitleTextField.setOnKeyPressed(changePlaylistNameTextFieldHandler);
+	}
 
-			if(keyPressed == KeyCode.ENTER && newTitle.equals(playlist.getName())) {
-				removePlaylistTextField();
+	private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler() {
+		return event -> {
+			if(event.getCode() == KeyCode.ENTER) {
+				Playlist playlist = selectedPlaylistProperty.getValue().get();
+				String newName = playlistTitleTextField.getText();
+				if(isValidPlaylistName(newName) || playlist.getName().equals(newName)) {
+					playlist.setName(newName);
+					removePlaylistTextField();
+					musicLibrary.saveLibrary(false, false, true);
+				}
 				event.consume();
 			}
-			else if(keyPressed == KeyCode.ENTER && !newTitle.isEmpty() && !musicLibrary.containsPlaylist(newTitle)) {
-				playlist.setName(newTitle);
-				musicLibrary.saveLibrary(false, false, true);
-				removePlaylistTextField();
-				event.consume();
-			}
-		});
+		};
+	}
+
+	/**
+	 * Puts a text field to edit the name of the playlist
+	 */
+	private void placePlaylistTextField() {
+		showTableInfoPane();
+		if(!playlistInfoVBox.getChildren().contains(playlistTitleTextField)) {
+			playlistInfoVBox.getChildren().remove(playlistTitleLabel);
+			playlistInfoVBox.getChildren().add(0, playlistTitleTextField);
+			playlistTitleTextField.requestFocus();
+		}
+	}
+
+	/**
+	 * Removes the text field and shows the label with the title of the selected or entered playlist
+	 */
+	private void removePlaylistTextField() {
+		showTableInfoPane();
+		if(!playlistInfoVBox.getChildren().contains(playlistTitleLabel)) {
+			playlistInfoVBox.getChildren().remove(playlistTitleTextField);
+			playlistInfoVBox.getChildren().add(0, playlistTitleLabel);
+		}
 	}
 
 	/**
@@ -188,21 +219,6 @@ public class RootController implements MusicottController {
 		boolean matchesAlbum = track.getAlbum().toLowerCase().contains(string.toLowerCase());
 		return matchesName || matchesArtist || matchesLabel || matchesGenre || matchesAlbum;
 	}
-	
-	public ObservableList<Map.Entry<Integer, Track>> getSelectedItems() {
-		return trackTable.getSelectionModel().getSelectedItems();
-	}
-
-	/**
-	 * Updates the information pane with the selected {@link Playlist}
-	 *
-	 * @param playlist The selected <tt>Playlist</tt>
-	 */
-	public void updateShowingInfoWithPlaylist(Playlist playlist) {
-		playlistTitleTextField.setText(playlist.getName());
-		playlistCover.imageProperty().bind(playlist.playlistCoverProperty());
-		removePlaylistTextField();
-	}
 
 	/**
 	 * Handles the naming of a new playlist placing a {@link TextField} on top
@@ -213,23 +229,41 @@ public class RootController implements MusicottController {
 	public void enterNewPlaylistName(boolean isFolder) {
 		LOG.debug("Editing playlist name");
 		musicLibrary.clearShowingTracks();
-		putPlaylistTextField();
+		placePlaylistTextField();
+
 		Playlist newPlaylist = new Playlist("", isFolder);
-		playlistTitleTextField.setText("");
 		playlistCover.imageProperty().bind(newPlaylist.playlistCoverProperty());
 
-		playlistTitleTextField.setOnKeyPressed(event -> {
-			String newTitle = playlistTitleTextField.getText();
+		EventHandler<KeyEvent> newPlaylistNameTextFieldHandler = event -> {
+			if(event.getCode() == KeyCode.ENTER) {
+				String newPlaylistName = playlistTitleTextField.getText();
 
-			if(event.getCode() == KeyCode.ENTER && !newTitle.isEmpty() && !musicLibrary.containsPlaylist(newTitle)) {
-				newPlaylist.setName(newTitle);
-				stageDemon.getNavigationController().addNewPlaylist(newPlaylist);
-				removePlaylistTextField();
+				if(isValidPlaylistName(newPlaylistName)) {
+					newPlaylist.setName(newPlaylistName);
+					removePlaylistTextField();
+					stageDemon.getNavigationController().addNewPlaylist(newPlaylist);
+					musicLibrary.saveLibrary(false, false, true);
+					playlistTitleTextField.setOnKeyPressed(changePlaylistNameTextFieldHandler);
+				}
 				event.consume();
 			}
-		});
+		};
+		playlistTitleTextField.clear();
+		playlistTitleTextField.setOnKeyPressed(newPlaylistNameTextFieldHandler);
 	}
-	
+
+	/**
+	 * Ensures that a string for a playlist is valid, checking if
+	 * it is empty, or another playlist has the same name.
+	 *
+	 * @param newName The name of the playlist to check
+	 * @return <tt>true</tt> if its a valid name, <tt>false</tt> otherwise
+	 */
+	private boolean isValidPlaylistName(String newName) {
+		Playlist blankPlaylist = new Playlist(newName, false);
+		return !newName.isEmpty() && !musicLibrary.containsPlaylist(blankPlaylist);
+	}
+
 	/**
 	 * Shows the upper table info pane
 	 */
@@ -251,7 +285,7 @@ public class RootController implements MusicottController {
 			LOG.debug("Hiding info pane");
 		}
 	}
-	
+
 	/**
 	 * Shows the left navigation pane
 	 */
@@ -274,34 +308,19 @@ public class RootController implements MusicottController {
 		}
 	}
 
+	public void setNavigationPaneVBox(VBox navigationPaneVBox) {
+		this.navigationPaneVBox = navigationPaneVBox;
+	}
+
+	public ObservableList<Map.Entry<Integer, Track>> getSelectedItems() {
+		return trackTable.getSelectionModel().getSelectedItems();
+	}
+
 	public ReadOnlyBooleanProperty showNavigationPaneProperty() {
 		return showingNavigationPaneProperty;
 	}
 
 	public ReadOnlyBooleanProperty showTableInfoPaneProperty() {
 		return showingTableInfoPaneProperty;
-	}
-	
-	/**
-	 * Puts a text field to edit the name of the playlist
-	 */
-	private void putPlaylistTextField() {
-		showTableInfoPane();
-		if(!playlistInfoVBox.getChildren().contains(playlistTitleTextField)) {
-			playlistInfoVBox.getChildren().remove(playlistTitleLabel);
-			playlistInfoVBox.getChildren().add(0, playlistTitleTextField);
-			playlistTitleTextField.requestFocus();
-		}
-	}
-
-	/**
-	 * Removes the text field and shows the label with the title of the selected or entered playlist
-	 */
-	private void removePlaylistTextField() {
-		showTableInfoPane();
-		if(!playlistInfoVBox.getChildren().contains(playlistTitleLabel)) {
-			playlistInfoVBox.getChildren().remove(playlistTitleTextField);
-			playlistInfoVBox.getChildren().add(0, playlistTitleLabel);
-		}
 	}
 }

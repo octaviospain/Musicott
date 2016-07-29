@@ -32,9 +32,9 @@ import javafx.scene.layout.*;
 import java.io.*;
 
 /**
- * Class that represents a single {@link Track} in the playqueue or the history queue.
+ * Class that represents a single {@link Track} in the play queue or the history queue.
  * It contains labels showing the artist and track names, the cover image, and a button
- * to remove the <tt>TrakQueueRow</tt> from his list.
+ * to remove the <tt>TrackQueueRow</tt> from his list.
  *
  * @author Octavio Calleya
  * @version 0.9
@@ -49,8 +49,6 @@ public class TrackQueueRow extends GridPane {
 	private Track track;
 	private ImageView coverImage;
 	private VBox labelBox;
-	private Label nameLabel;
-	private Label artistAlbumLabel;
 	private Button deleteTrackQueueRowButton;
 
 	public TrackQueueRow(int trackID) {
@@ -71,8 +69,8 @@ public class TrackQueueRow extends GridPane {
 		setAlignment(Pos.CENTER_LEFT);
 	}
 	
-	public int getRepresentedTrackID() {
-		return track.getTrackID();
+	public int getRepresentedTrackId() {
+		return track.getTrackId();
 	}
 	
 	public void changeRemoveButtonColor() {
@@ -83,10 +81,10 @@ public class TrackQueueRow extends GridPane {
 	}
 
  	private void placeLabels() {
-		nameLabel = new Label();
+		Label nameLabel = new Label();
 		nameLabel.setId("nameLabel");
 		nameLabel.textProperty().bind(track.nameProperty());
-		artistAlbumLabel = new Label();
+		Label artistAlbumLabel = new Label();
 		artistAlbumLabel.setId("artistAlbumLabel");
 		artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
 				() -> track.artistProperty().get() + " - " + track.albumProperty().get(),

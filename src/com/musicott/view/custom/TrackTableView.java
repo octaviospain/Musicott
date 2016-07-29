@@ -189,7 +189,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
 		dateAddedCol = new TableColumn<>("Added");
 		dateAddedCol.setPrefWidth(110);
-		dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<> (cellData.getValue().getValue().getDateAdded()));
+		dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getValue().getDateAdded()));
 		dateAddedCol.setStyle(CENTER_RIGHT_STYLE);
 		dateAddedCol.setSortType(TableColumn.SortType.DESCENDING); 	// Default sort of the table
 		dateAddedCol.setCellFactory(dateCellFactory);

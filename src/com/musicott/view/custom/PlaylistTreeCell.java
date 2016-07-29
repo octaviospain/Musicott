@@ -40,13 +40,13 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
 			if(oldPlaylist != null) {
 				textProperty().unbind();
 				setText("");
-				oldPlaylist.folderProperty().removeListener(isFolderListener);
+				oldPlaylist.isFolderProperty().removeListener(isFolderListener);
 				selectedProperty().removeListener(isSelectedListener);
 			}
 
 			if(newPlaylist != null) {
 				textProperty().bind(newPlaylist.nameProperty());
-				newPlaylist.folderProperty().addListener(isFolderListener);
+				newPlaylist.isFolderProperty().addListener(isFolderListener);
 				selectedProperty().addListener(isSelectedListener);
 
 				updatePseudoClassesStates(newPlaylist.isFolder(), selectedProperty().get());

@@ -20,6 +20,7 @@
 package com.musicott;
 
 import com.musicott.model.*;
+import com.musicott.player.*;
 import com.musicott.view.*;
 import com.musicott.view.custom.*;
 import javafx.application.*;
@@ -52,7 +53,7 @@ public class StageDemon {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	private static StageDemon instance;
-	private static ErrorDemon errorDemon;
+	private static ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private static MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
 	private Stage mainStage;
@@ -70,22 +71,16 @@ public class StageDemon {
 	private StageDemon() {}
 	
 	public static StageDemon getInstance() {
-		if(instance == null) {
+		if(instance == null)
 			instance = new StageDemon();
-			errorDemon = ErrorDemon.getInstance();
-		}
 		return instance;
 	}
 	
-	public Stage getMainStage() {
+	Stage getMainStage() {
 		return mainStage;
 	}
 
-	protected Stage getPreferencesStage() {
-		return preferencesStage;
-	}
-
-	public void setApplicationHostServices(HostServices hostServices) {
+	void setApplicationHostServices(HostServices hostServices) {
 		this.hostServices= hostServices;
 	}
 
@@ -95,10 +90,6 @@ public class StageDemon {
 
 	public RootController getRootController() {
 		return (RootController) controllers.get(ROOT_LAYOUT);
-	}
-
-	public EditController getEditController() {
-		return (EditController) controllers.get(EDIT_LAYOUT);
 	}
 
 	public NavigationController getNavigationController() {
@@ -112,9 +103,53 @@ public class StageDemon {
 	public PlayerController getPlayerController() {
 		return (PlayerController) controllers.get(PLAYER_LAYOUT);
 	}
-	
-	public PreferencesController getPreferencesController() {
-		return (PreferencesController) controllers.get(PREFERENCES_LAYOUT);
+
+	/**
+	 * Constructs the main view of the application and shows it
+	 *
+	 * @param primaryStage The primary Stage given in the launched application
+	 * @throws IOException If any resource was not found
+	 */
+	void showMusicott(Stage primaryStage) throws IOException {
+		mainStage = primaryStage;
+		VBox navigationLayout = (VBox) loadLayout(NAVIGATION_LAYOUT);
+		LOG.debug("Navigation layout loaded");
+		GridPane playerGridPane = (GridPane) loadLayout(PLAYER_LAYOUT);
+		LOG.debug("Player layout loaded");
+		AnchorPane playQueuePane = (AnchorPane) loadLayout(PLAYQUEUE_LAYOUT);
+		getPlayerController().setPlayQueuePane(playQueuePane);
+		LOG.debug("Play queue layout loaded");
+		BorderPane rootLayout = (BorderPane) loadLayout(ROOT_LAYOUT);
+		getRootController().setNavigationPaneVBox(navigationLayout);
+		LOG.debug("Root layout loaded");
+
+		BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
+		contentBorderLayout.setBottom(playerGridPane);
+		contentBorderLayout.setLeft(navigationLayout);
+		getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
+
+		MusicottMenuBar menuBar = new MusicottMenuBar(mainStage);
+		String os = System.getProperty ("os.name");
+		if(os != null && os.startsWith ("Mac"))
+			menuBar.macMenuBar();
+		else {
+			menuBar.defaultMenuBar();
+			VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
+			headerVBox.getChildren().add(0, menuBar);
+		}
+
+		// Hide play queue pane clicking outside of it
+		navigationLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
+		contentBorderLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
+		rootLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
+
+		Scene mainScene = new Scene(rootLayout, 1200, 775);
+		mainStage.setScene(mainScene);
+		mainStage.setTitle("Musicott");
+		mainStage.getIcons().add(new Image (getClass().getResourceAsStream(MUSICOTT_ICON)));
+		mainStage.setMinWidth(1200);
+		mainStage.setMinHeight(790);
+		mainStage.show();
 	}
 
 	/**
@@ -139,7 +174,7 @@ public class StageDemon {
 			if(edit[0]) {
 				if(editStage == null) {
 					editStage = initStage(EDIT_LAYOUT, "Edit");
-					getEditController().setStage(editStage);
+					((EditController) controllers.get(EDIT_LAYOUT)).setStage(editStage);
 				}
 
 				showStage(editStage);
@@ -149,8 +184,8 @@ public class StageDemon {
 	}
 
 	/**
-	 * Deletes the tracks selected in the table. If the size of the track selection
-	 * is greater than 1, an <tt>Alert</tt> is opened asking for a confirmation of the user.
+	 * Deletes the tracks selected in the table. An {@link Alert} is opened
+	 * asking for a confirmation of the user.
 	 */
 	public void deleteTracks() {
 		ObservableList<Map.Entry<Integer, Track>> trackSelection = getRootController().getSelectedItems();
@@ -161,71 +196,20 @@ public class StageDemon {
 			Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
 			Optional<ButtonType> result = alert.showAndWait();
 
-			result.ifPresent(a -> {
-				boolean delete = a.getButtonData().isDefaultButton();
-
-				if (delete) {
-					new Thread(() -> {
-						List<Integer> tracksToDelete = trackSelection.stream()
-								.map(Map.Entry::getKey)
-								.collect(Collectors.toList());
-						musicLibrary.deleteTracks(tracksToDelete);
-						Platform.runLater(this::closeIndeterminateProgress);
-					}).start();
-					showIndeterminateProgress();
-				} else
-					alert.close();
-			});
+			if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
+				new Thread(() -> {
+					List<Integer> tracksToDelete = trackSelection.stream()
+							.map(Map.Entry::getKey)
+							.collect(Collectors.toList());
+					PlayerFacade.getInstance().deleteFromQueues(tracksToDelete);
+					musicLibrary.deleteTracks(tracksToDelete);
+					Platform.runLater(this::closeIndeterminateProgress);
+				}).start();
+				showIndeterminateProgress();
+			}
+			else
+				alert.close();
 		}
-	}
-
-	/**
-	 * Constructs the main view of the application and shows it
-	 *
-	 * @param primaryStage The primary Stage given in the launched application
-	 * @throws IOException If any resource was not found
-	 */
-	protected void showMusicott(Stage primaryStage) throws IOException {
-		mainStage = primaryStage;
-		VBox navigationLayout = (VBox) loadLayout(NAVIGATION_LAYOUT);
-		LOG.debug("Navigation layout loaded");
-		GridPane playerGridPane = (GridPane) loadLayout(PLAYER_LAYOUT);
-		LOG.debug("Player layout loaded");
-		AnchorPane playQueuePane = (AnchorPane) loadLayout(PLAYQUEUE_LAYOUT);
-		getPlayerController().setPlayQueuePane(playQueuePane);
-		LOG.debug("Playqueue layout loaded");
-		BorderPane rootLayout = (BorderPane) loadLayout(ROOT_LAYOUT);
-		getRootController().setNavigationPaneVBox(navigationLayout);
-		LOG.debug("Root layout loaded");
-
-		BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
-		contentBorderLayout.setBottom(playerGridPane);
-		contentBorderLayout.setLeft(navigationLayout);
-		getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
-
-		MusicottMenuBar menuBar = new MusicottMenuBar();
-		String os = System.getProperty ("os.name");
-		if(os != null && os.startsWith ("Mac"))
-			menuBar.macMenuBar();
-		else {
-			menuBar.defaultMenuBar();
-			VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
-			headerVBox.getChildren().add(0, menuBar);
-		}
-
-		// Hide play queue pane clicking outside of it
-		navigationLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
-		contentBorderLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
-		rootLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
-
-		Scene mainScene = new Scene(rootLayout, 1200, 775);
-		mainStage.setScene(mainScene);
-		mainStage.setTitle("Musicott");
-		mainStage.getIcons().add(new Image (getClass().getResourceAsStream(MUSICOTT_ICON)));
-		mainStage.setMinWidth(1200);
-		mainStage.setMinHeight(790);
-		mainStage.setMaxWidth(1800);
-		mainStage.show();
 	}
 
 	/**
@@ -268,7 +252,7 @@ public class StageDemon {
 	 * @param header The header text of the <tt>Alert</tt>
 	 * @param content The content text of the <tt>Alert</tt>
 	 * @param type The type of the <tt>Alert</tt>
-	 * @return
+	 * @return The <tt>Alert</tt> object
 	 */
 	public Alert createAlert(String title, String header, String content, AlertType type) {
 		Alert alert = new Alert(type);

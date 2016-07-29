@@ -82,7 +82,7 @@ public class ParseTask extends Task<Void> {
 	private void parseFile(File fileToParse) {
 		Track currentTrack = parseFileToTrack(fileToParse);
 		if (currentTrack != null)
-			parsedTracks.put(currentTrack.getTrackID(), currentTrack);
+			parsedTracks.put(currentTrack.getTrackId(), currentTrack);
 
 		double progress = (double) ++currentFiles / totalFiles;
 		String statusMessage = "Imported " + Integer.toString(currentFiles) + " of " + Integer.toString(totalFiles);

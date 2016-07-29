@@ -31,6 +31,8 @@ import javafx.scene.input.*;
 import javafx.scene.input.KeyCombination.*;
 import javafx.scene.layout.*;
 
+import java.util.*;
+
 /**
  * Controller class of the left pane that contains the playlists, the
  * music library menus, and the status progress and status messages.
@@ -40,10 +42,6 @@ import javafx.scene.layout.*;
  */
 public class NavigationController implements MusicottController {
 
-	@FXML
-	private AnchorPane rootAnchorPane;
-	@FXML
-	private VBox navigationPaneVBox;
 	@FXML
 	private VBox navigationVBox;
 	@FXML
@@ -91,7 +89,7 @@ public class NavigationController implements MusicottController {
 		VBox.setVgrow(navigationVBox, Priority.ALWAYS);
 	}
 
-	public ContextMenu newPlaylistButtonContextMenu() {
+	private ContextMenu newPlaylistButtonContextMenu() {
 		ContextMenu contextMenu = new ContextMenu();;
 		MenuItem newPlaylistMI;
 		MenuItem newFolderPlaylistMI;
@@ -135,7 +133,7 @@ public class NavigationController implements MusicottController {
 		navigationModeProperty.setValue(mode);
 		switch(mode) {
 			case ALL_TRACKS:
-				musicLibrary.showMode(mode);
+				musicLibrary.showAllTracks();
 				playlistTreeView.getSelectionModel().clearAndSelect(-1);
 				Platform.runLater(() -> stageDemon.getRootController().hideTableInfoPane());
 				break;
@@ -154,8 +152,8 @@ public class NavigationController implements MusicottController {
 		return navigationModeProperty;
 	}
 
-	public ReadOnlyObjectProperty<TreeItem<Playlist>> selectedPlaylistProperty() {
-		return playlistTreeView.getSelectionModel().selectedItemProperty();
+	public ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
+		return playlistTreeView.selectedPlaylistProperty();
 	}
 
 	public void addNewPlaylist(Playlist newPlaylist) {

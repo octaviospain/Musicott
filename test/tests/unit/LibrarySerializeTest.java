@@ -107,7 +107,7 @@ public class LibrarySerializeTest {
 		Map<Integer, Track> tracks = new HashMap<>();
 		for(File f: audioFiles) {
 			Track t = MetadataParser.createTrack(f);
-			tracks.put(t.getTrackID(), t);
+			tracks.put(t.getTrackId(), t);
 		}
 		FileOutputStream fos = new FileOutputStream(jsonFile);
 		JsonWriter jsw = new JsonWriter(fos, args);
@@ -141,7 +141,7 @@ public class LibrarySerializeTest {
 		Map<Integer, Track> tracks = new HashMap<>();
 		for(File f: audioFiles) {
 			Track t = MetadataParser.createTrack(f);
-			tracks.put(t.getTrackID(), t);
+			tracks.put(t.getTrackId(), t);
 		}
 		
 		ObservableMap<Integer, Track> obsTracks = FXCollections.observableHashMap();

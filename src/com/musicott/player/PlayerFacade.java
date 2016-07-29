@@ -96,14 +96,14 @@ public class PlayerFacade {
 	/**
 	 * Adds a {@link List} of tracks to the play queue. Checks if all tracks given are playable.
 	 *
-	 * @param tracksID The <tt>List</tt> of tracks ids to add.
+	 * @param tracksId 				The <tt>List</tt> of tracks ids to add.
 	 * @param placeFirstInPlayQueue <tt>true</tt> if the tracks added should be placed in the beggining
 	 * o							of the play queue, <tt>false</tt> otherwise
 	 */
-	public void addTracksToPlayQueue(Collection<Integer> tracksID, boolean placeFirstInPlayQueue) {
+	public void addTracksToPlayQueue(Collection<Integer> tracksId, boolean placeFirstInPlayQueue) {
 		Thread playableTracksThread = new Thread(() -> {
 
-			List<Integer> playableTracks = tracksID.stream().filter(trackID -> {
+			List<Integer> playableTracks = tracksId.stream().filter(trackID -> {
 				Optional<Track> track = musicLibrary.getTrack(trackID);
 				boolean[] isPlayable = new boolean[1];
 				track.ifPresent(t ->  isPlayable[0] = t.isPlayable());
@@ -148,27 +148,29 @@ public class PlayerFacade {
 	}
 
 	/**
-	 * Deletes a {@link Track} from the play queue and from the history queue.
+	 * Deletes the {@link TrackQueueRow} objects from the play queue and from the history queue
 	 *
-	 * @param trackID The track id.
+	 * @param tracksToDelete The {@link List} of track ids
 	 */
-	public void deleteTrackFromQueues(int trackID) {
+	public void deleteFromQueues(List<Integer> tracksToDelete) {
 		currentTrack.ifPresent(track -> {
-			if(track.getTrackID() == trackID) {
+			if(tracksToDelete.contains(track.getTrackId())) {
 				currentTrack = Optional.empty();
 				stop();
 			}
 		});
 
-		Iterator<TrackQueueRow> trackQueueRowIterator = playList.iterator();
-		while(trackQueueRowIterator.hasNext())
-			if(trackQueueRowIterator.next().getRepresentedTrackID() == trackID)
-				trackQueueRowIterator.remove();
+		tracksToDelete.stream().forEach(trackId -> {
+			Iterator<TrackQueueRow> trackQueueRowIterator = playList.iterator();
+			while(trackQueueRowIterator.hasNext())
+				if(trackQueueRowIterator.next().getRepresentedTrackId() == trackId)
+					trackQueueRowIterator.remove();
 
-		trackQueueRowIterator = historyList.iterator();
-		while(trackQueueRowIterator.hasNext())
-			if(trackQueueRowIterator.next().getRepresentedTrackID() == trackID)
-				trackQueueRowIterator.remove();
+			trackQueueRowIterator = historyList.iterator();
+			while(trackQueueRowIterator.hasNext())
+				if(trackQueueRowIterator.next().getRepresentedTrackId() == trackId)
+					trackQueueRowIterator.remove();
+		});
 	}
 
 	public void play(boolean playRandom) {
@@ -204,7 +206,7 @@ public class PlayerFacade {
 		
 	public void previous() {
 		if(!historyList.isEmpty()) {
-			setPlayer(historyList.get(0).getRepresentedTrackID());
+			setPlayer(historyList.get(0).getRepresentedTrackId());
 			historyList.remove(0);
 			trackPlayer.play();
 		}
@@ -233,7 +235,7 @@ public class PlayerFacade {
 	 * @param index The position of the <tt>track</tt> in the history queue.
 	 */
 	public void playHistoryIndex(int index) {
-		setPlayer(historyList.get(index).getRepresentedTrackID());
+		setPlayer(historyList.get(index).getRepresentedTrackId());
 		historyList.remove(index);
 		trackPlayer.play();
 	}
@@ -244,7 +246,7 @@ public class PlayerFacade {
 	 * @param index The position of the <tt>track</tt> in the history queue.
 	 */
 	public void playQueueIndex(int index) {
-		setPlayer(playList.get(index).getRepresentedTrackID());
+		setPlayer(playList.get(index).getRepresentedTrackId());
 		historyList.add(0, playList.get(index));
 		playList.remove(index);
 		trackPlayer.play();
@@ -260,17 +262,17 @@ public class PlayerFacade {
 			trackPlayer.setVolume(-1 * amount);
 	}
 
-	public void setRandomList(List<Integer> randomTrackIDs) {
+	public void setRandomList(List<Integer> randomTrackIds) {
 		if(playQueueController == null)
 			playQueueController = stageDemon.getPlayQueueController();
 
-		if(!randomTrackIDs.isEmpty()) {
+		if(!randomTrackIds.isEmpty()) {
 			LOG.info("Created random list of tracks");
 			playingRandom = true;
-			for(int index = 0; index < randomTrackIDs.size(); index++) {
+			for(int index = 0; index < randomTrackIds.size(); index++) {
 				int i = index;
 				Platform.runLater(() -> {
-					playList.add(new TrackQueueRow(randomTrackIDs.get(i)));
+					playList.add(new TrackQueueRow(randomTrackIds.get(i)));
 					if(i == 0)
 						setCurrentTrack();
 				});
@@ -283,18 +285,18 @@ public class PlayerFacade {
 
 	private void setCurrentTrack() {
 		historyList.add(0, playList.get(0));
-		setPlayer(playList.get(0).getRepresentedTrackID());
+		setPlayer(playList.get(0).getRepresentedTrackId());
 		playList.remove(0);
 		trackPlayer.play();
 		LOG.info("Playing {}", currentTrack);
 	}
 
-	private void setPlayer(int trackID) {
+	private void setPlayer(int trackId) {
 		scrobbled = false;
 		played = false;
 		if(playerController == null)
 			playerController = stageDemon.getPlayerController();
-		currentTrack = musicLibrary.getTrack(trackID);
+		currentTrack = musicLibrary.getTrack(trackId);
 
 		currentTrack.ifPresent(track -> {
 			if(trackPlayer != null) {

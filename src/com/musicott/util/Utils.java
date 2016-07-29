@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * Class that does some useful operations with files, directories, strings
  * or other operations utilities to be used for the application
- * 
+ *
  * @author Octavio Calleya
  * @version 0.9
  */
@@ -41,12 +41,12 @@ public class Utils {
 	 * Private constructor to hide the implicit public one.
 	 */
 	private Utils() {}
-	
+
 	/**
 	 * Retrieves a {@link List} with at most <tt>maxFiles</tt> files that are in a folder or
 	 * any of the subfolders in that folder satisfying a condition.
 	 * If <tt>maxFilesRequired</tt> is 0 all the files will be retrieved.
-	 * 
+	 *
 	 * @param rootFolder The folder from within to find the files
 	 * @param filter The {@link FileFilter} condition
 	 * @param maxFilesRequired Maximun number of files in the List. 0 indicates no maximum
@@ -74,7 +74,7 @@ public class Utils {
 						finalFiles.addAll(Arrays.asList(subFiles));	// Add all valid files
 						remainingFiles -= finalFiles.size();
 					}
-			
+
 			if(maxFilesRequired == 0 || remainingFiles > 0) {
 				File[] rootSubFolders = rootFolder.listFiles(File::isDirectory);
 				int sbFldrsCount = 0;

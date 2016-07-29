@@ -23,7 +23,6 @@ import com.musicott.view.custom.*;
 import javafx.collections.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
 import org.slf4j.*;
 
 /**
@@ -36,8 +35,6 @@ public class PlayQueueController implements MusicottController {
 	
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-	@FXML
-	private AnchorPane playQueuePane;
 	@FXML
 	private Label titleQueueLabel;
 	@FXML
@@ -96,23 +93,23 @@ public class PlayQueueController implements MusicottController {
 			playQueueList.remove(trackQueueRow);
 	}
 
-	public void clearHistoryQueue() {
+	private void clearHistoryQueue() {
 		historyQueueList.clear();
 		LOG.trace("History queue cleared");
 	}
 
-	public void clearPlayQueue() {
+	private void clearPlayQueue() {
 		playQueueList.clear();
 		LOG.trace("Play queue cleared");
 	}
 
-	public void showHistoryQueue() {
+	private void showHistoryQueue() {
 		listView.setItems(historyQueueList);
 		titleQueueLabel.setText("Recently played");
 		LOG.trace("Showing history queue on the pane");
 	}
 
-	public void showPlayQueue() {
+	private void showPlayQueue() {
 		listView.setItems(playQueueList);
 		titleQueueLabel.setText("Play Queue");
 		LOG.trace("Showing play queue on the pane");
