@@ -18,9 +18,9 @@
 
 package tests.system;
 
-import com.musicott.*;
-import com.musicott.model.*;
-import com.musicott.util.*;
+import com.transgressoft.musicott.*;
+import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.*;
 import javafx.application.*;
 import javafx.scene.control.*;
 import javafx.scene.input.*;

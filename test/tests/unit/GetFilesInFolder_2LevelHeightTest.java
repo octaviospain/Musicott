@@ -18,13 +18,12 @@
 
 package tests.unit;
 
-import static org.junit.Assert.assertEquals;
+import com.transgressoft.musicott.util.*;
+import org.junit.*;
 
-import java.io.File;
+import java.io.*;
 
-import org.junit.Test;
-
-import com.musicott.util.Utils;
+import static org.junit.Assert.*;
 
 /**
  * @author Octavio Calleya

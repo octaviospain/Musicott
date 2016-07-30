@@ -18,14 +18,12 @@
 
 package tests.unit;
 
-import static org.junit.Assert.assertTrue;
+import org.junit.*;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
-import org.junit.After;
-import org.junit.Before;
+import static org.junit.Assert.*;
 
 /**
  * @author Octavio Calleya
