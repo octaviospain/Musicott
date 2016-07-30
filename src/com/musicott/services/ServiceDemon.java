@@ -29,7 +29,7 @@ import javafx.beans.property.*;
  * from external services.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class ServiceDemon {
 
@@ -39,14 +39,14 @@ public class ServiceDemon {
 	private LastFmTask lastFmTask;
 	private boolean usingLastFm;
 	private BooleanProperty usingLastFmProperty;
-	
+
 	private ServiceDemon() {
 		lastFmPreferences = new LastFmPreferences();
 		usingLastFmProperty = new SimpleBooleanProperty(this, "using LastFM", false);
 	}
-	
+
 	public static ServiceDemon getInstance() {
-		if(instance == null)
+		if (instance == null)
 			instance = new ServiceDemon();
 		return instance;
 	}
@@ -64,10 +64,10 @@ public class ServiceDemon {
 
 	public void lastFmLogOut() {
 		lastFmPreferences.deleteLastFmUserData();
-		if(lastFmTask != null && lastFmTask.isAlive())
+		if (lastFmTask != null && lastFmTask.isAlive())
 			lastFmTask.interrupt();
 	}
-	
+
 	public void updateAndScrobbleTrack(Track track) {
 		lastFmTask.updateAndScrobble(track);
 	}

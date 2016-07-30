@@ -24,21 +24,21 @@ import javafx.scene.control.*;
 
 /**
  * Context menu to be shown on the playlist pane
- * 
+ *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class PlaylistTreeViewContextMenu extends ContextMenu {
-	
+
 	private StageDemon stageDemon = StageDemon.getInstance();
-	
+
 	private MenuItem addPlaylist;
 	private MenuItem deletePlaylist;
 
 	public PlaylistTreeViewContextMenu() {
 		super();
-		
-		addPlaylist = new MenuItem("Add new playlist");		
+
+		addPlaylist = new MenuItem("Add new playlist");
 		addPlaylist.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
 
 		deletePlaylist = new MenuItem("Delete playlist");

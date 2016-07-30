@@ -26,15 +26,15 @@ import org.slf4j.*;
 /**
  * Class logger needed by iTunesUtilities library
  * to perform the itunes library parse.
- * 
+ *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  * @see <a href="https://github.com/codercowboy/iTunesUtilities">ItunesUtilities</a>
  */
 public class ItunesParserLogger implements StatusUpdateLogger, ParserStatusUpdateLogger {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	
+
 	@Override
 	public int getPlaylistParseUpdateFrequency() {
 		return UPDATE_FREQUENCY_NEVER;

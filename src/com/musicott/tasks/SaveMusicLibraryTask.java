@@ -30,16 +30,15 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.musicott.MainApp.*;
+import static com.musicott.MusicottApplication.*;
 
 /**
- * Extends from {@link Thread} to perform the operation of save data
- * of the {@link MusicLibrary} in the filesystem. It waits for a {@link Semaphore}
- * to perform the task in a endless loop, instead of finishing the execution
- * for each save request.
+ * Extends from {@link Thread} to perform the operation of save data of the {@link MusicLibrary} in the filesystem.
+ * <p>It waits for a {@link Semaphore} to perform the task in a endless loop, instead of finishing the execution for
+ * each save request.</p>
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class SaveMusicLibraryTask extends Thread {
 
@@ -62,8 +61,7 @@ public class SaveMusicLibraryTask extends Thread {
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
-	public SaveMusicLibraryTask(ObservableMap<Integer, Track> tracks,
-								Map<Integer, float[]> waveforms,
+	public SaveMusicLibraryTask(ObservableMap<Integer, Track> tracks, Map<Integer, float[]> waveforms,
 								List<Playlist> playlists) {
 		setName("Save Library Thread");
 		musicottTracks = tracks;
@@ -106,7 +104,7 @@ public class SaveMusicLibraryTask extends Thread {
 		trackAttributes.add("encoder");
 		trackAttributes.add("encoding");
 
-		Map<Class<?>,List<String>> trackFields = new HashMap<>();
+		Map<Class<?>, List<String>> trackFields = new HashMap<>();
 		trackFields.put(Track.class, trackAttributes);
 
 		tracksArgs.put(JsonWriter.FIELD_SPECIFIERS, trackFields);
@@ -137,18 +135,19 @@ public class SaveMusicLibraryTask extends Thread {
 	@Override
 	public void run() {
 		try {
-			while(true) {
+			while (true) {
 				saveSemaphore.acquire();
 				checkMusicottUserPathChanged();
 
-				if(saveTracks)
+				if (saveTracks)
 					serializeTracks();
-				if(saveWaveforms)
+				if (saveWaveforms)
 					serializeWaveforms();
-				if(savePlaylists)
+				if (savePlaylists)
 					serializePlaylists();
 			}
-		} catch (IOException | RuntimeException | InterruptedException exception) {
+		}
+		catch (IOException | RuntimeException | InterruptedException exception) {
 			Platform.runLater(() -> {
 				LOG.error("Error saving music library", exception.getCause());
 				errorDemon.showErrorDialog("Error saving music library", "", exception);
@@ -158,7 +157,7 @@ public class SaveMusicLibraryTask extends Thread {
 
 	private void checkMusicottUserPathChanged() throws FileNotFoundException {
 		String applicationPath = MainPreferences.getInstance().getMusicottUserFolder();
-		if(!applicationPath.equals(musicottUserPath)) {
+		if (! applicationPath.equals(musicottUserPath)) {
 			String sep = File.separator;
 			tracksFile = new File(applicationPath + sep + TRACKS_PERSISTENCE_FILE);
 			waveformsFile = new File(applicationPath + sep + WAVEFORMS_PERSISTENCE_FILE);
@@ -169,7 +168,7 @@ public class SaveMusicLibraryTask extends Thread {
 
 	private void serializeTracks() throws IOException {
 		saveTracks = false;
-		synchronized(musicottTracks) {
+		synchronized (musicottTracks) {
 			writeObjectToJsonFile(musicottTracks, tracksFile, tracksArgs);
 		}
 		LOG.debug("Saved list of tracks in {}", tracksFile);
@@ -177,7 +176,7 @@ public class SaveMusicLibraryTask extends Thread {
 
 	private void serializeWaveforms() throws IOException {
 		saveWaveforms = false;
-		synchronized(trackWaveforms) {
+		synchronized (trackWaveforms) {
 			writeObjectToJsonFile(trackWaveforms, waveformsFile, null);
 		}
 		LOG.debug("Saved waveform images in {}", waveformsFile);
@@ -185,12 +184,22 @@ public class SaveMusicLibraryTask extends Thread {
 
 	private void serializePlaylists() throws IOException {
 		savePlaylists = false;
-		synchronized(musicottPlaylists) {
+		synchronized (musicottPlaylists) {
 			writeObjectToJsonFile(musicottPlaylists, playlistsFile, playlistArgs);
 		}
 		LOG.debug("Saved playlists in {}", playlistsFile);
 	}
 
+	/**
+	 * Writes an <tt>Object</tt> into a JSON formatted file using Json-IO
+	 *
+	 * @param object   The <tt>Object</tt> to write
+	 * @param jsonFile The {@link File} where to write the <tt>Object</tt>
+	 * @param args     The arguments to pass to the {@link JsonWriter}
+	 *
+	 * @throws IOException If something went bad
+	 * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
+	 */
 	private void writeObjectToJsonFile(Object object, File jsonFile, Map<String, Object> args) throws IOException {
 		FileOutputStream outputStream = new FileOutputStream(jsonFile);
 		JsonWriter jsonWriter = new JsonWriter(outputStream, args);

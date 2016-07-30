@@ -38,7 +38,7 @@ import java.util.*;
  * music library menus, and the status progress and status messages.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class NavigationController implements MusicottController {
 
@@ -76,45 +76,45 @@ public class NavigationController implements MusicottController {
 			double newPlaylistButtonY = newPlaylistButton.getLayoutY();
 			newPlaylistButtonContextMenu.show(newPlaylistButton, newPlaylistButtonX, newPlaylistButtonY);
 		});
-		
+
 		navigationVBox.getChildren().add(1, navigationMenuListView);
 		playlistsVBox.getChildren().add(1, playlistTreeView);
-		taskProgressBar.visibleProperty().bind(
-				Bindings.createBooleanBinding(
-						() -> taskProgressBar.progressProperty().isEqualTo(0).not().get(),
-						taskProgressBar.progressProperty()));
+		taskProgressBar.visibleProperty().bind(Bindings.createBooleanBinding(
+				() -> taskProgressBar.progressProperty().isEqualTo(0).not().get(), taskProgressBar.progressProperty()));
 		taskProgressBar.setProgress(0);
-		
+
 		VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
 		VBox.setVgrow(navigationVBox, Priority.ALWAYS);
 	}
 
 	private ContextMenu newPlaylistButtonContextMenu() {
-		ContextMenu contextMenu = new ContextMenu();;
+		ContextMenu contextMenu = new ContextMenu();
 		MenuItem newPlaylistMI;
 		MenuItem newFolderPlaylistMI;
 		newPlaylistMI = new MenuItem("New Playlist");
 		newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier()));
 		newPlaylistMI.setOnAction(e -> {
 			stageDemon.getRootController().enterNewPlaylistName(false);
-			playlistTreeView.getSelectionModel().clearAndSelect(-1);
+			playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+			navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
 		});
 		newFolderPlaylistMI = new MenuItem("New Playlist Folder");
 		newFolderPlaylistMI.setOnAction(e -> {
 			stageDemon.getRootController().enterNewPlaylistName(true);
-			playlistTreeView.getSelectionModel().clearAndSelect(-1);
+			playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+			navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
 		});
 		contextMenu.getItems().addAll(newPlaylistMI, newFolderPlaylistMI);
 		return contextMenu;
 	}
 
 	/**
-	 * Returns the key acceletator for the applicaton. Command for os x and control down for windows and linux.
+	 * Returns the key accelerator for the application. Command for os x and control down for windows and linux.
 	 *
-	 * @return
+	 * @return The {}
 	 */
 	private Modifier systemModifier() {
-		String os = System.getProperty ("os.name");
+		String os = System.getProperty("os.name");
 		Modifier keyModifierOS;
 		if (os != null && os.startsWith("Mac"))
 			keyModifierOS = KeyCodeCombination.META_DOWN;
@@ -131,14 +131,15 @@ public class NavigationController implements MusicottController {
 	public void setNavigationMode(NavigationMode mode) {
 		showingMode = mode;
 		navigationModeProperty.setValue(mode);
-		switch(mode) {
+		switch (mode) {
 			case ALL_TRACKS:
 				musicLibrary.showAllTracks();
-				playlistTreeView.getSelectionModel().clearAndSelect(-1);
+				navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
+				playlistTreeView.getSelectionModel().clearAndSelect(- 1);
 				Platform.runLater(() -> stageDemon.getRootController().hideTableInfoPane());
 				break;
 			case PLAYLIST:
-				navigationMenuListView.getSelectionModel().clearAndSelect(-1);
+				navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
 				Platform.runLater(() -> stageDemon.getRootController().showTableInfoPane());
 				break;
 		}
@@ -159,9 +160,9 @@ public class NavigationController implements MusicottController {
 	public void addNewPlaylist(Playlist newPlaylist) {
 		TreeItem<Playlist> selectedPlaylistItem = playlistTreeView.getSelectionModel().selectedItemProperty().get();
 
-		if(selectedPlaylistItem != null && selectedPlaylistItem.getValue().isFolder()) {
+		if (selectedPlaylistItem != null && selectedPlaylistItem.getValue().isFolder()) {
 			Playlist selectedPlaylist = selectedPlaylistItem.getValue();
-			if(selectedPlaylist.isFolder()) {
+			if (selectedPlaylist.isFolder()) {
 				playlistTreeView.addPlaylistChild(selectedPlaylist, newPlaylist);
 				musicLibrary.saveLibrary(false, false, true);
 			}
@@ -171,15 +172,15 @@ public class NavigationController implements MusicottController {
 			musicLibrary.addPlaylist(newPlaylist);
 		}
 	}
-	
+
 	public void deleteSelectedPlaylist() {
 		playlistTreeView.deletePlaylist();
-	}	
+	}
 
 	public void setStatusProgress(double progress) {
 		taskProgressBar.setProgress(progress);
-	}	
-	
+	}
+
 	public void setStatusMessage(String message) {
 		statusLabel.setText(message);
 	}

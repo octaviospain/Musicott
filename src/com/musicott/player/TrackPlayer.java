@@ -23,23 +23,22 @@ import com.musicott.model.*;
 
 /**
  * @author Octavio Calleya
- *
  */
 public interface TrackPlayer {
-	
+
 	String getStatus();
-	
+
 	void setTrack(Track track);
 
 	void setVolume(double value);
 
 	void seek(double seekValue);
-	
+
 	void play();
-	
+
 	void pause();
-	
+
 	void stop();
-	
+
 	void dispose();
 }

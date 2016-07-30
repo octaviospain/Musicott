@@ -36,14 +36,14 @@ import org.controlsfx.tools.*;
 import java.io.*;
 import java.util.*;
 
-import static com.musicott.MainApp.*;
+import static com.musicott.MusicottApplication.*;
 import static com.musicott.tasks.ItunesImportTask.*;
 
 /**
  * Controller class of the preferences window.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class PreferencesController implements MusicottController {
 
@@ -52,7 +52,7 @@ public class PreferencesController implements MusicottController {
 	private static final String METADATA_INFO = "File metadata";
 	private static final String LOGIN = "Login";
 	private static final String LOGOUT = "Logout";
-	
+
 	@FXML
 	private TextField folderLocationTextField;
 	@FXML
@@ -116,10 +116,10 @@ public class PreferencesController implements MusicottController {
 	 */
 	private BooleanBinding lastFmLoginButtonDisableBinding() {
 		return Bindings.createBooleanBinding(
-				() -> lastFmUsernameTextField.textProperty().get().isEmpty() ||
-						lastFmPasswordField.textProperty().get().isEmpty(),
-				lastFmUsernameTextField.textProperty(),
-				lastFmPasswordField.textProperty());
+				() -> lastFmUsernameTextField.textProperty().get().isEmpty() || lastFmPasswordField.textProperty()
+																								   .get()
+																								   .isEmpty(),
+				lastFmUsernameTextField.textProperty(), lastFmPasswordField.textProperty());
 	}
 
 	/**
@@ -129,12 +129,11 @@ public class PreferencesController implements MusicottController {
 	 */
 	private StringBinding lastFmLoginButtonTextBinding() {
 		return Bindings.createStringBinding(() -> {
-					if (usingLastFmProperty.get())
-						return LOGOUT;
-					else
-						return LOGIN;
-				},
-				usingLastFmProperty);
+			if (usingLastFmProperty.get())
+				return LOGOUT;
+			else
+				return LOGIN;
+		}, usingLastFmProperty);
 	}
 
 	/**
@@ -143,7 +142,9 @@ public class PreferencesController implements MusicottController {
 	 * @see <a href="http://controlsfx.bitbucket.org/">ControlsFX</a>
 	 */
 	private void wrapItunesSectionWithBorder() {
-		Node itunesSectionBorder = Borders.wrap(itunesSectionVBox).etchedBorder().title("Itunes import options").build().build();
+		Node itunesSectionBorder = Borders.wrap(itunesSectionVBox).etchedBorder().title("Itunes import options")
+										  .build()
+										  .build();
 		parentVBox.getChildren().remove(itunesSectionVBox);
 		parentVBox.getChildren().add(itunesSectionBorder);
 	}
@@ -157,12 +158,12 @@ public class PreferencesController implements MusicottController {
 	private void loadImportPreferences() {
 		importFilterExtensions = preferences.getImportFilterExtensions();
 		extensionsCheckComboBox.getCheckModel().clearChecks();
-		for(String extension: importFilterExtensions)
+		for (String extension : importFilterExtensions)
 			extensionsCheckComboBox.getCheckModel().check(extension);
 
-		if(preferences.getItunesImportMetadataPolicy() == ITUNES_DATA_POLICY)
+		if (preferences.getItunesImportMetadataPolicy() == ITUNES_DATA_POLICY)
 			itunesImportPolicyCheckBox.getSelectionModel().select(ITUNES_INFO);
-		else if(preferences.getItunesImportMetadataPolicy() == METADATA_POLICY)
+		else if (preferences.getItunesImportMetadataPolicy() == METADATA_POLICY)
 			itunesImportPolicyCheckBox.getSelectionModel().select(METADATA_INFO);
 
 		holdPlayCountCheckBox.setSelected(preferences.getItunesImportHoldPlaycount());
@@ -181,12 +182,12 @@ public class PreferencesController implements MusicottController {
 		chooser.setTitle("Choose Musicott folder location");
 		Window preferencesWindow = okButton.getScene().getWindow();
 		File folder = chooser.showDialog(preferencesWindow);
-		if(folder != null)
+		if (folder != null)
 			folderLocationTextField.setText(folder.getAbsolutePath());
 	}
 
 	private void lastfmLoginOrLogout() {
-		if(lastFmLoginButton.getText().equals(LOGIN)) {
+		if (lastFmLoginButton.getText().equals(LOGIN)) {
 			String lastfmUsername = lastFmUsernameTextField.getText();
 			String lastfmPassword = lastFmPasswordField.getText();
 			stageDemon.showIndeterminateProgress();
@@ -211,13 +212,13 @@ public class PreferencesController implements MusicottController {
 	private void saveAndClose() {
 		String savedMusicottUserFolder = preferences.getMusicottUserFolder();
 		String newMusicottUserFolder = folderLocationTextField.getText();
-		if(!savedMusicottUserFolder.equals(newMusicottUserFolder))
+		if (! savedMusicottUserFolder.equals(newMusicottUserFolder))
 			changeMusicottUserFolder(newMusicottUserFolder);
 
 		String policy = itunesImportPolicyCheckBox.getSelectionModel().getSelectedItem();
-		if(policy.equals(ITUNES_INFO))
+		if (policy.equals(ITUNES_INFO))
 			preferences.setItunesImportMetadataPolicy(ITUNES_DATA_POLICY);
-		else if(policy.equals(METADATA_INFO))
+		else if (policy.equals(METADATA_INFO))
 			preferences.setItunesImportMetadataPolicy(METADATA_POLICY);
 
 		ObservableList<String> checkedItems = extensionsCheckComboBox.getCheckModel().getCheckedItems();
@@ -239,14 +240,14 @@ public class PreferencesController implements MusicottController {
 	private void changeMusicottUserFolder(String newApplicationUserFolder) {
 		String newApplicationUserFoderPath = newApplicationUserFolder + File.pathSeparator;
 		File tracksFile = new File(newApplicationUserFoderPath + TRACKS_PERSISTENCE_FILE);
-		if(tracksFile.exists())
+		if (tracksFile.exists())
 			tracksFile.delete();
 		File waveformsFile = new File(newApplicationUserFoderPath + WAVEFORMS_PERSISTENCE_FILE);
-		if(waveformsFile.exists())
+		if (waveformsFile.exists())
 			waveformsFile.delete();
 		File playlistsFile = new File(newApplicationUserFoderPath + PLAYLISTS_PERSISTENCE_FILE);
-		if(playlistsFile.exists())
-				playlistsFile.delete();
+		if (playlistsFile.exists())
+			playlistsFile.delete();
 		preferences.setMusicottUserFolder(newApplicationUserFolder);
 		MusicLibrary.getInstance().saveLibrary(true, true, true);
 	}

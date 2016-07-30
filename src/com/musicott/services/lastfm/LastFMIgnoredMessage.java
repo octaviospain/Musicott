@@ -23,16 +23,16 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
-@XmlRootElement(name = "ignoredmessage")
+@XmlRootElement (name = "ignoredmessage")
 public class LastFmIgnoredMessage {
 
 	@XmlAttribute
 	private String code;
 	@XmlValue
 	private String message;
-	
+
 	public String getCode() {
 		return code;
 	}
@@ -40,11 +40,11 @@ public class LastFmIgnoredMessage {
 	public void setCode(String code) {
 		this.code = code;
 	}
-	
+
 	public String getMesage() {
 		return this.message;
 	}
-	
+
 	public void setMessage(String message) {
 		this.message = message;
 	}

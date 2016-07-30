@@ -23,23 +23,22 @@ import com.musicott.model.*;
 
 /**
  * @author Octavio Calleya
- *
  */
 public class FlacPlayer implements TrackPlayer {
-	
+
 	public FlacPlayer() {
 		//TODO
 	}
-	
+
 	@Override
 	public String getStatus() {
 		return "";
 	}
-	
+
 	@Override
 	public void setTrack(Track track) {
 	}
-	
+
 	@Override
 	public void setVolume(double value) {
 	}
@@ -62,5 +61,5 @@ public class FlacPlayer implements TrackPlayer {
 
 	@Override
 	public void dispose() {
-	}	
+	}
 }

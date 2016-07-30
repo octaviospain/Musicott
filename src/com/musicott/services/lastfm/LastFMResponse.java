@@ -23,21 +23,21 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
-@XmlRootElement(name = "lfm")
+@XmlRootElement (name = "lfm")
 public class LastFmResponse {
 
 	private String token;
 	private String status;
 	private LastFmError error;
 	private LastFmSession session;
-	
+
 	@XmlAttribute
 	public String getStatus() {
 		return this.status;
 	}
-	
+
 	public void setStatus(String status) {
 		this.status = status;
 	}
@@ -46,7 +46,7 @@ public class LastFmResponse {
 	public String getToken() {
 		return this.token;
 	}
-	
+
 	public void setToken(String token) {
 		this.token = token;
 	}
@@ -55,7 +55,7 @@ public class LastFmResponse {
 	public LastFmError getError() {
 		return this.error;
 	}
-	
+
 	public void setError(LastFmError error) {
 		this.error = error;
 	}
@@ -64,7 +64,7 @@ public class LastFmResponse {
 	public LastFmSession getSession() {
 		return session;
 	}
-	
+
 	public void setSession(LastFmSession session) {
 		this.session = session;
 	}

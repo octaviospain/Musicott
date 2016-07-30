@@ -23,9 +23,9 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
-@XmlRootElement(name = "nowplaying")
+@XmlRootElement (name = "nowplaying")
 public class LastFmNowPlaying {
 
 	@XmlElement
@@ -38,35 +38,35 @@ public class LastFmNowPlaying {
 	private LastFmAlbumArtist albumArtist;
 	@XmlElement
 	private LastFmIgnoredMessage ignoredMessage;
-	
+
 	public LastFmTrack getTrack() {
 		return track;
 	}
-	
+
 	public void setTrack(LastFmTrack track) {
 		this.track = track;
 	}
-	
+
 	public LastFmArtist getArtist() {
 		return artist;
 	}
-	
+
 	public void setArtist(LastFmArtist artist) {
 		this.artist = artist;
 	}
-	
+
 	public LastFmAlbum getAlbum() {
 		return album;
 	}
-	
+
 	public void setAlbum(LastFmAlbum album) {
 		this.album = album;
 	}
-	
+
 	public LastFmAlbumArtist getAlbumArtist() {
 		return albumArtist;
 	}
-	
+
 	public void setAlbumArtist(LastFmAlbumArtist albumArtist) {
 		this.albumArtist = albumArtist;
 	}
@@ -74,8 +74,8 @@ public class LastFmNowPlaying {
 	public LastFmIgnoredMessage getIgnoredMessage() {
 		return ignoredMessage;
 	}
-	
+
 	public void setIgnoredMessage(LastFmIgnoredMessage ignoredMessage) {
 		this.ignoredMessage = ignoredMessage;
-	}	
+	}
 }

@@ -20,7 +20,6 @@
 package com.musicott.model;
 
 import com.musicott.*;
-import com.musicott.view.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.scene.image.*;
@@ -28,28 +27,28 @@ import javafx.scene.image.*;
 import java.io.*;
 import java.util.*;
 
+import static com.musicott.view.MusicottController.*;
+
 /**
  * Represents a Playlist of tracks. A <tt>Playlist</tt> can contain another playlists,
  * if so, an instance is a folder. One cover image of the contained tracks
  * is used when showing a {@link Playlist} on the application.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class Playlist {
 
-	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(MusicottController.DEFAULT_COVER_IMAGE));
-
+	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
+	private final boolean isFolder;
 	private String name;
 	private ObservableList<Integer> playlistTrackIds;
 	private List<Playlist> containedPlaylists;
-	private final boolean isFolder;
-
 	private StringProperty nameProperty;
 	private ObjectProperty<Image> playlistCoverProperty;
 	private BooleanProperty isFolderProperty;
 
-	private MusicLibrary musicLibrary =  MusicLibrary.getInstance();
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private StageDemon stageDemon = StageDemon.getInstance();
 
 	public Playlist(String name, boolean isFolder) {
@@ -78,16 +77,17 @@ public class Playlist {
 
 	public ObjectProperty<Image> playlistCoverProperty() {
 		ObjectProperty<Image> returnedCoverProperty = playlistCoverProperty;
-		if(isFolder) {
+		if (isFolder) {
 			Optional<Playlist> childPlaylistNotEmpty = containedPlaylists.stream()
-																.filter(playlist -> ! playlist.getTracks().isEmpty())
-																.findAny();
-			if(childPlaylistNotEmpty.isPresent())
+																		 .filter(playlist -> ! playlist.getTracks()
+																									   .isEmpty())
+																		 .findAny();
+			if (childPlaylistNotEmpty.isPresent())
 				returnedCoverProperty = childPlaylistNotEmpty.get().playlistCoverProperty();
 			else
 				returnedCoverProperty.set(COVER_IMAGE);
 		}
-		else if(playlistCoverProperty.get().equals(COVER_IMAGE) && !getTracks().isEmpty())
+		else if (playlistCoverProperty.get().equals(COVER_IMAGE) && ! getTracks().isEmpty())
 			changePlaylistCover();
 		return returnedCoverProperty;
 	}
@@ -105,29 +105,30 @@ public class Playlist {
 	}
 
 	public boolean addTracks(List<Integer> tracksIds) {
-		if(isFolder)
+		if (isFolder)
 			throw new UnsupportedOperationException("Addition not supported on folder playlist");
 
 		boolean result = playlistTrackIds.addAll(tracksIds);
-		if(result) {
+		if (result) {
 			changePlaylistCover();
 			musicLibrary.saveLibrary(false, false, true);
 		}
 
 		Optional<Playlist> selectedPlaylist = stageDemon.getNavigationController().selectedPlaylistProperty().get();
 		selectedPlaylist.ifPresent(playlist -> {
-			if(playlist.equals(this))
+			if (playlist.equals(this)) {
 				musicLibrary.addToShowingTracks(tracksIds);
+			}
 		});
 		return result;
 	}
 
 	public boolean removeTracks(List<Integer> tracksIds) {
-		if(isFolder)
+		if (isFolder)
 			throw new UnsupportedOperationException("Deletion not supported on folder playlist");
 
 		boolean result = playlistTrackIds.removeAll(tracksIds);
-		if(result) {
+		if (result) {
 			changePlaylistCover();
 			musicLibrary.saveLibrary(false, false, true);
 		}
@@ -144,7 +145,7 @@ public class Playlist {
 		musicLibrary.clearShowingTracks();
 
 		List<Integer> tracks = getTracks();
-		if(!tracks.isEmpty())
+		if (! tracks.isEmpty())
 			musicLibrary.addToShowingTracks(tracks);
 	}
 
@@ -154,7 +155,7 @@ public class Playlist {
 
 	private List<Integer> getTracks() {
 		List<Integer> allTracksWithin;
-		if(isFolder) {
+		if (isFolder) {
 			allTracksWithin = new ArrayList<>();
 			containedPlaylists.forEach(playlist -> allTracksWithin.addAll(playlist.getTracks()));
 		}
@@ -163,15 +164,20 @@ public class Playlist {
 		return allTracksWithin;
 	}
 
+	/**
+	 * Search in the contained tracks for one that has cover and sets it as the cove of the playlist.
+	 * If there is no track or any of them has cover, the default cover is used.
+	 */
 	private void changePlaylistCover() {
 		List<Integer> tracks = getTracks();
-		if(!tracks.isEmpty()) {
+		if (! tracks.isEmpty()) {
 			Optional<Integer> trackWithCover = tracks.stream()
-					.filter(trackId -> musicLibrary.getTrack(trackId).isPresent())
-					.filter(trackId -> musicLibrary.getTrack(trackId).get().getCoverImage().isPresent())
-					.findAny();
+													 .filter(trackId -> musicLibrary.getTrack(trackId).isPresent())
+													 .filter(trackId -> musicLibrary.getTrack(trackId).get()
+																					.getCoverImage().isPresent())
+													 .findAny();
 
-			if(trackWithCover.isPresent()) {
+			if (trackWithCover.isPresent()) {
 				int trackId = trackWithCover.get();
 				byte[] coverBytes = musicLibrary.getTrack(trackId).get().getCoverImage().get();
 				Image image = new Image(new ByteArrayInputStream(coverBytes));
@@ -194,8 +200,9 @@ public class Playlist {
 	@Override
 	public boolean equals(Object o) {
 		boolean equals = false;
-		if((o instanceof Playlist) && ((Playlist) o).getName().equals(this.name))
+		if ((o instanceof Playlist) && ((Playlist) o).getName().equals(this.name)) {
 			equals = true;
+		}
 		return equals;
 	}
 

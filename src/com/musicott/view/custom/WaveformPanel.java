@@ -28,19 +28,19 @@ import java.awt.*;
  * Swing panel paints the waveform of a track.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class WaveformPanel extends JPanel {
-	
+
 	private static final long serialVersionUID = 2195160480150957593L;
 	private final float[] defaultWave;
-	
+
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private float[] waveData;
 	private int paneWidth;
 	private Color backgroundColor;
 	private Color foregroundColor;
-	
+
 	public WaveformPanel(int width, int height) {
 		Dimension dim = new Dimension(width, height);
 		setMinimumSize(dim);
@@ -48,25 +48,25 @@ public class WaveformPanel extends JPanel {
 		setPreferredSize(dim);
 		paneWidth = width;
 		defaultWave = new float[width];
-		for(int i=0; i<width; i++)
-				defaultWave[i] = 0.28802148f;
+		for (int i = 0; i < width; i++)
+			defaultWave[i] = 0.28802148f;
 		waveData = defaultWave;
 		backgroundColor = new Color(243, 243, 243);
 		foregroundColor = new Color(182, 182, 182);
 		setBackground(backgroundColor);
 		setForeground(backgroundColor);
 	}
-	
+
 	public void clear() {
 		waveData = defaultWave;
 		setForeground(backgroundColor);
 		repaint();
 	}
-	
+
 	public void setTrack(Track track) {
-		if(musicLibrary.containsWaveform(track.getTrackId())) {
+		if (musicLibrary.containsWaveform(track.getTrackId())) {
 			waveData = musicLibrary.getWaveform(track.getTrackId());
-			if(getForeground().equals(backgroundColor))
+			if (getForeground().equals(backgroundColor))
 				setForeground(foregroundColor);
 			repaint();
 		}

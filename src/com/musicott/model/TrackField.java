@@ -24,7 +24,7 @@ package com.musicott.model;
  * (and most of them editable) on the table.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public enum TrackField {
 	TRACK_ID,
@@ -56,6 +56,7 @@ public enum TrackField {
 	 * Checks if a given <tt>TrackField</tt> is an integer numeric field type
 	 *
 	 * @param trackField The <tt>TrackField</tt>
+	 *
 	 * @return <tt>true</tt> if is an integer numeric field type, <tt>false</tt> otherwise
 	 */
 	public static boolean isIntegerField(TrackField trackField) {

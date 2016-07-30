@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.transgressoft</groupId>
     <artifactId>musicott</artifactId>
-    <version>0.7.0</version>
+    <version>0.9-b</version>
     <name>Musicott</name>
     <build>
         <directory>target</directory>
@@ -42,7 +42,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.musicott.MainApp</mainClass>
+                            <mainClass>com.musicott.MusicottApplication</mainClass>
                             <classpathPrefix>dependency-jars/</classpathPrefix>
                         </manifest>
                     </archive>

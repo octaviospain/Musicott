@@ -52,7 +52,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	
 	@Override
 	public void start(Stage stage) throws Exception {
-		frame = new MainApp();
+		frame = new MusicottApplication();
 		this.stage = stage;
 		frame.init();
 		frame.start(this.stage);

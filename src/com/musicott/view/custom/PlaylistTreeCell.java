@@ -10,7 +10,7 @@ import javafx.scene.control.*;
  * managed by pseudo classes
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  * @since 0.9
  */
 public class PlaylistTreeCell extends TreeCell<Playlist> {
@@ -37,14 +37,14 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
 
 		itemProperty().addListener((obs, oldPlaylist, newPlaylist) -> {
 
-			if(oldPlaylist != null) {
+			if (oldPlaylist != null) {
 				textProperty().unbind();
 				setText("");
 				oldPlaylist.isFolderProperty().removeListener(isFolderListener);
 				selectedProperty().removeListener(isSelectedListener);
 			}
 
-			if(newPlaylist != null) {
+			if (newPlaylist != null) {
 				textProperty().bind(newPlaylist.nameProperty());
 				newPlaylist.isFolderProperty().addListener(isFolderListener);
 				selectedProperty().addListener(isSelectedListener);
@@ -57,10 +57,10 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
 	}
 
 	private void updatePseudoClassesStates(boolean isFolder, boolean isSelected) {
-		pseudoClassStateChanged(folder, isFolder && !isSelected);
+		pseudoClassStateChanged(folder, isFolder && ! isSelected);
 		pseudoClassStateChanged(folderSelected, isFolder && isSelected);
-		pseudoClassStateChanged(playlist, !isFolder && !isSelected);
-		pseudoClassStateChanged(playlistSelected, !isFolder && isSelected);
+		pseudoClassStateChanged(playlist, ! isFolder && ! isSelected);
+		pseudoClassStateChanged(playlistSelected, ! isFolder && isSelected);
 	}
 
 	private void disablePseudoClassesStates() {

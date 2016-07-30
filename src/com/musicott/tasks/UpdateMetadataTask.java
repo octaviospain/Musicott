@@ -34,12 +34,12 @@ import static java.nio.file.StandardCopyOption.*;
  * updating the metadata of the audio files.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class UpdateMetadataTask extends Thread {
-	
+
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	
+
 	private List<Track> tracks;
 	private CopyOption[] options;
 	private List<String> updateErrors;
@@ -52,45 +52,47 @@ public class UpdateMetadataTask extends Thread {
 		options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
 		updateErrors = new ArrayList<>();
 	}
-	
+
 	@Override
 	public void run() {
 		boolean updated;
-		for(Track track: tracks)
-			if(track.getInDisk()) {
+		for (Track track : tracks)
+			if (track.getInDisk()) {
 				File backup = makeBackup(track);
 				updated = track.writeMetadata();
-				if(!updated && backup != null)
+				if (! updated && backup != null)
 					restoreBackup(track, backup);
 
-				if(updated)
+				if (updated)
 					LOG.debug("Updating metadata of {}", track.getFileFolder() + "/" + track.getFileName());
 				else
 					LOG.debug("Updating metadata of {}", track.getFileFolder() + "/" + track.getFileName());
 			}
 		musicLibrary.saveLibrary(true, false, false);
-		if(!updateErrors.isEmpty())
+		if (! updateErrors.isEmpty())
 			errorDemon.showExpandableErrorsDialog("Errors writing metadata on some tracks", "", updateErrors);
 	}
-	
+
 	private File makeBackup(Track track) {
 		File original = new File(track.getFileFolder() + "/" + track.getFileName());
 		File backup = null;
 		try {
 			backup = File.createTempFile(track.getName(), "");
 			Files.copy(original.toPath(), backup.toPath(), options);
-		} catch (IOException exception) {
+		}
+		catch (IOException exception) {
 			LOG.error("Error creating the backup file: ", exception.getCause());
 			errorDemon.showErrorDialog("Error creating the backup file", "", exception);
 		}
 		return backup;
 	}
-	
+
 	private void restoreBackup(Track track, File backup) {
 		File original = new File(track.getFileFolder() + "/" + track.getFileName());
 		try {
 			Files.move(backup.toPath(), original.toPath(), options);
-		} catch (IOException | UnsupportedOperationException exception) {
+		}
+		catch (IOException | UnsupportedOperationException exception) {
 			LOG.error("Error restoring the backup file: ", exception.getCause());
 			errorDemon.showErrorDialog("Error restoring the backup file", "", exception);
 		}

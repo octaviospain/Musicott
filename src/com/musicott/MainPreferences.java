@@ -30,7 +30,7 @@ import static com.musicott.tasks.ItunesImportTask.*;
  * or the the iTunes import options, using the java predefined class {@link Preferences}.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class MainPreferences {
 
@@ -72,7 +72,7 @@ public class MainPreferences {
 	 */
 	private static final String ITUNES_IMPORT_METADATA_POLICY = "itunes_import_policy";
 	private static final String[] IMPORT_EXTENSIONS = {"mp3", "m4a", "wav", "flac"};
-	
+
 	private static MainPreferences instance;
 	private Preferences preferences;
 	private Set<String> importExtensions;
@@ -86,28 +86,28 @@ public class MainPreferences {
 		preferences = Preferences.userNodeForPackage(getClass());
 		importExtensions = new HashSet<>();
 		importExtensions.addAll(Arrays.asList(IMPORT_EXTENSIONS));
-		if(preferences.getBoolean(IMPORT_MP3, true))
+		if (preferences.getBoolean(IMPORT_MP3, true))
 			importExtensions.add("mp3");
 		else
 			importExtensions.remove("mp3");
-		if(preferences.getBoolean(IMPORT_M4A, false))
+		if (preferences.getBoolean(IMPORT_M4A, false))
 			importExtensions.add("m4a");
 		else
 			importExtensions.remove("m4a");
-		if(preferences.getBoolean(IMPORT_WAV, false))
+		if (preferences.getBoolean(IMPORT_WAV, false))
 			importExtensions.add("wav");
 		else
 			importExtensions.remove("wav");
-		if(preferences.getBoolean(IMPORT_FLAC, false))
+		if (preferences.getBoolean(IMPORT_FLAC, false))
 			importExtensions.add("flac");
 		else
 			importExtensions.remove("flac");
 	}
-	
+
 	public static MainPreferences getInstance() {
-		if(instance == null)
+		if (instance == null)
 			instance = new MainPreferences();
-		return instance;			
+		return instance;
 	}
 
 	/**
@@ -119,7 +119,7 @@ public class MainPreferences {
 	 */
 	public int getTrackSequence() {
 		int sequence = preferences.getInt(TRACK_SEQUENCE, 0);
-		preferences.putInt(TRACK_SEQUENCE, ++sequence);
+		preferences.putInt(TRACK_SEQUENCE, ++ sequence);
 		return sequence;
 	}
 
@@ -127,6 +127,7 @@ public class MainPreferences {
 	 * Sets the application folder path and resets the track and play list sequences
 	 *
 	 * @param path The path to the application folder
+	 *
 	 * @return <tt>true</tt> if the creation of the directory was successfull, <tt>false</tt> otherwise
 	 */
 	public boolean setMusicottUserFolder(String path) {
@@ -135,35 +136,35 @@ public class MainPreferences {
 		preferences.putInt(PLAYLIST_SEQUENCE, 0);
 		return new File(path).mkdirs();
 	}
-	
+
 	public String getMusicottUserFolder() {
 		return preferences.get(MUSICOTT_FOLDER, null);
 	}
-	
+
 	public void setItunesImportMetadataPolicy(int policy) {
 		preferences.putInt(ITUNES_IMPORT_METADATA_POLICY, policy);
 	}
-	
+
 	public int getItunesImportMetadataPolicy() {
 		return preferences.getInt(ITUNES_IMPORT_METADATA_POLICY, ITUNES_DATA_POLICY);
 	}
-	
+
 	public void setItunesImportHoldPlaycount(boolean holdPlayCount) {
 		preferences.putBoolean(ITUNES_IMPORT_HOLD_PLAYCOUNT, holdPlayCount);
 	}
-	
+
 	public boolean getItunesImportHoldPlaycount() {
 		return preferences.getBoolean(ITUNES_IMPORT_HOLD_PLAYCOUNT, true);
 	}
-	
+
 	public void setItunesImportPlaylists(boolean importPlaylists) {
 		preferences.putBoolean(ITUNES_IMPORT_PLAYLISTS, importPlaylists);
 	}
-	
+
 	public boolean getItunesImportPlaylists() {
 		return preferences.getBoolean(ITUNES_IMPORT_PLAYLISTS, false);
-	}	
-	
+	}
+
 	public void setImportFilterExtensions(String... newImportFilterExtensions) {
 		importExtensions.clear();
 		importExtensions.addAll(Arrays.asList(newImportFilterExtensions));
@@ -172,7 +173,7 @@ public class MainPreferences {
 		preferences.putBoolean(IMPORT_WAV, importExtensions.contains("wav"));
 		preferences.putBoolean(IMPORT_FLAC, importExtensions.contains("flac"));
 	}
-	
+
 	public Set<String> getImportFilterExtensions() {
 		return importExtensions;
 	}

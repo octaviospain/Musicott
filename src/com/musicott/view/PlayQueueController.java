@@ -29,10 +29,10 @@ import org.slf4j.*;
  * Controller class of the play queue pane.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class PlayQueueController implements MusicottController {
-	
+
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	@FXML
@@ -43,38 +43,37 @@ public class PlayQueueController implements MusicottController {
 	private Button deleteAllButton;
 	@FXML
 	private ListView<TrackQueueRow> listView;
-	
+
 	private ObservableList<TrackQueueRow> playQueueList;
 	private ObservableList<TrackQueueRow> historyQueueList;
 
 	@FXML
-	public void initialize() {		
+	public void initialize() {
 		playQueueList = player.getPlayList();
 		historyQueueList = player.getHistorylist();
 		historyQueueButton.setId("historyQueueButton");
 		listView.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
-			if(oldValue != null)
+			if (oldValue != null)
 				oldValue.changeRemoveButtonColor();
-			if(newValue != null)
+			if (newValue != null)
 				newValue.changeRemoveButtonColor();
 		});
 		listView.setItems(playQueueList);
 		listView.setOnMouseClicked(event -> {
-			if(event.getClickCount() == 2) {
-				if(historyQueueButton.isSelected()) 
+			if (event.getClickCount() == 2)
+				if (historyQueueButton.isSelected())
 					player.playHistoryIndex(historyQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
-				else 
+				else
 					player.playQueueIndex(playQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
-			}
 		});
 		deleteAllButton.setOnAction(event -> {
-			if(historyQueueButton.isSelected() && !historyQueueList.isEmpty())
+			if (historyQueueButton.isSelected() && ! historyQueueList.isEmpty())
 				clearPlayQueue();
 			else
 				clearHistoryQueue();
 		});
 		historyQueueButton.setOnAction(event -> {
-			if(historyQueueButton.isSelected())
+			if (historyQueueButton.isSelected())
 				showHistoryQueue();
 			else
 				showPlayQueue();
@@ -87,7 +86,7 @@ public class PlayQueueController implements MusicottController {
 	 * @param trackQueueRow The <tt>TrackQueueRow</tt> the track queue row to remove
 	 */
 	public void removeTrackQueueRow(TrackQueueRow trackQueueRow) {
-		if(historyQueueButton.isSelected())
+		if (historyQueueButton.isSelected())
 			historyQueueList.remove(trackQueueRow);
 		else
 			playQueueList.remove(trackQueueRow);

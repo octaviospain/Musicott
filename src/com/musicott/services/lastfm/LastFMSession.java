@@ -23,16 +23,16 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
-@XmlRootElement(name = "session")
+@XmlRootElement (name = "session")
 public class LastFmSession {
 
 	private String userName;
 	private String sessionKey;
 	private String subscriber;
 
-	@XmlElement(name = "name")
+	@XmlElement (name = "name")
 	public String getUserName() {
 		return userName;
 	}
@@ -41,7 +41,7 @@ public class LastFmSession {
 		this.userName = userName;
 	}
 
-	@XmlElement(name = "key")
+	@XmlElement (name = "key")
 	public String getSessionKey() {
 		return sessionKey;
 	}

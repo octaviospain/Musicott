@@ -46,10 +46,10 @@ import static com.musicott.view.MusicottController.*;
  * the access to their controllers and the handling of showing/hiding views
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class StageDemon {
-	
+
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	private static StageDemon instance;
@@ -67,21 +67,21 @@ public class StageDemon {
 	private Map<String, MusicottController> controllers = new HashMap<>();
 
 	private HostServices hostServices;
-	
+
 	private StageDemon() {}
-	
+
 	public static StageDemon getInstance() {
-		if(instance == null)
+		if (instance == null)
 			instance = new StageDemon();
 		return instance;
 	}
-	
+
 	Stage getMainStage() {
 		return mainStage;
 	}
 
 	void setApplicationHostServices(HostServices hostServices) {
-		this.hostServices= hostServices;
+		this.hostServices = hostServices;
 	}
 
 	public HostServices getApplicationHostServices() {
@@ -108,6 +108,7 @@ public class StageDemon {
 	 * Constructs the main view of the application and shows it
 	 *
 	 * @param primaryStage The primary Stage given in the launched application
+	 *
 	 * @throws IOException If any resource was not found
 	 */
 	void showMusicott(Stage primaryStage) throws IOException {
@@ -129,8 +130,8 @@ public class StageDemon {
 		getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
 
 		MusicottMenuBar menuBar = new MusicottMenuBar(mainStage);
-		String os = System.getProperty ("os.name");
-		if(os != null && os.startsWith ("Mac"))
+		String os = System.getProperty("os.name");
+		if (os != null && os.startsWith("Mac"))
 			menuBar.macMenuBar();
 		else {
 			menuBar.defaultMenuBar();
@@ -146,7 +147,7 @@ public class StageDemon {
 		Scene mainScene = new Scene(rootLayout, 1200, 775);
 		mainStage.setScene(mainScene);
 		mainStage.setTitle("Musicott");
-		mainStage.getIcons().add(new Image (getClass().getResourceAsStream(MUSICOTT_ICON)));
+		mainStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_ICON)));
 		mainStage.setMinWidth(1200);
 		mainStage.setMinHeight(790);
 		mainStage.show();
@@ -158,21 +159,22 @@ public class StageDemon {
 	 */
 	public void editTracks() {
 		ObservableList<Entry<Integer, Track>> trackSelection = getRootController().getSelectedItems();
-		if(!trackSelection.isEmpty()) {
+		if (! trackSelection.isEmpty()) {
 			boolean[] edit = {true};
-			if(trackSelection.size() > 1) {
+			if (trackSelection.size() > 1) {
 				String alertHeader = "Are you sure you want to edit multiple files?";
 				Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
 				Optional<ButtonType> result = alert.showAndWait();
 
 				result.ifPresent(value -> {
-					if(value.getButtonData().isCancelButton())
+					if (value.getButtonData().isCancelButton()) {
 						edit[0] = false;
+					}
 				});
 			}
 
-			if(edit[0]) {
-				if(editStage == null) {
+			if (edit[0]) {
+				if (editStage == null) {
 					editStage = initStage(EDIT_LAYOUT, "Edit");
 					((EditController) controllers.get(EDIT_LAYOUT)).setStage(editStage);
 				}
@@ -190,7 +192,7 @@ public class StageDemon {
 	public void deleteTracks() {
 		ObservableList<Map.Entry<Integer, Track>> trackSelection = getRootController().getSelectedItems();
 
-		if(!trackSelection.isEmpty()) {
+		if (! trackSelection.isEmpty()) {
 			int numDeletedTracks = trackSelection.size();
 			String alertHeader = "Delete " + numDeletedTracks + " files from Musicott?";
 			Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
@@ -198,17 +200,17 @@ public class StageDemon {
 
 			if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
 				new Thread(() -> {
-					List<Integer> tracksToDelete = trackSelection.stream()
-							.map(Map.Entry::getKey)
-							.collect(Collectors.toList());
+					List<Integer> tracksToDelete = trackSelection.stream().map(Map.Entry::getKey)
+																 .collect(Collectors.toList());
 					PlayerFacade.getInstance().deleteFromQueues(tracksToDelete);
 					musicLibrary.deleteTracks(tracksToDelete);
 					Platform.runLater(this::closeIndeterminateProgress);
 				}).start();
 				showIndeterminateProgress();
 			}
-			else
+			else {
 				alert.close();
+			}
 		}
 	}
 
@@ -216,7 +218,7 @@ public class StageDemon {
 	 * Shows the preferences window
 	 */
 	public void showPreferences() {
-		if(preferencesStage == null) {
+		if (preferencesStage == null) {
 			preferencesStage = initStage(PREFERENCES_LAYOUT, "Preferences");
 			PreferencesController preferencesController = (PreferencesController) controllers.get(PREFERENCES_LAYOUT);
 			preferencesStage.setOnShowing(event -> preferencesController.loadUserPreferences());
@@ -229,7 +231,7 @@ public class StageDemon {
 	 * The user is unable to interact with the application until the background task finishes.
 	 */
 	public void showIndeterminateProgress() {
-		if(progressStage == null) {
+		if (progressStage == null) {
 			progressStage = initStage(PROGRESS_LAYOUT, "");
 			progressStage.initStyle(StageStyle.UNDECORATED);
 		}
@@ -240,7 +242,7 @@ public class StageDemon {
 	 * Closes the window with the indeterminate progress
 	 */
 	public void closeIndeterminateProgress() {
-		if(progressStage != null)
+		if (progressStage != null)
 			progressStage.close();
 	}
 
@@ -248,10 +250,11 @@ public class StageDemon {
 	 * Creates an {@link Alert} given a title, a header text, the content to be shown
 	 * in the description, and the {@link AlertType} of the requested <tt>Alert</tt>
 	 *
-	 * @param title The title of the <tt>Alert</tt> stage
-	 * @param header The header text of the <tt>Alert</tt>
+	 * @param title   The title of the <tt>Alert</tt> stage
+	 * @param header  The header text of the <tt>Alert</tt>
 	 * @param content The content text of the <tt>Alert</tt>
-	 * @param type The type of the <tt>Alert</tt>
+	 * @param type    The type of the <tt>Alert</tt>
+	 *
 	 * @return The <tt>Alert</tt> object
 	 */
 	public Alert createAlert(String title, String header, String content, AlertType type) {
@@ -271,9 +274,9 @@ public class StageDemon {
 	 * @param stageToShow The Stage to be shown
 	 */
 	private void showStage(Stage stageToShow) {
-		if(stageToShow.equals(mainStage) || stageToShow.equals(progressStage))
+		if (stageToShow.equals(mainStage) || stageToShow.equals(progressStage))
 			stageToShow.show();
-		else if(!stageToShow.isShowing())
+		else if (! stageToShow.isShowing())
 			stageToShow.showAndWait();
 		stageToShow.centerOnScreen();
 	}
@@ -282,6 +285,7 @@ public class StageDemon {
 	 * Loads a given layout resource and sets it into a new <tt>Stage</tt> and <tt>Scene</tt>
 	 *
 	 * @param layout The <tt>*.fxml</tt> source to be loaded
+	 *
 	 * @return The <tt>Stage</tt> with the layout
 	 */
 	private Stage initStage(String layout, String title) {
@@ -307,7 +311,9 @@ public class StageDemon {
 	 * Loads the given layout resource
 	 *
 	 * @param layout The <tt>*.fxml</tt> source to be loaded
+	 *
 	 * @return The {@link Parent} object that is the root of the layout
+	 *
 	 * @throws IOException thrown if the <tt>*.fxml</tt> file wasn't found
 	 */
 	private Parent loadLayout(String layout) throws IOException {

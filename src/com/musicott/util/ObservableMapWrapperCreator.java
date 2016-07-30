@@ -26,12 +26,12 @@ import javafx.collections.*;
  * Class needed by the <tt>Json-io</tt> library in order to deserialize an {@link ObservableMap}.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
  */
 public class ObservableMapWrapperCreator implements JsonReader.ClassFactory {
 
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings ("rawtypes")
 	@Override
 	public Object newInstance(Class c) {
 		return FXCollections.observableHashMap();

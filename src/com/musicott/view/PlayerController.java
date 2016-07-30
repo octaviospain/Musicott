@@ -41,14 +41,14 @@ import java.io.*;
  * Controller class of the bottom pane that includes the player and the search field.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class PlayerController implements MusicottController {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private static final double VOLUME_AMOUNT = 0.05;
 	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
-	
+
 	@FXML
 	private GridPane playerGridPane;
 	@FXML
@@ -87,7 +87,7 @@ public class PlayerController implements MusicottController {
 	private ProgressBar volumeProgressBar;
 	private AnchorPane playQueuePane;
 	private WaveformPanel mainWaveformPanel;
-	
+
 	@FXML
 	public void initialize() {
 		playButton.disableProperty().bind(musicLibrary.emptyLibraryProperty());
@@ -95,7 +95,7 @@ public class PlayerController implements MusicottController {
 		prevButton.setOnAction(e -> player.previous());
 		nextButton.setOnAction(e -> player.next());
 		volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {
-			if(!isChanging)
+			if (! isChanging)
 				volumeProgressBar.setProgress(volumeSlider.getValue());
 		});
 		volumeSlider.valueProperty().addListener(
@@ -103,12 +103,12 @@ public class PlayerController implements MusicottController {
 
 		SwingUtilities.invokeLater(() -> {
 			mainWaveformPanel = new WaveformPanel(520, 50);
-            waveformSwingNode.setContent(mainWaveformPanel);
+			waveformSwingNode.setContent(mainWaveformPanel);
 		});
 		playerStackPane.getChildren().add(0, waveformSwingNode);
 
 		playQueueButton.setOnAction(event -> {
-			if(playQueuePane.isVisible())
+			if (playQueuePane.isVisible())
 				hidePlayQueue();
 			else
 				showPlayQueue();
@@ -133,11 +133,11 @@ public class PlayerController implements MusicottController {
 	public StringProperty searchTextProperty() {
 		return searchTextField.textProperty();
 	}
-	
+
 	public ReadOnlyBooleanProperty previousButtonDisabledProperty() {
 		return prevButton.disabledProperty();
 	}
-	
+
 	public ReadOnlyBooleanProperty nextButtonDisabledProperty() {
 		return nextButton.disabledProperty();
 	}
@@ -179,7 +179,7 @@ public class PlayerController implements MusicottController {
 		playQueuePane = pane;
 		playQueuePane.setVisible(false);
 		playQueuePane.visibleProperty().addListener((observable, oldValue, newValue) -> {
-			if(newValue)
+			if (newValue)
 				playQueueButton.setSelected(true);
 			else
 				playQueueButton.setSelected(false);
@@ -188,14 +188,14 @@ public class PlayerController implements MusicottController {
 	}
 
 	public void hidePlayQueue() {
-		if(playQueueStackPane.getChildren().contains(playQueuePane)) {
+		if (playQueueStackPane.getChildren().contains(playQueuePane)) {
 			playQueueStackPane.getChildren().remove(playQueuePane);
 			playQueuePane.setVisible(false);
 		}
 	}
 
 	public void showPlayQueue() {
-		if(!playQueueStackPane.getChildren().contains(playQueuePane)) {
+		if (! playQueueStackPane.getChildren().contains(playQueuePane)) {
 			playQueueStackPane.getChildren().add(0, playQueuePane);
 			playQueuePane.setVisible(true);
 		}
@@ -245,7 +245,7 @@ public class PlayerController implements MusicottController {
 	public void updatePlayer(Track currentTrack) {
 		LOG.debug("Setting up player and view for track {}", currentTrack);
 		String fileFormat = currentTrack.getFileFormat();
-		if(musicLibrary.containsWaveform(currentTrack.getTrackId()))
+		if (musicLibrary.containsWaveform(currentTrack.getTrackId()))
 			setWaveform(currentTrack);
 		else if ("wav".equals(fileFormat) || "mp3".equals(fileFormat) || "m4a".equals(fileFormat))
 			TaskDemon.getInstance().analyzeTrackWaveform(currentTrack);
@@ -254,9 +254,8 @@ public class PlayerController implements MusicottController {
 		songTitleLabel.textProperty().bind(currentTrack.nameProperty());
 		artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
 				() -> currentTrack.artistProperty().get() + " - " + currentTrack.albumProperty().get(),
-				currentTrack.artistProperty(), currentTrack.albumProperty())
-		);
-		if(currentTrack.getCoverImage().isPresent()) {
+				currentTrack.artistProperty(), currentTrack.albumProperty()));
+		if (currentTrack.getCoverImage().isPresent()) {
 			byte[] coverBytes = currentTrack.getCoverImage().get();
 			Image image = new Image(new ByteArrayInputStream(coverBytes));
 			currentCover.setImage(image);
@@ -266,7 +265,7 @@ public class PlayerController implements MusicottController {
 
 		trackSlider.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
 			Double endTime = trackSlider.getMax();
-			if(!endTime.equals(Double.POSITIVE_INFINITY) || !endTime.equals(Double.NaN)) {
+			if (! endTime.equals(Double.POSITIVE_INFINITY) || ! endTime.equals(Double.NaN)) {
 				trackProgressBar.setProgress(trackSlider.getValue() / endTime);
 				player.seek(trackSlider.getValue());
 			}
@@ -278,13 +277,13 @@ public class PlayerController implements MusicottController {
 	 * {@link Track} that is currently being played.
 	 *
 	 * @param elapsed The elapsed time of the track
-	 * @param total The total time of the track
+	 * @param total   The total time of the track
 	 */
 	public void updateTrackLabels(Duration elapsed, Duration total) {
 		int currentHours = (int) elapsed.toHours();
 		int currentMins = (int) elapsed.subtract(Duration.hours(currentHours)).toMinutes();
-		int currentSecs = (int) elapsed.subtract(Duration.minutes(currentMins))
-				.subtract(Duration.hours(currentHours)).toSeconds();
+		int currentSecs = (int) elapsed.subtract(Duration.minutes(currentMins)).subtract(Duration.hours(currentHours))
+									   .toSeconds();
 
 		String currentTimeText = getFormattedTimeString(currentHours, currentMins, currentSecs, (int) total.toHours());
 		currentTimeLabel.setText(currentTimeText);
@@ -293,23 +292,24 @@ public class PlayerController implements MusicottController {
 		int remainingHours = (int) remaining.toHours();
 		int remainingMins = (int) remaining.subtract(Duration.hours(remainingHours)).toMinutes();
 		int remainingSecs = (int) remaining.subtract(Duration.minutes(remainingMins))
-				.subtract(Duration.hours(remainingHours)).toSeconds();
+										   .subtract(Duration.hours(remainingHours)).toSeconds();
 
-		String remainingTimeText = getFormattedTimeString(remainingHours, remainingMins, remainingSecs, (int) total.toHours());
+		String remainingTimeText = getFormattedTimeString(remainingHours, remainingMins, remainingSecs,
+														  (int) total.toHours());
 		remainingTimeLabel.setText(remainingTimeText);
 	}
 
 	private String getFormattedTimeString(int currentHours, int currentMins, int currentSecs, int totalHours) {
 		String formattedTime = "";
-		if(totalHours > 0)
+		if (totalHours > 0)
 			formattedTime += Integer.toString(currentHours) + ":";
 
-		if(currentMins < 10)
+		if (currentMins < 10)
 			formattedTime += "0" + currentMins;
 		else
 			formattedTime += Integer.toString(currentMins);
 		formattedTime += ":";
-		if(currentSecs < 10)
+		if (currentSecs < 10)
 			formattedTime += "0" + Integer.toString(currentSecs);
 		else
 			formattedTime += Integer.toString(currentSecs);

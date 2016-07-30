@@ -37,14 +37,14 @@ import java.io.*;
  * to remove the <tt>TrackQueueRow</tt> from his list.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class TrackQueueRow extends GridPane {
-	
+
 	private static final double COVER_SIZE = 42.0;
 	private static final String DELETE_BUTTON_BLACK_STYLE = "deleteButton-black";
 	private static final String DELETE_BUTTON_WHITE_STYLE = "deleteButton-white";
-	
+
 	private PlayQueueController playQueueController;
 	private Track track;
 	private ImageView coverImage;
@@ -60,36 +60,35 @@ public class TrackQueueRow extends GridPane {
 		placeDeleteHoverButton();
 		ColumnConstraints cc1 = new ColumnConstraints(50);
 		ColumnConstraints cc2 = new ColumnConstraints(200);
-		getColumnConstraints().addAll(cc1,cc2);
-		GridPane.setMargin(deleteTrackQueueRowButton, new Insets (1, 1, 1, 200));
+		getColumnConstraints().addAll(cc1, cc2);
+		GridPane.setMargin(deleteTrackQueueRowButton, new Insets(1, 1, 1, 200));
 		GridPane.setMargin(coverImage, new Insets(0, 0, 0, 0));
 		GridPane.setMargin(labelBox, new Insets(1, 1, 1, 5));
 		setOnMouseMoved(event -> deleteTrackQueueRowButton.setVisible(true));
 		setOnMouseExited(event -> deleteTrackQueueRowButton.setVisible(false));
 		setAlignment(Pos.CENTER_LEFT);
 	}
-	
+
 	public int getRepresentedTrackId() {
 		return track.getTrackId();
 	}
-	
+
 	public void changeRemoveButtonColor() {
-		if(DELETE_BUTTON_BLACK_STYLE.equals(deleteTrackQueueRowButton.getId()))
+		if (DELETE_BUTTON_BLACK_STYLE.equals(deleteTrackQueueRowButton.getId()))
 			deleteTrackQueueRowButton.setId(DELETE_BUTTON_WHITE_STYLE);
 		else
 			deleteTrackQueueRowButton.setId(DELETE_BUTTON_BLACK_STYLE);
 	}
 
- 	private void placeLabels() {
+	private void placeLabels() {
 		Label nameLabel = new Label();
 		nameLabel.setId("nameLabel");
 		nameLabel.textProperty().bind(track.nameProperty());
 		Label artistAlbumLabel = new Label();
 		artistAlbumLabel.setId("artistAlbumLabel");
 		artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
-				() -> track.artistProperty().get() + " - " + track.albumProperty().get(),
-				track.artistProperty(), track.albumProperty())
-		);
+				() -> track.artistProperty().get() + " - " + track.albumProperty().get(), track.artistProperty(),
+				track.albumProperty()));
 		labelBox = new VBox();
 		VBox.setMargin(nameLabel, new Insets(0, 0, 1, 0));
 		VBox.setMargin(artistAlbumLabel, new Insets(1, 0, 0, 0));
@@ -112,7 +111,7 @@ public class TrackQueueRow extends GridPane {
 		coverImage = new ImageView();
 		coverImage.setFitHeight(40.0);
 		coverImage.setFitHeight(40.0);
-		if(track.getCoverImage().isPresent()) {
+		if (track.getCoverImage().isPresent()) {
 			byte[] coverBytes = track.getCoverImage().get();
 			Image image = new Image(new ByteArrayInputStream(coverBytes));
 			coverImage.setImage(image);

@@ -24,7 +24,7 @@ package com.musicott.util;
  * information of a {@link com.musicott.model.Track} instance was unsuccessful.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  * @since 0.9
  */
 public class TrackUpdateException extends Exception {

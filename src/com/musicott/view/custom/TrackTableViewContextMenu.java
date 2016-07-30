@@ -35,15 +35,15 @@ import java.util.stream.*;
 
 /**
  * Context menu to be shown on the {@link TrackTableView}.
- * 
+ *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class TrackTableViewContextMenu extends ContextMenu {
-	
+
 	private StageDemon stageDemon = StageDemon.getInstance();
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-	
+
 	private Menu addToPlaylistMenu;
 	private MenuItem playMenuItem;
 	private MenuItem editMenuItem;
@@ -53,7 +53,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
 	private ObservableList<Entry<Integer, Track>> trackSelection;
 
 	private List<MenuItem> playlistsInMenu;
-	
+
 	public TrackTableViewContextMenu(ObservableList<Entry<Integer, Track>> tableSelection) {
 		super();
 		trackSelection = tableSelection;
@@ -62,7 +62,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
 
 		playMenuItem = new MenuItem("Play");
 		playMenuItem.setOnAction(event -> {
-			if(!trackSelection.isEmpty())
+			if (! trackSelection.isEmpty())
 				PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(), true);
 		});
 
@@ -74,7 +74,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
 
 		addToQueueMenuItem = new MenuItem("Add to play Queue");
 		addToQueueMenuItem.setOnAction(event -> {
-			if(!trackSelection.isEmpty())
+			if (! trackSelection.isEmpty())
 				PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(), false);
 		});
 
@@ -83,18 +83,18 @@ public class TrackTableViewContextMenu extends ContextMenu {
 
 		NavigationController navigationController = stageDemon.getNavigationController();
 		deleteFromPlaylistMenuItem.setOnAction(event -> {
-			if (!trackSelection.isEmpty()) {
+			if (! trackSelection.isEmpty()) {
 				Optional<Playlist> selectedPlaylist = navigationController.selectedPlaylistProperty().getValue();
 				selectedPlaylist.ifPresent(playlist -> playlist.removeTracks(trackSelectionIds()));
 			}
 		});
-		
-		ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty = navigationController.selectedPlaylistProperty();
-		deleteFromPlaylistMenuItem.visibleProperty().bind(
-				Bindings.createBooleanBinding(
-						() -> selectedPlaylistProperty.getValue().isPresent() &&
-								!selectedPlaylistProperty.getValue().get().isFolder()
-						, selectedPlaylistProperty));
+
+		ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty = navigationController
+				.selectedPlaylistProperty();
+		deleteFromPlaylistMenuItem.visibleProperty().bind(Bindings.createBooleanBinding(
+				() -> selectedPlaylistProperty.getValue().isPresent() && ! selectedPlaylistProperty.getValue().get()
+																								   .isFolder(),
+				selectedPlaylistProperty));
 
 		getItems().addAll(playMenuItem, editMenuItem, deleteMenuItem, addToQueueMenuItem, new SeparatorMenuItem());
 		getItems().addAll(deleteFromPlaylistMenuItem, addToPlaylistMenu);
@@ -105,7 +105,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
 		playlistsInMenu.clear();
 
 		musicLibrary.getPlaylists().forEach(playlist -> {
-			if (!playlist.isFolder())
+			if (! playlist.isFolder())
 				addPlaylistToMenuList(playlist);
 			else
 				playlist.getContainedPlaylists().forEach(this::addPlaylistToMenuList);
@@ -119,7 +119,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
 	private void addPlaylistToMenuList(Playlist playlist) {
 		MenuItem playlistMenuItem = new MenuItem(playlist.getName());
 		playlistMenuItem.setOnAction(event -> {
-			if(!trackSelection.isEmpty())
+			if (! trackSelection.isEmpty())
 				playlist.addTracks(trackSelectionIds());
 		});
 		playlistsInMenu.add(playlistMenuItem);

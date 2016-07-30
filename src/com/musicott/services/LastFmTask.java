@@ -33,7 +33,7 @@ import java.util.concurrent.*;
  * service in order to scrobble and updates the user profile.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class LastFmTask extends Thread {
 
@@ -44,11 +44,11 @@ public class LastFmTask extends Thread {
 	private Track trackToScrobble;
 	private LastFmService lastFmService;
 	private Semaphore updateAndScrobbleSemaphore;
-	private List<Map <Integer, Track>> tracksToScrobbleLater;
+	private List<Map<Integer, Track>> tracksToScrobbleLater;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private ServiceDemon serviceDemon = ServiceDemon.getInstance();
-	
+
 	public LastFmTask() {
 		super("LastFM Thread");
 		lastFmService = new LastFmService();
@@ -69,12 +69,12 @@ public class LastFmTask extends Thread {
 
 	private boolean loginToLastFmApi() {
 		boolean loginResult = true;
-		if(!lastFmService.isApiConfigurationPresent()) {
+		if (! lastFmService.isApiConfigurationPresent()) {
 			errorDemon.showLastFmErrorDialog("LastFM error", "LastFM API Key or Secret are invalid");
 			loginResult = false;
 		}
 
-		if(loginResult) {
+		if (loginResult) {
 			LastFmResponse lastFmResponse = lastFmService.getSession();
 			if (lastFmResponse.getStatus().equals(FAILED)) {
 				handleLastFMError(lastFmResponse.getError());
@@ -88,13 +88,14 @@ public class LastFmTask extends Thread {
 	}
 
 	private void updateAndScrobbleLoop() {
-		while(!Thread.currentThread().isInterrupted()) {
+		while (! Thread.currentThread().isInterrupted()) {
 			try {
 				scrobbleTracksSavedForLater();
 				updateAndScrobbleSemaphore.acquire();
 				updateNowPlaying();
 				scrobble();
-			} catch (InterruptedException exception) {
+			}
+			catch (InterruptedException exception) {
 				LOG.warn("LastFM thread error: {}", exception);
 				errorDemon.showErrorDialog("Error using LastFM", "", exception);
 				serviceDemon.setUsingLastFm(false);
@@ -105,22 +106,20 @@ public class LastFmTask extends Thread {
 
 	private void updateNowPlaying() {
 		LastFmResponse lastFmResponse = lastFmService.updateNowPlaying(trackToScrobble);
-		if(lastFmResponse.getStatus().equals(FAILED))
+		if (lastFmResponse.getStatus().equals(FAILED))
 			handleLastFMError(lastFmResponse.getError());
 	}
 
 	private void scrobble() {
 		LastFmResponse lastFmResponse = lastFmService.scrobbleTrack(trackToScrobble);
-		if(lastFmResponse.getStatus().equals(FAILED)) {
+		if (lastFmResponse.getStatus().equals(FAILED))
 			handleLastFMError(lastFmResponse.getError());
 			addTrackToScrobbleLater(trackToScrobble);
-		}
 	}
 
 	private void scrobbleTracksSavedForLater() {
-		tracksToScrobbleLater.stream()
-				.filter(mapBatch -> !mapBatch.isEmpty())
-				.forEach(lastFmService::scrobbleTrackBatch);
+		tracksToScrobbleLater.stream().filter(mapBatch -> ! mapBatch.isEmpty())
+							 .forEach(lastFmService::scrobbleTrackBatch);
 	}
 
 	/**
@@ -129,31 +128,32 @@ public class LastFmTask extends Thread {
 	 * on the LastFM service, so if a batch is fulled, other one is created an added to the list.
 	 *
 	 * @param track The {@link Track} instance to add
+	 *
 	 * @see <a href="http://www.last.fm/api/show/track.scrobble">LastFM API documentation</a>
 	 */
 	private void addTrackToScrobbleLater(Track track) {
-		ListIterator<Map <Integer, Track>> trackToScrobbleLaterIterator = tracksToScrobbleLater.listIterator();
+		ListIterator<Map<Integer, Track>> trackToScrobbleLaterIterator = tracksToScrobbleLater.listIterator();
 		boolean done = false;
-		while(trackToScrobbleLaterIterator.hasNext() && !done) {
+		while (trackToScrobbleLaterIterator.hasNext() && ! done) {
 			Map<Integer, Track> trackBatch = trackToScrobbleLaterIterator.next();
-			if(trackBatch.size() < 50) {
+			if (trackBatch.size() < 50) {
 				trackBatch.put((int) System.currentTimeMillis() / 1000, track);
 				done = true;
 			}
-			else if (!trackToScrobbleLaterIterator.hasNext()) {
+			else if (! trackToScrobbleLaterIterator.hasNext()) {
 				Map<Integer, Track> newMapBatch = new HashMap<>();
 				newMapBatch.put((int) System.currentTimeMillis() / 1000, track);
 				trackToScrobbleLaterIterator.add(newMapBatch);
 				done = true;
 			}
-		}	
-	}		
-	
+		}
+	}
+
 	private void handleLastFMError(LastFmError error) {
 		//TODO Error handling for Last FM error statuses
 		String errorTitle;
 		String errorMessage;
-		switch(error.getCode()) {
+		switch (error.getCode()) {
 			case "4":
 				errorTitle = "Authentication Failed";
 				errorMessage = "Username or password invalid.";

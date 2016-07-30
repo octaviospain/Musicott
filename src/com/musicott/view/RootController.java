@@ -44,7 +44,7 @@ import java.util.function.*;
  * Controller class of the root layout of the whole application.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class RootController implements MusicottController {
 
@@ -98,8 +98,8 @@ public class RootController implements MusicottController {
 		filteredTracks = new FilteredList<>(tracks, predicate -> true);
 
 		StringProperty searchTextProperty = stageDemon.getPlayerController().searchTextProperty();
-		searchTextProperty.addListener((observable, oldText, newText) ->
-				filteredTracks.setPredicate(findTracksContainingTextPredicate(newText)));
+		searchTextProperty.addListener((observable, oldText, newText) -> filteredTracks
+				.setPredicate(findTracksContainingTextPredicate(newText)));
 
 		SortedList<Map.Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
 		sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
@@ -124,19 +124,19 @@ public class RootController implements MusicottController {
 				() -> showingTracksProperty.sizeProperty().get() + " songs", showingTracksProperty));
 
 		playlistSizeLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-			long sizeOfAllShowingTracks = showingTracksProperty.stream()
-					.mapToLong(trackEntry -> (long) trackEntry.getValue().getSize()).sum();
+			long sizeOfAllShowingTracks = showingTracksProperty.stream().mapToLong(
+					trackEntry -> (long) trackEntry.getValue().getSize()).sum();
 
 			String sizeString = Utils.byteSizeString(sizeOfAllShowingTracks, 2);
-			if("0 B".equals(sizeString))
+			if ("0 B".equals(sizeString))
 				sizeString = "";
 			return sizeString;
-		},  showingTracksProperty));
+		}, showingTracksProperty));
 
 		playlistTitleLabel.textProperty().bind(playlistTitleTextField.textProperty());
 
 		playlistTitleLabel.setOnMouseClicked(event -> {
-			if(event.getClickCount() == 2)	// double click for edit the playlist name
+			if (event.getClickCount() == 2)    // double click to edit the playlist name
 				placePlaylistTextField();
 		});
 	}
@@ -145,7 +145,7 @@ public class RootController implements MusicottController {
 		playlistTitleTextField = new TextField();
 		playlistTitleTextField.setPrefWidth(150);
 		playlistTitleTextField.setPrefHeight(25);
-		playlistTitleTextField.setPadding(new Insets(-10, 0, -10, 0));
+		playlistTitleTextField.setPadding(new Insets(- 10, 0, - 10, 0));
 		playlistTitleTextField.setFont(new Font("System", 20));
 		VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
 		playlistTitleTextField.setOnKeyPressed(changePlaylistNameTextFieldHandler);
@@ -153,10 +153,10 @@ public class RootController implements MusicottController {
 
 	private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler() {
 		return event -> {
-			if(event.getCode() == KeyCode.ENTER) {
+			if (event.getCode() == KeyCode.ENTER) {
 				Playlist playlist = selectedPlaylistProperty.getValue().get();
 				String newName = playlistTitleTextField.getText();
-				if(isValidPlaylistName(newName) || playlist.getName().equals(newName)) {
+				if (isValidPlaylistName(newName) || playlist.getName().equals(newName)) {
 					playlist.setName(newName);
 					removePlaylistTextField();
 					musicLibrary.saveLibrary(false, false, true);
@@ -171,7 +171,7 @@ public class RootController implements MusicottController {
 	 */
 	private void placePlaylistTextField() {
 		showTableInfoPane();
-		if(!playlistInfoVBox.getChildren().contains(playlistTitleTextField)) {
+		if (! playlistInfoVBox.getChildren().contains(playlistTitleTextField)) {
 			playlistInfoVBox.getChildren().remove(playlistTitleLabel);
 			playlistInfoVBox.getChildren().add(0, playlistTitleTextField);
 			playlistTitleTextField.requestFocus();
@@ -183,7 +183,7 @@ public class RootController implements MusicottController {
 	 */
 	private void removePlaylistTextField() {
 		showTableInfoPane();
-		if(!playlistInfoVBox.getChildren().contains(playlistTitleLabel)) {
+		if (! playlistInfoVBox.getChildren().contains(playlistTitleLabel)) {
 			playlistInfoVBox.getChildren().remove(playlistTitleTextField);
 			playlistInfoVBox.getChildren().add(0, playlistTitleLabel);
 		}
@@ -193,12 +193,13 @@ public class RootController implements MusicottController {
 	 * Returns a {@link Predicate} that evaluates the match of a given <tt>String</tt> to a given track {@link Entry}
 	 *
 	 * @param string The <tt>String</tt> to match against the track
+	 *
 	 * @return The <tt>Predicate</tt>
 	 */
 	private Predicate<Entry<Integer, Track>> findTracksContainingTextPredicate(String string) {
 		return trackEntry -> {
 			boolean result = string == null || string.isEmpty();
-			if(!result)
+			if (! result)
 				result = trackMatchesString(trackEntry.getValue(), string);
 			return result;
 		};
@@ -207,8 +208,9 @@ public class RootController implements MusicottController {
 	/**
 	 * Determines if a track matches a given string by its name, artist, label, genre or album.
 	 *
-	 * @param track The {@link Track} to match
+	 * @param track  The {@link Track} to match
 	 * @param string The string to match against the <tt>Track</tt>
+	 *
 	 * @return <tt>true</tt> if the <tt>Track matches</tt>, <tt>false</tt> otherwise
 	 */
 	private boolean trackMatchesString(Track track, String string) {
@@ -235,10 +237,10 @@ public class RootController implements MusicottController {
 		playlistCover.imageProperty().bind(newPlaylist.playlistCoverProperty());
 
 		EventHandler<KeyEvent> newPlaylistNameTextFieldHandler = event -> {
-			if(event.getCode() == KeyCode.ENTER) {
+			if (event.getCode() == KeyCode.ENTER) {
 				String newPlaylistName = playlistTitleTextField.getText();
 
-				if(isValidPlaylistName(newPlaylistName)) {
+				if (isValidPlaylistName(newPlaylistName)) {
 					newPlaylist.setName(newPlaylistName);
 					removePlaylistTextField();
 					stageDemon.getNavigationController().addNewPlaylist(newPlaylist);
@@ -257,18 +259,19 @@ public class RootController implements MusicottController {
 	 * it is empty, or another playlist has the same name.
 	 *
 	 * @param newName The name of the playlist to check
+	 *
 	 * @return <tt>true</tt> if its a valid name, <tt>false</tt> otherwise
 	 */
 	private boolean isValidPlaylistName(String newName) {
 		Playlist blankPlaylist = new Playlist(newName, false);
-		return !newName.isEmpty() && !musicLibrary.containsPlaylist(blankPlaylist);
+		return ! newName.isEmpty() && ! musicLibrary.containsPlaylist(blankPlaylist);
 	}
 
 	/**
 	 * Shows the upper table info pane
 	 */
 	public void showTableInfoPane() {
-		if(!tableBorderPane.getChildren().contains(tableInfoHBox)) {
+		if (! tableBorderPane.getChildren().contains(tableInfoHBox)) {
 			tableBorderPane.setTop(tableInfoHBox);
 			showingTableInfoPaneProperty.set(true);
 			LOG.debug("Showing info pane");
@@ -279,7 +282,7 @@ public class RootController implements MusicottController {
 	 * Hides the upper table info pane
 	 */
 	public void hideTableInfoPane() {
-		if(tableBorderPane.getChildren().contains(tableInfoHBox)) {
+		if (tableBorderPane.getChildren().contains(tableInfoHBox)) {
 			tableBorderPane.getChildren().remove(tableInfoHBox);
 			showingTableInfoPaneProperty.set(false);
 			LOG.debug("Hiding info pane");
@@ -290,7 +293,7 @@ public class RootController implements MusicottController {
 	 * Shows the left navigation pane
 	 */
 	public void showNavigationPane() {
-		if(!contentBorderLayout.getChildren().equals(navigationPaneVBox)) {
+		if (! contentBorderLayout.getChildren().equals(navigationPaneVBox)) {
 			contentBorderLayout.setLeft(navigationPaneVBox);
 			showingNavigationPaneProperty.set(true);
 			LOG.debug("Showing navigation pane");
@@ -301,7 +304,7 @@ public class RootController implements MusicottController {
 	 * Hides the left navigation pane
 	 */
 	public void hideNavigationPane() {
-		if(contentBorderLayout.getChildren().contains(navigationPaneVBox)) {
+		if (contentBorderLayout.getChildren().contains(navigationPaneVBox)) {
 			contentBorderLayout.getChildren().remove(navigationPaneVBox);
 			showingNavigationPaneProperty.set(false);
 			LOG.debug("Showing navigation pane");

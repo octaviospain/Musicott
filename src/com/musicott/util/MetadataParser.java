@@ -32,7 +32,7 @@ import java.util.*;
  * Performs the operation of parsing an audio file to a {@link Track} instance.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
 public class MetadataParser {
@@ -58,55 +58,65 @@ public class MetadataParser {
 			Tag tag = audioFile.getTag();
 			parseBaseMetadata(track, tag);
 			getCoverBytes(tag).ifPresent(coverBytes -> track.hasCoverProperty().set(true));
-		} catch (IOException | CannotReadException | ReadOnlyFileException |
+		}
+		catch (IOException | CannotReadException | ReadOnlyFileException |
 				TagException | InvalidAudioFrameException exception) {
 			throw new TrackParseException("Error parsing the file " + fileToParse, exception);
 		}
 		return track;
 	}
-	
+
 	private static void parseBaseMetadata(Track track, Tag tag) {
-		if(tag.hasField(FieldKey.TITLE))
+		if (tag.hasField(FieldKey.TITLE))
 			track.setName(tag.getFirst(FieldKey.TITLE));
-		if(tag.hasField(FieldKey.ALBUM))
+		if (tag.hasField(FieldKey.ALBUM))
 			track.setAlbum(tag.getFirst(FieldKey.ALBUM));
-		if(tag.hasField(FieldKey.ALBUM_ARTIST))
+		if (tag.hasField(FieldKey.ALBUM_ARTIST))
 			track.setAlbumArtist(tag.getFirst(FieldKey.ALBUM_ARTIST));
-		if(tag.hasField(FieldKey.ARTIST))
+		if (tag.hasField(FieldKey.ARTIST))
 			track.setArtist(tag.getFirst(FieldKey.ARTIST));
-		if(tag.hasField(FieldKey.GENRE))
+		if (tag.hasField(FieldKey.GENRE))
 			track.setGenre(tag.getFirst(FieldKey.GENRE));
-		if(tag.hasField(FieldKey.COMMENT))
+		if (tag.hasField(FieldKey.COMMENT))
 			track.setComments(tag.getFirst(FieldKey.COMMENT));
-		if(tag.hasField(FieldKey.GROUPING))
+		if (tag.hasField(FieldKey.GROUPING))
 			track.setLabel(tag.getFirst(FieldKey.GROUPING));
-		if(tag.hasField(FieldKey.ENCODER))
+		if (tag.hasField(FieldKey.ENCODER))
 			track.setEncoder(tag.getFirst(FieldKey.ENCODER));
-		if(tag.hasField(FieldKey.IS_COMPILATION))
-			if("m4a".equals(track.getFileFormat()))
+		if (tag.hasField(FieldKey.IS_COMPILATION)) {
+			if ("m4a".equals(track.getFileFormat()))
 				track.setIsPartOfCompilation("1".equals(tag.getFirst(FieldKey.IS_COMPILATION)));
 			else
 				track.setIsPartOfCompilation("true".equals(tag.getFirst(FieldKey.IS_COMPILATION)));
-		if(tag.hasField(FieldKey.BPM))
+		}
+		if (tag.hasField(FieldKey.BPM)) {
 			try {
 				int bpm = Integer.parseInt(tag.getFirst(FieldKey.BPM));
 				track.setBpm(bpm < 1 ? 0 : bpm);
-			} catch (NumberFormatException e) {}
-		if(tag.hasField(FieldKey.DISC_NO))
+			}
+			catch (NumberFormatException e) {}
+		}
+		if (tag.hasField(FieldKey.DISC_NO)) {
 			try {
 				int dn = Integer.parseInt(tag.getFirst(FieldKey.DISC_NO));
 				track.setDiscNumber(dn < 1 ? 0 : dn);
-			} catch (NumberFormatException e) {}
-		if(tag.hasField(FieldKey.TRACK))
+			}
+			catch (NumberFormatException e) {}
+		}
+		if (tag.hasField(FieldKey.TRACK)) {
 			try {
 				int trackNumber = Integer.parseInt(tag.getFirst(FieldKey.TRACK));
 				track.setTrackNumber(trackNumber < 1 ? 0 : trackNumber);
-			} catch (NumberFormatException e) {}
-		if(tag.hasField(FieldKey.YEAR))
+			}
+			catch (NumberFormatException e) {}
+		}
+		if (tag.hasField(FieldKey.YEAR)) {
 			try {
 				int year = Integer.parseInt(tag.getFirst(FieldKey.YEAR));
 				track.setYear(year < 1 ? 0 : year);
-			} catch (NumberFormatException e) {}
+			}
+			catch (NumberFormatException e) {}
+		}
 	}
 
 	public static Optional<Tag> getAudioTag(File file) {
@@ -114,7 +124,8 @@ public class MetadataParser {
 		try {
 			AudioFile audioFile = AudioFileIO.read(file);
 			optionalTag = Optional.ofNullable(audioFile.getTag());
-		} catch (IOException | CannotReadException | ReadOnlyFileException |
+		}
+		catch (IOException | CannotReadException | ReadOnlyFileException |
 				TagException | InvalidAudioFrameException exception) {
 			optionalTag = Optional.empty();
 		}
@@ -123,10 +134,12 @@ public class MetadataParser {
 
 	public static Optional<byte[]> getCoverBytes(Tag tag) {
 		Optional<byte[]> coverBytes;
-		if(!tag.getArtworkList().isEmpty())
+		if (! tag.getArtworkList().isEmpty()) {
 			coverBytes = Optional.ofNullable(tag.getFirstArtwork().getBinaryData());
-		else
+		}
+		else {
 			coverBytes = Optional.empty();
+		}
 		return coverBytes;
 	}
 }

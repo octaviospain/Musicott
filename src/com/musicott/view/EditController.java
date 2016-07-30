@@ -44,10 +44,10 @@ import java.util.stream.*;
  * Controller class of the window that edits the information of tracks
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class EditController implements MusicottController {
-	
+
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
 
@@ -107,17 +107,17 @@ public class EditController implements MusicottController {
 		editFieldsMap.put(TrackField.DISC_NUMBER, discNumTextField);
 		editFieldsMap.put(TrackField.YEAR, yearTextField);
 		editFieldsMap.put(TrackField.BPM, bpmTextField);
-		
+
 		titleNameLabel.textProperty().bind(nameTextField.textProperty());
 		titleArtistLabel.textProperty().bind(artistTextField.textProperty());
 		titleAlbumLabel.textProperty().bind(albumTextField.textProperty());
 
 		setNumericValidationFilters();
-		
+
 		coverImage.setImage(COVER_IMAGE);
 		coverImage.setCacheHint(CacheHint.QUALITY);
 		coverImage.setOnMouseClicked(event -> {
-			if(event.getClickCount() <= 2)
+			if (event.getClickCount() <= 2)
 				changeCover();
 		});
 
@@ -127,27 +127,27 @@ public class EditController implements MusicottController {
 
 	private void setNumericValidationFilters() {
 		EventHandler<KeyEvent> nonNumericFilter = event -> {
-			if(!event.getCharacter().matches("[0-9]"))
+			if (! event.getCharacter().matches("[0-9]"))
 				event.consume();
 		};
 		trackNumTextField.addEventFilter(KeyEvent.KEY_TYPED, nonNumericFilter);
 		trackNumTextField.addEventFilter(KeyEvent.KEY_TYPED, event -> {
-			if(trackNumTextField.getText().length() == 3)
+			if (trackNumTextField.getText().length() == 3)
 				event.consume();
 		});
 		discNumTextField.addEventFilter(KeyEvent.KEY_TYPED, nonNumericFilter);
 		discNumTextField.addEventFilter(KeyEvent.KEY_TYPED, event -> {
-			if(discNumTextField.getText().length() == 3)
+			if (discNumTextField.getText().length() == 3)
 				event.consume();
 		});
 		bpmTextField.addEventFilter(KeyEvent.KEY_TYPED, nonNumericFilter);
 		bpmTextField.addEventFilter(KeyEvent.KEY_TYPED, event -> {
-			if(bpmTextField.getText().length() == 3)
+			if (bpmTextField.getText().length() == 3)
 				event.consume();
 		});
 		yearTextField.addEventFilter(KeyEvent.KEY_TYPED, nonNumericFilter);
 		yearTextField.addEventFilter(KeyEvent.KEY_TYPED, event -> {
-			if(yearTextField.getText().length() == 4)
+			if (yearTextField.getText().length() == 4)
 				event.consume();
 		});
 	}
@@ -182,7 +182,7 @@ public class EditController implements MusicottController {
 		Optional<byte[]> commonCover = commonCover();
 		commonCover.ifPresent(coverBytes -> coverImage.setImage(new Image(new ByteArrayInputStream(coverBytes))));
 
-		if(!commonCompilation())
+		if (! commonCompilation())
 			isCompilationCheckBox.setIndeterminate(true);
 		else
 			isCompilationCheckBox.setSelected(trackSelection.get(0).isPartOfCompilation());
@@ -199,26 +199,27 @@ public class EditController implements MusicottController {
 		TextInputControl inputControl = fieldEntry.getValue();
 
 		List<String> selectionValues = trackSelection.stream()
-				.map(trackToEdit -> getTrackPropertyValue(trackField, trackToEdit))
-				.collect(Collectors.toList());
+													 .map(trackToEdit -> getTrackPropertyValue(trackField, trackToEdit))
+													 .collect(Collectors.toList());
 		inputControl.textProperty().setValue(commonString(selectionValues));
 	}
 
 	/**
 	 * Returns a <tt>String</tt> of the track property value.
 	 *
-	 * @param trackField The {@link TrackField}
+	 * @param trackField  The {@link TrackField}
 	 * @param trackToEdit The {@link Track}
+	 *
 	 * @return
 	 */
 	private String getTrackPropertyValue(TrackField trackField, Track trackToEdit) {
 		Map<TrackField, Property> propertyMap = trackToEdit.getPropertyMap();
 		Property<?> trackProperty = propertyMap.get(trackField);
-		
+
 		String value;
-		if(TrackField.isIntegerField(trackField)) {
+		if (TrackField.isIntegerField(trackField)) {
 			IntegerProperty ip = (IntegerProperty) trackProperty;
-			if(ip.get() == 0)
+			if (ip.get() == 0)
 				value = "";
 			else
 				value = String.valueOf(ip.get());
@@ -255,14 +256,14 @@ public class EditController implements MusicottController {
 			changed[0] = editTrackTrackField(entry, property);
 		});
 
-		if(!isCompilationCheckBox.isIndeterminate()) {
+		if (! isCompilationCheckBox.isIndeterminate()) {
 			track.setIsPartOfCompilation(isCompilationCheckBox.isSelected());
 			changed[0] = true;
 		}
 
 		track.setCoverImage(newCoverImage);
 
-		if(changed[0]) {
+		if (changed[0]) {
 			track.setLastDateModified(LocalDateTime.now());
 			LOG.info("Track {} edited to {}", track.getTrackId(), track);
 		}
@@ -272,8 +273,9 @@ public class EditController implements MusicottController {
 	 * Updates the new value of a {@link Track} property with the one entered
 	 * by the user on the {@link TextInputControl} of the window.
 	 *
-	 * @param entry The {@link Entry} with the {@link TrackField} and its related text input
+	 * @param entry         The {@link Entry} with the {@link TrackField} and its related text input
 	 * @param trackProperty The {@link Property} of the track to edit
+	 *
 	 * @return <tt>true</tt> if the property was changed, <tt>false</tt> otherwise
 	 */
 	private boolean editTrackTrackField(Entry<TrackField, TextInputControl> entry, Property<?> trackProperty) {
@@ -281,19 +283,20 @@ public class EditController implements MusicottController {
 		TrackField field = entry.getKey();
 		String newValue = entry.getValue().textProperty().getValue();
 
-		if(TrackField.isIntegerField(field)) {
+		if (TrackField.isIntegerField(field)) {
 			IntegerProperty ip = (IntegerProperty) trackProperty;
 			try {
 				int newNumericValue = Integer.parseInt(newValue);
-				if(!"-".equals(newValue) || (!newValue.isEmpty() && ip.get() != newNumericValue)) {
+				if (! "-".equals(newValue) || (! newValue.isEmpty() && ip.get() != newNumericValue)) {
 					ip.setValue(newNumericValue);
 					changed = true;
 				}
-			} catch (NumberFormatException e) {}
+			}
+			catch (NumberFormatException e) {}
 		}
 		else {
 			StringProperty sp = (StringProperty) trackProperty;
-			if(!"-".equals(newValue) && !sp.get().equals(newValue)) {
+			if (! "-".equals(newValue) && ! sp.get().equals(newValue)) {
 				sp.setValue(newValue);
 				changed = true;
 			}
@@ -309,10 +312,10 @@ public class EditController implements MusicottController {
 		LOG.debug("Choosing cover image");
 		FileChooser chooser = new FileChooser();
 		chooser.setTitle("Open file(s)...");
-		ExtensionFilter filter = new ExtensionFilter ("Image files (*.png, *.jpg, *.jpeg)","*.png", "*.jpg", "*.jpeg");
+		ExtensionFilter filter = new ExtensionFilter("Image files (*.png, *.jpg, *.jpeg)", "*.png", "*.jpg", "*.jpeg");
 		chooser.getExtensionFilters().addAll(filter);
 		newCoverImage = chooser.showOpenDialog(editStage);
-		if(newCoverImage != null) {
+		if (newCoverImage != null) {
 			Optional<Image> newImage = Utils.getImageFromFile(newCoverImage);
 			newImage.ifPresent(coverImage::setImage);
 		}
@@ -326,11 +329,10 @@ public class EditController implements MusicottController {
 	private Optional<byte[]> commonCover() {
 		Optional<byte[]>[] optionalCoverBytes = new Optional[]{Optional.empty()};
 		Optional<String> sameAlbum = commonAlbum();
-		sameAlbum.ifPresent(trackAlbum ->
-			trackSelection.stream().filter(track -> track.getCoverImage().isPresent())
-					.findFirst()
-					.ifPresent(track -> optionalCoverBytes[0] = Optional.of(track.getCoverImage().get()))
-		);
+		sameAlbum.ifPresent(
+				trackAlbum -> trackSelection.stream().filter(track -> track.getCoverImage().isPresent()).findFirst()
+											.ifPresent(track -> optionalCoverBytes[0] = Optional
+													.of(track.getCoverImage().get())));
 		return optionalCoverBytes[0];
 	}
 
@@ -358,11 +360,12 @@ public class EditController implements MusicottController {
 	 * Returns the common <tt>String</tt> of a list, if any, or a dash (-) otherwise.
 	 *
 	 * @param list The {@link List} with the <tt>String</tt>s
+	 *
 	 * @return
 	 */
 	private String commonString(List<String> list) {
 		String commonString;
-		if(list.stream().allMatch(st -> st.equalsIgnoreCase(list.get(0))))
+		if (list.stream().allMatch(st -> st.equalsIgnoreCase(list.get(0))))
 			commonString = list.get(0);
 		else
 			commonString = "-";

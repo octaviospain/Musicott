@@ -42,37 +42,37 @@ import java.util.stream.*;
  * instances in their rows, showing almost all of the properties of a <tt>Track</tt> in the columns.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
 	private static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
 
-	private TableColumn <Entry <Integer, Track>, String> nameCol;
-	private TableColumn <Entry <Integer, Track>, String> artistCol;
-	private TableColumn <Entry <Integer, Track>, String> albumCol;
-	private TableColumn <Entry <Integer, Track>, String> genreCol;
-	private TableColumn <Entry <Integer, Track>, String> commentsCol;
-	private TableColumn <Entry <Integer, Track>, String> albumArtistCol;
-	private TableColumn <Entry <Integer, Track>, String> labelCol;
-	private TableColumn <Entry <Integer, Track>, Number> sizeCol;
-	private TableColumn <Entry <Integer, Track>, Number> yearCol;
-	private TableColumn <Entry <Integer, Track>, Number> bitRateCol;
-	private TableColumn <Entry <Integer, Track>, Number> playCountCol;
-	private TableColumn <Entry <Integer, Track>, Number> discNumberCol;
-	private TableColumn <Entry <Integer, Track>, Number> bpmCol;
-	private TableColumn <Entry <Integer, Track>, Number> trackNumberCol;
-	private TableColumn <Entry <Integer, Track>, LocalDateTime> dateModifiedCol;
-	private TableColumn <Entry <Integer, Track>, LocalDateTime> dateAddedCol;
-	private TableColumn <Entry <Integer, Track>, Duration> totalTimeCol;
-	private TableColumn <Entry <Integer, Track>, Boolean> coverCol;
+	private TableColumn<Entry<Integer, Track>, String> nameCol;
+	private TableColumn<Entry<Integer, Track>, String> artistCol;
+	private TableColumn<Entry<Integer, Track>, String> albumCol;
+	private TableColumn<Entry<Integer, Track>, String> genreCol;
+	private TableColumn<Entry<Integer, Track>, String> commentsCol;
+	private TableColumn<Entry<Integer, Track>, String> albumArtistCol;
+	private TableColumn<Entry<Integer, Track>, String> labelCol;
+	private TableColumn<Entry<Integer, Track>, Number> sizeCol;
+	private TableColumn<Entry<Integer, Track>, Number> yearCol;
+	private TableColumn<Entry<Integer, Track>, Number> bitRateCol;
+	private TableColumn<Entry<Integer, Track>, Number> playCountCol;
+	private TableColumn<Entry<Integer, Track>, Number> discNumberCol;
+	private TableColumn<Entry<Integer, Track>, Number> bpmCol;
+	private TableColumn<Entry<Integer, Track>, Number> trackNumberCol;
+	private TableColumn<Entry<Integer, Track>, LocalDateTime> dateModifiedCol;
+	private TableColumn<Entry<Integer, Track>, LocalDateTime> dateAddedCol;
+	private TableColumn<Entry<Integer, Track>, Duration> totalTimeCol;
+	private TableColumn<Entry<Integer, Track>, Boolean> coverCol;
 
 	private TrackTableViewContextMenu trackTableContextMenu;
 	private List<Entry<Integer, Track>> selection;
-	
+
 	private PlayerFacade player;
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings ("unchecked")
 	public TrackTableView() {
 		super();
 		player = PlayerFacade.getInstance();
@@ -93,15 +93,15 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 		getSortOrder().add(dateAddedCol);
 		setRowFactory(tableView -> getTrackTableRowFactory());
 		addEventHandler(KeyEvent.KEY_PRESSED, getKeyPressedEventHandler());
-		
+
 		trackTableContextMenu = new TrackTableViewContextMenu(getSelectionModel().getSelectedItems());
 		setContextMenu(trackTableContextMenu);
 		addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-			if(event.getButton() == MouseButton.SECONDARY)
+			if (event.getButton() == MouseButton.SECONDARY)
 				trackTableContextMenu.show(this, event.getScreenX(), event.getScreenY());
-			else if(event.getButton() == MouseButton.PRIMARY && trackTableContextMenu.isShowing())
+			else if (event.getButton() == MouseButton.PRIMARY && trackTableContextMenu.isShowing())
 				trackTableContextMenu.hide();
-		});		
+		});
 	}
 
 	/**
@@ -113,7 +113,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 	private TableRow<Entry<Integer, Track>> getTrackTableRowFactory() {
 		TableRow<Entry<Integer, Track>> row = new TableRow<>();
 		row.setOnMouseClicked(event -> {
-			if(event.getClickCount() == 2 && !row.isEmpty()) {
+			if (event.getClickCount() == 2 && ! row.isEmpty()) {
 				List<Integer> singleTrackIdList = Collections.singletonList(row.getItem().getKey());
 				player.addTracksToPlayQueue(singleTrackIdList, true);
 			}
@@ -130,28 +130,28 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 	 */
 	private EventHandler<KeyEvent> getKeyPressedEventHandler() {
 		return event -> {
-			if(event.getCode() == KeyCode.ENTER) {
+			if (event.getCode() == KeyCode.ENTER) {
 				List<Integer> selectionIDs = selection.stream().map(Entry::getKey).collect(Collectors.toList());
 				player.addTracksToPlayQueue(selectionIDs, true);
 			}
-			else if(event.getCode() == KeyCode.SPACE) {
+			else if (event.getCode() == KeyCode.SPACE) {
 				String playerStatus = player.getPlayerStatus();
-				if("PLAYING".equals(playerStatus))
+				if ("PLAYING".equals(playerStatus))
 					player.pause();
-				else if("PAUSED".equals(playerStatus))
+				else if ("PAUSED".equals(playerStatus))
 					player.resume();
-				else if("STOPPED".equals(playerStatus))
+				else if ("STOPPED".equals(playerStatus))
 					player.play(true);
 			}
 		};
 	}
 
 	private void initColumns() {
-		Callback <TableColumn <Entry <Integer, Track>,Number>,
-				TableCell<Entry<Integer, Track>, Number>> numericCellFactory = columns -> new NumericTableCell();
+		Callback<TableColumn<Entry<Integer, Track>, Number>, TableCell<Entry<Integer, Track>, Number>>
+				numericCellFactory = columns -> new NumericTableCell();
 
-		Callback <TableColumn <Entry <Integer, Track>, LocalDateTime>,
-				TableCell<Entry<Integer, Track>, LocalDateTime>> dateCellFactory = column -> new DateTimeTableCell();
+		Callback<TableColumn<Entry<Integer, Track>, LocalDateTime>, TableCell<Entry<Integer, Track>, LocalDateTime>>
+				dateCellFactory = column -> new DateTimeTableCell();
 
 		nameCol = new TableColumn<>("Name");
 		nameCol.setPrefWidth(170);
@@ -189,9 +189,10 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
 		dateAddedCol = new TableColumn<>("Added");
 		dateAddedCol.setPrefWidth(110);
-		dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getValue().getDateAdded()));
+		dateAddedCol.setCellValueFactory(
+				cellData -> new SimpleObjectProperty<>(cellData.getValue().getValue().getDateAdded()));
 		dateAddedCol.setStyle(CENTER_RIGHT_STYLE);
-		dateAddedCol.setSortType(TableColumn.SortType.DESCENDING); 	// Default sort of the table
+		dateAddedCol.setSortType(TableColumn.SortType.DESCENDING);    // Default sort of the table
 		dateAddedCol.setCellFactory(dateCellFactory);
 
 		sizeCol = new TableColumn<>("Size");
@@ -202,7 +203,8 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
 		totalTimeCol = new TableColumn<>("Duration");
 		totalTimeCol.setPrefWidth(60);
-		totalTimeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getValue().getTotalTime()));
+		totalTimeCol.setCellValueFactory(
+				cellData -> new SimpleObjectProperty<>(cellData.getValue().getValue().getTotalTime()));
 		totalTimeCol.setStyle(CENTER_RIGHT_STYLE);
 		totalTimeCol.setCellFactory(column -> new DurationTableCell());
 
@@ -231,7 +233,8 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
 		bitRateCol = new TableColumn<>("BitRate");
 		bitRateCol.setPrefWidth(60);
-		bitRateCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getValue().getBitRate()));
+		bitRateCol.setCellValueFactory(
+				cellData -> new SimpleIntegerProperty(cellData.getValue().getValue().getBitRate()));
 		bitRateCol.setCellFactory(columns -> new BitRateTableCell());
 		bitRateCol.setStyle(CENTER_RIGHT_STYLE);
 
@@ -248,46 +251,46 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 	}
 }
 
-class NumericTableCell extends TableCell <Entry <Integer, Track>, Number> {
+class NumericTableCell extends TableCell<Entry<Integer, Track>, Number> {
 
 	@Override
 	protected void updateItem(Number item, boolean empty) {
 		super.updateItem(item, empty);
-		if(empty || item == null)
+		if (empty || item == null)
 			setText("");
-		else if(((int) item) < 1)
+		else if (((int) item) < 1)
 			setText("");
 		else
 			setText("" + item);
 	}
 }
 
-class DateTimeTableCell extends TableCell <Entry <Integer, Track>, LocalDateTime> {
+class DateTimeTableCell extends TableCell<Entry<Integer, Track>, LocalDateTime> {
 
 	@Override
 	protected void updateItem(LocalDateTime item, boolean empty) {
 		super.updateItem(item, empty);
 		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
-		if(item == null)
+		if (item == null)
 			setText("");
 		else
 			setText(item.format(dateFormatter));
 	}
 }
 
-class ByteSizeTableCell extends TableCell <Entry <Integer, Track>,Number> {
+class ByteSizeTableCell extends TableCell<Entry<Integer, Track>, Number> {
 
 	@Override
 	protected void updateItem(Number item, boolean empty) {
 		super.updateItem(item, empty);
-		if(item == null)
+		if (item == null)
 			setText("");
 		else
 			setText(Utils.byteSizeString(item.longValue(), 1));
 	}
 }
 
-class DurationTableCell extends TableCell <Entry <Integer, Track>, Duration> {
+class DurationTableCell extends TableCell<Entry<Integer, Track>, Duration> {
 
 	@Override
 	protected void updateItem(Duration item, boolean empty) {
@@ -300,25 +303,22 @@ class DurationTableCell extends TableCell <Entry <Integer, Track>, Duration> {
 			int seconds = (int) item.subtract(Duration.minutes(minutes)).subtract(Duration.hours(hours)).toSeconds();
 
 			String text = "";
-			if(hours > 0)
+			if (hours > 0)
 				text += Integer.toString(hours) + ":";
-
-			if(minutes <10)
+			if (minutes < 10)
 				text += "0" + Integer.toString(minutes) + ":";
 			else
 				text += Integer.toString(minutes) + ":";
-
-			if(seconds < 10)
+			if (seconds < 10)
 				text += "0" + Integer.toString(seconds);
 			else
 				text += Integer.toString(seconds);
-
 			setText(text);
 		}
 	}
 }
 
-class BitRateTableCell extends TableCell <Entry <Integer, Track>, Number> {
+class BitRateTableCell extends TableCell<Entry<Integer, Track>, Number> {
 
 	@Override
 	protected void updateItem(Number item, boolean empty) {

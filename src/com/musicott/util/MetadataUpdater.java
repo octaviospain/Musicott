@@ -39,18 +39,18 @@ import java.nio.file.*;
  * to the audio metadata of the file.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
 public class MetadataUpdater {
-	
+
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	
+
 	private boolean succeeded;
 	private Track track;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
-	
+
 	public MetadataUpdater(Track track) {
 		this.track = track;
 	}
@@ -59,6 +59,7 @@ public class MetadataUpdater {
 	 * Writes the {@link Track} information to an audio file metadata.
 	 *
 	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
+	 *
 	 * @throws TrackUpdateException if something went bad in the operation.
 	 */
 	public boolean writeAudioMetadata() {
@@ -75,7 +76,8 @@ public class MetadataUpdater {
 			}
 			setTrackFieldsToTag(audio.getTag());
 			audio.commit();
-		} catch (IOException | CannotReadException | ReadOnlyFileException |
+		}
+		catch (IOException | CannotReadException | ReadOnlyFileException |
 				TagException | CannotWriteException | InvalidAudioFrameException exception) {
 			LOG.warn("Error updating metadata of {}", track, exception);
 			String errorText = "Error writing metadata of " + track.getArtist() + " - " + track.getName();
@@ -84,9 +86,9 @@ public class MetadataUpdater {
 		succeeded = true;
 		return succeeded;
 	}
-	
+
 	private void setTrackFieldsToTag(Tag tag) throws FieldDataInvalidException {
-	//	tag.setEncoding(Charset.forName("UTF-8"));	//TODO when jaudiotagger supports it
+		//	tag.setEncoding(Charset.forName("UTF-8"));	//TODO when jaudiotagger supports it
 		tag.setField(FieldKey.TITLE, track.getName());
 		tag.setField(FieldKey.ALBUM, track.getAlbum());
 		tag.setField(FieldKey.ALBUM_ARTIST, track.getAlbumArtist());
@@ -100,8 +102,9 @@ public class MetadataUpdater {
 		tag.deleteField(FieldKey.DISC_TOTAL);
 		tag.setField(FieldKey.YEAR, Integer.toString(track.getYear()));
 		tag.setField(FieldKey.BPM, Integer.toString(track.getBpm()));
-		if("m4a".equals(track.getFileFormat()))
+		if ("m4a".equals(track.getFileFormat())) {
 			((Mp4Tag) tag).setField(Mp4FieldKey.COMPILATION, track.isPartOfCompilation() ? "1" : "0");
+		}
 		tag.setField(FieldKey.IS_COMPILATION, Boolean.toString(track.isPartOfCompilation()));
 	}
 
@@ -109,14 +112,16 @@ public class MetadataUpdater {
 	 * Saves a new cover image to the audio file metadata of the {@link Track}
 	 *
 	 * @param coverFile The {@link File} of the new cover image to save
+	 *
 	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
 	 */
 	public boolean updateCover(File coverFile) {
 		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
 		File trackFile = trackPath.toFile();
 		boolean result = updateCoverOnTag(trackFile, coverFile);
-		if(result)
+		if (result) {
 			track.hasCoverProperty().set(true);
+		}
 		return result;
 	}
 
@@ -130,7 +135,8 @@ public class MetadataUpdater {
 			tag.addField(cover);
 			audioFile.commit();
 			result = true;
-		} catch (IOException | TagException | CannotWriteException | CannotReadException |
+		}
+		catch (IOException | TagException | CannotWriteException | CannotReadException |
 				InvalidAudioFrameException | ReadOnlyFileException exception) {
 			LOG.warn("Error saving cover image of {}", track, exception);
 			String errorText = "Error saving cover image of " + track.getArtist() + " - " + track.getName();
@@ -150,14 +156,14 @@ public class MetadataUpdater {
 		File coverFile = null;
 		String[] acceptedMimeTypes = {"jpg", "jpeg", "png"};
 		String trackFolder = track.getFileFolder();
-		for(String mimeType: acceptedMimeTypes) {
+		for (String mimeType : acceptedMimeTypes) {
 			File file = new File(trackFolder + "/cover." + mimeType);
-			if(file.exists()) {
+			if (file.exists()) {
 				coverFile = file;
 				break;
 			}
 		}
-		if(coverFile != null) {
+		if (coverFile != null) {
 			track.setCoverImage(coverFile);
 			found = updateCover(coverFile);
 		}

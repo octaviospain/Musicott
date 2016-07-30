@@ -32,12 +32,12 @@ import java.util.concurrent.*;
  * flow between concurrent task threads in the application.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class TaskDemon {
-	
+
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	
+
 	private static TaskDemon instance;
 	private ParseTask parseTask;
 	private ItunesImportTask itunesImportTask;
@@ -45,17 +45,17 @@ public class TaskDemon {
 	private Queue<Track> tracksToProcessQueue;
 	private WaveformTask waveformTask;
 	private String alreadyImportingErrorMessage = "There is already an import task running." +
-												  "Wait for it to perform another import task.";
+													"Wait for it to perform another import task.";
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
-	
+
 	private TaskDemon() {
 		tracksToProcessQueue = new ArrayDeque<>();
 		waveformSemaphore = new Semaphore(0);
 	}
-	
+
 	public static TaskDemon getInstance() {
-		if(instance == null)
+		if (instance == null)
 			instance = new TaskDemon();
 		return instance;
 	}
@@ -67,8 +67,10 @@ public class TaskDemon {
 	 * @param itunesLibraryPath The path where the <tt>iTunes Music Library.xml</tt> file is located.
 	 */
 	public void importFromItunesLibrary(String itunesLibraryPath) {
-		if((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning()))
+		if ((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask
+				.isRunning())) {
 			errorDemon.showErrorDialog(alreadyImportingErrorMessage);
+		}
 		else {
 			itunesImportTask = new ItunesImportTask(itunesLibraryPath);
 			Thread itunesThread = new Thread(itunesImportTask, "Parse Itunes Task");
@@ -83,10 +85,10 @@ public class TaskDemon {
 	 * to the application.
 	 *
 	 * @param filesToImport The {@link List} of the files to import.
-	 * @param playAtTheEnd Specifies whether the application should play music at the end of the importation.
+	 * @param playAtTheEnd  Specifies whether the application should play music at the end of the importation.
 	 */
 	public void importFiles(List<File> filesToImport, boolean playAtTheEnd) {
-		if((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning()))
+		if ((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning()))
 			errorDemon.showErrorDialog(alreadyImportingErrorMessage);
 		else {
 			parseTask = new ParseTask(filesToImport, playAtTheEnd);
@@ -95,9 +97,9 @@ public class TaskDemon {
 			parseThread.start();
 		}
 	}
-	
+
 	public synchronized void analyzeTrackWaveform(Track trackToAnalyze) {
-		if(waveformTask == null) {
+		if (waveformTask == null) {
 			waveformTask = new WaveformTask(waveformSemaphore);
 			waveformTask.start();
 		}
@@ -105,7 +107,7 @@ public class TaskDemon {
 		waveformSemaphore.release();
 		LOG.debug("Added track {} to waveform analyze queue", trackToAnalyze);
 	}
-	
+
 	protected synchronized Track getNextTrackToAnalyzeWaveform() {
 		return tracksToProcessQueue.poll();
 	}

@@ -37,7 +37,7 @@ import java.util.*;
  * audio files and add them to the {@link MusicLibrary}.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class ParseTask extends Task<Void> {
 
@@ -67,12 +67,12 @@ public class ParseTask extends Task<Void> {
 		filesToParse.addAll(files);
 		totalFiles = filesToParse.size();
 	}
-	
+
 	@Override
 	protected Void call() {
 		startMillis = System.currentTimeMillis();
-		for(File fileToParse: filesToParse) {
-			if(isCancelled())
+		for (File fileToParse : filesToParse) {
+			if (isCancelled())
 				break;
 			parseFile(fileToParse);
 		}
@@ -84,16 +84,17 @@ public class ParseTask extends Task<Void> {
 		if (currentTrack != null)
 			parsedTracks.put(currentTrack.getTrackId(), currentTrack);
 
-		double progress = (double) ++currentFiles / totalFiles;
+		double progress = (double) ++ currentFiles / totalFiles;
 		String statusMessage = "Imported " + Integer.toString(currentFiles) + " of " + Integer.toString(totalFiles);
 		Platform.runLater(() -> updateTaskProgressOnView(progress, statusMessage));
 	}
-	
+
 	private Track parseFileToTrack(File file) {
 		Track newTrack = null;
 		try {
 			newTrack = MetadataParser.createTrack(file);
-		} catch (TrackParseException exception) {
+		}
+		catch (TrackParseException exception) {
 			LOG.error("Error parsing file {}: ", file, exception.getCause());
 			parseErrors.add(file + ": " + exception.getMessage());
 		}
@@ -108,7 +109,7 @@ public class ParseTask extends Task<Void> {
 		navigationController.setStatusProgress(progress);
 		navigationController.setStatusMessage(message);
 	}
-	
+
 	@Override
 	protected void succeeded() {
 		super.succeeded();
@@ -119,23 +120,24 @@ public class ParseTask extends Task<Void> {
 		addTracksToMusicLibraryThread.start();
 		stageDemon.showIndeterminateProgress();
 
-		if(!parseErrors.isEmpty())
+		if (! parseErrors.isEmpty())
 			errorDemon.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
-		if(playAtTheEnd)
+		if (playAtTheEnd)
 			player.addTracksToPlayQueue(parsedTracks.keySet(), true);
 	}
 
 	public void addTracksToMusicLibrary() {
-		Platform.runLater(() -> updateTaskProgressOnView(-1, ""));
+		Platform.runLater(() -> updateTaskProgressOnView(- 1, ""));
 		musicLibrary.addTracks(parsedTracks);
 		Platform.runLater(stageDemon::closeIndeterminateProgress);
 
 		double endMillis = System.currentTimeMillis() - startMillis;
 		double totalTaskTime = Duration.millis(endMillis).toSeconds();
-		String statusMessage = Integer.toString(parsedTracks.size()) + " in (" + Double.toString(totalTaskTime) + ") secs";
+		String statusMessage = Integer.toString(parsedTracks.size()) + " in (" + Double
+				.toString(totalTaskTime) + ") secs";
 		Platform.runLater(() -> updateTaskProgressOnView(0.0, statusMessage));
 	}
-	
+
 	@Override
 	protected void cancelled() {
 		super.cancelled();

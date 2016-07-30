@@ -23,14 +23,14 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
-@XmlRootElement(name = "error")
+@XmlRootElement (name = "error")
 public class LastFmError {
 
 	private String code;
 	private String message;
-	
+
 	public LastFmError() {
 	}
 
@@ -38,7 +38,7 @@ public class LastFmError {
 	public String getMessage() {
 		return this.message;
 	}
-	
+
 	public void setMessage(String message) {
 		this.message = message;
 	}
@@ -47,7 +47,7 @@ public class LastFmError {
 	public String getCode() {
 		return this.code;
 	}
-	
+
 	public void setCode(String code) {
 		this.code = code;
 	}

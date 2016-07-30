@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 @XmlRootElement
 public class LastFmAlbumArtist {
@@ -32,20 +32,20 @@ public class LastFmAlbumArtist {
 	private String corrected;
 	@XmlValue
 	private String value;
-	
+
 	public String getCorrected() {
 		return corrected;
 	}
-	
+
 	public void setCorrected(String corrected) {
 		this.corrected = corrected;
 	}
-	
+
 	public String getValue() {
 		return value;
 	}
-	
+
 	public void setValue(String value) {
 		this.value = value;
-	}	
+	}
 }

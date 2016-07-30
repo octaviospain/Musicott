@@ -11,7 +11,7 @@ import com.musicott.services.*;
  * references to the singleton classes.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  * @since 0.9
  */
 public interface MusicottController {
@@ -20,7 +20,7 @@ public interface MusicottController {
 	String IMAGES_PATH = "/images/";
 
 	String ROOT_LAYOUT = LAYOUTS_PATH + "RootLayout.fxml";
-	String NAVIGATION_LAYOUT = LAYOUTS_PATH +  "NavigationLayout.fxml";
+	String NAVIGATION_LAYOUT = LAYOUTS_PATH + "NavigationLayout.fxml";
 	String PRELOADER_LAYOUT = LAYOUTS_PATH + "PreloaderPromptLayout.fxml";
 	String EDIT_LAYOUT = LAYOUTS_PATH + "EditLayout.fxml";
 	String PLAYQUEUE_LAYOUT = LAYOUTS_PATH + "PlayQueueLayout.fxml";

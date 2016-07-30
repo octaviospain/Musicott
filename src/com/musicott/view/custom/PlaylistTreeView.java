@@ -25,6 +25,7 @@ import javafx.beans.property.*;
 import javafx.scene.control.*;
 
 import java.util.*;
+import java.util.stream.*;
 
 /**
  * Class that extends from a {@link TreeView} representing a list of
@@ -32,7 +33,7 @@ import java.util.*;
  * playlists inside of them.
  *
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
 public class PlaylistTreeView extends TreeView<Playlist> {
 
@@ -56,20 +57,20 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 
 		selectedPlaylistProperty = new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
 		getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-		getSelectionModel().selectedItemProperty().addListener(
-				(obs, oldItem, newItem) -> {
-					if(newItem != null)
-						selectedPlaylistProperty.set(Optional.of(newItem.getValue()));
-					else
-						selectedPlaylistProperty.set(Optional.empty());
-				});
-		selectedPlaylistProperty.addListener((obs, oldSelectedPlaylist, newSelectedPlaylist) ->
-			newSelectedPlaylist.ifPresent(playlist -> {
+		getSelectionModel().selectedItemProperty().addListener((obs, oldItem, newItem) -> {
+			if (newItem != null)
+				selectedPlaylistProperty.set(Optional.of(newItem.getValue()));
+			else
+				selectedPlaylistProperty.set(Optional.empty());
+		});
+		selectedPlaylistProperty.addListener((obs, oldSelectedPlaylist, newSelectedPlaylist) -> {
+			if (newSelectedPlaylist.isPresent()) {
+				Playlist playlist = newSelectedPlaylist.get();
 				playlist.showTracksOnTable();
 				stageDemon.getNavigationController().setNavigationMode(NavigationMode.PLAYLIST);
-			})
-		);
-		
+			}
+		});
+
 		contextMenu = new PlaylistTreeViewContextMenu();
 		setContextMenu(contextMenu);
 		createPlaylistsItems();
@@ -83,13 +84,13 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 			musicLibrary.getPlaylists().forEach(playlist -> {
 				if (playlist.isFolder()) {
 					TreeItem<Playlist> folderItem = new TreeItem<>(playlist);
-					playlist.getContainedPlaylists().forEach(childPlaylist -> folderItem.getChildren().add(new TreeItem<>(childPlaylist)));
+					playlist.getContainedPlaylists()
+							.forEach(childPlaylist -> folderItem.getChildren().add(new TreeItem<>(childPlaylist)));
 
 					root.getChildren().add(folderItem);
 				}
-				else {
+				else
 					root.getChildren().add(new TreeItem<>(playlist));
-				}
 			});
 		}
 	}
@@ -109,13 +110,13 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 	 * Adds a new {@link TreeItem} given a {@link Playlist} that has to be
 	 * included in a folder <tt>Playlist</tt>.
 	 *
-	 * @param folder The folder playlist
+	 * @param folder           The folder playlist
 	 * @param newPlaylistChild The playlist to add to the folder playlist
 	 */
 	public void addPlaylistChild(Playlist folder, Playlist newPlaylistChild) {
-		TreeItem<Playlist> folderTreeItem = root.getChildren().stream()
-				.filter(child -> child.getValue().equals(folder))
-				.findFirst().get();
+		TreeItem<Playlist> folderTreeItem = root.getChildren().stream().filter(child -> child.getValue().equals
+				(folder))
+												.findFirst().get();
 
 		TreeItem<Playlist> newPlaylistItem = new TreeItem<>(newPlaylistChild);
 		folderTreeItem.getChildren().add(newPlaylistItem);
@@ -133,38 +134,35 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 			musicLibrary.deletePlaylist(selectedPlaylist);
 			boolean removed = root.getChildren().removeIf(treeItem -> treeItem.getValue().equals(selectedPlaylist));
 
-			if(!removed)
+			if (! removed)
 				deletePlaylistInSomeFolder(selectedPlaylist);
 
-			selectFirstPlaylistOrAllSongsMode();
+			if (root.getChildren().isEmpty())
+				stageDemon.getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
 		});
 	}
 
 	/**
 	 * Deletes the {@link TreeItem} that has the value of the given {@link Playlist}
-	 * that is a child of some <tt>TreeItem</tt> of the root, a folder playlist.
+	 * that is a child of some <tt>TreeItem</tt> of the root, a folder playlist;
+	 * and the playlist from the the folder.
 	 *
 	 * @param playlistToDelete The playlist to delete
 	 */
 	private void deletePlaylistInSomeFolder(Playlist playlistToDelete) {
-		root.getChildren().stream().filter(playlist -> !playlist.getChildren().isEmpty())
-				.forEach(folder -> {
-					ListIterator<TreeItem<Playlist>> childrenIterator = folder.getChildren().listIterator();
-					while (childrenIterator.hasNext())
-						if (childrenIterator.next().getValue().equals(playlistToDelete))
-							childrenIterator.remove();
-				});
-	}
-
-	/**
-	 * Selects the first item on the {@link TreeView}, or if it hasn't any,
-	 * changes the view to show all the songs.
-	 */
-	private void selectFirstPlaylistOrAllSongsMode() {
-		if(root.getChildren().isEmpty())
-			stageDemon.getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
-		else
-			getSelectionModel().selectFirst();
+		List<TreeItem<Playlist>> notEmptyFolders = root.getChildren().stream()
+													   .filter(playlist -> ! playlist.getChildren().isEmpty())
+													   .collect(Collectors.toList());
+	search:
+		for (TreeItem<Playlist> playlistTreeItem : notEmptyFolders) {
+			ListIterator<TreeItem<Playlist>> childrenIterator = playlistTreeItem.getChildren().listIterator();
+			while (childrenIterator.hasNext()) {
+				if (childrenIterator.next().getValue().equals(playlistToDelete)) {
+					childrenIterator.remove();
+					break search;
+				}
+			}
+		}
 	}
 
 	public ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {

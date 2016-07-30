@@ -23,14 +23,14 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- * @version 0.9
+ * @version 0.9-b
  */
-@XmlRootElement(name = "track")
+@XmlRootElement (name = "track")
 public class LastFmTrack {
 
 	private String corrected;
 	private String value;
-	
+
 	@XmlAttribute
 	public String getCorrected() {
 		return corrected;
@@ -39,13 +39,13 @@ public class LastFmTrack {
 	public void setCorrected(String corrected) {
 		this.corrected = corrected;
 	}
-	
+
 	@XmlValue
 	public String getValue() {
 		return value;
 	}
-	
+
 	public void setValue(String value) {
 		this.value = value;
-	}	
+	}
 }
