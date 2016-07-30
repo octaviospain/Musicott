@@ -25,10 +25,10 @@ import java.io.File;
 
 import org.junit.Test;
 
-import com.musicott.util.Utils;
+import com.transgressoft.musicott.util.Utils;
 
 /**
- * Tests for {@link com.musicott.util.Utils#getAllFilesInFolder} in whith the folder tree
+ * Tests for {@link com.transgressoft.musicott.util.Utils#getAllFilesInFolder} in whith the folder tree
  * to scan has 1 level height like:
  * 
  *   -rootFolder/

@@ -14,19 +14,52 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
-package tests.unit;
+package com.transgressoft.musicott.player;
 
-import org.junit.runner.*;
-import org.junit.runners.*;
-import org.junit.runners.Suite.*;
+import com.transgressoft.musicott.model.*;
 
 /**
  * @author Octavio Calleya
- *
  */
-@RunWith(Suite.class)
-@SuiteClasses({LibrarySerializeTest.class, ParseUpdateTest.class})
-public class UnitTestSuit {
+public class FlacPlayer implements TrackPlayer {
+
+	public FlacPlayer() {
+		//TODO
+	}
+
+	@Override
+	public String getStatus() {
+		return "";
+	}
+
+	@Override
+	public void setTrack(Track track) {
+	}
+
+	@Override
+	public void setVolume(double value) {
+	}
+
+	@Override
+	public void seek(double seekValue) {
+	}
+
+	@Override
+	public void play() {
+	}
+
+	@Override
+	public void pause() {
+	}
+
+	@Override
+	public void stop() {
+	}
+
+	@Override
+	public void dispose() {
+	}
 }

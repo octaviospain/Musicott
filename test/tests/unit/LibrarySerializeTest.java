@@ -19,8 +19,8 @@
 package tests.unit;
 
 import com.cedarsoftware.util.io.*;
-import com.musicott.model.*;
-import com.musicott.util.*;
+import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.*;
 import com.sun.javafx.collections.*;
 import javafx.collections.*;
 import org.junit.*;

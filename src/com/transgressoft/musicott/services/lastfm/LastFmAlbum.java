@@ -14,19 +14,38 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
-package tests.unit;
+package com.transgressoft.musicott.services.lastfm;
 
-import org.junit.runner.*;
-import org.junit.runners.*;
-import org.junit.runners.Suite.*;
+import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @version 0.9-b
  */
-@RunWith(Suite.class)
-@SuiteClasses({LibrarySerializeTest.class, ParseUpdateTest.class})
-public class UnitTestSuit {
+@XmlRootElement (name = "album")
+public class LastFmAlbum {
+
+	@XmlAttribute
+	private String corrected;
+	@XmlValue
+	private String value;
+
+	public String getCorrected() {
+		return corrected;
+	}
+
+	public void setCorrected(String corrected) {
+		this.corrected = corrected;
+	}
+
+	public String getValue() {
+		return value;
+	}
+
+	public void setValue(String value) {
+		this.value = value;
+	}
 }

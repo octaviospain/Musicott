@@ -14,19 +14,26 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
-package tests.unit;
+package com.transgressoft.musicott.util;
 
-import org.junit.runner.*;
-import org.junit.runners.*;
-import org.junit.runners.Suite.*;
+import com.cedarsoftware.util.io.*;
+import javafx.collections.*;
 
 /**
- * @author Octavio Calleya
+ * Class needed by the <tt>Json-io</tt> library in order to deserialize an {@link ObservableList}.
  *
+ * @author Octavio Calleya
+ * @version 0.9-b
+ * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
  */
-@RunWith(Suite.class)
-@SuiteClasses({LibrarySerializeTest.class, ParseUpdateTest.class})
-public class UnitTestSuit {
+public class ObservableListWrapperCreator implements JsonReader.ClassFactory {
+
+	@SuppressWarnings ("rawtypes")
+	@Override
+	public Object newInstance(Class c) {
+		return FXCollections.observableArrayList();
+	}
 }

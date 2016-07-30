@@ -18,8 +18,8 @@
 
 package tests.unit;
 
-import com.musicott.model.*;
-import com.musicott.util.*;
+import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.*;
 import javafx.beans.property.*;
 import javafx.util.*;
 import org.jaudiotagger.audio.*;

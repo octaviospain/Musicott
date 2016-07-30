@@ -14,19 +14,30 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
-package tests.unit;
-
-import org.junit.runner.*;
-import org.junit.runners.*;
-import org.junit.runners.Suite.*;
+package com.transgressoft.musicott.util;
 
 /**
- * @author Octavio Calleya
+ * This exception is thrown if an attempt to parse a file to create
+ * a {@link com.transgressoft.musicott.model.Track} instance was unsuccessful.
  *
+ * @author Octavio Calleya
+ * @version 0.9-b
+ * @since 0.9
  */
-@RunWith(Suite.class)
-@SuiteClasses({LibrarySerializeTest.class, ParseUpdateTest.class})
-public class UnitTestSuit {
+public class TrackParseException extends Exception {
+
+	public TrackParseException() {
+		super();
+	}
+
+	public TrackParseException(String message) {
+		super(message);
+	}
+
+	public TrackParseException(String message, Throwable cause) {
+		super(message, cause);
+	}
 }

@@ -18,7 +18,7 @@
 
 package tests.unit;
 
-import com.musicott.model.*;
+import com.transgressoft.musicott.model.*;
 import org.jaudiotagger.audio.*;
 import org.jaudiotagger.tag.*;
 import org.jaudiotagger.tag.images.*;
