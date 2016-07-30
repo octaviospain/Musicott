@@ -57,7 +57,7 @@ public class MusicottMenuBar extends MenuBar {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	private static final String MUSICOTT_GITHUB_LINK = "https://github.com/octaviospain/Musicott/";
-	private static final String ABOUT_MUSICOTT_FIRST_LINE = " Version 0.8.0\n\n Copyright © 2015 Octavio Calleya.";
+	private static final String ABOUT_MUSICOTT_FIRST_LINE = " Version 0.9-b\n\n Copyright © 2015 Octavio Calleya.";
 	private static final String ABOUT_MUSICOTT_SECOND_LINE = " Licensed under GNU GPLv3. This product includes\n" + " " +
 																"software developed by other open source projects.";
 
