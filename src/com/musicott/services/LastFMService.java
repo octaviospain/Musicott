@@ -14,190 +14,201 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.services;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import com.musicott.model.*;
+import com.musicott.services.lastfm.*;
+import com.sun.jersey.api.client.*;
+import com.sun.jersey.core.util.*;
+import org.slf4j.*;
 
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.*;
+import java.security.*;
+import java.util.*;
+import java.util.Map.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.model.Track;
-import com.musicott.services.ServiceManager.ServicesPreferences;
-import com.musicott.services.lastfm.LastFMError;
-import com.musicott.services.lastfm.LastFMResponse;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
+import static javax.ws.rs.HttpMethod.*;
 
 /**
- * @author Octavio Calleya
+ * Performs the usage of the LastFM API.
  *
+ * @author Octavio Calleya
+ * @version 0.9-b
+ * @see <a href="http://www.last.fm/es/api/scrobbling">LastFM API documentation</a>
  */
-public class LastFMService {
+public class LastFmService {
 
+	private static final String API_ROOT_URL = "https://ws.audioscrobbler.com/2.0/";
+	private static final String OK = "ok";
+	private static final String FAILED = "failed";
+	private static final String UPDATE_PLAYING = "track.updateNowPlaying";
+	private static final String TRACK_SCROBBLE = "track.scrobble";
+	private static final String MOBILE_SESSION = "auth.getMobileSession";
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	/**
 	 * The API Key for the application submitted in LastFM.
 	 * Retrieved from config file for security reasons
 	 */
-	private String API_KEY;
+	private final String API_KEY;
+
 	/**
 	 * The API Secret for the application submitted in LastFM.
 	 * Retrieved from config file for security reasons
 	 */
-	private String API_SECRET;
-	private final String API_ROOT_URL = "https://ws.audioscrobbler.com/2.0/";
+	private final String API_SECRET;
+
 	private final String USERNAME;
 	private final String PASSWORD;
-	private ServicesPreferences servicePreferences;
 	private String sessionKey;
+
+	private LastFmPreferences servicesPreferences;
 	private Client client;
 	private WebResource resource;
-	
-	public LastFMService() {
+
+	public LastFmService() {
 		client = Client.create();
 		resource = client.resource(API_ROOT_URL);
-		servicePreferences = ServiceManager.getInstance().getServicesPreferences();
-		USERNAME = servicePreferences.getLastFMUsername();
-		PASSWORD = servicePreferences.getLastFMPassword();
-		sessionKey = servicePreferences.getLastFMSessionKey();
-		API_KEY = servicePreferences.getAPIKey();
-		API_SECRET = servicePreferences.getAPISecret();
+		servicesPreferences = ServiceDemon.getInstance().getLastFmPreferences();
+		USERNAME = servicesPreferences.getLastFmUsername();
+		PASSWORD = servicesPreferences.getLastFmPassword();
+		sessionKey = servicesPreferences.getLastFmSessionKey();
+		API_KEY = servicesPreferences.getApiKey();
+		API_SECRET = servicesPreferences.getApiSecret();
 	}
-	
-	public LastFMResponse updateNowPlaying(Track track) {
-		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-        queryParams.add("artist", track.getArtist());
-        queryParams.add("track", track.getName());
-        queryParams.add("sk", sessionKey);
-        queryParams.add("method", "track.updateNowPlaying");
-        queryParams.add("api_key", API_KEY);
-        queryParams.add("sk", sessionKey);
-        queryParams.add("password", PASSWORD);
-        queryParams.add("username", USERNAME);
-        queryParams.add("api_sig", buildSignature(queryParams));
-        return makeRequest(queryParams, HttpMethod.POST);
+
+	public boolean isApiConfigurationPresent() {
+		return API_KEY != null && API_SECRET != null;
 	}
-	
-	public LastFMResponse scrobble(Track track) {
+
+	public LastFmResponse updateNowPlaying(Track track) {
 		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
 		queryParams.add("artist", track.getArtist());
 		queryParams.add("track", track.getName());
-		queryParams.add("timestamp", ""+System.currentTimeMillis()/1000);
-        queryParams.add("method", "track.scrobble");
-        queryParams.add("api_key", API_KEY);
-        queryParams.add("sk", sessionKey);
-        queryParams.add("password", PASSWORD);
-        queryParams.add("username", USERNAME);
-        queryParams.add("api_sig", buildSignature(queryParams));
-    	return makeRequest(queryParams, HttpMethod.POST);
+		addApiParams(queryParams, UPDATE_PLAYING);
+		return makeRequest(queryParams, POST);
 	}
-	
-	public LastFMResponse scrobbleBatch(Map<Track, Integer> trackBatch) {
-		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-		int i = 0;
-		for(Track t: trackBatch.keySet()) {
-			queryParams.add("artist["+i+"]", t.getArtist());
-			queryParams.add("track"+i+"]", t.getName());
-			queryParams.add("timestamp"+i+"]", ""+trackBatch.get(t));
-			i++;
+
+	private void addApiParams(MultivaluedMap<String, String> queryParams, String apiMethod) {
+		queryParams.add("method", apiMethod);
+		queryParams.add("api_key", API_KEY);
+		queryParams.add("sk", sessionKey);
+		queryParams.add("password", PASSWORD);
+		queryParams.add("username", USERNAME);
+		queryParams.add("api_sig", buildSignature(queryParams));
+	}
+
+	private LastFmResponse makeRequest(MultivaluedMap<String, String> params, String httpMethod) {
+		LastFmResponse lfmResponse = null;
+		ClientResponse clientResponse = null;
+		try {
+			if (httpMethod.equals(GET))
+				clientResponse = resource.queryParams(params).get(ClientResponse.class);
+			else if (httpMethod.equals(POST))
+				clientResponse = resource.queryParams(params).post(ClientResponse.class);
+
+			if (clientResponse != null) {
+				LOG.debug("LastFM API " + httpMethod + " petition status: {}", clientResponse.getStatus());
+				lfmResponse = clientResponse.getEntity(LastFmResponse.class);
+			}
 		}
-        queryParams.add("method", "track.scrobble");
-        queryParams.add("api_key", API_KEY);
-        queryParams.add("sk", sessionKey);
-        queryParams.add("password", PASSWORD);
-        queryParams.add("username", USERNAME);
-        queryParams.add("api_sig", buildSignature(queryParams));
-    	return makeRequest(queryParams, HttpMethod.POST);
-	}
-	
-	public LastFMResponse getSession() {
-		LastFMResponse lfm;
-		if(sessionKey == null) {
-			MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-	        queryParams.add("method", "auth.getMobileSession");
-	        queryParams.add("api_key", API_KEY);
-	        queryParams.add("password", PASSWORD);
-	        queryParams.add("username", USERNAME);
-	        queryParams.add("api_sig", buildSignature(queryParams));
-	        lfm = makeRequest(queryParams, HttpMethod.POST);
-	        if(lfm.getStatus().equals("ok")) {
-	        	sessionKey = lfm.getSession().getSessionKey();
-	        	servicePreferences.setLastFMSessionkey(sessionKey);
-	        }
+		catch (RuntimeException exception) {
+			lfmResponse = buildLastFmErrorResponse("U1", exception.getMessage());
+			LOG.warn("LastFM API " + httpMethod + " petition failed: {}", exception);
 		}
-		else {
-			lfm = new LastFMResponse();
-			lfm.setStatus("ok");
+		finally {
+			if (clientResponse != null)
+				clientResponse.close();
 		}
-		return lfm;
-	}
-	
-	public boolean isValidAPIConfig() {
-		return API_KEY != null && API_SECRET != null;
-	}
-	
-	private LastFMResponse makeRequest(MultivaluedMap<String, String> params, String method) {
-		LastFMResponse lfmResponse = null;
-    	ClientResponse response = null;
-        try {
-        	if(method.equals(HttpMethod.GET))
-	        		response = resource.queryParams(params).get(ClientResponse.class);
-	        else if(method.equals(HttpMethod.POST))
-	        		response = resource.queryParams(params).post(ClientResponse.class);			
-	     	LOG.debug("LastFM API GET petition status: {}", response.getStatus());
-	     	lfmResponse = response.getEntity(LastFMResponse.class);
-        } catch (RuntimeException e) {
-    		lfmResponse = new LastFMResponse();
-    		lfmResponse.setStatus("failed");
-    		LastFMError lfmError = new LastFMError();
-    		lfmError.setCode("U1");
-    		lfmError.setMessage(e.getMessage());
-    		lfmResponse.setError(lfmError);
-        } finally {
-        	if(response != null)
-        		response.close();
-        }
-        if(lfmResponse == null) {
-        	LastFMError lastFMError = new LastFMError();
-        	lfmResponse = new LastFMResponse();
-        	lastFMError.setCode(""+response.getStatus());
-        	lastFMError.setMessage("LastFM "+method+" petition error "+response.getStatus());
-        	lfmResponse.setStatus("failed");
-        	lfmResponse.setError(lastFMError);
-        }
+
+		if (lfmResponse == null) {
+			String statusString = Integer.toString(clientResponse.getStatus());
+			String errorMessage = "LastFM " + httpMethod + " petition error " + statusString;
+			lfmResponse = buildLastFmErrorResponse(statusString, errorMessage);
+		}
 		return lfmResponse;
 	}
-	
+
 	private String buildSignature(MultivaluedMap<String, String> params) {
 		String sig = "";
-		Set<String> sortedParams = new TreeSet<String>(params.keySet());
-		for(String key: sortedParams)
-			sig += key+params.getFirst(key);
+		Set<String> sortedParams = new TreeSet<>(params.keySet());
+		for (String key : sortedParams)
+			sig += key + params.getFirst(key);
 		sig += API_SECRET;
-		return MD5(sig);
+		return getMd5Hash(sig);
 	}
-	
-	private String MD5(String message) {
+
+	private LastFmResponse buildLastFmErrorResponse(String status, String message) {
+		LastFmError lfmError = new LastFmError();
+		lfmError.setCode(status);
+		lfmError.setMessage(message);
+
+		LastFmResponse lfmResponse = new LastFmResponse();
+		lfmResponse.setStatus(FAILED);
+		lfmResponse.setError(lfmError);
+		return lfmResponse;
+	}
+
+	private String getMd5Hash(String message) {
 		String md5 = null;
 		try {
-			MessageDigest md = MessageDigest.getInstance("MD5");
-			byte[] array = md.digest(message.getBytes());
-			StringBuffer sb = new StringBuffer();
-			for (int i=0; i<array.length; i++)
-				sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
-			md5 = sb.toString();
-	    } catch (NoSuchAlgorithmException e) {}
-	    return md5;
+			MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+			byte[] array = messageDigest.digest(message.getBytes());
+			StringBuilder stringBuilder = new StringBuilder();
+			for (int i = 0; i < array.length; i++)
+				stringBuilder.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
+			md5 = stringBuilder.toString();
+		}
+		catch (NoSuchAlgorithmException e) {
+		}
+		return md5;
+	}
+
+	public LastFmResponse scrobbleTrack(Track track) {
+		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+		queryParams.add("artist", track.getArtist());
+		queryParams.add("track", track.getName());
+		queryParams.add("timestamp", Long.toString(System.currentTimeMillis() / 1000));
+		addApiParams(queryParams, TRACK_SCROBBLE);
+		return makeRequest(queryParams, POST);
+	}
+
+	public LastFmResponse scrobbleTrackBatch(Map<Integer, Track> trackBatch) {
+		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+		int i = 0;
+		for (Entry<Integer, Track> entry : trackBatch.entrySet()) {
+			int timeStamp = entry.getKey();
+			Track track = entry.getValue();
+			queryParams.add("artist[" + i + "]", track.getArtist());
+			queryParams.add("track[" + i + "]", track.getName());
+			queryParams.add("timestamp[" + i + "]", Integer.toString(timeStamp));
+			i++;
+		}
+		addApiParams(queryParams, TRACK_SCROBBLE);
+		return makeRequest(queryParams, POST);
+	}
+
+	public LastFmResponse getSession() {
+		LastFmResponse lfm;
+		if (sessionKey == null) {
+			MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+			queryParams.add("method", MOBILE_SESSION);
+			queryParams.add("api_key", API_KEY);
+			queryParams.add("password", PASSWORD);
+			queryParams.add("username", USERNAME);
+			queryParams.add("api_sig", buildSignature(queryParams));
+			lfm = makeRequest(queryParams, POST);
+			if (OK.equals(lfm.getStatus())) {
+				sessionKey = lfm.getSession().getSessionKey();
+				servicesPreferences.setLastFmSessionKey(sessionKey);
+			}
+		}
+		else {
+			lfm = new LastFmResponse();
+			lfm.setStatus(OK);
+		}
+		return lfm;
 	}
 }

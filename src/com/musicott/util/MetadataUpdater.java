@@ -12,77 +12,83 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import com.musicott.*;
+import com.musicott.model.*;
+import org.jaudiotagger.audio.*;
+import org.jaudiotagger.audio.exceptions.*;
+import org.jaudiotagger.audio.wav.*;
+import org.jaudiotagger.tag.*;
+import org.jaudiotagger.tag.id3.*;
+import org.jaudiotagger.tag.images.*;
+import org.jaudiotagger.tag.mp4.*;
+import org.jaudiotagger.tag.wav.*;
+import org.slf4j.*;
 
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.audio.exceptions.CannotReadException;
-import org.jaudiotagger.audio.exceptions.CannotWriteException;
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
-import org.jaudiotagger.audio.wav.WavOptions;
-import org.jaudiotagger.tag.FieldDataInvalidException;
-import org.jaudiotagger.tag.FieldKey;
-import org.jaudiotagger.tag.KeyNotFoundException;
-import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.TagException;
-import org.jaudiotagger.tag.id3.ID3v24Tag;
-import org.jaudiotagger.tag.images.Artwork;
-import org.jaudiotagger.tag.images.ArtworkFactory;
-import org.jaudiotagger.tag.mp4.Mp4FieldKey;
-import org.jaudiotagger.tag.mp4.Mp4Tag;
-import org.jaudiotagger.tag.wav.WavInfoTag;
-import org.jaudiotagger.tag.wav.WavTag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.musicott.ErrorHandler;
-import com.musicott.model.Track;
+import java.io.*;
+import java.nio.file.*;
 
 /**
- * @author Octavio Calleya
+ * Performs the operation of writing the information of a {@link Track} instance
+ * to the audio metadata of the file.
  *
+ * @author Octavio Calleya
+ * @version 0.9-b
+ * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
 public class MetadataUpdater {
-	
+
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+
 	private boolean succeeded;
 	private Track track;
-	
+
+	private ErrorDemon errorDemon = ErrorDemon.getInstance();
+
 	public MetadataUpdater(Track track) {
 		this.track = track;
 	}
-	
-	public boolean updateMetadata() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException {
+
+	/**
+	 * Writes the {@link Track} information to an audio file metadata.
+	 *
+	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
+	 *
+	 * @throws TrackUpdateException if something went bad in the operation.
+	 */
+	public boolean writeAudioMetadata() {
 		succeeded = false;
 		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
-		AudioFile audio = AudioFileIO.read(trackPath.toFile());
-		String format = audio.getAudioHeader().getFormat();
-		if(format.startsWith("WAV")) {
-			WavTag wavTag = new WavTag(WavOptions.READ_ID3_ONLY);
-			wavTag.setID3Tag(new ID3v24Tag());
-			wavTag.setInfoTag(new WavInfoTag());
-			audio.setTag(wavTag);
+		try {
+			AudioFile audio = AudioFileIO.read(trackPath.toFile());
+			String format = audio.getAudioHeader().getFormat();
+			if (format.startsWith("WAV")) {
+				WavTag wavTag = new WavTag(WavOptions.READ_ID3_ONLY);
+				wavTag.setID3Tag(new ID3v24Tag());
+				wavTag.setInfoTag(new WavInfoTag());
+				audio.setTag(wavTag);
+			}
+			setTrackFieldsToTag(audio.getTag());
+			audio.commit();
 		}
-		baseUpdater(audio.getTag());
-		audio.commit();
+		catch (IOException | CannotReadException | ReadOnlyFileException |
+				TagException | CannotWriteException | InvalidAudioFrameException exception) {
+			LOG.warn("Error updating metadata of {}", track, exception);
+			String errorText = "Error writing metadata of " + track.getArtist() + " - " + track.getName();
+			errorDemon.showErrorDialog(errorText, "", exception);
+		}
 		succeeded = true;
-//		LOG.warn("Error updating metadata of "+track, e);
-//		ErrorHandler.getInstance().showErrorDialog("Error writing metadata of "+track.getArtist()+" - "+track.getName(), null, e);
 		return succeeded;
 	}
-	
-	public void baseUpdater(Tag tag) throws KeyNotFoundException, FieldDataInvalidException {
-	//	tag.setEncoding(Charset.forName("UTF-8"));	//TODO when jaudiotagger supports it
+
+	private void setTrackFieldsToTag(Tag tag) throws FieldDataInvalidException {
+		//	tag.setEncoding(Charset.forName("UTF-8"));	//TODO when jaudiotagger supports it
 		tag.setField(FieldKey.TITLE, track.getName());
 		tag.setField(FieldKey.ALBUM, track.getAlbum());
 		tag.setField(FieldKey.ALBUM_ARTIST, track.getAlbumArtist());
@@ -90,62 +96,77 @@ public class MetadataUpdater {
 		tag.setField(FieldKey.GENRE, track.getGenre());
 		tag.setField(FieldKey.COMMENT, track.getComments());
 		tag.setField(FieldKey.GROUPING, track.getLabel());
-		tag.setField(FieldKey.TRACK, ""+track.getTrackNumber());
+		tag.setField(FieldKey.TRACK, Integer.toString(track.getTrackNumber()));
 		tag.deleteField(FieldKey.TRACK_TOTAL);
-		tag.setField(FieldKey.DISC_NO, ""+track.getDiscNumber());
+		tag.setField(FieldKey.DISC_NO, Integer.toString(track.getDiscNumber()));
 		tag.deleteField(FieldKey.DISC_TOTAL);
-		tag.setField(FieldKey.YEAR, ""+track.getYear());
-		tag.setField(FieldKey.BPM, ""+track.getBpm());
-		if(track.getFileFormat().equals("m4a"))
-			((Mp4Tag)tag).setField(Mp4FieldKey.COMPILATION, track.getIsCompilation() ? "1" : "0");
-		tag.setField(FieldKey.IS_COMPILATION, ""+track.getIsCompilation());
+		tag.setField(FieldKey.YEAR, Integer.toString(track.getYear()));
+		tag.setField(FieldKey.BPM, Integer.toString(track.getBpm()));
+		if ("m4a".equals(track.getFileFormat())) {
+			((Mp4Tag) tag).setField(Mp4FieldKey.COMPILATION, track.isPartOfCompilation() ? "1" : "0");
+		}
+		tag.setField(FieldKey.IS_COMPILATION, Boolean.toString(track.isPartOfCompilation()));
 	}
-	
+
+	/**
+	 * Saves a new cover image to the audio file metadata of the {@link Track}
+	 *
+	 * @param coverFile The {@link File} of the new cover image to save
+	 *
+	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
+	 */
 	public boolean updateCover(File coverFile) {
-		succeeded = false;
 		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
+		File trackFile = trackPath.toFile();
+		boolean result = updateCoverOnTag(trackFile, coverFile);
+		if (result) {
+			track.hasCoverProperty().set(true);
+		}
+		return result;
+	}
+
+	private boolean updateCoverOnTag(File trackFile, File coverFile) {
+		boolean result = false;
 		try {
-			AudioFile audioFile = AudioFileIO.read(trackPath.toFile());
-			Tag tag = audioFile.getTag();
+			AudioFile audioFile = AudioFileIO.read(trackFile);
 			Artwork cover = ArtworkFactory.createArtworkFromFile(coverFile);
+			Tag tag = audioFile.getTag();
 			tag.deleteArtworkField();
 			tag.addField(cover);
 			audioFile.commit();
-			succeeded = true;
-		} catch (CannotReadException | IOException | TagException | ReadOnlyFileException
-				| InvalidAudioFrameException | CannotWriteException e) {
-			LOG.warn("Error saving cover image of "+track, e);
-			ErrorHandler.getInstance().showErrorDialog("Error saving cover image of "+track.getArtist()+" - "+track.getName(), null, e);
+			result = true;
 		}
-		if(succeeded)
-			track.setHasCover(true);
-		return succeeded;
+		catch (IOException | TagException | CannotWriteException | CannotReadException |
+				InvalidAudioFrameException | ReadOnlyFileException exception) {
+			LOG.warn("Error saving cover image of {}", track, exception);
+			String errorText = "Error saving cover image of " + track.getArtist() + " - " + track.getName();
+			errorDemon.showErrorDialog(errorText, "", exception);
+		}
+		return result;
 	}
-	
-	public boolean searchCoverInFolder() {
-		boolean finded = false;
-		String[] mimeTypes = {"jpg","jpeg","png"};
-		String trackFolder = track.getFileFolder();
+
+	/**
+	 * Search for an image in the folder of the audio file, and saves it to his
+	 * metadata.
+	 *
+	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
+	 */
+	public boolean searchCoverInFolderAndUpdate() {
+		boolean found = false;
 		File coverFile = null;
-		for(String m: mimeTypes) {
-			File aux = new File(trackFolder+"/cover."+m);
-			if(aux.exists()) {
-				coverFile = aux;
+		String[] acceptedMimeTypes = {"jpg", "jpeg", "png"};
+		String trackFolder = track.getFileFolder();
+		for (String mimeType : acceptedMimeTypes) {
+			File file = new File(trackFolder + "/cover." + mimeType);
+			if (file.exists()) {
+				coverFile = file;
 				break;
 			}
 		}
-		if(coverFile != null) {
-			try {
-				Artwork cover = ArtworkFactory.createArtworkFromFile(coverFile);
-				AudioFile audioFile = AudioFileIO.read(new File(trackFolder+"/"+track.getFileName()));
-				Tag tag = audioFile.getTag();
-				tag.addField(cover);
-				audioFile.commit();
-				track.setHasCover(true);
-				finded = true;
-			} catch (IOException | TagException | CannotWriteException | CannotReadException
-					| ReadOnlyFileException | InvalidAudioFrameException e) {}
+		if (coverFile != null) {
+			track.setCoverImage(coverFile);
+			found = updateCover(coverFile);
 		}
-		return finded;
+		return found;
 	}
 }

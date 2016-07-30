@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.text.*?>
-<?import javafx.scene.control.*?>
 <?import javafx.geometry.*?>
-<?import java.lang.*?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
-<AnchorPane id="playQueuePane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="465.0" prefWidth="300.0" stylesheets="@../css/playqueuepane.css" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.PlayQueueController">
+<?import javafx.scene.text.*?>
+<AnchorPane id="playQueuePane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="465.0" prefWidth="300.0" stylesheets="@../css/playqueuepane.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.PlayQueueController">
    <children>
-      <BorderPane id="playQueuePane" prefHeight="465.0" prefWidth="300.0" stylesheets="@../css/playqueuepane.css" AnchorPane.topAnchor="0.0">
-         <top>
+      <BorderPane id="playQueuePane" prefHeight="467.0" prefWidth="300.0" stylesheets="@../css/playqueuepane.css" AnchorPane.topAnchor="0.0">
+         <center>
+            <ListView id="listView" fx:id="listView" BorderPane.alignment="CENTER">
+               <BorderPane.margin>
+                  <Insets left="5.0" right="5.0" />
+               </BorderPane.margin></ListView>
+         </center>
+         <bottom>
             <GridPane prefHeight="35.0" BorderPane.alignment="CENTER">
                <columnConstraints>
                   <ColumnConstraints hgrow="SOMETIMES" maxWidth="175.0" minWidth="10.0" prefWidth="144.0" />
@@ -27,7 +31,7 @@
                         <Insets bottom="8.0" left="10.0" top="5.0" />
                      </padding>
                   </Label>
-                  <Button fx:id="deleteAllButton" mnemonicParsing="false" onAction="#doDeleteAll" text="Delete" GridPane.columnIndex="1" GridPane.halignment="RIGHT">
+                  <Button fx:id="deleteAllButton" mnemonicParsing="false" text="Delete" GridPane.columnIndex="1" GridPane.halignment="RIGHT">
                      <font>
                         <Font size="11.0" />
                      </font>
@@ -38,19 +42,16 @@
                         <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
                      </padding>
                   </Button>
-                  <ToggleButton fx:id="historyQueueButton" cacheHint="QUALITY" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#doHistoryQueueButton" prefHeight="20.0" prefWidth="20.0" GridPane.columnIndex="1" GridPane.halignment="CENTER">
+                  <ToggleButton fx:id="historyQueueButton" cacheHint="QUALITY" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" GridPane.columnIndex="1" GridPane.halignment="CENTER">
                      <GridPane.margin>
                         <Insets bottom="2.0" />
                      </GridPane.margin></ToggleButton>
                </children>
                <BorderPane.margin>
-                  <Insets top="20.0" />
+                  <Insets bottom="20.0" />
                </BorderPane.margin>
             </GridPane>
-         </top>
-         <center>
-            <ListView id="listView" fx:id="listView" BorderPane.alignment="CENTER" />
-         </center>
+         </bottom>
       </BorderPane>
    </children>
 </AnchorPane>

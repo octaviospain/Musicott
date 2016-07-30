@@ -18,44 +18,31 @@
 
 package tests.system;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import com.musicott.*;
+import com.musicott.model.*;
+import com.musicott.util.*;
+import javafx.application.*;
+import javafx.scene.control.*;
+import javafx.scene.input.*;
+import javafx.stage.*;
+import org.junit.*;
+import org.testfx.framework.junit.*;
+import org.testfx.util.*;
 
-import javafx.application.Application;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.Label;
-import javafx.scene.control.CheckBox;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
-import javafx.stage.Stage;
+import java.io.*;
+import java.util.*;
 
-import org.junit.After;
-import org.junit.Test;
-import org.testfx.framework.junit.ApplicationTest;
-import org.testfx.util.WaitForAsyncUtils;
-
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
+import static org.loadui.testfx.Assertions.*;
+import static org.loadui.testfx.GuiTest.*;
+import static org.loadui.testfx.controls.TableViews.*;
 import static org.testfx.api.FxAssert.verifyThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.loadui.testfx.controls.TableViews.numberOfRowsIn;
-import static org.loadui.testfx.GuiTest.find;
-import static org.loadui.testfx.Assertions.assertNodeExists;
 import static org.testfx.matcher.base.NodeMatchers.*;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-
-import com.musicott.MainApp;
-import com.musicott.model.Track;
-import com.musicott.util.MetadataParser;
 
 /**
  * @author Octavio Calleya
- *
+ * @deprecated
  */
 public class SystemApplicationTest extends ApplicationTest {
 
@@ -65,7 +52,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	
 	@Override
 	public void start(Stage stage) throws Exception {
-		frame = new MainApp();
+		frame = new MusicottApplication();
 		this.stage = stage;
 		frame.init();
 		frame.start(this.stage);
@@ -233,7 +220,7 @@ public class SystemApplicationTest extends ApplicationTest {
 			assertEquals(tv.getItems().get(i).getComments(), "Very nice drop");
 			assertEquals(tv.getItems().get(i).getTrackNumber(), Integer.parseInt("3"));
 			assertEquals(tv.getItems().get(i).getDiscNumber(), Integer.parseInt("1"));
-			assertTrue(tv.getItems().get(i).getIsCompilation());
+			assertTrue(tv.getItems().get(i).isPartOfCompilation());
 		}
 	}
 	
@@ -242,8 +229,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		List<Track> list = new ArrayList<Track>();
 		for(File f:new File(mp3FilePath).getParentFile().listFiles())
 			if(f.getName().substring(f.getName().length()-3).equals("mp3")) {
-				MetadataParser parser = new MetadataParser(f);
-				list.add(parser.createTrack());
+				list.add(MetadataParser.createTrack(f));
 			}
 		clickOn("#menuFile");
 		clickOn("#menuItemImport");		// Because the Filechooser is not selectable with testFX, I set the correct folder
@@ -326,8 +312,8 @@ public class SystemApplicationTest extends ApplicationTest {
 		assertEquals(((TextArea) find("#comments")).getText(), matchCommonString(listOfSameFields));
 		List<Boolean> listOfSameBools = new ArrayList<Boolean>();
 		for(Track t: list)
-			listOfSameBools.add(t.getIsCompilation());
-		if(!matchCommonBool(listOfSameBools, list.get(0).getIsCompilation()))
+			listOfSameBools.add(t.isPartOfCompilation());
+		if(!matchCommonBool(listOfSameBools, list.get(0).isPartOfCompilation()))
 			assertTrue(((CheckBox) find("#isCompilationCheckBox")).isIndeterminate());
 		else
 			assertTrue(!((CheckBox) find("#isCompilationCheckBox")).isIndeterminate());
@@ -336,8 +322,7 @@ public class SystemApplicationTest extends ApplicationTest {
 	
 	@Test
 	public void showCorrectFieldsEditViewOneTrackTest() throws Exception {
-		MetadataParser parser = new MetadataParser(new File(mp3FilePath));
-		Track t = parser.createTrack();
+		Track t = MetadataParser.createTrack(new File(mp3FilePath));
 		clickOn("#menuFile");
 		clickOn("#menuItemOpen");
 		press(KeyCode.DIGIT0);		// Because the Filechooser is not moveable with testFX, I set the correct folder
@@ -379,7 +364,7 @@ public class SystemApplicationTest extends ApplicationTest {
 		assertEquals(((TextField) find("#discNum")).getText(), String.valueOf(t.getDiscNumber()));
 		verifyThat("#discNum", isEnabled());
 		verifyThat("#discNum", isVisible());
-		assertEquals(((CheckBox) find("#isCompilationCheckBox")).isSelected(), t.getIsCompilation());
+		assertEquals(((CheckBox) find("#isCompilationCheckBox")).isSelected(), t.isPartOfCompilation());
 		verifyThat("#isCompilationCheckBox", isEnabled());
 		verifyThat("#isCompilationCheckBox", isVisible());
 		assertEquals(((Label) find("#titleName")).getText(), t.getName());

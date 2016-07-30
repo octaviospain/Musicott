@@ -14,33 +14,37 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.player;
 
-import com.musicott.model.Track;
+import com.musicott.model.*;
 
 /**
  * @author Octavio Calleya
- *
  */
 public class FlacPlayer implements TrackPlayer {
-	
+
 	public FlacPlayer() {
 		//TODO
 	}
-	
+
 	@Override
 	public String getStatus() {
 		return "";
 	}
-	
+
 	@Override
 	public void setTrack(Track track) {
 	}
-	
+
 	@Override
 	public void setVolume(double value) {
+	}
+
+	@Override
+	public void seek(double seekValue) {
 	}
 
 	@Override
@@ -57,5 +61,5 @@ public class FlacPlayer implements TrackPlayer {
 
 	@Override
 	public void dispose() {
-	}	
+	}
 }

@@ -14,48 +14,29 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.model;
 
-import java.io.File;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.audio.exceptions.CannotReadException;
-import org.jaudiotagger.audio.exceptions.CannotWriteException;
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
-import org.jaudiotagger.tag.TagException;
-
-import com.musicott.ErrorHandler;
-import com.musicott.MainPreferences;
-import com.musicott.SceneManager;
-import com.musicott.util.MetadataUpdater;
-
-import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.Property;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import com.musicott.*;
+import com.musicott.util.*;
+import javafx.beans.property.*;
 import javafx.util.Duration;
 
+import java.io.*;
+import java.time.*;
+import java.util.*;
+
 /**
- * @author Octavio Calleya
+ * Represents an audio file and its metadata information.
  *
+ * @author Octavio Calleya
+ * @version 0.9-b
  */
 public class Track {
-	
-	private int trackID;
+
+	private int trackId;
 	private String fileFolder;
 	private String fileName;
 	private String name;
@@ -78,13 +59,12 @@ public class Track {
 	private Duration totalTime;
 
 	private boolean inDisk;
-	private boolean isCompilation;
+	private boolean isPartOfCompilation;
 	private boolean isVariableBitRate;
-	private boolean hasCover;
 
-	private LocalDateTime dateModified;
+	private LocalDateTime lastDateModified;
 	private LocalDateTime dateAdded;
-	
+
 	private StringProperty nameProperty;
 	private StringProperty artistProperty;
 	private StringProperty albumProperty;
@@ -98,247 +78,112 @@ public class Track {
 	private IntegerProperty discNumberProperty;
 	private IntegerProperty bpmProperty;
 	private IntegerProperty playCountProperty;
-	
-	private BooleanProperty hasCoverProperty;
 
 	private ObjectProperty<LocalDateTime> dateModifiedProperty;
-	private Map<TrackField,Property<?>> propertyMap;
+	private BooleanProperty hasCoverProperty;
+
+	/**
+	 * Map of the properties that are editable in the application
+	 */
+	private Map<TrackField, Property> propertyMap;
+
 	private String fileFormat;
+	private File coverFileToUpdate;
 	private MetadataUpdater updater;
-	
-    public Track() {
-    	trackID = MainPreferences.getInstance().getTrackSequence();
-    	fileFolder = "";
-    	fileName = "";
-    	fileFormat = "";
-    	name = "";
-    	artist = "";
-    	album = "";
-    	genre = "";
-    	comments = "";
-    	albumArtist = "";
-    	label = "";
-    	encoder = "";
-    	encoding = "";
-    	trackNumber = 0;
-    	discNumber = 0;
-    	year = 0;
-    	bpm = 0;
-    	size = 0;
-    	totalTime = Duration.UNKNOWN;
-    	bitRate = 0;
-    	playCount = 0;
-    	inDisk = false;
-    	isCompilation = false;
-    	hasCover = false;
-    	isVariableBitRate = false;
-    	dateModified = LocalDateTime.now();
-    	dateAdded = LocalDateTime.now();
-    	updater = new MetadataUpdater(this);
-    	
-    	nameProperty = new SimpleStringProperty(name);
-    	nameProperty.addListener((observable, oldString, newString) -> setName(newString));
-    	artistProperty = new SimpleStringProperty(artist);
-    	artistProperty.addListener((observable, oldString, newString) -> setArtist(newString));
-    	albumProperty = new SimpleStringProperty(album);
-    	albumProperty.addListener((observable, oldString, newString) -> setAlbum(newString));
-    	genreProperty = new SimpleStringProperty(genre);
-    	genreProperty.addListener((observable, oldString, newString) -> setGenre(newString));
-    	commentsProperty = new SimpleStringProperty(comments);
-    	commentsProperty.addListener((observable, oldString, newString) -> setComments(newString));
-    	albumArtistProperty = new SimpleStringProperty(albumArtist);
-    	albumArtistProperty.addListener((observable, oldString, newString) -> setAlbumArtist(newString));
-    	labelProperty = new SimpleStringProperty(label);
-    	labelProperty.addListener((observable, oldString, newString) -> setLabel(newString));
-    	trackNumberProperty = new SimpleIntegerProperty(trackNumber);
-    	trackNumberProperty.addListener((observable, oldNumber, newNumber) -> setTrackNumber(newNumber.intValue()));
-    	yearProperty = new SimpleIntegerProperty(year);
-    	yearProperty.addListener((observable, oldNumber, newNumber) -> setYear(newNumber.intValue()));
-    	discNumberProperty = new SimpleIntegerProperty(discNumber);
-    	discNumberProperty.addListener((observable, oldNumber, newNumber) -> setDiscNumber(newNumber.intValue()));
-    	bpmProperty = new SimpleIntegerProperty(bpm);
-    	bpmProperty.addListener((observable, oldNumber, newNumber) -> setBpm(newNumber.intValue()));
-    	dateModifiedProperty = new SimpleObjectProperty<>(dateModified);
-    	dateModifiedProperty.addListener((observable, oldDate, newDate) -> setDateModified(newDate));
-    	hasCoverProperty = new SimpleBooleanProperty(hasCover);
-    	playCountProperty = new SimpleIntegerProperty(playCount);
-    	
-    	propertyMap = new HashMap<>();
-    	propertyMap.put(TrackField.NAME, nameProperty);
-    	propertyMap.put(TrackField.ALBUM, albumProperty);
-    	propertyMap.put(TrackField.ALBUM_ARTIST, albumArtistProperty);
-    	propertyMap.put(TrackField.ARTIST, artistProperty);
-    	propertyMap.put(TrackField.GENRE, genreProperty);
-    	propertyMap.put(TrackField.COMMENTS, commentsProperty);
-    	propertyMap.put(TrackField.LABEL, labelProperty);
-    	propertyMap.put(TrackField.TRACK_NUMBER, trackNumberProperty);
-    	propertyMap.put(TrackField.DISC_NUMBER, discNumberProperty);
-    	propertyMap.put(TrackField.YEAR, yearProperty);
-    	propertyMap.put(TrackField.BPM, bpmProperty);
-    }
-    
-    public boolean updateMetadata() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException, CannotWriteException {
-    	return updater.updateMetadata();
-    }
-    
-    public boolean updateCover(File coverFile) {
-    	return updater.updateCover(coverFile);
-    }
-    
-	public byte[] getCoverBytes() {
-		byte[] coverBytes = null;
-		try {
-			AudioFile audioFile = AudioFileIO.read(new File(fileFolder+"/"+fileName));
-			if(!audioFile.getTag().getArtworkList().isEmpty())
-				coverBytes = audioFile.getTag().getFirstArtwork().getBinaryData();
-		} catch (CannotReadException | IOException | TagException
-				|ReadOnlyFileException | InvalidAudioFrameException e) {
-		}
-		return coverBytes;
-	}
-    
-	public Map<TrackField,Property<?>> getPropertiesMap() {
-    	return propertyMap;
-    }
-	
-	public boolean isPlayable() {
-		boolean playable = true;
-		if(getInDisk()) {
-			File file = new File(fileFolder+"/"+fileName);
-			if(!file.exists()) {
-				ErrorHandler.getInstance().showErrorDialog(fileFolder+"/"+fileName+" not found");
-				setInDisk(false);
-				playable = false;
-			}
-			else if(fileFormat.equals("flac") || encoding.startsWith("Apple") || encoder.startsWith("iTunes")) {
-				Platform.runLater(() -> SceneManager.getInstance().getRootController().setStatusMessage("Musicott can't play .flac files or .m4a files encoded by Apple"));
-				playable = false;
-			}
-		}
-		else
-			playable = false;
-		return playable;
-	}
-    
-    public int getTrackID() {
-		return trackID;
+	private ErrorDemon errorDemon = ErrorDemon.getInstance();
+
+	public Track() {
+		trackId = MainPreferences.getInstance().getTrackSequence();
+		fileFolder = "";
+		fileName = "";
+		fileFormat = "";
+		name = "";
+		artist = "";
+		album = "";
+		genre = "";
+		comments = "";
+		albumArtist = "";
+		label = "";
+		encoder = "";
+		encoding = "";
+		trackNumber = 0;
+		discNumber = 0;
+		year = 0;
+		bpm = 0;
+		size = 0;
+		totalTime = Duration.UNKNOWN;
+		bitRate = 0;
+		playCount = 0;
+		inDisk = false;
+		isPartOfCompilation = false;
+		isVariableBitRate = false;
+		lastDateModified = LocalDateTime.now();
+		dateAdded = LocalDateTime.now();
+		updater = new MetadataUpdater(this);
+
+		nameProperty = new SimpleStringProperty(this, "name", name);
+		nameProperty.addListener((observable, oldString, newString) -> setName(newString));
+		artistProperty = new SimpleStringProperty(this, "artist", artist);
+		artistProperty.addListener((observable, oldString, newString) -> setArtist(newString));
+		albumProperty = new SimpleStringProperty(this, "album", album);
+		albumProperty.addListener((observable, oldString, newString) -> setAlbum(newString));
+		genreProperty = new SimpleStringProperty(this, "genre", genre);
+		genreProperty.addListener((observable, oldString, newString) -> setGenre(newString));
+		commentsProperty = new SimpleStringProperty(this, "comments", comments);
+		commentsProperty.addListener((observable, oldString, newString) -> setComments(newString));
+		albumArtistProperty = new SimpleStringProperty(this, "albumArtist", albumArtist);
+		albumArtistProperty.addListener((observable, oldString, newString) -> setAlbumArtist(newString));
+		labelProperty = new SimpleStringProperty(this, "label", label);
+		labelProperty.addListener((observable, oldString, newString) -> setLabel(newString));
+		trackNumberProperty = new SimpleIntegerProperty(this, "track number", trackNumber);
+		trackNumberProperty.addListener((observable, oldNumber, newNumber) -> setTrackNumber(newNumber.intValue()));
+		yearProperty = new SimpleIntegerProperty(this, "year", year);
+		yearProperty.addListener((observable, oldNumber, newNumber) -> setYear(newNumber.intValue()));
+		discNumberProperty = new SimpleIntegerProperty(this, "disc number", discNumber);
+		discNumberProperty.addListener((observable, oldNumber, newNumber) -> setDiscNumber(newNumber.intValue()));
+		bpmProperty = new SimpleIntegerProperty(this, "bpm", bpm);
+		bpmProperty.addListener((observable, oldNumber, newNumber) -> setBpm(newNumber.intValue()));
+		dateModifiedProperty = new SimpleObjectProperty<>(this, "date modified", lastDateModified);
+		dateModifiedProperty.addListener((observable, oldDate, newDate) -> setLastDateModified(newDate));
+		playCountProperty = new SimpleIntegerProperty(this, "play count", playCount);
+		hasCoverProperty = new SimpleBooleanProperty(this, "cover bytes", false);
+		getCoverImage().ifPresent(coverBytes -> hasCoverProperty.set(true));
+
+		propertyMap = new EnumMap<>(TrackField.class);
+		propertyMap.put(TrackField.NAME, nameProperty);
+		propertyMap.put(TrackField.ALBUM, albumProperty);
+		propertyMap.put(TrackField.ALBUM_ARTIST, albumArtistProperty);
+		propertyMap.put(TrackField.ARTIST, artistProperty);
+		propertyMap.put(TrackField.GENRE, genreProperty);
+		propertyMap.put(TrackField.COMMENTS, commentsProperty);
+		propertyMap.put(TrackField.LABEL, labelProperty);
+		propertyMap.put(TrackField.TRACK_NUMBER, trackNumberProperty);
+		propertyMap.put(TrackField.DISC_NUMBER, discNumberProperty);
+		propertyMap.put(TrackField.YEAR, yearProperty);
+		propertyMap.put(TrackField.BPM, bpmProperty);
 	}
 
-    public void setTrackID(int trackID) {
-		this.trackID = trackID;
+	public Optional<byte[]> getCoverImage() {
+		File trackFile = new File(fileFolder + "/" + fileName);
+		Optional<byte[]>[] coverBytes = new Optional[]{Optional.empty()};
+		MetadataParser.getAudioTag(trackFile).ifPresent(tag -> coverBytes[0] = MetadataParser.getCoverBytes(tag));
+		return coverBytes[0];
 	}
 
-	public String getFileFolder() {
-		return fileFolder;
+	public void setCoverImage(File cover) {
+		coverFileToUpdate = cover;
 	}
 
-	public void setFileFolder(String fileFolder) {
-		this.fileFolder = fileFolder;
+	public int getTrackId() {
+		return trackId;
 	}
 
-	public String getFileName() {
-		return fileName;
+	public void setTrackId(int trackId) {
+		this.trackId = trackId;
 	}
 
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
-		int pos = fileName.lastIndexOf(".");
-		fileFormat = fileName.substring(pos + 1);
-	}
-	
 	public String getFileFormat() {
 		return fileFormat;
-	}
-
-	public StringProperty getNameProperty() {
-		return nameProperty;
-	}
-
-	public String getName() {
-		return this.name;
-	}
-	
-	public void setName(String name) {
-		this.name = name;
-		nameProperty.setValue(this.name);
-	}
-
-	public StringProperty getArtistProperty() {
-		return artistProperty;
-	}
-	
-	public String getArtist() {
-		return this.artist;
-	}
-
-	public void setArtist(String artist) {
-		this.artist = artist;
-		artistProperty.setValue(this.artist);
-	}
-
-	public StringProperty getAlbumProperty() {
-		return albumProperty;
-	}
-
-	public String getAlbum() {
-		return this.album;
-	}
-	
-	public void setAlbum(String album) {
-		this.album = album;
-		albumProperty.setValue(this.album);
-	}
-
-	public StringProperty getGenreProperty() {
-		return genreProperty;
-	}
-	
-	public String getGenre() {
-		return this.genre;
-	}
-
-	public void setGenre(String genre) {
-		this.genre = genre;
-		genreProperty.setValue(this.genre);
-	}
-
-	public StringProperty getCommentsProperty() {
-		return commentsProperty;
-	}
-
-	public String getComments() {
-		return this.comments;
-	}
-	
-	public void setComments(String comments) {
-		this.comments = comments;
-		commentsProperty.setValue(this.comments);
-	}
-
-	public StringProperty getAlbumArtistProperty() {
-		return albumArtistProperty;
-	}
-
-	public String getAlbumArtist() {
-		return this.albumArtist;
-	}
-	
-	public void setAlbumArtist(String albumArtist) {
-		this.albumArtist = albumArtist;
-		albumArtistProperty.setValue(this.albumArtist);
-	}
-
-	public StringProperty getLabelProperty() {
-		return labelProperty;
-	}
-	
-	public String getLabel() {
-		return this.label;
-	}
-
-	public void setLabel(String label) {
-		this.label = label;
-		labelProperty.setValue(this.label);
 	}
 
 	public String getEncoding() {
@@ -348,21 +193,13 @@ public class Track {
 	public void setEncoding(String encoding) {
 		this.encoding = encoding;
 	}
-	
+
+	public String getEncoder() {
+		return encoder;
+	}
+
 	public void setEncoder(String encoder) {
 		this.encoder = encoder;
-	}
-	
-	public String getEncoder() {
-		return this.encoder;
-	}
-
-	public int getSize() {
-		return size;
-	}
-
-	public void setSize(int size) {
-		this.size = size;
 	}
 
 	public Duration getTotalTime() {
@@ -373,29 +210,13 @@ public class Track {
 		this.totalTime = totalTime;
 	}
 
-	public IntegerProperty getTrackNumberProperty() {
-		return trackNumberProperty;
-	}
-	
-	public int getTrackNumber() {
-		return this.trackNumber;
+	public int getDiscNumber() {
+		return discNumber;
 	}
 
-	public void setTrackNumber(int trackNumber) {
-		this.trackNumber = trackNumber;
-		trackNumberProperty.setValue(this.trackNumber);
-	}
-
-	public IntegerProperty getYearProperty() {
-		return yearProperty;
-	}
-	
-	public int getYear() {
-		return this.year;
-	}
-
-	public void setYear(int year) {
-		this.year = year;
+	public void setDiscNumber(int discNumber) {
+		this.discNumber = discNumber;
+		discNumberProperty.setValue(this.discNumber);
 	}
 
 	public int getBitRate() {
@@ -409,74 +230,35 @@ public class Track {
 	public int getPlayCount() {
 		return playCount;
 	}
-	
+
 	public void setPlayCount(int playCount) {
 		this.playCount = playCount;
-		this.playCountProperty.setValue(playCount);
-	}
-	
-	public IntegerProperty getPlayCountProperty() {
-		return this.playCountProperty;
+		playCountProperty.setValue(playCount);
 	}
 
-	public void incrementPlayCount() {
-		this.playCount++;
-		this.playCountProperty.setValue(playCount);
+	public int getSize() {
+		return size;
 	}
 
-	public IntegerProperty getDiscNumberProperty() {
-		return discNumberProperty;
-	}
-	
-	public int getDiscNumber() {
-		return this.discNumber;
+	public void setSize(int size) {
+		this.size = size;
 	}
 
-	public void setDiscNumber(int discNumber) {
-		this.discNumber = discNumber;
-		discNumberProperty.setValue(this.discNumber);
+	public boolean isPartOfCompilation() {
+		return isPartOfCompilation;
 	}
 
-	public IntegerProperty getBpmProperty() {
-		return bpmProperty;
-	}
-	
-	public int getBpm() {
-		return this.bpm;
+	public boolean isVariableBitRate() {
+		return isVariableBitRate;
 	}
 
-	public void setBpm(int bpm) {
-		this.bpm = bpm;
-		bpmProperty.setValue(this.bpm);
-	}
-	
-	public boolean getInDisk() {
-		return inDisk;
+	public LocalDateTime getLastDateModified() {
+		return lastDateModified;
 	}
 
-	public void setInDisk(boolean inDisk) {
-		this.inDisk = inDisk;
-	}
-	
-	public boolean getIsCompilation() {
-		return this.isCompilation;
-	}
-	
-	public void setCompilation(boolean isCompilation) {
-		this.isCompilation = isCompilation;
-	}
-	
-	public ObjectProperty<LocalDateTime> getDateModifiedProperty() {
-		return dateModifiedProperty;
-	}
-	
-	public LocalDateTime getDateModified() {
-		return dateModified;
-	}
-
-	public void setDateModified(LocalDateTime dateModified) {
-		this.dateModified = dateModified;
-		dateModifiedProperty.set(dateModified);
+	public void setLastDateModified(LocalDateTime lastDateModified) {
+		this.lastDateModified = lastDateModified;
+		dateModifiedProperty.set(lastDateModified);
 	}
 
 	public LocalDateTime getDateAdded() {
@@ -487,74 +269,265 @@ public class Track {
 		this.dateAdded = dateAdded;
 	}
 
-	public BooleanProperty getHasCoverProperty() {
-		return hasCoverProperty;
+	public Map<TrackField, Property> getPropertyMap() {
+		return propertyMap;
 	}
-	
-	public boolean hasCover() {
-		return this.hasCover;
+
+	public void setIsPartOfCompilation(boolean isPartOfCompilation) {
+		this.isPartOfCompilation = isPartOfCompilation;
 	}
-	
-	public void setHasCover(boolean hasCover) {
-		this.hasCover = hasCover;
-		hasCoverProperty.set(hasCover);
-	}
-	
-	public boolean isVariableBitRate() {
-		return this.isVariableBitRate;
-	}
-	
+
 	public void setIsVariableBitRate(boolean isVariableBitRate) {
 		this.isVariableBitRate = isVariableBitRate;
 	}
-	
-	public MetadataUpdater getUpdater() {
-		return updater;
+
+	public StringProperty nameProperty() {
+		return nameProperty;
 	}
 
-	public void setUpdater(MetadataUpdater updater) {
-		this.updater = updater;
+	public StringProperty artistProperty() {
+		return artistProperty;
+	}
+
+	public StringProperty albumProperty() {
+		return albumProperty;
+	}
+
+	public StringProperty genreProperty() {
+		return genreProperty;
+	}
+
+	public StringProperty commentsProperty() {
+		return commentsProperty;
+	}
+
+	public StringProperty albumArtistProperty() {
+		return albumArtistProperty;
+	}
+
+	public StringProperty labelProperty() {
+		return labelProperty;
+	}
+
+	public IntegerProperty trackNumberProperty() {
+		return trackNumberProperty;
+	}
+
+	public IntegerProperty yearProperty() {
+		return yearProperty;
+	}
+
+	public IntegerProperty playCountProperty() {
+		return this.playCountProperty;
+	}
+
+	public IntegerProperty discNumberProperty() {
+		return discNumberProperty;
+	}
+
+	public IntegerProperty bpmProperty() {
+		return bpmProperty;
+	}
+
+	public ObjectProperty<LocalDateTime> lastDateModifiedProperty() {
+		return dateModifiedProperty;
+	}
+
+	public BooleanProperty hasCoverProperty() {
+		return hasCoverProperty;
+	}
+
+	public boolean writeMetadata() {
+		boolean updatedCover = coverFileToUpdate == null || updater.updateCover(coverFileToUpdate);
+		return updater.writeAudioMetadata() && updatedCover;
+	}
+
+	public boolean isPlayable() {
+		boolean playable = true;
+		if (getInDisk()) {
+			File file = new File(fileFolder + "/" + fileName);
+			if (! file.exists()) {
+				errorDemon.showErrorDialog(fileFolder + "/" + fileName + " not found");
+				setInDisk(false);
+				playable = false;
+			}
+			else if ("flac".equals(fileFormat) || encoding.startsWith("Apple") || encoder.startsWith("iTunes"))
+				playable = false;
+		}
+		else
+			playable = false;
+		return playable;
+	}
+
+	public boolean getInDisk() {
+		return inDisk;
+	}
+
+	public void setInDisk(boolean inDisk) {
+		this.inDisk = inDisk;
+	}
+
+	public void incrementPlayCount() {
+		playCount++;
+		playCountProperty.setValue(playCount);
+	}
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public String getFileFolder() {
+		return fileFolder;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getArtist() {
+		return artist;
+	}
+
+	public String getAlbum() {
+		return album;
+	}
+
+	public String getComments() {
+		return comments;
+	}
+
+	public String getGenre() {
+		return genre;
+	}
+
+	public int getTrackNumber() {
+		return trackNumber;
+	}
+
+	public int getYear() {
+		return year;
+	}
+
+	public String getAlbumArtist() {
+		return albumArtist;
+	}
+
+	public int getBpm() {
+		return bpm;
+	}
+
+	public String getLabel() {
+		return label;
+	}
+
+	public void setLabel(String label) {
+		this.label = label;
+		labelProperty.setValue(this.label);
+	}
+
+	public void setBpm(int bpm) {
+		this.bpm = bpm;
+		bpmProperty.setValue(this.bpm);
+	}
+
+	public void setAlbumArtist(String albumArtist) {
+		this.albumArtist = albumArtist;
+		albumArtistProperty.setValue(this.albumArtist);
+	}
+
+	public void setYear(int year) {
+		this.year = year;
+	}
+
+	public void setTrackNumber(int trackNumber) {
+		this.trackNumber = trackNumber;
+		trackNumberProperty.setValue(this.trackNumber);
+	}
+
+	public void setGenre(String genre) {
+		this.genre = genre;
+		genreProperty.setValue(this.genre);
+	}
+
+	public void setComments(String comments) {
+		this.comments = comments;
+		commentsProperty.setValue(this.comments);
+	}
+
+	public void setAlbum(String album) {
+		this.album = album;
+		albumProperty.setValue(this.album);
+	}
+
+	public void setArtist(String artist) {
+		this.artist = artist;
+		artistProperty.setValue(this.artist);
+	}
+
+	public void setName(String name) {
+		this.name = name;
+		nameProperty.setValue(this.name);
+	}
+
+	public void setFileFolder(String fileFolder) {
+		this.fileFolder = fileFolder;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+		int pos = fileName.lastIndexOf('.');
+		fileFormat = fileName.substring(pos + 1);
 	}
 
 	@Override
 	public int hashCode() {
-		int hash=71;
-		hash = 73*hash+fileName.hashCode();
-		hash = 73*hash+fileFolder.hashCode();
-		hash = 73*hash+name.hashCode();
-		hash = 73*hash+artist.hashCode();
-		hash = 73*hash+album.hashCode();
-		hash = 73*hash+comments.hashCode();
-		hash = 73*hash+genre.hashCode();
-		hash = 73*hash+trackNumber;
-		hash = 73*hash+year;
-		hash = 73*hash+albumArtist.hashCode();
-		hash = 73*hash+bpm;
-		hash = 73*hash+label.hashCode();
+		int hash = 71;
+		hash = 73 * hash + fileName.hashCode();
+		hash = 73 * hash + fileFolder.hashCode();
+		hash = 73 * hash + name.hashCode();
+		hash = 73 * hash + artist.hashCode();
+		hash = 73 * hash + album.hashCode();
+		hash = 73 * hash + comments.hashCode();
+		hash = 73 * hash + genre.hashCode();
+		hash = 73 * hash + trackNumber;
+		hash = 73 * hash + year;
+		hash = 73 * hash + albumArtist.hashCode();
+		hash = 73 * hash + bpm;
+		hash = 73 * hash + label.hashCode();
 		return hash;
 	}
-	
+
 	@Override
 	public boolean equals(Object o) {
 		boolean equals = false;
-		if((o instanceof Track && ((Track) o).getFileName().equalsIgnoreCase(this.fileName)) &&
-			o instanceof Track && ((Track) o).getFileFolder().equalsIgnoreCase(this.fileFolder) && 
-			o instanceof Track && ((Track) o).getName().equalsIgnoreCase(this.name) &&
-			o instanceof Track && ((Track) o).getArtist().equalsIgnoreCase(this.artist) &&
-			o instanceof Track && ((Track) o).getAlbum().equalsIgnoreCase(this.album) &&
-			o instanceof Track && ((Track) o).getComments().equalsIgnoreCase(this.comments) &&
-			o instanceof Track && ((Track) o).getGenre().equalsIgnoreCase(this.genre) &&
-			o instanceof Track && ((Track) o).getTrackNumber() == this.trackNumber &&
-			o instanceof Track && ((Track) o).getYear() == this.year &&
-			o instanceof Track && ((Track) o).getAlbumArtist().equalsIgnoreCase(this.albumArtist) &&
-			o instanceof Track && ((Track) o).getBpm() == this.bpm &&
-			o instanceof Track && ((Track) o).getLabel().equalsIgnoreCase(this.label))
+
+		if (o instanceof Track) {
+			Track oTrack = (Track) o;
+
+			if (oTrack.getFileName().equalsIgnoreCase(fileName) &&
+					oTrack.getFileFolder().equalsIgnoreCase(fileFolder) &&
+					oTrack.getName().equalsIgnoreCase(name) &&
+					oTrack.getArtist().equalsIgnoreCase(artist) &&
+					oTrack.getAlbum().equalsIgnoreCase(album) &&
+					oTrack.getComments().equalsIgnoreCase(comments) &&
+					oTrack.getGenre().equalsIgnoreCase(genre) &&
+					oTrack.getTrackNumber() == trackNumber &&
+					oTrack.getYear() == year &&
+					oTrack.getAlbumArtist().equalsIgnoreCase(albumArtist) &&
+					oTrack.getBpm() == bpm &&
+					oTrack.getLabel().equalsIgnoreCase(label)) {
 				equals = true;
+			}
+		}
+		else {
+			equals = false;
+		}
+
 		return equals;
 	}
-	
+
 	@Override
-    public String toString(){
-    	return "["+name+"|"+artist+"|"+genre+"|"+album+"("+year+")|"+bpm+"|"+label+"]";
-    }
+	public String toString() {
+		return name + "|" + artist + "|" + genre + "|" + album + "(" + year + ")|" + bpm + "|" + label;
+	}
 }

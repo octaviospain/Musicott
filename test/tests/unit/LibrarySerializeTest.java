@@ -18,36 +18,21 @@
 
 package tests.unit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import com.cedarsoftware.util.io.*;
+import com.musicott.model.*;
+import com.musicott.util.*;
+import com.sun.javafx.collections.*;
+import javafx.collections.*;
+import org.junit.*;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.cedarsoftware.util.io.JsonReader;
-import com.cedarsoftware.util.io.JsonWriter;
-import com.musicott.model.Track;
-import com.musicott.util.MetadataParser;
-import com.musicott.util.ObservableMapWrapperCreator;
-import com.musicott.util.Utils;
-import com.sun.javafx.collections.ObservableMapWrapper;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableMap;
+import static org.junit.Assert.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @deprecated
  */
 @SuppressWarnings({"restriction", "unchecked"})
 public class LibrarySerializeTest {
@@ -121,9 +106,8 @@ public class LibrarySerializeTest {
 		assertEquals(MAX_TRACKS, audioFiles.size());
 		Map<Integer, Track> tracks = new HashMap<>();
 		for(File f: audioFiles) {
-			MetadataParser parser = new MetadataParser(f);
-			Track t = parser.createTrack();
-			tracks.put(t.getTrackID(), t);
+			Track t = MetadataParser.createTrack(f);
+			tracks.put(t.getTrackId(), t);
 		}
 		FileOutputStream fos = new FileOutputStream(jsonFile);
 		JsonWriter jsw = new JsonWriter(fos, args);
@@ -156,9 +140,8 @@ public class LibrarySerializeTest {
 		assertEquals(MAX_TRACKS, audioFiles.size());
 		Map<Integer, Track> tracks = new HashMap<>();
 		for(File f: audioFiles) {
-			MetadataParser parser = new MetadataParser(f);
-			Track t = parser.createTrack();
-			tracks.put(t.getTrackID(), t);
+			Track t = MetadataParser.createTrack(f);
+			tracks.put(t.getTrackId(), t);
 		}
 		
 		ObservableMap<Integer, Track> obsTracks = FXCollections.observableHashMap();
@@ -181,8 +164,7 @@ public class LibrarySerializeTest {
 	
 	@Test
 	public void testTrackToJsonToTrack() throws Exception {
-		MetadataParser parser = new MetadataParser(new File("/users/octavio/test/testeable.mp3"));
-		Track t = parser.createTrack();
+		Track t = MetadataParser.createTrack(new File("/users/octavio/test/testeable.mp3"));
 		fos = new FileOutputStream(jsonFile);
 		jsw = new JsonWriter(fos, args);
 		jsw.write(t);

@@ -1,239 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.input.*?>
 <?import javafx.geometry.*?>
-<?import java.lang.*?>
-<?import java.util.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.paint.*?>
-<?import javafx.scene.text.*?>
-<?import javafx.embed.swing.*?>
 <?import javafx.scene.image.*?>
-
-<BorderPane fx:id="rootBorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="750.0" prefWidth="1200.0" stylesheets="@../css/rootstyle.css" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.RootController">
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<BorderPane fx:id="rootBorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="750.0" prefWidth="1200.0" stylesheets="@../css/rootstyle.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.RootController">
    <top>
-      <VBox BorderPane.alignment="CENTER">
-         <children>
-            <MenuBar minHeight="30.0" prefHeight="30.0">
-              <menus>
-                <Menu fx:id="menuFile" mnemonicParsing="false" text="File">
-                  <items>
-                    <MenuItem fx:id="menuItemOpen" mnemonicParsing="false" onAction="#doOpen" text="Open File(s)...">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="O" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                    <MenuItem fx:id="menuItemImport" mnemonicParsing="false" onAction="#doImportFolder" text="Import folder...">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="R" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <MenuItem fx:id="menuItemItunesImport" mnemonicParsing="false" onAction="#doItunesImport" text="Import from Itunes Library..">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="I" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
-                           </accelerator>
-                        </MenuItem>
-                    <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem fx:id="menuItemLastFM" mnemonicParsing="false" onAction="#doPreferences" text="Preferences">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="COMMA" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator>
-                        </MenuItem>
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                    <MenuItem mnemonicParsing="false" onAction="#handleExit" text="Close">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                  </items>
-                </Menu>
-                <Menu fx:id="menuEdit" mnemonicParsing="false" text="Edit">
-                  <items>
-                    <MenuItem fx:id="menuItemEdit" mnemonicParsing="false" onAction="#doEdit" text="Edit">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="I" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <MenuItem fx:id="menuItemDelete" mnemonicParsing="false" onAction="#doDelete" text="Delete">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="BACK_SPACE" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                  </items>
-                </Menu>
-                  <Menu mnemonicParsing="false" text="Controls">
-                    <items>
-                      <MenuItem fx:id="menuItemNext" mnemonicParsing="false" onAction="#doNext" text="Next">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="RIGHT" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <MenuItem fx:id="menuItemPrev" mnemonicParsing="false" onAction="#doPrevious" text="Previous">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="LEFT" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" onAction="#doIncreaseVolume" text="Increase Volume">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="UP" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#doDecreaseVolume" text="Decrease Volume">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="DOWN" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" onAction="#doSelectCurrentTrack" text="Select Current Track">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="L" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator></MenuItem>
-                    </items>
-                  </Menu>
-                <Menu fx:id="menuAbout" mnemonicParsing="false" text="About">
-                  <items>
-                    <MenuItem fx:id="menuItemAbout" mnemonicParsing="false" onAction="#doAbout" text="About Musicott" />
-                  </items>
-                </Menu>
-              </menus>
-            </MenuBar>
-            <GridPane minHeight="50.0">
-              <columnConstraints>
-                <ColumnConstraints halignment="CENTER" hgrow="NEVER" maxWidth="395.0" minWidth="10.0" prefWidth="164.0" />
-                  <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="891.0" minWidth="10.0" prefWidth="141.0" />
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="891.0" minWidth="10.0" prefWidth="601.0" />
-                  <ColumnConstraints halignment="CENTER" hgrow="NEVER" maxWidth="444.0" minWidth="15.0" prefWidth="45.0" />
-                  <ColumnConstraints hgrow="NEVER" maxWidth="444.0" minWidth="10.0" prefWidth="249.0" />
-              </columnConstraints>
-              <rowConstraints>
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-              </rowConstraints>
-               <children>
-                  <HBox alignment="CENTER_LEFT" minHeight="50.0" minWidth="-Infinity" prefHeight="50.0" GridPane.columnIndex="0">
-                     <children>
-                        <Button fx:id="prevButton" ellipsisString="" mnemonicParsing="false" onAction="#doPrevious" />
-                        <ToggleButton fx:id="playButton" ellipsisString="" mnemonicParsing="false" onAction="#doPlayPause" />
-                        <Button fx:id="nextButton" ellipsisString="" mnemonicParsing="false" onAction="#doNext" />
-                     </children>
-                     <GridPane.margin>
-                        <Insets />
-                     </GridPane.margin>
-                  </HBox>
-                  <HBox GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="NEVER">
-                     <children>
-                        <ImageView fx:id="currentCover" cacheHint="SPEED" fitHeight="51.0" fitWidth="51.0" pickOnBounds="true" preserveRatio="true" />
-                        <StackPane fx:id="playerStackPane" GridPane.columnIndex="2">
-                           <children>
-                              <VBox>
-                                 <children>
-                                    <SwingNode fx:id="waveformSwingNode" VBox.vgrow="NEVER" />
-                                    <BorderPane minWidth="-Infinity" prefHeight="50.0" prefWidth="520.0" VBox.vgrow="NEVER">
-                                       <left>
-                                          <Label fx:id="currentTimeLabel" prefWidth="50.0" textFill="#000000be" BorderPane.alignment="CENTER_LEFT">
-                                             <font>
-                                                <Font size="11.0" />
-                                             </font>
-                                             <BorderPane.margin>
-                                                <Insets left="2.0" />
-                                             </BorderPane.margin>
-                                          </Label>
-                                       </left>
-                                       <right>
-                                          <Label fx:id="remainingTimeLabel" contentDisplay="RIGHT" prefWidth="50.0" textFill="#000000be" BorderPane.alignment="CENTER_RIGHT">
-                                             <font>
-                                                <Font size="11.0" />
-                                             </font>
-                                             <BorderPane.margin>
-                                                <Insets right="2.0" />
-                                             </BorderPane.margin>
-                                          </Label>
-                                       </right>
-                                       <center>
-                                          <Label fx:id="artistAlbumLabel" alignment="CENTER" contentDisplay="CENTER" prefWidth="400.0" textFill="#000000be" BorderPane.alignment="CENTER">
-                                             <font>
-                                                <Font size="11.0" />
-                                             </font>
-                                          </Label>
-                                       </center>
-                                       <top>
-                                          <Label fx:id="titleLabel" BorderPane.alignment="CENTER">
-                                             <BorderPane.margin>
-                                                <Insets top="3.0" />
-                                             </BorderPane.margin>
-                                          </Label>
-                                       </top>
-                                    </BorderPane>
-                                    <StackPane GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="NEVER">
-                                       <children>
-                                          <ProgressBar fx:id="trackProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="5.0" prefWidth="520.0" progress="0.0" StackPane.alignment="CENTER">
-                                             <StackPane.margin>
-                                                <Insets bottom="-1.0" />
-                                             </StackPane.margin>
-                                          </ProgressBar>
-                                          <Slider fx:id="trackSlider" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="5.0" prefWidth="520.0" StackPane.alignment="CENTER">
-                                             <StackPane.margin>
-                                                <Insets bottom="-1.0" />
-                                             </StackPane.margin>
-                                             <rotationAxis>
-                                                <Point3D />
-                                             </rotationAxis>
-                                             <padding>
-                                                <Insets right="-15.0" />
-                                             </padding>
-                                          </Slider>
-                                       </children>
-                                       <VBox.margin>
-                                          <Insets />
-                                       </VBox.margin>
-                                    </StackPane>
-                                 </children>
-                              </VBox>
-                           </children>
-                        </StackPane>
-                     </children>
-                  </HBox>
-                   <ToggleButton fx:id="playQueueButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#doShowHidePlayQueue" prefHeight="15.0" prefWidth="15.0" GridPane.columnIndex="3" GridPane.halignment="CENTER" GridPane.hgrow="NEVER" />
-                  <StackPane GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.hgrow="NEVER">
-                     <children>
-                        <ProgressBar fx:id="volumeProgressBar" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="10.0" prefWidth="105.0" progress="0.0" StackPane.alignment="CENTER" />
-                        <Slider fx:id="volumeSlider" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="110.0" StackPane.alignment="CENTER" />
-                     </children>
-                  </StackPane>
-                  <TextField fx:id="searchTextField" alignment="CENTER_LEFT" GridPane.columnIndex="4">
-                     <GridPane.margin>
-                        <Insets left="15.0" right="15.0" />
-                     </GridPane.margin></TextField>
-               </children>
-              </GridPane>
-         </children>
-      </VBox>
+      <VBox fx:id="headerVBox" BorderPane.alignment="CENTER" />
    </top>
    <center>
-      <GridPane>
-         <children>
-         	<TableView fx:id="trackTable" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
-              <columns>
-                  <TableColumn fx:id="coverCol" prefWidth="50.0" text="Cover" />
-                  <TableColumn fx:id="artistCol" prefWidth="170.0" text="Artist" />
-                  <TableColumn fx:id="nameCol" prefWidth="170.0" text="Name" />
-                  <TableColumn fx:id="albumCol" prefWidth="170.0" text="Album" />
-                  <TableColumn fx:id="genreCol" prefWidth="120.0" text="Genre" />
-                  <TableColumn fx:id="labelCol" prefWidth="120.0" text="Label" />
-                  <TableColumn fx:id="bpmCol" prefWidth="60.0" text="BPM" />
-                  <TableColumn fx:id="totalTimeCol" prefWidth="60.0" text="Duration" />
-                  <TableColumn fx:id="yearCol" prefWidth="60.0" text="Year" />
-                  <TableColumn fx:id="sizeCol" prefWidth="64.0" text="Size" />
-                  <TableColumn fx:id="trackNumberCol" prefWidth="45.0" text="Track Num" />
-                  <TableColumn fx:id="discNumberCol" prefWidth="45.0" text="Disc Num" />
-                  <TableColumn fx:id="albumArtistCol" prefWidth="100.0" text="Album Artist" />
-                  <TableColumn fx:id="commentsCol" prefWidth="150.0" text="Comments" />
-                  <TableColumn fx:id="bitRateCol" prefWidth="60.0" text="BitRate" />
-                  <TableColumn fx:id="playCountCol" prefWidth="50.0" text="Plays" />
-                  <TableColumn fx:id="dateModifiedCol" prefWidth="110.0" text="Modified" />
-                  <TableColumn fx:id="dateAddedCol" prefWidth="110.0" text="Added" />
-              </columns>
-            </TableView>
-         </children>
-         <columnConstraints>
-            <ColumnConstraints />
-         </columnConstraints>
-         <rowConstraints>
-            <RowConstraints />
-         </rowConstraints>
-      </GridPane>
+      <BorderPane fx:id="contentBorderLayout" BorderPane.alignment="CENTER">
+         <center>
+            <BorderPane fx:id="tableBorderPane" BorderPane.alignment="CENTER">
+               <top>
+                  <HBox fx:id="tableInfoHBox" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                     <children>
+                        <ImageView fx:id="playlistCover" fitHeight="90.0" fitWidth="90.0" pickOnBounds="true" preserveRatio="true">
+                           <HBox.margin>
+                              <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                           </HBox.margin>
+                           <image>
+                              <Image url="@../images/default-cover-image.png" />
+                           </image>
+                        </ImageView>
+                        <VBox fx:id="playlistInfoVBox">
+                           <children>
+                              <Label fx:id="playlistTitleLabel" maxHeight="-Infinity" prefHeight="25.0">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" left="15.0" top="30.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <HBox>
+                                 <VBox.margin>
+                                    <Insets left="15.0" top="10.0" />
+                                 </VBox.margin>
+                                 <children>
+                                    <Label fx:id="playlistTracksNumberLabel" textFill="#000000bf">
+                                       <HBox.margin>
+                                          <Insets right="10.0" />
+                                       </HBox.margin>
+                                    </Label>
+                                    <Label fx:id="playlistSizeLabel" textFill="#000000bf">
+                                       <HBox.margin>
+                                          <Insets right="10.0" />
+                                       </HBox.margin>
+                                    </Label>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </top>
+            </BorderPane>
+         </center>
+      </BorderPane>
    </center>
-   
 </BorderPane>

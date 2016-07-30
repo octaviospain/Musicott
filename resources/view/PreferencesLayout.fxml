@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.image.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import java.lang.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="550.0" stylesheets="@../css/dialog.css" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.PreferencesController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="550.0" stylesheets="@../css/dialog.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.musicott.view.PreferencesController">
    <children>
       <VBox>
          <children>
@@ -32,7 +30,7 @@
                                                       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                    </HBox.margin>
                                                 </TextField>
-                                                <Button fx:id="openLocationButton" alignment="CENTER" mnemonicParsing="false" onAction="#doSelectMusicottFolder" text="Open..">
+                                                <Button fx:id="chooseApplicationFolderButton" alignment="CENTER" mnemonicParsing="false" text="Open..">
                                                    <HBox.margin>
                                                       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                    </HBox.margin>
@@ -73,6 +71,12 @@
                                                             <Insets />
                                                          </HBox.margin>
                                                       </CheckBox>
+                                                      <Label text="Import all playlists">
+                                                         <HBox.margin>
+                                                            <Insets bottom="10.0" left="20.0" right="18.0" top="10.0" />
+                                                         </HBox.margin>
+                                                      </Label>
+                                                      <CheckBox fx:id="importPlaylistsCheckBox" mnemonicParsing="false" selected="true" />
                                                    </children>
                                                    <VBox.margin>
                                                       <Insets />
@@ -92,7 +96,7 @@
                   <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <BorderPane layoutX="132.0" layoutY="14.0" prefHeight="205.0" prefWidth="550.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <BorderPane layoutX="132.0" layoutY="14.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                  <right>
                                     <ImageView fitHeight="150.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="TOP_CENTER">
                                        <image>
@@ -104,7 +108,7 @@
                                     </ImageView>
                                  </right>
                                  <center>
-                                    <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+                                    <VBox alignment="CENTER" BorderPane.alignment="CENTER">
                                        <children>
                                           <HBox alignment="CENTER">
                                              <children>
@@ -113,7 +117,7 @@
                                                       <Insets bottom="10.0" left="20.0" right="10.0" top="10.0" />
                                                    </HBox.margin>
                                                 </Label>
-                                                <TextField fx:id="lastfmUsernameTextField">
+                                                <TextField fx:id="lastFmUsernameTextField">
                                                    <HBox.margin>
                                                       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                                    </HBox.margin>
@@ -127,7 +131,7 @@
                                                       <Insets bottom="10.0" left="20.0" right="10.0" top="10.0" />
                                                    </HBox.margin>
                                                 </Label>
-                                                <PasswordField fx:id="lastfmPasswordField">
+                                                <PasswordField fx:id="lastFmPasswordField">
                                                    <HBox.margin>
                                                       <Insets bottom="10.0" left="10.0" right="7.0" top="10.0" />
                                                    </HBox.margin>
@@ -136,7 +140,7 @@
                                           </HBox>
                                           <HBox alignment="CENTER">
                                              <children>
-                                                <Button fx:id="lastfmLoginButton" mnemonicParsing="false" onAction="#doLastFMLoginLogout" text="Login">
+                                                <Button fx:id="lastFmLoginButton" mnemonicParsing="false" text="Login">
                                                    <HBox.margin>
                                                       <Insets right="20.0" top="10.0" />
                                                    </HBox.margin>
@@ -149,10 +153,13 @@
                                  <top>
                                     <Label text="Log in to your LastFM account to scrobble your listened tracks and update your profile with the music you are currently listening on Musicott." wrapText="true" BorderPane.alignment="CENTER">
                                        <BorderPane.margin>
-                                          <Insets bottom="10.0" left="20.0" right="20.0" top="20.0" />
+                                          <Insets bottom="10.0" />
                                        </BorderPane.margin>
                                     </Label>
                                  </top>
+                                 <padding>
+                                    <Insets left="20.0" right="20.0" top="20.0" />
+                                 </padding>
                               </BorderPane>
                            </children></AnchorPane>
                   </content>
@@ -161,7 +168,7 @@
             </TabPane>
             <HBox alignment="CENTER_RIGHT" prefHeight="70.0">
                <children>
-                  <Button fx:id="okButton" cancelButton="true" defaultButton="true" mnemonicParsing="false" onAction="#doOK" prefWidth="100.0" text="OK">
+                  <Button fx:id="okButton" cancelButton="true" defaultButton="true" mnemonicParsing="false" prefWidth="100.0" text="OK">
                      <HBox.margin>
                         <Insets left="15.0" right="15.0" />
                      </HBox.margin>

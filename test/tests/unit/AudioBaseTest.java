@@ -18,18 +18,13 @@
 
 package tests.unit;
 
-import java.nio.file.Path;
+import com.musicott.model.*;
+import org.jaudiotagger.audio.*;
+import org.jaudiotagger.tag.*;
+import org.jaudiotagger.tag.images.*;
+import org.jaudiotagger.tag.mp4.*;
 
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.tag.FieldKey;
-import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.images.Artwork;
-import org.jaudiotagger.tag.images.ArtworkFactory;
-import org.jaudiotagger.tag.mp4.Mp4FieldKey;
-import org.jaudiotagger.tag.mp4.Mp4Tag;
-
-import com.musicott.model.Track;
+import java.nio.file.*;
 
 /**
  * @author Octavio Calleya
@@ -62,7 +57,7 @@ public abstract class AudioBaseTest {
 		tag.setField(FieldKey.BPM, expected.getBpm()+"");
 		if(expected.getFileFormat().equals("m4a"))
 			((Mp4Tag)tag).setField(Mp4FieldKey.COMPILATION, "1");
-		tag.setField(FieldKey.IS_COMPILATION, ""+expected.getIsCompilation());
+		tag.setField(FieldKey.IS_COMPILATION, ""+expected.isPartOfCompilation());
 		audioFile.commit();
 	}
 	

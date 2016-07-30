@@ -12,13 +12,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 .root,
 .menu-bar,
-.dialog-pane {
+.dialog-pane, #playlistTreeView, .list-view {
     -fx-focus-color: rgb(73, 73, 73);
     -fx-faint-focus-color: transparent;
     -fx-background-color: transparent, transparent, transparent, -fx-body-color;
@@ -45,13 +46,45 @@
     -fx-highlight-text-fill: white;
 }
 
-.table-row-cell:fillled:focused:selected {
+.table-row-cell:filled:focused:selected {
 	-fx-text-fill: white;
+}
+
+.tree-cell, .list-cell, #navigationPaneVBox {
+	-fx-background-color: rgb(243, 243, 243);
+}
+
+.tree-cell:playlist {
+	-fx-graphic: url('../icons/playlist-black-icon.png');
+}
+
+.tree-cell:playlist-selected {
+	-fx-graphic: url('../icons/playlist-white-icon.png');
+}
+
+.tree-cell:folder {
+	-fx-graphic: url('../icons/playlist-folder-black-icon.png');
+}
+
+.tree-cell:folder-selected {
+	-fx-graphic: url('../icons/playlist-folder-white-icon.png');
+}
+
+.tree-cell:playlist-selected, .tree-cell:folder-selected,
+.list-cell:selected, .tree-cell:selected{
+	-fx-background-color: black;
+	-fx-text-fill: white;
+}
+
+.tree-cell:empty, #showMenuListView .list-cell:empty {
+	-fx-graphic: none;
 }
 
 /* The main scrollbar **track** CSS class  */
 #trackTable .scroll-bar:horizontal .track,
-#trackTable .scroll-bar:vertical .track {
+#trackTable .scroll-bar:vertical .track,
+#playlistTreeView  .scroll-bar:horizontal .track,
+#playlistTreeView  .scroll-bar:vertical .track {
 	-fx-background-color:transparent;
 	-fx-opacity: 0;
 	-fx-border-color:transparent;
@@ -60,8 +93,10 @@
 }
 
 /* The increment and decrement button CSS class of scrollbar */
-#trackTable .scroll-bar:horizontal .increment-button ,
-#trackTable .scroll-bar:horizontal .decrement-button {
+#trackTable .scroll-bar:horizontal .increment-button,
+#trackTable .scroll-bar:horizontal .decrement-button,
+#playlistTreeView  .scroll-bar:horizontal .increment-button,
+#playlistTreeView  .scroll-bar:horizontal .decrement-button {
     -fx-background-color:transparent;
 	-fx-background-radius: 0em;
 	-fx-padding:0 0 10 0;
@@ -69,7 +104,9 @@
 
 /* The increment and decrement button CSS class of scrollbar */
 #trackTable .scroll-bar:vertical .increment-button ,
-#trackTable .scroll-bar:vertical .decrement-button {
+#trackTable .scroll-bar:vertical .decrement-button,
+#playlistTreeView  .scroll-bar:vertical .increment-button,
+#playlistTreeView  .scroll-bar:vertical .decrement-button {
 
     -fx-background-color:transparent;
 	-fx-background-radius: 0em;
@@ -78,101 +115,40 @@
 }
 
 #trackTable .scroll-bar .increment-arrow,
-#trackTable .scroll-bar .decrement-arrow {
+#trackTable .scroll-bar .decrement-arrow,
+#playlistTreeView  .scroll-bar .increment-arrow,
+#playlistTreeView  .scroll-bar .decrement-arrow {
 	-fx-shape: " ";	
 	-fx-padding:0;
 }
 
 /* The main scrollbar **thumb** CSS class which we drag every time (movable) */
 #trackTable .scroll-bar:horizontal .thumb,
-#trackTable .scroll-bar:vertical .thumb {
-    -fx-background-color:derive(black,90%);
+#trackTable .scroll-bar:vertical .thumb,
+#playlistTreeView  .scroll-bar:horizontal .thumb,
+#playlistTreeView  .scroll-bar:vertical .thumb	 {
+    -fx-background-color: derive(black,50%);
 	-fx-background-insets: 2, 0, 0;
 	-fx-background-radius: 2em;
 
+}
+
+#showMenuListView .list-cell {
+	-fx-graphic: url('../icons/menusongs-black-icon.png');
+}
+
+#showMenuListView .list-cell:selected {
+	-fx-graphic: url('../icons/menusongs-white-icon.png');
+}
+
+#tableInfoHBox {
+	-fx-background-color: rgb(243, 243, 243);
 }
 
 #trackTable, .scroll-pane {
     -fx-background-color: transparent, transparent, transparent, white;
 }
 
-#playButton {
-	-fx-graphic: url('../icons/play-button-icon.png');
-	-fx-background-color: transparent;
-}
-
-#playButton:disabled {
-	-fx-graphic: url('../icons/play-button-disabled-icon.png');
-	-fx-background-color: transparent;
-}
-
-#playButton:selected {	
-	-fx-graphic: url('../icons/pause-button-icon.png');
-	-fx-background-color: transparent;
-}
-
-#prevButton {
-	-fx-graphic: url('../icons/prev-button-icon.png');
-	-fx-background-color: transparent;
-}
-
-#prevButton:disabled {
-	-fx-graphic: url('../icons/prev-button-disabled-icon.png');
-	-fx-background-color: transparent;
-}
-
-#nextButton {
-	-fx-graphic: url('../icons/next-button-icon.png');
-	-fx-background-color: transparent;
-}
-
-#nextButton:disabled {
-	-fx-graphic: url('../icons/next-button-disabled-icon.png');
-	-fx-background-color: transparent;
-}
-
-#playQueueButton {
-	-fx-graphic: url('../icons/playqueue-button-icon.png');
-	-fx-background-color: transparent;
-}
-
-#playQueueButton:selected {
-	-fx-graphic: url('../icons/playqueue-button-selected-icon.png');
- 	-fx-effect: dropshadow(gaussian, rgb(73, 73, 73), 15, 0.3, 0, 0);
-}
-
-#trackSlider .track {
-    -fx-background-color: null;
-	-fx-background-insets: 0 0 0 0;
-}
-
-#trackSlider .thumb {
-	-fx-background-color: null;
-	-fx-background-image: url('../icons/sliderthumb-icon.png');
- 	-fx-background-repeat:no-repeat ;
-}
-
-#trackProgressBar .bar {
-	-fx-background-color: black;
-	-fx-background-insets: 0 0 1 0;
-	-fx-background-radius: null;
-}
-
-#trackProgressBar .track {
-	-fx-control-inner-background: rgb(182,182,182);
-	-fx-background-radius: null;
-}
-
-#volumeSlider .track {
-    -fx-background-color: null;
-}
-
-#volumeProgressBar .bar {
-	-fx-background-color: black;
-	-fx-background-insets: 1 1 2 1;
-	-fx-background-radius: 2;	
-}
-
-#volumeProgressBar .track {
-	-fx-control-inner-background: rgb(182,182,182);
-}
+#playlistTitleTextField {
+	-fx-border-radius: 0em;
+} 

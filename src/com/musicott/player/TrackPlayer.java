@@ -14,29 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.player;
 
-import com.musicott.model.Track;
+import com.musicott.model.*;
 
 /**
  * @author Octavio Calleya
- *
  */
 public interface TrackPlayer {
-	
-	public String getStatus();
-	
-	public void setTrack(Track track);
 
-	public void setVolume(double value);
-	
-	public void play();
-	
-	public void pause();
-	
-	public void stop();
-	
-	public void dispose();
+	String getStatus();
+
+	void setTrack(Track track);
+
+	void setVolume(double value);
+
+	void seek(double seekValue);
+
+	void play();
+
+	void pause();
+
+	void stop();
+
+	void dispose();
 }

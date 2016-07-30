@@ -12,3 +12,5 @@
 Musicott-main-log.txt
 /_site/
 /resources/config/config.properties
+.idea
+*.iml

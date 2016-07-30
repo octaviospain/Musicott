@@ -14,28 +14,25 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.services.lastfm;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @version 0.9-b
  */
-@XmlRootElement(name = "session")
-public class LastFMSession {
+@XmlRootElement (name = "session")
+public class LastFmSession {
 
 	private String userName;
 	private String sessionKey;
 	private String subscriber;
-	
-	public LastFMSession() {
-	}
 
-	@XmlElement(name = "name")
+	@XmlElement (name = "name")
 	public String getUserName() {
 		return userName;
 	}
@@ -44,7 +41,7 @@ public class LastFMSession {
 		this.userName = userName;
 	}
 
-	@XmlElement(name = "key")
+	@XmlElement (name = "key")
 	public String getSessionKey() {
 		return sessionKey;
 	}

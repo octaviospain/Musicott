@@ -14,27 +14,27 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.worldsworstsoftware.itunes.parser.logging.ParserStatusUpdateLogger;
-import com.worldsworstsoftware.logging.StatusUpdateLogger;
+import com.worldsworstsoftware.itunes.parser.logging.*;
+import com.worldsworstsoftware.logging.*;
+import org.slf4j.*;
 
 /**
- * Class logger needed by com.worldworstsoftware library
+ * Class logger needed by iTunesUtilities library
  * to perform the itunes library parse.
- * 
- * @author Octavio Calleya
  *
+ * @author Octavio Calleya
+ * @version 0.9-b
+ * @see <a href="https://github.com/codercowboy/iTunesUtilities">ItunesUtilities</a>
  */
 public class ItunesParserLogger implements StatusUpdateLogger, ParserStatusUpdateLogger {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	
+
 	@Override
 	public int getPlaylistParseUpdateFrequency() {
 		return UPDATE_FREQUENCY_NEVER;
@@ -52,17 +52,17 @@ public class ItunesParserLogger implements StatusUpdateLogger, ParserStatusUpdat
 
 	@Override
 	public void error(String arg0, Exception arg1, boolean arg2) {
-		LOG.warn((arg2 ? "" : "NON ")+"RECOVERABLE ERROR: "+arg0+": "+arg1.getMessage());
+		LOG.warn((arg2 ? "" : "NON ") + "RECOVERABLE ERROR: " + arg0 + ": " + arg1.getMessage());
 	}
 
 	@Override
 	public void fatal(String arg0, Exception arg1, boolean arg2) {
-		LOG.error((arg2 ? "" : "NON ")+"RECOVERABLE FATAL ERROR: "+arg0+": "+arg1.getMessage());
+		LOG.error((arg2 ? "" : "NON ") + "RECOVERABLE FATAL ERROR: " + arg0 + ": " + arg1.getMessage());
 	}
 
 	@Override
 	public void statusUpdate(int arg0, String arg1) {
-		LOG.info("#"+arg0+": "+arg1);
+		LOG.info("#" + arg0 + ": " + arg1);
 	}
 
 	@Override

@@ -14,38 +14,38 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.services.lastfm;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlValue;
+import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @version 0.9-b
  */
 @XmlRootElement
-public class LastFMAlbumArtist {
+public class LastFmAlbumArtist {
 
 	@XmlAttribute
 	private String corrected;
 	@XmlValue
 	private String value;
-	
+
 	public String getCorrected() {
 		return corrected;
 	}
+
 	public void setCorrected(String corrected) {
 		this.corrected = corrected;
 	}
-	
+
 	public String getValue() {
 		return value;
 	}
-	
+
 	public void setValue(String value) {
 		this.value = value;
-	}	
+	}
 }

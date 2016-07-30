@@ -14,25 +14,26 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.util;
 
-import com.cedarsoftware.util.io.JsonReader.ClassFactory;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableMap;
+import com.cedarsoftware.util.io.*;
+import javafx.collections.*;
 
 /**
- * @author Octavio Calleya
+ * Class needed by the <tt>Json-io</tt> library in order to deserialize an {@link ObservableMap}.
  *
+ * @author Octavio Calleya
+ * @version 0.9-b
+ * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
  */
-public class ObservableMapWrapperCreator implements ClassFactory {
+public class ObservableMapWrapperCreator implements JsonReader.ClassFactory {
 
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings ("rawtypes")
 	@Override
 	public Object newInstance(Class c) {
-		ObservableMap ol = FXCollections.observableHashMap();
-		return ol;
+		return FXCollections.observableHashMap();
 	}
 }

@@ -18,28 +18,22 @@
 
 package tests.system;
 
-import static org.hamcrest.Matchers.greaterThan;
+import com.musicott.*;
+import com.musicott.model.*;
+import javafx.application.*;
+import javafx.scene.control.*;
+import javafx.scene.input.*;
+import javafx.scene.layout.*;
+import javafx.stage.*;
+import org.junit.*;
+import org.testfx.framework.junit.*;
+
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.loadui.testfx.GuiTest.find;
-import static org.loadui.testfx.controls.TableViews.numberOfRowsIn;
-import static org.testfx.api.FxAssert.verifyThat;
+import static org.loadui.testfx.GuiTest.*;
+import static org.loadui.testfx.controls.TableViews.*;
+import static org.testfx.api.FxAssert.*;
 import static org.testfx.matcher.base.NodeMatchers.*;
-
-import org.junit.After;
-import org.junit.Test;
-import org.testfx.framework.junit.ApplicationTest;
-
-import com.musicott.MainApp;
-import com.musicott.model.Track;
-
-import javafx.application.Application;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TableView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.layout.GridPane;
-import javafx.stage.Stage;
 
 /**
  * @author Octavio Calleya
@@ -52,7 +46,7 @@ public class PlayerApplicationTest extends ApplicationTest {
 	
 	@Override
 	public void start(Stage stage) throws Exception {
-		frame = new MainApp();
+		frame = new MusicottApplication();
 		this.stage = stage;
 		frame.init();
 		frame.start(this.stage);

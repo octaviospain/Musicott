@@ -14,32 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.services.lastfm;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlValue;
+import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- *
+ * @version 0.9-b
  */
-@XmlRootElement(name = "error")
-public class LastFMError {
+@XmlRootElement (name = "error")
+public class LastFmError {
 
 	private String code;
 	private String message;
-	
-	public LastFMError() {
+
+	public LastFmError() {
 	}
 
 	@XmlValue
 	public String getMessage() {
 		return this.message;
 	}
-	
+
 	public void setMessage(String message) {
 		this.message = message;
 	}
@@ -48,7 +47,7 @@ public class LastFMError {
 	public String getCode() {
 		return this.code;
 	}
-	
+
 	public void setCode(String code) {
 		this.code = code;
 	}

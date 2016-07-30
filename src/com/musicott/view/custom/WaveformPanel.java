@@ -14,61 +14,59 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.view.custom;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
+import com.musicott.model.*;
 
-import javax.swing.JPanel;
-
-import com.musicott.model.MusicLibrary;
-import com.musicott.model.Track;
+import javax.swing.*;
+import java.awt.*;
 
 /**
- * @author Octavio Calleya
+ * Swing panel paints the waveform of a track.
  *
+ * @author Octavio Calleya
+ * @version 0.9-b
  */
 public class WaveformPanel extends JPanel {
-	
+
 	private static final long serialVersionUID = 2195160480150957593L;
 	private final float[] defaultWave;
-	
-	private MusicLibrary ml;
+
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private float[] waveData;
-	private int width;
+	private int paneWidth;
 	private Color backgroundColor;
 	private Color foregroundColor;
-	
+
 	public WaveformPanel(int width, int height) {
-		ml = MusicLibrary.getInstance();
 		Dimension dim = new Dimension(width, height);
 		setMinimumSize(dim);
 		setMaximumSize(dim);
 		setPreferredSize(dim);
-		this.width = width;
+		paneWidth = width;
 		defaultWave = new float[width];
-		for(int i=0; i<width; i++)
-				defaultWave[i] = 0.28802148f;
+		for (int i = 0; i < width; i++)
+			defaultWave[i] = 0.28802148f;
 		waveData = defaultWave;
-		backgroundColor = new Color(237, 237, 237);
+		backgroundColor = new Color(243, 243, 243);
 		foregroundColor = new Color(182, 182, 182);
 		setBackground(backgroundColor);
 		setForeground(backgroundColor);
 	}
-	
+
 	public void clear() {
 		waveData = defaultWave;
 		setForeground(backgroundColor);
 		repaint();
 	}
-	
+
 	public void setTrack(Track track) {
-		if(ml.containsWaveform(track.getTrackID())) {
-			waveData = ml.getWaveform(track.getTrackID());
-			if(getForeground().equals(backgroundColor))
+		if (musicLibrary.containsWaveform(track.getTrackId())) {
+			waveData = musicLibrary.getWaveform(track.getTrackId());
+			if (getForeground().equals(backgroundColor))
 				setForeground(foregroundColor);
 			repaint();
 		}
@@ -80,7 +78,7 @@ public class WaveformPanel extends JPanel {
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		int nHeight = getHeight();
-		for (int i = 0; i<width; i++) {
+		for (int i = 0; i < paneWidth; i++) {
 			int value = (int) (waveData[i] * nHeight);
 			int y1 = (nHeight - 2 * value) / 2;
 			int y2 = y1 + 2 * value;

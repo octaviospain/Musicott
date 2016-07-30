@@ -12,10 +12,11 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Musicott library.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
- 
+
 .root {
     -fx-focus-color: rgb(73, 73, 73);
     -fx-faint-focus-color: transparent;
@@ -34,7 +35,7 @@
     -fx-text-fill: white;
 }
 
-.button:default:hover, .button:default:pressed {
+.button:default:hover, .button:pressed {
     -fx-background-color: black;
     -fx-text-fill: white;
 }

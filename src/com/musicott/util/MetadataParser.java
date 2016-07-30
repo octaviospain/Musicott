@@ -14,105 +14,132 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
 package com.musicott.util;
 
-import java.io.File;
-import java.io.IOException;
+import com.musicott.model.*;
+import javafx.util.*;
+import org.jaudiotagger.audio.*;
+import org.jaudiotagger.audio.exceptions.*;
+import org.jaudiotagger.tag.*;
 
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.audio.exceptions.CannotReadException;
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
-import org.jaudiotagger.tag.FieldKey;
-import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.TagException;
-
-import com.musicott.model.Track;
-
-import javafx.util.Duration;
+import java.io.*;
+import java.util.*;
 
 /**
- * @author Octavio Calleya
+ * Performs the operation of parsing an audio file to a {@link Track} instance.
  *
+ * @author Octavio Calleya
+ * @version 0.9-b
+ * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
 public class MetadataParser {
-	
-	private File fileToParse;
-	
-	public MetadataParser(File file) {
-		this.fileToParse = file;
-	}
 
-	public Track createTrack() throws CannotReadException, IOException, TagException, ReadOnlyFileException, InvalidAudioFrameException {
+	private MetadataParser() {}
+
+	public static Track createTrack(File fileToParse) throws TrackParseException {
 		Track track = new Track();
-		AudioFile audioFile = AudioFileIO.read(fileToParse);
-		track.setFileFolder(fileToParse.getParent().toString());
-		track.setFileName(fileToParse.getName());
-		track.setInDisk(true);
-		track.setSize((int) (fileToParse.length()));
-		track.setTotalTime(Duration.seconds(audioFile.getAudioHeader().getTrackLength()));
-		track.setEncoding(audioFile.getAudioHeader().getEncodingType());
-		String bitRate = audioFile.getAudioHeader().getBitRate();
-		if(bitRate.substring(0, 1).equals("~")) {
-			track.setIsVariableBitRate(true);
-			bitRate = bitRate.substring(1);
+		try {
+			AudioFile audioFile = AudioFileIO.read(fileToParse);
+			track.setFileFolder(fileToParse.getParent());
+			track.setFileName(fileToParse.getName());
+			track.setInDisk(true);
+			track.setSize((int) (fileToParse.length()));
+			track.setTotalTime(Duration.seconds(audioFile.getAudioHeader().getTrackLength()));
+			track.setEncoding(audioFile.getAudioHeader().getEncodingType());
+			String bitRate = audioFile.getAudioHeader().getBitRate();
+			if ("~".equals(bitRate.substring(0, 1))) {
+				track.setIsVariableBitRate(true);
+				bitRate = bitRate.substring(1);
+			}
+			track.setBitRate(Integer.parseInt(bitRate));
+			Tag tag = audioFile.getTag();
+			parseBaseMetadata(track, tag);
+			getCoverBytes(tag).ifPresent(coverBytes -> track.hasCoverProperty().set(true));
 		}
-		track.setBitRate(Integer.parseInt(bitRate));
-		Tag tag = audioFile.getTag();
-		parseBaseMetadata(track, tag);
-		checkCoverImage(track, tag);
+		catch (IOException | CannotReadException | ReadOnlyFileException |
+				TagException | InvalidAudioFrameException exception) {
+			throw new TrackParseException("Error parsing the file " + fileToParse, exception);
+		}
 		return track;
 	}
-	
-	private void parseBaseMetadata(Track track, Tag tag) {
-		if(tag.hasField(FieldKey.TITLE))
+
+	private static void parseBaseMetadata(Track track, Tag tag) {
+		if (tag.hasField(FieldKey.TITLE))
 			track.setName(tag.getFirst(FieldKey.TITLE));
-		if(tag.hasField(FieldKey.ALBUM))
+		if (tag.hasField(FieldKey.ALBUM))
 			track.setAlbum(tag.getFirst(FieldKey.ALBUM));
-		if(tag.hasField(FieldKey.ALBUM_ARTIST))
+		if (tag.hasField(FieldKey.ALBUM_ARTIST))
 			track.setAlbumArtist(tag.getFirst(FieldKey.ALBUM_ARTIST));
-		if(tag.hasField(FieldKey.ARTIST))
+		if (tag.hasField(FieldKey.ARTIST))
 			track.setArtist(tag.getFirst(FieldKey.ARTIST));
-		if(tag.hasField(FieldKey.GENRE))
+		if (tag.hasField(FieldKey.GENRE))
 			track.setGenre(tag.getFirst(FieldKey.GENRE));
-		if(tag.hasField(FieldKey.COMMENT))
+		if (tag.hasField(FieldKey.COMMENT))
 			track.setComments(tag.getFirst(FieldKey.COMMENT));
-		if(tag.hasField(FieldKey.GROUPING))
+		if (tag.hasField(FieldKey.GROUPING))
 			track.setLabel(tag.getFirst(FieldKey.GROUPING));
-		if(tag.hasField(FieldKey.ENCODER))
+		if (tag.hasField(FieldKey.ENCODER))
 			track.setEncoder(tag.getFirst(FieldKey.ENCODER));
-		if(tag.hasField(FieldKey.IS_COMPILATION))
-			if(track.getFileFormat().equals("m4a"))
-				track.setCompilation(tag.getFirst(FieldKey.IS_COMPILATION).equals("1") ? true : false);
+		if (tag.hasField(FieldKey.IS_COMPILATION)) {
+			if ("m4a".equals(track.getFileFormat()))
+				track.setIsPartOfCompilation("1".equals(tag.getFirst(FieldKey.IS_COMPILATION)));
 			else
-				track.setCompilation(tag.getFirst(FieldKey.IS_COMPILATION).equals("true") ? true : false);
-		if(tag.hasField(FieldKey.BPM))
+				track.setIsPartOfCompilation("true".equals(tag.getFirst(FieldKey.IS_COMPILATION)));
+		}
+		if (tag.hasField(FieldKey.BPM)) {
 			try {
 				int bpm = Integer.parseInt(tag.getFirst(FieldKey.BPM));
 				track.setBpm(bpm < 1 ? 0 : bpm);
-			} catch (NumberFormatException e) {}
-		if(tag.hasField(FieldKey.DISC_NO))
+			}
+			catch (NumberFormatException e) {}
+		}
+		if (tag.hasField(FieldKey.DISC_NO)) {
 			try {
 				int dn = Integer.parseInt(tag.getFirst(FieldKey.DISC_NO));
 				track.setDiscNumber(dn < 1 ? 0 : dn);
-			} catch (NumberFormatException e) {}
-		if(tag.hasField(FieldKey.TRACK))
+			}
+			catch (NumberFormatException e) {}
+		}
+		if (tag.hasField(FieldKey.TRACK)) {
 			try {
-				int tn = Integer.parseInt(tag.getFirst(FieldKey.TRACK));
-				track.setTrackNumber(tn < 1 ? 0 : tn);
-			} catch (NumberFormatException e) {}
-		if(tag.hasField(FieldKey.YEAR))
+				int trackNumber = Integer.parseInt(tag.getFirst(FieldKey.TRACK));
+				track.setTrackNumber(trackNumber < 1 ? 0 : trackNumber);
+			}
+			catch (NumberFormatException e) {}
+		}
+		if (tag.hasField(FieldKey.YEAR)) {
 			try {
 				int year = Integer.parseInt(tag.getFirst(FieldKey.YEAR));
 				track.setYear(year < 1 ? 0 : year);
-			} catch (NumberFormatException e) {}
+			}
+			catch (NumberFormatException e) {}
+		}
 	}
-	
-	public static void checkCoverImage(Track track, Tag tag) {
-		if(!tag.getArtworkList().isEmpty())
-			track.setHasCover(true);
+
+	public static Optional<Tag> getAudioTag(File file) {
+		Optional<Tag> optionalTag;
+		try {
+			AudioFile audioFile = AudioFileIO.read(file);
+			optionalTag = Optional.ofNullable(audioFile.getTag());
+		}
+		catch (IOException | CannotReadException | ReadOnlyFileException |
+				TagException | InvalidAudioFrameException exception) {
+			optionalTag = Optional.empty();
+		}
+		return optionalTag;
+	}
+
+	public static Optional<byte[]> getCoverBytes(Tag tag) {
+		Optional<byte[]> coverBytes;
+		if (! tag.getArtworkList().isEmpty()) {
+			coverBytes = Optional.ofNullable(tag.getFirstArtwork().getBinaryData());
+		}
+		else {
+			coverBytes = Optional.empty();
+		}
+		return coverBytes;
 	}
 }
