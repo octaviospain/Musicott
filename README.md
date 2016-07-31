@@ -7,8 +7,6 @@ Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to 
 
 ![Musicott screenshot 1](https://dl.dropboxusercontent.com/u/3596661/main.png)
 
-![Musicott screenshot 2](https://dl.dropboxusercontent.com/u/3596661/main2.png)
-
 ### Features
 * Play mp3, wav and m4a (with ALAC encoding) files
 * Import mp3, wav and flac files
@@ -42,7 +40,8 @@ Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki")
 * Added a navigation area with playlist and the showing modes
 * Added a information pane at the top of the table when a playlist is shown, with a cover image,
 the number of tracks and the size of the playlist
-* You can hide/show the navigation pane with CMD SHIFT R and the table info pane with CMD SHIFT H
+* You can hide/show the navigation pane with <kbd>CMDD</kbd> + <kbd>SHIFT</kbd> + <kbd>R</kbd>
+ and the table info pane with <kbd>CMD</kbd> + <kbd>SHIFT</kbd> + <kbd>H</kbd>
 
 
 ### Version 0.8
