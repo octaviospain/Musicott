@@ -14,18 +14,35 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
-package tests.unit;
+/*
+ * This file is part of Musicott software.
+ *
+ * Musicott software is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Musicott library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+package com.transgressoft.musicott.tests.system.unit;
 
-import java.io.File;
+import com.transgressoft.musicott.util.*;
+import org.junit.*;
 
-import org.junit.Test;
+import java.io.*;
 
-import com.transgressoft.musicott.util.Utils;
+import static org.junit.Assert.*;
 
 /**
  * Tests for {@link com.transgressoft.musicott.util.Utils#getAllFilesInFolder} in whith the folder tree

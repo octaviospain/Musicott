@@ -67,7 +67,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <skipTests>true</skipTests>
+                    <skipTests>false</skipTests>
                 </configuration>
             </plugin>
         </plugins>
@@ -112,7 +112,7 @@
         <dependency>
             <groupId>com.cedarsoftware</groupId>
             <artifactId>json-io</artifactId>
-            <version>4.1.6</version>
+            <version>4.5.0</version>
             <scope>compile</scope>
         </dependency>
 
@@ -161,7 +161,7 @@
         <dependency>
         	<groupId>org.controlsfx</groupId>
         	<artifactId>controlsfx</artifactId>
-        	<version>8.40.10</version>
+        	<version>8.40.11</version>
             <scope>compile</scope>
         </dependency>
 

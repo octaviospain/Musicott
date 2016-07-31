@@ -14,9 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
-package tests.unit;
+package com.transgressoft.musicott.tests.system.unit;
 
 import org.junit.runner.*;
 import org.junit.runners.*;
