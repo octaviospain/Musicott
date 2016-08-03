@@ -7,5 +7,10 @@ sudo: false
 
 script: mvn clean verify package
 
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
+
 after_success:
   - bash <(curl -s https://codecov.io/bash)
