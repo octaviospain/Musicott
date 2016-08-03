@@ -32,10 +32,9 @@ public interface MusicottController {
 
 	String DEFAULT_COVER_IMAGE = IMAGES_PATH + "default-cover-image.png";
 	String LASTFM_LOGO = IMAGES_PATH + "lastfm-logo.png";
-	String MUSICOTT_WINDOW_ICON = IMAGES_PATH + "musicott-window-icon.png";
+	String MUSICOTT_APP_ICON = IMAGES_PATH + "musicott-app-icon.png";
 	String MUSICOTT_ABOUT_LOGO = IMAGES_PATH + "musicott-about-logo.png";
 
-	String BASE_STYLE = STYLES_PATH + "base.css";
 	String DIALOG_STYLE = STYLES_PATH + "dialog.css";
 	String TRACK_TABLE_STYLE = STYLES_PATH + "tracktable.css";
 

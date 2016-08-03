@@ -25,6 +25,7 @@ import javafx.event.*;
 import javafx.fxml.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
+import javafx.scene.image.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
 
@@ -60,6 +61,7 @@ public class MainPreloader extends Preloader {
 		preloaderStage = primaryStage;
 		preloaderStage.setOnCloseRequest(Event::consume);
 		preloaderStage.setTitle("Musicott");
+		preloaderStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
 		preloaderStage.setScene(new Scene(rootAnchorPane));
 		preloaderStage.setResizable(false);
 		preloaderStage.initStyle(StageStyle.UNDECORATED);
