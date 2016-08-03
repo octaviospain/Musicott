@@ -30,7 +30,7 @@ Next version 0.9 is almost prepared but it needs more tests (as always)! Communi
 * Smart playlists
 
 ## Download
-[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.8), or clone and build the last version 0.9-b.
+[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.9-b);
 
 ## How to build and run
 To build you need at least Java 8 update 40 and Maven
