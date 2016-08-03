@@ -1,9 +1,18 @@
-# Musicott
+[![Build Status](https://travis-ci.org/octaviospain/Musicott.svg?branch=master)](https://travis-ci.org/octaviospain/Musicott)
+[![codecov](https://codecov.io/gh/octaviospain/Musicott/branch/master/graph/badge.svg)](https://codecov.io/gh/octaviospain/Musicott)
+[![license](https://img.shields.io/badge/license-GPL3v2-brightgreen.svg)](https://github.com/octaviospain/Musicott/blob/master/license/gpl.txt)
+
+
+![Musicott title logo](https://dl.dropboxusercontent.com/u/3596661/musicott-title-logo.png)
+
+#
 Musicott is an application that manages and plays music files. Coded in Java 8 with JavaFX.
 Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to read and write the metadata,
 [Json-io](https://github.com/jdereg/json-io "Json-io") for persistence,
 [TestFx](https://github.com/TestFX/TestFX "TestFx") for testing, and some components from
 [ControlsFx](https://bitbucket.org/controlsfx/controlsfx/ "ControlsFx").
+
+Next version 0.9 is almost prepared but it needs more tests (as always)! Community help is welcomed ;)
 
 ![Musicott screenshot 1](https://dl.dropboxusercontent.com/u/3596661/main.png)
 
@@ -21,8 +30,7 @@ Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to 
 * Smart playlists
 
 ## Download
-[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.8).
-Current last version 0.9-b.
+[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.8), or clone and build the last version 0.9-b.
 
 ## How to build and run
 To build you need at least Java 8 update 40 and Maven
@@ -37,10 +45,11 @@ Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki")
 ## Changes history
 
 ### Version 0.9
+* New dark theme
 * Added a navigation area with playlist and the showing modes
 * Added a information pane at the top of the table when a playlist is shown, with a cover image,
 the number of tracks and the size of the playlist
-* You can hide/show the navigation pane with <kbd>CMDD</kbd> + <kbd>SHIFT</kbd> + <kbd>R</kbd>
+* You can hide/show the navigation pane with <kbd>CMD</kbd> + <kbd>SHIFT</kbd> + <kbd>R</kbd>
  and the table info pane with <kbd>CMD</kbd> + <kbd>SHIFT</kbd> + <kbd>H</kbd>
 
 
