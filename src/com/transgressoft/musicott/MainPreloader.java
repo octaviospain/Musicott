@@ -25,7 +25,6 @@ import javafx.event.*;
 import javafx.fxml.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
-import javafx.scene.image.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
 
@@ -50,7 +49,6 @@ public class MainPreloader extends Preloader {
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private MainPreferences preferences = MainPreferences.getInstance();
 	private Stage preloaderStage;
-	private Image musicottIcon = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
 	private Label infoLabel;
 	private ProgressBar preloaderProgressBar;
 
@@ -62,7 +60,6 @@ public class MainPreloader extends Preloader {
 		preloaderStage = primaryStage;
 		preloaderStage.setOnCloseRequest(Event::consume);
 		preloaderStage.setTitle("Musicott");
-		preloaderStage.getIcons().add(musicottIcon);
 		preloaderStage.setScene(new Scene(rootAnchorPane));
 		preloaderStage.setResizable(false);
 		preloaderStage.initStyle(StageStyle.UNDECORATED);
