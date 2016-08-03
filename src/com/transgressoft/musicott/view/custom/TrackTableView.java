@@ -37,6 +37,8 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
+import static com.transgressoft.musicott.view.MusicottController.*;
+
 /**
  * Class that extends from {@link TableView} and models a table that represents {@link Track}
  * instances in their rows, showing almost all of the properties of a <tt>Track</tt> in the columns.
@@ -93,6 +95,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 		getSortOrder().add(dateAddedCol);
 		setRowFactory(tableView -> getTrackTableRowFactory());
 		addEventHandler(KeyEvent.KEY_PRESSED, getKeyPressedEventHandler());
+		getStylesheets().add(getClass().getResource(TRACK_TABLE_STYLE).toExternalForm());
 
 		trackTableContextMenu = new TrackTableViewContextMenu(getSelectionModel().getSelectedItems());
 		setContextMenu(trackTableContextMenu);

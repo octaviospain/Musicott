@@ -5,7 +5,7 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<BorderPane fx:id="rootBorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="750.0" prefWidth="1200.0" stylesheets="@../css/rootstyle.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.RootController">
+<BorderPane fx:id="rootBorderPane" minHeight="-Infinity" minWidth="-Infinity" prefWidth="1200.0" stylesheets="@../css/base.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.RootController">
    <top>
       <VBox fx:id="headerVBox" BorderPane.alignment="CENTER" />
    </top>
@@ -24,20 +24,21 @@
                               <Image url="@../images/default-cover-image.png" />
                            </image>
                         </ImageView>
-                        <VBox fx:id="playlistInfoVBox">
+                        <GridPane fx:id="playlistInfoGridPane" HBox.hgrow="SOMETIMES">
+                          <columnConstraints>
+                            <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                          </columnConstraints>
+                          <rowConstraints>
+                            <RowConstraints maxHeight="42.0" minHeight="10.0" prefHeight="41.0" vgrow="NEVER" />
+                            <RowConstraints maxHeight="46.0" minHeight="10.0" prefHeight="39.0" vgrow="SOMETIMES" />
+                          </rowConstraints>
                            <children>
-                              <Label fx:id="playlistTitleLabel" maxHeight="-Infinity" prefHeight="25.0">
+                              <Label fx:id="playlistTitleLabel" maxHeight="-Infinity">
                                  <font>
                                     <Font size="20.0" />
                                  </font>
-                                 <VBox.margin>
-                                    <Insets bottom="5.0" left="15.0" top="30.0" />
-                                 </VBox.margin>
                               </Label>
-                              <HBox>
-                                 <VBox.margin>
-                                    <Insets left="15.0" top="10.0" />
-                                 </VBox.margin>
+                              <HBox alignment="CENTER_LEFT" GridPane.rowIndex="1">
                                  <children>
                                     <Label fx:id="playlistTracksNumberLabel" textFill="#000000bf">
                                        <HBox.margin>
@@ -52,7 +53,10 @@
                                  </children>
                               </HBox>
                            </children>
-                        </VBox>
+                           <HBox.margin>
+                              <Insets bottom="20.0" right="20.0" top="20.0" />
+                           </HBox.margin>
+                        </GridPane>
                      </children>
                   </HBox>
                </top>

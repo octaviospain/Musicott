@@ -65,7 +65,7 @@ public class PlayerApplicationTest extends ApplicationTest {
 		verifyThat("#nextButton", isDisabled());
 		verifyThat("#titleLabel", hasText(""));
 		verifyThat("#artistAlbumLabel", hasText(""));
-		ListView<GridPane> playList = find("#listView");
+		ListView<GridPane> playList = find("#queuesListView");
 		assertTrue(playList.getItems().isEmpty());
 		
 		clickOn("#menuFile");
