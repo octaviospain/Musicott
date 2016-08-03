@@ -55,7 +55,7 @@ import static java.nio.file.StandardCopyOption.*;
  */
 public class WaveformTask extends Thread {
 
-	private static final double WAVEFORM_HEIGHT_COEFFICIENT = 4.0; // This fits the waveform to the swing node height
+	private static final double WAVEFORM_HEIGHT_COEFFICIENT = 2.7; // This fits the waveform to the swing node height
 	private static final double WAVEFORM_WIDTH = 520.0;
 	private static final CopyOption[] options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());

@@ -44,6 +44,8 @@ import java.util.concurrent.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
+import static com.transgressoft.musicott.view.MusicottController.*;
+
 /**
  * Extends from {@link Task} to perform the operation of import a
  * <tt>iTunes</tt> library to the {@link MusicLibrary} of the application.
@@ -55,7 +57,6 @@ public class ItunesImportTask extends Task<Void> {
 
 	public static final int METADATA_POLICY = 0;
 	public static final int ITUNES_DATA_POLICY = 1;
-	private static final String DIALOG_STYLE = "/css/dialog.css";
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private final String itunesLibraryXmlPath;
 	private final int metadataPolicy;

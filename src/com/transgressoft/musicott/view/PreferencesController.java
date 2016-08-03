@@ -76,7 +76,7 @@ public class PreferencesController implements MusicottController {
 	@FXML
 	private CheckBox importPlaylistsCheckBox;
 	@FXML
-	private ChoiceBox<String> itunesImportPolicyCheckBox;
+	private ComboBox<String> itunesImportPolicyCheckBox;
 	private CheckComboBox<String> extensionsCheckComboBox;
 	private ObservableList<String> selectedExtensions;
 	private Set<String> importFilterExtensions;

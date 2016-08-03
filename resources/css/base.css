@@ -1,0 +1,89 @@
+/*
+ * This file is part of Musicott software.
+ *
+ * Musicott software is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Musicott library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Copyright (C) 2015, 2016 Octavio Calleya
+ */
+
+.root,
+.menu-bar,
+.dialog-pane,
+.tree-view,
+.list-view,
+.context-menu {
+    -fx-focus-color: rgb(73, 73, 73);
+    -fx-faint-focus-color: transparent;
+    -fx-background-color: transparent, transparent, transparent, rgb(34, 34, 34);
+    -fx-background-radius: 0, 0, 0, 0;
+    -fx-accent: rgb(99, 255, 109);
+}
+
+.menu-item:focused .label {
+    -fx-text-fill: black;
+}
+
+.menu:hover {
+    -fx-background-color: rgb(73, 73, 73);
+}
+
+.label, .check-box {
+    -fx-text-fill: white;
+    -fx-font-family: "Avenir", sans-serif;
+}
+
+.text-field {
+    -fx-padding: 200%;
+    -fx-label-padding: 200%;
+    -fx-highlight-text-fill: black;
+}
+
+.text-field, .text-area {
+    -fx-focus-color: rgb(73, 73, 73);
+    -fx-border-radius: 5, 5, 5, 5;
+    -fx-border-style: solid;
+    -fx-border-color: rgb(182, 182, 182);
+}
+
+.text-field:focused, .text-area:focused {
+    -fx-border-color: transparent;
+}
+
+.text-area .scroll-pane .scroll-bar,
+.text-area .scroll-pane .scroll-bar {
+    -fx-opacity: 0;
+}
+
+.progress-bar .bar {
+    -fx-background-color: rgb(99, 255, 109);
+    -fx-background-insets: 1 1 2 1;
+    -fx-background-radius: 10;
+}
+
+.progress-bar .track {
+    -fx-control-inner-background: rgb(73, 73, 73);
+    -fx-background-insets: 1 1 2 1;
+    -fx-background-radius: 10;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: rgb(99, 255, 109);
+}
+
+.check-box .box {
+    -fx-background-color: rgb(73, 73, 73);
+    -fx-border-color: rgb(34, 34, 34);
+    -fx-border-insets: 0 0 -1 0;
+    -fx-border-radius: 2;
+}

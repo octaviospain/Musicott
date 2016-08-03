@@ -14,19 +14,35 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
-package tests.unit;
+package com.transgressoft.musicott.tests;
 
-import org.junit.runner.*;
-import org.junit.runners.*;
-import org.junit.runners.Suite.*;
+import javafx.stage.*;
+import org.junit.*;
+import org.testfx.framework.junit.*;
 
 /**
- * @author Octavio Calleya
+ * Base test class to initialize the FX Toolkit
  *
+ * @author Octavio Calleya
  */
-@RunWith(Suite.class)
-@SuiteClasses({LibrarySerializeTest.class, ParseUpdateTest.class})
-public class UnitTestSuit {
+public class BaseJavaFxTest extends ApplicationTest {
+
+
+	@Override
+	public void start(Stage stage) throws Exception {
+
+	}
+
+	@Before
+	public void setUp() throws Exception {
+
+	}
+
+	@After
+	public void tearDown() throws Exception {
+
+	}
 }

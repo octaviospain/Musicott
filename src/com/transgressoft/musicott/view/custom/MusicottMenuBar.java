@@ -88,8 +88,8 @@ public class MusicottMenuBar extends MenuBar {
 	private MenuItem newPlaylistMenuItem;
 	private MenuItem showHideNavigationPaneMenuItem;
 	private MenuItem showHideTableInfoPaneMenuItem;
-	private Image musicottIcon = new Image(getClass().getResourceAsStream(MUSICOTT_ICON));
-	private ImageView musicottImageView = new ImageView(musicottIcon);
+	private Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
+	private ImageView musicottLogoImageView = new ImageView(musicottLogo);
 
 	public MusicottMenuBar(Stage primaryStage) {
 		super();
@@ -272,6 +272,7 @@ public class MusicottMenuBar extends MenuBar {
 		String alertContentText = "Import " + filesToImport.size() + " files?";
 		Platform.runLater(() -> {
 			Alert alert = stageDemon.createAlert("Import", alertContentText, "", AlertType.CONFIRMATION);
+			alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
 			Optional<ButtonType> result = alert.showAndWait();
 			if (result.isPresent() && result.get().equals(ButtonType.OK)) {
 				TaskDemon.getInstance().importFiles(filesToImport, false);
@@ -327,7 +328,8 @@ public class MusicottMenuBar extends MenuBar {
 
 	private void setAboutMenuActions() {
 		aboutMenuItem.setOnAction(e -> {
-			Alert alert = stageDemon.createAlert("About Musicott", "Musicott", "", AlertType.INFORMATION);
+			Alert alert = stageDemon.createAlert("About Musicott", " ", "", AlertType.INFORMATION);
+			alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
 			Label aboutLabel1 = new Label(ABOUT_MUSICOTT_FIRST_LINE);
 			Label aboutLabel2 = new Label(ABOUT_MUSICOTT_SECOND_LINE);
 			Hyperlink githubLink = new Hyperlink(MUSICOTT_GITHUB_LINK);
@@ -335,7 +337,7 @@ public class MusicottMenuBar extends MenuBar {
 			FlowPane flowPane = new FlowPane();
 			flowPane.getChildren().addAll(aboutLabel1, githubLink, aboutLabel2);
 			alert.getDialogPane().contentProperty().set(flowPane);
-			alert.setGraphic(musicottImageView);
+			alert.setGraphic(musicottLogoImageView);
 			alert.showAndWait();
 			LOG.debug("Showing about window");
 		});

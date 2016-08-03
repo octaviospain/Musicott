@@ -16,28 +16,15 @@
  *
  * Copyright (C) 2015, 2016 Octavio Calleya
  */
- 
-.root, #playerGridPane, .list-view {
-    -fx-focus-color: rgb(73, 73, 73);
-    -fx-faint-focus-color: transparent;
-    -fx-background-color: transparent, transparent, transparent, rgb(243, 243, 243);
-    -fx-background-radius: 0, 0, 0, 0;
-    -fx-accent: black;
-}
 
-.text-field {
+@import url("base.css");
+
+#playerGridPane {
 	-fx-focus-color: rgb(73, 73, 73);
-    -fx-border-radius: 5, 5, 5, 5;
-	-fx-border-style: solid;
-	-fx-border-color: rgb(182,182,182);
-}
-
-.text-field:focused {
-	-fx-border-color: transparent;
-}
-
-.text-field {
-    -fx-highlight-text-fill: white;
+	-fx-faint-focus-color: transparent;
+	-fx-background-color: transparent, transparent, transparent, rgb(34, 34, 34);
+	-fx-background-radius: 0, 0, 0, 0;
+	-fx-accent: rgb(99,255,109);
 }
 
 #playButton {
@@ -76,13 +63,13 @@
 }
 
 #playQueueButton {
-	-fx-graphic: url('../icons/playqueue-button-icon.png');
+	-fx-graphic: url('../icons/playqueue-button-white-icon.png');
 	-fx-background-color: transparent;
 }
 
 #playQueueButton:selected {
-	-fx-graphic: url('../icons/playqueue-button-selected-icon.png');
- 	-fx-effect: dropshadow(gaussian, rgb(73, 73, 73), 15, 0.3, 0, 0);
+	-fx-graphic: url('../icons/playqueue-button-green-icon.png');
+	-fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 15, 0.3, 0, 0);
 }
 
 #trackSlider .track {
@@ -97,13 +84,13 @@
 }
 
 #trackProgressBar .bar {
-	-fx-background-color: black;
+	-fx-background-color: rgb(99,255,109);
 	-fx-background-insets: 0 0 1 0;
 	-fx-background-radius: null;
 }
 
 #trackProgressBar .track {
-	-fx-control-inner-background: rgb(182,182,182);
+	-fx-control-inner-background: null;
 	-fx-background-radius: null;
 }
 
@@ -112,11 +99,13 @@
 }
 
 #volumeProgressBar .bar {
-	-fx-background-color: black;
+	-fx-background-color: rgb(99,255,109);
 	-fx-background-insets: 1 1 2 1;
-	-fx-background-radius: 2;	
+	-fx-background-radius: 0;
 }
 
 #volumeProgressBar .track {
-	-fx-control-inner-background: rgb(182,182,182);
+	-fx-control-inner-background: rgb(73, 73, 73);
+	-fx-background-insets: 1 1 2 1;
+	-fx-background-radius: 0;
 }

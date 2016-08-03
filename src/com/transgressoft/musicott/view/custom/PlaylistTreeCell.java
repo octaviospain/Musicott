@@ -23,15 +23,15 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
 	public PlaylistTreeCell() {
 		super();
 
-		ChangeListener<Boolean> isFolderListener = (obs, oldPlaylist, newPlaylist) -> {
-			boolean isFolder = newPlaylist.booleanValue();
+		ChangeListener<Boolean> isFolderListener = (obs, oldPlaylistIsFolder, newPlaylistIsFolder) -> {
+			boolean isFolder = newPlaylistIsFolder;
 			boolean isSelected = selectedProperty().get();
 			updatePseudoClassesStates(isFolder, isSelected);
 		};
 
-		ChangeListener<Boolean> isSelectedListener = (obs, oldValue, newValue) -> {
+		ChangeListener<Boolean> isSelectedListener = (obs, oldValueIsSelected, newValueIsSelected) -> {
 			boolean isFolder = itemProperty().getValue().isFolder();
-			boolean isSelected = newValue.booleanValue();
+			boolean isSelected = newValueIsSelected;
 			updatePseudoClassesStates(isFolder, isSelected);
 		};
 

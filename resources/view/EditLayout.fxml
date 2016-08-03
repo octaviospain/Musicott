@@ -5,21 +5,21 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="560.0" prefWidth="630.0" stylesheets="@../css/editinfo.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.EditController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="560.0" prefWidth="630.0" stylesheets="@../css/dialog.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.EditController">
    <children>
-      <BorderPane layoutX="215.0" layoutY="182.0" prefHeight="540.0" prefWidth="630.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <BorderPane layoutX="215.0" layoutY="182.0" prefHeight="540.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <bottom>
-            <HBox alignment="CENTER_RIGHT" minHeight="-Infinity" prefHeight="70.0">
+            <HBox alignment="CENTER_RIGHT" minHeight="-Infinity">
                <children>
-                  <Button fx:id="cancelButton" alignment="CENTER" cancelButton="true" contentDisplay="CENTER" mnemonicParsing="false" prefHeight="26.0" prefWidth="100.0" text="Cancel" />
-                  <Button fx:id="okButton" alignment="CENTER" contentDisplay="CENTER" defaultButton="true" mnemonicParsing="false" prefHeight="26.0" prefWidth="100.0" text="OK" textAlignment="CENTER">
+                  <Button fx:id="cancelButton" alignment="CENTER" cancelButton="true" contentDisplay="CENTER" mnemonicParsing="false" prefWidth="100.0" text="Cancel" />
+                  <Button fx:id="okButton" alignment="CENTER" contentDisplay="CENTER" defaultButton="true" mnemonicParsing="false" prefWidth="100.0" text="OK" textAlignment="CENTER">
                      <HBox.margin>
-                        <Insets left="15.0" right="15.0" />
+                        <Insets left="20.0" />
                      </HBox.margin>
                   </Button>
                </children>
                <BorderPane.margin>
-                  <Insets />
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                </BorderPane.margin>
             </HBox>
          </bottom>
@@ -82,85 +82,94 @@
                         <Insets right="7.0" />
                      </GridPane.margin>
                   </Label>
-                  <TextField fx:id="nameTextField" maxHeight="-Infinity" prefHeight="26.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.vgrow="NEVER">
+                  <TextField fx:id="nameTextField" maxHeight="-Infinity" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="artistTextField" maxHeight="-Infinity" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="1" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="albumTextField" maxHeight="-Infinity" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="2" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="albumArtistTextField" maxHeight="-Infinity" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="3" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <TextField fx:id="genreTextField" maxHeight="-Infinity" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="4" GridPane.vgrow="NEVER">
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" top="7.0" />
+                     </GridPane.margin>
+                  </TextField>
+                  <HBox GridPane.columnIndex="1" GridPane.rowIndex="5">
+                     <children>
+                        <TextField fx:id="labelTextField" maxHeight="-Infinity" HBox.hgrow="SOMETIMES">
+                           <HBox.margin>
+                              <Insets right="10.0" />
+                           </HBox.margin>
+                        </TextField>
+                        <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Track Num" textAlignment="RIGHT">
+                           <HBox.margin>
+                              <Insets right="5.0" />
+                           </HBox.margin>
+                        </Label>
+                        <TextField fx:id="trackNumTextField" maxHeight="-Infinity" maxWidth="-Infinity" prefWidth="35.0">
+                           <HBox.margin>
+                              <Insets right="10.0" />
+                           </HBox.margin>
+                        </TextField>
+                        <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Disc Num" textAlignment="RIGHT">
+                           <HBox.margin>
+                              <Insets right="10.0" />
+                           </HBox.margin>
+                        </Label>
+                        <TextField fx:id="discNumTextField" maxHeight="-Infinity" maxWidth="-Infinity" prefWidth="35.0" />
+                     </children>
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" top="7.0" />
+                     </GridPane.margin>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="6">
+                     <children>
+                        <TextField fx:id="yearTextField" alignment="CENTER_RIGHT" maxHeight="-Infinity" prefWidth="50.0">
+                           <HBox.margin>
+                              <Insets right="10.0" />
+                           </HBox.margin>
+                        </TextField>
+                        <CheckBox fx:id="isCompilationCheckBox" mnemonicParsing="false" text="Part of a compilation" />
+                     </children>
+                     <GridPane.margin>
+                        <Insets bottom="7.0" left="7.0" top="7.0" />
+                     </GridPane.margin>
+                  </HBox>
+                  <TextField fx:id="bpmTextField" alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="7" GridPane.vgrow="NEVER">
                      <GridPane.margin>
                         <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
                      </GridPane.margin>
                   </TextField>
-                  <TextField fx:id="artistTextField" maxHeight="-Infinity" prefHeight="26.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="1" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
-                     </GridPane.margin>
-                  </TextField>
-                  <TextField fx:id="albumTextField" maxHeight="-Infinity" prefHeight="26.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="2" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
-                     </GridPane.margin>
-                  </TextField>
-                  <TextField fx:id="albumArtistTextField" maxHeight="-Infinity" prefHeight="26.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="3" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
-                     </GridPane.margin>
-                  </TextField>
-                  <TextField fx:id="genreTextField" maxHeight="-Infinity" prefHeight="26.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="4" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
-                     </GridPane.margin>
-                  </TextField>
-                  <TextField fx:id="labelTextField" maxHeight="-Infinity" maxWidth="185.0" prefHeight="26.0" prefWidth="185.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
-                     </GridPane.margin>
-                  </TextField>
-                  <TextField fx:id="trackNumTextField" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="26.0" prefWidth="35.0" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets right="130.0" />
-                     </GridPane.margin>
-                  </TextField>
-                  <TextField fx:id="discNumTextField" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="26.0" prefWidth="35.0" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets right="15.0" />
-                     </GridPane.margin>
-                  </TextField>
-                  <TextField fx:id="yearTextField" alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="50.0" prefHeight="26.0" prefWidth="50.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="6" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
-                     </GridPane.margin>
-                  </TextField>
-                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Track Num" textAlignment="RIGHT" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets right="175.0" />
-                     </GridPane.margin>
-                  </Label>
-                  <TextField fx:id="bpmTextField" alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="26.0" prefWidth="50.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.rowIndex="7" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
-                     </GridPane.margin>
-                  </TextField>
-                  <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Disc Num" textAlignment="RIGHT" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="NEVER" GridPane.rowIndex="5" GridPane.vgrow="NEVER">
-                     <GridPane.margin>
-                        <Insets right="60.0" />
-                     </GridPane.margin>
-                  </Label>
                   <Label alignment="BASELINE_RIGHT" contentDisplay="BOTTOM" text="Comments" textAlignment="RIGHT" GridPane.halignment="RIGHT" GridPane.rowIndex="8" GridPane.valignment="TOP">
                      <GridPane.margin>
                         <Insets right="7.0" top="7.0" />
                      </GridPane.margin>
                   </Label>
-                  <CheckBox fx:id="isCompilationCheckBox" mnemonicParsing="false" text="Part of a compilation" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="6">
-                     <GridPane.margin>
-                        <Insets left="75.0" />
-                     </GridPane.margin>
-                  </CheckBox>
                   <TextArea fx:id="commentsTextField" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="8">
                      <GridPane.margin>
-                        <Insets bottom="7.0" left="7.0" right="15.0" top="7.0" />
+                        <Insets bottom="7.0" left="7.0" top="7.0" />
                      </GridPane.margin>
                   </TextArea>
                </children>
                <opaqueInsets>
                   <Insets />
                </opaqueInsets>
+               <BorderPane.margin>
+                  <Insets right="20.0" />
+               </BorderPane.margin>
             </GridPane>
          </center>
          <top>

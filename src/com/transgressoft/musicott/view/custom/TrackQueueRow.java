@@ -42,8 +42,7 @@ import java.io.*;
 public class TrackQueueRow extends GridPane {
 
 	private static final double COVER_SIZE = 42.0;
-	private static final String DELETE_BUTTON_BLACK_STYLE = "deleteButton-black";
-	private static final String DELETE_BUTTON_WHITE_STYLE = "deleteButton-white";
+	private static final String DELETE_BUTTON_STYLE = "deleteButton-white";
 
 	private PlayQueueController playQueueController;
 	private Track track;
@@ -73,13 +72,6 @@ public class TrackQueueRow extends GridPane {
 		return track.getTrackId();
 	}
 
-	public void changeRemoveButtonColor() {
-		if (DELETE_BUTTON_BLACK_STYLE.equals(deleteTrackQueueRowButton.getId()))
-			deleteTrackQueueRowButton.setId(DELETE_BUTTON_WHITE_STYLE);
-		else
-			deleteTrackQueueRowButton.setId(DELETE_BUTTON_BLACK_STYLE);
-	}
-
 	private void placeLabels() {
 		Label nameLabel = new Label();
 		nameLabel.setId("nameLabel");
@@ -100,7 +92,7 @@ public class TrackQueueRow extends GridPane {
 
 	private void placeDeleteHoverButton() {
 		deleteTrackQueueRowButton = new Button();
-		deleteTrackQueueRowButton.setId(DELETE_BUTTON_BLACK_STYLE);
+		deleteTrackQueueRowButton.setId(DELETE_BUTTON_STYLE);
 		deleteTrackQueueRowButton.setPrefSize(3, 3);
 		deleteTrackQueueRowButton.setVisible(false);
 		deleteTrackQueueRowButton.setOnAction(event -> playQueueController.removeTrackQueueRow(this));

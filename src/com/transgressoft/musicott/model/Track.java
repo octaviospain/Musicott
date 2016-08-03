@@ -81,6 +81,7 @@ public class Track {
 
 	private ObjectProperty<LocalDateTime> dateModifiedProperty;
 	private BooleanProperty hasCoverProperty;
+	private BooleanProperty isPlayableProperty;
 
 	/**
 	 * Map of the properties that are editable in the application
@@ -146,6 +147,7 @@ public class Track {
 		dateModifiedProperty = new SimpleObjectProperty<>(this, "date modified", lastDateModified);
 		dateModifiedProperty.addListener((observable, oldDate, newDate) -> setLastDateModified(newDate));
 		playCountProperty = new SimpleIntegerProperty(this, "play count", playCount);
+		isPlayableProperty = new SimpleBooleanProperty(this, "is playable", isPlayable());
 		hasCoverProperty = new SimpleBooleanProperty(this, "cover bytes", false);
 		getCoverImage().ifPresent(coverBytes -> hasCoverProperty.set(true));
 
@@ -335,6 +337,10 @@ public class Track {
 
 	public BooleanProperty hasCoverProperty() {
 		return hasCoverProperty;
+	}
+
+	public BooleanProperty isPlayableProperty() {
+		return isPlayableProperty;
 	}
 
 	public boolean writeMetadata() {

@@ -20,12 +20,12 @@
 package com.transgressoft.musicott;
 
 import com.cedarsoftware.util.io.*;
+import com.sun.javafx.application.*;
+import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.services.lastfm.*;
 import com.transgressoft.musicott.util.*;
-import com.sun.javafx.application.*;
-import com.sun.javafx.collections.*;
 import javafx.application.*;
 import javafx.application.Preloader.*;
 import javafx.collections.*;
@@ -394,6 +394,7 @@ public class MusicottApplication extends Application {
 		track.lastDateModifiedProperty().setValue(track.getLastDateModified());
 		track.playCountProperty().setValue(track.getPlayCount());
 		track.getCoverImage().ifPresent(coverBytes -> track.hasCoverProperty().set(true));
+		track.isPlayableProperty().setValue(track.isPlayable());
 	}
 
 	/**
