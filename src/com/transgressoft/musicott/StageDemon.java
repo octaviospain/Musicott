@@ -147,7 +147,7 @@ public class StageDemon {
 		Scene mainScene = new Scene(rootLayout);
 		mainStage.setScene(mainScene);
 		mainStage.setTitle("Musicott");
-		mainStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_ICON)));
+		mainStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
 		mainStage.setMinWidth(1200);
 		mainStage.setMinHeight(805);
 		mainStage.show();
