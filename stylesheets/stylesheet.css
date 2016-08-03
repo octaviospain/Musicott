@@ -464,8 +464,8 @@ header {
   padding-top: 40px;
   padding-bottom: 40px;
   font-family: 'PCBius', 'Helvetica Neue', Helvetica, Arial, serif;
-  background-color: rgb(0, 0, 0);
-  border-bottom: solid 1px #275da1;
+  background-color: rgb(34, 34, 34);
+  border-bottom: solid 1px rgb(99, 255, 109);
 }
 
 header a{

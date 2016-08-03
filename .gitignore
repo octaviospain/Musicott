@@ -8,3 +8,6 @@
 /lib/
 /resources/
 /_site/
+.idea/
+Musicott-main-log.txt
+*.iml
