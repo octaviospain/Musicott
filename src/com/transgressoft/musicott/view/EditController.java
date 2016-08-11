@@ -92,6 +92,7 @@ public class EditController implements MusicottController {
 	private Stage editStage;
 	private Map<TrackField, TextInputControl> editFieldsMap;
 	private List<Track> trackSelection;
+	private Optional<byte[]> commonCover = Optional.empty();
 
 	@FXML
 	private void initialize() {
@@ -116,6 +117,9 @@ public class EditController implements MusicottController {
 
 		coverImage.setImage(COVER_IMAGE);
 		coverImage.setCacheHint(CacheHint.QUALITY);
+		coverImage.setOnDragOver(this::onDragOverCoverImage);
+		coverImage.setOnDragExited(this::onDragExitedOutOfCoverImage);
+		coverImage.setOnDragDropped(this::onDragDroppedOnCoverImage);
 		coverImage.setOnMouseClicked(event -> {
 			if (event.getClickCount() <= 2)
 				changeCover();
@@ -123,6 +127,56 @@ public class EditController implements MusicottController {
 
 		okButton.setOnAction(event -> editAndClose());
 		cancelButton.setOnAction(event -> close());
+	}
+
+	private void onDragOverCoverImage(DragEvent event) {
+		Dragboard dragboard = event.getDragboard();
+
+		if (isFileDraggedAccepted(event)) {
+			File imageFileDragged = dragboard.getFiles().get(0);
+			Optional<Image> newImage = Utils.getImageFromFile(imageFileDragged);
+			newImage.ifPresent(coverImage::setImage);
+		}
+		event.consume();
+	}
+
+	private void onDragDroppedOnCoverImage(DragEvent event) {
+		Dragboard dragboard = event.getDragboard();
+		boolean[] success = {false};
+
+		if (isFileDraggedAccepted(event)) {
+			newCoverImage = dragboard.getFiles().get(0);
+			Optional<Image> newImage = Utils.getImageFromFile(newCoverImage);
+			newImage.ifPresent(image -> {
+				coverImage.setImage(image);
+				success[0] = true;
+			});
+		}
+
+		event.setDropCompleted(success[0]);
+		event.consume();
+	}
+
+	private boolean isFileDraggedAccepted(DragEvent event) {
+		Dragboard dragboard = event.getDragboard();
+		boolean isAccepted = false;
+		if (dragboard.hasFiles() && dragboard.getFiles().size() == 1) {
+			event.acceptTransferModes(TransferMode.MOVE);
+			File imageFileDragged = dragboard.getFiles().get(0);
+			String fileName = imageFileDragged.getName().toLowerCase();
+			isAccepted = fileName.endsWith(".png") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpg");
+		}
+		return isAccepted;
+	}
+
+	private void onDragExitedOutOfCoverImage(DragEvent event) {
+		if (newCoverImage == null) {
+			if (commonCover.isPresent())
+				coverImage.setImage(new Image(new ByteArrayInputStream(commonCover.get())));
+			else
+				coverImage.setImage(COVER_IMAGE);
+		}
+		event.consume();
 	}
 
 	private void setNumericValidationFilters() {
@@ -158,6 +212,7 @@ public class EditController implements MusicottController {
 	private void close() {
 		LOG.info("Edit stage cancelled");
 		newCoverImage = null;
+		commonCover = Optional.empty();
 		editStage.close();
 	}
 
@@ -178,9 +233,9 @@ public class EditController implements MusicottController {
 
 		editFieldsMap.entrySet().forEach(this::setFieldValue);
 
-		coverImage.setImage(COVER_IMAGE);
 		newCoverImage = null;
-		Optional<byte[]> commonCover = commonCover();
+		coverImage.setImage(COVER_IMAGE);
+		commonCover = commonCover();
 		commonCover.ifPresent(coverBytes -> coverImage.setImage(new Image(new ByteArrayInputStream(coverBytes))));
 
 		if (! commonCompilation())
