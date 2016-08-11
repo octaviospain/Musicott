@@ -36,6 +36,9 @@ import org.slf4j.*;
 
 import javax.swing.*;
 import java.io.*;
+import java.util.*;
+
+import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
 
 /**
  * Controller class of the bottom pane that includes the player and the search field.
@@ -116,6 +119,16 @@ public class PlayerController implements MusicottController {
 
 		playerGridPane.setOnMouseClicked(event -> hidePlayQueue());
 		playButton.setOnMouseClicked(event -> hidePlayQueue());
+
+		playQueueStackPane.setOnDragOver(event -> {
+			event.acceptTransferModes(TransferMode.ANY);
+			event.consume();
+		});
+		playQueueStackPane.setOnDragDropped(event -> {
+			Dragboard dragBoard = event.getDragboard();
+			List<Integer> selectedTracks = (List<Integer>) dragBoard.getContent(TRACK_ID_MIME_TYPE);
+			player.addTracksToPlayQueue(selectedTracks, false);
+		});
 	}
 
 	private void playPause() {
