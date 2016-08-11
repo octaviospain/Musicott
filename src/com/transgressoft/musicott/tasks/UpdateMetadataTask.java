@@ -41,14 +41,16 @@ public class UpdateMetadataTask extends Thread {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	private List<Track> tracks;
+	private File newCoverFile;
 	private CopyOption[] options;
 	private List<String> updateErrors;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
-	public UpdateMetadataTask(List<Track> tracks) {
+	public UpdateMetadataTask(List<Track> tracks, File newCoverFile) {
 		this.tracks = tracks;
+		this.newCoverFile = newCoverFile;
 		options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
 		updateErrors = new ArrayList<>();
 	}
@@ -59,6 +61,8 @@ public class UpdateMetadataTask extends Thread {
 		for (Track track : tracks)
 			if (track.getInDisk()) {
 				File backup = makeBackup(track);
+				if (newCoverFile != null)
+					track.setCoverImage(newCoverFile);
 				updated = track.writeMetadata();
 				if (! updated && backup != null)
 					restoreBackup(track, backup);

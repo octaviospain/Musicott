@@ -179,6 +179,7 @@ public class EditController implements MusicottController {
 		editFieldsMap.entrySet().forEach(this::setFieldValue);
 
 		coverImage.setImage(COVER_IMAGE);
+		newCoverImage = null;
 		Optional<byte[]> commonCover = commonCover();
 		commonCover.ifPresent(coverBytes -> coverImage.setImage(new Image(new ByteArrayInputStream(coverBytes))));
 
@@ -234,8 +235,7 @@ public class EditController implements MusicottController {
 	 */
 	private void editAndClose() {
 		trackSelection.forEach(this::editTrack);
-		newCoverImage = null;
-		UpdateMetadataTask updateTask = new UpdateMetadataTask(trackSelection);
+		UpdateMetadataTask updateTask = new UpdateMetadataTask(trackSelection, newCoverImage);
 		updateTask.setDaemon(true);
 		updateTask.start();
 		editStage.close();
