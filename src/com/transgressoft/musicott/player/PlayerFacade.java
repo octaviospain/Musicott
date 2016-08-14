@@ -41,7 +41,7 @@ import java.util.stream.*;
  * Singleton class that isolates the usage of the music player.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class PlayerFacade {
 

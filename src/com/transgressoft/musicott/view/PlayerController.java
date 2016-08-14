@@ -44,7 +44,7 @@ import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
  * Controller class of the bottom pane that includes the player and the search field.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class PlayerController implements MusicottController {
 

@@ -44,7 +44,7 @@ import java.util.stream.*;
  * Controller class of the window that edits the information of tracks
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class EditController implements MusicottController {
 

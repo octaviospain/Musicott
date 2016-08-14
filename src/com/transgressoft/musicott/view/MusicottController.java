@@ -11,7 +11,7 @@ import com.transgressoft.musicott.services.*;
  * references to the singleton classes.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  * @since 0.9
  */
 public interface MusicottController {
