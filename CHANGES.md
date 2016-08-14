@@ -7,6 +7,8 @@
 the number of tracks and the size of the playlist
 * You can hide/show the navigation pane with <kbd>CMD</kbd> + <kbd>SHIFT</kbd> + <kbd>R</kbd>
  and the table info pane with <kbd>CMD</kbd> + <kbd>SHIFT</kbd> + <kbd>H</kbd>
+* You can add tracks to a playlist by drag and drop them
+* You can set a new image when editing tracks by drag and drop the file to the image view on the window
 
 
 ### Version 0.8
