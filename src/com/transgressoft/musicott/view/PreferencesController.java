@@ -43,7 +43,7 @@ import static com.transgressoft.musicott.tasks.ItunesImportTask.*;
  * Controller class of the preferences window.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class PreferencesController implements MusicottController {
 

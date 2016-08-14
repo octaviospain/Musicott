@@ -33,7 +33,7 @@ import java.util.stream.*;
  * playlists inside of them.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class PlaylistTreeView extends TreeView<Playlist> {
 
@@ -53,7 +53,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		setPrefHeight(USE_COMPUTED_SIZE);
 		setPrefWidth(USE_COMPUTED_SIZE);
 		setId("playlistTreeView");
-		setCellFactory(treeView -> new PlaylistTreeCell());
+		setCellFactory(PlaylistTreeCell::new);
 
 		selectedPlaylistProperty = new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
 		getSelectionModel().setSelectionMode(SelectionMode.SINGLE);

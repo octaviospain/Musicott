@@ -37,7 +37,7 @@ import java.io.*;
  * to remove the <tt>TrackQueueRow</tt> from his list.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class TrackQueueRow extends GridPane {
 

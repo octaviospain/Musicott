@@ -4,13 +4,18 @@ import com.transgressoft.musicott.model.*;
 import javafx.beans.value.*;
 import javafx.css.*;
 import javafx.scene.control.*;
+import javafx.scene.input.*;
+
+import java.util.*;
+
+import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
 
 /**
  * Custom {@link TreeCell} that isolates the style of his {@link Playlist}
  * managed by pseudo classes
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  * @since 0.9
  */
 public class PlaylistTreeCell extends TreeCell<Playlist> {
@@ -20,8 +25,11 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
 	private PseudoClass folder = PseudoClass.getPseudoClass("folder");
 	private PseudoClass folderSelected = PseudoClass.getPseudoClass("folder-selected");
 
-	public PlaylistTreeCell() {
+	private TreeView<Playlist> playlistTreeView;
+
+	public PlaylistTreeCell(TreeView<Playlist> playlistTreeView) {
 		super();
+		this.playlistTreeView = playlistTreeView;
 
 		ChangeListener<Boolean> isFolderListener = (obs, oldPlaylistIsFolder, newPlaylistIsFolder) -> {
 			boolean isFolder = newPlaylistIsFolder;
@@ -54,6 +62,24 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
 			else
 				disablePseudoClassesStates();
 		});
+
+		setOnDragOver(event -> {
+			if (getItem() != null && ! getItem().isFolder()) {
+				event.acceptTransferModes(TransferMode.ANY);
+				event.consume();
+			}
+		});
+		setOnDragDropped(this::onDragOverPlaylist);
+	}
+
+	private void onDragOverPlaylist(DragEvent event) {
+		Playlist treeCellPlaylist = getItem();
+		if (! treeCellPlaylist.isFolder()) {
+			Dragboard dragBoard = event.getDragboard();
+			List<Integer> selectedTracks = (List<Integer>) dragBoard.getContent(TRACK_ID_MIME_TYPE);
+			treeCellPlaylist.addTracks(selectedTracks);
+			event.consume();
+		}
 	}
 
 	private void updatePseudoClassesStates(boolean isFolder, boolean isSelected) {

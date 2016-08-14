@@ -51,7 +51,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * <tt>iTunes</tt> library to the {@link MusicLibrary} of the application.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class ItunesImportTask extends Task<Void> {
 

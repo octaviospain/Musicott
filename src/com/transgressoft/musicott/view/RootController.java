@@ -44,7 +44,7 @@ import java.util.function.*;
  * Controller class of the root layout of the whole application.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class RootController implements MusicottController {
 
