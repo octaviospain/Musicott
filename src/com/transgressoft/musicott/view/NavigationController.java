@@ -72,8 +72,8 @@ public class NavigationController implements MusicottController {
 
 		newPlaylistButton.setContextMenu(newPlaylistButtonContextMenu);
 		newPlaylistButton.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
-			double newPlaylistButtonX = newPlaylistButton.getLayoutX() + 150;
-			double newPlaylistButtonY = newPlaylistButton.getLayoutY();
+			double newPlaylistButtonX = e.getScreenX() + 10;
+			double newPlaylistButtonY = e.getScreenY() + 10;
 			newPlaylistButtonContextMenu.show(newPlaylistButton, newPlaylistButtonX, newPlaylistButtonY);
 		});
 
