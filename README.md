@@ -39,6 +39,17 @@ To build you need at least Java 8 update 40 and Maven
  2. Build with maven at Musicott's root folder (where `pom.xml` is located)  with `mvn package`
  3. Run with `java -cp target/Musicott-x.y.z.jar com.transgressoft.musicott.MusicottApplication`
 
+## How to contribute
+
+If you want to add a feature or fix a bug in Musicott, you can submit a pull request as follows:
+
+ 1. Fork the project
+ 2. Write the code of the feature with some `javadoc` and the necessary comments
+ 3. Please don't auto-format the code already written as it would make more difficult to see what was changed
+ 4. Add some tests! **Doing it in the `tests` branch is preferable**
+ 5. Commit
+ 6. Submit a pull request **on the `develop` branch**
+
 ## Manual
 Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki") for help about using Musicott.
 
@@ -65,5 +76,7 @@ the number of tracks and the size of the playlist
 * Better design
 * Big refactor implementing better concurrent model
 
-## License
+## Copyright
+Copyright (c) 2015-2016 Octavio Calleya.
+
 Musicott is free softare under GNU GPL version 3 license. The license of Musicott and the licenses of the included libraries in this software are in the [LICENSE](https://github.com/octaviospain/Musicott/tree/master/license "License") folder
