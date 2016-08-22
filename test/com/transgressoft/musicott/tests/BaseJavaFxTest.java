@@ -19,8 +19,9 @@
 
 package com.transgressoft.musicott.tests;
 
+import javafx.scene.*;
+import javafx.scene.layout.*;
 import javafx.stage.*;
-import org.junit.*;
 import org.testfx.framework.junit.*;
 
 /**
@@ -30,19 +31,12 @@ import org.testfx.framework.junit.*;
  */
 public class BaseJavaFxTest extends ApplicationTest {
 
+	public Stage testStage;
 
 	@Override
 	public void start(Stage stage) throws Exception {
-
-	}
-
-	@Before
-	public void setUp() throws Exception {
-
-	}
-
-	@After
-	public void tearDown() throws Exception {
-
+		testStage = stage;
+		testStage.setScene(new Scene(new AnchorPane()));
+		testStage.setTitle("Test");
 	}
 }

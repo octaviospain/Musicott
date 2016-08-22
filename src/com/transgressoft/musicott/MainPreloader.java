@@ -54,6 +54,25 @@ public class MainPreloader extends Preloader {
 	private ProgressBar preloaderProgressBar;
 
 	@Override
+<<<<<<< HEAD
+=======
+	public void init() throws Exception {
+		Platform.runLater(() -> {
+			infoLabel = new Label();
+			preloaderProgressBar = new ProgressBar();
+			preloaderProgressBar.setId("progressBar");
+			preloaderProgressBar.setPrefSize(300, 20.0);
+			preloaderProgressBar.setProgress(0.0);
+			preloaderProgressBar.setStyle("-fx-accent: rgb(99,255,109);");
+			VBox root = new VBox(musicottImageView, infoLabel, preloaderProgressBar);
+			root.setAlignment(Pos.CENTER);
+			VBox.setMargin(infoLabel, new Insets(10, 0, 10, 0));
+			preloaderScene = new Scene(root, 350, 230);
+		});
+	}
+
+	@Override
+>>>>>>> tests
 	public void start(Stage primaryStage) throws Exception {
 		AnchorPane rootAnchorPane = FXMLLoader.load(getClass().getResource(PRELOADER_INIT_LAYOUT));
 		infoLabel = (Label) rootAnchorPane.lookup("#infoLabel");
