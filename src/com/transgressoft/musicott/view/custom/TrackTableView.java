@@ -37,16 +37,18 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
+import static com.transgressoft.musicott.view.MusicottController.*;
+
 /**
  * Class that extends from {@link TableView} and models a table that represents {@link Track}
  * instances in their rows, showing almost all of the properties of a <tt>Track</tt> in the columns.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
-	private static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
+	protected static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
 
 	private TableColumn<Entry<Integer, Track>, String> nameCol;
 	private TableColumn<Entry<Integer, Track>, String> artistCol;
@@ -91,8 +93,9 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 		getSelectionModel().selectedIndexProperty().addListener(
 				(observable, oldValue, newValue) -> selection = getSelectionModel().getSelectedItems());
 		getSortOrder().add(dateAddedCol);
-		setRowFactory(tableView -> getTrackTableRowFactory());
+		setRowFactory(TrackTableRow::new);
 		addEventHandler(KeyEvent.KEY_PRESSED, getKeyPressedEventHandler());
+		getStylesheets().add(getClass().getResource(TRACK_TABLE_STYLE).toExternalForm());
 
 		trackTableContextMenu = new TrackTableViewContextMenu(getSelectionModel().getSelectedItems());
 		setContextMenu(trackTableContextMenu);
@@ -102,23 +105,6 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 			else if (event.getButton() == MouseButton.PRIMARY && trackTableContextMenu.isShowing())
 				trackTableContextMenu.hide();
 		});
-	}
-
-	/**
-	 * Returns a {@link TableRow} that fires the play of a {@link Track}
-	 * when the user double-clicks a row.
-	 *
-	 * @return The <tt>TableRow</tt>
-	 */
-	private TableRow<Entry<Integer, Track>> getTrackTableRowFactory() {
-		TableRow<Entry<Integer, Track>> row = new TableRow<>();
-		row.setOnMouseClicked(event -> {
-			if (event.getClickCount() == 2 && ! row.isEmpty()) {
-				List<Integer> singleTrackIdList = Collections.singletonList(row.getItem().getKey());
-				player.addTracksToPlayQueue(singleTrackIdList, true);
-			}
-		});
-		return row;
 	}
 
 	/**

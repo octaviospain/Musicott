@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="550.0" stylesheets="@../css/dialog.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.PreferencesController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="550.0" stylesheets="@../css/preferences.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.PreferencesController">
    <children>
       <VBox>
          <children>
@@ -49,14 +49,14 @@
                                           </HBox>
                                           <VBox fx:id="itunesSectionVBox">
                                              <children>
-                                                <HBox alignment="CENTER_LEFT" minHeight="-Infinity" prefHeight="50.0">
+                                                <HBox fx:id="itunesInformationHBox" alignment="CENTER_LEFT" minHeight="-Infinity" prefHeight="50.0">
                                                    <children>
                                                       <Label text="Obtain track information from">
                                                          <HBox.margin>
                                                             <Insets bottom="10.0" left="20.0" right="10.0" top="10.0" />
                                                          </HBox.margin>
                                                       </Label>
-                                                      <ChoiceBox fx:id="itunesImportPolicyCheckBox" prefWidth="150.0" />
+                                                      <ComboBox fx:id="itunesImportPolicyCheckBox" prefWidth="200.0" />
                                                    </children>
                                                 </HBox>
                                                 <HBox alignment="CENTER_LEFT" prefHeight="50.0">
@@ -66,7 +66,7 @@
                                                             <Insets bottom="10.0" left="20.0" right="18.0" top="10.0" />
                                                          </HBox.margin>
                                                       </Label>
-                                                      <CheckBox fx:id="holdPlayCountCheckBox" mnemonicParsing="false" selected="true">
+                                                      <CheckBox fx:id="holdPlayCountCheckBox" mnemonicParsing="false" prefWidth="14.0" selected="true">
                                                          <HBox.margin>
                                                             <Insets />
                                                          </HBox.margin>
@@ -76,7 +76,7 @@
                                                             <Insets bottom="10.0" left="20.0" right="18.0" top="10.0" />
                                                          </HBox.margin>
                                                       </Label>
-                                                      <CheckBox fx:id="importPlaylistsCheckBox" mnemonicParsing="false" selected="true" />
+                                                      <CheckBox fx:id="importPlaylistsCheckBox" mnemonicParsing="false" />
                                                    </children>
                                                    <VBox.margin>
                                                       <Insets />

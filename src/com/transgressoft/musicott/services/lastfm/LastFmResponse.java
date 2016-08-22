@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 @XmlRootElement (name = "lfm")
 public class LastFmResponse {

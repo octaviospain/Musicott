@@ -41,7 +41,7 @@ import java.util.stream.*;
  * Singleton class that isolates the usage of the music player.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class PlayerFacade {
 
@@ -97,8 +97,8 @@ public class PlayerFacade {
 	 * Adds a {@link List} of tracks to the play queue. Checks if all tracks given are playable.
 	 *
 	 * @param tracksId              The <tt>List</tt> of tracks ids to add.
-	 * @param placeFirstInPlayQueue <tt>true</tt> if the tracks added should be placed in the beggining
-	 *                              o							of the play queue, <tt>false</tt> otherwise
+	 * @param placeFirstInPlayQueue <tt>true</tt> if the tracks added should be placed in the beginning
+	 *                              of the play queue, <tt>false</tt> otherwise
 	 */
 	public void addTracksToPlayQueue(Collection<Integer> tracksId, boolean placeFirstInPlayQueue) {
 		Thread playableTracksThread = new Thread(() -> {

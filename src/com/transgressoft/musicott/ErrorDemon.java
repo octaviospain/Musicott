@@ -37,7 +37,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * the stack trace, or a text area with several error messages
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class ErrorDemon {
 

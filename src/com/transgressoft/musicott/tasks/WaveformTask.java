@@ -50,12 +50,12 @@ import static java.nio.file.StandardCopyOption.*;
  * </p>
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  * @see <a href="https://github.com/JorenSix/TarsosTranscoder">Tarsos Transcoder</a>
  */
 public class WaveformTask extends Thread {
 
-	private static final double WAVEFORM_HEIGHT_COEFFICIENT = 4.0; // This fits the waveform to the swing node height
+	private static final double WAVEFORM_HEIGHT_COEFFICIENT = 2.6; // This fits the waveform to the swing node height
 	private static final double WAVEFORM_WIDTH = 520.0;
 	private static final CopyOption[] options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());

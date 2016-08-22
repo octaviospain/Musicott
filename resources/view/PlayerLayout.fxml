@@ -21,7 +21,7 @@
       <HBox alignment="CENTER_LEFT" minHeight="50.0" minWidth="-Infinity" prefHeight="50.0">
          <children>
             <Button fx:id="prevButton" disable="true" ellipsisString="" mnemonicParsing="false" />
-            <ToggleButton fx:id="playButton" ellipsisString="" mnemonicParsing="false"/>
+            <ToggleButton fx:id="playButton" ellipsisString="" mnemonicParsing="false" />
             <Button fx:id="nextButton" disable="true" ellipsisString="" mnemonicParsing="false" />
          </children>
       </HBox>
@@ -33,7 +33,7 @@
       </StackPane>
       <HBox GridPane.columnIndex="2">
          <children>
-            <ImageView fx:id="currentCover" cacheHint="SPEED" fitHeight="51.0" fitWidth="51.0" pickOnBounds="true" preserveRatio="true" />
+            <ImageView fx:id="currentCover" cacheHint="SPEED" fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true" />
             <StackPane fx:id="playerStackPane" GridPane.columnIndex="2">
                <children>
                   <VBox>
@@ -104,9 +104,9 @@
             </StackPane>
          </children>
       </HBox>
-      <StackPane fx:id="playQueueStackPane" GridPane.columnIndex="3">
+      <StackPane fx:id="playQueueStackPane" GridPane.columnIndex="3" GridPane.hgrow="NEVER" GridPane.vgrow="NEVER">
          <children>
-            <ToggleButton fx:id="playQueueButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="15.0" prefWidth="15.0" />
+            <ToggleButton fx:id="playQueueButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" StackPane.alignment="CENTER" />
          </children>
       </StackPane>
       <TextField fx:id="searchTextField" alignment="CENTER_LEFT" GridPane.columnIndex="4">

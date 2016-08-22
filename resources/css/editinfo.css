@@ -16,53 +16,10 @@
  *
  * Copyright (C) 2015, 2016 Octavio Calleya
  */
- 
-.root {
-    -fx-focus-color: rgb(73, 73, 73);
-    -fx-faint-focus-color: transparent;
-    -fx-background-color: transparent, transparent, transparent, -fx-body-color;
-    -fx-background-radius: 0, 0, 0, 0;
-    -fx-accent: rgb(99,255,109);
-}
 
-.text-field {
-	-fx-padding: 350%;
-    -fx-highlight-text-fill: black;
-}
-
-.text-field, .text-area {
-	-fx-focus-color: rgb(73, 73, 73);
-    -fx-border-radius: 5, 5, 5, 5;
-	-fx-border-style: solid;
-	-fx-border-color: rgb(182,182,182);
-}
-
-.text-field:focused,
-.text-area:focused {
-	-fx-border-color: transparent;
-}
-
-.text-area .scroll-pane .scroll-bar,
-.text-area .scroll-pane .scroll-bar {
-	-fx-opacity: 0;
-}
+@import url("base.css");
 
 #imagePane {
-	-fx-border-style: solid;
-	-fx-border-color: rgb(182,182,182);
-}
-
-.button {
-	-fx-focus-color: rgb(73, 73, 73);
-	-fx-border-color: rgb(182,182,182);
-}
-
-.button:default {
-    -fx-background-color: rgb(73,73,73);
-    -fx-text-fill: white;
-}
-
-.button:default:hover, .button:default:pressed {
-    -fx-background-color: black;
-    -fx-text-fill: white;
+    -fx-border-style: solid;
+    -fx-border-color: rgb(182, 182, 182);
 }

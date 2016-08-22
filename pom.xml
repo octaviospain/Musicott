@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.transgressoft</groupId>
     <artifactId>musicott</artifactId>
-    <version>0.9-b</version>
+    <version>0.9.1-b</version>
     <name>Musicott</name>
     <build>
         <directory>target</directory>
@@ -13,16 +13,27 @@
         <resources>
 
             <resource>
-            <directory>src</directory>
-            <excludes>
-                <exclude>**/*.java</exclude>
-            </excludes>
+                <directory>src</directory>
+                <excludes>
+                    <exclude>**/*.java</exclude>
+                </excludes>
             </resource>
 
             <resource>
-            	<directory>resources</directory>
+                <directory>resources</directory>
             </resource>
         </resources>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>3.0.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
 
             <plugin>
@@ -42,7 +53,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.musicott.MusicottApplication</mainClass>
+                            <mainClass>com.musicott.transgressoft.MusicottApplication</mainClass>
                             <classpathPrefix>dependency-jars/</classpathPrefix>
                         </manifest>
                     </archive>
@@ -55,10 +66,10 @@
                 <version>1.6</version>
                 <executions>
                     <execution>
-                    <phase>package</phase>
-                    <goals>
-                    <goal>shade</goal>
-                    </goals>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -149,30 +160,16 @@
         </dependency>
 
         <dependency>
-        	<groupId>org.testfx</groupId>
-        	<artifactId>openjfx-monocle</artifactId>
-        	<version>1.8.0_20</version>
-        	<scope>test</scope>
-        </dependency>
-
-        <dependency>
-        	<groupId>org.testfx</groupId>
-        	<artifactId>testfx-legacy</artifactId>
-        	<version>4.0.1-alpha</version>
-        	<scope>test</scope>
-        </dependency>
-
-        <dependency>
-        	<groupId>org.testfx</groupId>
-        	<artifactId>testfx-junit</artifactId>
-        	<version>4.0.1-alpha</version>
-        	<scope>test</scope>
+            <groupId>org.testfx</groupId>
+            <artifactId>testfx-junit</artifactId>
+            <version>4.0.1-alpha</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>com.cedarsoftware</groupId>
             <artifactId>json-io</artifactId>
-            <version>4.5.0</version>
+            <version>4.4.0</version>
             <scope>compile</scope>
         </dependency>
 
@@ -205,23 +202,23 @@
         </dependency>
 
         <dependency>
-        	<groupId>org.slf4j</groupId>
-        	<artifactId>slf4j-api</artifactId>
-        	<version>1.7.12</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.12</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
-    		<groupId>org.slf4j</groupId>
-    		<artifactId>slf4j-jdk14</artifactId>
-    		<version>1.7.11</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>1.7.11</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
-        	<groupId>org.controlsfx</groupId>
-        	<artifactId>controlsfx</artifactId>
-        	<version>8.40.11</version>
+            <groupId>org.controlsfx</groupId>
+            <artifactId>controlsfx</artifactId>
+            <version>8.40.11</version>
             <scope>compile</scope>
         </dependency>
 
@@ -240,19 +237,19 @@
         </dependency>
 
         <dependency>
-        	<groupId>net.jthink</groupId>
-        	<artifactId>jaudiotagger</artifactId>
-        	<scope>system</scope>
-        	<version>2.2.6-SNAPSHOT</version>
-        	<systemPath>${project.basedir}/lib/jaudiotagger-2.2.6-SNAPSHOT.jar</systemPath>
+            <groupId>net.jthink</groupId>
+            <artifactId>jaudiotagger</artifactId>
+            <scope>system</scope>
+            <version>2.2.6-SNAPSHOT</version>
+            <systemPath>${project.basedir}/lib/jaudiotagger-2.2.6-SNAPSHOT.jar</systemPath>
         </dependency>
 
         <dependency>
-        	<groupId>be.tarsos</groupId>
-        	<artifactId>transcoder</artifactId>
-        	<scope>system</scope>
-        	<version>1.2</version>
-        	<systemPath>${project.basedir}/lib/TarsosTranscoder-1.2.jar</systemPath>
+            <groupId>be.tarsos</groupId>
+            <artifactId>transcoder</artifactId>
+            <scope>system</scope>
+            <version>1.2</version>
+            <systemPath>${project.basedir}/lib/TarsosTranscoder-1.2.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -279,7 +276,7 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
             <snapshots>
                 <enabled>true</enabled>
-           </snapshots>
+            </snapshots>
         </repository>
 
         <repository>

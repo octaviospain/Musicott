@@ -46,7 +46,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * the access to their controllers and the handling of showing/hiding views
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class StageDemon {
 
@@ -121,7 +121,7 @@ public class StageDemon {
 		getPlayerController().setPlayQueuePane(playQueuePane);
 		LOG.debug("Play queue layout loaded");
 		BorderPane rootLayout = (BorderPane) loadLayout(ROOT_LAYOUT);
-		getRootController().setNavigationPaneVBox(navigationLayout);
+		getRootController().setNavigationPane(navigationLayout);
 		LOG.debug("Root layout loaded");
 
 		BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
@@ -144,12 +144,12 @@ public class StageDemon {
 		contentBorderLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
 		rootLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
 
-		Scene mainScene = new Scene(rootLayout, 1200, 775);
+		Scene mainScene = new Scene(rootLayout);
 		mainStage.setScene(mainScene);
 		mainStage.setTitle("Musicott");
-		mainStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_ICON)));
+		mainStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
 		mainStage.setMinWidth(1200);
-		mainStage.setMinHeight(790);
+		mainStage.setMinHeight(805);
 		mainStage.show();
 	}
 
@@ -196,12 +196,12 @@ public class StageDemon {
 			int numDeletedTracks = trackSelection.size();
 			String alertHeader = "Delete " + numDeletedTracks + " files from Musicott?";
 			Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
+			alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
 			Optional<ButtonType> result = alert.showAndWait();
 
 			if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
 				new Thread(() -> {
-					List<Integer> tracksToDelete = trackSelection.stream().map(Map.Entry::getKey)
-																 .collect(Collectors.toList());
+					List<Integer> tracksToDelete = trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList());
 					PlayerFacade.getInstance().deleteFromQueues(tracksToDelete);
 					musicLibrary.deleteTracks(tracksToDelete);
 					Platform.runLater(this::closeIndeterminateProgress);
@@ -259,7 +259,7 @@ public class StageDemon {
 	 */
 	public Alert createAlert(String title, String header, String content, AlertType type) {
 		Alert alert = new Alert(type);
-		alert.getDialogPane().getStylesheets().add(getClass().getResource("/css/dialog.css").toExternalForm());
+		alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
 		alert.setTitle(title);
 		alert.setHeaderText(header);
 		alert.setContentText(content);

@@ -44,7 +44,7 @@ import java.util.function.*;
  * Controller class of the root layout of the whole application.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class RootController implements MusicottController {
 
@@ -65,7 +65,7 @@ public class RootController implements MusicottController {
 	@FXML
 	private HBox tableInfoHBox;
 	@FXML
-	private VBox playlistInfoVBox;
+	private GridPane playlistInfoGridPane;
 	@FXML
 	private VBox navigationPaneVBox;
 	private TrackTableView trackTable;
@@ -143,10 +143,10 @@ public class RootController implements MusicottController {
 
 	private void initializePlaylistTitleTextField() {
 		playlistTitleTextField = new TextField();
-		playlistTitleTextField.setPrefWidth(150);
+		playlistTitleTextField.setMaxWidth(150);
 		playlistTitleTextField.setPrefHeight(25);
 		playlistTitleTextField.setPadding(new Insets(- 10, 0, - 10, 0));
-		playlistTitleTextField.setFont(new Font("System", 20));
+		playlistTitleTextField.setFont(new Font("Avenir", 19));
 		VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
 		playlistTitleTextField.setOnKeyPressed(changePlaylistNameTextFieldHandler);
 	}
@@ -171,9 +171,9 @@ public class RootController implements MusicottController {
 	 */
 	private void placePlaylistTextField() {
 		showTableInfoPane();
-		if (! playlistInfoVBox.getChildren().contains(playlistTitleTextField)) {
-			playlistInfoVBox.getChildren().remove(playlistTitleLabel);
-			playlistInfoVBox.getChildren().add(0, playlistTitleTextField);
+		if (! playlistInfoGridPane.getChildren().contains(playlistTitleTextField)) {
+			playlistInfoGridPane.getChildren().remove(playlistTitleLabel);
+			playlistInfoGridPane.add(playlistTitleTextField, 0, 0);
 			playlistTitleTextField.requestFocus();
 		}
 	}
@@ -183,9 +183,9 @@ public class RootController implements MusicottController {
 	 */
 	private void removePlaylistTextField() {
 		showTableInfoPane();
-		if (! playlistInfoVBox.getChildren().contains(playlistTitleLabel)) {
-			playlistInfoVBox.getChildren().remove(playlistTitleTextField);
-			playlistInfoVBox.getChildren().add(0, playlistTitleLabel);
+		if (! playlistInfoGridPane.getChildren().contains(playlistTitleLabel)) {
+			playlistInfoGridPane.getChildren().remove(playlistTitleTextField);
+			playlistInfoGridPane.add(playlistTitleLabel, 0, 0);
 		}
 	}
 
@@ -311,7 +311,7 @@ public class RootController implements MusicottController {
 		}
 	}
 
-	public void setNavigationPaneVBox(VBox navigationPaneVBox) {
+	public void setNavigationPane(VBox navigationPaneVBox) {
 		this.navigationPaneVBox = navigationPaneVBox;
 	}
 

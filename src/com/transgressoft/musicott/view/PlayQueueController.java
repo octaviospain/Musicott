@@ -29,7 +29,7 @@ import org.slf4j.*;
  * Controller class of the play queue pane.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class PlayQueueController implements MusicottController {
 
@@ -42,7 +42,7 @@ public class PlayQueueController implements MusicottController {
 	@FXML
 	private Button deleteAllButton;
 	@FXML
-	private ListView<TrackQueueRow> listView;
+	private ListView<TrackQueueRow> queuesListView;
 
 	private ObservableList<TrackQueueRow> playQueueList;
 	private ObservableList<TrackQueueRow> historyQueueList;
@@ -52,25 +52,19 @@ public class PlayQueueController implements MusicottController {
 		playQueueList = player.getPlayList();
 		historyQueueList = player.getHistorylist();
 		historyQueueButton.setId("historyQueueButton");
-		listView.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
-			if (oldValue != null)
-				oldValue.changeRemoveButtonColor();
-			if (newValue != null)
-				newValue.changeRemoveButtonColor();
-		});
-		listView.setItems(playQueueList);
-		listView.setOnMouseClicked(event -> {
+		queuesListView.setItems(playQueueList);
+		queuesListView.setOnMouseClicked(event -> {
 			if (event.getClickCount() == 2)
 				if (historyQueueButton.isSelected())
-					player.playHistoryIndex(historyQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
+					player.playHistoryIndex(historyQueueList.indexOf(queuesListView.getSelectionModel().getSelectedItem()));
 				else
-					player.playQueueIndex(playQueueList.indexOf(listView.getSelectionModel().getSelectedItem()));
+					player.playQueueIndex(playQueueList.indexOf(queuesListView.getSelectionModel().getSelectedItem()));
 		});
 		deleteAllButton.setOnAction(event -> {
-			if (historyQueueButton.isSelected() && ! historyQueueList.isEmpty())
-				clearPlayQueue();
-			else
+			if (historyQueueButton.isSelected())
 				clearHistoryQueue();
+			else
+				clearPlayQueue();
 		});
 		historyQueueButton.setOnAction(event -> {
 			if (historyQueueButton.isSelected())
@@ -103,13 +97,13 @@ public class PlayQueueController implements MusicottController {
 	}
 
 	private void showHistoryQueue() {
-		listView.setItems(historyQueueList);
+		queuesListView.setItems(historyQueueList);
 		titleQueueLabel.setText("Recently played");
 		LOG.trace("Showing history queue on the pane");
 	}
 
 	private void showPlayQueue() {
-		listView.setItems(playQueueList);
+		queuesListView.setItems(playQueueList);
 		titleQueueLabel.setText("Play Queue");
 		LOG.trace("Showing play queue on the pane");
 	}

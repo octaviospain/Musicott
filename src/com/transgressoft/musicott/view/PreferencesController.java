@@ -43,7 +43,7 @@ import static com.transgressoft.musicott.tasks.ItunesImportTask.*;
  * Controller class of the preferences window.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class PreferencesController implements MusicottController {
 
@@ -76,7 +76,7 @@ public class PreferencesController implements MusicottController {
 	@FXML
 	private CheckBox importPlaylistsCheckBox;
 	@FXML
-	private ChoiceBox<String> itunesImportPolicyCheckBox;
+	private ComboBox<String> itunesImportPolicyCheckBox;
 	private CheckComboBox<String> extensionsCheckComboBox;
 	private ObservableList<String> selectedExtensions;
 	private Set<String> importFilterExtensions;

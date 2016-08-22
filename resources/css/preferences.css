@@ -1,0 +1,92 @@
+/*
+ * This file is part of Musicott software.
+ *
+ * Musicott software is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Musicott library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Copyright (C) 2015, 2016 Octavio Calleya
+ */
+
+@import url("base.css");
+
+.combo-box .list-cell {
+    -fx-background-color: rgb(73, 73, 73);
+    -fx-text-fill: white;
+    -fx-font-family: "Avenir", sans-serif;
+}
+
+.combo-box .arrow-button .arrow {
+    -fx-background-color: rgb(201, 201, 201);
+}
+
+.combo-box .arrow-button {
+    -fx-background-color: rgb(34, 34, 34);
+    -fx-border-color: rgb(73, 73, 73);
+}
+
+.combo-box-base {
+    -fx-padding: -1 -1 -1 -1;
+}
+
+.combo-box-base .label {
+    -fx-text-fill: rgb(99, 255, 109);
+}
+
+.combo-box-base .list-view .list-cell:hover {
+    -fx-background-color: rgb(99, 255, 109);
+    -fx-text-fill: black;
+}
+
+.tab .tab-label {
+    -fx-text-fill: white;
+    -fx-font-family: "Avenir", sans-serif;
+}
+
+.tab {
+    -fx-background-color: rgb(73, 73, 73);
+    -fx-font-size: 14px;
+}
+
+.tab:hover {
+    -fx-background-color: black;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: rgb(201, 201, 201);
+    -fx-border-width: 0px;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: rgb(34, 34, 34);
+}
+
+.button {
+    -fx-focus-color: rgb(73, 73, 73);
+    -fx-font-family: "Avenir", sans-serif;
+    -fx-background-color: rgb(201, 201, 201);
+}
+
+.button:hover {
+    -fx-background-color: white;
+    -fx-text-fill: black;
+}
+
+.button:default {
+    -fx-background-color: rgb(73, 73, 73);
+    -fx-text-fill: white;
+}
+
+.button:default:hover, .button:default:pressed {
+    -fx-background-color: black;
+    -fx-text-fill: white;
+}

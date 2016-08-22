@@ -23,7 +23,6 @@ import com.transgressoft.musicott.MusicottApplication.*;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.fxml.*;
-import javafx.geometry.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.image.*;
@@ -41,7 +40,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * application folder. </p>
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class MainPreloader extends Preloader {
 
@@ -51,36 +50,19 @@ public class MainPreloader extends Preloader {
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private MainPreferences preferences = MainPreferences.getInstance();
 	private Stage preloaderStage;
-	private Scene preloaderScene;
-	private Image musicottIcon = new Image(getClass().getResourceAsStream(MUSICOTT_ICON));
-	private ImageView musicottImageView = new ImageView(musicottIcon);
 	private Label infoLabel;
 	private ProgressBar preloaderProgressBar;
 
 	@Override
-	public void init() throws Exception {
-		Platform.runLater(() -> {
-			infoLabel = new Label();
-			preloaderProgressBar = new ProgressBar();
-			preloaderProgressBar.setId("progressBar");
-			preloaderProgressBar.setPrefSize(300, 20.0);
-			preloaderProgressBar.setProgress(0.0);
-			preloaderProgressBar.setStyle("-fx-accent: rgb(99,255,109);");
-			VBox root = new VBox(musicottImageView, infoLabel, preloaderProgressBar);
-			root.setAlignment(Pos.CENTER);
-			VBox.setMargin(infoLabel, new Insets(10, 0, 10, 0));
-			preloaderScene = new Scene(root, 350, 230);
-		});
-	}
-
-	@Override
 	public void start(Stage primaryStage) throws Exception {
-		// Set preloader scene and show stage.
+		AnchorPane rootAnchorPane = FXMLLoader.load(getClass().getResource(PRELOADER_INIT_LAYOUT));
+		infoLabel = (Label) rootAnchorPane.lookup("#infoLabel");
+		preloaderProgressBar = (ProgressBar) rootAnchorPane.lookup("#preloaderProgressBar");
 		preloaderStage = primaryStage;
 		preloaderStage.setOnCloseRequest(Event::consume);
 		preloaderStage.setTitle("Musicott");
-		preloaderStage.getIcons().add(musicottIcon);
-		preloaderStage.setScene(preloaderScene);
+		preloaderStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
+		preloaderStage.setScene(new Scene(rootAnchorPane));
 		preloaderStage.setResizable(false);
 		preloaderStage.initStyle(StageStyle.UNDECORATED);
 		preloaderStage.show();
@@ -122,7 +104,7 @@ public class MainPreloader extends Preloader {
 	private void openFirstUseDialog() {
 		try {
 			Stage promptStage = new Stage();
-			AnchorPane preloaderPane = FXMLLoader.load(getClass().getResource(PRELOADER_LAYOUT));
+			AnchorPane preloaderPane = FXMLLoader.load(getClass().getResource(PRELOADER_FIRST_USE_PROMPT));
 			Button openButton = (Button) preloaderPane.lookup("#openButton");
 			Button okButton = (Button) preloaderPane.lookup("#okButton");
 			TextField musicottFolderTextField = (TextField) preloaderPane.lookup("#musicottFolderTextField");

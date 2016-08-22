@@ -37,7 +37,7 @@ import java.util.*;
  * audio files and add them to the {@link MusicLibrary}.
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  */
 public class ParseTask extends Task<Void> {
 

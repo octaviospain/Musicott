@@ -20,12 +20,12 @@
 package com.transgressoft.musicott;
 
 import com.cedarsoftware.util.io.*;
+import com.sun.javafx.application.*;
+import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.services.lastfm.*;
 import com.transgressoft.musicott.util.*;
-import com.sun.javafx.application.*;
-import com.sun.javafx.collections.*;
 import javafx.application.*;
 import javafx.application.Preloader.*;
 import javafx.collections.*;
@@ -50,7 +50,7 @@ import java.util.logging.*;
  * </ol>
  *
  * @author Octavio Calleya
- * @version 0.9-b
+ * @version 0.9.1-b
  * @see <a href="https://octaviospain.github.io/Musicott">Musicott</a>
  */
 public class MusicottApplication extends Application {
@@ -185,7 +185,6 @@ public class MusicottApplication extends Application {
 		}
 		catch (IOException exception) {
 			LOG.warn("Error loading configuration properties", exception);
-			errorDemon.showErrorDialog("Error", "Error when loading configuration properties", exception);
 		}
 	}
 
@@ -272,7 +271,6 @@ public class MusicottApplication extends Application {
 		catch (IOException exception) {
 			waveformsMap = new HashMap<>();
 			LOG.error("Error loading waveform thumbnails: ", exception.getCause());
-			errorDemon.showErrorDialog("Error", "Error when loading waveform thumbnails: ", exception);
 		}
 		return waveformsMap;
 	}
@@ -306,7 +304,6 @@ public class MusicottApplication extends Application {
 		catch (IOException exception) {
 			playlists = new ArrayList<>();
 			LOG.error("Error loading playlists: ", exception.getCause());
-			errorDemon.showErrorDialog("Error loading playlists: ", "", exception);
 		}
 		return playlists;
 	}
@@ -338,7 +335,6 @@ public class MusicottApplication extends Application {
 		catch (IOException exception) {
 			tracksMap = FXCollections.observableHashMap();
 			LOG.error("Error loading track library {}", exception.getCause());
-			errorDemon.showErrorDialog("Error loading tracks: ", "", exception);
 		}
 		return tracksMap;
 	}
@@ -394,6 +390,7 @@ public class MusicottApplication extends Application {
 		track.lastDateModifiedProperty().setValue(track.getLastDateModified());
 		track.playCountProperty().setValue(track.getPlayCount());
 		track.getCoverImage().ifPresent(coverBytes -> track.hasCoverProperty().set(true));
+		track.isPlayableProperty().setValue(track.isPlayable());
 	}
 
 	/**

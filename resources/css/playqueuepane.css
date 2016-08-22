@@ -17,23 +17,41 @@
  * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
-.root, .list-view {
-    -fx-focus-color: rgb(73, 73, 73);
-    -fx-faint-focus-color: transparent;
-    -fx-background-color: transparent, transparent, transparent, -fx-body-color;
-    -fx-background-radius: 0, 0, 0, 0;
-    -fx-accent: black;
+.list-view {
+	-fx-focus-color: rgb(73, 73, 73);
+	-fx-faint-focus-color: transparent;
+	-fx-text-fill: white;
+	-fx-background-color: transparent;
+	-fx-background-radius: 10px;
+}
+
+.label {
+	-fx-text-fill: white;
+	-fx-font-family: "Avenir", sans-serif;
+}
+
+#deleteAllButton {
+	-fx-background-color: rgb(73, 73, 73);
+	-fx-text-fill: white;
+}
+
+#deleteAllButton:hover {
+	-fx-background-color: rgb(201, 201, 201);
+	-fx-text-fill: black;
+	-fx-padding: 2 2 2 2;
+}
+
+
+#deleteAllButton {
+	-fx-padding: 2 2 2 2;
 }
 
 #playQueuePane {
 	-fx-background-image: url('../images/playqueue-background-image.png');
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
 	-fx-background-color: transparent;
- 	-fx-effect: dropshadow(gaussian, rgb(182,182,182), 10, 0, 0, 0); 
-}
-
-#listView {
-	-fx-background-color: transparent;
-    -fx-background-radius: 10px;
+	-fx-effect: dropshadow(gaussian, rgb(73, 73, 73), 15, 0.3, 0, 0);
 }
 
 .list-cell {
@@ -41,26 +59,7 @@
 }
 
 .list-cell:filled:selected {
-    -fx-background-color: black;
-}
-
-.list-cell:filled:selected .text{
-    -fx-fill: white !important;
-}
-
-/* Scroll bars hided */
-#listView .scroll-bar .decrement-button,
-#listView .scroll-bar .increment-button,
-#listView .scroll-bar .increment-arrow,
-#listView .scroll-bar .decrement-arrow {
-	-fx-shape: " ";	
-	-fx-padding:0;
-}
-
-#deleteButton-black {
-	-fx-graphic: url('../icons/remove-button-black-icon.png');
-	-fx-background-insets: 1 1 1 1;
-	-fx-background-color: transparent;
+    -fx-background-color: rgb(73, 73, 73);
 }
 
 #deleteButton-white {
@@ -70,25 +69,32 @@
 }
 
 #nameLabel {
-	-fx-font-size: 12px;
+	-fx-font-size: 13px;
 }
 
 #artistAlbumLabel{
-	-fx-text-fill: #000000be;
-	-fx-font-size: 10px;
+	-fx-text-fill: rgb(201, 201, 201);
+	-fx-font-size: 11px;
 }
 
 #historyQueueButton {
-	-fx-graphic: url('../icons/historyqueue-button-icon.png');
+	-fx-graphic: url('../icons/historyqueue-button-white-icon.png');
 	-fx-background-color: transparent;
 }
 
 #historyQueueButton:selected{
-	-fx-graphic: url('../icons/historyqueue-button-selected-icon.png');
- 	-fx-effect: dropshadow(gaussian, rgb(73, 73, 73), 15, 0.3, 0, 0);
+	-fx-graphic: url('../icons/historyqueue-button-black-icon.png');
+ 	-fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 9, 0.4, 0, 0);
 }
 
 #coverImage {
 	-fx-image: url('../images/default-cover-image-queue.png');
 	-fx-background-insets: 0 0 0 0;
+}
+
+#queuesListView .scroll-bar .decrement-button,
+#queuesListView .scroll-bar .increment-arrow,
+#queuesListView .scroll-bar .decrement-arrow {
+	-fx-shape: " ";
+	-fx-padding:0;
 }
