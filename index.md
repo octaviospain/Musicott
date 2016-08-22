@@ -5,10 +5,6 @@ title: Musicott by octaviospain
 [![codecov](https://codecov.io/gh/octaviospain/Musicott/branch/master/graph/badge.svg)](https://codecov.io/gh/octaviospain/Musicott)
 [![license](https://img.shields.io/badge/license-GPL3v2-brightgreen.svg)](https://github.com/octaviospain/Musicott/blob/master/license/gpl.txt)
 
-
-![Musicott title logo](https://dl.dropboxusercontent.com/u/3596661/musicott-title-logo.png)
-
-#
 Musicott is an application that manages and plays music files. Coded in Java 8 with JavaFX.
 Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to read and write the metadata,
 [Json-io](https://github.com/jdereg/json-io "Json-io") for persistence,
