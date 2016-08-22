@@ -21,9 +21,12 @@ package com.transgressoft.musicott;
 
 import com.google.common.collect.*;
 import org.junit.jupiter.api.*;
+import org.junit.platform.runner.*;
+import org.junit.runner.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.prefs.*;
 
 import static com.transgressoft.musicott.tasks.ItunesImportTask.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,18 +34,25 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Octavio Calleya
  */
+@RunWith (JUnitPlatform.class)
 public class MainPreferencesTest {
 
-	static MainPreferences mainPreferences;
-
-	@BeforeAll
-	static void beforeAll() {
-		mainPreferences = MainPreferences.getInstance();
+	@Test
+	@DisplayName ("Creation with previous extensions already saved")
+	void creationWithPreviousConfig() {
+		Preferences preferences = Preferences.userNodeForPackage(MainPreferences.class);
+		preferences.putBoolean("import_m4a_flag", true);
+		preferences.putBoolean("import_wav_flag", true);
+		preferences.putBoolean("import_flac_flag", true);
+		preferences.putBoolean("import_mp3_flag", false);
+		MainPreferences mainPreferences = MainPreferences.getInstance();
+		assertEquals(Sets.newHashSet("m4a", "wav", "flac"), mainPreferences.getImportFilterExtensions());
 	}
 
 	@Test
 	@DisplayName ("User folder")
 	void userFolderMethodTest() {
+		MainPreferences mainPreferences = MainPreferences.getInstance();
 		String sep = File.separator;
 		String userHome = System.getProperty("user.home");
 		String newUserFolder = userHome + sep + "Musicott";
@@ -57,6 +67,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName ("Itunes import metadata")
 	void itunesImportMetadataTest() {
+		MainPreferences mainPreferences = MainPreferences.getInstance();
 		mainPreferences.setItunesImportMetadataPolicy(METADATA_POLICY);
 
 		assertEquals(METADATA_POLICY, mainPreferences.getItunesImportMetadataPolicy());
@@ -65,6 +76,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName ("Itunes import hold playcount")
 	void itunesImportHoldPlaycountTest() {
+		MainPreferences mainPreferences = MainPreferences.getInstance();
 		mainPreferences.setItunesImportHoldPlaycount(false);
 
 		assertFalse(mainPreferences.getItunesImportHoldPlaycount());
@@ -73,6 +85,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName("Itunes import playlists")
 	void itunesImportPlaylistsTest() {
+		MainPreferences mainPreferences = MainPreferences.getInstance();
 		mainPreferences.setItunesImportPlaylists(true);
 
 		assertTrue(mainPreferences.getItunesImportPlaylists());
@@ -81,6 +94,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName("Import filter extensions empty")
 	void emptyImportFilterExtensionsTest() {
+		MainPreferences mainPreferences = MainPreferences.getInstance();
 		mainPreferences.setImportFilterExtensions();
 
 		assertEquals(Collections.emptySet(), mainPreferences.getImportFilterExtensions());
@@ -89,6 +103,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName("One import filter extension")
 	void oneImportFilterExtensionsTest() {
+		MainPreferences mainPreferences = MainPreferences.getInstance();
 		mainPreferences.setImportFilterExtensions("mp3");
 
 		assertEquals(Sets.newHashSet("mp3"), mainPreferences.getImportFilterExtensions());
