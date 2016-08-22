@@ -25,7 +25,7 @@ import org.junit.jupiter.api.*;
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.tasks.ItunesImportTask.METADATA_POLICY;
+import static com.transgressoft.musicott.tasks.ItunesImportTask.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -38,14 +38,6 @@ public class MainPreferencesTest {
 	@BeforeAll
 	static void beforeAll() {
 		mainPreferences = MainPreferences.getInstance();
-	}
-
-	@Test
-	@DisplayName ("Constructor")
-	void constructorTest() {
-		Set<String> expectedExtensions = Sets.newHashSet("mp3", "m4a", "wav", "flac");
-
-		assertEquals(expectedExtensions, mainPreferences.getImportFilterExtensions());
 	}
 
 	@Test
@@ -87,10 +79,18 @@ public class MainPreferencesTest {
 	}
 
 	@Test
-	@DisplayName("Import filter extensions")
-	void importFilterExtensionsTest() {
+	@DisplayName("Import filter extensions empty")
+	void emptyImportFilterExtensionsTest() {
 		mainPreferences.setImportFilterExtensions();
 
 		assertEquals(Collections.emptySet(), mainPreferences.getImportFilterExtensions());
+	}
+
+	@Test
+	@DisplayName("One import filter extension")
+	void oneImportFilterExtensionsTest() {
+		mainPreferences.setImportFilterExtensions("mp3");
+
+		assertEquals(Sets.newHashSet("mp3"), mainPreferences.getImportFilterExtensions());
 	}
 }
