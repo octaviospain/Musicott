@@ -11,7 +11,7 @@ jdk:
 
 sudo: false
 
-script: mvn clean install mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN
+script: mvn clean install sonar:sonar -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONAR_TOKEN
 
 addons:
   apt:
