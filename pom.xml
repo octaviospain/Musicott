@@ -137,14 +137,7 @@
             <version>2.0.42-beta</version>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock</artifactId>
-            <version>1.6.5</version>
-            <scope>test</scope>
-        </dependency>
-
+        
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-module-junit4</artifactId>
