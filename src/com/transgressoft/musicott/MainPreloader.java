@@ -62,6 +62,7 @@ public class MainPreloader extends Preloader {
 		Platform.runLater(() -> {
 			infoLabel = new Label();
 			preloaderProgressBar = new ProgressBar();
+			preloaderProgressBar.setId("progressBar");
 			preloaderProgressBar.setPrefSize(300, 20.0);
 			preloaderProgressBar.setProgress(0.0);
 			preloaderProgressBar.setStyle("-fx-accent: rgb(99,255,109);");

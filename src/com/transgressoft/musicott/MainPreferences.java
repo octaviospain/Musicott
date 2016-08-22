@@ -44,11 +44,6 @@ public class MainPreferences {
 	 */
 	private static final String TRACK_SEQUENCE = "track_sequence";
 
-	/**
-	 * The sequence number of the keys of the {@link com.transgressoft.musicott.model.Playlist} map
-	 */
-	private static final String PLAYLIST_SEQUENCE = "playlist_sequence";
-
 	private static final String IMPORT_MP3 = "import_mp3_flag";
 	private static final String IMPORT_M4A = "import_m4a_flag";
 	private static final String IMPORT_WAV = "import_wav_flag";
@@ -71,7 +66,6 @@ public class MainPreferences {
 	 * or the iTunes data saved in the library, when importing from a iTunes library.
 	 */
 	private static final String ITUNES_IMPORT_METADATA_POLICY = "itunes_import_policy";
-	private static final String[] IMPORT_EXTENSIONS = {"mp3", "m4a", "wav", "flac"};
 
 	private static MainPreferences instance;
 	private Preferences preferences;
@@ -85,28 +79,20 @@ public class MainPreferences {
 	private MainPreferences() {
 		preferences = Preferences.userNodeForPackage(getClass());
 		importExtensions = new HashSet<>();
-		importExtensions.addAll(Arrays.asList(IMPORT_EXTENSIONS));
 		if (preferences.getBoolean(IMPORT_MP3, true))
 			importExtensions.add("mp3");
-		else
-			importExtensions.remove("mp3");
 		if (preferences.getBoolean(IMPORT_M4A, false))
 			importExtensions.add("m4a");
-		else
-			importExtensions.remove("m4a");
 		if (preferences.getBoolean(IMPORT_WAV, false))
 			importExtensions.add("wav");
-		else
-			importExtensions.remove("wav");
 		if (preferences.getBoolean(IMPORT_FLAC, false))
 			importExtensions.add("flac");
-		else
-			importExtensions.remove("flac");
 	}
 
 	public static MainPreferences getInstance() {
-		if (instance == null)
+		if (instance == null) {
 			instance = new MainPreferences();
+		}
 		return instance;
 	}
 
@@ -128,12 +114,11 @@ public class MainPreferences {
 	 *
 	 * @param path The path to the application folder
 	 *
-	 * @return <tt>true</tt> if the creation of the directory was successfull, <tt>false</tt> otherwise
+	 * @return <tt>true</tt> if the creation of the directory was successful, <tt>false</tt> otherwise
 	 */
 	public boolean setMusicottUserFolder(String path) {
 		preferences.put(MUSICOTT_FOLDER, path);
 		preferences.putInt(TRACK_SEQUENCE, 0);
-		preferences.putInt(PLAYLIST_SEQUENCE, 0);
 		return new File(path).mkdirs();
 	}
 
@@ -141,28 +126,32 @@ public class MainPreferences {
 		return preferences.get(MUSICOTT_FOLDER, null);
 	}
 
-	public void setItunesImportMetadataPolicy(int policy) {
-		preferences.putInt(ITUNES_IMPORT_METADATA_POLICY, policy);
-	}
-
 	public int getItunesImportMetadataPolicy() {
 		return preferences.getInt(ITUNES_IMPORT_METADATA_POLICY, ITUNES_DATA_POLICY);
 	}
 
-	public void setItunesImportHoldPlaycount(boolean holdPlayCount) {
-		preferences.putBoolean(ITUNES_IMPORT_HOLD_PLAYCOUNT, holdPlayCount);
+	public void setItunesImportMetadataPolicy(int policy) {
+		preferences.putInt(ITUNES_IMPORT_METADATA_POLICY, policy);
 	}
 
 	public boolean getItunesImportHoldPlaycount() {
 		return preferences.getBoolean(ITUNES_IMPORT_HOLD_PLAYCOUNT, true);
 	}
 
-	public void setItunesImportPlaylists(boolean importPlaylists) {
-		preferences.putBoolean(ITUNES_IMPORT_PLAYLISTS, importPlaylists);
+	public void setItunesImportHoldPlaycount(boolean holdPlayCount) {
+		preferences.putBoolean(ITUNES_IMPORT_HOLD_PLAYCOUNT, holdPlayCount);
 	}
 
 	public boolean getItunesImportPlaylists() {
 		return preferences.getBoolean(ITUNES_IMPORT_PLAYLISTS, false);
+	}
+
+	public void setItunesImportPlaylists(boolean importPlaylists) {
+		preferences.putBoolean(ITUNES_IMPORT_PLAYLISTS, importPlaylists);
+	}
+
+	public Set<String> getImportFilterExtensions() {
+		return importExtensions;
 	}
 
 	public void setImportFilterExtensions(String... newImportFilterExtensions) {
@@ -172,9 +161,5 @@ public class MainPreferences {
 		preferences.putBoolean(IMPORT_M4A, importExtensions.contains("m4a"));
 		preferences.putBoolean(IMPORT_WAV, importExtensions.contains("wav"));
 		preferences.putBoolean(IMPORT_FLAC, importExtensions.contains("flac"));
-	}
-
-	public Set<String> getImportFilterExtensions() {
-		return importExtensions;
 	}
 }

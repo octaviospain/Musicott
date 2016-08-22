@@ -197,6 +197,7 @@ public class ErrorDemon {
 	 */
 	private Alert createErrorAlert(String message, String content, Scene ownerScene) {
 		alert = new Alert(AlertType.ERROR);
+		alert.getDialogPane().setId("errorAlert");
 		alert.setTitle("Error");
 		alert.setHeaderText(message == null ? "Error" : message);
 		alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
