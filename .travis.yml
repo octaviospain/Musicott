@@ -1,11 +1,17 @@
 language: java
 
+secure: "P/eyCzQU9xjAfsr08tLabfiRAI4+ChjnaZeqlu7rIxAEqLg3M11e58UB10fRFSBxBbVUcnB4rhVDqSsaPuVmb/jZ2yuaiu/DEqVFP7NE41GdwnoRGhdifTW9NuEVoiRaGnqvUA3FlI1qDsZjE1PnIu3XCTRsKVmXS4bb4MWV0/oz8jVPpeKR2qaI9jKFsQXCh5Zihrchp318v6Qrxi6N9UCGiTPa47U+HwtxHbwcOCpUDmJ9ycgP05Gk9dk54BzevSib2C5mo5+qk6aaccUThMvsWid0giz5qzo+T7/ebA9rIRyQ1CSREObli7LclaRFgONXmOpAbn1RQKBhtIbF9yZTfRBr4dTn2qh6B6hJ0jDxmNl1WhltZ6iHzm8XV4XummNn8B6SbGOaip2qA3nIwoUR18xSN1k5Y+/zpURexARZ49r80mmd6X1lIPGwI8ntPGigo/TumiFzhH7pA5UUMxAX0gRWcCWXh1c4A9sbq75i4KJnAbXaiyUPM8RMC32BEmYIZlkOQ30IsUGEizWp6Cq5RHHwZ/vGYN+0+5siBpfuy6DLULiMwXNW0iXZ2lsywWhbaVAjj6QvKMiwpb8dl1z7ZfY9xs3iPQA8yH0ttmZ6EVmeg3olcbcVcQOZ6GFGmqN/hwEkdyYKJnZoNfob7bujD477sfRBYZC9L+SBCns="
+
+directories:
+  - $HOME/.m2
+  - $HOME/.sonar/cache
+
 jdk:
   - oraclejdk8
 
 sudo: false
 
-script: mvn clean verify package
+script: mvn clean install sonar:sonar -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONAR_TOKEN
 
 addons:
   apt:
