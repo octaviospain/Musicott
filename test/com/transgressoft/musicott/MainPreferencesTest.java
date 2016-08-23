@@ -37,16 +37,21 @@ import static org.junit.jupiter.api.Assertions.*;
 @RunWith (JUnitPlatform.class)
 public class MainPreferencesTest {
 
+	static final String IMPORT_MP3 = "import_mp3_flag";
+	static final String IMPORT_M4A = "import_m4a_flag";
+	static final String IMPORT_WAV = "import_wav_flag";
+	static final String IMPORT_FLAC = "import_flac_flag";
+
 	@Test
 	@DisplayName ("Creation with previous extensions already saved")
-	void creationWithPreviousConfig() {
+	void creationWithPreviousConfig() throws Exception {
 		Preferences preferences = Preferences.userNodeForPackage(MainPreferences.class);
-		preferences.putBoolean("import_m4a_flag", true);
-		preferences.putBoolean("import_wav_flag", true);
-		preferences.putBoolean("import_flac_flag", true);
-		preferences.putBoolean("import_mp3_flag", false);
+		preferences.putBoolean(IMPORT_FLAC, true);
+		preferences.putBoolean(IMPORT_WAV, true);
+		preferences.putBoolean(IMPORT_M4A, true);
+		preferences.putBoolean(IMPORT_MP3, true);
 		MainPreferences mainPreferences = MainPreferences.getInstance();
-		assertEquals(Sets.newHashSet("m4a", "wav", "flac"), mainPreferences.getImportFilterExtensions());
+		assertEquals(Sets.newHashSet("m4a", "wav", "flac", "mp3"), mainPreferences.getImportFilterExtensions());
 	}
 
 	@Test
