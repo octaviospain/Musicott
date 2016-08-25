@@ -64,8 +64,11 @@ public class UpdateMetadataTask extends Thread {
 				if (newCoverFile != null)
 					track.setCoverImage(newCoverFile);
 				updated = track.writeMetadata();
+
 				if (! updated && backup != null)
 					restoreBackup(track, backup);
+				else
+					deleteBackup(track, backup);
 
 				if (updated)
 					LOG.debug("Updating metadata of {}", track.getFileFolder() + "/" + track.getFileName());
@@ -81,7 +84,7 @@ public class UpdateMetadataTask extends Thread {
 		File original = new File(track.getFileFolder() + "/" + track.getFileName());
 		File backup = null;
 		try {
-			backup = File.createTempFile(track.getName(), "");
+			backup = File.createTempFile(track.getFileName(), "");
 			Files.copy(original.toPath(), backup.toPath(), options);
 		}
 		catch (IOException exception) {
@@ -99,6 +102,13 @@ public class UpdateMetadataTask extends Thread {
 		catch (IOException | UnsupportedOperationException exception) {
 			LOG.error("Error restoring the backup file: ", exception.getCause());
 			errorDemon.showErrorDialog("Error restoring the backup file", "", exception);
+		}
+	}
+
+	private void deleteBackup(Track track, File backup) {
+		if (! backup.delete()) {
+			LOG.error("Error deleting backup file of {}", track);
+			errorDemon.showErrorDialog("Error deleting the backup file of " + track.getFileName());
 		}
 	}
 }

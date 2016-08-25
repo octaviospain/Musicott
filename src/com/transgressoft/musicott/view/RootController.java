@@ -70,6 +70,7 @@ public class RootController implements MusicottController {
 	private VBox navigationPaneVBox;
 	private TrackTableView trackTable;
 	private TextField playlistTitleTextField;
+	private List<Track> selectedTracks;
 	private FilteredList<Entry<Integer, Track>> filteredTracks;
 	private ListProperty<Map.Entry<Integer, Track>> showingTracksProperty;
 	private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
@@ -81,6 +82,7 @@ public class RootController implements MusicottController {
 
 	@FXML
 	public void initialize() {
+		selectedTracks = new ArrayList<>();
 		showingTracksProperty = musicLibrary.showingTracksProperty();
 		selectedPlaylistProperty = stageDemon.getNavigationController().selectedPlaylistProperty();
 		selectedPlaylistProperty.addListener(
@@ -315,8 +317,16 @@ public class RootController implements MusicottController {
 		this.navigationPaneVBox = navigationPaneVBox;
 	}
 
-	public ObservableList<Map.Entry<Integer, Track>> getSelectedItems() {
-		return trackTable.getSelectionModel().getSelectedItems();
+	public List<Track> getSelectedTracks() {
+		selectedTracks.clear();
+		List<Entry<Integer, Track>> selectedItems = trackTable.getSelectionModel().getSelectedItems();
+		if (selectedItems != null)
+			selectedItems.forEach(entry -> {
+				if (entry != null)
+					selectedTracks.add(entry.getValue());
+			});
+
+		return selectedTracks;
 	}
 
 	public ReadOnlyBooleanProperty showNavigationPaneProperty() {

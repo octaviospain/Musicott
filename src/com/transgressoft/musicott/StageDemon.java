@@ -24,7 +24,6 @@ import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.view.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
-import javafx.collections.*;
 import javafx.fxml.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
@@ -36,7 +35,6 @@ import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.Map.*;
 import java.util.stream.*;
 
 import static com.transgressoft.musicott.view.MusicottController.*;
@@ -158,7 +156,7 @@ public class StageDemon {
 	 * an <tt>Alert</tt> is opened asking for a confirmation of the user.
 	 */
 	public void editTracks() {
-		ObservableList<Entry<Integer, Track>> trackSelection = getRootController().getSelectedItems();
+		List<Track> trackSelection = getRootController().getSelectedTracks();
 		if (! trackSelection.isEmpty()) {
 			boolean[] edit = {true};
 			if (trackSelection.size() > 1) {
@@ -190,7 +188,7 @@ public class StageDemon {
 	 * asking for a confirmation of the user.
 	 */
 	public void deleteTracks() {
-		ObservableList<Map.Entry<Integer, Track>> trackSelection = getRootController().getSelectedItems();
+		List<Track> trackSelection = getRootController().getSelectedTracks();
 
 		if (! trackSelection.isEmpty()) {
 			int numDeletedTracks = trackSelection.size();
@@ -201,7 +199,7 @@ public class StageDemon {
 
 			if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
 				new Thread(() -> {
-					List<Integer> tracksToDelete = trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList());
+					List<Integer> tracksToDelete = trackSelection.stream().map(Track::getTrackId).collect(Collectors.toList());
 					PlayerFacade.getInstance().deleteFromQueues(tracksToDelete);
 					musicLibrary.deleteTracks(tracksToDelete);
 					Platform.runLater(this::closeIndeterminateProgress);
