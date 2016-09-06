@@ -11,7 +11,7 @@ Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to 
 [TestFx](https://github.com/TestFX/TestFX "TestFx") for testing, and some components from
 [ControlsFx](https://bitbucket.org/controlsfx/controlsfx/ "ControlsFx").
 
-Next version 0.9 is almost prepared but it needs more tests (as always)! Community help is welcomed ;)
+Next version 0.9 is almost prepared but it needs more tests (as always)! Community help is welcomed <i class="em em-smile"></i>
 
 ![Musicott screenshot 1](https://dl.dropboxusercontent.com/u/3596661/main.png)
 

@@ -1,5 +1,6 @@
 /target/
 /bin/
+/Musicott-out-resources/
 .classpath
 .DS_Store
 .project
