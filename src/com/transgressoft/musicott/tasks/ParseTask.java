@@ -71,6 +71,7 @@ public class ParseTask extends Task<Void> {
 	@Override
 	protected Void call() {
 		startMillis = System.currentTimeMillis();
+		LOG.debug("Starting file importing");
 		for (File fileToParse : filesToParse) {
 			if (isCancelled())
 				break;
@@ -93,6 +94,7 @@ public class ParseTask extends Task<Void> {
 		Track newTrack = null;
 		try {
 			newTrack = MetadataParser.createTrack(file);
+			LOG.debug("Parsed file {}: {}", file, newTrack);
 		}
 		catch (TrackParseException exception) {
 			LOG.error("Error parsing file {}: ", file, exception.getCause());
