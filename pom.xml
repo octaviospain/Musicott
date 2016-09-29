@@ -61,20 +61,6 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>1.6</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19</version>
                 <dependencies>
@@ -137,7 +123,7 @@
             <version>2.0.42-beta</version>
             <scope>test</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-module-junit4</artifactId>
@@ -155,14 +141,20 @@
         <dependency>
             <groupId>org.testfx</groupId>
             <artifactId>testfx-core</artifactId>
-            <version>4.0.1-alpha</version>
+            <version>4.0.4-alpha</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.testfx</groupId>
+            <artifactId>testfx-legacy</artifactId>
+            <version>4.0.4-alpha</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testfx</groupId>
             <artifactId>testfx-junit</artifactId>
-            <version>4.0.1-alpha</version>
+            <version>4.0.4-alpha</version>
             <scope>test</scope>
         </dependency>
 
@@ -218,7 +210,7 @@
         <dependency>
             <groupId>org.controlsfx</groupId>
             <artifactId>controlsfx</artifactId>
-            <version>8.40.11</version>
+            <version>8.40.12</version>
             <scope>compile</scope>
         </dependency>
 

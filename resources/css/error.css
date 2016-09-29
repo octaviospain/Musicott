@@ -17,26 +17,29 @@
  * Copyright (C) 2015, 2016 Octavio Calleya
  */
 
-package com.transgressoft.musicott.tests;
+@import url("dialog.css");
 
-import javafx.scene.*;
-import javafx.scene.layout.*;
-import javafx.stage.*;
-import org.testfx.framework.junit.*;
+#errorTitle {
+    -fx-font-size: 17px;
+}
 
-/**
- * Base test class to initialize the FX Toolkit
- *
- * @author Octavio Calleya
- */
-public class BaseJavaFxTest extends ApplicationTest {
+#seeDetailsButton {
+    -fx-graphic: url('../images/double-arrow-down.png');
+    -fx-background-color: transparent;
+}
 
-	public Stage testStage;
+#seeDetailsButton:selected {
+    -fx-graphic: url('../images/double-arrow-up.png');
+    -fx-background-color: transparent;
+}
 
-	@Override
-	public void start(Stage stage) throws Exception {
-		testStage = stage;
-		testStage.setScene(new Scene(new AnchorPane()));
-		testStage.setTitle("Test");
-	}
+.hyperlink {
+    -fx-text-fill: #ee2d22;
+    -fx-font-family: "Avenir", sans-serif;
+    -fx-font-style: normal;
+    -fx-font-size: 15px;
+}
+
+.hyperlink:hover {
+    -fx-text-fill: rgb(99, 255, 109);
 }

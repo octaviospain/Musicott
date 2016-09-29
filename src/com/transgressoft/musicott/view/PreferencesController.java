@@ -78,8 +78,6 @@ public class PreferencesController implements MusicottController {
 	@FXML
 	private ComboBox<String> itunesImportPolicyCheckBox;
 	private CheckComboBox<String> extensionsCheckComboBox;
-	private ObservableList<String> selectedExtensions;
-	private Set<String> importFilterExtensions;
 	private LastFmPreferences lastFmPreferences;
 
 	private ReadOnlyBooleanProperty usingLastFmProperty = ServiceDemon.getInstance().usingLastFmProperty();
@@ -96,7 +94,7 @@ public class PreferencesController implements MusicottController {
 
 		wrapItunesSectionWithBorder();
 
-		selectedExtensions = FXCollections.observableArrayList(EXTENSIONS);
+		ObservableList<String> selectedExtensions = FXCollections.observableArrayList(EXTENSIONS);
 		extensionsCheckComboBox = new CheckComboBox<>(selectedExtensions);
 		extensionsCheckComboBox.setMinWidth(100);
 		HBox.setHgrow(extensionsCheckComboBox, Priority.SOMETIMES);
@@ -156,7 +154,7 @@ public class PreferencesController implements MusicottController {
 	}
 
 	private void loadImportPreferences() {
-		importFilterExtensions = preferences.getImportFilterExtensions();
+		Set<String> importFilterExtensions = preferences.getImportFilterExtensions();
 		extensionsCheckComboBox.getCheckModel().clearChecks();
 		for (String extension : importFilterExtensions)
 			extensionsCheckComboBox.getCheckModel().check(extension);
