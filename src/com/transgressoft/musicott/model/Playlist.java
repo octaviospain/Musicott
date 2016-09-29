@@ -179,9 +179,11 @@ public class Playlist {
 
 			if (trackWithCover.isPresent()) {
 				int trackId = trackWithCover.get();
-				byte[] coverBytes = musicLibrary.getTrack(trackId).get().getCoverImage().get();
-				Image image = new Image(new ByteArrayInputStream(coverBytes));
-				playlistCoverProperty.set(image);
+				musicLibrary.getTrack(trackId).ifPresent(track -> {
+					byte[] coverBytes = track.getCoverImage().get();
+					Image image = new Image(new ByteArrayInputStream(coverBytes));
+					playlistCoverProperty.set(image);
+				});
 			}
 			else
 				playlistCoverProperty.set(COVER_IMAGE);

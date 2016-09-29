@@ -66,16 +66,15 @@ public class StageDemon {
 
 	private HostServices hostServices;
 
-	private StageDemon() {}
+	private StageDemon() {
+		errorDemon.setErrorAlertStage(initStage(ERROR_ALERT_LAYOUT, "Error"));
+		errorDemon.setErrorAlertController((ErrorDialogController) controllers.get(ERROR_ALERT_LAYOUT));
+	}
 
 	public static StageDemon getInstance() {
 		if (instance == null)
 			instance = new StageDemon();
 		return instance;
-	}
-
-	Stage getMainStage() {
-		return mainStage;
 	}
 
 	void setApplicationHostServices(HostServices hostServices) {
@@ -271,7 +270,7 @@ public class StageDemon {
 	 *
 	 * @param stageToShow The Stage to be shown
 	 */
-	private void showStage(Stage stageToShow) {
+	void showStage(Stage stageToShow) {
 		if (stageToShow.equals(mainStage) || stageToShow.equals(progressStage))
 			stageToShow.show();
 		else if (! stageToShow.isShowing())
@@ -287,22 +286,24 @@ public class StageDemon {
 	 * @return The <tt>Stage</tt> with the layout
 	 */
 	private Stage initStage(String layout, String title) {
-		Stage newStage;
+		Stage newStage = new Stage();
+		initStage(newStage, layout, title);
+		newStage.initModality(Modality.APPLICATION_MODAL);
+		return newStage;
+	}
+
+	private void initStage(Stage stage, String layout, String title) {
 		try {
 			Parent nodeLayout = loadLayout(layout);
 			Scene scene = new Scene(nodeLayout);
-			newStage = new Stage();
-			newStage.setTitle(title);
-			newStage.initModality(Modality.APPLICATION_MODAL);
-			newStage.setScene(scene);
-			newStage.setResizable(false);
+			stage.setTitle(title);
+			stage.setScene(scene);
+			stage.setResizable(false);
 		}
 		catch (IOException exception) {
 			LOG.error("Error initiating stage of layout " + layout, exception.getCause());
 			errorDemon.showErrorDialog("Error initiating stage of layout " + layout + ":", "", exception);
-			newStage = null;
 		}
-		return newStage;
 	}
 
 	/**
