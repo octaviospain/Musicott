@@ -95,7 +95,7 @@ public class ParseTask extends Task<Void> {
 			newTrack = MetadataParser.createTrack(file);
 		}
 		catch (TrackParseException exception) {
-			LOG.error("Error parsing file {}: ", file, exception.getCause());
+			LOG.error("Error parsing file {}: ", file, exception);
 			parseErrors.add(file + ": " + exception.getMessage());
 		}
 		return newTrack;

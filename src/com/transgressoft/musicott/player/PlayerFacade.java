@@ -206,6 +206,21 @@ public class PlayerFacade {
 		MediaPlayer mediaPlayer = ((NativePlayer) trackPlayer).getMediaPlayer();
 		mediaPlayer.volumeProperty().bindBidirectional(playerController.volumeSliderValueProperty());
 
+		bindPlayerConfiguration(mediaPlayer);
+
+		mediaPlayer.statusProperty().addListener((observable, oldStatus, newStatus) -> {
+			if (Status.PLAYING == newStatus)
+				playerController.setPlaying();
+			else if (Status.PAUSED == newStatus)
+				playerController.playButtonSelectedProperty().setValue(false);
+			else if (Status.STOPPED == newStatus) {
+				playerController.setStopped();
+				playerController.volumeSliderValueProperty().unbindBidirectional(mediaPlayer.volumeProperty());
+			}
+		});
+	}
+
+	private void bindPlayerConfiguration(MediaPlayer mediaPlayer) {
 		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> {
 			Duration halfTime = mediaPlayer.getStopTime().divide(2.0);
 			if (newTime.greaterThanOrEqualTo(halfTime))
@@ -220,7 +235,7 @@ public class PlayerFacade {
 
 		DoubleProperty trackSliderMaxProperty = playerController.trackSliderMaxProperty();
 		trackSliderMaxProperty
-				.bind(Bindings.createDoubleBinding(() -> mediaPlayer.totalDurationProperty().getValue().toMillis(),
+				.bind(Bindings.createDoubleBinding(mediaPlayer.totalDurationProperty().getValue()::toMillis,
 												   mediaPlayer.totalDurationProperty()));
 
 		BooleanProperty trackSliderValueChangingProperty = playerController.trackSliderValueChangingProperty();
@@ -246,17 +261,6 @@ public class PlayerFacade {
 
 		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> playerController
 				.updateTrackLabels(newTime, mediaPlayer.getMedia().getDuration()));
-
-		mediaPlayer.statusProperty().addListener((observable, oldStatus, newStatus) -> {
-			if (Status.PLAYING == newStatus)
-				playerController.setPlaying();
-			else if (Status.PAUSED == newStatus)
-				playerController.playButtonSelectedProperty().setValue(false);
-			else if (Status.STOPPED == newStatus) {
-				playerController.setStopped();
-				playerController.volumeSliderValueProperty().unbindBidirectional(mediaPlayer.volumeProperty());
-			}
-		});
 	}
 
 	private void incrementCurrentTrackPlayCount() {
@@ -388,7 +392,7 @@ public class PlayerFacade {
 					() -> stageDemon.getNavigationController().setStatusMessage("Playing a random " + "playlist"));
 		}
 		else {
-			Platform.runLater(() -> stageDemon.getPlayerController().setStopped());
+			Platform.runLater(stageDemon.getPlayerController()::setStopped);
 		}
 	}
 }

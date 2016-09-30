@@ -72,15 +72,15 @@ public class NavigationController implements MusicottController {
 
 		newPlaylistButton.setContextMenu(newPlaylistButtonContextMenu);
 		newPlaylistButton.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
-			double newPlaylistButtonX = e.getScreenX() + 10;
-			double newPlaylistButtonY = e.getScreenY() + 10;
+			double newPlaylistButtonX = e.getScreenX() + 10.0;
+			double newPlaylistButtonY = e.getScreenY() + 10.0;
 			newPlaylistButtonContextMenu.show(newPlaylistButton, newPlaylistButtonX, newPlaylistButtonY);
 		});
 
 		navigationVBox.getChildren().add(1, navigationMenuListView);
 		playlistsVBox.getChildren().add(1, playlistTreeView);
 		taskProgressBar.visibleProperty().bind(Bindings.createBooleanBinding(
-				() -> taskProgressBar.progressProperty().isEqualTo(0).not().get(), taskProgressBar.progressProperty()));
+				taskProgressBar.progressProperty().isEqualTo(0).not()::get, taskProgressBar.progressProperty()));
 		taskProgressBar.setProgress(0);
 
 		VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
@@ -136,11 +136,11 @@ public class NavigationController implements MusicottController {
 				musicLibrary.showAllTracks();
 				navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
 				playlistTreeView.getSelectionModel().clearAndSelect(- 1);
-				Platform.runLater(() -> stageDemon.getRootController().hideTableInfoPane());
+				Platform.runLater(stageDemon.getRootController()::hideNavigationPane);
 				break;
 			case PLAYLIST:
 				navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
-				Platform.runLater(() -> stageDemon.getRootController().showTableInfoPane());
+				Platform.runLater(stageDemon.getRootController()::showNavigationPane);
 				break;
 		}
 	}

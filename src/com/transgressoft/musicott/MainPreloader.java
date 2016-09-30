@@ -47,7 +47,6 @@ public class MainPreloader extends Preloader {
 	private static final int SCENE_WIDTH = 450;
 	private static final int SCENE_HEIGHT = 120;
 
-	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private MainPreferences preferences = MainPreferences.getInstance();
 	private Stage preloaderStage;
 	private Label infoLabel;
@@ -73,15 +72,11 @@ public class MainPreloader extends Preloader {
 		// Handle state change notifications.
 		StateChangeNotification.Type type = info.getType();
 		switch (type) {
-			case BEFORE_LOAD:
-				// Called after MusicottApplication#start is called.
-				break;
-			case BEFORE_INIT:
-				// Called before MusicottApplication#init is called.
-				break;
 			case BEFORE_START:
 				// Called after MusicottApplication#init and before MusicottApplication#start is called.
 				preloaderStage.close();
+				break;
+			default:
 				break;
 		}
 	}
@@ -138,7 +133,7 @@ public class MainPreloader extends Preloader {
 			promptStage.showAndWait();
 		}
 		catch (IOException e) {
-			errorDemon.showErrorDialog("Error opening Musicott's folder selection", "", e);
+			ErrorDemon.getInstance().showErrorDialog("Error opening Musicott's folder selection", "", e);
 		}
 	}
 }

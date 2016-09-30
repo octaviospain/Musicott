@@ -24,7 +24,6 @@ import javafx.fxml.*;
 import javafx.scene.*;
 import javafx.stage.*;
 import org.junit.*;
-import org.testfx.api.*;
 import org.testfx.framework.junit.*;
 
 /**
@@ -36,9 +35,8 @@ public class JavaFxTestBase extends ApplicationTest {
 
     protected static String layout;
     protected static Stage testStage;
-    protected Application testApplication;
-    protected FxRobot robot = new FxRobot();
     protected Object controller;
+    private Application testApplication;
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -73,49 +71,14 @@ public class JavaFxTestBase extends ApplicationTest {
             System.setProperty("prism.text", "t2k");
             System.setProperty("java.awt.headless", "true");
         }
-
-//        registerPrimaryStage();
-//        setupStage(stage -> {
-//            testStage = stage;
-//            stage.show();
-//            stage.centerOnScreen();
-//        });
-
     }
 
     @Before
     public void beforeEachTest() throws Exception {
-        Platform.runLater(() -> {
-//            testStage.show();
-//            testStage.centerOnScreen();
-        });
     }
 
     @After
     public void afterEachTest() throws Exception  {
         testApplication.stop();
     }
-
-
-//    @Before
-//    public void beforeEachTest() throws Exception {
-//        try {
-//            FXMLLoader loader = new FXMLLoader();
-//            loader.setLocation(getClass().getResource(layout));
-//            Parent nodeLayout = loader.load();
-//            controller = loader.getController();
-//
-//            setupApplication(new ApplicationTest() {
-//
-//                @Override
-//                public void start(Stage stage) throws Exception {
-//                    testStage.setScene(new Scene(nodeLayout));
-//                    testStage.setTitle("Test");
-//                }
-//            });
-//        }
-//        catch (Exception exception) {
-//            exception.printStackTrace();
-//        }
-//    }
 }

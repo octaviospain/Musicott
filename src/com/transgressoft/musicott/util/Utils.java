@@ -142,10 +142,10 @@ public class Utils {
 		}
 
 		String byteSizeString = byteSizeString(bytes);
-		String decimalSharps = "";
+		StringBuilder decimalSharps = new StringBuilder();
 		for (int n = 0; n < numDecimals; n++)
-			decimalSharps += "#";
-		DecimalFormat decimalFormat = new DecimalFormat("#." + decimalSharps);
+			decimalSharps.append("#");
+		DecimalFormat decimalFormat = new DecimalFormat("#." + decimalSharps.toString());
 		decimalFormat.setRoundingMode(RoundingMode.CEILING);
 
 		int unitPos = byteSizeString.lastIndexOf(' ');
@@ -243,6 +243,14 @@ public class Utils {
 				extensions = Arrays.copyOf(extensions, numExtensions == 0 ? 1 : 2 * numExtensions);
 		}
 
+		private boolean matchExtension(String extension) {
+			boolean res = false;
+			for (String requiredExtension : extensions)
+				if (extension.equals(requiredExtension))
+					res = true;
+			return res;
+		}
+
 		@Override
 		public boolean accept(File pathname) {
 			boolean res = false;
@@ -250,9 +258,7 @@ public class Utils {
 				int pos = pathname.getName().lastIndexOf('.');
 				if (pos != - 1) {
 					String extension = pathname.getName().substring(pos + 1);
-					for (String requiredExtension : extensions)
-						if (extension.equals(requiredExtension))
-							res = true;
+					res = matchExtension(extension);
 				}
 			}
 			return res;

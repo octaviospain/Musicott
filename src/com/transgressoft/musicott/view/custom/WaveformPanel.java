@@ -35,7 +35,7 @@ public class WaveformPanel extends JPanel {
 	private static final long serialVersionUID = 2195160480150957593L;
 	private final float[] defaultWave;
 
-	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+	private transient MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private float[] waveData;
 	private int paneWidth;
 	private Color backgroundColor;
