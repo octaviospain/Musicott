@@ -66,7 +66,7 @@ public class MusicLibrary {
 	}
 
 	/**
-	 * Binds a list of entries of the Musicott tracks map, and it to a list property
+	 * Binds deletePlaylistFromFolders list of entries of the Musicott tracks map, and it to deletePlaylistFromFolders list property
 	 */
 	private void bindTrackEntriesList() {
 		musicottTrackEntriesList = FXCollections.observableArrayList(musicottTracks.entrySet());
@@ -75,11 +75,10 @@ public class MusicLibrary {
 	}
 
 	/**
-	 * Binds the tracks that must be shown on the table to a list property
+	 * Binds the tracks that must be shown on the table to deletePlaylistFromFolders list property
 	 */
 	private void bindShowingTracks() {
 		showingTracks = FXCollections.observableArrayList(musicottTracks.entrySet());
-		;
 		showingTracksProperty = new SimpleListProperty<>(this, "showing tracks");
 		showingTracksProperty.bind(new SimpleObjectProperty<>(showingTracks));
 	}
@@ -215,20 +214,22 @@ public class MusicLibrary {
 		synchronized (playlists) {
 			boolean removed = playlists.remove(playlist);
 			if (! removed) {
-				List<Playlist> folders = playlists.stream().filter(p -> p.isFolder()).collect(Collectors.toList());
-
-			search:
-				for (Playlist folder : folders) {
-					ListIterator<Playlist> folderChildsIterator = folder.getContainedPlaylists().listIterator();
-					while (folderChildsIterator.hasNext())
-						if (folderChildsIterator.next().equals(playlist)) {
-						folderChildsIterator.remove();
-						break search;
-					}
-				}
+				List<Playlist> folders = playlists.stream().filter(Playlist::isFolder).collect(Collectors.toList());
+				deletePlaylistFromFolders(playlist, folders);
 			}
 		}
 		saveLibrary(false, false, true);
+	}
+
+	private void deletePlaylistFromFolders(Playlist playlist, List<Playlist> folders) {
+		for (Playlist folder : folders) {
+			ListIterator<Playlist> folderChildsIterator = folder.getContainedPlaylists().listIterator();
+			while (folderChildsIterator.hasNext())
+				if (folderChildsIterator.next().equals(playlist)) {
+					folderChildsIterator.remove();
+					break;
+				}
+		}
 	}
 
 	public boolean containsWaveform(int trackId) {
@@ -253,7 +254,7 @@ public class MusicLibrary {
 	}
 
 	/**
-	 * Makes a random playlist of tracks and adds it to the {@link PlayerFacade}
+	 * Makes deletePlaylistFromFolders random playlist of tracks and adds it to the {@link PlayerFacade}
 	 */
 	public void makeRandomPlaylist() {
 		Thread randomPlaylistThread = new Thread(() -> {

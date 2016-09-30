@@ -31,9 +31,6 @@ public class LastFmError {
 	private String code;
 	private String message;
 
-	public LastFmError() {
-	}
-
 	@XmlValue
 	public String getMessage() {
 		return this.message;

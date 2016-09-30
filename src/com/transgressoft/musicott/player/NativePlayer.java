@@ -32,16 +32,13 @@ public class NativePlayer implements TrackPlayer {
 
 	private MediaPlayer mediaPlayer;
 
-	public NativePlayer() {
-	}
-
-	public MediaPlayer getMediaPlayer() {
+	MediaPlayer getMediaPlayer() {
 		return mediaPlayer;
 	}
 
 	@Override
 	public String getStatus() {
-		String status = "NULL";
+		String status = null;
 		if (mediaPlayer != null) {
 			switch (mediaPlayer.getStatus()) {
 				case PLAYING:
@@ -68,6 +65,8 @@ public class NativePlayer implements TrackPlayer {
 				case UNKNOWN:
 					status = "UNKNOWN";
 					break;
+				default:
+					status = "NULL";
 			}
 		}
 		return status;
@@ -78,7 +77,7 @@ public class NativePlayer implements TrackPlayer {
 		File mp3File = new File(track.getFileFolder() + "/" + track.getFileName());
 		Media media = new Media(mp3File.toURI().toString());
 		mediaPlayer = new MediaPlayer(media);
-		mediaPlayer.setOnEndOfMedia(() -> PlayerFacade.getInstance().next());
+		mediaPlayer.setOnEndOfMedia(PlayerFacade.getInstance()::next);
 	}
 
 	@Override

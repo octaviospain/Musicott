@@ -25,11 +25,8 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
 	private PseudoClass folder = PseudoClass.getPseudoClass("folder");
 	private PseudoClass folderSelected = PseudoClass.getPseudoClass("folder-selected");
 
-	private TreeView<Playlist> playlistTreeView;
-
-	public PlaylistTreeCell(TreeView<Playlist> playlistTreeView) {
+	public PlaylistTreeCell() {
 		super();
-		this.playlistTreeView = playlistTreeView;
 
 		ChangeListener<Boolean> isFolderListener = (obs, oldPlaylistIsFolder, newPlaylistIsFolder) -> {
 			boolean isFolder = newPlaylistIsFolder;

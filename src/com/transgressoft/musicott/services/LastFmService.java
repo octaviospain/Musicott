@@ -21,6 +21,7 @@ package com.transgressoft.musicott.services;
 
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.core.util.*;
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.lastfm.*;
 import org.slf4j.*;
@@ -112,6 +113,12 @@ public class LastFmService {
 			if (clientResponse != null) {
 				LOG.debug("LastFM API " + httpMethod + " petition status: {}", clientResponse.getStatus());
 				lfmResponse = clientResponse.getEntity(LastFmResponse.class);
+
+				if (lfmResponse == null) {
+					String statusString = Integer.toString(clientResponse.getStatus());
+					String errorMessage = "LastFM " + httpMethod + " petition error " + statusString;
+					lfmResponse = buildLastFmErrorResponse(statusString, errorMessage);
+				}
 			}
 		}
 		catch (RuntimeException exception) {
@@ -122,22 +129,16 @@ public class LastFmService {
 			if (clientResponse != null)
 				clientResponse.close();
 		}
-
-		if (lfmResponse == null) {
-			String statusString = Integer.toString(clientResponse.getStatus());
-			String errorMessage = "LastFM " + httpMethod + " petition error " + statusString;
-			lfmResponse = buildLastFmErrorResponse(statusString, errorMessage);
-		}
 		return lfmResponse;
 	}
 
 	private String buildSignature(MultivaluedMap<String, String> params) {
-		String sig = "";
+		StringBuilder stringBuilder = new StringBuilder();
 		Set<String> sortedParams = new TreeSet<>(params.keySet());
 		for (String key : sortedParams)
-			sig += key + params.getFirst(key);
-		sig += API_SECRET;
-		return getMd5Hash(sig);
+			stringBuilder.append(key).append(params.getFirst(key));
+		stringBuilder.append(API_SECRET);
+		return getMd5Hash(stringBuilder.toString());
 	}
 
 	private LastFmResponse buildLastFmErrorResponse(String status, String message) {
@@ -161,7 +162,9 @@ public class LastFmService {
 				stringBuilder.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
 			md5 = stringBuilder.toString();
 		}
-		catch (NoSuchAlgorithmException e) {
+		catch (NoSuchAlgorithmException exception) {
+			LOG.warn("Error creating MD5 hash", exception);
+			ErrorDemon.getInstance().showLastFmErrorDialog("Error creating MD5 hash", exception.getMessage());
 		}
 		return md5;
 	}

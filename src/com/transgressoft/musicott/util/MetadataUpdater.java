@@ -46,7 +46,6 @@ public class MetadataUpdater {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-	private boolean succeeded;
 	private Track track;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
@@ -63,7 +62,7 @@ public class MetadataUpdater {
 	 * @throws TrackUpdateException if something went bad in the operation.
 	 */
 	public boolean writeAudioMetadata() {
-		succeeded = false;
+		boolean succeeded = false;
 		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
 		try {
 			AudioFile audio = AudioFileIO.read(trackPath.toFile());

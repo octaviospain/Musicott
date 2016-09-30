@@ -236,16 +236,16 @@ public class PreferencesController implements MusicottController {
 	 * @param newApplicationUserFolder The new directory for the application
 	 */
 	private void changeMusicottUserFolder(String newApplicationUserFolder) {
-		String newApplicationUserFoderPath = newApplicationUserFolder + File.pathSeparator;
-		File tracksFile = new File(newApplicationUserFoderPath + TRACKS_PERSISTENCE_FILE);
-		if (tracksFile.exists())
-			tracksFile.delete();
-		File waveformsFile = new File(newApplicationUserFoderPath + WAVEFORMS_PERSISTENCE_FILE);
-		if (waveformsFile.exists())
-			waveformsFile.delete();
-		File playlistsFile = new File(newApplicationUserFoderPath + PLAYLISTS_PERSISTENCE_FILE);
-		if (playlistsFile.exists())
-			playlistsFile.delete();
+		String newApplicationUserFolderPath = newApplicationUserFolder + File.pathSeparator;
+		File tracksFile = new File(newApplicationUserFolderPath + TRACKS_PERSISTENCE_FILE);
+		if (tracksFile.exists() &&	! tracksFile.delete())
+			errorDemon.showErrorDialog("Unable to delete tracks file", tracksFile.getAbsolutePath());
+		File waveformsFile = new File(newApplicationUserFolderPath + WAVEFORMS_PERSISTENCE_FILE);
+		if (waveformsFile.exists() && ! waveformsFile.delete())
+			errorDemon.showErrorDialog("Unable to delete waveforms file", waveformsFile.getAbsolutePath());
+		File playlistsFile = new File(newApplicationUserFolderPath + PLAYLISTS_PERSISTENCE_FILE);
+		if (playlistsFile.exists() && ! playlistsFile.delete())
+			errorDemon.showErrorDialog("Unable to delete playlists file", playlistsFile.getAbsolutePath());
 		preferences.setMusicottUserFolder(newApplicationUserFolder);
 		MusicLibrary.getInstance().saveLibrary(true, true, true);
 	}

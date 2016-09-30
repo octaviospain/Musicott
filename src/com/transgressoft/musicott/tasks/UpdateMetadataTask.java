@@ -73,7 +73,7 @@ public class UpdateMetadataTask extends Thread {
 				if (updated)
 					LOG.debug("Updating metadata of {}", track.getFileFolder() + "/" + track.getFileName());
 				else
-					LOG.debug("Updating metadata of {}", track.getFileFolder() + "/" + track.getFileName());
+					LOG.debug("Not updated metadata of {}", track.getFileFolder() + "/" + track.getFileName());
 			}
 		musicLibrary.saveLibrary(true, false, false);
 		if (! updateErrors.isEmpty())
