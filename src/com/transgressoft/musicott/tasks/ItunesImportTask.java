@@ -124,19 +124,16 @@ public class ItunesImportTask extends Task<Void> {
 	}
 
 	private boolean isValidItunesXML() {
-		boolean valid = true;
-		Scanner scanner;
+		boolean valid = false;
 		String itunesXmlSampleLine = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 		String itunesPlistSampleLine = "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" " +
 				"\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">";
-		try {
-			scanner = new Scanner(new File(itunesLibraryXmlPath));
+		try (Scanner scanner = new Scanner(new File(itunesLibraryXmlPath))) {
 			scanner.useDelimiter(Pattern.compile(">"));
-			if (! (scanner.hasNextLine() && scanner.nextLine().contains(itunesXmlSampleLine)))
-				valid = false;
-			if (! (scanner.hasNextLine() && scanner.nextLine().contains(itunesPlistSampleLine)))
-				valid = false;
-			scanner.close();
+			if (scanner.hasNextLine() && scanner.nextLine().contains(itunesXmlSampleLine))
+				valid = true;
+			if (scanner.hasNextLine() && scanner.nextLine().contains(itunesPlistSampleLine))
+				valid = true;
 		}
 		catch (FileNotFoundException exception) {
 			LOG.info("Error accessing to the itunes xml: ", exception);
@@ -265,8 +262,8 @@ public class ItunesImportTask extends Task<Void> {
 				parsedTrack = Optional.of(MetadataParser.createTrack(itunesFile));
 			}
 			catch (TrackParseException exception) {
-				LOG.error("Error parsing {}", itunesFile, exception.getCause());
-				parseErrors.add(itunesFile + exception.getMessage());
+				LOG.error("Error parsing {}", itunesFile, exception);
+				parseErrors.add(itunesFile + ":" + exception.getMessage());
 			}
 			if (parsedTrack.isPresent() && holdPlayCount)
 				parsedTrack.get().setPlayCount(itunesTrack.getPlayCount() < 1 ? 0 : itunesTrack.getPlayCount());

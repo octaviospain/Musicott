@@ -24,7 +24,6 @@ import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.view.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
-import javafx.collections.*;
 import javafx.fxml.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
@@ -36,7 +35,6 @@ import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.Map.*;
 import java.util.stream.*;
 
 import static com.transgressoft.musicott.view.MusicottController.*;
@@ -68,16 +66,15 @@ public class StageDemon {
 
 	private HostServices hostServices;
 
-	private StageDemon() {}
+	private StageDemon() {
+		errorDemon.setErrorAlertStage(initStage(ERROR_ALERT_LAYOUT, "Error"));
+		errorDemon.setErrorAlertController((ErrorDialogController) controllers.get(ERROR_ALERT_LAYOUT));
+	}
 
 	public static StageDemon getInstance() {
 		if (instance == null)
 			instance = new StageDemon();
 		return instance;
-	}
-
-	Stage getMainStage() {
-		return mainStage;
 	}
 
 	void setApplicationHostServices(HostServices hostServices) {
@@ -158,7 +155,7 @@ public class StageDemon {
 	 * an <tt>Alert</tt> is opened asking for a confirmation of the user.
 	 */
 	public void editTracks() {
-		ObservableList<Entry<Integer, Track>> trackSelection = getRootController().getSelectedItems();
+		List<Track> trackSelection = getRootController().getSelectedTracks();
 		if (! trackSelection.isEmpty()) {
 			boolean[] edit = {true};
 			if (trackSelection.size() > 1) {
@@ -190,7 +187,7 @@ public class StageDemon {
 	 * asking for a confirmation of the user.
 	 */
 	public void deleteTracks() {
-		ObservableList<Map.Entry<Integer, Track>> trackSelection = getRootController().getSelectedItems();
+		List<Track> trackSelection = getRootController().getSelectedTracks();
 
 		if (! trackSelection.isEmpty()) {
 			int numDeletedTracks = trackSelection.size();
@@ -201,7 +198,7 @@ public class StageDemon {
 
 			if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
 				new Thread(() -> {
-					List<Integer> tracksToDelete = trackSelection.stream().map(Map.Entry::getKey).collect(Collectors.toList());
+					List<Integer> tracksToDelete = trackSelection.stream().map(Track::getTrackId).collect(Collectors.toList());
 					PlayerFacade.getInstance().deleteFromQueues(tracksToDelete);
 					musicLibrary.deleteTracks(tracksToDelete);
 					Platform.runLater(this::closeIndeterminateProgress);
@@ -273,7 +270,7 @@ public class StageDemon {
 	 *
 	 * @param stageToShow The Stage to be shown
 	 */
-	private void showStage(Stage stageToShow) {
+	void showStage(Stage stageToShow) {
 		if (stageToShow.equals(mainStage) || stageToShow.equals(progressStage))
 			stageToShow.show();
 		else if (! stageToShow.isShowing())
@@ -289,22 +286,24 @@ public class StageDemon {
 	 * @return The <tt>Stage</tt> with the layout
 	 */
 	private Stage initStage(String layout, String title) {
-		Stage newStage;
+		Stage newStage = new Stage();
+		initStage(newStage, layout, title);
+		newStage.initModality(Modality.APPLICATION_MODAL);
+		return newStage;
+	}
+
+	private void initStage(Stage stage, String layout, String title) {
 		try {
 			Parent nodeLayout = loadLayout(layout);
 			Scene scene = new Scene(nodeLayout);
-			newStage = new Stage();
-			newStage.setTitle(title);
-			newStage.initModality(Modality.APPLICATION_MODAL);
-			newStage.setScene(scene);
-			newStage.setResizable(false);
+			stage.setTitle(title);
+			stage.setScene(scene);
+			stage.setResizable(false);
 		}
 		catch (IOException exception) {
 			LOG.error("Error initiating stage of layout " + layout, exception.getCause());
 			errorDemon.showErrorDialog("Error initiating stage of layout " + layout + ":", "", exception);
-			newStage = null;
 		}
-		return newStage;
 	}
 
 	/**

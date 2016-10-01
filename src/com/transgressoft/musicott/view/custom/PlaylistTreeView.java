@@ -53,7 +53,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		setPrefHeight(USE_COMPUTED_SIZE);
 		setPrefWidth(USE_COMPUTED_SIZE);
 		setId("playlistTreeView");
-		setCellFactory(PlaylistTreeCell::new);
+		setCellFactory(cell -> new PlaylistTreeCell());
 
 		selectedPlaylistProperty = new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
 		getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
@@ -153,13 +153,13 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 		List<TreeItem<Playlist>> notEmptyFolders = root.getChildren().stream()
 													   .filter(playlist -> ! playlist.getChildren().isEmpty())
 													   .collect(Collectors.toList());
-	search:
+
 		for (TreeItem<Playlist> playlistTreeItem : notEmptyFolders) {
 			ListIterator<TreeItem<Playlist>> childrenIterator = playlistTreeItem.getChildren().listIterator();
 			while (childrenIterator.hasNext()) {
 				if (childrenIterator.next().getValue().equals(playlistToDelete)) {
 					childrenIterator.remove();
-					break search;
+					break;
 				}
 			}
 		}

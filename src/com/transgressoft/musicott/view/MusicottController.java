@@ -29,8 +29,10 @@ public interface MusicottController {
 	String PROGRESS_LAYOUT = LAYOUTS_PATH + "ProgressLayout.fxml";
 	String PREFERENCES_LAYOUT = LAYOUTS_PATH + "PreferencesLayout.fxml";
 	String PLAYER_LAYOUT = LAYOUTS_PATH + "PlayerLayout.fxml";
+	String ERROR_ALERT_LAYOUT = LAYOUTS_PATH + "ErrorDialogLayout.fxml";
 
 	String DEFAULT_COVER_IMAGE = IMAGES_PATH + "default-cover-image.png";
+	String COMMON_ERROR_IMAGE = IMAGES_PATH + "common-error.png";
 	String LASTFM_LOGO = IMAGES_PATH + "lastfm-logo.png";
 	String MUSICOTT_APP_ICON = IMAGES_PATH + "musicott-app-icon.png";
 	String MUSICOTT_ABOUT_LOGO = IMAGES_PATH + "musicott-about-logo.png";

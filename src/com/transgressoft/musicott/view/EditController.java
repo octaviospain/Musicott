@@ -23,7 +23,6 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
 import javafx.beans.property.*;
-import javafx.collections.*;
 import javafx.event.*;
 import javafx.fxml.*;
 import javafx.scene.*;
@@ -228,8 +227,7 @@ public class EditController implements MusicottController {
 	 * a dash (<tt>-</tt>) is placed in the {@link TextField}.
 	 */
 	private void setEditFieldsValues() {
-		ObservableList<Entry<Integer, Track>> selectionEntries = stageDemon.getRootController().getSelectedItems();
-		trackSelection = selectionEntries.stream().map(Map.Entry::getValue).collect(Collectors.toList());
+		trackSelection = stageDemon.getRootController().getSelectedTracks();
 
 		editFieldsMap.entrySet().forEach(this::setFieldValue);
 

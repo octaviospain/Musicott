@@ -242,9 +242,7 @@ class NumericTableCell extends TableCell<Entry<Integer, Track>, Number> {
 	@Override
 	protected void updateItem(Number item, boolean empty) {
 		super.updateItem(item, empty);
-		if (empty || item == null)
-			setText("");
-		else if (((int) item) < 1)
+		if (empty || item == null || ((int) item) < 1)
 			setText("");
 		else
 			setText("" + item);
@@ -309,9 +307,7 @@ class BitRateTableCell extends TableCell<Entry<Integer, Track>, Number> {
 	@Override
 	protected void updateItem(Number item, boolean empty) {
 		super.updateItem(item, empty);
-		if (empty || item == null)
-			setText("");
-		else if (((int) item) == 0)
+		if (empty || item == null || ((int) item) == 0)
 			setText("");
 		else
 			setText("" + item);

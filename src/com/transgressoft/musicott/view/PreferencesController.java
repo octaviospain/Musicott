@@ -78,8 +78,6 @@ public class PreferencesController implements MusicottController {
 	@FXML
 	private ComboBox<String> itunesImportPolicyCheckBox;
 	private CheckComboBox<String> extensionsCheckComboBox;
-	private ObservableList<String> selectedExtensions;
-	private Set<String> importFilterExtensions;
 	private LastFmPreferences lastFmPreferences;
 
 	private ReadOnlyBooleanProperty usingLastFmProperty = ServiceDemon.getInstance().usingLastFmProperty();
@@ -96,7 +94,7 @@ public class PreferencesController implements MusicottController {
 
 		wrapItunesSectionWithBorder();
 
-		selectedExtensions = FXCollections.observableArrayList(EXTENSIONS);
+		ObservableList<String> selectedExtensions = FXCollections.observableArrayList(EXTENSIONS);
 		extensionsCheckComboBox = new CheckComboBox<>(selectedExtensions);
 		extensionsCheckComboBox.setMinWidth(100);
 		HBox.setHgrow(extensionsCheckComboBox, Priority.SOMETIMES);
@@ -156,7 +154,7 @@ public class PreferencesController implements MusicottController {
 	}
 
 	private void loadImportPreferences() {
-		importFilterExtensions = preferences.getImportFilterExtensions();
+		Set<String> importFilterExtensions = preferences.getImportFilterExtensions();
 		extensionsCheckComboBox.getCheckModel().clearChecks();
 		for (String extension : importFilterExtensions)
 			extensionsCheckComboBox.getCheckModel().check(extension);
@@ -238,16 +236,16 @@ public class PreferencesController implements MusicottController {
 	 * @param newApplicationUserFolder The new directory for the application
 	 */
 	private void changeMusicottUserFolder(String newApplicationUserFolder) {
-		String newApplicationUserFoderPath = newApplicationUserFolder + File.pathSeparator;
-		File tracksFile = new File(newApplicationUserFoderPath + TRACKS_PERSISTENCE_FILE);
-		if (tracksFile.exists())
-			tracksFile.delete();
-		File waveformsFile = new File(newApplicationUserFoderPath + WAVEFORMS_PERSISTENCE_FILE);
-		if (waveformsFile.exists())
-			waveformsFile.delete();
-		File playlistsFile = new File(newApplicationUserFoderPath + PLAYLISTS_PERSISTENCE_FILE);
-		if (playlistsFile.exists())
-			playlistsFile.delete();
+		String newApplicationUserFolderPath = newApplicationUserFolder + File.pathSeparator;
+		File tracksFile = new File(newApplicationUserFolderPath + TRACKS_PERSISTENCE_FILE);
+		if (tracksFile.exists() &&	! tracksFile.delete())
+			errorDemon.showErrorDialog("Unable to delete tracks file", tracksFile.getAbsolutePath());
+		File waveformsFile = new File(newApplicationUserFolderPath + WAVEFORMS_PERSISTENCE_FILE);
+		if (waveformsFile.exists() && ! waveformsFile.delete())
+			errorDemon.showErrorDialog("Unable to delete waveforms file", waveformsFile.getAbsolutePath());
+		File playlistsFile = new File(newApplicationUserFolderPath + PLAYLISTS_PERSISTENCE_FILE);
+		if (playlistsFile.exists() && ! playlistsFile.delete())
+			errorDemon.showErrorDialog("Unable to delete playlists file", playlistsFile.getAbsolutePath());
 		preferences.setMusicottUserFolder(newApplicationUserFolder);
 		MusicLibrary.getInstance().saveLibrary(true, true, true);
 	}

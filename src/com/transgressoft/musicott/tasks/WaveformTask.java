@@ -94,7 +94,7 @@ public class WaveformTask extends Thread {
 				}
 			}
 			catch (IOException | UnsupportedAudioFileException | EncoderException | InterruptedException exception) {
-				LOG.warn("Error processing waveform of {}: " + exception.getMessage(), trackToAnalyze);
+				LOG.warn("Error processing waveform of {}", trackToAnalyze, exception);
 				String message = "Waveform not processed successfully";
 				Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage(message));
 			}

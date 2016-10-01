@@ -30,11 +30,11 @@ import java.util.prefs.*;
  */
 public class LastFmPreferences {
 
-	private final String LASTFM_API_KEY = "lastfm_api_key";
-	private final String LASTFM_API_SECRET = "lastfm_api_secret";
-	private final String LASTFM_SESSION_KEY = "lastfm_session_key";
-	private final String LASTFM_USERNAME = "lastfm_username";
-	private final String LASTFM_PASSWORD = "lastfm_password";
+	private static final String LASTFM_API_KEY = "lastfm_api_key";
+	private static final String LASTFM_API_SECRET = "lastfm_api_secret";
+	private static final String LASTFM_SESSION_KEY = "lastfm_session_key";
+	private static final String LASTFM_USERNAME = "lastfm_username";
+	private static final String LASTFM_PASSWORD = "lastfm_password";
 
 	private Preferences preferences;
 

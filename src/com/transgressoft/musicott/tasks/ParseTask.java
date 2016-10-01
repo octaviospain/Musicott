@@ -97,7 +97,7 @@ public class ParseTask extends Task<Void> {
 			LOG.debug("Parsed file {}: {}", file, newTrack);
 		}
 		catch (TrackParseException exception) {
-			LOG.error("Error parsing file {}: ", file, exception.getCause());
+			LOG.error("Error parsing file {}: ", file, exception);
 			parseErrors.add(file + ": " + exception.getMessage());
 		}
 		return newTrack;

@@ -226,7 +226,7 @@ public class PlayerController implements MusicottController {
 		currentCover.setVisible(false);
 		currentTimeLabel.setText("");
 		remainingTimeLabel.setText("");
-		SwingUtilities.invokeLater(() -> mainWaveformPanel.clear());
+		SwingUtilities.invokeLater(mainWaveformPanel::clear);
 	}
 
 	public void setPlaying() {

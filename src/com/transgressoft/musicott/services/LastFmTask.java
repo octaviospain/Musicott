@@ -99,6 +99,7 @@ public class LastFmTask extends Thread {
 				LOG.warn("LastFM thread error: {}", exception);
 				errorDemon.showErrorDialog("Error using LastFM", "", exception);
 				serviceDemon.setUsingLastFm(false);
+				Thread.currentThread().interrupt();
 				break;
 			}
 		}
@@ -112,9 +113,10 @@ public class LastFmTask extends Thread {
 
 	private void scrobble() {
 		LastFmResponse lastFmResponse = lastFmService.scrobbleTrack(trackToScrobble);
-		if (lastFmResponse.getStatus().equals(FAILED))
+		if (lastFmResponse.getStatus().equals(FAILED)) {
 			handleLastFMError(lastFmResponse.getError());
 			addTrackToScrobbleLater(trackToScrobble);
+		}
 	}
 
 	private void scrobbleTracksSavedForLater() {
@@ -150,7 +152,6 @@ public class LastFmTask extends Thread {
 	}
 
 	private void handleLastFMError(LastFmError error) {
-		//TODO Error handling for Last FM error statuses
 		String errorTitle;
 		String errorMessage;
 		switch (error.getCode()) {

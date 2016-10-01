@@ -65,7 +65,6 @@ public class MusicottApplication extends Application {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private MusicLibrary musicLibrary;
 	private MainPreferences preferences;
-	private ErrorDemon errorDemon;
 	private StageDemon stageDemon;
 	private String applicationFolder;
 	private volatile int step;
@@ -73,8 +72,8 @@ public class MusicottApplication extends Application {
 	public MusicottApplication() {
 		musicLibrary = MusicLibrary.getInstance();
 		preferences = MainPreferences.getInstance();
-		errorDemon = ErrorDemon.getInstance();
 		stageDemon = StageDemon.getInstance();
+		ErrorDemon.getInstance();
 	}
 
 	public static void main(String[] args) {
@@ -103,12 +102,11 @@ public class MusicottApplication extends Application {
 					return logTextString(record);
 				}
 			});
-
 			logManager.getLogger("").removeHandler(rootHandler);
 			logManager.getLogger("").addHandler(baseFileHandler);
 		}
 		catch (SecurityException | IOException exception) {
-			System.err.println("Error initiating logger");
+			System.err.println("Error initiating logger: " + exception.getMessage());
 			exception.printStackTrace();
 		}
 	}
@@ -270,7 +268,7 @@ public class MusicottApplication extends Application {
 		}
 		catch (IOException exception) {
 			waveformsMap = new HashMap<>();
-			LOG.error("Error loading waveform thumbnails: ", exception.getCause());
+			LOG.error("Error loading waveform thumbnails: {}", exception.getMessage(), exception);
 		}
 		return waveformsMap;
 	}
@@ -303,7 +301,7 @@ public class MusicottApplication extends Application {
 		}
 		catch (IOException exception) {
 			playlists = new ArrayList<>();
-			LOG.error("Error loading playlists: ", exception.getCause());
+			LOG.error("Error loading playlists: {}", exception.getMessage(), exception);
 		}
 		return playlists;
 	}
@@ -334,7 +332,7 @@ public class MusicottApplication extends Application {
 		}
 		catch (IOException exception) {
 			tracksMap = FXCollections.observableHashMap();
-			LOG.error("Error loading track library {}", exception.getCause());
+			LOG.error("Error loading track library: {}", exception.getMessage(), exception);
 		}
 		return tracksMap;
 	}
