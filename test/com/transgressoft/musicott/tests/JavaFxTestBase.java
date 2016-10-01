@@ -44,17 +44,19 @@ public class JavaFxTestBase extends ApplicationTest {
 
             @Override
             public void start(Stage stage) throws Exception {
-                try {
-                    FXMLLoader loader = new FXMLLoader();
-                    loader.setLocation(getClass().getResource(layout));
-                    Parent nodeLayout = loader.load();
-                    controller = loader.getController();
-                    testStage.setScene(new Scene(nodeLayout));
-                    testStage.setTitle("Test");
+                if (layout != null) {
+                    try {
+                        FXMLLoader loader = new FXMLLoader();
+                        loader.setLocation(getClass().getResource(layout));
+                        Parent nodeLayout = loader.load();
+                        controller = loader.getController();
+                        testStage.setScene(new Scene(nodeLayout));
+                    }
+                    catch (Exception exception) {
+                        exception.printStackTrace();
+                    }
                 }
-                catch (Exception exception) {
-                    exception.printStackTrace();
-                }
+                testStage.setTitle("Test");
             }
         };
 

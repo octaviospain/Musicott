@@ -38,38 +38,7 @@ public class NativePlayer implements TrackPlayer {
 
 	@Override
 	public String getStatus() {
-		String status = null;
-		if (mediaPlayer != null) {
-			switch (mediaPlayer.getStatus()) {
-				case PLAYING:
-					status = "PLAYING";
-					break;
-				case STOPPED:
-					status = "STOPPED";
-					break;
-				case DISPOSED:
-					status = "DISPOSED";
-					break;
-				case HALTED:
-					status = "HALTED";
-					break;
-				case PAUSED:
-					status = "PAUSED";
-					break;
-				case READY:
-					status = "READY";
-					break;
-				case STALLED:
-					status = "STALLED";
-					break;
-				case UNKNOWN:
-					status = "UNKNOWN";
-					break;
-				default:
-					status = "NULL";
-			}
-		}
-		return status;
+		return mediaPlayer.getStatus().name();
 	}
 
 	@Override
