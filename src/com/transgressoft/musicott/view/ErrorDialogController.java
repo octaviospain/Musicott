@@ -73,7 +73,7 @@ public class ErrorDialogController implements MusicottController {
             HostServices hostServices = StageDemon.getInstance().getApplicationHostServices();
             Hyperlink link = (Hyperlink) event.getSource();
             String str = link == null ? "" : link.getText();
-            if (str.equals("Report this error on github.")) {
+            if ("Report this error on github.".equals(str)) {
                 hostServices.showDocument("https://github.com/octaviospain/Musicott/issues");
             }
         });

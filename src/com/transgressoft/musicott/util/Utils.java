@@ -49,7 +49,7 @@ public class Utils {
 	 *
 	 * @param rootFolder       The folder from within to find the files
 	 * @param filter           The {@link FileFilter} condition
-	 * @param maxFilesRequired Maximun number of files in the List. 0 indicates no maximum
+	 * @param maxFilesRequired Maximum number of files in the List. 0 indicates no maximum
 	 *
 	 * @return The list containing all the files
 	 *
@@ -64,35 +64,75 @@ public class Utils {
 				throw new IllegalArgumentException("folder or filter null");
 			if (! rootFolder.exists() || ! rootFolder.isDirectory())
 				throw new IllegalArgumentException("rootFolder argument is not a directory");
-			File[] subFiles = rootFolder.listFiles(filter);
-			int remainingFiles = maxFilesRequired;
-			if (maxFilesRequired == 0)    						// No max = add all files
-				finalFiles.addAll(Arrays.asList(subFiles));
-			else if (maxFilesRequired < subFiles.length) {    	// There are more valid files than the required
-				finalFiles.addAll(Arrays.asList(Arrays.copyOfRange(subFiles, 0, maxFilesRequired)));
-				remainingFiles -= finalFiles.size();        	// Zero files remaining
-			}
-			else if (subFiles.length > 0) {
-				finalFiles.addAll(Arrays.asList(subFiles));    // Add all valid files
-				remainingFiles -= finalFiles.size();
-			}
+
+			int remainingFiles = addFilesDependingMax(finalFiles, rootFolder.listFiles(filter), maxFilesRequired);
 
 			if (maxFilesRequired == 0 || remainingFiles > 0) {
 				File[] rootSubFolders = rootFolder.listFiles(File::isDirectory);
-				int sbFldrsCount = 0;
-				while ((sbFldrsCount < rootSubFolders.length) && ! Thread.currentThread().isInterrupted()) {
-					File subFolder = rootSubFolders[sbFldrsCount++];
-					List<File> subFolderFiles = getAllFilesInFolder(subFolder, filter, remainingFiles);
-					finalFiles.addAll(subFolderFiles);
-					if (remainingFiles > 0)
-						remainingFiles = maxFilesRequired - finalFiles.size();
-					if (maxFilesRequired > 0 && remainingFiles == 0)
-						break;
-				}
+				addFilesFromFolders(finalFiles, rootSubFolders, maxFilesRequired, remainingFiles, filter);
 			}
 		}
 		return finalFiles;
 	}
+
+	/**
+	 * Add files to a {@link List} depending a {@code maxFilesRequired} parameter.
+	 * <ul>
+	 *     <li>
+	 *         If it's 0, all files are added.
+	 *     </li>
+     *     <li>
+     *         If it's greater than the actual number of files, all files are added too.
+     *     </li>
+	 *     <li>
+	 *         If it's less than the actual number of files, the required number
+	 *         of files are added
+	 *     </li>
+	 * </ul>
+	 *
+	 * @param files            The collection of final files
+	 * @param subFiles         An Array of files to add to the collection
+	 * @param maxFilesRequired The maximum number of files to add to the collection
+	 *
+	 * @return The remaining number of files to be added
+	 */
+	private static int addFilesDependingMax(List files, File[] subFiles, int maxFilesRequired) {
+		int remainingFiles = maxFilesRequired;
+		if (maxFilesRequired == 0)    						// No max = add all files
+			files.addAll(Arrays.asList(subFiles));
+		else if (maxFilesRequired < subFiles.length) {    	// There are more valid files than the required
+			files.addAll(Arrays.asList(Arrays.copyOfRange(subFiles, 0, maxFilesRequired)));
+			remainingFiles -= files.size();        			// Zero files remaining in the folder
+		}
+		else if (subFiles.length > 0) {
+			files.addAll(Arrays.asList(subFiles));   		// Add all valid files
+			remainingFiles -= files.size();
+		}
+		return remainingFiles;
+	}
+
+	/**
+	 * Adds files to a {@link List} from several folders depending of a maximum required files,
+	 * the remaining files to be added, using a {@link FileFilter}.
+	 *
+	 * @param files 		   The collection of final files
+	 * @param folders 		   The folders where the files are
+	 * @param maxFilesRequired The maximum number of files to add to the collection
+	 * @param remainingFiles   The remaining number of files to add
+	 * @param filter 		   The {@link FileFilter} to use to filter the files in the folders
+	 */
+	private static void addFilesFromFolders(List files, File[] folders, int maxFilesRequired, int remainingFiles, FileFilter filter) {
+        int subFoldersCount = 0;
+        while ((subFoldersCount < folders.length) && ! Thread.currentThread().isInterrupted()) {
+            File subFolder = folders[subFoldersCount++];
+            List<File> subFolderFiles = getAllFilesInFolder(subFolder, filter, remainingFiles);
+            files.addAll(subFolderFiles);
+            if (remainingFiles > 0)
+                remainingFiles = maxFilesRequired - files.size();
+            if (maxFilesRequired > 0 && remainingFiles == 0)
+                break;
+        }
+    }
 
 	/**
 	 * Returns a {@link String} representing the given <tt>bytes</tt>, with a textual representation
