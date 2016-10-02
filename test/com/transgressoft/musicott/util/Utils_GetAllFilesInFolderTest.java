@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Octavio Calleya
  */
 @RunWith (JUnitPlatform.class)
-public class Utils_GetAllFilesInFolder {
+public class Utils_GetAllFilesInFolderTest {
 
     private Path testPath = Paths.get("./test-resources", "/treefoldertest/");
     private List<File> files;
