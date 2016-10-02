@@ -123,13 +123,14 @@ public class Utils {
 	 */
 	private static void addFilesFromFolders(List files, File[] folders, int maxFilesRequired, int remainingFiles, FileFilter filter) {
         int subFoldersCount = 0;
+		int remaining = remainingFiles;
         while ((subFoldersCount < folders.length) && ! Thread.currentThread().isInterrupted()) {
             File subFolder = folders[subFoldersCount++];
-            List<File> subFolderFiles = getAllFilesInFolder(subFolder, filter, remainingFiles);
+            List<File> subFolderFiles = getAllFilesInFolder(subFolder, filter, remaining);
             files.addAll(subFolderFiles);
-            if (remainingFiles > 0)
-                remainingFiles = maxFilesRequired - files.size();
-            if (maxFilesRequired > 0 && remainingFiles == 0)
+            if (remaining > 0)
+				remaining = maxFilesRequired - files.size();
+            if (maxFilesRequired > 0 && remaining == 0)
                 break;
         }
     }

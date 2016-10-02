@@ -22,6 +22,9 @@
             <resource>
                 <directory>resources</directory>
             </resource>
+            <resource>
+                <directory>test-resources</directory>
+            </resource>
         </resources>
 
         <pluginManagement>
@@ -114,7 +117,7 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>5.0.0-M2</version>
-            <scope>compile</scope>
+            <scope>runtime</scope>
         </dependency>
 
         <dependency>
