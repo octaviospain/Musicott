@@ -62,7 +62,7 @@ public class MetadataUpdater {
 	 * @throws TrackUpdateException if something went bad in the operation.
 	 */
 	public boolean writeAudioMetadata() {
-		boolean succeeded = false;
+		boolean succeeded;
 		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
 		try {
 			AudioFile audio = AudioFileIO.read(trackPath.toFile());
@@ -75,14 +75,15 @@ public class MetadataUpdater {
 			}
 			setTrackFieldsToTag(audio.getTag());
 			audio.commit();
+			succeeded = true;
 		}
 		catch (IOException | CannotReadException | ReadOnlyFileException |
 				TagException | CannotWriteException | InvalidAudioFrameException exception) {
 			LOG.warn("Error updating metadata of {}", track, exception);
 			String errorText = "Error writing metadata of " + track.getArtist() + " - " + track.getName();
 			errorDemon.showErrorDialog(errorText, "", exception);
+			succeeded = false;
 		}
-		succeeded = true;
 		return succeeded;
 	}
 
