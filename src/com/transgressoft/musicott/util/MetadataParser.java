@@ -133,13 +133,9 @@ public class MetadataParser {
 	}
 
 	public static Optional<byte[]> getCoverBytes(Tag tag) {
-		Optional<byte[]> coverBytes;
-		if (! tag.getArtworkList().isEmpty()) {
+		Optional<byte[]> coverBytes = Optional.empty();
+		if (! tag.getArtworkList().isEmpty())
 			coverBytes = Optional.ofNullable(tag.getFirstArtwork().getBinaryData());
-		}
-		else {
-			coverBytes = Optional.empty();
-		}
 		return coverBytes;
 	}
 }

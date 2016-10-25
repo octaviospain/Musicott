@@ -31,14 +31,16 @@ import org.junit.runners.Suite.*;
  * Test suite for the test classes
  *
  * @author Octavio Calleya
- * @version 0.1
  */
 @RunWith (Suite.class)
 @SuiteClasses ({
+        NavigationModeTest.class,
+        TrackTest.class,
         TrackFieldTest.class,
         NativePlayerTest.class,
+        MetadataParserTest.class,
         Utils_GetAllFilesInFolderTest.class,
-        MainPreferencesTest.class
+        MainPreferencesTest.class,
 })
 public class MusicottTestSuite {
 
