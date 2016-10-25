@@ -37,7 +37,7 @@ To build you need at least Java 8 update 40 and Maven
 
  1. Clone Musicott at any directory `git clone https://github.com/octaviospain/Musicott.git`
  2. Build with maven at Musicott's root folder (where `pom.xml` is located)  with `mvn package`
- 3. Run with `java -cp target/Musicott-x.y.z.jar com.transgressoft.musicott.MusicottApplication`
+ 3. Run with `mvn exec:java -D exec.mainClass=com.transgressoft.musicott.MusicottApplication`
 
 ## How to contribute
 
@@ -79,4 +79,4 @@ the number of tracks and the size of the playlist
 ## Copyright
 Copyright (c) 2015-2016 Octavio Calleya.
 
-Musicott is free softare under GNU GPL version 3 license. The license of Musicott and the licenses of the included libraries in this software are in the [LICENSE](https://github.com/octaviospain/Musicott/tree/master/license "License") folder
+Musicott is free software under GNU GPL version 3 license. The license of Musicott and the licenses of the included libraries in this software are in the [LICENSE](https://github.com/octaviospain/Musicott/tree/master/license "License") folder
