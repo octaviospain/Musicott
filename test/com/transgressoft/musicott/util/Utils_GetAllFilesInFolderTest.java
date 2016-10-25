@@ -66,7 +66,7 @@ public class Utils_GetAllFilesInFolderTest {
             }
     }
 
-    protected void assertFiles(List<File> files) {
+    private void assertFiles(List<File> files) {
         for (File file : files) {
             int pos = file.getName().lastIndexOf(".");
             assertTrue(extension.equals(file.getName().substring(pos + 1)));

@@ -152,6 +152,7 @@
             <groupId>org.testfx</groupId>
             <artifactId>testfx-legacy</artifactId>
             <version>4.0.4-alpha</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -164,7 +165,7 @@
         <dependency>
             <groupId>com.cedarsoftware</groupId>
             <artifactId>json-io</artifactId>
-            <version>4.4.0</version>
+            <version>4.8.0</version>
             <scope>compile</scope>
         </dependency>
 

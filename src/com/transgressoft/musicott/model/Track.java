@@ -525,9 +525,6 @@ public class Track {
 				equals = true;
 			}
 		}
-		else {
-			equals = false;
-		}
 
 		return equals;
 	}

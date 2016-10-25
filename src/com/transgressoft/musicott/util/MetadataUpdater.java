@@ -27,7 +27,6 @@ import org.jaudiotagger.audio.wav.*;
 import org.jaudiotagger.tag.*;
 import org.jaudiotagger.tag.id3.*;
 import org.jaudiotagger.tag.images.*;
-import org.jaudiotagger.tag.mp4.*;
 import org.jaudiotagger.tag.wav.*;
 import org.slf4j.*;
 
@@ -102,9 +101,6 @@ public class MetadataUpdater {
 		tag.deleteField(FieldKey.DISC_TOTAL);
 		tag.setField(FieldKey.YEAR, Integer.toString(track.getYear()));
 		tag.setField(FieldKey.BPM, Integer.toString(track.getBpm()));
-		if ("m4a".equals(track.getFileFormat())) {
-			((Mp4Tag) tag).setField(Mp4FieldKey.COMPILATION, track.isPartOfCompilation() ? "1" : "0");
-		}
 		tag.setField(FieldKey.IS_COMPILATION, Boolean.toString(track.isPartOfCompilation()));
 	}
 
