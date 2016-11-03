@@ -24,6 +24,7 @@ import javafx.util.*;
 import org.jaudiotagger.audio.*;
 import org.jaudiotagger.audio.exceptions.*;
 import org.jaudiotagger.tag.*;
+import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
@@ -37,11 +38,14 @@ import java.util.*;
  */
 public class MetadataParser {
 
+	private static final Logger LOG = LoggerFactory.getLogger(MetadataParser.class.getName());
+
 	private MetadataParser() {}
 
 	public static Track createTrack(File fileToParse) throws TrackParseException {
 		Track track = new Track();
 		try {
+			LOG.debug("Creating AudioFile instance with jAudioTagger of: {}", fileToParse);
 			AudioFile audioFile = AudioFileIO.read(fileToParse);
 			track.setFileFolder(fileToParse.getParent());
 			track.setFileName(fileToParse.getName());
@@ -61,12 +65,14 @@ public class MetadataParser {
 		}
 		catch (IOException | CannotReadException | ReadOnlyFileException |
 				TagException | InvalidAudioFrameException exception) {
+			LOG.debug("Error creating track from {}: ", fileToParse, exception);
 			throw new TrackParseException("Error parsing the file " + fileToParse, exception);
 		}
 		return track;
 	}
 
 	private static void parseBaseMetadata(Track track, Tag tag) {
+		LOG.debug("Parsing base metadata of the file");
 		if (tag.hasField(FieldKey.TITLE))
 			track.setName(tag.getFirst(FieldKey.TITLE));
 		if (tag.hasField(FieldKey.ALBUM))
@@ -122,17 +128,20 @@ public class MetadataParser {
 	public static Optional<Tag> getAudioTag(File file) {
 		Optional<Tag> optionalTag;
 		try {
+			LOG.debug("Getting audio tag of {} ", file.getAbsolutePath());
 			AudioFile audioFile = AudioFileIO.read(file);
 			optionalTag = Optional.ofNullable(audioFile.getTag());
 		}
 		catch (IOException | CannotReadException | ReadOnlyFileException |
 				TagException | InvalidAudioFrameException exception) {
 			optionalTag = Optional.empty();
+			LOG.debug("Unable to get the audio tag: ", exception);
 		}
 		return optionalTag;
 	}
 
 	public static Optional<byte[]> getCoverBytes(Tag tag) {
+		LOG.debug("Getting cover bytes from tag");
 		Optional<byte[]> coverBytes = Optional.empty();
 		if (! tag.getArtworkList().isEmpty())
 			coverBytes = Optional.ofNullable(tag.getFirstArtwork().getBinaryData());
