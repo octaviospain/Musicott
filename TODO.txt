@@ -1,0 +1,8 @@
+Use the google's guava library to refactor the code:
+
+Preconditions
+Collections
+Utility classes
+etc
+
+https://github.com/google/guava/wiki
