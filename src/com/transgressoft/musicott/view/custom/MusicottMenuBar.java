@@ -235,6 +235,7 @@ public class MusicottMenuBar extends MenuBar {
 	}
 
 	private void countFilesToImport(File folder) {
+		LOG.debug("Starting scanning of {}", folder);
 		Platform.runLater(() -> {
 			navigationController.setStatusMessage("Scanning folders...");
 			navigationController.setStatusProgress(- 1);
@@ -252,6 +253,7 @@ public class MusicottMenuBar extends MenuBar {
 			navigationController.setStatusMessage("");
 			navigationController.setStatusProgress(0);
 		});
+		LOG.debug("Counting files to import {}", extensions);
 		List<File> files = Utils.getAllFilesInFolder(folder, filter, 0);
 		if (files.isEmpty())
 			showNoFilesToImportAlert();
@@ -273,6 +275,7 @@ public class MusicottMenuBar extends MenuBar {
 		Platform.runLater(() -> {
 			Alert alert = stageDemon.createAlert("Import", alertContentText, "", AlertType.CONFIRMATION);
 			alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
+			LOG.debug("Showing confirmation alert to import {} files", filesToImport.size());
 			Optional<ButtonType> result = alert.showAndWait();
 			if (result.isPresent() && result.get().equals(ButtonType.OK)) {
 				TaskDemon.getInstance().importFiles(filesToImport, false);

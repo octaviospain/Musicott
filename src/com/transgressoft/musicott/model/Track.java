@@ -149,7 +149,6 @@ public class Track {
 		playCountProperty = new SimpleIntegerProperty(this, "play count", playCount);
 		isPlayableProperty = new SimpleBooleanProperty(this, "is playable", isPlayable());
 		hasCoverProperty = new SimpleBooleanProperty(this, "cover bytes", false);
-		getCoverImage().ifPresent(coverBytes -> hasCoverProperty.set(true));
 
 		propertyMap = new EnumMap<>(TrackField.class);
 		propertyMap.put(TrackField.NAME, nameProperty);
