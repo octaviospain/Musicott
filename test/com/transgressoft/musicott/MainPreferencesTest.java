@@ -26,7 +26,6 @@ import org.junit.runner.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.prefs.*;
 
 import static com.transgressoft.musicott.tasks.ItunesImportTask.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,18 +40,6 @@ public class MainPreferencesTest {
 	static final String IMPORT_M4A = "import_m4a_flag";
 	static final String IMPORT_WAV = "import_wav_flag";
 	static final String IMPORT_FLAC = "import_flac_flag";
-
-	@Test
-	@DisplayName ("Creation with previous extensions already saved")
-	void creationWithPreviousConfig() throws Exception {
-		Preferences preferences = Preferences.userNodeForPackage(MainPreferences.class);
-		preferences.putBoolean(IMPORT_FLAC, true);
-		preferences.putBoolean(IMPORT_WAV, true);
-		preferences.putBoolean(IMPORT_M4A, true);
-		preferences.putBoolean(IMPORT_MP3, true);
-		MainPreferences mainPreferences = MainPreferences.getInstance();
-		assertEquals(Sets.newHashSet("m4a", "wav", "flac", "mp3"), mainPreferences.getImportFilterExtensions());
-	}
 
 	@Test
 	@DisplayName ("User folder")

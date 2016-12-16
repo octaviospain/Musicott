@@ -6,4 +6,5 @@ coverage:
   round: up
 
   ignore:
-      -"test/com/transgressoft/musicott/tests/BaseJavaFxTest.java"
+      - "test/com/transgressoft/musicott/tests/JavaFxTestBase.java"
+      - "test/com/transgressoft/musicott/tests/MusicottTestSuite.java"
