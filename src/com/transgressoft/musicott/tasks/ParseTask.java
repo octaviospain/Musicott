@@ -133,7 +133,7 @@ public class ParseTask extends Task<Void> {
 		musicLibrary.addTracks(parsedTracks);
 		Platform.runLater(stageDemon::closeIndeterminateProgress);
 
-		double endMillis = System.currentTimeMillis() - startMillis;
+		double endMillis = (double) System.currentTimeMillis() - startMillis;
 		double totalTaskTime = Duration.millis(endMillis).toSeconds();
 		String statusMessage = Integer.toString(parsedTracks.size()) + " in (" + Double
 				.toString(totalTaskTime) + ") secs";
