@@ -36,6 +36,8 @@ import java.util.concurrent.*;
  */
 public class TaskDemon {
 
+	private static final String ALREADY_IMPORTING_ERROR_MESSAGE = "There is already an import task running." +
+			 													  "Wait for it to perform another import task.";
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	private static TaskDemon instance;
@@ -44,8 +46,6 @@ public class TaskDemon {
 	private Semaphore waveformSemaphore;
 	private Queue<Track> tracksToProcessQueue;
 	private WaveformTask waveformTask;
-	private String alreadyImportingErrorMessage = "There is already an import task running." +
-													"Wait for it to perform another import task.";
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
@@ -69,7 +69,7 @@ public class TaskDemon {
 	public void importFromItunesLibrary(String itunesLibraryPath) {
 		if ((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask
 				.isRunning())) {
-			errorDemon.showErrorDialog(alreadyImportingErrorMessage);
+			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE);
 		}
 		else {
 			itunesImportTask = new ItunesImportTask(itunesLibraryPath);
@@ -89,7 +89,7 @@ public class TaskDemon {
 	 */
 	public void importFiles(List<File> filesToImport, boolean playAtTheEnd) {
 		if ((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning()))
-			errorDemon.showErrorDialog(alreadyImportingErrorMessage);
+			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE);
 		else {
 			parseTask = new ParseTask(filesToImport, playAtTheEnd);
 			Thread parseThread = new Thread(parseTask, "Parse Files Task");

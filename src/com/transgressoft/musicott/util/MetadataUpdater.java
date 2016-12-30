@@ -57,8 +57,6 @@ public class MetadataUpdater {
 	 * Writes the {@link Track} information to an audio file metadata.
 	 *
 	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
-	 *
-	 * @throws TrackUpdateException if something went bad in the operation.
 	 */
 	public boolean writeAudioMetadata() {
 		boolean succeeded;

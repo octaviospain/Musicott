@@ -81,7 +81,7 @@ public class PlayerFacade {
 		return playList;
 	}
 
-	public ObservableList<TrackQueueRow> getHistorylist() {
+	public ObservableList<TrackQueueRow> getHistoryList() {
 		return historyList;
 	}
 
