@@ -203,7 +203,7 @@ public class LastFmService {
 			queryParams.add("username", USERNAME);
 			queryParams.add("api_sig", buildSignature(queryParams));
 			lfm = makeRequest(queryParams, POST);
-			if (OK.equals(lfm.getStatus())) {
+			if (lfm != null && OK.equals(lfm.getStatus())) {
 				sessionKey = lfm.getSession().getSessionKey();
 				servicesPreferences.setLastFmSessionKey(sessionKey);
 			}

@@ -39,8 +39,8 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  */
 public class Playlist {
 
-	private final static String ADDITION_NOT_SUPPORTED = "Addition not supported on folder playlist";
-	private final static String DELETION_NOT_SUPPORTED = "Deletion not supported on folder playlist";
+	private static final String ADDITION_NOT_SUPPORTED = "Addition not supported on folder playlist";
+	private static final String DELETION_NOT_SUPPORTED = "Deletion not supported on folder playlist";
 
 	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
 	private final boolean isFolder;
