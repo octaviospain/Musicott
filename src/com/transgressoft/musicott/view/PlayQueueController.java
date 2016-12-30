@@ -50,7 +50,7 @@ public class PlayQueueController implements MusicottController {
 	@FXML
 	public void initialize() {
 		playQueueList = player.getPlayList();
-		historyQueueList = player.getHistorylist();
+		historyQueueList = player.getHistoryList();
 		historyQueueButton.setId("historyQueueButton");
 		queuesListView.setItems(playQueueList);
 		queuesListView.setOnMouseClicked(event -> {

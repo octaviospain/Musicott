@@ -39,6 +39,9 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  */
 public class Playlist {
 
+	private final static String ADDITION_NOT_SUPPORTED = "Addition not supported on folder playlist";
+	private final static String DELETION_NOT_SUPPORTED = "Deletion not supported on folder playlist";
+
 	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
 	private final boolean isFolder;
 	private String name;
@@ -106,7 +109,7 @@ public class Playlist {
 
 	public boolean addTracks(List<Integer> tracksIds) {
 		if (isFolder)
-			throw new UnsupportedOperationException("Addition not supported on folder playlist");
+			throw new UnsupportedOperationException(ADDITION_NOT_SUPPORTED);
 
 		boolean result = playlistTrackIds.addAll(tracksIds);
 		if (result) {
@@ -125,7 +128,7 @@ public class Playlist {
 
 	public boolean removeTracks(List<Integer> tracksIds) {
 		if (isFolder)
-			throw new UnsupportedOperationException("Deletion not supported on folder playlist");
+			throw new UnsupportedOperationException(DELETION_NOT_SUPPORTED);
 
 		boolean result = playlistTrackIds.removeAll(tracksIds);
 		if (result) {
