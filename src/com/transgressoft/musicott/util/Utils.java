@@ -96,7 +96,7 @@ public class Utils {
 	 *
 	 * @return The remaining number of files to be added
 	 */
-	private static int addFilesDependingMax(List files, File[] subFiles, int maxFilesRequired) {
+	private static int addFilesDependingMax(List<File> files, File[] subFiles, int maxFilesRequired) {
 		int remainingFiles = maxFilesRequired;
 		if (maxFilesRequired == 0)    						// No max = add all files
 			files.addAll(Arrays.asList(subFiles));
@@ -121,7 +121,7 @@ public class Utils {
 	 * @param remainingFiles   The remaining number of files to add
 	 * @param filter 		   The {@link FileFilter} to use to filter the files in the folders
 	 */
-	private static void addFilesFromFolders(List files, File[] folders, int maxFilesRequired, int remainingFiles, FileFilter filter) {
+	private static void addFilesFromFolders(List<File> files, File[] folders, int maxFilesRequired, int remainingFiles, FileFilter filter) {
         int subFoldersCount = 0;
 		int remaining = remainingFiles;
         while ((subFoldersCount < folders.length) && ! Thread.currentThread().isInterrupted()) {
@@ -178,9 +178,8 @@ public class Utils {
 	 * @throws IllegalArgumentException Thrown if <tt>bytes</tt> or <tt>numDecimals</tt> are negative
 	 */
 	public static String byteSizeString(long bytes, int numDecimals) {
-		if (numDecimals < 0) {
+		if (numDecimals < 0)
 			throw new IllegalArgumentException("Given number of decimals can't be less than zero");
-		}
 
 		String byteSizeString = byteSizeString(bytes);
 		StringBuilder decimalSharps = new StringBuilder();
