@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.model;
 
+import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
@@ -260,7 +261,7 @@ public class MusicLibrary {
 		Thread randomPlaylistThread = new Thread(() -> {
 			List<Integer> randomPlaylist = new ArrayList<>();
 			synchronized (musicottTracks) {
-				List<Integer> trackIDs = new ArrayList<>(musicottTracks.keySet());
+				ImmutableList<Integer> trackIDs = ImmutableList.copyOf(musicottTracks.keySet());
 				Random randomGenerator = new Random();
 				do {
 					int rnd = randomGenerator.nextInt(trackIDs.size());
@@ -289,9 +290,7 @@ public class MusicLibrary {
 		synchronized (musicottTracks) {
 			synchronized (waveforms) {
 				synchronized (playlists) {
-					hash = 73 * hash + musicottTracks.hashCode();
-					hash = 73 * hash + waveforms.hashCode();
-					hash = 73 * hash + playlists.hashCode();
+					hash = Objects.hash(musicottTracks, waveforms, playlists);
 				}
 			}
 		}
