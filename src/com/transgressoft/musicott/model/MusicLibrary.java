@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.model;
@@ -24,7 +24,7 @@ import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.view.*;
-import javafx.application.*;
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import org.slf4j.*;
