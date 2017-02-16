@@ -57,7 +57,7 @@ public class ParseTask extends Task<Void> {
 	private PlayerFacade player = PlayerFacade.getInstance();
 	private NavigationController navigationController = stageDemon.getNavigationController();
 
-	public ParseTask(List<File> files, boolean playAtTheEnd) {
+	public ParseTask(Collection<File> files, boolean playAtTheEnd) {
 		super();
 		parsedTracks = new HashMap<>();
 		filesToParse = new ArrayDeque<>();

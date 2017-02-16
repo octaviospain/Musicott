@@ -136,11 +136,11 @@ public class NavigationController implements MusicottController {
 				musicLibrary.showAllTracks();
 				navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
 				playlistTreeView.getSelectionModel().clearAndSelect(- 1);
-				Platform.runLater(stageDemon.getRootController()::hideNavigationPane);
+				Platform.runLater(stageDemon.getRootController()::hideTableInfoPane);
 				break;
 			case PLAYLIST:
 				navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
-				Platform.runLater(stageDemon.getRootController()::showNavigationPane);
+				Platform.runLater(stageDemon.getRootController()::showTableInfoPane);
 				break;
 		}
 	}

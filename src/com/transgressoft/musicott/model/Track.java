@@ -486,20 +486,8 @@ public class Track {
 
 	@Override
 	public int hashCode() {
-		int hash = 71;
-		hash = 73 * hash + fileName.hashCode();
-		hash = 73 * hash + fileFolder.hashCode();
-		hash = 73 * hash + name.hashCode();
-		hash = 73 * hash + artist.hashCode();
-		hash = 73 * hash + album.hashCode();
-		hash = 73 * hash + comments.hashCode();
-		hash = 73 * hash + genre.hashCode();
-		hash = 73 * hash + trackNumber;
-		hash = 73 * hash + year;
-		hash = 73 * hash + albumArtist.hashCode();
-		hash = 73 * hash + bpm;
-		hash = 73 * hash + label.hashCode();
-		return hash;
+		return Objects.hash(fileName, fileFolder, name, artist, album, comments,
+							genre, trackNumber, year, albumArtist, bpm, label);
 	}
 
 	@Override

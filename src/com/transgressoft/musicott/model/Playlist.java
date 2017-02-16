@@ -197,9 +197,7 @@ public class Playlist {
 
 	@Override
 	public int hashCode() {
-		int hash = 71;
-		hash = 73 * hash + name.hashCode();
-		return hash;
+		return Objects.hash(name);
 	}
 
 	@Override

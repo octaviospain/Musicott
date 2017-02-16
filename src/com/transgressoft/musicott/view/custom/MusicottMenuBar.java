@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view.custom;
 
+import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
@@ -208,7 +209,7 @@ public class MusicottMenuBar extends MenuBar {
 						   new ExtensionFilter("flac files (*.flac)", "*.flac"),
 						   new ExtensionFilter("wav files (*.wav)", "*.wav"),
 						   new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
-			List<File> files = chooser.showOpenMultipleDialog(primaryStage);
+			ImmutableList<File> files = ImmutableList.copyOf(chooser.showOpenMultipleDialog(primaryStage));
 			if (files != null) {
 				TaskDemon.getInstance().importFiles(files, true);
 				navigationController.setStatusMessage("Opening files");
