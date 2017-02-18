@@ -26,7 +26,6 @@ import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.view.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
-import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.scene.media.*;
@@ -192,9 +191,9 @@ public class PlayerFacade {
 				trackPlayer = new FlacPlayer();
 				//TODO
 			}
+			playerController.updatePlayer(track);
 			trackPlayer.setTrack(track);
 			bindMediaPlayer();
-			playerController.updatePlayer(track);
 			LOG.debug("Created new player");
 		});
 	}
@@ -234,9 +233,7 @@ public class PlayerFacade {
 		});
 
 		DoubleProperty trackSliderMaxProperty = playerController.trackSliderMaxProperty();
-		trackSliderMaxProperty
-				.bind(Bindings.createDoubleBinding(mediaPlayer.totalDurationProperty().getValue()::toMillis,
-												   mediaPlayer.totalDurationProperty()));
+		currentTrack.ifPresent(track -> trackSliderMaxProperty.setValue(track.getTotalTime().toMillis()));
 
 		BooleanProperty trackSliderValueChangingProperty = playerController.trackSliderValueChangingProperty();
 		DoubleProperty trackSliderValueProperty = playerController.trackSliderValueProperty();
