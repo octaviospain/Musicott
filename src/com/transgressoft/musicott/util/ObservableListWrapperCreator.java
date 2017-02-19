@@ -19,7 +19,7 @@
 
 package com.transgressoft.musicott.util;
 
-import com.cedarsoftware.util.io.*;
+import com.cedarsoftware.util.io.JsonReader.*;
 import javafx.collections.*;
 
 /**
@@ -29,7 +29,7 @@ import javafx.collections.*;
  * @version 0.9.1-b
  * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
  */
-public class ObservableListWrapperCreator implements JsonReader.ClassFactory {
+public class ObservableListWrapperCreator implements ClassFactory {
 
 	@SuppressWarnings ("rawtypes")
 	@Override

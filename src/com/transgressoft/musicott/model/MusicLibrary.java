@@ -67,7 +67,7 @@ public class MusicLibrary {
 	}
 
 	/**
-	 * Binds deletePlaylistFromFolders list of entries of the Musicott tracks map, and it to deletePlaylistFromFolders list property
+	 * Binds the entries of the Musicott tracks to a {@link ListProperty} of all its elements
 	 */
 	private void bindTrackEntriesList() {
 		musicottTrackEntriesList = FXCollections.observableArrayList(musicottTracks.entrySet());
@@ -76,7 +76,8 @@ public class MusicLibrary {
 	}
 
 	/**
-	 * Binds the tracks that must be shown on the table to deletePlaylistFromFolders list property
+	 * Binds the entries of the Musicott tracks to a {@link ListProperty} of the elements
+	 * that are shown in the table
 	 */
 	private void bindShowingTracks() {
 		showingTracks = FXCollections.observableArrayList(musicottTracks.entrySet());
@@ -93,7 +94,7 @@ public class MusicLibrary {
 	/**
 	 * Listener that adds or removes the tracks changed in the Musicott tracks map to the track entries list.
 	 *
-	 * @return The {@link WeakMapChangeListener} reference
+	 * @return The {@link MapChangeListener} reference
 	 */
 	private MapChangeListener<Integer, Track> musicottTracksChangeListener() {
 		return (MapChangeListener.Change<? extends Integer, ? extends Track> change) -> {
@@ -135,7 +136,6 @@ public class MusicLibrary {
 				}
 			}
 		});
-		saveLibrary(true, false, false);
 	}
 
 	private void addToShowingTracksStream(Stream<Entry<Integer, Track>> tracksEntriesStream) {
@@ -161,8 +161,16 @@ public class MusicLibrary {
 		synchronized (waveforms) {
 			waveforms.put(trackId, waveform);
 		}
+		saveLibrary(false, true, false);
 	}
 
+	/**
+	 * Adds a collection of waveforms to the music library's collection of waveforms.
+	 * This method is only called from {@link MusicottApplication#loadWaveforms} when
+	 * the user's waveforms are loaded, and that's why {@link #saveLibrary} is not called.
+	 *
+	 * @param newWaveforms The {@code Map} of waveforms to be added
+	 */
 	public void addWaveforms(Map<Integer, float[]> newWaveforms) {
 		synchronized (waveforms) {
 			waveforms.putAll(newWaveforms);
@@ -176,6 +184,13 @@ public class MusicLibrary {
 		saveLibrary(false, false, true);
 	}
 
+	/**
+	 * Adds {@link Playlist}s to the music library's collection playlists.
+	 * This method is only called from {@link MusicottApplication#loadPlaylists} when
+	 * the user's playlists are loaded, and that's why {@link #saveLibrary} is not called.
+	 *
+	 * @param newPlaylists The playlists to be added
+	 */
 	public void addPlaylists(List<Playlist> newPlaylists) {
 		synchronized (playlists) {
 			playlists.addAll(newPlaylists);
@@ -190,17 +205,30 @@ public class MusicLibrary {
 		return playlists;
 	}
 
+	/**
+	 * Delete tracks from the music library looking also for occurrences in
+	 * the playlists and the waveforms collections.
+	 * This method is called on an independent Thread in {@link StageDemon#deleteTracks}
+	 *
+	 * @param trackIds A {@code List} of track ids
+	 */
 	public void deleteTracks(List<Integer> trackIds) {
 		synchronized (musicottTracks) {
-			waveforms.keySet().removeAll(trackIds);
 			Platform.runLater(() -> {
 				removeFromShowingTracks(trackIds);
-				playlists.stream().filter(playlist -> ! playlist.isFolder())
-						 .forEach(playlist -> playlist.removeTracks(trackIds));
 				musicottTracks.keySet().removeAll(trackIds);
 			});
 		}
-		saveLibrary(true, true, true);
+
+		boolean playlistsChanged[] = new boolean[]{false};
+		synchronized (playlists) {
+			playlists.stream().filter(playlist -> ! playlist.isFolder())
+					 .forEach(playlist -> playlistsChanged[0] = playlist.removeTracks(trackIds));
+		}
+
+		boolean waveformsChanged = waveforms.keySet().removeAll(trackIds);
+
+		saveLibrary(true, waveformsChanged, playlistsChanged[0]);
 		LOG.info("Deleted {} tracks", trackIds.size());
 		String message = "Deleted " + Integer.toString(trackIds.size()) + " tracks";
 		Platform.runLater(() -> StageDemon.getInstance().getNavigationController().setStatusMessage(message));
@@ -286,7 +314,7 @@ public class MusicLibrary {
 
 	@Override
 	public int hashCode() {
-		int hash = 71;
+		int hash;
 		synchronized (musicottTracks) {
 			synchronized (waveforms) {
 				synchronized (playlists) {

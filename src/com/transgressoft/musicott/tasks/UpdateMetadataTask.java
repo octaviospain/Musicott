@@ -21,6 +21,7 @@ package com.transgressoft.musicott.tasks;
 
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -41,43 +42,38 @@ public class UpdateMetadataTask extends Thread {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	private List<Track> tracks;
-	private File newCoverFile;
 	private CopyOption[] options;
 	private List<String> updateErrors;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
-	public UpdateMetadataTask(List<Track> tracks, File newCoverFile) {
+	public UpdateMetadataTask(List<Track> tracks) {
 		this.tracks = tracks;
-		this.newCoverFile = newCoverFile;
 		options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
 		updateErrors = new ArrayList<>();
 	}
 
 	@Override
 	public void run() {
-		boolean updated;
-		for (Track track : tracks)
-			if (track.getInDisk()) {
-				File backup = makeBackup(track);
-				if (newCoverFile != null)
-					track.setCoverImage(newCoverFile);
-				updated = track.writeMetadata();
+		tracks.stream().filter(Track::getInDisk).forEach(track -> {
+			File backup = makeBackup(track);
 
-				if (! updated && backup != null)
-					restoreBackup(track, backup);
-				else
-					deleteBackup(track, backup);
-
-				if (updated)
-					LOG.debug("Updating metadata of {}", track.getFileFolder() + "/" + track.getFileName());
-				else
-					LOG.debug("Not updated metadata of {}", track.getFileFolder() + "/" + track.getFileName());
+			try {
+				track.writeMetadata();
+				deleteBackup(track, backup);
+				LOG.debug("Updated (or not) metadata of {}", track.getFileFolder() + "/" + track.getFileName());
 			}
+			catch (TrackUpdateException exception) {
+				if (backup != null)
+					restoreBackup(track, backup);
+				updateErrors.add(exception.getMessage() + ": " + exception.getCause().getMessage());
+			}
+		});
+
 		musicLibrary.saveLibrary(true, false, false);
 		if (! updateErrors.isEmpty())
-			errorDemon.showExpandableErrorsDialog("Errors writing metadata on some tracks", "", updateErrors);
+			errorDemon.showExpandableErrorsDialog("Errors writing metadata on some tracks", null, updateErrors);
 	}
 
 	private File makeBackup(Track track) {
@@ -89,7 +85,7 @@ public class UpdateMetadataTask extends Thread {
 		}
 		catch (IOException exception) {
 			LOG.error("Error creating the backup file: ", exception.getCause());
-			errorDemon.showErrorDialog("Error creating the backup file", "", exception);
+			errorDemon.showErrorDialog("Error creating the backup file", null, exception);
 		}
 		return backup;
 	}
@@ -101,7 +97,7 @@ public class UpdateMetadataTask extends Thread {
 		}
 		catch (IOException | UnsupportedOperationException exception) {
 			LOG.error("Error restoring the backup file: ", exception.getCause());
-			errorDemon.showErrorDialog("Error restoring the backup file", "", exception);
+			errorDemon.showErrorDialog("Error restoring the backup file", null, exception);
 		}
 	}
 

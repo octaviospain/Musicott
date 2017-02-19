@@ -19,7 +19,6 @@
 
 package com.transgressoft.musicott.util;
 
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import org.jaudiotagger.audio.*;
 import org.jaudiotagger.audio.exceptions.*;
@@ -47,8 +46,6 @@ public class MetadataUpdater {
 
 	private Track track;
 
-	private ErrorDemon errorDemon = ErrorDemon.getInstance();
-
 	public MetadataUpdater(Track track) {
 		this.track = track;
 	}
@@ -56,10 +53,9 @@ public class MetadataUpdater {
 	/**
 	 * Writes the {@link Track} information to an audio file metadata.
 	 *
-	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
+	 * @return {@code True} if the operation was successful, {@code False} otherwise
 	 */
-	public boolean writeAudioMetadata() {
-		boolean succeeded;
+	public void writeAudioMetadata() throws TrackUpdateException {
 		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
 		try {
 			AudioFile audio = AudioFileIO.read(trackPath.toFile());
@@ -72,16 +68,13 @@ public class MetadataUpdater {
 			}
 			setTrackFieldsToTag(audio.getTag());
 			audio.commit();
-			succeeded = true;
 		}
 		catch (IOException | CannotReadException | ReadOnlyFileException |
 				TagException | CannotWriteException | InvalidAudioFrameException exception) {
 			LOG.warn("Error updating metadata of {}", track, exception);
 			String errorText = "Error writing metadata of " + track.getArtist() + " - " + track.getName();
-			errorDemon.showErrorDialog(errorText, "", exception);
-			succeeded = false;
+			throw new TrackUpdateException(errorText, exception);
 		}
-		return succeeded;
 	}
 
 	private void setTrackFieldsToTag(Tag tag) throws FieldDataInvalidException {
@@ -107,20 +100,18 @@ public class MetadataUpdater {
 	 *
 	 * @param coverFile The {@link File} of the new cover image to save
 	 *
-	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
+	 * @return {@code True} if the operation was successful, {@code False} otherwise
+	 *
+	 * @throws Exception If something went bad updating the cover on the metadata
 	 */
-	public boolean updateCover(File coverFile) {
+	public void updateCover(File coverFile) throws TrackUpdateException {
 		Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
 		File trackFile = trackPath.toFile();
-		boolean result = updateCoverOnTag(trackFile, coverFile);
-		if (result) {
-			track.hasCoverProperty().set(true);
-		}
-		return result;
+		updateCoverOnTag(trackFile, coverFile);
+		track.hasCoverProperty().set(true);
 	}
 
-	private boolean updateCoverOnTag(File trackFile, File coverFile) {
-		boolean result = false;
+	private void updateCoverOnTag(File trackFile, File coverFile) throws TrackUpdateException {
 		try {
 			AudioFile audioFile = AudioFileIO.read(trackFile);
 			Artwork cover = ArtworkFactory.createArtworkFromFile(coverFile);
@@ -128,25 +119,22 @@ public class MetadataUpdater {
 			tag.deleteArtworkField();
 			tag.addField(cover);
 			audioFile.commit();
-			result = true;
 		}
 		catch (IOException | TagException | CannotWriteException | CannotReadException |
 				InvalidAudioFrameException | ReadOnlyFileException exception) {
 			LOG.warn("Error saving cover image of {}", track, exception);
 			String errorText = "Error saving cover image of " + track.getArtist() + " - " + track.getName();
-			errorDemon.showErrorDialog(errorText, "", exception);
+			throw new TrackUpdateException(errorText, exception);
 		}
-		return result;
 	}
 
 	/**
 	 * Search for an image in the folder of the audio file, and saves it to his
 	 * metadata.
 	 *
-	 * @return <tt>true</tt> if the operation was successful, <tt>false</tt> otherwise
+	 * @return {@code True} if the operation was successful, {@code False} otherwise
 	 */
-	public boolean searchCoverInFolderAndUpdate() {
-		boolean found = false;
+	public void searchCoverInFolderAndUpdate() throws TrackUpdateException {
 		File coverFile = null;
 		String[] acceptedMimeTypes = {"jpg", "jpeg", "png"};
 		String trackFolder = track.getFileFolder();
@@ -159,8 +147,7 @@ public class MetadataUpdater {
 		}
 		if (coverFile != null) {
 			track.setCoverImage(coverFile);
-			found = updateCover(coverFile);
+			updateCover(coverFile);
 		}
-		return found;
 	}
 }

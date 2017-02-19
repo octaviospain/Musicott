@@ -90,7 +90,6 @@ public class WaveformTask extends Thread {
 					Optional<Track> currentTrack = PlayerFacade.getInstance().getCurrentTrack();
 					currentTrack.ifPresent(this::checkAnalyzedTrackIsCurrentPlaying);
 					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage(""));
-					musicLibrary.saveLibrary(false, true, false);
 				}
 			}
 			catch (IOException | UnsupportedAudioFileException | EncoderException | InterruptedException exception) {

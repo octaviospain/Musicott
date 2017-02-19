@@ -129,14 +129,14 @@ public class SaveMusicLibraryTask extends Thread {
 		this.saveTracks = saveTracks;
 		this.saveWaveforms = saveWaveforms;
 		this.savePlaylists = savePlaylists;
-		saveSemaphore.release();
+        saveSemaphore.release();
 	}
 
 	@Override
 	public void run() {
 		try {
 			while (true) {
-				saveSemaphore.acquire();
+				saveSemaphore.acquire(saveSemaphore.availablePermits());
 				checkMusicottUserPathChanged();
 
 				if (saveTracks)
@@ -150,7 +150,7 @@ public class SaveMusicLibraryTask extends Thread {
 		catch (IOException | RuntimeException | InterruptedException exception) {
 			Platform.runLater(() -> {
 				LOG.error("Error saving music library", exception.getCause());
-				errorDemon.showErrorDialog("Error saving music library", "", exception);
+				errorDemon.showErrorDialog("Error saving music library", null, exception);
 			});
 		}
 	}

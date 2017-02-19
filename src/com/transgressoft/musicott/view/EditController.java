@@ -288,7 +288,7 @@ public class EditController implements MusicottController {
 	 */
 	private void editAndClose() {
 		trackSelection.forEach(this::editTrack);
-		UpdateMetadataTask updateTask = new UpdateMetadataTask(trackSelection, newCoverImage);
+		UpdateMetadataTask updateTask = new UpdateMetadataTask(trackSelection);
 		updateTask.setDaemon(true);
 		updateTask.start();
 		editStage.close();

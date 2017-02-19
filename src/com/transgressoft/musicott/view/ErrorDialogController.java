@@ -90,6 +90,7 @@ public class ErrorDialogController implements MusicottController {
                 rootBorderPane.getChildren().remove(detailsTextArea);
                 seeDetailsToggleButton.setSelected(true);
             }
+            contentVBox.getScene().getWindow().sizeToScene();
         };
         seeDetailsToggleButton.setOnAction(expandablePaneHandler);
         seeDetailsHyperlink.setOnAction(expandablePaneHandler);
