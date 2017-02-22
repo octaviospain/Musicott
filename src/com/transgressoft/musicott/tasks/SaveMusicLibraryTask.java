@@ -55,9 +55,9 @@ public class SaveMusicLibraryTask extends Thread {
 	private volatile boolean saveWaveforms;
 	private volatile boolean savePlaylists;
 
-	private ObservableMap<Integer, Track> musicottTracks;
-	private Map<Integer, float[]> trackWaveforms;
-	private List<Playlist> musicottPlaylists;
+	private final ObservableMap<Integer, Track> musicottTracks;
+	private final Map<Integer, float[]> trackWaveforms;
+	private final List<Playlist> musicottPlaylists;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
@@ -129,14 +129,15 @@ public class SaveMusicLibraryTask extends Thread {
 		this.saveTracks = saveTracks;
 		this.saveWaveforms = saveWaveforms;
 		this.savePlaylists = savePlaylists;
-        saveSemaphore.release();
+		if (saveSemaphore.availablePermits() < 1)
+        	saveSemaphore.release();
 	}
 
 	@Override
 	public void run() {
 		try {
 			while (true) {
-				saveSemaphore.acquire(saveSemaphore.availablePermits());
+				saveSemaphore.acquire();
 				checkMusicottUserPathChanged();
 
 				if (saveTracks)
@@ -167,34 +168,34 @@ public class SaveMusicLibraryTask extends Thread {
 	}
 
 	private void serializeTracks() throws IOException {
-		saveTracks = false;
 		synchronized (musicottTracks) {
 			writeObjectToJsonFile(musicottTracks, tracksFile, tracksArgs);
 		}
+		saveTracks = false;
 		LOG.debug("Saved list of tracks in {}", tracksFile);
 	}
 
 	private void serializeWaveforms() throws IOException {
-		saveWaveforms = false;
 		synchronized (trackWaveforms) {
 			writeObjectToJsonFile(trackWaveforms, waveformsFile, null);
 		}
+		saveWaveforms = false;
 		LOG.debug("Saved waveform images in {}", waveformsFile);
 	}
 
 	private void serializePlaylists() throws IOException {
-		savePlaylists = false;
 		synchronized (musicottPlaylists) {
 			writeObjectToJsonFile(musicottPlaylists, playlistsFile, playlistArgs);
 		}
+		savePlaylists = false;
 		LOG.debug("Saved playlists in {}", playlistsFile);
 	}
 
 	/**
-	 * Writes an <tt>Object</tt> into a JSON formatted file using Json-IO
+	 * Writes an {@code Object} into a JSON formatted file using Json-IO
 	 *
-	 * @param object   The <tt>Object</tt> to write
-	 * @param jsonFile The {@link File} where to write the <tt>Object</tt>
+	 * @param object   The {@code Object} to write
+	 * @param jsonFile The {@link File} where to write the {@code Object}
 	 * @param args     The arguments to pass to the {@link JsonWriter}
 	 *
 	 * @throws IOException If something went bad

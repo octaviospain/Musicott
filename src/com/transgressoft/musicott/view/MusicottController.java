@@ -23,6 +23,7 @@ import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.services.*;
+import com.transgressoft.musicott.tasks.*;
 
 /**
  * Interface that represent a controller of the Musicott application.
@@ -65,4 +66,5 @@ public interface MusicottController {
 	ServiceDemon serviceDemon = ServiceDemon.getInstance();
 	StageDemon stageDemon = StageDemon.getInstance();
 	ErrorDemon errorDemon = ErrorDemon.getInstance();
+	TaskDemon taskDemon = TaskDemon.getInstance();
 }

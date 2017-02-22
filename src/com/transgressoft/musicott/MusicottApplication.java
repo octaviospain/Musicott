@@ -73,7 +73,6 @@ public class MusicottApplication extends Application {
 		musicLibrary = MusicLibrary.getInstance();
 		preferences = MainPreferences.getInstance();
 		stageDemon = StageDemon.getInstance();
-		ErrorDemon.getInstance();
 	}
 
 	public static void main(String[] args) {

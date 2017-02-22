@@ -46,7 +46,7 @@ public class UpdateMetadataTask extends Thread {
 	private List<String> updateErrors;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
-	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+	private TaskDemon taskDemon = TaskDemon.getInstance();
 
 	public UpdateMetadataTask(List<Track> tracks) {
 		this.tracks = tracks;
@@ -71,7 +71,7 @@ public class UpdateMetadataTask extends Thread {
 			}
 		});
 
-		musicLibrary.saveLibrary(true, false, false);
+        taskDemon.saveLibrary(true, false, false);
 		if (! updateErrors.isEmpty())
 			errorDemon.showExpandableErrorsDialog("Errors writing metadata on some tracks", null, updateErrors);
 	}

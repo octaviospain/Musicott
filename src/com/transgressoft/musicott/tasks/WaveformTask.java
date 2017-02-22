@@ -61,24 +61,23 @@ public class WaveformTask extends Thread {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private Track trackToAnalyze;
 	private float[] resultingWaveform;
-	private Semaphore taskSemaphore;
 
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private StageDemon stageDemon = StageDemon.getInstance();
-	private TaskDemon taskDemon = TaskDemon.getInstance();
+	private TaskDemon taskDemon;
 
-	public WaveformTask(Semaphore taskSemaphore) {
+	public WaveformTask(TaskDemon taskDemon) {
 		super("Waveform task");
-		this.taskSemaphore = taskSemaphore;
+		this.taskDemon = taskDemon;
 	}
 
 	@Override
 	public void run() {
 		while (true) {
 			try {
-				taskSemaphore.acquire();
 				trackToAnalyze = taskDemon.getNextTrackToAnalyzeWaveform();
 				LOG.debug("Processing resultingWaveform of trackToAnalyze {}", trackToAnalyze);
+
 				String fileFormat = trackToAnalyze.getFileFormat();
 				if ("wav".equals(fileFormat))
 					resultingWaveform = processFromWavFile();
