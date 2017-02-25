@@ -23,7 +23,7 @@ import java.io.*;
 import java.util.*;
 import java.util.prefs.*;
 
-import static com.transgressoft.musicott.tasks.ItunesImportTask.*;
+import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
 
 /**
  * Singleton class that isolates some user preferences, such as the application folder

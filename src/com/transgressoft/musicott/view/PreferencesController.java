@@ -37,7 +37,7 @@ import java.io.*;
 import java.util.*;
 
 import static com.transgressoft.musicott.MusicottApplication.*;
-import static com.transgressoft.musicott.tasks.ItunesImportTask.*;
+import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
 
 /**
  * Controller class of the preferences window.

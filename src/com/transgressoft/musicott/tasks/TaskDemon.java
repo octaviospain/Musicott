@@ -21,6 +21,7 @@ package com.transgressoft.musicott.tasks;
 
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.tasks.parse.*;
 import javafx.collections.*;
 import org.slf4j.*;
 
@@ -37,13 +38,14 @@ import java.util.concurrent.*;
  */
 public class TaskDemon {
 
-	private static final String ALREADY_IMPORTING_ERROR_MESSAGE = "There is already an import task running." +
+	private static final String ALREADY_IMPORTING_ERROR_MESSAGE = "There is already an import task running. " +
 			 													  "Wait for it to perform another import task.";
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	private static TaskDemon instance;
-	private ParseTask parseTask;
-	private ItunesImportTask itunesImportTask;
+	private ExecutorService parseExecutorService;
+	private Future parseFuture;
+	private BaseParseTask parseTask;
 	private BlockingQueue<Track> tracksToProcessQueue;
 	private WaveformTask waveformTask;
     private SaveMusicLibraryTask saveMusicLibraryTask;
@@ -69,6 +71,7 @@ public class TaskDemon {
 		tracks = musicottTracks;
 		this.waveforms = waveforms;
 		this.playlists = playlists;
+		parseExecutorService = Executors.newSingleThreadExecutor();
 	}
 
 	/**
@@ -78,20 +81,13 @@ public class TaskDemon {
 	 * @param itunesLibraryPath The path where the <tt>iTunes Music Library.xml</tt> file is located.
 	 */
 	public void importFromItunesLibrary(String itunesLibraryPath) {
-		if (isOtherImportTaskRunning())
-			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE);
+		if (parseFuture != null && ! parseFuture.isDone())
+			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
-			itunesImportTask = new ItunesImportTask(itunesLibraryPath);
-			Thread itunesThread = new Thread(itunesImportTask, "Parse Itunes Task");
-			itunesThread.setDaemon(true);
-			itunesThread.start();
+			parseTask = new ItunesParseTask(itunesLibraryPath);
+			parseFuture = parseExecutorService.submit(parseTask);
 			LOG.debug("Importing Itunes Library: {}", itunesLibraryPath);
 		}
-	}
-
-	private boolean isOtherImportTaskRunning() {
-		return (itunesImportTask != null && itunesImportTask.isRunning())
-				|| (parseTask != null && parseTask.isRunning());
 	}
 
 	/**
@@ -102,13 +98,11 @@ public class TaskDemon {
 	 * @param playAtTheEnd  Specifies whether the application should play music at the end of the importation.
 	 */
 	public void importFiles(List<File> filesToImport, boolean playAtTheEnd) {
-		if (isOtherImportTaskRunning())
-			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE);
+		if (parseFuture != null && ! parseFuture.isDone())
+			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
-			parseTask = new ParseTask(filesToImport, playAtTheEnd);
-			Thread parseThread = new Thread(parseTask, "Parse Files Task");
-			parseThread.setDaemon(true);
-			parseThread.start();
+			parseTask = new FilesParseTask(filesToImport, playAtTheEnd);
+			parseFuture = parseExecutorService.submit(parseTask);
 			LOG.debug("Importing {} files from folder", filesToImport.size());
 		}
 	}
