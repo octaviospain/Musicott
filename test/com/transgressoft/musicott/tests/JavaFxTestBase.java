@@ -36,7 +36,7 @@ public class JavaFxTestBase extends ApplicationTest {
     protected static String layout;
     protected static Stage testStage;
     protected Object controller;
-    private Application testApplication;
+    protected Application testApplication;
 
     @Override
     public void start(Stage stage) throws Exception {

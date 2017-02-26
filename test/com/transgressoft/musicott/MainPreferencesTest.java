@@ -36,11 +36,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @RunWith (JUnitPlatform.class)
 public class MainPreferencesTest {
 
-	static final String IMPORT_MP3 = "import_mp3_flag";
-	static final String IMPORT_M4A = "import_m4a_flag";
-	static final String IMPORT_WAV = "import_wav_flag";
-	static final String IMPORT_FLAC = "import_flac_flag";
-
 	@Test
 	@DisplayName ("User folder")
 	void userFolderMethodTest() {

@@ -110,16 +110,21 @@ public class MainPreferences {
 	}
 
 	/**
-	 * Sets the application folder path and resets the track and play list sequences
+	 * Sets the application folder path and resets the track and play list sequences or
+	 * deletes it from the preferences if receives null
 	 *
 	 * @param path The path to the application folder
 	 *
-	 * @return <tt>true</tt> if the creation of the directory was successful, <tt>false</tt> otherwise
+	 * @return <tt>true</tt> if the creation/deletion of the directory was successful, <tt>false</tt> otherwise
 	 */
 	public boolean setMusicottUserFolder(String path) {
-		preferences.put(MUSICOTT_FOLDER, path);
-		preferences.putInt(TRACK_SEQUENCE, 0);
-		return new File(path).mkdirs();
+		if (path == null)
+			preferences.remove(MUSICOTT_FOLDER);
+		else {
+			preferences.put(MUSICOTT_FOLDER, path);
+			preferences.putInt(TRACK_SEQUENCE, 0);
+		}
+		return path == null || new File(path).mkdirs();
 	}
 
 	public String getMusicottUserFolder() {
