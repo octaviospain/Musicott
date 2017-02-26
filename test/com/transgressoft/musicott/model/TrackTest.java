@@ -81,6 +81,7 @@ public class TrackTest {
     @After
     public void afterEachTest() {
         verifyStatic();
+        MainPreferences.getInstance().setMusicottUserFolder(null);
     }
 
     @Test

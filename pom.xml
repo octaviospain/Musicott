@@ -100,24 +100,30 @@
     <dependencies>
 
         <dependency>
+            <groupId>org.jfxtras</groupId>
+            <artifactId>openjfx-monocle</artifactId>
+            <version>1.8.0_20</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.0.0-M2</version>
-            <scope>compile</scope>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-runner</artifactId>
             <version>1.0.0-M2</version>
-            <scope>compile</scope>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>5.0.0-M2</version>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -151,14 +157,14 @@
         <dependency>
             <groupId>org.testfx</groupId>
             <artifactId>testfx-legacy</artifactId>
-            <version>4.0.4-alpha</version>
+            <version>4.0.5-alpha</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.testfx</groupId>
             <artifactId>testfx-junit</artifactId>
-            <version>4.0.4-alpha</version>
+            <version>4.0.5-alpha</version>
             <scope>test</scope>
         </dependency>
 
