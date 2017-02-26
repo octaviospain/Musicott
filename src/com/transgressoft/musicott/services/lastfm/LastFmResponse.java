@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.services.lastfm;
@@ -23,49 +23,49 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 @XmlRootElement (name = "lfm")
 public class LastFmResponse {
 
-	private String token;
-	private String status;
-	private LastFmError error;
-	private LastFmSession session;
+    private String token;
+    private String status;
+    private LastFmError error;
+    private LastFmSession session;
 
-	@XmlAttribute
-	public String getStatus() {
-		return this.status;
-	}
+    @XmlAttribute
+    public String getStatus() {
+        return this.status;
+    }
 
-	public void setStatus(String status) {
-		this.status = status;
-	}
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-	@XmlElement
-	public String getToken() {
-		return this.token;
-	}
+    @XmlElement
+    public String getToken() {
+        return this.token;
+    }
 
-	public void setToken(String token) {
-		this.token = token;
-	}
+    public void setToken(String token) {
+        this.token = token;
+    }
 
-	@XmlElement
-	public LastFmError getError() {
-		return this.error;
-	}
+    @XmlElement
+    public LastFmError getError() {
+        return this.error;
+    }
 
-	public void setError(LastFmError error) {
-		this.error = error;
-	}
+    public void setError(LastFmError error) {
+        this.error = error;
+    }
 
-	@XmlElement
-	public LastFmSession getSession() {
-		return session;
-	}
+    @XmlElement
+    public LastFmSession getSession() {
+        return session;
+    }
 
-	public void setSession(LastFmSession session) {
-		this.session = session;
-	}
+    public void setSession(LastFmSession session) {
+        this.session = session;
+    }
 }

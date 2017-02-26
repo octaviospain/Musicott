@@ -17,5 +17,5 @@
 Musicott-main-log.txt
 .idea
 *.iml
-*.fxbuild
+/build.fxbuild
 /resources/config/config.properties

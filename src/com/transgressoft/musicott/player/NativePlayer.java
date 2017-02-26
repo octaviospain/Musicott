@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.player;
@@ -30,53 +30,53 @@ import java.io.*;
  */
 public class NativePlayer implements TrackPlayer {
 
-	private MediaPlayer mediaPlayer;
+    private MediaPlayer mediaPlayer;
 
-	MediaPlayer getMediaPlayer() {
-		return mediaPlayer;
-	}
+    MediaPlayer getMediaPlayer() {
+        return mediaPlayer;
+    }
 
-	@Override
-	public String getStatus() {
-		return mediaPlayer.getStatus().name();
-	}
+    @Override
+    public String getStatus() {
+        return mediaPlayer.getStatus().name();
+    }
 
-	@Override
-	public void setTrack(Track track) {
-		File mp3File = new File(track.getFileFolder() + "/" + track.getFileName());
-		Media media = new Media(mp3File.toURI().toString());
-		mediaPlayer = new MediaPlayer(media);
-		mediaPlayer.setOnEndOfMedia(PlayerFacade.getInstance()::next);
-	}
+    @Override
+    public void setTrack(Track track) {
+        File mp3File = new File(track.getFileFolder() + "/" + track.getFileName());
+        Media media = new Media(mp3File.toURI().toString());
+        mediaPlayer = new MediaPlayer(media);
+        mediaPlayer.setOnEndOfMedia(PlayerFacade.getInstance()::next);
+    }
 
-	@Override
-	public void seek(double seekValue) {
-		mediaPlayer.seek(Duration.millis(seekValue));
-	}
+    @Override
+    public void seek(double seekValue) {
+        mediaPlayer.seek(Duration.millis(seekValue));
+    }
 
-	@Override
-	public void setVolume(double value) {
-		mediaPlayer.setVolume(mediaPlayer.getVolume() + value);
-	}
+    @Override
+    public void setVolume(double value) {
+        mediaPlayer.setVolume(mediaPlayer.getVolume() + value);
+    }
 
-	@Override
-	public void play() {
-		mediaPlayer.play();
-	}
+    @Override
+    public void play() {
+        mediaPlayer.play();
+    }
 
-	@Override
-	public void pause() {
-		mediaPlayer.pause();
-	}
+    @Override
+    public void pause() {
+        mediaPlayer.pause();
+    }
 
-	@Override
-	public void stop() {
-		mediaPlayer.stop();
-	}
+    @Override
+    public void stop() {
+        mediaPlayer.stop();
+    }
 
-	@Override
-	public void dispose() {
-		mediaPlayer.dispose();
-		mediaPlayer = null;
-	}
+    @Override
+    public void dispose() {
+        mediaPlayer.dispose();
+        mediaPlayer = null;
+    }
 }

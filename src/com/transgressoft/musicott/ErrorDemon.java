@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott;
@@ -30,92 +30,92 @@ import java.util.*;
  * the stack trace, or a text area with several error messages
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class ErrorDemon {
 
-	private static ErrorDemon instance;
-	private ErrorDialogController errorAlertController;
-	private Stage alertStage;
+    private static ErrorDemon instance;
+    private ErrorDialogController errorAlertController;
+    private Stage alertStage;
 
-	private ErrorDemon() {}
+    private ErrorDemon() {}
 
-	void setErrorAlertStage(Stage stage) {
-		alertStage = stage;
-	}
+    void setErrorAlertStage(Stage stage) {
+        alertStage = stage;
+    }
 
-	void setErrorAlertController(ErrorDialogController errorAlertController) {
-		this.errorAlertController = errorAlertController;
-	}
+    void setErrorAlertController(ErrorDialogController errorAlertController) {
+        this.errorAlertController = errorAlertController;
+    }
 
-	public static ErrorDemon getInstance() {
-		if (instance == null)
-			instance = new ErrorDemon();
-		return instance;
-	}
+    public static ErrorDemon getInstance() {
+        if (instance == null)
+            instance = new ErrorDemon();
+        return instance;
+    }
 
-	/**
-	 * Shows an error dialog with a message
-	 *
-	 * @param message The message to be shown
-	 */
-	public synchronized void showErrorDialog(String message) {
-		showErrorDialog(message, null);
-	}
+    /**
+     * Shows an error dialog with a message
+     *
+     * @param message The message to be shown
+     */
+    public synchronized void showErrorDialog(String message) {
+        showErrorDialog(message, null);
+    }
 
-	/**
-	 * Shows an error dialog with a message and a content text
-	 *
-	 * @param message The message to be shown
-	 * @param content The content text of the error dialog
-	 */
-	public synchronized void showErrorDialog(String message, String content) {
-		showErrorDialog(message, content, null);
-	}
+    /**
+     * Shows an error dialog with a message and a content text
+     *
+     * @param message The message to be shown
+     * @param content The content text of the error dialog
+     */
+    public synchronized void showErrorDialog(String message, String content) {
+        showErrorDialog(message, content, null);
+    }
 
-	/**
-	 * Shows an error dialog with a message, a content text,
-	 * and the stack trace of a exception
-	 *
-	 * @param message   The message to be shown
-	 * @param content   The content text of the error dialog
-	 * @param exception The exception error
-	 */
-	public synchronized void showErrorDialog(String message, String content, Exception exception) {
-		Platform.runLater(() -> {
-			errorAlertController.prepareDialog(message, content, exception);
-			StageDemon.getInstance().showStage(alertStage);
-			alertStage.sizeToScene();
-		});
-	}
+    /**
+     * Shows an error dialog with a message, a content text,
+     * and the stack trace of a exception
+     *
+     * @param message   The message to be shown
+     * @param content   The content text of the error dialog
+     * @param exception The exception error
+     */
+    public synchronized void showErrorDialog(String message, String content, Exception exception) {
+        Platform.runLater(() -> {
+            errorAlertController.prepareDialog(message, content, exception);
+            StageDemon.getInstance().showStage(alertStage);
+            alertStage.sizeToScene();
+        });
+    }
 
-	/**
-	 * Shows an error dialog with a message and a content text, and a collection of
-	 * error messages inside an expandable text area.
-	 *
-	 * @param message The message to be shown
-	 * @param content The content text of the error dialog
-	 * @param errors  The collection of error messages to be shown in the expandable area
-	 */
-	public synchronized void showExpandableErrorsDialog(String message, String content, Collection<String> errors) {
-		Platform.runLater(() -> {
-			errorAlertController.prepareDialogWithMessages(message, content, errors);
-			StageDemon.getInstance().showStage(alertStage);
-			alertStage.sizeToScene();
-		});
-	}
+    /**
+     * Shows an error dialog with a message and a content text, and a collection of
+     * error messages inside an expandable text area.
+     *
+     * @param message The message to be shown
+     * @param content The content text of the error dialog
+     * @param errors  The collection of error messages to be shown in the expandable area
+     */
+    public synchronized void showExpandableErrorsDialog(String message, String content, Collection<String> errors) {
+        Platform.runLater(() -> {
+            errorAlertController.prepareDialogWithMessages(message, content, errors);
+            StageDemon.getInstance().showStage(alertStage);
+            alertStage.sizeToScene();
+        });
+    }
 
-	/**
-	 * Shows an error dialog with the logo of LastFM
-	 *
-	 * @param message The message of the error
-	 * @param content The content text of the error dialog
-	 */
-	public synchronized void showLastFmErrorDialog(String message, String content) {
-		Platform.runLater(() -> {
-			errorAlertController.prepareLastFmDialog(message, content);
-			StageDemon.getInstance().showStage(alertStage);
-			alertStage.sizeToScene();
-		});
-	}
+    /**
+     * Shows an error dialog with the logo of LastFM
+     *
+     * @param message The message of the error
+     * @param content The content text of the error dialog
+     */
+    public synchronized void showLastFmErrorDialog(String message, String content) {
+        Platform.runLater(() -> {
+            errorAlertController.prepareLastFmDialog(message, content);
+            StageDemon.getInstance().showStage(alertStage);
+            alertStage.sizeToScene();
+        });
+    }
 }

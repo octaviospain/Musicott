@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.view.custom;
@@ -34,46 +34,46 @@ import java.util.stream.*;
  * a track id as a key and the {@link Track} as value.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9.1-b
  */
 public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
 
-	public static final DataFormat TRACK_ID_MIME_TYPE = new DataFormat("application/x-java-tracks-id");
+    public static final DataFormat TRACK_ID_MIME_TYPE = new DataFormat("application/x-java-tracks-id");
 
-	private TableView<Entry<Integer, Track>> trackTableView;
-	private PlayerFacade player = PlayerFacade.getInstance();
+    private TableView<Entry<Integer, Track>> trackTableView;
+    private PlayerFacade player = PlayerFacade.getInstance();
 
-	public TrackTableRow(TableView<Entry<Integer, Track>> trackTableView) {
-		super();
-		this.trackTableView = trackTableView;
-		setOnMouseClicked(this::playTrackOnMouseClickedHandler);
-		setOnDragDetected(this::onDragDetectedMovingTracks);
-	}
+    public TrackTableRow(TableView<Entry<Integer, Track>> trackTableView) {
+        super();
+        this.trackTableView = trackTableView;
+        setOnMouseClicked(this::playTrackOnMouseClickedHandler);
+        setOnDragDetected(this::onDragDetectedMovingTracks);
+    }
 
-	/**
-	 * Fires the play of a {@link Track}
-	 * when the user double-clicks a row.
-	 */
-	private void playTrackOnMouseClickedHandler(MouseEvent event) {
-		if (event.getClickCount() == 2 && ! isEmpty()) {
-			List<Integer> singleTrackIdList = Collections.singletonList(getItem().getKey());
-			player.addTracksToPlayQueue(singleTrackIdList, true);
-		}
-	}
+    /**
+     * Fires the play of a {@link Track}
+     * when the user double-clicks a row.
+     */
+    private void playTrackOnMouseClickedHandler(MouseEvent event) {
+        if (event.getClickCount() == 2 && ! isEmpty()) {
+            List<Integer> singleTrackIdList = Collections.singletonList(getItem().getKey());
+            player.addTracksToPlayQueue(singleTrackIdList, true);
+        }
+    }
 
-	private void onDragDetectedMovingTracks(MouseEvent event) {
-		if (! isEmpty()) {
-			Dragboard dragboard = startDragAndDrop(TransferMode.ANY);
-			dragboard.setDragView(snapshot(null, null));
+    private void onDragDetectedMovingTracks(MouseEvent event) {
+        if (! isEmpty()) {
+            Dragboard dragboard = startDragAndDrop(TransferMode.ANY);
+            dragboard.setDragView(snapshot(null, null));
 
-			ObservableList<Entry<Integer, Track>> selection = trackTableView.getSelectionModel().getSelectedItems();
-			List<Integer> selectionIds = selection.stream().map(Entry::getKey).collect(Collectors.toList());
-			ClipboardContent clipboardContent = new ClipboardContent();
-			clipboardContent.put(TRACK_ID_MIME_TYPE, selectionIds);
+            ObservableList<Entry<Integer, Track>> selection = trackTableView.getSelectionModel().getSelectedItems();
+            List<Integer> selectionIds = selection.stream().map(Entry::getKey).collect(Collectors.toList());
+            ClipboardContent clipboardContent = new ClipboardContent();
+            clipboardContent.put(TRACK_ID_MIME_TYPE, selectionIds);
 
-			dragboard.setContent(clipboardContent);
-			event.consume();
-		}
-	}
+            dragboard.setContent(clipboardContent);
+            event.consume();
+        }
+    }
 }

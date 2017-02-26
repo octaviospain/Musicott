@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.player;
@@ -26,43 +26,43 @@ import com.transgressoft.musicott.model.*;
  */
 public class FlacPlayer implements TrackPlayer {
 
-	@Override
-	public String getStatus() {
-		return "";
-	}
+    @Override
+    public String getStatus() {
+        return "";
+    }
 
-	@Override
-	public void setTrack(Track track) {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void setTrack(Track track) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void setVolume(double value) {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void setVolume(double value) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void seek(double seekValue) {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void seek(double seekValue) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void play() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void play() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void pause() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void pause() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void stop() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void stop() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void dispose() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void dispose() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 }

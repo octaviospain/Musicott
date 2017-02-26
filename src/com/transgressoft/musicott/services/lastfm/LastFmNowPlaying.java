@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.services.lastfm;
@@ -23,59 +23,59 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 @XmlRootElement (name = "nowplaying")
 public class LastFmNowPlaying {
 
-	@XmlElement
-	private LastFmTrack track;
-	@XmlElement
-	private LastFmArtist artist;
-	@XmlElement
-	private LastFmAlbum album;
-	@XmlElement
-	private LastFmAlbumArtist albumArtist;
-	@XmlElement
-	private LastFmIgnoredMessage ignoredMessage;
+    @XmlElement
+    private LastFmTrack track;
+    @XmlElement
+    private LastFmArtist artist;
+    @XmlElement
+    private LastFmAlbum album;
+    @XmlElement
+    private LastFmAlbumArtist albumArtist;
+    @XmlElement
+    private LastFmIgnoredMessage ignoredMessage;
 
-	public LastFmTrack getTrack() {
-		return track;
-	}
+    public LastFmTrack getTrack() {
+        return track;
+    }
 
-	public void setTrack(LastFmTrack track) {
-		this.track = track;
-	}
+    public void setTrack(LastFmTrack track) {
+        this.track = track;
+    }
 
-	public LastFmArtist getArtist() {
-		return artist;
-	}
+    public LastFmArtist getArtist() {
+        return artist;
+    }
 
-	public void setArtist(LastFmArtist artist) {
-		this.artist = artist;
-	}
+    public void setArtist(LastFmArtist artist) {
+        this.artist = artist;
+    }
 
-	public LastFmAlbum getAlbum() {
-		return album;
-	}
+    public LastFmAlbum getAlbum() {
+        return album;
+    }
 
-	public void setAlbum(LastFmAlbum album) {
-		this.album = album;
-	}
+    public void setAlbum(LastFmAlbum album) {
+        this.album = album;
+    }
 
-	public LastFmAlbumArtist getAlbumArtist() {
-		return albumArtist;
-	}
+    public LastFmAlbumArtist getAlbumArtist() {
+        return albumArtist;
+    }
 
-	public void setAlbumArtist(LastFmAlbumArtist albumArtist) {
-		this.albumArtist = albumArtist;
-	}
+    public void setAlbumArtist(LastFmAlbumArtist albumArtist) {
+        this.albumArtist = albumArtist;
+    }
 
-	public LastFmIgnoredMessage getIgnoredMessage() {
-		return ignoredMessage;
-	}
+    public LastFmIgnoredMessage getIgnoredMessage() {
+        return ignoredMessage;
+    }
 
-	public void setIgnoredMessage(LastFmIgnoredMessage ignoredMessage) {
-		this.ignoredMessage = ignoredMessage;
-	}
+    public void setIgnoredMessage(LastFmIgnoredMessage ignoredMessage) {
+        this.ignoredMessage = ignoredMessage;
+    }
 }

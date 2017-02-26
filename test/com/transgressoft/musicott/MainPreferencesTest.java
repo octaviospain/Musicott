@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott;
@@ -27,7 +27,7 @@ import org.junit.runner.*;
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.tasks.ItunesImportTask.*;
+import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -35,11 +35,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @RunWith (JUnitPlatform.class)
 public class MainPreferencesTest {
-
-	static final String IMPORT_MP3 = "import_mp3_flag";
-	static final String IMPORT_M4A = "import_m4a_flag";
-	static final String IMPORT_WAV = "import_wav_flag";
-	static final String IMPORT_FLAC = "import_flac_flag";
 
 	@Test
 	@DisplayName ("User folder")

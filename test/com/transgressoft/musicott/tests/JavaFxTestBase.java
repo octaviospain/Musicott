@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.tests;
@@ -36,7 +36,7 @@ public class JavaFxTestBase extends ApplicationTest {
     protected static String layout;
     protected static Stage testStage;
     protected Object controller;
-    private Application testApplication;
+    protected Application testApplication;
 
     @Override
     public void start(Stage stage) throws Exception {

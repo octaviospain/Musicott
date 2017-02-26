@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.view;
@@ -35,6 +35,8 @@ import java.util.*;
  * optionally a text area with exception stack traces or multiple error messages.
  *
  * @author Octavio Calleya
+ * @version 0.9.2-b
+ * @since 0.9.1-b
  */
 public class ErrorDialogController implements MusicottController {
 
@@ -71,11 +73,7 @@ public class ErrorDialogController implements MusicottController {
     public void initialize() {
         reportInGithubHyperlink.setOnAction(event -> {
             HostServices hostServices = StageDemon.getInstance().getApplicationHostServices();
-            Hyperlink link = (Hyperlink) event.getSource();
-            String str = link == null ? "" : link.getText();
-            if ("Report this error on github.".equals(str)) {
-                hostServices.showDocument("https://github.com/octaviospain/Musicott/issues");
-            }
+            hostServices.showDocument("https://github.com/octaviospain/Musicott/issues");
         });
         contentVBox.getChildren().remove(reportInGithubHyperlink);
 
@@ -90,6 +88,7 @@ public class ErrorDialogController implements MusicottController {
                 rootBorderPane.getChildren().remove(detailsTextArea);
                 seeDetailsToggleButton.setSelected(true);
             }
+            contentVBox.getScene().getWindow().sizeToScene();
         };
         seeDetailsToggleButton.setOnAction(expandablePaneHandler);
         seeDetailsHyperlink.setOnAction(expandablePaneHandler);

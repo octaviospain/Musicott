@@ -14,7 +14,7 @@
                   <Image url="@../images/musicott-about-logo.png" />
                </image>
             </ImageView>
-            <Label fx:id="infoLabel" text="Label" VBox.vgrow="SOMETIMES">
+            <Label fx:id="infoLabel" VBox.vgrow="SOMETIMES">
                <VBox.margin>
                   <Insets bottom="10.0" top="10.0" />
                </VBox.margin>

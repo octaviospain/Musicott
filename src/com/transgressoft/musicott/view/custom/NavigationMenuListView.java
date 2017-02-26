@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.view.custom;
@@ -31,16 +31,16 @@ import javafx.scene.control.*;
  */
 public class NavigationMenuListView extends ListView<NavigationMode> {
 
-	private StageDemon stageDemon = StageDemon.getInstance();
+    private StageDemon stageDemon = StageDemon.getInstance();
 
-	public NavigationMenuListView() {
-		super();
-		setId("showMenuListView");
-		setPrefHeight(USE_COMPUTED_SIZE);
-		setPrefWidth(USE_COMPUTED_SIZE);
-		getSelectionModel().selectedItemProperty().addListener((obs, oldMenu, newMode) -> {
-			if (newMode != null)
-				stageDemon.getNavigationController().setNavigationMode(newMode);
-		});
-	}
+    public NavigationMenuListView() {
+        super();
+        setId("showMenuListView");
+        setPrefHeight(USE_COMPUTED_SIZE);
+        setPrefWidth(USE_COMPUTED_SIZE);
+        getSelectionModel().selectedItemProperty().addListener((obs, oldMenu, newMode) -> {
+            if (newMode != null)
+                stageDemon.getNavigationController().setNavigationMode(newMode);
+        });
+    }
 }

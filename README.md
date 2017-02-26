@@ -12,7 +12,7 @@ Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to 
 [TestFx](https://github.com/TestFX/TestFX "TestFx") for testing, and some components from
 [ControlsFx](https://bitbucket.org/controlsfx/controlsfx/ "ControlsFx").
 
-Next version 0.9 is almost prepared but it needs more tests (as always)! Community help is welcomed ;)
+Testing with Junit 5, TestFX and maven is quite difficult, help is welcomed !
 
 ![Musicott screenshot 1](https://dl.dropboxusercontent.com/u/3596661/main.png)
 
@@ -77,6 +77,6 @@ the number of tracks and the size of the playlist
 * Big refactor implementing better concurrent model
 
 ## Copyright
-Copyright (c) 2015-2016 Octavio Calleya.
+Copyright (c) 2015-2017 Octavio Calleya.
 
 Musicott is free software under GNU GPL version 3 license. The license of Musicott and the licenses of the included libraries in this software are in the [LICENSE](https://github.com/octaviospain/Musicott/tree/master/license "License") folder

@@ -14,13 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.tasks;
 
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.tasks.parse.*;
+import javafx.collections.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -32,32 +34,48 @@ import java.util.concurrent.*;
  * flow between concurrent task threads in the application.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class TaskDemon {
 
-	private static final String ALREADY_IMPORTING_ERROR_MESSAGE = "There is already an import task running." +
+	private static final String ALREADY_IMPORTING_ERROR_MESSAGE = "There is already an import task running. " +
 			 													  "Wait for it to perform another import task.";
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	private static TaskDemon instance;
-	private ParseTask parseTask;
-	private ItunesImportTask itunesImportTask;
-	private Semaphore waveformSemaphore;
-	private Queue<Track> tracksToProcessQueue;
+	private ExecutorService parseExecutorService;
+	private Future parseFuture;
+	private BaseParseTask parseTask;
+	private BlockingQueue<Track> tracksToProcessQueue;
 	private WaveformTask waveformTask;
+    private SaveMusicLibraryTask saveMusicLibraryTask;
+
+	private ObservableMap<Integer, Track> tracks;
+	private Map<Integer, float[]> waveforms;
+	private List<Playlist> playlists;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
 	private TaskDemon() {
-		tracksToProcessQueue = new ArrayDeque<>();
-		waveformSemaphore = new Semaphore(0);
+		tracksToProcessQueue = new LinkedBlockingQueue<>();
+		parseExecutorService = Executors.newSingleThreadExecutor();
 	}
 
 	public static TaskDemon getInstance() {
 		if (instance == null)
 			instance = new TaskDemon();
 		return instance;
+	}
+
+	public void shutDownTasks() {
+		parseExecutorService.shutdown();
+	}
+
+	public void setMusicCollections(ObservableMap<Integer, Track> musicottTracks, Map<Integer, float[]> waveforms,
+			List<Playlist> playlists) {
+		tracks = musicottTracks;
+		this.waveforms = waveforms;
+		this.playlists = playlists;
 	}
 
 	/**
@@ -67,15 +85,11 @@ public class TaskDemon {
 	 * @param itunesLibraryPath The path where the <tt>iTunes Music Library.xml</tt> file is located.
 	 */
 	public void importFromItunesLibrary(String itunesLibraryPath) {
-		if ((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask
-				.isRunning())) {
-			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE);
-		}
+		if (parseFuture != null && ! parseFuture.isDone())
+			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
-			itunesImportTask = new ItunesImportTask(itunesLibraryPath);
-			Thread itunesThread = new Thread(itunesImportTask, "Parse Itunes Task");
-			itunesThread.setDaemon(true);
-			itunesThread.start();
+			parseTask = new ItunesParseTask(itunesLibraryPath);
+			parseFuture = parseExecutorService.submit(parseTask);
 			LOG.debug("Importing Itunes Library: {}", itunesLibraryPath);
 		}
 	}
@@ -88,27 +102,35 @@ public class TaskDemon {
 	 * @param playAtTheEnd  Specifies whether the application should play music at the end of the importation.
 	 */
 	public void importFiles(List<File> filesToImport, boolean playAtTheEnd) {
-		if ((itunesImportTask != null && itunesImportTask.isRunning()) || (parseTask != null && parseTask.isRunning()))
-			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE);
+		if (parseFuture != null && ! parseFuture.isDone())
+			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
-			parseTask = new ParseTask(filesToImport, playAtTheEnd);
-			Thread parseThread = new Thread(parseTask, "Parse Files Task");
-			parseThread.setDaemon(true);
-			parseThread.start();
+			parseTask = new FilesParseTask(filesToImport, playAtTheEnd);
+			parseFuture = parseExecutorService.submit(parseTask);
+			LOG.debug("Importing {} files from folder", filesToImport.size());
 		}
 	}
 
-	public synchronized void analyzeTrackWaveform(Track trackToAnalyze) {
+    public void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
+        if (saveMusicLibraryTask == null) {
+			saveMusicLibraryTask = new SaveMusicLibraryTask(tracks, waveforms, playlists);
+			saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
+			saveMusicLibraryTask.setDaemon(true);
+			saveMusicLibraryTask.start();
+        }
+		saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
+    }
+
+	public void analyzeTrackWaveform(Track trackToAnalyze) {
 		if (waveformTask == null) {
-			waveformTask = new WaveformTask(waveformSemaphore);
+			waveformTask = new WaveformTask(this);
 			waveformTask.start();
 		}
 		tracksToProcessQueue.add(trackToAnalyze);
-		waveformSemaphore.release();
 		LOG.debug("Added track {} to waveform analyze queue", trackToAnalyze);
 	}
 
-	protected synchronized Track getNextTrackToAnalyzeWaveform() {
-		return tracksToProcessQueue.poll();
+	Track getNextTrackToAnalyzeWaveform() throws InterruptedException {
+		return tracksToProcessQueue.take();
 	}
 }
