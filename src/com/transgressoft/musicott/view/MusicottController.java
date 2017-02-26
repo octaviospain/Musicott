@@ -36,6 +36,10 @@ import com.transgressoft.musicott.tasks.*;
  */
 public interface MusicottController {
 
+	String TRACKS_PERSISTENCE_FILE = "Musicott-tracks.json";
+	String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
+	String PLAYLISTS_PERSISTENCE_FILE = "Musicott-playlists.json";
+
 	String LAYOUTS_PATH = "/view/";
 	String IMAGES_PATH = "/images/";
 	String STYLES_PATH = "/css/";

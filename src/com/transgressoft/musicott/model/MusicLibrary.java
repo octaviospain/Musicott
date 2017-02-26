@@ -23,6 +23,7 @@ import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.tasks.load.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.Platform;
 import javafx.beans.property.*;
@@ -159,7 +160,7 @@ public class MusicLibrary {
 
 	/**
 	 * Adds a collection of waveforms to the music library's collection of waveforms.
-	 * This method is only called from {@link MusicottApplication#loadWaveforms} when
+	 * This method is only called from a {@link WaveformsLoadAction} when
 	 * the user's waveforms are loaded, and that's why {@link TaskDemon#saveLibrary} is not called.
 	 *
 	 * @param newWaveforms The {@code Map} of waveforms to be added
@@ -179,7 +180,7 @@ public class MusicLibrary {
 
 	/**
 	 * Adds {@link Playlist}s to the music library's collection playlists.
-	 * This method is only called from {@link MusicottApplication#loadPlaylists} when
+	 * This method is only called from a {@link PlaylistsLoadAction} when
 	 * the user's playlists are loaded, and that's why {@link TaskDemon#saveLibrary} is not called.
 	 *
 	 * @param newPlaylists The playlists to be added

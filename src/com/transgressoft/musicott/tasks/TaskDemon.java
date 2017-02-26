@@ -58,6 +58,7 @@ public class TaskDemon {
 
 	private TaskDemon() {
 		tracksToProcessQueue = new LinkedBlockingQueue<>();
+		parseExecutorService = Executors.newSingleThreadExecutor();
 	}
 
 	public static TaskDemon getInstance() {
@@ -66,12 +67,15 @@ public class TaskDemon {
 		return instance;
 	}
 
+	public void shutDownTasks() {
+		parseExecutorService.shutdown();
+	}
+
 	public void setMusicCollections(ObservableMap<Integer, Track> musicottTracks, Map<Integer, float[]> waveforms,
 			List<Playlist> playlists) {
 		tracks = musicottTracks;
 		this.waveforms = waveforms;
 		this.playlists = playlists;
-		parseExecutorService = Executors.newSingleThreadExecutor();
 	}
 
 	/**
