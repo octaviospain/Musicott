@@ -38,7 +38,7 @@ import java.util.*;
  * music library menus, and the status progress and status messages.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class NavigationController implements MusicottController {
 

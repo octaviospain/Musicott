@@ -28,7 +28,7 @@ import java.util.*;
  * to system's track's ids, and a list of not found files during the {@link ItunesTracksParseAction}
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9.2-b
  */
 public class ItunesParseResult extends ParseResult<Map<Integer, Track>> {

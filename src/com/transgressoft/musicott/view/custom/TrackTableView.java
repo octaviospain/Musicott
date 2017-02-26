@@ -44,7 +44,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * instances in their rows, showing almost all of the properties of a <tt>Track</tt> in the columns.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class TrackTableView extends TableView<Entry<Integer, Track>> {
 

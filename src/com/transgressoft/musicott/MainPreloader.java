@@ -40,7 +40,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * application folder. </p>
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class MainPreloader extends Preloader {
 

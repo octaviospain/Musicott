@@ -44,7 +44,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * the access to their controllers and the handling of showing/hiding views
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class StageDemon {
 

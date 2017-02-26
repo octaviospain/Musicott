@@ -45,7 +45,7 @@ import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
  * with partitions of the items collection and their results joined after their completion.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9.2-b
  */
 public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {

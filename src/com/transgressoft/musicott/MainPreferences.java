@@ -30,7 +30,7 @@ import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
  * or the the iTunes import options, using the java predefined class {@link Preferences}.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class MainPreferences {
 
