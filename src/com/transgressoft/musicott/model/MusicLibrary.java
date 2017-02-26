@@ -23,6 +23,7 @@ import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.tasks.load.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.Platform;
 import javafx.beans.property.*;
@@ -45,17 +46,18 @@ public class MusicLibrary {
 	private static final int DEFAULT_RANDOM_QUEUE_SIZE = 8;
 	private static MusicLibrary instance;
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private ObservableMap<Integer, Track> musicottTracks;
-	private Map<Integer, float[]> waveforms;
-	private List<Playlist> playlists;
+	private final ObservableMap<Integer, Track> musicottTracks;
+	private final Map<Integer, float[]> waveforms;
+	private final List<Playlist> playlists;
 
 	private ObservableList<Map.Entry<Integer, Track>> showingTracks;
 	private ListProperty<Map.Entry<Integer, Track>> showingTracksProperty;
 
 	private ObservableList<Map.Entry<Integer, Track>> musicottTrackEntriesList;
 	private ListProperty<Map.Entry<Integer, Track>> musicottTrackEntriesListProperty;
-	private SaveMusicLibraryTask saveMusicLibraryTask;
 	private MapChangeListener<Integer, Track> musicottTracksChangeListener = musicottTracksChangeListener();
+	
+	private TaskDemon taskDemon = TaskDemon.getInstance();
 
 	private MusicLibrary() {
 		musicottTracks = FXCollections.observableHashMap();
@@ -64,6 +66,7 @@ public class MusicLibrary {
 		bindShowingTracks();
 		waveforms = new HashMap<>();
 		playlists = new ArrayList<>();
+		taskDemon.setMusicCollections(musicottTracks, waveforms, playlists);
 	}
 
 	/**
@@ -108,19 +111,10 @@ public class MusicLibrary {
 				Integer trackId = removedTrack.getTrackId();
 				musicottTrackEntriesList.remove(new AbstractMap.SimpleEntry<>(trackId, removedTrack));
 			}
-			saveLibrary(true, false, false);
+			taskDemon.saveLibrary(true, false, false);
 		};
 	}
-
-	public void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
-		if (saveMusicLibraryTask == null) {
-			saveMusicLibraryTask = new SaveMusicLibraryTask(musicottTracks, waveforms, playlists);
-			saveMusicLibraryTask.setDaemon(true);
-			saveMusicLibraryTask.start();
-		}
-		saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
-	}
-
+	
 	public void addTracks(Map<Integer, Track> tracks) {
 		tracks.entrySet().parallelStream().forEach(trackEntry -> {
 			synchronized (musicottTracks) {
@@ -161,13 +155,13 @@ public class MusicLibrary {
 		synchronized (waveforms) {
 			waveforms.put(trackId, waveform);
 		}
-		saveLibrary(false, true, false);
+		taskDemon.saveLibrary(false, true, false);
 	}
 
 	/**
 	 * Adds a collection of waveforms to the music library's collection of waveforms.
-	 * This method is only called from {@link MusicottApplication#loadWaveforms} when
-	 * the user's waveforms are loaded, and that's why {@link #saveLibrary} is not called.
+	 * This method is only called from a {@link WaveformsLoadAction} when
+	 * the user's waveforms are loaded, and that's why {@link TaskDemon#saveLibrary} is not called.
 	 *
 	 * @param newWaveforms The {@code Map} of waveforms to be added
 	 */
@@ -181,13 +175,13 @@ public class MusicLibrary {
 		synchronized (playlists) {
 			playlists.add(playlist);
 		}
-		saveLibrary(false, false, true);
+		taskDemon.saveLibrary(false, false, true);
 	}
 
 	/**
 	 * Adds {@link Playlist}s to the music library's collection playlists.
-	 * This method is only called from {@link MusicottApplication#loadPlaylists} when
-	 * the user's playlists are loaded, and that's why {@link #saveLibrary} is not called.
+	 * This method is only called from a {@link PlaylistsLoadAction} when
+	 * the user's playlists are loaded, and that's why {@link TaskDemon#saveLibrary} is not called.
 	 *
 	 * @param newPlaylists The playlists to be added
 	 */
@@ -213,12 +207,12 @@ public class MusicLibrary {
 	 * @param trackIds A {@code List} of track ids
 	 */
 	public void deleteTracks(List<Integer> trackIds) {
-		synchronized (musicottTracks) {
-			Platform.runLater(() -> {
-				removeFromShowingTracks(trackIds);
+		Platform.runLater(() -> {
+			removeFromShowingTracks(trackIds);
+			synchronized (musicottTracks) {
 				musicottTracks.keySet().removeAll(trackIds);
-			});
-		}
+			}
+		});
 
 		boolean playlistsChanged[] = new boolean[]{false};
 		synchronized (playlists) {
@@ -228,7 +222,7 @@ public class MusicLibrary {
 
 		boolean waveformsChanged = waveforms.keySet().removeAll(trackIds);
 
-		saveLibrary(true, waveformsChanged, playlistsChanged[0]);
+		taskDemon.saveLibrary(true, waveformsChanged, playlistsChanged[0]);
 		LOG.info("Deleted {} tracks", trackIds.size());
 		String message = "Deleted " + Integer.toString(trackIds.size()) + " tracks";
 		Platform.runLater(() -> StageDemon.getInstance().getNavigationController().setStatusMessage(message));
@@ -247,7 +241,7 @@ public class MusicLibrary {
 				deletePlaylistFromFolders(playlist, folders);
 			}
 		}
-		saveLibrary(false, false, true);
+		taskDemon.saveLibrary(false, false, true);
 	}
 
 	private void deletePlaylistFromFolders(Playlist playlist, List<Playlist> folders) {
@@ -334,8 +328,8 @@ public class MusicLibrary {
 					if (o instanceof MusicLibrary) {
 						MusicLibrary object = (MusicLibrary) o;
 						res = object.musicottTracks.equals(this.musicottTracks) &&
-								object.musicottTracks.equals(this.waveforms) &&
-								object.musicottTracks.equals(this.playlists);
+								object.waveforms.equals(this.waveforms) &&
+								object.playlists.equals(this.playlists);
 					}
 					else {
 						res = false;

@@ -139,6 +139,7 @@ public class MusicottMenuBar extends MenuBar {
 		closeMI.setAccelerator(new KeyCodeCombination(KeyCode.F4, ALT_DOWN));
 		closeMI.setOnAction(event -> {
 			LOG.info("Exiting Musicott");
+			taskDemon.shutDownTasks();
 			System.exit(0);
 		});
 		fileMenu.getItems().addAll(new SeparatorMenuItem(), preferencesMenuItem, new SeparatorMenuItem(), closeMI);

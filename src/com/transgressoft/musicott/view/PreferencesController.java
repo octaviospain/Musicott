@@ -19,9 +19,9 @@
 
 package com.transgressoft.musicott.view;
 
-import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.services.lastfm.*;
+import com.transgressoft.musicott.tasks.*;
 import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
@@ -37,7 +37,7 @@ import java.io.*;
 import java.util.*;
 
 import static com.transgressoft.musicott.MusicottApplication.*;
-import static com.transgressoft.musicott.tasks.ItunesImportTask.*;
+import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
 
 /**
  * Controller class of the preferences window.
@@ -247,6 +247,6 @@ public class PreferencesController implements MusicottController {
 		if (playlistsFile.exists() && ! playlistsFile.delete())
 			errorDemon.showErrorDialog("Unable to delete playlists file", playlistsFile.getAbsolutePath());
 		preferences.setMusicottUserFolder(newApplicationUserFolder);
-		MusicLibrary.getInstance().saveLibrary(true, true, true);
+		TaskDemon.getInstance().saveLibrary(true, true, true);
 	}
 }

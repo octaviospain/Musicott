@@ -27,7 +27,7 @@ import org.junit.runner.*;
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.tasks.ItunesImportTask.*;
+import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

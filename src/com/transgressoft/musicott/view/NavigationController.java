@@ -164,7 +164,7 @@ public class NavigationController implements MusicottController {
 			Playlist selectedPlaylist = selectedPlaylistItem.getValue();
 			if (selectedPlaylist.isFolder()) {
 				playlistTreeView.addPlaylistChild(selectedPlaylist, newPlaylist);
-				musicLibrary.saveLibrary(false, false, true);
+				taskDemon.saveLibrary(false, false, true);
 			}
 		}
 		else {

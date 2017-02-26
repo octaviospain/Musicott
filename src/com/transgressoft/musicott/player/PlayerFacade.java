@@ -23,6 +23,7 @@ import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.model.Track;
 import com.transgressoft.musicott.services.*;
+import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.view.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
@@ -59,6 +60,7 @@ public class PlayerFacade {
 	private StageDemon stageDemon = StageDemon.getInstance();
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private ServiceDemon services = ServiceDemon.getInstance();
+	private TaskDemon taskDemon = TaskDemon.getInstance();
 
 	private PlayerFacade() {
 		playList = FXCollections.observableArrayList();
@@ -263,7 +265,7 @@ public class PlayerFacade {
 	private void incrementCurrentTrackPlayCount() {
 		if (! played) {
 			currentTrack.ifPresent(Track::incrementPlayCount);
-			musicLibrary.saveLibrary(true, false, false);
+			taskDemon.saveLibrary(true, false, false);
 			played = true;
 		}
 	}

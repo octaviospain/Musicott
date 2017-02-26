@@ -20,6 +20,7 @@
 package com.transgressoft.musicott.model;
 
 import com.transgressoft.musicott.*;
+import com.transgressoft.musicott.tasks.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.scene.image.*;
@@ -53,6 +54,7 @@ public class Playlist {
 
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private StageDemon stageDemon = StageDemon.getInstance();
+	private TaskDemon taskDemon = TaskDemon.getInstance();
 
 	public Playlist(String name, boolean isFolder) {
 		this.name = name;
@@ -114,7 +116,7 @@ public class Playlist {
 		boolean result = playlistTrackIds.addAll(tracksIds);
 		if (result) {
 			changePlaylistCover();
-			musicLibrary.saveLibrary(false, false, true);
+			taskDemon.saveLibrary(false, false, true);
 		}
 
 		Optional<Playlist> selectedPlaylist = stageDemon.getNavigationController().selectedPlaylistProperty().get();
@@ -133,7 +135,7 @@ public class Playlist {
 		boolean result = playlistTrackIds.removeAll(tracksIds);
 		if (result) {
 			changePlaylistCover();
-			musicLibrary.saveLibrary(false, false, true);
+			taskDemon.saveLibrary(false, false, true);
 		}
 
 		Optional<Playlist> selectedPlaylist = stageDemon.getNavigationController().selectedPlaylistProperty().get();

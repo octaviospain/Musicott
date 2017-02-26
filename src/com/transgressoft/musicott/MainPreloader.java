@@ -19,7 +19,7 @@
 
 package com.transgressoft.musicott;
 
-import com.transgressoft.musicott.MusicottApplication.*;
+import com.transgressoft.musicott.util.*;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.fxml.*;

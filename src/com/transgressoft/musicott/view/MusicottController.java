@@ -23,6 +23,7 @@ import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.services.*;
+import com.transgressoft.musicott.tasks.*;
 
 /**
  * Interface that represent a controller of the Musicott application.
@@ -34,6 +35,10 @@ import com.transgressoft.musicott.services.*;
  * @since 0.9
  */
 public interface MusicottController {
+
+	String TRACKS_PERSISTENCE_FILE = "Musicott-tracks.json";
+	String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
+	String PLAYLISTS_PERSISTENCE_FILE = "Musicott-playlists.json";
 
 	String LAYOUTS_PATH = "/view/";
 	String IMAGES_PATH = "/images/";
@@ -65,4 +70,5 @@ public interface MusicottController {
 	ServiceDemon serviceDemon = ServiceDemon.getInstance();
 	StageDemon stageDemon = StageDemon.getInstance();
 	ErrorDemon errorDemon = ErrorDemon.getInstance();
+	TaskDemon taskDemon = TaskDemon.getInstance();
 }
