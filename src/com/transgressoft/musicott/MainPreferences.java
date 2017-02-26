@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott;
@@ -23,7 +23,7 @@ import java.io.*;
 import java.util.*;
 import java.util.prefs.*;
 
-import static com.transgressoft.musicott.tasks.ItunesImportTask.*;
+import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
 
 /**
  * Singleton class that isolates some user preferences, such as the application folder

@@ -14,12 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.model;
 
 import com.transgressoft.musicott.*;
+import com.transgressoft.musicott.tasks.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.scene.image.*;
@@ -53,6 +54,7 @@ public class Playlist {
 
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private StageDemon stageDemon = StageDemon.getInstance();
+	private TaskDemon taskDemon = TaskDemon.getInstance();
 
 	public Playlist(String name, boolean isFolder) {
 		this.name = name;
@@ -114,7 +116,7 @@ public class Playlist {
 		boolean result = playlistTrackIds.addAll(tracksIds);
 		if (result) {
 			changePlaylistCover();
-			musicLibrary.saveLibrary(false, false, true);
+			taskDemon.saveLibrary(false, false, true);
 		}
 
 		Optional<Playlist> selectedPlaylist = stageDemon.getNavigationController().selectedPlaylistProperty().get();
@@ -133,7 +135,7 @@ public class Playlist {
 		boolean result = playlistTrackIds.removeAll(tracksIds);
 		if (result) {
 			changePlaylistCover();
-			musicLibrary.saveLibrary(false, false, true);
+			taskDemon.saveLibrary(false, false, true);
 		}
 
 		Optional<Playlist> selectedPlaylist = stageDemon.getNavigationController().selectedPlaylistProperty().get();
@@ -197,9 +199,7 @@ public class Playlist {
 
 	@Override
 	public int hashCode() {
-		int hash = 71;
-		hash = 73 * hash + name.hashCode();
-		return hash;
+		return Objects.hash(name);
 	}
 
 	@Override

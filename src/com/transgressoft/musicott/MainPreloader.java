@@ -14,12 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott;
 
-import com.transgressoft.musicott.MusicottApplication.*;
+import com.transgressoft.musicott.util.*;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.fxml.*;

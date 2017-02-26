@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.tasks;
@@ -61,24 +61,23 @@ public class WaveformTask extends Thread {
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 	private Track trackToAnalyze;
 	private float[] resultingWaveform;
-	private Semaphore taskSemaphore;
 
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private StageDemon stageDemon = StageDemon.getInstance();
-	private TaskDemon taskDemon = TaskDemon.getInstance();
+	private TaskDemon taskDemon;
 
-	public WaveformTask(Semaphore taskSemaphore) {
+	public WaveformTask(TaskDemon taskDemon) {
 		super("Waveform task");
-		this.taskSemaphore = taskSemaphore;
+		this.taskDemon = taskDemon;
 	}
 
 	@Override
 	public void run() {
 		while (true) {
 			try {
-				taskSemaphore.acquire();
 				trackToAnalyze = taskDemon.getNextTrackToAnalyzeWaveform();
 				LOG.debug("Processing resultingWaveform of trackToAnalyze {}", trackToAnalyze);
+
 				String fileFormat = trackToAnalyze.getFileFormat();
 				if ("wav".equals(fileFormat))
 					resultingWaveform = processFromWavFile();
@@ -90,7 +89,6 @@ public class WaveformTask extends Thread {
 					Optional<Track> currentTrack = PlayerFacade.getInstance().getCurrentTrack();
 					currentTrack.ifPresent(this::checkAnalyzedTrackIsCurrentPlaying);
 					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage(""));
-					musicLibrary.saveLibrary(false, true, false);
 				}
 			}
 			catch (IOException | UnsupportedAudioFileException | EncoderException | InterruptedException exception) {

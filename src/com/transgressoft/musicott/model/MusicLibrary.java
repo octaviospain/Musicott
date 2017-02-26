@@ -14,16 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.model;
 
+import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.tasks.load.*;
 import com.transgressoft.musicott.view.*;
-import javafx.application.*;
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import org.slf4j.*;
@@ -44,17 +46,18 @@ public class MusicLibrary {
 	private static final int DEFAULT_RANDOM_QUEUE_SIZE = 8;
 	private static MusicLibrary instance;
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private ObservableMap<Integer, Track> musicottTracks;
-	private Map<Integer, float[]> waveforms;
-	private List<Playlist> playlists;
+	private final ObservableMap<Integer, Track> musicottTracks;
+	private final Map<Integer, float[]> waveforms;
+	private final List<Playlist> playlists;
 
 	private ObservableList<Map.Entry<Integer, Track>> showingTracks;
 	private ListProperty<Map.Entry<Integer, Track>> showingTracksProperty;
 
 	private ObservableList<Map.Entry<Integer, Track>> musicottTrackEntriesList;
 	private ListProperty<Map.Entry<Integer, Track>> musicottTrackEntriesListProperty;
-	private SaveMusicLibraryTask saveMusicLibraryTask;
 	private MapChangeListener<Integer, Track> musicottTracksChangeListener = musicottTracksChangeListener();
+	
+	private TaskDemon taskDemon = TaskDemon.getInstance();
 
 	private MusicLibrary() {
 		musicottTracks = FXCollections.observableHashMap();
@@ -63,10 +66,11 @@ public class MusicLibrary {
 		bindShowingTracks();
 		waveforms = new HashMap<>();
 		playlists = new ArrayList<>();
+		taskDemon.setMusicCollections(musicottTracks, waveforms, playlists);
 	}
 
 	/**
-	 * Binds deletePlaylistFromFolders list of entries of the Musicott tracks map, and it to deletePlaylistFromFolders list property
+	 * Binds the entries of the Musicott tracks to a {@link ListProperty} of all its elements
 	 */
 	private void bindTrackEntriesList() {
 		musicottTrackEntriesList = FXCollections.observableArrayList(musicottTracks.entrySet());
@@ -75,7 +79,8 @@ public class MusicLibrary {
 	}
 
 	/**
-	 * Binds the tracks that must be shown on the table to deletePlaylistFromFolders list property
+	 * Binds the entries of the Musicott tracks to a {@link ListProperty} of the elements
+	 * that are shown in the table
 	 */
 	private void bindShowingTracks() {
 		showingTracks = FXCollections.observableArrayList(musicottTracks.entrySet());
@@ -92,7 +97,7 @@ public class MusicLibrary {
 	/**
 	 * Listener that adds or removes the tracks changed in the Musicott tracks map to the track entries list.
 	 *
-	 * @return The {@link WeakMapChangeListener} reference
+	 * @return The {@link MapChangeListener} reference
 	 */
 	private MapChangeListener<Integer, Track> musicottTracksChangeListener() {
 		return (MapChangeListener.Change<? extends Integer, ? extends Track> change) -> {
@@ -106,19 +111,10 @@ public class MusicLibrary {
 				Integer trackId = removedTrack.getTrackId();
 				musicottTrackEntriesList.remove(new AbstractMap.SimpleEntry<>(trackId, removedTrack));
 			}
-			saveLibrary(true, false, false);
+			taskDemon.saveLibrary(true, false, false);
 		};
 	}
-
-	public void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
-		if (saveMusicLibraryTask == null) {
-			saveMusicLibraryTask = new SaveMusicLibraryTask(musicottTracks, waveforms, playlists);
-			saveMusicLibraryTask.setDaemon(true);
-			saveMusicLibraryTask.start();
-		}
-		saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
-	}
-
+	
 	public void addTracks(Map<Integer, Track> tracks) {
 		tracks.entrySet().parallelStream().forEach(trackEntry -> {
 			synchronized (musicottTracks) {
@@ -134,7 +130,6 @@ public class MusicLibrary {
 				}
 			}
 		});
-		saveLibrary(true, false, false);
 	}
 
 	private void addToShowingTracksStream(Stream<Entry<Integer, Track>> tracksEntriesStream) {
@@ -160,8 +155,16 @@ public class MusicLibrary {
 		synchronized (waveforms) {
 			waveforms.put(trackId, waveform);
 		}
+		taskDemon.saveLibrary(false, true, false);
 	}
 
+	/**
+	 * Adds a collection of waveforms to the music library's collection of waveforms.
+	 * This method is only called from a {@link WaveformsLoadAction} when
+	 * the user's waveforms are loaded, and that's why {@link TaskDemon#saveLibrary} is not called.
+	 *
+	 * @param newWaveforms The {@code Map} of waveforms to be added
+	 */
 	public void addWaveforms(Map<Integer, float[]> newWaveforms) {
 		synchronized (waveforms) {
 			waveforms.putAll(newWaveforms);
@@ -172,9 +175,16 @@ public class MusicLibrary {
 		synchronized (playlists) {
 			playlists.add(playlist);
 		}
-		saveLibrary(false, false, true);
+		taskDemon.saveLibrary(false, false, true);
 	}
 
+	/**
+	 * Adds {@link Playlist}s to the music library's collection playlists.
+	 * This method is only called from a {@link PlaylistsLoadAction} when
+	 * the user's playlists are loaded, and that's why {@link TaskDemon#saveLibrary} is not called.
+	 *
+	 * @param newPlaylists The playlists to be added
+	 */
 	public void addPlaylists(List<Playlist> newPlaylists) {
 		synchronized (playlists) {
 			playlists.addAll(newPlaylists);
@@ -189,17 +199,30 @@ public class MusicLibrary {
 		return playlists;
 	}
 
+	/**
+	 * Delete tracks from the music library looking also for occurrences in
+	 * the playlists and the waveforms collections.
+	 * This method is called on an independent Thread in {@link StageDemon#deleteTracks}
+	 *
+	 * @param trackIds A {@code List} of track ids
+	 */
 	public void deleteTracks(List<Integer> trackIds) {
-		synchronized (musicottTracks) {
-			waveforms.keySet().removeAll(trackIds);
-			Platform.runLater(() -> {
-				removeFromShowingTracks(trackIds);
-				playlists.stream().filter(playlist -> ! playlist.isFolder())
-						 .forEach(playlist -> playlist.removeTracks(trackIds));
+		Platform.runLater(() -> {
+			removeFromShowingTracks(trackIds);
+			synchronized (musicottTracks) {
 				musicottTracks.keySet().removeAll(trackIds);
-			});
+			}
+		});
+
+		boolean playlistsChanged[] = new boolean[]{false};
+		synchronized (playlists) {
+			playlists.stream().filter(playlist -> ! playlist.isFolder())
+					 .forEach(playlist -> playlistsChanged[0] = playlist.removeTracks(trackIds));
 		}
-		saveLibrary(true, true, true);
+
+		boolean waveformsChanged = waveforms.keySet().removeAll(trackIds);
+
+		taskDemon.saveLibrary(true, waveformsChanged, playlistsChanged[0]);
 		LOG.info("Deleted {} tracks", trackIds.size());
 		String message = "Deleted " + Integer.toString(trackIds.size()) + " tracks";
 		Platform.runLater(() -> StageDemon.getInstance().getNavigationController().setStatusMessage(message));
@@ -218,7 +241,7 @@ public class MusicLibrary {
 				deletePlaylistFromFolders(playlist, folders);
 			}
 		}
-		saveLibrary(false, false, true);
+		taskDemon.saveLibrary(false, false, true);
 	}
 
 	private void deletePlaylistFromFolders(Playlist playlist, List<Playlist> folders) {
@@ -260,7 +283,7 @@ public class MusicLibrary {
 		Thread randomPlaylistThread = new Thread(() -> {
 			List<Integer> randomPlaylist = new ArrayList<>();
 			synchronized (musicottTracks) {
-				List<Integer> trackIDs = new ArrayList<>(musicottTracks.keySet());
+				ImmutableList<Integer> trackIDs = ImmutableList.copyOf(musicottTracks.keySet());
 				Random randomGenerator = new Random();
 				do {
 					int rnd = randomGenerator.nextInt(trackIDs.size());
@@ -285,13 +308,11 @@ public class MusicLibrary {
 
 	@Override
 	public int hashCode() {
-		int hash = 71;
+		int hash;
 		synchronized (musicottTracks) {
 			synchronized (waveforms) {
 				synchronized (playlists) {
-					hash = 73 * hash + musicottTracks.hashCode();
-					hash = 73 * hash + waveforms.hashCode();
-					hash = 73 * hash + playlists.hashCode();
+					hash = Objects.hash(musicottTracks, waveforms, playlists);
 				}
 			}
 		}
@@ -307,8 +328,8 @@ public class MusicLibrary {
 					if (o instanceof MusicLibrary) {
 						MusicLibrary object = (MusicLibrary) o;
 						res = object.musicottTracks.equals(this.musicottTracks) &&
-								object.musicottTracks.equals(this.waveforms) &&
-								object.musicottTracks.equals(this.playlists);
+								object.waveforms.equals(this.waveforms) &&
+								object.playlists.equals(this.playlists);
 					}
 					else {
 						res = false;

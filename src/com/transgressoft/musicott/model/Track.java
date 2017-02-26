@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.model;
@@ -37,33 +37,34 @@ import java.util.*;
 public class Track {
 
 	private int trackId;
-	private String fileFolder;
-	private String fileName;
-	private String name;
-	private String artist;
-	private String album;
-	private String genre;
-	private String comments;
-	private String albumArtist;
-	private String label;
-	private String encoding;
-	private String encoder;
+	private String fileFolder = "";
+	private String fileName = "";
+	private String fileFormat = "";
+	private String name = "";
+	private String artist = "";
+	private String album = "";
+	private String genre = "";
+	private String comments = "";
+	private String albumArtist = "";
+	private String label = "";
+	private String encoding = "";
+	private String encoder = "";
 
-	private int size;
-	private int bitRate;
-	private int playCount;
-	private int trackNumber;
-	private int discNumber;
-	private int year;
-	private int bpm;
-	private Duration totalTime;
+	private int size = 0;
+	private int bitRate = 0;
+	private int playCount = 0;
+	private int trackNumber = 0;
+	private int discNumber = 0;
+	private int year = 0;
+	private int bpm = 0;
+	private Duration totalTime = Duration.UNKNOWN;
 
-	private boolean inDisk;
-	private boolean isPartOfCompilation;
-	private boolean isVariableBitRate;
+	private boolean inDisk = false;
+	private boolean isPartOfCompilation = false;
+	private boolean isVariableBitRate = false;
 
-	private LocalDateTime lastDateModified;
-	private LocalDateTime dateAdded;
+	private LocalDateTime lastDateModified = LocalDateTime.now();
+	private LocalDateTime dateAdded = LocalDateTime.now();
 
 	private StringProperty nameProperty;
 	private StringProperty artistProperty;
@@ -88,38 +89,12 @@ public class Track {
 	 */
 	private Map<TrackField, Property> propertyMap;
 
-	private String fileFormat;
-	private File coverFileToUpdate;
+	private Optional<File> coverFileToUpdate = Optional.empty();
 	private MetadataUpdater updater;
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
 	public Track() {
 		trackId = MainPreferences.getInstance().getTrackSequence();
-		fileFolder = "";
-		fileName = "";
-		fileFormat = "";
-		name = "";
-		artist = "";
-		album = "";
-		genre = "";
-		comments = "";
-		albumArtist = "";
-		label = "";
-		encoder = "";
-		encoding = "";
-		trackNumber = 0;
-		discNumber = 0;
-		year = 0;
-		bpm = 0;
-		size = 0;
-		totalTime = Duration.UNKNOWN;
-		bitRate = 0;
-		playCount = 0;
-		inDisk = false;
-		isPartOfCompilation = false;
-		isVariableBitRate = false;
-		lastDateModified = LocalDateTime.now();
-		dateAdded = LocalDateTime.now();
 		updater = new MetadataUpdater(this);
 
 		nameProperty = new SimpleStringProperty(this, "name", name);
@@ -172,7 +147,7 @@ public class Track {
 	}
 
 	public void setCoverImage(File cover) {
-		coverFileToUpdate = cover;
+		coverFileToUpdate = Optional.ofNullable(cover);
 	}
 
 	public int getTrackId() {
@@ -342,9 +317,18 @@ public class Track {
 		return isPlayableProperty;
 	}
 
-	public boolean writeMetadata() {
-		boolean updatedCover = coverFileToUpdate == null || updater.updateCover(coverFileToUpdate);
-		return updater.writeAudioMetadata() && updatedCover;
+	/**
+	 * Updates the cover image and the metadata of the audio file that is represented by
+	 * this {@link Track} instance with the information that has been entered by the application to it
+	 *
+	 * @throws TrackUpdateException If something went bad updating the metadata
+	 */
+	public void writeMetadata() throws TrackUpdateException {
+		updater.writeAudioMetadata();
+		if (coverFileToUpdate.isPresent()) {
+			updater.updateCover(coverFileToUpdate.get());
+			coverFileToUpdate = Optional.empty();
+		}
 	}
 
 	public boolean isPlayable() {
@@ -486,20 +470,8 @@ public class Track {
 
 	@Override
 	public int hashCode() {
-		int hash = 71;
-		hash = 73 * hash + fileName.hashCode();
-		hash = 73 * hash + fileFolder.hashCode();
-		hash = 73 * hash + name.hashCode();
-		hash = 73 * hash + artist.hashCode();
-		hash = 73 * hash + album.hashCode();
-		hash = 73 * hash + comments.hashCode();
-		hash = 73 * hash + genre.hashCode();
-		hash = 73 * hash + trackNumber;
-		hash = 73 * hash + year;
-		hash = 73 * hash + albumArtist.hashCode();
-		hash = 73 * hash + bpm;
-		hash = 73 * hash + label.hashCode();
-		return hash;
+		return Objects.hash(fileName, fileFolder, name, artist, album, comments,
+							genre, trackNumber, year, albumArtist, bpm, label);
 	}
 
 	@Override

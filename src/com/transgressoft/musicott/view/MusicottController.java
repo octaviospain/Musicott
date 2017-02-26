@@ -1,9 +1,29 @@
+/*
+ * This file is part of Musicott software.
+ *
+ * Musicott software is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Musicott library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Copyright (C) 2015 - 2017 Octavio Calleya
+ */
+
 package com.transgressoft.musicott.view;
 
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.services.*;
+import com.transgressoft.musicott.tasks.*;
 
 /**
  * Interface that represent a controller of the Musicott application.
@@ -15,6 +35,10 @@ import com.transgressoft.musicott.services.*;
  * @since 0.9
  */
 public interface MusicottController {
+
+	String TRACKS_PERSISTENCE_FILE = "Musicott-tracks.json";
+	String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
+	String PLAYLISTS_PERSISTENCE_FILE = "Musicott-playlists.json";
 
 	String LAYOUTS_PATH = "/view/";
 	String IMAGES_PATH = "/images/";
@@ -46,4 +70,5 @@ public interface MusicottController {
 	ServiceDemon serviceDemon = ServiceDemon.getInstance();
 	StageDemon stageDemon = StageDemon.getInstance();
 	ErrorDemon errorDemon = ErrorDemon.getInstance();
+	TaskDemon taskDemon = TaskDemon.getInstance();
 }

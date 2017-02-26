@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.player;
@@ -23,10 +23,10 @@ import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.model.Track;
 import com.transgressoft.musicott.services.*;
+import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.view.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
-import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.scene.media.*;
@@ -60,6 +60,7 @@ public class PlayerFacade {
 	private StageDemon stageDemon = StageDemon.getInstance();
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 	private ServiceDemon services = ServiceDemon.getInstance();
+	private TaskDemon taskDemon = TaskDemon.getInstance();
 
 	private PlayerFacade() {
 		playList = FXCollections.observableArrayList();
@@ -192,9 +193,9 @@ public class PlayerFacade {
 				trackPlayer = new FlacPlayer();
 				//TODO
 			}
+			playerController.updatePlayer(track);
 			trackPlayer.setTrack(track);
 			bindMediaPlayer();
-			playerController.updatePlayer(track);
 			LOG.debug("Created new player");
 		});
 	}
@@ -234,9 +235,7 @@ public class PlayerFacade {
 		});
 
 		DoubleProperty trackSliderMaxProperty = playerController.trackSliderMaxProperty();
-		trackSliderMaxProperty
-				.bind(Bindings.createDoubleBinding(mediaPlayer.totalDurationProperty().getValue()::toMillis,
-												   mediaPlayer.totalDurationProperty()));
+		currentTrack.ifPresent(track -> trackSliderMaxProperty.setValue(track.getTotalTime().toMillis()));
 
 		BooleanProperty trackSliderValueChangingProperty = playerController.trackSliderValueChangingProperty();
 		DoubleProperty trackSliderValueProperty = playerController.trackSliderValueProperty();
@@ -266,7 +265,7 @@ public class PlayerFacade {
 	private void incrementCurrentTrackPlayCount() {
 		if (! played) {
 			currentTrack.ifPresent(Track::incrementPlayCount);
-			musicLibrary.saveLibrary(true, false, false);
+			taskDemon.saveLibrary(true, false, false);
 			played = true;
 		}
 	}

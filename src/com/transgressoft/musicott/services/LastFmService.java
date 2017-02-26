@@ -14,11 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.services;
 
+import com.google.common.collect.*;
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.core.util.*;
 import com.transgressoft.musicott.*;
@@ -134,7 +135,7 @@ public class LastFmService {
 
 	private String buildSignature(MultivaluedMap<String, String> params) {
 		StringBuilder stringBuilder = new StringBuilder();
-		Set<String> sortedParams = new TreeSet<>(params.keySet());
+		ImmutableSet<String> sortedParams = ImmutableSet.copyOf(params.keySet());
 		for (String key : sortedParams)
 			stringBuilder.append(key).append(params.getFirst(key));
 		stringBuilder.append(API_SECRET);

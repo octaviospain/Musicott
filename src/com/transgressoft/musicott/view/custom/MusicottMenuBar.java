@@ -14,11 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2015, 2016 Octavio Calleya
+ * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
 package com.transgressoft.musicott.view.custom;
 
+import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
@@ -27,7 +28,7 @@ import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.Utils.*;
 import com.transgressoft.musicott.view.*;
 import de.codecentric.centerdevice.*;
-import javafx.application.*;
+import javafx.application.Platform;
 import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.scene.control.*;
@@ -138,6 +139,7 @@ public class MusicottMenuBar extends MenuBar {
 		closeMI.setAccelerator(new KeyCodeCombination(KeyCode.F4, ALT_DOWN));
 		closeMI.setOnAction(event -> {
 			LOG.info("Exiting Musicott");
+			taskDemon.shutDownTasks();
 			System.exit(0);
 		});
 		fileMenu.getItems().addAll(new SeparatorMenuItem(), preferencesMenuItem, new SeparatorMenuItem(), closeMI);
@@ -208,7 +210,7 @@ public class MusicottMenuBar extends MenuBar {
 						   new ExtensionFilter("flac files (*.flac)", "*.flac"),
 						   new ExtensionFilter("wav files (*.wav)", "*.wav"),
 						   new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
-			List<File> files = chooser.showOpenMultipleDialog(primaryStage);
+			ImmutableList<File> files = ImmutableList.copyOf(chooser.showOpenMultipleDialog(primaryStage));
 			if (files != null) {
 				TaskDemon.getInstance().importFiles(files, true);
 				navigationController.setStatusMessage("Opening files");
