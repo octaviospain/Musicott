@@ -53,11 +53,11 @@ public enum TrackField {
     DATE_ADDED;
 
     /**
-     * Checks if a given <tt>TrackField</tt> is an integer numeric field type
+     * Checks if a given {@code TrackField} is an integer numeric field type
      *
-     * @param trackField The <tt>TrackField</tt>
+     * @param trackField The {@code TrackField}
      *
-     * @return <tt>true</tt> if is an integer numeric field type, <tt>false</tt> otherwise
+     * @return {@code true} if is an integer numeric field type, {@code false} otherwise
      */
     public static boolean isIntegerField(TrackField trackField) {
         return trackField == TrackField.TRACK_NUMBER ||

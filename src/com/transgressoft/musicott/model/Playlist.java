@@ -31,7 +31,7 @@ import java.util.*;
 import static com.transgressoft.musicott.view.MusicottController.*;
 
 /**
- * Represents a Playlist of tracks. A <tt>Playlist</tt> can contain another playlists,
+ * Represents a Playlist of tracks. A {@code Playlist} can contain another playlists,
  * if so, an instance is a folder. One cover image of the contained tracks
  * is used when showing a {@link Playlist} on the application.
  *

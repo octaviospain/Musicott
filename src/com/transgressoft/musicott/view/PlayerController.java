@@ -249,7 +249,7 @@ public class PlayerController implements MusicottController {
      * Updates the components of the player pane such as the song title label, the artist label,
      * the cover image, or the waveform image; with the given current {@link Track}.
      *
-     * @param currentTrack The <tt>Track</tt> that is being currently playing.
+     * @param currentTrack The {@code Track} that is being currently playing.
      */
     public void updatePlayer(Track currentTrack) {
         LOG.debug("Setting up player and view for track {}", currentTrack);

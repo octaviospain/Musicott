@@ -41,7 +41,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
 
 /**
  * Extends from {@link BaseParseTask} to perform the operation of import a
- * <tt>iTunes</tt> library to the {@link MusicLibrary} of the application.
+ * {@code iTunes} library to the {@link MusicLibrary} of the application.
  *
  * @author Octavio Calleya
  * @version 0.9.1-b

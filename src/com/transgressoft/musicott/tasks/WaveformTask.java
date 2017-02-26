@@ -41,7 +41,7 @@ import static java.nio.file.StandardCopyOption.*;
  * Class that extends from {@link Thread} that performs the operation of processing
  * an audio file to get the waveform image. It waits for a {@link Semaphore} to process
  * a new {@link Track} in an endless loop, instead of terminating the execution for
- * each <tt>track</tt> process.
+ * each {@code track} process.
  * <p>
  * If the audio file is not WAV, is converted into WAV before get
  * the wav amplitudes from the audio file.

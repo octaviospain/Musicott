@@ -35,7 +35,7 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 /**
- * Singleton class that isolates the access to the tracks, waveforms, and playlists of the <tt>Musicott</tt> music
+ * Singleton class that isolates the access to the tracks, waveforms, and playlists of the {@code Musicott} music
  * library.
  *
  * @author Octavio Calleya

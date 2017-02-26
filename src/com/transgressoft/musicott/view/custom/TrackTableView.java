@@ -41,7 +41,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
 
 /**
  * Class that extends from {@link TableView} and models a table that represents {@link Track}
- * instances in their rows, showing almost all of the properties of a <tt>Track</tt> in the columns.
+ * instances in their rows, showing almost all of the properties of a {@code Track} in the columns.
  *
  * @author Octavio Calleya
  * @version 0.9.1-b
@@ -213,10 +213,10 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
     /**
      * Returns a {@link EventHandler} that fires the play of a {@link Track} when
-     * the user presses the <tt>Enter</tt> key, and pauses/resumes the player when the user
-     * presses the <tt>Space</tt> key.
+     * the user presses the {@code Enter} key, and pauses/resumes the player when the user
+     * presses the {@code Space} key.
      *
-     * @return The <tt>EventHandler</tt>
+     * @return The {@code EventHandler}
      */
     private EventHandler<KeyEvent> getKeyPressedEventHandler() {
         return event -> {

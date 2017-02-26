@@ -113,7 +113,7 @@ public class RootController implements MusicottController {
     /**
      * Updates the information pane with the selected {@link Playlist}
      *
-     * @param playlist The selected <tt>Playlist</tt>
+     * @param playlist The selected {@code Playlist}
      */
     private void updateShowingInfoWithPlaylist(Playlist playlist) {
         playlistTitleTextField.setText(playlist.getName());
@@ -212,11 +212,11 @@ public class RootController implements MusicottController {
     }
 
     /**
-     * Returns a {@link Predicate} that evaluates the match of a given <tt>String</tt> to a given track {@link Entry}
+     * Returns a {@link Predicate} that evaluates the match of a given {@code String} to a given track {@link Entry}
      *
-     * @param string The <tt>String</tt> to match against the track
+     * @param string The {@code String} to match against the track
      *
-     * @return The <tt>Predicate</tt>
+     * @return The {@code Predicate}
      */
     private Predicate<Entry<Integer, Track>> findTracksContainingTextPredicate(String string) {
         return trackEntry -> {
@@ -231,9 +231,9 @@ public class RootController implements MusicottController {
      * Determines if a track matches a given string by its name, artist, label, genre or album.
      *
      * @param track  The {@link Track} to match
-     * @param string The string to match against the <tt>Track</tt>
+     * @param string The string to match against the {@code Track}
      *
-     * @return <tt>true</tt> if the <tt>Track matches</tt>, <tt>false</tt> otherwise
+     * @return {@code true} if the {@code Track matches}, {@code false} otherwise
      */
     private boolean trackMatchesString(Track track, String string) {
         boolean matchesName = track.getName().toLowerCase().contains(string.toLowerCase());
@@ -248,7 +248,7 @@ public class RootController implements MusicottController {
      * Handles the naming of a new playlist placing a {@link TextField} on top
      * of the playlist label asking the user for the name.
      *
-     * @param isFolder <tt>true</tt> if the new {@link Playlist} is a folder, <tt>false</tt> otherwise
+     * @param isFolder {@code true} if the new {@link Playlist} is a folder, {@code false} otherwise
      */
     public void enterNewPlaylistName(boolean isFolder) {
         LOG.debug("Editing playlist name");
@@ -281,7 +281,7 @@ public class RootController implements MusicottController {
      *
      * @param newName The name of the playlist to check
      *
-     * @return <tt>true</tt> if its a valid name, <tt>false</tt> otherwise
+     * @return {@code true} if its a valid name, {@code false} otherwise
      */
     private boolean isValidPlaylistName(String newName) {
         Playlist blankPlaylist = new Playlist(newName, false);

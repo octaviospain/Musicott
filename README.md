@@ -25,7 +25,6 @@ Next version 0.9 is almost prepared but it needs more tests (as always)! Communi
 
 ### Not yet
 * Advanced search feature
-* Show cover image on table
 * Music library statistics
 * Smart playlists
 

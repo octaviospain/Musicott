@@ -94,7 +94,7 @@ public class MainPreloader extends Preloader {
 
     /**
      * Shows a window asking the user to enter the location of the application folder. The default location is
-     * <tt>~/Music/Musicott</tt>
+     * {@code ~/Music/Musicott}
      */
     private void openFirstUseDialog() {
         try {

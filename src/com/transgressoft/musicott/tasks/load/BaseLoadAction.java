@@ -54,11 +54,11 @@ public abstract class BaseLoadAction extends RecursiveAction implements Callable
     }
 
     /**
-     * Parses an <tt>Object</tt> of a previously serialized instance using Json-IO
+     * Parses an {@code Object} of a previously serialized instance using Json-IO
      *
      * @param jsonFormattedFile A JSON formatted {@link File}
      *
-     * @return The parsed <tt>Object</tt>
+     * @return The parsed {@code Object}
      *
      * @throws IOException If something went bad
      * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>

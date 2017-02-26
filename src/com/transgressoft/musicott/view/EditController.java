@@ -213,8 +213,8 @@ public class EditController implements MusicottController {
 
     /**
      * Fills the text inputs on the edit window for each {@link TrackField}.
-     * If there is not a common value for the selected tracks for each <tt>TrackField</tt>,
-     * a dash (<tt>-</tt>) is placed in the {@link TextField}.
+     * If there is not a common value for the selected tracks for each {@code TrackField},
+     * a dash ({@code -}) is placed in the {@link TextField}.
      */
     private void setEditFieldsValues() {
         trackSelection = stageDemon.getRootController().getSelectedTracks();
@@ -249,7 +249,7 @@ public class EditController implements MusicottController {
     }
 
     /**
-     * Returns a <tt>String</tt> of the track property value.
+     * Returns a {@code String} of the track property value.
      *
      * @param trackField  The {@link TrackField}
      * @param trackToEdit The {@link Track}
@@ -298,7 +298,7 @@ public class EditController implements MusicottController {
      * Edits a {@link Track} with the values of the input controls of the
      * window for each {@link TrackField}.
      *
-     * @param track The <tt>Track</tt> to edit
+     * @param track The {@code Track} to edit
      */
     private void editTrack(Track track) {
         Map<TrackField, Property> trackPropertiesMap = track.getPropertyMap();
@@ -329,7 +329,7 @@ public class EditController implements MusicottController {
      * @param entry         The {@link Entry} with the {@link TrackField} and its related text input
      * @param trackProperty The {@link Property} of the track to edit
      *
-     * @return <tt>true</tt> if the property was changed, <tt>false</tt> otherwise
+     * @return {@code true} if the property was changed, {@code false} otherwise
      */
     private boolean editTrackTrackField(Entry<TrackField, TextInputControl> entry, Property<?> trackProperty) {
         boolean changed = false;
@@ -377,7 +377,7 @@ public class EditController implements MusicottController {
     /**
      * Returns the common cover image of the track selection, or an empty {@link Optional} otherwise
      *
-     * @return The <tt>byte</tt>s of the common cover image, or an empty <tt>Optional</tt>
+     * @return The {@code byte}s of the common cover image, or an empty {@code Optional}
      */
     private Optional<byte[]> commonCover() {
         Optional<byte[]>[] optionalCoverBytes = new Optional[]{Optional.empty()};
@@ -402,7 +402,7 @@ public class EditController implements MusicottController {
     }
 
     /**
-     * @return <tt>true</tt> if al the tracks have the same compilation value, <tt>false</tt> otherwise.
+     * @return {@code true} if al the tracks have the same compilation value, {@code false} otherwise.
      */
     private boolean commonCompilation() {
         Boolean isCommon = trackSelection.get(0).isPartOfCompilation();
@@ -410,9 +410,9 @@ public class EditController implements MusicottController {
     }
 
     /**
-     * Returns the common <tt>String</tt> of a list, if any, or a dash (-) otherwise.
+     * Returns the common {@code String} of a list, if any, or a dash (-) otherwise.
      *
-     * @param list The {@link List} with the <tt>String</tt>s
+     * @param list The {@link List} with the {@code String}s
      *
      * @return
      */

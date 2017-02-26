@@ -98,7 +98,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
     /**
      * Adds a new {@link TreeItem} given a {@link Playlist}.
      *
-     * @param newPlaylist The playlist value of the <tt>TreeItem</tt>
+     * @param newPlaylist The playlist value of the {@code TreeItem}
      */
     public void addPlaylist(Playlist newPlaylist) {
         TreeItem<Playlist> newItem = new TreeItem<>(newPlaylist);
@@ -108,7 +108,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 
     /**
      * Adds a new {@link TreeItem} given a {@link Playlist} that has to be
-     * included in a folder <tt>Playlist</tt>.
+     * included in a folder {@code Playlist}.
      *
      * @param folder           The folder playlist
      * @param newPlaylistChild The playlist to add to the folder playlist
@@ -144,7 +144,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 
     /**
      * Deletes the {@link TreeItem} that has the value of the given {@link Playlist}
-     * that is a child of some <tt>TreeItem</tt> of the root, a folder playlist;
+     * that is a child of some {@code TreeItem} of the root, a folder playlist;
      * and the playlist from the the folder.
      *
      * @param playlistToDelete The playlist to delete

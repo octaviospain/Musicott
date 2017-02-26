@@ -103,9 +103,9 @@ public class ItunesPlaylistsParseAction extends RecursiveTask<ParseResult<List<P
      * instances that have been already parsed from the ItunesLibrary so those tracks
      * could be mapped into the parsed playlists instead of parse them again.
      *
-     * @param itunesTracks The <tt>List</tt> of {@link ItunesTrack} instances
+     * @param itunesTracks The {@code List} of {@link ItunesTrack} instances
      *
-     * @return The <tt>List</tt> of integers that are the ids of the <tt>parsedTracks</tt>
+     * @return The {@code List} of integers that are the ids of the {@code parsedTracks}
      */
     private List<Integer> getPlaylistTracksAlreadyParsed(List<ItunesTrack> itunesTracks) {
         return itunesTracks.stream()

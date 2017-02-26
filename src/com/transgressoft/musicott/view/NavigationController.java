@@ -126,7 +126,7 @@ public class NavigationController implements MusicottController {
     /**
      * Changes the view depending of the choose {@link NavigationMode}
      *
-     * @param mode The <tt>NavigationMode</tt> that the user choose
+     * @param mode The {@code NavigationMode} that the user choose
      */
     public void setNavigationMode(NavigationMode mode) {
         showingMode = mode;
