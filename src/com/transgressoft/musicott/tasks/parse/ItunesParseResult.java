@@ -24,7 +24,12 @@ import com.transgressoft.musicott.model.*;
 import java.util.*;
 
 /**
+ * Extends from {@link ParseResult} adding a {@link Map} of the associated itunes ids
+ * to system's track's ids, and a list of not found files during the {@link ItunesTracksParseAction}
+ *
  * @author Octavio Calleya
+ * @version 0.9.1-b
+ * @since 0.9.2-b
  */
 public class ItunesParseResult extends ParseResult<Map<Integer, Track>> {
 

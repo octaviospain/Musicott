@@ -22,7 +22,11 @@ package com.transgressoft.musicott.tasks.parse;
 import java.util.*;
 
 /**
+ * Class that isolates results and errors of a {@link BaseParseTask}
+ *
  * @author Octavio Calleya
+ * @version 0.9.1-b
+ * @since 0.9.2-b
  */
 public class ParseResult<T> {
 

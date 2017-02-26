@@ -33,6 +33,7 @@ import java.util.*;
  *
  * @author Octavio Calleya
  * @version 0.9.1-b
+ * @since 0.9.2-b
  */
 public abstract class BaseParseTask extends Task<Void> {
 
