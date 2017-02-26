@@ -31,9 +31,9 @@ import javafx.collections.*;
  */
 public class ObservableMapWrapperCreator implements ClassFactory {
 
-	@SuppressWarnings ("rawtypes")
-	@Override
-	public Object newInstance(Class c) {
-		return FXCollections.observableHashMap();
-	}
+    @SuppressWarnings ("rawtypes")
+    @Override
+    public Object newInstance(Class c) {
+        return FXCollections.observableHashMap();
+    }
 }

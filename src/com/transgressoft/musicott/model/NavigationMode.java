@@ -27,24 +27,24 @@ package com.transgressoft.musicott.model;
  */
 public enum NavigationMode {
 
-	/**
-	 * All tracks in Musicott are shown on the table
-	 */
-	ALL_TRACKS("All songs"),
+    /**
+     * All tracks in Musicott are shown on the table
+     */
+    ALL_TRACKS("All songs"),
 
-	/**
-	 * The tracks of a selected {@link Playlist} are shown on the table
-	 */
-	PLAYLIST("Playlist");
+    /**
+     * The tracks of a selected {@link Playlist} are shown on the table
+     */
+    PLAYLIST("Playlist");
 
-	String name;
+    String name;
 
-	NavigationMode(String name) {
-		this.name = name;
-	}
+    NavigationMode(String name) {
+        this.name = name;
+    }
 
-	@Override
-	public String toString() {
-		return name;
-	}
+    @Override
+    public String toString() {
+        return name;
+    }
 }

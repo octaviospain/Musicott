@@ -28,34 +28,34 @@ import javax.xml.bind.annotation.*;
 @XmlRootElement (name = "session")
 public class LastFmSession {
 
-	private String userName;
-	private String sessionKey;
-	private String subscriber;
+    private String userName;
+    private String sessionKey;
+    private String subscriber;
 
-	@XmlElement (name = "name")
-	public String getUserName() {
-		return userName;
-	}
+    @XmlElement (name = "name")
+    public String getUserName() {
+        return userName;
+    }
 
-	public void setUserName(String userName) {
-		this.userName = userName;
-	}
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
 
-	@XmlElement (name = "key")
-	public String getSessionKey() {
-		return sessionKey;
-	}
+    @XmlElement (name = "key")
+    public String getSessionKey() {
+        return sessionKey;
+    }
 
-	public void setSessionKey(String sessionKey) {
-		this.sessionKey = sessionKey;
-	}
+    public void setSessionKey(String sessionKey) {
+        this.sessionKey = sessionKey;
+    }
 
-	@XmlElement
-	public String getSubscriber() {
-		return subscriber;
-	}
+    @XmlElement
+    public String getSubscriber() {
+        return subscriber;
+    }
 
-	public void setSubscriber(String subscriber) {
-		this.subscriber = subscriber;
-	}
+    public void setSubscriber(String subscriber) {
+        this.subscriber = subscriber;
+    }
 }

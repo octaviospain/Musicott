@@ -33,40 +33,40 @@ import org.slf4j.*;
  */
 public class ItunesParserLogger implements StatusUpdateLogger, ParserStatusUpdateLogger {
 
-	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-	@Override
-	public int getPlaylistParseUpdateFrequency() {
-		return UPDATE_FREQUENCY_NEVER;
-	}
+    @Override
+    public int getPlaylistParseUpdateFrequency() {
+        return UPDATE_FREQUENCY_NEVER;
+    }
 
-	@Override
-	public int getTrackParseUpdateFrequency() {
-		return UPDATE_FREQUENCY_NEVER;
-	}
+    @Override
+    public int getTrackParseUpdateFrequency() {
+        return UPDATE_FREQUENCY_NEVER;
+    }
 
-	@Override
-	public void debug(String arg0) {
-		LOG.debug(arg0);
-	}
+    @Override
+    public void debug(String arg0) {
+        LOG.debug(arg0);
+    }
 
-	@Override
-	public void error(String arg0, Exception arg1, boolean arg2) {
-		LOG.warn((arg2 ? "" : "NON ") + "RECOVERABLE ERROR: " + arg0 + ": " + arg1.getMessage());
-	}
+    @Override
+    public void fatal(String arg0, Exception arg1, boolean arg2) {
+        LOG.error((arg2 ? "" : "NON ") + "RECOVERABLE FATAL ERROR: " + arg0 + ": " + arg1.getMessage());
+    }
 
-	@Override
-	public void fatal(String arg0, Exception arg1, boolean arg2) {
-		LOG.error((arg2 ? "" : "NON ") + "RECOVERABLE FATAL ERROR: " + arg0 + ": " + arg1.getMessage());
-	}
+    @Override
+    public void statusUpdate(int arg0, String arg1) {
+        LOG.info("#" + arg0 + ": " + arg1);
+    }
 
-	@Override
-	public void statusUpdate(int arg0, String arg1) {
-		LOG.info("#" + arg0 + ": " + arg1);
-	}
+    @Override
+    public void warn(String arg0, Exception arg1, boolean arg2) {
+        error(arg0, arg1, arg2);
+    }
 
-	@Override
-	public void warn(String arg0, Exception arg1, boolean arg2) {
-		error(arg0, arg1, arg2);
-	}
+    @Override
+    public void error(String arg0, Exception arg1, boolean arg2) {
+        LOG.warn((arg2 ? "" : "NON ") + "RECOVERABLE ERROR: " + arg0 + ": " + arg1.getMessage());
+    }
 }

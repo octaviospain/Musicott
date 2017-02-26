@@ -28,44 +28,44 @@ import javax.xml.bind.annotation.*;
 @XmlRootElement (name = "lfm")
 public class LastFmResponse {
 
-	private String token;
-	private String status;
-	private LastFmError error;
-	private LastFmSession session;
+    private String token;
+    private String status;
+    private LastFmError error;
+    private LastFmSession session;
 
-	@XmlAttribute
-	public String getStatus() {
-		return this.status;
-	}
+    @XmlAttribute
+    public String getStatus() {
+        return this.status;
+    }
 
-	public void setStatus(String status) {
-		this.status = status;
-	}
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-	@XmlElement
-	public String getToken() {
-		return this.token;
-	}
+    @XmlElement
+    public String getToken() {
+        return this.token;
+    }
 
-	public void setToken(String token) {
-		this.token = token;
-	}
+    public void setToken(String token) {
+        this.token = token;
+    }
 
-	@XmlElement
-	public LastFmError getError() {
-		return this.error;
-	}
+    @XmlElement
+    public LastFmError getError() {
+        return this.error;
+    }
 
-	public void setError(LastFmError error) {
-		this.error = error;
-	}
+    public void setError(LastFmError error) {
+        this.error = error;
+    }
 
-	@XmlElement
-	public LastFmSession getSession() {
-		return session;
-	}
+    @XmlElement
+    public LastFmSession getSession() {
+        return session;
+    }
 
-	public void setSession(LastFmSession session) {
-		this.session = session;
-	}
+    public void setSession(LastFmSession session) {
+        this.session = session;
+    }
 }

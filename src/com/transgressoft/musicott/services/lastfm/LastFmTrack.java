@@ -28,24 +28,24 @@ import javax.xml.bind.annotation.*;
 @XmlRootElement (name = "track")
 public class LastFmTrack {
 
-	private String corrected;
-	private String value;
+    private String corrected;
+    private String value;
 
-	@XmlAttribute
-	public String getCorrected() {
-		return corrected;
-	}
+    @XmlAttribute
+    public String getCorrected() {
+        return corrected;
+    }
 
-	public void setCorrected(String corrected) {
-		this.corrected = corrected;
-	}
+    public void setCorrected(String corrected) {
+        this.corrected = corrected;
+    }
 
-	@XmlValue
-	public String getValue() {
-		return value;
-	}
+    @XmlValue
+    public String getValue() {
+        return value;
+    }
 
-	public void setValue(String value) {
-		this.value = value;
-	}
+    public void setValue(String value) {
+        this.value = value;
+    }
 }

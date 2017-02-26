@@ -56,7 +56,7 @@ public class FilesParseAction extends RecursiveTask<ParseResult<Map<Integer, Tra
      * Constructor of {@link FilesParseAction}
      *
      * @param filesToParse The {@link List} of audio files to parse
-     * @param parentTask The reference to the parent {@link BaseParseTask} that called this action
+     * @param parentTask   The reference to the parent {@link BaseParseTask} that called this action
      */
     public FilesParseAction(List<File> filesToParse, BaseParseTask parentTask) {
         this.filesToParse = filesToParse;

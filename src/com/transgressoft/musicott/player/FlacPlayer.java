@@ -26,43 +26,43 @@ import com.transgressoft.musicott.model.*;
  */
 public class FlacPlayer implements TrackPlayer {
 
-	@Override
-	public String getStatus() {
-		return "";
-	}
+    @Override
+    public String getStatus() {
+        return "";
+    }
 
-	@Override
-	public void setTrack(Track track) {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void setTrack(Track track) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void setVolume(double value) {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void setVolume(double value) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void seek(double seekValue) {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void seek(double seekValue) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void play() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void play() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void pause() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void pause() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void stop() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void stop() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void dispose() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void dispose() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 }

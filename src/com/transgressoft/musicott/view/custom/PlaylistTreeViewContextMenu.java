@@ -30,19 +30,19 @@ import javafx.scene.control.*;
  */
 public class PlaylistTreeViewContextMenu extends ContextMenu {
 
-	private StageDemon stageDemon = StageDemon.getInstance();
+    private StageDemon stageDemon = StageDemon.getInstance();
 
-	private MenuItem addPlaylist;
-	private MenuItem deletePlaylist;
+    private MenuItem addPlaylist;
+    private MenuItem deletePlaylist;
 
-	public PlaylistTreeViewContextMenu() {
-		super();
+    public PlaylistTreeViewContextMenu() {
+        super();
 
-		addPlaylist = new MenuItem("Add new playlist");
-		addPlaylist.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
+        addPlaylist = new MenuItem("Add new playlist");
+        addPlaylist.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
 
-		deletePlaylist = new MenuItem("Delete playlist");
-		deletePlaylist.setOnAction(e -> stageDemon.getNavigationController().deleteSelectedPlaylist());
-		getItems().addAll(addPlaylist, deletePlaylist);
-	}
+        deletePlaylist = new MenuItem("Delete playlist");
+        deletePlaylist.setOnAction(e -> stageDemon.getNavigationController().deleteSelectedPlaylist());
+        getItems().addAll(addPlaylist, deletePlaylist);
+    }
 }

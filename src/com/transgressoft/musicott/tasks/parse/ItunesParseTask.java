@@ -112,8 +112,9 @@ public class ItunesParseTask extends BaseParseTask {
             currentItunesItemsParsed = 0;
             totalItunesItemsToParse = itunesPlaylists.size();
             Map<Integer, Integer> itunesIdToMusicottIdMap = itunesParseResult.getItunesIdToMusicottIdMap();
-            ItunesPlaylistsParseAction itunesPlaylistsParseAction =
-                    new ItunesPlaylistsParseAction(itunesPlaylists, itunesIdToMusicottIdMap, this);
+            ItunesPlaylistsParseAction itunesPlaylistsParseAction = new ItunesPlaylistsParseAction(itunesPlaylists,
+                                                                                                   itunesIdToMusicottIdMap,
+                                                                                                   this);
             playlists = forkJoinPool.invoke(itunesPlaylistsParseAction).getParsedItems();
         }
         return null;

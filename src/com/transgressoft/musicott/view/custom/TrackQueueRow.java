@@ -41,80 +41,80 @@ import java.io.*;
  */
 public class TrackQueueRow extends GridPane {
 
-	private static final double COVER_SIZE = 42.0;
-	private static final String DELETE_BUTTON_STYLE = "deleteButton-white";
+    private static final double COVER_SIZE = 42.0;
+    private static final String DELETE_BUTTON_STYLE = "deleteButton-white";
 
-	private PlayQueueController playQueueController;
-	private Track track;
-	private ImageView coverImage;
-	private VBox labelBox;
-	private Button deleteTrackQueueRowButton;
+    private PlayQueueController playQueueController;
+    private Track track;
+    private ImageView coverImage;
+    private VBox labelBox;
+    private Button deleteTrackQueueRowButton;
 
-	public TrackQueueRow(int trackID) {
-		super();
-		track = MusicLibrary.getInstance().getTrack(trackID).get();
-		playQueueController = StageDemon.getInstance().getPlayQueueController();
-		placeCover();
-		placeLabels();
-		placeDeleteHoverButton();
-		ColumnConstraints cc1 = new ColumnConstraints(50);
-		ColumnConstraints cc2 = new ColumnConstraints(200);
-		getColumnConstraints().addAll(cc1, cc2);
-		GridPane.setMargin(deleteTrackQueueRowButton, new Insets(1, 1, 1, 200));
-		GridPane.setMargin(coverImage, new Insets(0, 0, 0, 0));
-		GridPane.setMargin(labelBox, new Insets(1, 1, 1, 5));
-		setOnMouseMoved(event -> deleteTrackQueueRowButton.setVisible(true));
-		setOnMouseExited(event -> deleteTrackQueueRowButton.setVisible(false));
-		setAlignment(Pos.CENTER_LEFT);
-	}
+    public TrackQueueRow(int trackID) {
+        super();
+        track = MusicLibrary.getInstance().getTrack(trackID).get();
+        playQueueController = StageDemon.getInstance().getPlayQueueController();
+        placeCover();
+        placeLabels();
+        placeDeleteHoverButton();
+        ColumnConstraints cc1 = new ColumnConstraints(50);
+        ColumnConstraints cc2 = new ColumnConstraints(200);
+        getColumnConstraints().addAll(cc1, cc2);
+        GridPane.setMargin(deleteTrackQueueRowButton, new Insets(1, 1, 1, 200));
+        GridPane.setMargin(coverImage, new Insets(0, 0, 0, 0));
+        GridPane.setMargin(labelBox, new Insets(1, 1, 1, 5));
+        setOnMouseMoved(event -> deleteTrackQueueRowButton.setVisible(true));
+        setOnMouseExited(event -> deleteTrackQueueRowButton.setVisible(false));
+        setAlignment(Pos.CENTER_LEFT);
+    }
 
-	public int getRepresentedTrackId() {
-		return track.getTrackId();
-	}
+    public int getRepresentedTrackId() {
+        return track.getTrackId();
+    }
 
-	private void placeLabels() {
-		Label nameLabel = new Label();
-		nameLabel.setId("nameLabel");
-		nameLabel.textProperty().bind(track.nameProperty());
-		Label artistAlbumLabel = new Label();
-		artistAlbumLabel.setId("artistAlbumLabel");
-		artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
-				() -> track.artistProperty().get() + " - " + track.albumProperty().get(), track.artistProperty(),
-				track.albumProperty()));
-		labelBox = new VBox();
-		VBox.setMargin(nameLabel, new Insets(0, 0, 1, 0));
-		VBox.setMargin(artistAlbumLabel, new Insets(1, 0, 0, 0));
-		labelBox.getChildren().add(nameLabel);
-		labelBox.getChildren().add(artistAlbumLabel);
-		labelBox.setAlignment(Pos.CENTER_LEFT);
-		add(labelBox, 1, 0);
-	}
+    private void placeCover() {
+        coverImage = new ImageView();
+        coverImage.setFitHeight(40.0);
+        coverImage.setFitHeight(40.0);
+        if (track.getCoverImage().isPresent()) {
+            byte[] coverBytes = track.getCoverImage().get();
+            Image image = new Image(new ByteArrayInputStream(coverBytes));
+            coverImage.setImage(image);
+        }
+        else
+            coverImage.setId("coverImage");
+        coverImage.setCacheHint(CacheHint.QUALITY);
+        coverImage.setCache(false);
+        coverImage.setSmooth(true);
+        coverImage.setFitWidth(COVER_SIZE);
+        coverImage.setFitHeight(COVER_SIZE);
+        add(coverImage, 0, 0);
+    }
 
-	private void placeDeleteHoverButton() {
-		deleteTrackQueueRowButton = new Button();
-		deleteTrackQueueRowButton.setId(DELETE_BUTTON_STYLE);
-		deleteTrackQueueRowButton.setPrefSize(3, 3);
-		deleteTrackQueueRowButton.setVisible(false);
-		deleteTrackQueueRowButton.setOnAction(event -> playQueueController.removeTrackQueueRow(this));
-		add(deleteTrackQueueRowButton, 1, 0);
-	}
+    private void placeLabels() {
+        Label nameLabel = new Label();
+        nameLabel.setId("nameLabel");
+        nameLabel.textProperty().bind(track.nameProperty());
+        Label artistAlbumLabel = new Label();
+        artistAlbumLabel.setId("artistAlbumLabel");
+        artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
+                () -> track.artistProperty().get() + " - " + track.albumProperty().get(), track.artistProperty(),
+                track.albumProperty()));
+        labelBox = new VBox();
+        VBox.setMargin(nameLabel, new Insets(0, 0, 1, 0));
+        VBox.setMargin(artistAlbumLabel, new Insets(1, 0, 0, 0));
+        labelBox.getChildren().add(nameLabel);
+        labelBox.getChildren().add(artistAlbumLabel);
+        labelBox.setAlignment(Pos.CENTER_LEFT);
+        add(labelBox, 1, 0);
+    }
 
-	private void placeCover() {
-		coverImage = new ImageView();
-		coverImage.setFitHeight(40.0);
-		coverImage.setFitHeight(40.0);
-		if (track.getCoverImage().isPresent()) {
-			byte[] coverBytes = track.getCoverImage().get();
-			Image image = new Image(new ByteArrayInputStream(coverBytes));
-			coverImage.setImage(image);
-		}
-		else
-			coverImage.setId("coverImage");
-		coverImage.setCacheHint(CacheHint.QUALITY);
-		coverImage.setCache(false);
-		coverImage.setSmooth(true);
-		coverImage.setFitWidth(COVER_SIZE);
-		coverImage.setFitHeight(COVER_SIZE);
-		add(coverImage, 0, 0);
-	}
+    private void placeDeleteHoverButton() {
+        deleteTrackQueueRowButton = new Button();
+        deleteTrackQueueRowButton.setId(DELETE_BUTTON_STYLE);
+        deleteTrackQueueRowButton.setPrefSize(3, 3);
+        deleteTrackQueueRowButton.setVisible(false);
+        deleteTrackQueueRowButton.setOnAction(event -> playQueueController.removeTrackQueueRow(this));
+        add(deleteTrackQueueRowButton, 1, 0);
+    }
 }

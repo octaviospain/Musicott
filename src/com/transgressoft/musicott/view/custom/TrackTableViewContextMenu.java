@@ -41,91 +41,91 @@ import java.util.stream.*;
  */
 public class TrackTableViewContextMenu extends ContextMenu {
 
-	private StageDemon stageDemon = StageDemon.getInstance();
-	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private StageDemon stageDemon = StageDemon.getInstance();
+    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
-	private Menu addToPlaylistMenu;
-	private MenuItem playMenuItem;
-	private MenuItem editMenuItem;
-	private MenuItem deleteMenuItem;
-	private MenuItem addToQueueMenuItem;
-	private MenuItem deleteFromPlaylistMenuItem;
-	private ObservableList<Entry<Integer, Track>> trackSelection;
+    private Menu addToPlaylistMenu;
+    private MenuItem playMenuItem;
+    private MenuItem editMenuItem;
+    private MenuItem deleteMenuItem;
+    private MenuItem addToQueueMenuItem;
+    private MenuItem deleteFromPlaylistMenuItem;
+    private ObservableList<Entry<Integer, Track>> trackSelection;
 
-	private List<MenuItem> playlistsInMenu;
+    private List<MenuItem> playlistsInMenu;
 
-	public TrackTableViewContextMenu(ObservableList<Entry<Integer, Track>> tableSelection) {
-		super();
-		trackSelection = tableSelection;
-		playlistsInMenu = new ArrayList<>();
-		addToPlaylistMenu = new Menu("Add to playlist");
+    public TrackTableViewContextMenu(ObservableList<Entry<Integer, Track>> tableSelection) {
+        super();
+        trackSelection = tableSelection;
+        playlistsInMenu = new ArrayList<>();
+        addToPlaylistMenu = new Menu("Add to playlist");
 
-		playMenuItem = new MenuItem("Play");
-		playMenuItem.setOnAction(event -> {
-			if (! trackSelection.isEmpty())
-				PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(), true);
-		});
+        playMenuItem = new MenuItem("Play");
+        playMenuItem.setOnAction(event -> {
+            if (! trackSelection.isEmpty())
+                PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(), true);
+        });
 
-		editMenuItem = new MenuItem("Edit");
-		editMenuItem.setOnAction(event -> stageDemon.editTracks());
+        editMenuItem = new MenuItem("Edit");
+        editMenuItem.setOnAction(event -> stageDemon.editTracks());
 
-		deleteMenuItem = new MenuItem("Delete");
-		deleteMenuItem.setOnAction(event -> stageDemon.deleteTracks());
+        deleteMenuItem = new MenuItem("Delete");
+        deleteMenuItem.setOnAction(event -> stageDemon.deleteTracks());
 
-		addToQueueMenuItem = new MenuItem("Add to play Queue");
-		addToQueueMenuItem.setOnAction(event -> {
-			if (! trackSelection.isEmpty())
-				PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(), false);
-		});
+        addToQueueMenuItem = new MenuItem("Add to play Queue");
+        addToQueueMenuItem.setOnAction(event -> {
+            if (! trackSelection.isEmpty())
+                PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(), false);
+        });
 
-		deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
-		deleteFromPlaylistMenuItem.setId("deleteFromPlaylistMenuItem");
+        deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
+        deleteFromPlaylistMenuItem.setId("deleteFromPlaylistMenuItem");
 
-		NavigationController navigationController = stageDemon.getNavigationController();
-		deleteFromPlaylistMenuItem.setOnAction(event -> {
-			if (! trackSelection.isEmpty()) {
-				Optional<Playlist> selectedPlaylist = navigationController.selectedPlaylistProperty().getValue();
-				selectedPlaylist.ifPresent(playlist -> playlist.removeTracks(trackSelectionIds()));
-			}
-		});
+        NavigationController navigationController = stageDemon.getNavigationController();
+        deleteFromPlaylistMenuItem.setOnAction(event -> {
+            if (! trackSelection.isEmpty()) {
+                Optional<Playlist> selectedPlaylist = navigationController.selectedPlaylistProperty().getValue();
+                selectedPlaylist.ifPresent(playlist -> playlist.removeTracks(trackSelectionIds()));
+            }
+        });
 
-		ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty = navigationController
-				.selectedPlaylistProperty();
-		deleteFromPlaylistMenuItem.visibleProperty().bind(Bindings.createBooleanBinding(
-				() -> selectedPlaylistProperty.getValue().isPresent() && ! selectedPlaylistProperty.getValue().get()
-																								   .isFolder(),
-				selectedPlaylistProperty));
+        ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty = navigationController
+                .selectedPlaylistProperty();
+        deleteFromPlaylistMenuItem.visibleProperty().bind(Bindings.createBooleanBinding(
+                () -> selectedPlaylistProperty.getValue().isPresent() && ! selectedPlaylistProperty.getValue().get()
+                                                                                                   .isFolder(),
+                selectedPlaylistProperty));
 
-		getItems().addAll(playMenuItem, editMenuItem, deleteMenuItem, addToQueueMenuItem, new SeparatorMenuItem());
-		getItems().addAll(deleteFromPlaylistMenuItem, addToPlaylistMenu);
-	}
+        getItems().addAll(playMenuItem, editMenuItem, deleteMenuItem, addToQueueMenuItem, new SeparatorMenuItem());
+        getItems().addAll(deleteFromPlaylistMenuItem, addToPlaylistMenu);
+    }
 
-	@Override
-	public void show(Node anchor, double screenX, double screenY) {
-		playlistsInMenu.clear();
+    private List<Integer> trackSelectionIds() {
+        return trackSelection.stream().map(Entry::getKey).collect(Collectors.toList());
+    }
 
-		musicLibrary.getPlaylists().forEach(playlist -> {
-			if (! playlist.isFolder())
-				addPlaylistToMenuList(playlist);
-			else
-				playlist.getContainedPlaylists().forEach(this::addPlaylistToMenuList);
-		});
+    @Override
+    public void show(Node anchor, double screenX, double screenY) {
+        playlistsInMenu.clear();
 
-		addToPlaylistMenu.getItems().clear();
-		addToPlaylistMenu.getItems().addAll(playlistsInMenu);
-		super.show(anchor, screenX, screenY);
-	}
+        musicLibrary.getPlaylists().forEach(playlist -> {
+            if (! playlist.isFolder())
+                addPlaylistToMenuList(playlist);
+            else
+                playlist.getContainedPlaylists().forEach(this::addPlaylistToMenuList);
+        });
 
-	private void addPlaylistToMenuList(Playlist playlist) {
-		MenuItem playlistMenuItem = new MenuItem(playlist.getName());
-		playlistMenuItem.setOnAction(event -> {
-			if (! trackSelection.isEmpty())
-				playlist.addTracks(trackSelectionIds());
-		});
-		playlistsInMenu.add(playlistMenuItem);
-	}
+        addToPlaylistMenu.getItems().clear();
+        addToPlaylistMenu.getItems().addAll(playlistsInMenu);
+        super.show(anchor, screenX, screenY);
+    }
 
-	private List<Integer> trackSelectionIds() {
-		return trackSelection.stream().map(Entry::getKey).collect(Collectors.toList());
-	}
+    private void addPlaylistToMenuList(Playlist playlist) {
+        MenuItem playlistMenuItem = new MenuItem(playlist.getName());
+        playlistMenuItem.setOnAction(event -> {
+            if (! trackSelection.isEmpty())
+                playlist.addTracks(trackSelectionIds());
+        });
+        playlistsInMenu.add(playlistMenuItem);
+    }
 }

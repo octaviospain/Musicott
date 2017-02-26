@@ -31,16 +31,16 @@ import javafx.scene.control.*;
  */
 public class NavigationMenuListView extends ListView<NavigationMode> {
 
-	private StageDemon stageDemon = StageDemon.getInstance();
+    private StageDemon stageDemon = StageDemon.getInstance();
 
-	public NavigationMenuListView() {
-		super();
-		setId("showMenuListView");
-		setPrefHeight(USE_COMPUTED_SIZE);
-		setPrefWidth(USE_COMPUTED_SIZE);
-		getSelectionModel().selectedItemProperty().addListener((obs, oldMenu, newMode) -> {
-			if (newMode != null)
-				stageDemon.getNavigationController().setNavigationMode(newMode);
-		});
-	}
+    public NavigationMenuListView() {
+        super();
+        setId("showMenuListView");
+        setPrefHeight(USE_COMPUTED_SIZE);
+        setPrefWidth(USE_COMPUTED_SIZE);
+        getSelectionModel().selectedItemProperty().addListener((obs, oldMenu, newMode) -> {
+            if (newMode != null)
+                stageDemon.getNavigationController().setNavigationMode(newMode);
+        });
+    }
 }

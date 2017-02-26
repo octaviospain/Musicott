@@ -33,13 +33,13 @@ public class ParseResult<T> {
     private T parsedItems;
     private Collection<String> parseErrors;
 
-    public ParseResult(T parsedItems) {
-        this.parsedItems = parsedItems;
-    }
-
     public ParseResult(T parsedItems, Collection<String> parseErrors) {
         this(parsedItems);
         this.parseErrors = parseErrors;
+    }
+
+    public ParseResult(T parsedItems) {
+        this.parsedItems = parsedItems;
     }
 
     public T getParsedItems() {

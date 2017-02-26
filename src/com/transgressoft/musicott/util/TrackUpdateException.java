@@ -29,15 +29,15 @@ package com.transgressoft.musicott.util;
  */
 public class TrackUpdateException extends Exception {
 
-	public TrackUpdateException() {
-		super();
-	}
+    public TrackUpdateException() {
+        super();
+    }
 
-	public TrackUpdateException(String message) {
-		super(message);
-	}
+    public TrackUpdateException(String message) {
+        super(message);
+    }
 
-	public TrackUpdateException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public TrackUpdateException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

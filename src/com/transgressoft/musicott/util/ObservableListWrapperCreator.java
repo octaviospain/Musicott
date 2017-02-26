@@ -31,9 +31,9 @@ import javafx.collections.*;
  */
 public class ObservableListWrapperCreator implements ClassFactory {
 
-	@SuppressWarnings ("rawtypes")
-	@Override
-	public Object newInstance(Class c) {
-		return FXCollections.observableArrayList();
-	}
+    @SuppressWarnings ("rawtypes")
+    @Override
+    public Object newInstance(Class c) {
+        return FXCollections.observableArrayList();
+    }
 }

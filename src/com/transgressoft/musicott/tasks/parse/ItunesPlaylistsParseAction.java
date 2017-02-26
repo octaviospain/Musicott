@@ -54,9 +54,9 @@ public class ItunesPlaylistsParseAction extends RecursiveTask<ParseResult<List<P
     /**
      * Constructor of {@link ItunesTracksParseAction}
      *
-     * @param itunesPlaylistsToParse The {@link List} of {@link ItunesPlaylist} obects to parse
+     * @param itunesPlaylistsToParse  The {@link List} of {@link ItunesPlaylist} obects to parse
      * @param itunesIdToMusicottIdMap The {@link Map} between itunes' tracks id's and system's tracks id's
-     * @param parentTask The reference to the parent {@link BaseParseTask} that called this action
+     * @param parentTask              The reference to the parent {@link BaseParseTask} that called this action
      */
     public ItunesPlaylistsParseAction(List<ItunesPlaylist> itunesPlaylistsToParse,
             Map<Integer, Integer> itunesIdToMusicottIdMap, BaseParseTask parentTask) {

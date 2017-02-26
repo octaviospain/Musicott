@@ -26,19 +26,19 @@ import com.transgressoft.musicott.model.*;
  */
 public interface TrackPlayer {
 
-	String getStatus();
+    String getStatus();
 
-	void setTrack(Track track);
+    void setTrack(Track track);
 
-	void setVolume(double value);
+    void setVolume(double value);
 
-	void seek(double seekValue);
+    void seek(double seekValue);
 
-	void play();
+    void play();
 
-	void pause();
+    void pause();
 
-	void stop();
+    void stop();
 
-	void dispose();
+    void dispose();
 }

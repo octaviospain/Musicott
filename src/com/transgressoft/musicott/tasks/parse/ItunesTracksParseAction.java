@@ -25,7 +25,6 @@ import com.transgressoft.musicott.util.*;
 import com.worldsworstsoftware.itunes.*;
 import javafx.util.*;
 import org.jaudiotagger.audio.*;
-import org.jaudiotagger.audio.exceptions.*;
 import org.jaudiotagger.tag.*;
 import org.slf4j.*;
 
@@ -67,10 +66,10 @@ public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {
     /**
      * Constructor of {@link ItunesTracksParseAction}
      *
-     * @param itunesTracks The {@link List} of {@link ItunesTrack} instances to parse
+     * @param itunesTracks   The {@link List} of {@link ItunesTrack} instances to parse
      * @param metadataPolicy The policy to follow importing the metadata
-     * @param holdPlayCount Flag to hold or not the play count from the iTunes Library data
-     * @param parentTask The reference to the parent {@link BaseParseTask} that called this action
+     * @param holdPlayCount  Flag to hold or not the play count from the iTunes Library data
+     * @param parentTask     The reference to the parent {@link BaseParseTask} that called this action
      */
     public ItunesTracksParseAction(List<ItunesTrack> itunesTracks, int metadataPolicy, boolean holdPlayCount,
             BaseParseTask parentTask) {
@@ -227,7 +226,7 @@ public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {
             }
             track.setBitRate(Integer.parseInt(bitRate));
         }
-        catch (CannotReadException | IOException | TagException | ReadOnlyFileException | InvalidAudioFrameException exception) {
+        catch (Exception exception) {
             LOG.warn("Error getting encoder or bitrate from track {}:", track.getTrackId(), exception);
         }
     }
