@@ -111,7 +111,7 @@ public class NavigationController implements MusicottController {
     /**
      * Returns the key accelerator for the application. Command for os x and control down for windows and linux.
      *
-     * @return The {}
+     * @return The {@link Modifier} of the operative system
      */
     private Modifier systemModifier() {
         String os = System.getProperty("os.name");

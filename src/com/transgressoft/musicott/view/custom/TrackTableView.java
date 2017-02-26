@@ -48,7 +48,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  */
 public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
-    protected static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
+    private static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
 
     private TableColumn<Entry<Integer, Track>, String> nameCol;
     private TableColumn<Entry<Integer, Track>, String> artistCol;
@@ -109,10 +109,10 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
     private void initColumns() {
         Callback<TableColumn<Entry<Integer, Track>, Number>, TableCell<Entry<Integer, Track>, Number>>
-                numericCellFactory = columns -> new NumericTableCell();
+                numericCellFactory = column -> new NumericTableCell();
 
         Callback<TableColumn<Entry<Integer, Track>, LocalDateTime>, TableCell<Entry<Integer, Track>, LocalDateTime>>
-				dateCellFactory = column -> new DateTimeTableCell();
+                dateCellFactory = column -> new DateTimeTableCell();
 
         nameCol = new TableColumn<>("Name");
         nameCol.setPrefWidth(170);

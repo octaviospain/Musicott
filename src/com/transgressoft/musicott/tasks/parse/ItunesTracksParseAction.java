@@ -190,9 +190,7 @@ public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {
     private Track parseItunesFieldsToTrackFields(ItunesTrack itunesTrack, Path itunesPath) {
         String fileFolder = itunesPath.getParent().toString();
         String fileName = itunesPath.getName(itunesPath.getNameCount() - 1).toString();
-        Track newTrack = new Track();
-        newTrack.setFileFolder(fileFolder);
-        newTrack.setFileName(fileName);
+        Track newTrack = new Track(fileFolder, fileName);
         newTrack.setInDisk(true);
         newTrack.setSize(itunesTrack.getSize());
         newTrack.setTotalTime(Duration.millis(itunesTrack.getTotalTime()));

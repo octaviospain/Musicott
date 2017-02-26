@@ -36,6 +36,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import org.slf4j.*;
 
+import java.io.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.function.*;
@@ -49,6 +50,7 @@ import java.util.function.*;
 public class RootController implements MusicottController {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private static final int HOVER_COVER_SIZE = 100;
 
     @FXML
     private BorderPane tableBorderPane;
@@ -67,10 +69,12 @@ public class RootController implements MusicottController {
     @FXML
     private GridPane playlistInfoGridPane;
     @FXML
+    private StackPane tableStackPane;
     private VBox navigationPaneVBox;
-    private TrackTableView trackTable;
     private TextField playlistTitleTextField;
-    private List<Track> selectedTracks;
+    private List<Track> selectedTracks = new ArrayList<>();
+    private ImageView hoverCoverImageView = new ImageView();
+    private TrackTableView trackTable = new TrackTableView();
     private ListProperty<Map.Entry<Integer, Track>> showingTracksProperty;
     private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
@@ -81,7 +85,6 @@ public class RootController implements MusicottController {
 
     @FXML
     public void initialize() {
-        selectedTracks = new ArrayList<>();
         showingTracksProperty = musicLibrary.showingTracksProperty();
         selectedPlaylistProperty = stageDemon.getNavigationController().selectedPlaylistProperty();
         selectedPlaylistProperty.addListener(
@@ -90,9 +93,9 @@ public class RootController implements MusicottController {
         showingNavigationPaneProperty = new SimpleBooleanProperty(this, "showing navigation pane", true);
         showingTableInfoPaneProperty = new SimpleBooleanProperty(this, "showing table info pane", true);
         initializeInfoPaneFields();
-
-        trackTable = new TrackTableView();
-        tableBorderPane.setCenter(trackTable);
+        initializeHoverCoverImageView();
+        tableStackPane.getChildren().add(trackTable);
+        tableStackPane.getChildren().add(hoverCoverImageView);
 
         // Binding of the text typed on the search text field to the items shown on the table
         ObservableList<Entry<Integer, Track>> tracks = showingTracksProperty.get();
@@ -114,7 +117,7 @@ public class RootController implements MusicottController {
      */
     private void updateShowingInfoWithPlaylist(Playlist playlist) {
         playlistTitleTextField.setText(playlist.getName());
-        playlistCover.imageProperty().bind(playlist.playlistCoverProperty());
+        playlistCover.setImage(playlist.playlistCoverProperty().getValue());
         removePlaylistTextField();
     }
 
@@ -165,6 +168,24 @@ public class RootController implements MusicottController {
                 event.consume();
             }
         };
+    }
+
+    private void initializeHoverCoverImageView() {
+        hoverCoverImageView = new ImageView(new Image(DEFAULT_COVER_IMAGE));
+        hoverCoverImageView.setFitWidth(HOVER_COVER_SIZE);
+        hoverCoverImageView.setFitHeight(HOVER_COVER_SIZE);
+        hoverCoverImageView.visibleProperty().bind(
+                Bindings.createBooleanBinding(
+                        () -> ! selectedPlaylistProperty.getValue().isPresent(), selectedPlaylistProperty));
+
+        hoverCoverImageView.translateXProperty().bind(
+                Bindings.createDoubleBinding(
+                        () -> (tableStackPane.widthProperty().doubleValue() / 2) - (HOVER_COVER_SIZE / 2) - 10,
+                        tableStackPane.widthProperty()));
+        hoverCoverImageView.translateYProperty().bind(
+                Bindings.createDoubleBinding(
+                        () -> (tableStackPane.heightProperty().doubleValue() / 2) - (HOVER_COVER_SIZE / 2) - 27,
+                        tableStackPane.heightProperty()));
     }
 
     /**
@@ -309,6 +330,25 @@ public class RootController implements MusicottController {
             showingNavigationPaneProperty.set(false);
             LOG.debug("Showing navigation pane");
         }
+    }
+
+    /**
+     * Shows the cover image of the track the is hovered on the table,
+     * or the default cover image, on the playlist info pane, or in an floating
+     * {@link ImageView} on the right bottom of the table.
+     */
+    public void updateTrackHoveredCover(Track trackHovered) {
+        Optional<byte[]> cover = trackHovered.getCoverImage();
+        Image trackHoveredImage;
+        if (cover.isPresent())
+            trackHoveredImage = new Image(new ByteArrayInputStream(cover.get()));
+        else
+            trackHoveredImage = new Image(DEFAULT_COVER_IMAGE);
+
+        if (selectedPlaylistProperty.getValue().isPresent())
+            playlistCover.setImage(trackHoveredImage);
+        else
+            hoverCoverImageView.setImage(trackHoveredImage);
     }
 
     public void setNavigationPane(VBox navigationPaneVBox) {

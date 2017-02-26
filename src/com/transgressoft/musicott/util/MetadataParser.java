@@ -43,12 +43,10 @@ public class MetadataParser {
     private MetadataParser() {}
 
     public static Track createTrack(File fileToParse) throws TrackParseException {
-        Track track = new Track();
+        Track track = new Track(fileToParse.getParent(), fileToParse.getName());
         try {
             LOG.debug("Creating AudioFile instance with jAudioTagger of: {}", fileToParse);
             AudioFile audioFile = AudioFileIO.read(fileToParse);
-            track.setFileFolder(fileToParse.getParent());
-            track.setFileName(fileToParse.getName());
             track.setInDisk(true);
             track.setSize((int) (fileToParse.length()));
             track.setTotalTime(Duration.seconds(audioFile.getAudioHeader().getTrackLength()));
