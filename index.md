@@ -11,7 +11,7 @@ Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to 
 [TestFx](https://github.com/TestFX/TestFX "TestFx") for testing, and some components from
 [ControlsFx](https://bitbucket.org/controlsfx/controlsfx/ "ControlsFx").
 
-Next version 0.9 is almost prepared but it needs more tests (as always)! Community help is welcomed <i class="em em-smile"></i>
+Testing with Junit 5, TestFX and maven is quite difficult, help is welcomed !
 
 ![Musicott screenshot 1](https://dl.dropboxusercontent.com/u/3596661/main.png)
 
@@ -29,7 +29,7 @@ Next version 0.9 is almost prepared but it needs more tests (as always)! Communi
 * Smart playlists
 
 ## Download
-[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.9-b);
+[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.9.2-b);
 
 ## How to build and run
 To build you need at least Java 8 update 40 and Maven
