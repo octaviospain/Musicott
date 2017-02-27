@@ -31,7 +31,7 @@ import com.transgressoft.musicott.tasks.*;
  * references to the singleton classes.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9
  */
 public interface MusicottController {
@@ -54,6 +54,7 @@ public interface MusicottController {
     String PREFERENCES_LAYOUT = LAYOUTS_PATH + "PreferencesLayout.fxml";
     String PLAYER_LAYOUT = LAYOUTS_PATH + "PlayerLayout.fxml";
     String ERROR_ALERT_LAYOUT = LAYOUTS_PATH + "ErrorDialogLayout.fxml";
+    String ARTISTS_VIEW_LAYOUT = LAYOUTS_PATH + "ArtistsLayout.fxml";
 
     String DEFAULT_COVER_IMAGE = IMAGES_PATH + "default-cover-image.png";
     String COMMON_ERROR_IMAGE = IMAGES_PATH + "common-error.png";

@@ -35,11 +35,11 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 /**
- * Singleton class that isolates the access to the tracks, waveforms, and playlists of the {@code Musicott} music
- * library.
+ * Singleton class that isolates the access to the tracks, waveforms,
+ * and playlists of the {@code Musicott} music library.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class MusicLibrary {
 
@@ -55,13 +55,12 @@ public class MusicLibrary {
 
     private ObservableList<Map.Entry<Integer, Track>> musicottTrackEntriesList;
     private ListProperty<Map.Entry<Integer, Track>> musicottTrackEntriesListProperty;
-    private MapChangeListener<Integer, Track> musicottTracksChangeListener = musicottTracksChangeListener();
 
     private TaskDemon taskDemon = TaskDemon.getInstance();
 
     private MusicLibrary() {
         musicottTracks = FXCollections.observableHashMap();
-        musicottTracks.addListener(musicottTracksChangeListener);
+        musicottTracks.addListener(musicottTracksChangeListener());
         bindTrackEntriesList();
         bindShowingTracks();
         waveforms = new HashMap<>();
@@ -116,19 +115,19 @@ public class MusicLibrary {
     }
 
     public void addTracks(Map<Integer, Track> tracks) {
+        NavigationController navigationController = StageDemon.getInstance().getNavigationController();
+        NavigationMode mode = navigationController == null ? null : navigationController.getNavigationMode();
+
         tracks.entrySet().parallelStream().forEach(trackEntry -> {
             synchronized (musicottTracks) {
-                synchronized (musicottTrackEntriesList) {
-                    musicottTracks.put(trackEntry.getKey(), trackEntry.getValue());
-                    musicottTrackEntriesList.addAll(trackEntry);
-
-                    NavigationController navigationController = StageDemon.getInstance().getNavigationController();
-                    NavigationMode mode = navigationController == null ? null : navigationController.getNavigationMode();
-
-                    if (mode != null && mode == NavigationMode.ALL_TRACKS)
-                        addToShowingTracksStream(Stream.of(trackEntry));
-                }
+                musicottTracks.put(trackEntry.getKey(), trackEntry.getValue());
             }
+            synchronized (musicottTrackEntriesList) {
+                musicottTrackEntriesList.addAll(trackEntry);
+            }
+            if (mode != null && mode == NavigationMode.ALL_TRACKS)
+                addToShowingTracksStream(Stream.of(trackEntry));
+
         });
     }
 

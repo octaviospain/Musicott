@@ -45,7 +45,7 @@ import java.util.function.*;
  * Controller class of the root layout of the whole application.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class RootController implements MusicottController {
 
@@ -71,6 +71,7 @@ public class RootController implements MusicottController {
     @FXML
     private StackPane tableStackPane;
     private VBox navigationPaneVBox;
+    private AnchorPane artistsViewSplitPane;
     private TextField playlistTitleTextField;
     private List<Track> selectedTracks = new ArrayList<>();
     private ImageView hoverCoverImageView = new ImageView();
@@ -289,6 +290,42 @@ public class RootController implements MusicottController {
     }
 
     /**
+     * Shows the artists view, containing a left pane with an artist's list and
+     * a panel with the tracks divided in their albums
+     */
+    public void showArtistsView() {
+        if (! contentBorderLayout.getChildren().contains(artistsViewSplitPane)) {
+            contentBorderLayout.getChildren().remove(tableBorderPane);
+            contentBorderLayout.setCenter(artistsViewSplitPane);
+            LOG.debug("Showing artists view pane");
+        }
+    }
+
+    /**
+     * Shows the view with only the table containing all the tracks in the music library
+     */
+    public void showAllTracksView() {
+        removeArtistsViewPane();
+        hideTableInfoPane();
+    }
+
+    /**
+     * Shows the view with a table showing the tracks of the selected playlist and
+     * a info pane in the top with information about it
+     */
+    public void showPlaylistView() {
+        removeArtistsViewPane();
+        showTableInfoPane();
+    }
+
+    private void removeArtistsViewPane() {
+        if (contentBorderLayout.getChildren().contains(artistsViewSplitPane)) {
+            contentBorderLayout.getChildren().remove(artistsViewSplitPane);
+            contentBorderLayout.setCenter(tableBorderPane);
+        }
+    }
+
+    /**
      * Shows the upper table info pane
      */
     public void showTableInfoPane() {
@@ -353,6 +390,10 @@ public class RootController implements MusicottController {
 
     public void setNavigationPane(VBox navigationPaneVBox) {
         this.navigationPaneVBox = navigationPaneVBox;
+    }
+
+    public void setArtistsPane(AnchorPane artistsViewSplitPane) {
+        this.artistsViewSplitPane = artistsViewSplitPane;
     }
 
     public List<Track> getSelectedTracks() {

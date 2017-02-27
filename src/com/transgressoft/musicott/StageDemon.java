@@ -19,12 +19,15 @@
 
 package com.transgressoft.musicott;
 
+import com.google.common.collect.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.view.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
+import javafx.application.Platform;
 import javafx.fxml.*;
+import javafx.scene.Node;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
@@ -44,7 +47,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * the access to their controllers and the handling of showing/hiding views
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class StageDemon {
 
@@ -110,6 +113,17 @@ public class StageDemon {
      */
     void showMusicott(Stage primaryStage) throws IOException {
         mainStage = primaryStage;
+        Parent rootLayout = loadAndLinkLayouts();
+        Scene mainScene = new Scene(rootLayout);
+        mainStage.setScene(mainScene);
+        mainStage.setTitle("Musicott");
+        mainStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
+        mainStage.setMinWidth(1200);
+        mainStage.setMinHeight(805);
+        mainStage.show();
+    }
+
+    private Parent loadAndLinkLayouts() throws IOException {
         VBox navigationLayout = (VBox) loadLayout(NAVIGATION_LAYOUT);
         LOG.debug("Navigation layout loaded");
         GridPane playerGridPane = (GridPane) loadLayout(PLAYER_LAYOUT);
@@ -117,15 +131,23 @@ public class StageDemon {
         AnchorPane playQueuePane = (AnchorPane) loadLayout(PLAYQUEUE_LAYOUT);
         getPlayerController().setPlayQueuePane(playQueuePane);
         LOG.debug("Play queue layout loaded");
+        AnchorPane artistsLayout = (AnchorPane) loadLayout(ARTISTS_VIEW_LAYOUT);
+        LOG.debug("Artists layout loaded");
         BorderPane rootLayout = (BorderPane) loadLayout(ROOT_LAYOUT);
         getRootController().setNavigationPane(navigationLayout);
+        getRootController().setArtistsPane(artistsLayout);
         LOG.debug("Root layout loaded");
 
         BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
         contentBorderLayout.setBottom(playerGridPane);
         contentBorderLayout.setLeft(navigationLayout);
         getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
+        loadMenuBar(rootLayout);
+        setHidePlayQueueActionOnLayouts(ImmutableList.of(navigationLayout, contentBorderLayout, rootLayout));
+        return rootLayout;
+    }
 
+    private void loadMenuBar(Node rootLayout) {
         MusicottMenuBar menuBar = new MusicottMenuBar(mainStage);
         String os = System.getProperty("os.name");
         if (os != null && os.startsWith("Mac"))
@@ -135,19 +157,10 @@ public class StageDemon {
             VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
             headerVBox.getChildren().add(0, menuBar);
         }
+    }
 
-        // Hide play queue pane clicking outside of it
-        navigationLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
-        contentBorderLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
-        rootLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
-
-        Scene mainScene = new Scene(rootLayout);
-        mainStage.setScene(mainScene);
-        mainStage.setTitle("Musicott");
-        mainStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
-        mainStage.setMinWidth(1200);
-        mainStage.setMinHeight(805);
-        mainStage.show();
+    private void setHidePlayQueueActionOnLayouts(Collection<Node> nodes) {
+        nodes.forEach(node -> node.setOnMouseClicked(e -> getPlayerController().hidePlayQueue()));
     }
 
     /**

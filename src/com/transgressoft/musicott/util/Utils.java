@@ -33,7 +33,7 @@ import java.util.*;
  * or other operations utilities to be used for the application
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class Utils {
 

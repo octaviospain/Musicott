@@ -32,7 +32,7 @@ import java.util.*;
  * Base class of parse tasks of import music into the application.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9.2-b
  */
 public abstract class BaseParseTask extends Task<Void> {

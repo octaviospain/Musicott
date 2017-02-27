@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<AnchorPane stylesheets="@../css/artists.css" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.ArtistsViewController">
+   <children>
+      <SplitPane fx:id="rootSplitPane" dividerPositions="0.21" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <items>
+          <AnchorPane>
+               <children>
+                  <ListView fx:id="artistsListView" layoutX="17.0" layoutY="114.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </AnchorPane>
+          <AnchorPane minHeight="0.0" minWidth="0.0">
+               <children>
+                  <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <top>
+                        <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+                           <BorderPane.margin>
+                              <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                           </BorderPane.margin>
+                           <children>
+                              <VBox alignment="CENTER_LEFT" prefHeight="80.0" HBox.hgrow="SOMETIMES">
+                                 <children>
+                                    <Label fx:id="nameLabel">
+                                        <font>
+                                            <Font size="20.0" />
+                                        </font>
+                                     </Label>
+                                    <HBox alignment="CENTER_LEFT" VBox.vgrow="SOMETIMES">
+                                       <children>
+                                          <Label fx:id="albumsLabel" />
+                                          <Label text="," />
+                                          <Label fx:id="tracksLabel">
+                                             <HBox.margin>
+                                                <Insets left="5.0" />
+                                             </HBox.margin>
+                                          </Label>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="randomButton" mnemonicParsing="false" text="Random" />
+                           </children>
+                        </HBox>
+                     </top>
+                     <center>
+                        <ListView fx:id="artistMusicListView" BorderPane.alignment="CENTER" />
+                     </center>
+                  </BorderPane>
+               </children>
+            </AnchorPane>
+        </items>
+      </SplitPane>
+   </children>
+</AnchorPane>

@@ -27,7 +27,7 @@ import javafx.scene.control.*;
  * ListView for the application navigation showing modes.
  *
  * @author Octavio Calleya
- * @vesion 0.9
+ * @version 0.9.2-b
  */
 public class NavigationMenuListView extends ListView<NavigationMode> {
 

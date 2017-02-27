@@ -37,7 +37,7 @@ import java.util.stream.*;
  * with partitions of the items collection and their results joined after their completion.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9.2-b
  */
 public class ItunesPlaylistsParseAction extends RecursiveTask<ParseResult<List<Playlist>>> {

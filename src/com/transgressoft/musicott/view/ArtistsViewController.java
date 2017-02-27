@@ -17,35 +17,39 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.services.lastfm;
+package com.transgressoft.musicott.view;
 
-import javax.xml.bind.annotation.*;
+import javafx.fxml.*;
+import javafx.scene.control.*;
 
 /**
+ * Controller class of the navigation mode that shows a list with all
+ * the artists and an adapted section with all the tracks of a selected
+ * artist in the list divided in their albums.
+ *
  * @author Octavio Calleya
  * @version 0.9.2-b
+ * @since 0.10-b
  */
-@XmlRootElement
-public class LastFmAlbumArtist {
+public class ArtistsViewController implements MusicottController {
 
-    @XmlAttribute
-    private String corrected;
-    @XmlValue
-    private String value;
+    @FXML
+    private SplitPane rootSplitPane;
+    @FXML
+    private ListView<String> artistsListView;
+    @FXML
+    private ListView<?> artistMusicListView;
+    @FXML
+    private Label nameLabel;
+    @FXML
+    private Label albumsLabel;
+    @FXML
+    private Label tracksLabel;
+    @FXML
+    private Button randomButton;
 
-    public String getCorrected() {
-        return corrected;
-    }
+    @FXML
+    public void initialize() {
 
-    public void setCorrected(String corrected) {
-        this.corrected = corrected;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
     }
 }

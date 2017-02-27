@@ -38,7 +38,7 @@ import java.util.*;
  * music library menus, and the status progress and status messages.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class NavigationController implements MusicottController {
 
@@ -65,7 +65,7 @@ public class NavigationController implements MusicottController {
 
         playlistTreeView = new PlaylistTreeView();
         navigationMenuListView = new NavigationMenuListView();
-        NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS};
+        NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS, NavigationMode.ARTISTS};
         navigationMenuListView.setItems(FXCollections.observableArrayList(navigationModes));
 
         ContextMenu newPlaylistButtonContextMenu = newPlaylistButtonContextMenu();
@@ -136,11 +136,15 @@ public class NavigationController implements MusicottController {
                 musicLibrary.showAllTracks();
                 navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
                 playlistTreeView.getSelectionModel().clearAndSelect(- 1);
-                Platform.runLater(stageDemon.getRootController()::hideTableInfoPane);
+                Platform.runLater(stageDemon.getRootController()::showAllTracksView);
                 break;
             case PLAYLIST:
                 navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
-                Platform.runLater(stageDemon.getRootController()::showTableInfoPane);
+                Platform.runLater(stageDemon.getRootController()::showPlaylistView);
+                break;
+            case ARTISTS:
+                navigationMenuListView.getSelectionModel().select(NavigationMode.ARTISTS);
+                Platform.runLater(stageDemon.getRootController()::showArtistsView);
                 break;
         }
     }

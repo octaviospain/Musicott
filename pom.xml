@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.transgressoft</groupId>
     <artifactId>musicott</artifactId>
-    <version>0.9.1-b</version>
+    <version>0.9.2-b</version>
     <name>Musicott</name>
     <build>
         <directory>target</directory>

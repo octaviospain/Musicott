@@ -29,7 +29,7 @@ import org.slf4j.*;
  * Controller class of the play queue pane.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class PlayQueueController implements MusicottController {
 
