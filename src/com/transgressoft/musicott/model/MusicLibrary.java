@@ -131,6 +131,10 @@ public class MusicLibrary {
         });
     }
 
+    public void addArtistsMultiMap(Multimap<Integer, String> tracksToArtistsMultimap) {
+        // TODO
+    }
+
     private void addToShowingTracksStream(Stream<Entry<Integer, Track>> tracksEntriesStream) {
         tracksEntriesStream.parallel().filter(trackEntry -> ! showingTracks.contains(trackEntry))
                            .forEach(trackEntry -> Platform.runLater(() -> showingTracks.add(trackEntry)));

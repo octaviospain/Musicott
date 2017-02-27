@@ -19,10 +19,11 @@
 
 package com.transgressoft.musicott.tasks.parse;
 
+import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.*;
-import javafx.application.*;
+import javafx.application.Platform;
 import javafx.concurrent.*;
 import javafx.util.*;
 
@@ -38,6 +39,7 @@ import java.util.*;
 public abstract class BaseParseTask extends Task<Void> {
 
     protected Map<Integer, Track> parsedTracks;
+    protected Multimap<Integer, String> tracksToArtistsMultimap;
     protected Collection<String> parseErrors;
     protected long startMillis;
 
@@ -46,7 +48,7 @@ public abstract class BaseParseTask extends Task<Void> {
     protected ErrorDemon errorDemon = ErrorDemon.getInstance();
     protected NavigationController navigationController = stageDemon.getNavigationController();
 
-    public synchronized void updateProgressTask() {
+    public void updateProgressTask() {
         int parsedItems = getNumberOfParsedItemsAndIncrement();
         int totalItemsToParse = getTotalItemsToParse();
         double progress = (double) parsedItems / totalItemsToParse;
@@ -66,7 +68,7 @@ public abstract class BaseParseTask extends Task<Void> {
         stageDemon.getNavigationController().setStatusProgress(progress);
         stageDemon.getNavigationController().setStatusMessage(message);
     }
-
+    
     protected abstract void addResultsToMusicLibrary();
 
     protected void computeAndShowElapsedTime() {

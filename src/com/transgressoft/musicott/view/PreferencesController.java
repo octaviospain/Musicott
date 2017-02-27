@@ -36,7 +36,7 @@ import org.controlsfx.tools.*;
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
+import static com.transgressoft.musicott.tasks.parse.itunes.ItunesParseTask.*;
 
 /**
  * Controller class of the preferences window.

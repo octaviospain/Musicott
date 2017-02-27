@@ -1,0 +1,67 @@
+/*
+ * This file is part of Musicott software.
+ *
+ * Musicott software is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Musicott library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Copyright (C) 2015 - 2017 Octavio Calleya
+ */
+
+package com.transgressoft.musicott.tasks.parse;
+
+import com.google.common.collect.*;
+
+import java.util.*;
+
+/**
+ * Class that isolates results and errors of a {@link BaseParseTask}
+ *
+ * @param <T> The type of the parsed results
+ *
+ * @author Octavio Calleya
+ * @version 0.9.2-b
+ * @since 0.9.2-b
+ */
+public abstract class BaseParseResult<T> {
+
+    private T parsedResults;
+    private Multimap<Integer, String> tracksToArtistsMultimap;
+    private Collection<String> parseErrors;
+
+    public BaseParseResult(T parsedResults, Multimap<Integer, String> tracksToArtistsMultimap,
+            Collection<String> parseErrors) {
+        this(parsedResults, tracksToArtistsMultimap);
+        this.parseErrors = parseErrors;
+    }
+
+    public BaseParseResult(T parsedResults, Multimap<Integer, String> tracksToArtistsMultimap) {
+        this(parsedResults);
+        this.tracksToArtistsMultimap = tracksToArtistsMultimap;
+    }
+
+    public BaseParseResult(T parsedResults) {
+        this.parsedResults = parsedResults;
+    }
+
+    public T getParsedResults() {
+        return parsedResults;
+    }
+
+    public Collection<String> getParseErrors() {
+        return parseErrors;
+    }
+
+    public Multimap<Integer, String> getTracksToArtistsMultimap() {
+        return tracksToArtistsMultimap;
+    }
+}

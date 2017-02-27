@@ -17,11 +17,12 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.tasks.parse;
+package com.transgressoft.musicott.tasks.parse.itunes;
 
 import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
 import com.worldsworstsoftware.itunes.*;
 import com.worldsworstsoftware.itunes.parser.*;
@@ -63,7 +64,7 @@ public class ItunesParseTask extends BaseParseTask {
     private List<Playlist> playlists;
     private List<String> notFoundFiles;
 
-    private int currentItunesItemsParsed;
+    private volatile int currentItunesItemsParsed;
     private int totalItunesItemsToParse;
 
     public ItunesParseTask(String path) {
@@ -75,7 +76,6 @@ public class ItunesParseTask extends BaseParseTask {
         holdPlayCount = mainPreferences.getItunesImportHoldPlaycount();
         waitConfirmationSemaphore = new Semaphore(0);
         currentItunesItemsParsed = 0;
-        playlists = new ArrayList<>();
     }
 
     @Override
@@ -104,19 +104,12 @@ public class ItunesParseTask extends BaseParseTask {
                                                                                       holdPlayCount, this);
         ItunesParseResult itunesParseResult = forkJoinPool.invoke(itunesTracksParseAction);
 
-        parsedTracks = itunesParseResult.getParsedItems();
+        parsedTracks = itunesParseResult.getParsedResults();
         parseErrors = itunesParseResult.getParseErrors();
         notFoundFiles = itunesParseResult.getNotFoundFiles();
 
-        if (importPlaylists) {
-            currentItunesItemsParsed = 0;
-            totalItunesItemsToParse = itunesPlaylists.size();
-            Map<Integer, Integer> itunesIdToMusicottIdMap = itunesParseResult.getItunesIdToMusicottIdMap();
-            ItunesPlaylistsParseAction itunesPlaylistsParseAction = new ItunesPlaylistsParseAction(itunesPlaylists,
-                                                                                                   itunesIdToMusicottIdMap,
-                                                                                                   this);
-            playlists = forkJoinPool.invoke(itunesPlaylistsParseAction).getParsedItems();
-        }
+        if (importPlaylists)
+            parseItunesPlaylists(ImmutableMap.copyOf(itunesParseResult.getItunesIdToMusicottIdMap()));
         return null;
     }
 
@@ -167,9 +160,17 @@ public class ItunesParseTask extends BaseParseTask {
         Platform.runLater(() -> showConfirmationAlert(playlistsAlertText[0]));
     }
 
+    private void parseItunesPlaylists(Map<Integer, Integer> idsMap) {
+        currentItunesItemsParsed = 0;
+        totalItunesItemsToParse = itunesPlaylists.size();
+        PlaylistsParseAction playlistsParseAction = new PlaylistsParseAction(itunesPlaylists, idsMap, this);
+        ForkJoinPool forkJoinPool = new ForkJoinPool(2);
+        playlists = forkJoinPool.invoke(playlistsParseAction).getParsedResults();
+    }
+
     private void showConfirmationAlert(String playlistsAlertText) {
         String itunesTracksString = Integer.toString(totalItunesItemsToParse);
-        String headerText = "Import " + itunesTracksString + " parsedTracks " + playlistsAlertText + "from itunes?";
+        String headerText = "Import " + itunesTracksString + " songs " + playlistsAlertText + "from itunes?";
 
         Alert alert = new Alert(AlertType.CONFIRMATION);
         alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
@@ -182,8 +183,10 @@ public class ItunesParseTask extends BaseParseTask {
             waitConfirmationSemaphore.release();
             navigationController.setStatusMessage("Importing files");
         }
-        else
+        else {
+            Platform.runLater(() -> updateTaskProgressOnView(0.0, ""));
             cancel();
+        }
     }
 
     private boolean isValidItunesPlaylist(ItunesPlaylist itunesPlaylist) {
@@ -212,6 +215,7 @@ public class ItunesParseTask extends BaseParseTask {
         Platform.runLater(() -> updateTaskProgressOnView(- 1, ""));
         playlists.forEach(playlist -> Platform.runLater(() -> navigationController.addNewPlaylist(playlist)));
         musicLibrary.addTracks(parsedTracks);
+        //        musicLibrary.addArtistsMultiMap(tracksToArtistsMultimap); // TODO
         Platform.runLater(stageDemon::closeIndeterminateProgress);
         computeAndShowElapsedTime();
     }

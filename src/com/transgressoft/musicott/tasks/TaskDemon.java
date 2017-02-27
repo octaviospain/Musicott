@@ -22,6 +22,8 @@ package com.transgressoft.musicott.tasks;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
+import com.transgressoft.musicott.tasks.parse.audiofiles.*;
+import com.transgressoft.musicott.tasks.parse.itunes.*;
 import javafx.collections.*;
 import org.slf4j.*;
 
@@ -105,7 +107,7 @@ public class TaskDemon {
 		if (parseFuture != null && ! parseFuture.isDone())
 			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
-			parseTask = new FilesParseTask(filesToImport, playAtTheEnd);
+			parseTask = new AudioFilesParseTask(filesToImport, playAtTheEnd);
 			parseFuture = parseExecutorService.submit(parseTask);
 			LOG.debug("Importing {} files from folder", filesToImport.size());
 		}

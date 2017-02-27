@@ -17,10 +17,11 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.tasks.parse;
+package com.transgressoft.musicott.tasks.parse.audiofiles;
 
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
+import com.transgressoft.musicott.tasks.parse.*;
 import javafx.application.*;
 import org.slf4j.*;
 
@@ -35,7 +36,7 @@ import java.util.concurrent.*;
  * @author Octavio Calleya
  * @version 0.9.2-b
  */
-public class FilesParseTask extends BaseParseTask {
+public class AudioFilesParseTask extends BaseParseTask {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
@@ -46,7 +47,7 @@ public class FilesParseTask extends BaseParseTask {
 
     private PlayerFacade player = PlayerFacade.getInstance();
 
-    public FilesParseTask(List<File> files, boolean playAtTheEnd) {
+    public AudioFilesParseTask(List<File> files, boolean playAtTheEnd) {
         filesToParse = files;
         this.playAtTheEnd = playAtTheEnd;
         currentParsedFiles = 0;
@@ -68,9 +69,10 @@ public class FilesParseTask extends BaseParseTask {
         startMillis = System.currentTimeMillis();
         LOG.debug("Starting file importing");
         ForkJoinPool forkJoinPool = new ForkJoinPool(4);
-        ParseResult<Map<Integer, Track>> result = forkJoinPool.invoke(new FilesParseAction(filesToParse, this));
-        parsedTracks = result.getParsedItems();
+        BaseParseResult<Map<Integer, Track>> result = forkJoinPool.invoke(new AudioFilesParseAction(filesToParse, this));
+        parsedTracks = result.getParsedResults();
         parseErrors = result.getParseErrors();
+        tracksToArtistsMultimap = result.getTracksToArtistsMultimap();
         return null;
     }
 
@@ -94,6 +96,7 @@ public class FilesParseTask extends BaseParseTask {
     protected void addResultsToMusicLibrary() {
         Platform.runLater(() -> updateTaskProgressOnView(- 1, ""));
         musicLibrary.addTracks(parsedTracks);
+//        musicLibrary.addArtistsMultiMap(tracksToArtistsMultimap); // TODO
         Platform.runLater(stageDemon::closeIndeterminateProgress);
         computeAndShowElapsedTime();
     }
