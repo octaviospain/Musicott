@@ -52,7 +52,7 @@ public abstract class ItunesParseAction extends BaseParseAction<ItunesTrack, Map
         parsedTracks.putAll(partialResult.getParsedResults());
         parseErrors.addAll(partialResult.getParseErrors());
         ItunesParseResult itunesParseResult = (ItunesParseResult) partialResult;
-//        itunesIdToMusicottIdMap.putAll(itunesParseResult.getItunesIdToMusicottIdMap()); // TODO
+        itunesIdToMusicottIdMap.putAll(itunesParseResult.getItunesIdToMusicottIdMap());
         notFoundFiles.addAll(itunesParseResult.getNotFoundFiles());
     }
 }

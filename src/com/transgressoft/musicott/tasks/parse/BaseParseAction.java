@@ -20,7 +20,6 @@
 package com.transgressoft.musicott.tasks.parse;
 
 import com.google.common.collect.*;
-import com.transgressoft.musicott.model.*;
 import org.slf4j.*;
 
 import java.util.*;
@@ -81,33 +80,6 @@ public abstract class BaseParseAction<I, X, T extends BaseParseResult<X>> extend
     }
 
     protected abstract <T extends BaseParseResult<X>> void joinPartialResults(T partialResult);
-
-    /**
-     * Returns the names of the artists that are involved in a {@link Track},
-     * that is, every artist that could appear in the {@link Track#artist} variable,
-     * or {@link Track#albumArtist} or in the {@link Track#name}.
-     *
-     * <h3>Example</h3>
-     *
-     * <p>The following Track intance: <pre>   {@code
-     *
-     *   Track.name = "Who Controls (Kyle Geiger Remix)"
-     *   Track.artist = "David Meiser, Black Asteroid"
-     *   Track.albumArtist = "David Meiser"
-     *
-     *   }</pre>
-     * ... produces the following: <pre>   {@code
-     *      [David Meiser, Black Asteroid, Kyle Geiger]
-     *   }</pre>
-     *
-     * @param track The {@code Track} object
-     *
-     * @return An {@code Iterable} object with the names of the artists
-     */
-    protected Iterable<String> getArtistsInvolvedInTrack(Track track) {
-        // TODO
-        return null;
-    }
 
     /**
      * Returns the number of partitions in which {@link #itemsToParse}

@@ -96,7 +96,7 @@ public class AudioFilesParseTask extends BaseParseTask {
     protected void addResultsToMusicLibrary() {
         Platform.runLater(() -> updateTaskProgressOnView(- 1, ""));
         musicLibrary.addTracks(parsedTracks);
-//        musicLibrary.addArtistsMultiMap(tracksToArtistsMultimap); // TODO
+        musicLibrary.addArtistsMultiMap(tracksToArtistsMultimap);
         Platform.runLater(stageDemon::closeIndeterminateProgress);
         computeAndShowElapsedTime();
     }

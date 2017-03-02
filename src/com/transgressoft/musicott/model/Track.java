@@ -89,6 +89,8 @@ public class Track {
      */
     private Map<TrackField, Property> propertyMap;
 
+    private Set<String> artistsInvolved;
+
     private Optional<File> coverFileToUpdate = Optional.empty();
     private MetadataUpdater updater;
     private ErrorDemon errorDemon = ErrorDemon.getInstance();
@@ -142,7 +144,7 @@ public class Track {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = name.trim().replaceAll("\\s+", " ");
         nameProperty.setValue(this.name);
     }
 
@@ -151,7 +153,7 @@ public class Track {
     }
 
     public void setArtist(String artist) {
-        this.artist = artist;
+        this.artist = artist.trim().replaceAll("\\s+", " ");
         artistProperty.setValue(this.artist);
     }
 
@@ -160,7 +162,7 @@ public class Track {
     }
 
     public void setAlbum(String album) {
-        this.album = album;
+        this.album = album.trim().replaceAll("\\s+", " ");
         albumProperty.setValue(this.album);
     }
 
@@ -169,7 +171,7 @@ public class Track {
     }
 
     public void setGenre(String genre) {
-        this.genre = genre;
+        this.genre = genre.trim().replaceAll("\\s+", " ");
         genreProperty.setValue(this.genre);
     }
 
@@ -178,7 +180,7 @@ public class Track {
     }
 
     public void setComments(String comments) {
-        this.comments = comments;
+        this.comments = comments.trim().replaceAll("\\s+", " ");
         commentsProperty.setValue(this.comments);
     }
 
@@ -187,7 +189,7 @@ public class Track {
     }
 
     public void setAlbumArtist(String albumArtist) {
-        this.albumArtist = albumArtist;
+        this.albumArtist = albumArtist.trim().replaceAll("\\s+", " ");
         albumArtistProperty.setValue(this.albumArtist);
     }
 
@@ -196,7 +198,7 @@ public class Track {
     }
 
     public void setLabel(String label) {
-        this.label = label;
+        this.label = label.trim().replaceAll("\\s+", " ");
         labelProperty.setValue(this.label);
     }
 
@@ -347,6 +349,14 @@ public class Track {
 
     public boolean isVariableBitRate() {
         return isVariableBitRate;
+    }
+
+    public void setArtistsInvolved(Set<String> artistsInvolved) {
+        this.artistsInvolved = artistsInvolved;
+    }
+
+    public Set<String> getArtistsInvolved() {
+        return artistsInvolved;
     }
 
     public void setDateAdded(LocalDateTime dateAdded) {

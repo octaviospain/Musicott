@@ -99,7 +99,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
             currentTrack.ifPresent(track -> {
                 itunesIdToMusicottIdMap.put(itunesTrack.getTrackID(), track.getTrackId());
                 parsedTracks.put(track.getTrackId(), track);
-//                tracksToArtistsMultimap.putAll(track.getTrackId(), getArtistsInvolvedInTrack(track)); // TODO
+                tracksToArtistsMultimap.putAll(track.getTrackId(), track.getArtistsInvolved());
             });
         }
         parentTask.updateProgressTask();

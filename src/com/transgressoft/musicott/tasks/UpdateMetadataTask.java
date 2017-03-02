@@ -47,6 +47,7 @@ public class UpdateMetadataTask extends Thread {
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private TaskDemon taskDemon = TaskDemon.getInstance();
+	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
 	public UpdateMetadataTask(List<Track> tracks) {
 		this.tracks = tracks;
@@ -59,6 +60,9 @@ public class UpdateMetadataTask extends Thread {
 		tracks.stream().filter(Track::getInDisk).forEach(track -> {
 			File backup = makeBackup(track);
 
+			Set<String> newArtistsInvolved = Utils.getArtistsInvolvedInTrack(track);
+			track.setArtistsInvolved(newArtistsInvolved);
+			musicLibrary.updateArtistsInvolvedInTrack(track.getTrackId(), newArtistsInvolved);
 			try {
 				track.writeMetadata();
 				deleteBackup(track, backup);

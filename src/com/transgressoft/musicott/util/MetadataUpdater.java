@@ -69,7 +69,8 @@ public class MetadataUpdater {
             setTrackFieldsToTag(audio.getTag());
             audio.commit();
         }
-        catch (IOException | CannotReadException | ReadOnlyFileException | TagException | CannotWriteException | InvalidAudioFrameException exception) {
+        catch (IOException | CannotReadException | ReadOnlyFileException | TagException | CannotWriteException |
+                InvalidAudioFrameException exception) {
             LOG.warn("Error updating metadata of {}", track, exception);
             String errorText = "Error writing metadata of " + track.getArtist() + " - " + track.getName();
             throw new TrackUpdateException(errorText, exception);
@@ -122,9 +123,7 @@ public class MetadataUpdater {
      *
      * @param coverFile The {@link File} of the new cover image to save
      *
-     * @return {@code True} if the operation was successful, {@code False} otherwise
-     *
-     * @throws Exception If something went bad updating the cover on the metadata
+     * @throws TrackUpdateException If something went bad updating the cover on the metadata
      */
     public void updateCover(File coverFile) throws TrackUpdateException {
         Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
@@ -143,7 +142,7 @@ public class MetadataUpdater {
             audioFile.commit();
         }
         catch (IOException | TagException | CannotWriteException | CannotReadException | InvalidAudioFrameException |
-				ReadOnlyFileException exception) {
+                ReadOnlyFileException exception) {
             LOG.warn("Error saving cover image of {}", track, exception);
             String errorText = "Error saving cover image of " + track.getArtist() + " - " + track.getName();
             throw new TrackUpdateException(errorText, exception);

@@ -100,6 +100,7 @@ public class SaveMusicLibraryTask extends Thread {
         trackAttributes.add("isVariableBitRate");
         trackAttributes.add("encoder");
         trackAttributes.add("encoding");
+        trackAttributes.add("artistsInvolved");
 
         Map<Class<?>, List<String>> trackFields = new HashMap<>();
         trackFields.put(Track.class, trackAttributes);

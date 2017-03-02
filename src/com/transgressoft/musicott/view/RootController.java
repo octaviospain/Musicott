@@ -177,7 +177,9 @@ public class RootController implements MusicottController {
         hoverCoverImageView.setFitHeight(HOVER_COVER_SIZE);
         hoverCoverImageView.visibleProperty().bind(
                 Bindings.createBooleanBinding(
-                        () -> ! selectedPlaylistProperty.getValue().isPresent(), selectedPlaylistProperty));
+                        () -> ! selectedPlaylistProperty.getValue().isPresent() &&
+                                ! musicLibrary.emptyLibraryProperty().get(),
+                        selectedPlaylistProperty, musicLibrary.emptyLibraryProperty()));
 
         hoverCoverImageView.translateXProperty().bind(
                 Bindings.createDoubleBinding(

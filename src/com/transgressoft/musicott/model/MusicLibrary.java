@@ -56,6 +56,8 @@ public class MusicLibrary {
     private ObservableList<Map.Entry<Integer, Track>> musicottTrackEntriesList;
     private ListProperty<Map.Entry<Integer, Track>> musicottTrackEntriesListProperty;
 
+    private Multimap<Integer, String> artistsMultiMap;
+
     private TaskDemon taskDemon = TaskDemon.getInstance();
 
     private MusicLibrary() {
@@ -65,6 +67,7 @@ public class MusicLibrary {
         bindShowingTracks();
         waveforms = new HashMap<>();
         playlists = new ArrayList<>();
+        artistsMultiMap = TreeMultimap.create();
         taskDemon.setMusicCollections(musicottTracks, waveforms, playlists);
     }
 
@@ -122,9 +125,6 @@ public class MusicLibrary {
             synchronized (musicottTracks) {
                 musicottTracks.put(trackEntry.getKey(), trackEntry.getValue());
             }
-            synchronized (musicottTrackEntriesList) {
-                musicottTrackEntriesList.addAll(trackEntry);
-            }
             if (mode != null && mode == NavigationMode.ALL_TRACKS)
                 addToShowingTracksStream(Stream.of(trackEntry));
 
@@ -132,7 +132,11 @@ public class MusicLibrary {
     }
 
     public void addArtistsMultiMap(Multimap<Integer, String> tracksToArtistsMultimap) {
-        // TODO
+        artistsMultiMap.putAll(tracksToArtistsMultimap);
+    }
+
+    public void updateArtistsInvolvedInTrack(int trackId, Set<String> artistsInvolved) {
+        artistsMultiMap.putAll(trackId, artistsInvolved);
     }
 
     private void addToShowingTracksStream(Stream<Entry<Integer, Track>> tracksEntriesStream) {
@@ -214,6 +218,8 @@ public class MusicLibrary {
                 musicottTracks.keySet().removeAll(trackIds);
             }
         });
+
+        trackIds.forEach(artistsMultiMap::removeAll);
 
         boolean[] playlistsChanged = new boolean[]{false};
         synchronized (playlists) {

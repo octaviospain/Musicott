@@ -60,6 +60,7 @@ public class MetadataParser {
             Tag tag = audioFile.getTag();
             parseBaseMetadata(track, tag);
             getCoverBytes(tag).ifPresent(coverBytes -> track.hasCoverProperty().set(true));
+            track.setArtistsInvolved(Utils.getArtistsInvolvedInTrack(track));
         }
         catch (IOException | CannotReadException | ReadOnlyFileException | TagException | InvalidAudioFrameException exception) {
             LOG.debug("Error creating track from {}: ", fileToParse, exception);

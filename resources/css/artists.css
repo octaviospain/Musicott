@@ -3,6 +3,9 @@
 #rootSplitPane {
     -fx-background-color: rgb(34, 34, 34);
     -fx-text-fill: rgb(182, 182, 182);
+    -fx-border-color: rgb(73, 73, 73);
+    -fx-border-width: 2px;
+    -fx-border-insets: -2 -2 0 -2;
 }
 
 #rootSplitPane > .split-pane-divider {
