@@ -19,11 +19,10 @@
 
 package com.transgressoft.musicott.tasks.parse;
 
-import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.*;
-import javafx.application.Platform;
+import javafx.application.*;
 import javafx.concurrent.*;
 import javafx.util.*;
 
@@ -39,7 +38,6 @@ import java.util.*;
 public abstract class BaseParseTask extends Task<Void> {
 
     protected Map<Integer, Track> parsedTracks;
-    protected Multimap<Integer, String> tracksToArtistsMultimap;
     protected Collection<String> parseErrors;
     protected long startMillis;
 

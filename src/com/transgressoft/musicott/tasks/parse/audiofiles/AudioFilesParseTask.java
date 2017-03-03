@@ -72,7 +72,6 @@ public class AudioFilesParseTask extends BaseParseTask {
         BaseParseResult<Map<Integer, Track>> result = forkJoinPool.invoke(new AudioFilesParseAction(filesToParse, this));
         parsedTracks = result.getParsedResults();
         parseErrors = result.getParseErrors();
-        tracksToArtistsMultimap = result.getTracksToArtistsMultimap();
         return null;
     }
 
@@ -96,7 +95,6 @@ public class AudioFilesParseTask extends BaseParseTask {
     protected void addResultsToMusicLibrary() {
         Platform.runLater(() -> updateTaskProgressOnView(- 1, ""));
         musicLibrary.addTracks(parsedTracks);
-        musicLibrary.addArtistsMultiMap(tracksToArtistsMultimap);
         Platform.runLater(stageDemon::closeIndeterminateProgress);
         computeAndShowElapsedTime();
     }

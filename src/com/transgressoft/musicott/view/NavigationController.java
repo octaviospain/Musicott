@@ -138,13 +138,14 @@ public class NavigationController implements MusicottController {
                 playlistTreeView.getSelectionModel().clearAndSelect(- 1);
                 Platform.runLater(stageDemon.getRootController()::showAllTracksView);
                 break;
+            case ARTISTS:
+                navigationMenuListView.getSelectionModel().select(NavigationMode.ARTISTS);
+                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+                Platform.runLater(stageDemon.getRootController()::showArtistsView);
+                break;
             case PLAYLIST:
                 navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
                 Platform.runLater(stageDemon.getRootController()::showPlaylistView);
-                break;
-            case ARTISTS:
-                navigationMenuListView.getSelectionModel().select(NavigationMode.ARTISTS);
-                Platform.runLater(stageDemon.getRootController()::showArtistsView);
                 break;
         }
     }

@@ -89,7 +89,7 @@ public class Track {
      */
     private Map<TrackField, Property> propertyMap;
 
-    private Set<String> artistsInvolved;
+    private Set<String> artistsInvolved = new HashSet<>();
 
     private Optional<File> coverFileToUpdate = Optional.empty();
     private MetadataUpdater updater;

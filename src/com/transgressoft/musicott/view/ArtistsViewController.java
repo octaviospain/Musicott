@@ -50,6 +50,6 @@ public class ArtistsViewController implements MusicottController {
 
     @FXML
     public void initialize() {
-
+        artistsListView.setItems(musicLibrary.artistsProperty());
     }
 }

@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.model;
 
+import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import javafx.beans.property.*;
 import javafx.util.Duration;
@@ -173,6 +174,7 @@ public class TrackTest {
         track.setInDisk(true);
         track.setDateAdded(LocalDateTime.of(2006, 1, 1, 23, 59));
         track.setLastDateModified(LocalDateTime.of(2006, 1, 1, 23, 59));
+        track.setArtistsInvolved(Sets.newHashSet(artist, albumArtist));
 
         assertEquals(trackId, track.getTrackId());
         assertEquals(name, track.getName());
@@ -200,11 +202,12 @@ public class TrackTest {
         assertTrue(track.getInDisk());
         assertEquals(LocalDateTime.of(2006, 1, 1, 23, 59), track.getDateAdded());
         assertEquals(LocalDateTime.of(2006, 1, 1, 23, 59), track.getLastDateModified());
+        assertEquals(Sets.newHashSet(artist, albumArtist), track.getArtistsInvolved());
     }
 
     @Test
     public void writeMetadataTest() {
-
+        // TODO
     }
 
     @Test

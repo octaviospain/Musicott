@@ -134,13 +134,13 @@ public class StageDemon {
         AnchorPane artistsLayout = (AnchorPane) loadLayout(ARTISTS_VIEW_LAYOUT);
         LOG.debug("Artists layout loaded");
         BorderPane rootLayout = (BorderPane) loadLayout(ROOT_LAYOUT);
-        getRootController().setNavigationPane(navigationLayout);
-        getRootController().setArtistsPane(artistsLayout);
         LOG.debug("Root layout loaded");
 
         BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
         contentBorderLayout.setBottom(playerGridPane);
         contentBorderLayout.setLeft(navigationLayout);
+        getRootController().setNavigationPane(navigationLayout);
+        getRootController().setArtistsPane(artistsLayout);
         getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
         loadMenuBar(rootLayout);
         setHidePlayQueueActionOnLayouts(ImmutableList.of(navigationLayout, contentBorderLayout, rootLayout));

@@ -215,7 +215,6 @@ public class ItunesParseTask extends BaseParseTask {
         Platform.runLater(() -> updateTaskProgressOnView(- 1, ""));
         playlists.forEach(playlist -> Platform.runLater(() -> navigationController.addNewPlaylist(playlist)));
         musicLibrary.addTracks(parsedTracks);
-        musicLibrary.addArtistsMultiMap(tracksToArtistsMultimap);
         Platform.runLater(stageDemon::closeIndeterminateProgress);
         computeAndShowElapsedTime();
     }

@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.tasks;
 
+import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
@@ -60,9 +61,13 @@ public class UpdateMetadataTask extends Thread {
 		tracks.stream().filter(Track::getInDisk).forEach(track -> {
 			File backup = makeBackup(track);
 
+			Set<String> oldArtistsInvolved = track.getArtistsInvolved();
 			Set<String> newArtistsInvolved = Utils.getArtistsInvolvedInTrack(track);
+			Set<String> removedArtists = Sets.difference(oldArtistsInvolved, newArtistsInvolved).immutableCopy();
+			Set<String> addedArtists = Sets.difference(newArtistsInvolved, oldArtistsInvolved).immutableCopy();
+
 			track.setArtistsInvolved(newArtistsInvolved);
-			musicLibrary.updateArtistsInvolvedInTrack(track.getTrackId(), newArtistsInvolved);
+			musicLibrary.updateArtistsInvolvedInTrack(track.getTrackId(), removedArtists, addedArtists);
 			try {
 				track.writeMetadata();
 				deleteBackup(track, backup);
