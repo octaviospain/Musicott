@@ -43,6 +43,8 @@ import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.*;
+import java.util.stream.*;
 
 import static com.transgressoft.musicott.view.MusicottController.*;
 import static javafx.scene.input.KeyCombination.*;
@@ -92,9 +94,12 @@ public class MusicottMenuBar extends MenuBar {
     private Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
     private ImageView musicottLogoImageView = new ImageView(musicottLogo);
 
+    private ListProperty<Entry<Integer, Track>> trackSelectionProperty;
+
     public MusicottMenuBar(Stage primaryStage) {
         super();
         this.primaryStage = primaryStage;
+        trackSelectionProperty = stageDemon.getRootController().selectedTracksProperty();
         initializeMenus();
         setFileMenuActions();
         setEditMenuActions();
@@ -217,8 +222,8 @@ public class MusicottMenuBar extends MenuBar {
     }
 
     private void setEditMenuActions() {
-        editMenuItem.setOnAction(e -> stageDemon.editTracks());
-        deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks());
+        editMenuItem.setOnAction(e -> stageDemon.editTracks(trackSelectionTracks()));
+        deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks(trackSelectionIds()));
         newPlaylistMenuItem.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
     }
 
@@ -276,6 +281,14 @@ public class MusicottMenuBar extends MenuBar {
             alert.showAndWait();
             LOG.debug("Showing about window");
         });
+    }
+
+    private List<Integer> trackSelectionIds() {
+        return trackSelectionProperty.stream().map(Entry::getKey).collect(Collectors.toList());
+    }
+
+    private List<Track> trackSelectionTracks() {
+        return trackSelectionProperty.stream().map(Entry::getValue).collect(Collectors.toList());
     }
 
     /**

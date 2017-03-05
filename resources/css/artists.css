@@ -1,7 +1,6 @@
 @import url("base.css");
-@import url("scrollbar.css");
 
-#rootSplitPane {
+#artistsViewSplitPane {
     -fx-background-color: rgb(34, 34, 34);
     -fx-text-fill: white;
     -fx-border-color: rgb(73, 73, 73);
@@ -9,7 +8,7 @@
     -fx-border-insets: -2 -2 0 -2;
 }
 
-#rootSplitPane > .split-pane-divider {
+#artistsViewSplitPane > .split-pane-divider {
     -fx-background-color: rgb(73, 73, 73);
     -fx-pref-width: 2px;
 }
@@ -35,6 +34,19 @@
 #artistsListView .list-cell:filled:selected {
     -fx-background-color: rgb(73, 73, 73);
     -fx-text-fill: rgb(99, 255, 109);
+}
+
+#infoHBox {
+    -fx-border-color: rgb(73, 73, 73);
+    -fx-border-width: 0 0 2 0;
+}
+
+#areaTitleLabel {
+    -fx-font-size: 20px;
+}
+
+#albumLabelLabel {
+    -fx-font-size: 17px;
 }
 
 .list-view .scroll-bar .decrement-button,

@@ -10,9 +10,74 @@
       <VBox fx:id="headerVBox" BorderPane.alignment="CENTER" />
    </top>
    <center>
-      <BorderPane fx:id="contentBorderLayout" BorderPane.alignment="CENTER">
+      <BorderPane fx:id="wrapperBorderPane" BorderPane.alignment="CENTER">
          <center>
-            <BorderPane fx:id="tableBorderPane" BorderPane.alignment="CENTER">
+            <BorderPane fx:id="contentBorderPane" BorderPane.alignment="CENTER">
+               <center>
+                  <BorderPane fx:id="tableBorderPane" BorderPane.alignment="CENTER">
+                     <center>
+                        <StackPane fx:id="tableStackPane">
+                           <children>
+                              <SplitPane fx:id="artistsViewSplitPane" dividerPositions="0.15" stylesheets="@../css/artists.css">
+                                <items>
+                                  <AnchorPane>
+                                       <children>
+                                          <ListView fx:id="artistsListView" layoutX="17.0" layoutY="114.0" maxWidth="300.0" minWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                       </children>
+                                    </AnchorPane>
+                                  <AnchorPane minWidth="600.0">
+                                       <children>
+                                          <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                             <top>
+                                                <HBox fx:id="infoHBox" alignment="CENTER" BorderPane.alignment="CENTER">
+                                                   <BorderPane.margin>
+                                                      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                                                   </BorderPane.margin>
+                                                   <children>
+                                                      <VBox alignment="CENTER_LEFT" prefHeight="80.0" HBox.hgrow="SOMETIMES">
+                                                         <children>
+                                                            <Label fx:id="nameLabel">
+                                                                <font>
+                                                                    <Font size="20.0" />
+                                                                </font>
+                                                             </Label>
+                                                            <HBox alignment="CENTER_LEFT" VBox.vgrow="SOMETIMES">
+                                                               <children>
+                                                                  <Label fx:id="totalAlbumsLabel" />
+                                                                  <Label text="," />
+                                                                  <Label fx:id="totalTracksLabel">
+                                                                     <HBox.margin>
+                                                                        <Insets left="5.0" />
+                                                                     </HBox.margin>
+                                                                  </Label>
+                                                               </children>
+                                                            </HBox>
+                                                         </children>
+                                                      </VBox>
+                                                      <Button fx:id="randomButton" mnemonicParsing="false" text="Random" />
+                                                   </children>
+                                                </HBox>
+                                             </top>
+                                             <center>
+                                                <AnchorPane BorderPane.alignment="CENTER">
+                                                   <children>
+                                                      <ScrollPane fitToHeight="true" fitToWidth="true" stylesheets="@../css/scrollbar.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                         <content>
+                                                            <VBox fx:id="trackSetsAreaVBox" prefHeight="200.0" prefWidth="100.0" />
+                                                         </content>
+                                                      </ScrollPane>
+                                                   </children>
+                                                </AnchorPane>
+                                             </center>
+                                          </BorderPane>
+                                       </children>
+                                    </AnchorPane>
+                                </items>
+                              </SplitPane>
+                           </children></StackPane>
+                     </center>
+                  </BorderPane>
+               </center>
                <top>
                   <HBox fx:id="tableInfoHBox" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
                      <children>
@@ -60,9 +125,6 @@
                      </children>
                   </HBox>
                </top>
-               <center>
-                  <StackPane fx:id="tableStackPane" BorderPane.alignment="CENTER" />
-               </center>
             </BorderPane>
          </center>
       </BorderPane>

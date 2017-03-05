@@ -217,7 +217,8 @@ public class EditController implements MusicottController {
      * a dash ({@code -}) is placed in the {@link TextField}.
      */
     private void setEditFieldsValues() {
-        trackSelection = stageDemon.getRootController().getSelectedTracks();
+        trackSelection = stageDemon.getRootController().selectedTracksProperty().get().stream()
+                                   .map(Entry::getValue).collect(Collectors.toList());
 
         editFieldsMap.entrySet().forEach(this::setFieldValue);
 
@@ -281,6 +282,7 @@ public class EditController implements MusicottController {
         UpdateMetadataTask updateTask = new UpdateMetadataTask(trackSelection);
         updateTask.setDaemon(true);
         updateTask.start();
+        // TODO update changes if user is on artist navigation mode
         editStage.close();
     }
 

@@ -27,7 +27,6 @@ import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
 import javafx.application.Platform;
 import javafx.fxml.*;
-import javafx.scene.Node;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
@@ -38,7 +37,6 @@ import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.*;
 
 import static com.transgressoft.musicott.view.MusicottController.*;
 
@@ -131,19 +129,17 @@ public class StageDemon {
         AnchorPane playQueuePane = (AnchorPane) loadLayout(PLAYQUEUE_LAYOUT);
         getPlayerController().setPlayQueuePane(playQueuePane);
         LOG.debug("Play queue layout loaded");
-        AnchorPane artistsLayout = (AnchorPane) loadLayout(ARTISTS_VIEW_LAYOUT);
-        LOG.debug("Artists layout loaded");
         BorderPane rootLayout = (BorderPane) loadLayout(ROOT_LAYOUT);
         LOG.debug("Root layout loaded");
 
-        BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
-        contentBorderLayout.setBottom(playerGridPane);
-        contentBorderLayout.setLeft(navigationLayout);
+
+        BorderPane wrapperBorderPane = (BorderPane) rootLayout.lookup("#wrapperBorderPane");
+        wrapperBorderPane.setBottom(playerGridPane);
+        wrapperBorderPane.setLeft(navigationLayout);
         getRootController().setNavigationPane(navigationLayout);
-        getRootController().setArtistsPane(artistsLayout);
         getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
         loadMenuBar(rootLayout);
-        setHidePlayQueueActionOnLayouts(ImmutableList.of(navigationLayout, contentBorderLayout, rootLayout));
+        setHidePlayQueueActionOnLayouts(ImmutableList.of(navigationLayout, wrapperBorderPane, rootLayout));
         return rootLayout;
     }
 
@@ -167,8 +163,7 @@ public class StageDemon {
      * Shows the edit window. If the size of track selection is greater than 1,
      * an {@code Alert} is opened asking for a confirmation of the user.
      */
-    public void editTracks() {
-        List<Track> trackSelection = getRootController().getSelectedTracks();
+    public void editTracks(List<Track> trackSelection) {
         if (! trackSelection.isEmpty()) {
             boolean[] edit = {true};
             if (trackSelection.size() > 1) {
@@ -177,9 +172,8 @@ public class StageDemon {
                 Optional<ButtonType> result = alert.showAndWait();
 
                 result.ifPresent(value -> {
-                    if (value.getButtonData().isCancelButton()) {
+                    if (value.getButtonData().isCancelButton())
                         edit[0] = false;
-                    }
                 });
             }
 
@@ -199,28 +193,22 @@ public class StageDemon {
      * Deletes the tracks selected in the table. An {@link Alert} is opened
      * asking for a confirmation of the user.
      */
-    public void deleteTracks() {
-        List<Track> trackSelection = getRootController().getSelectedTracks();
-
+    public void deleteTracks(List<Integer> trackSelection) {
         if (! trackSelection.isEmpty()) {
-            int numDeletedTracks = trackSelection.size();
-            String alertHeader = "Delete " + numDeletedTracks + " files from Musicott?";
+            String alertHeader = "Delete " + trackSelection.size() + " files from Musicott?";
             Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
-            alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
             Optional<ButtonType> result = alert.showAndWait();
 
             if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
                 new Thread(() -> {
-                    List<Integer> tracksToDelete = trackSelection.stream().map(Track::getTrackId).collect(Collectors.toList());
-                    PlayerFacade.getInstance().deleteFromQueues(tracksToDelete);
-                    musicLibrary.deleteTracks(tracksToDelete);
+                    PlayerFacade.getInstance().deleteFromQueues(trackSelection);
+                    musicLibrary.deleteTracks(trackSelection);
                     Platform.runLater(this::closeIndeterminateProgress);
                 }).start();
                 showIndeterminateProgress();
             }
-            else {
+            else
                 alert.close();
-            }
         }
     }
 

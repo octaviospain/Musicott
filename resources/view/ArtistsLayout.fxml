@@ -4,20 +4,20 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<AnchorPane stylesheets="@../css/artists.css" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.ArtistsViewController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.ArtistsViewController">
    <children>
-      <SplitPane fx:id="rootSplitPane" dividerPositions="0.15" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <SplitPane fx:id="rootSplitPane" dividerPositions="0.15" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <items>
           <AnchorPane>
                <children>
                   <ListView fx:id="artistsListView" layoutX="17.0" layoutY="114.0" maxWidth="300.0" minWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                </children>
             </AnchorPane>
-          <AnchorPane minWidth="450.0">
+          <AnchorPane>
                <children>
                   <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <top>
-                        <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+                        <HBox fx:id="infoHBox" alignment="CENTER" BorderPane.alignment="CENTER">
                            <BorderPane.margin>
                               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                            </BorderPane.margin>
@@ -31,9 +31,9 @@
                                      </Label>
                                     <HBox alignment="CENTER_LEFT" VBox.vgrow="SOMETIMES">
                                        <children>
-                                          <Label fx:id="albumsLabel" />
+                                          <Label fx:id="totalAlbumsLabel" />
                                           <Label text="," />
-                                          <Label fx:id="tracksLabel">
+                                          <Label fx:id="totalTracksLabel">
                                              <HBox.margin>
                                                 <Insets left="5.0" />
                                              </HBox.margin>
@@ -47,7 +47,15 @@
                         </HBox>
                      </top>
                      <center>
-                        <ListView fx:id="artistMusicListView" BorderPane.alignment="CENTER" />
+                        <AnchorPane BorderPane.alignment="CENTER">
+                           <children>
+                              <ScrollPane fitToHeight="true" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <content>
+                                    <VBox fx:id="trackSetsAreaVBox" prefHeight="200.0" prefWidth="100.0" />
+                                 </content>
+                              </ScrollPane>
+                           </children>
+                        </AnchorPane>
                      </center>
                   </BorderPane>
                </children>

@@ -23,9 +23,9 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.util.*;
 import javafx.beans.property.*;
+import javafx.collections.*;
 import javafx.event.*;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.util.*;
@@ -67,10 +67,9 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
     private TableColumn<Entry<Integer, Track>, LocalDateTime> dateModifiedCol;
     private TableColumn<Entry<Integer, Track>, LocalDateTime> dateAddedCol;
     private TableColumn<Entry<Integer, Track>, Duration> totalTimeCol;
-    private TableColumn<Entry<Integer, Track>, Boolean> coverCol;
 
     private TrackTableViewContextMenu trackTableContextMenu;
-    private List<Entry<Integer, Track>> selection;
+    private ObservableList<Entry<Integer, Track>> selection;
 
     private PlayerFacade player;
 
@@ -83,7 +82,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         initColumns();
         getColumns().addAll(artistCol, nameCol, albumCol, genreCol, labelCol, bpmCol, totalTimeCol);
         getColumns().addAll(yearCol, sizeCol, trackNumberCol, discNumberCol, albumArtistCol, commentsCol);
-        getColumns().addAll(bitRateCol, playCountCol, dateModifiedCol, dateAddedCol, coverCol);
+        getColumns().addAll(bitRateCol, playCountCol, dateModifiedCol, dateAddedCol);
         GridPane.setHgrow(this, Priority.ALWAYS);
         GridPane.setVgrow(this, Priority.ALWAYS);
         setPrefWidth(USE_COMPUTED_SIZE);
@@ -91,13 +90,13 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         setColumnResizePolicy(UNCONSTRAINED_RESIZE_POLICY);
         getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         getSelectionModel().selectedIndexProperty().addListener(
-                (observable, oldValue, newValue) -> selection = getSelectionModel().getSelectedItems());
+                listener -> selection = getSelectionModel().getSelectedItems());
         getSortOrder().add(dateAddedCol);
         setRowFactory(TrackTableRow::new);
         addEventHandler(KeyEvent.KEY_PRESSED, getKeyPressedEventHandler());
         getStylesheets().add(getClass().getResource(TRACK_TABLE_STYLE).toExternalForm());
 
-        trackTableContextMenu = new TrackTableViewContextMenu(getSelectionModel().getSelectedItems());
+        trackTableContextMenu = new TrackTableViewContextMenu();
         setContextMenu(trackTableContextMenu);
         addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             if (event.getButton() == MouseButton.SECONDARY)
@@ -198,11 +197,6 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
                 cellData -> new SimpleIntegerProperty(cellData.getValue().getValue().getBitRate()));
         bitRateCol.setCellFactory(columns -> new BitRateTableCell());
         bitRateCol.setStyle(CENTER_RIGHT_STYLE);
-
-        coverCol = new TableColumn<>("Cover");
-        coverCol.setPrefWidth(50);
-        coverCol.setCellValueFactory(cellData -> cellData.getValue().getValue().hasCoverProperty());
-        coverCol.setCellFactory(CheckBoxTableCell.forTableColumn(coverCol));
 
         bpmCol = new TableColumn<>("BPM");
         bpmCol.setPrefWidth(60);
