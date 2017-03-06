@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
@@ -89,24 +90,24 @@ public class EditController implements MusicottController {
 
     private File newCoverImage;
     private Stage editStage;
-    private Map<TrackField, TextInputControl> editFieldsMap;
+    private Map<TrackField, TextInputControl> editableFieldsMap;
     private List<Track> trackSelection;
     private Optional<byte[]> commonCover = Optional.empty();
 
     @FXML
     private void initialize() {
-        editFieldsMap = new EnumMap<>(TrackField.class);
-        editFieldsMap.put(TrackField.NAME, nameTextField);
-        editFieldsMap.put(TrackField.ARTIST, artistTextField);
-        editFieldsMap.put(TrackField.ALBUM, albumTextField);
-        editFieldsMap.put(TrackField.GENRE, genreTextField);
-        editFieldsMap.put(TrackField.COMMENTS, commentsTextField);
-        editFieldsMap.put(TrackField.ALBUM_ARTIST, albumArtistTextField);
-        editFieldsMap.put(TrackField.LABEL, labelTextField);
-        editFieldsMap.put(TrackField.TRACK_NUMBER, trackNumTextField);
-        editFieldsMap.put(TrackField.DISC_NUMBER, discNumTextField);
-        editFieldsMap.put(TrackField.YEAR, yearTextField);
-        editFieldsMap.put(TrackField.BPM, bpmTextField);
+        editableFieldsMap = new EnumMap<>(TrackField.class);
+        editableFieldsMap.put(TrackField.NAME, nameTextField);
+        editableFieldsMap.put(TrackField.ARTIST, artistTextField);
+        editableFieldsMap.put(TrackField.ALBUM, albumTextField);
+        editableFieldsMap.put(TrackField.GENRE, genreTextField);
+        editableFieldsMap.put(TrackField.COMMENTS, commentsTextField);
+        editableFieldsMap.put(TrackField.ALBUM_ARTIST, albumArtistTextField);
+        editableFieldsMap.put(TrackField.LABEL, labelTextField);
+        editableFieldsMap.put(TrackField.TRACK_NUMBER, trackNumTextField);
+        editableFieldsMap.put(TrackField.DISC_NUMBER, discNumTextField);
+        editableFieldsMap.put(TrackField.YEAR, yearTextField);
+        editableFieldsMap.put(TrackField.BPM, bpmTextField);
 
         titleNameLabel.textProperty().bind(nameTextField.textProperty());
         titleArtistLabel.textProperty().bind(artistTextField.textProperty());
@@ -211,17 +212,20 @@ public class EditController implements MusicottController {
         editStage.setOnShowing(e -> setEditFieldsValues());
     }
 
+    public ReadOnlyBooleanProperty showingProperty() {
+        return editStage.showingProperty();
+    }
+
     /**
      * Fills the text inputs on the edit window for each {@link TrackField}.
      * If there is not a common value for the selected tracks for each {@code TrackField},
      * a dash ({@code -}) is placed in the {@link TextField}.
      */
     private void setEditFieldsValues() {
-        trackSelection = stageDemon.getRootController().selectedTracksProperty().get().stream()
+        trackSelection = StageDemon.getInstance().getRootController().selectedTracksProperty().stream()
                                    .map(Entry::getValue).collect(Collectors.toList());
 
-        editFieldsMap.entrySet().forEach(this::setFieldValue);
-
+        editableFieldsMap.entrySet().forEach(this::setFieldValue);
         newCoverImage = null;
         coverImage.setImage(COVER_IMAGE);
         commonCover = commonCover();
@@ -306,7 +310,7 @@ public class EditController implements MusicottController {
         Map<TrackField, Property> trackPropertiesMap = track.getPropertyMap();
         final boolean[] changed = {false};
 
-        editFieldsMap.entrySet().forEach(entry -> {
+        editableFieldsMap.entrySet().forEach(entry -> {
             Property property = trackPropertiesMap.get(entry.getKey());
             changed[0] = editTrackTrackField(entry, property);
         });

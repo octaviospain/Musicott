@@ -32,13 +32,15 @@ import javafx.beans.property.*;
  * @version 0.9.2-b
  */
 public class ServiceDemon {
-
-    private static ServiceDemon instance;
-
+    
     private LastFmPreferences lastFmPreferences;
     private LastFmTask lastFmTask;
     private boolean usingLastFm;
     private BooleanProperty usingLastFmProperty;
+
+    private static class InstanceHolder {
+        static final ServiceDemon INSTANCE = new ServiceDemon();
+    }
 
     private ServiceDemon() {
         lastFmPreferences = new LastFmPreferences();
@@ -46,9 +48,7 @@ public class ServiceDemon {
     }
 
     public static ServiceDemon getInstance() {
-        if (instance == null)
-            instance = new ServiceDemon();
-        return instance;
+        return InstanceHolder.INSTANCE;
     }
 
     public LastFmPreferences getLastFmPreferences() {

@@ -64,11 +64,10 @@ public class PlaylistTreeView extends TreeView<Playlist> {
                 selectedPlaylistProperty.set(Optional.empty());
         });
         selectedPlaylistProperty.addListener((obs, oldSelectedPlaylist, newSelectedPlaylist) -> {
-            if (newSelectedPlaylist.isPresent()) {
-                Playlist playlist = newSelectedPlaylist.get();
-                playlist.showTracksOnTable();
+            newSelectedPlaylist.ifPresent(playlist -> {
+                musicLibrary.showPlaylist(playlist);
                 stageDemon.getNavigationController().setNavigationMode(NavigationMode.PLAYLIST);
-            }
+            });
         });
 
         contextMenu = new PlaylistTreeViewContextMenu();

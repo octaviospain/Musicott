@@ -34,11 +34,18 @@ import java.util.*;
  */
 public class ErrorDemon {
 
-    private static ErrorDemon instance;
     private ErrorDialogController errorAlertController;
     private Stage alertStage;
 
+    private static class InstanceHolder {
+        static final ErrorDemon INSTANCE = new ErrorDemon();
+    }
+
     private ErrorDemon() {}
+
+    public static ErrorDemon getInstance() {
+        return InstanceHolder.INSTANCE;
+    }
 
     void setErrorAlertStage(Stage stage) {
         alertStage = stage;
@@ -46,12 +53,6 @@ public class ErrorDemon {
 
     void setErrorAlertController(ErrorDialogController errorAlertController) {
         this.errorAlertController = errorAlertController;
-    }
-
-    public static ErrorDemon getInstance() {
-        if (instance == null)
-            instance = new ErrorDemon();
-        return instance;
     }
 
     /**

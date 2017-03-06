@@ -91,15 +91,16 @@ public class MusicottMenuBar extends MenuBar {
     private MenuItem newPlaylistMenuItem;
     private MenuItem showHideNavigationPaneMenuItem;
     private MenuItem showHideTableInfoPaneMenuItem;
+    private MenuItem selectAllMenuItem;
+    private MenuItem dontSelectAllMenuItem;
     private Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
     private ImageView musicottLogoImageView = new ImageView(musicottLogo);
 
-    private ListProperty<Entry<Integer, Track>> trackSelectionProperty;
+    private TaskDemon taskDemon = TaskDemon.getInstance();
 
     public MusicottMenuBar(Stage primaryStage) {
         super();
         this.primaryStage = primaryStage;
-        trackSelectionProperty = stageDemon.getRootController().selectedTracksProperty();
         initializeMenus();
         setFileMenuActions();
         setEditMenuActions();
@@ -155,7 +156,7 @@ public class MusicottMenuBar extends MenuBar {
 
     private void initializeMenus() {
         fileMenu = new Menu("File");
-        editMenu = new Menu("Menu");
+        editMenu = new Menu("Edit");
         controlsMenu = new Menu("Controls");
         viewMenu = new Menu("View");
         aboutMenu = new Menu("About");
@@ -174,9 +175,13 @@ public class MusicottMenuBar extends MenuBar {
         newPlaylistMenuItem = new MenuItem("Add new playlist");
         showHideNavigationPaneMenuItem = new MenuItem("Hide navigation pane");
         showHideTableInfoPaneMenuItem = new MenuItem("Hide table info pane");
+        selectAllMenuItem = new MenuItem("Select all");
+        dontSelectAllMenuItem = new MenuItem("Don't select all");
 
         fileMenu.getItems().addAll(openFileMenuItem, importFolderMenuItem, importItunesMenuItem);
-        editMenu.getItems().addAll(editMenuItem, deleteMenuItem, new SeparatorMenuItem(), newPlaylistMenuItem);
+        fileMenu.getItems().addAll(new SeparatorMenuItem(), newPlaylistMenuItem);
+        editMenu.getItems().addAll(editMenuItem, deleteMenuItem);
+        editMenu.getItems().addAll(new SeparatorMenuItem(), selectAllMenuItem, dontSelectAllMenuItem);
         controlsMenu.getItems().addAll(previousMenuItem, nextMenuItem, new SeparatorMenuItem());
         controlsMenu.getItems().addAll(increaseVolumeMenuItem, decreaseVolumeMenuItem, new SeparatorMenuItem());
         controlsMenu.getItems().add(selectCurrentTrackMenuItem);
@@ -219,12 +224,18 @@ public class MusicottMenuBar extends MenuBar {
                 TaskDemon.getInstance().importFromItunesLibrary(xmlFile.getAbsolutePath());
         });
         preferencesMenuItem.setOnAction(e -> stageDemon.showPreferences());
+        newPlaylistMenuItem.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
     }
 
     private void setEditMenuActions() {
-        editMenuItem.setOnAction(e -> stageDemon.editTracks(trackSelectionTracks()));
+        ListProperty<Entry<Integer, Track>> selection = stageDemon.getRootController().selectedTracksProperty();
+        editMenuItem.setOnAction(e -> stageDemon.editTracks(selection.size()));
         deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks(trackSelectionIds()));
-        newPlaylistMenuItem.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
+        selectAllMenuItem.setOnAction(e -> stageDemon.getRootController().selectAllTracks());
+        dontSelectAllMenuItem.setOnAction(e -> stageDemon.getRootController().deselectAllTracks());
+        ReadOnlyBooleanProperty editingTracksProperty = stageDemon.getEditController().showingProperty();
+        selectAllMenuItem.disableProperty().bind(editingTracksProperty);
+        dontSelectAllMenuItem.disableProperty().bind(editingTracksProperty);
     }
 
     private void setControlsMenuActions() {
@@ -240,6 +251,7 @@ public class MusicottMenuBar extends MenuBar {
         selectCurrentTrackMenuItem.setOnAction(e -> {
             Optional<Track> currentTrack = playerFacade.getCurrentTrack();
             TrackTableView trackTable = (TrackTableView) primaryStage.getScene().lookup("#trackTable");
+            // TODO Fix select current track when showing artists
             trackTable.getSelectionModel().clearSelection();
             currentTrack.ifPresent(track -> {
                 int currentTrackId = track.getTrackId();
@@ -284,11 +296,8 @@ public class MusicottMenuBar extends MenuBar {
     }
 
     private List<Integer> trackSelectionIds() {
-        return trackSelectionProperty.stream().map(Entry::getKey).collect(Collectors.toList());
-    }
-
-    private List<Track> trackSelectionTracks() {
-        return trackSelectionProperty.stream().map(Entry::getValue).collect(Collectors.toList());
+        List<Entry<Integer, Track>> trackSelection = stageDemon.getRootController().selectedTracksProperty();
+        return trackSelection.stream().map(Entry::getKey).collect(Collectors.toList());
     }
 
     /**
@@ -347,7 +356,7 @@ public class MusicottMenuBar extends MenuBar {
     private void countFilesToImportTask(File folder) {
         Set<String> extensions = MainPreferences.getInstance().getImportFilterExtensions();
         ExtensionFileFilter filter = new ExtensionFileFilter();
-        extensions.stream().forEach(filter::addExtension);
+        extensions.forEach(filter::addExtension);
         Platform.runLater(() -> {
             navigationController.setStatusMessage("");
             navigationController.setStatusProgress(0);
@@ -401,5 +410,7 @@ public class MusicottMenuBar extends MenuBar {
                 .setAccelerator(new KeyCodeCombination(KeyCode.R, operativeSystemModifier, shiftDown));
         showHideTableInfoPaneMenuItem
                 .setAccelerator(new KeyCodeCombination(KeyCode.U, operativeSystemModifier, shiftDown));
+        selectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemModifier));
+        dontSelectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemModifier, shiftDown));
     }
 }

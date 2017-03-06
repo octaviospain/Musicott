@@ -22,6 +22,7 @@ package com.transgressoft.musicott.model;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.util.*;
 import javafx.beans.property.*;
+import javafx.collections.*;
 import javafx.util.Duration;
 
 import java.io.*;
@@ -80,6 +81,7 @@ public class Track {
     private IntegerProperty bpmProperty;
     private IntegerProperty playCountProperty;
 
+    private SetProperty<String> artistsInvolvedProperty;
     private ObjectProperty<LocalDateTime> dateModifiedProperty;
     private BooleanProperty hasCoverProperty;
     private BooleanProperty isPlayableProperty;
@@ -88,8 +90,7 @@ public class Track {
      * Map of the properties that are editable in the application
      */
     private Map<TrackField, Property> propertyMap;
-
-    private Set<String> artistsInvolved = new HashSet<>();
+    private ObservableSet<String> artistsInvolved;
 
     private Optional<File> coverFileToUpdate = Optional.empty();
     private MetadataUpdater updater;
@@ -128,6 +129,8 @@ public class Track {
         playCountProperty = new SimpleIntegerProperty(this, "play count", playCount);
         isPlayableProperty = new SimpleBooleanProperty(this, "is playable", isPlayable());
         hasCoverProperty = new SimpleBooleanProperty(this, "cover flag", false);
+        artistsInvolvedProperty = new SimpleSetProperty<>(this, "artists involved", artistsInvolved);
+        artistsInvolvedProperty.addListener((obs, oldArtists, newArtists) -> setArtistsInvolved(newArtists));
 
         propertyMap = new EnumMap<>(TrackField.class);
         propertyMap.put(TrackField.NAME, nameProperty);
@@ -351,11 +354,14 @@ public class Track {
         return isVariableBitRate;
     }
 
-    public void setArtistsInvolved(Set<String> artistsInvolved) {
+    public void setArtistsInvolved(ObservableSet<String> artistsInvolved) {
         this.artistsInvolved = artistsInvolved;
+        if (artistsInvolved.isEmpty())
+            artistsInvolved.add("Unknown artist");
+        artistsInvolvedProperty.set(artistsInvolved);
     }
 
-    public Set<String> getArtistsInvolved() {
+    public ObservableSet<String> getArtistsInvolved() {
         return artistsInvolved;
     }
 
@@ -455,6 +461,10 @@ public class Track {
 
     public BooleanProperty isPlayableProperty() {
         return isPlayableProperty;
+    }
+
+    public SetProperty<String> artistsInvolvedProperty() {
+        return artistsInvolvedProperty;
     }
 
     /**

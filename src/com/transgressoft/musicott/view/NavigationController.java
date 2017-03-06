@@ -19,7 +19,9 @@
 
 package com.transgressoft.musicott.view;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
 import javafx.beans.binding.*;
@@ -55,12 +57,15 @@ public class NavigationController implements MusicottController {
 
     private NavigationMenuListView navigationMenuListView;
     private PlaylistTreeView playlistTreeView;
-    private NavigationMode showingMode;
     private ObjectProperty<NavigationMode> navigationModeProperty;
+
+    private StageDemon stageDemon = StageDemon.getInstance();
+    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private TaskDemon taskDemon = TaskDemon.getInstance();
 
     @FXML
     public void initialize() {
-        navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", showingMode);
+        navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", NavigationMode.ALL_TRACKS);
         navigationModeProperty.addListener((obs, oldMode, newMode) -> setNavigationMode(newMode));
 
         playlistTreeView = new PlaylistTreeView();
@@ -129,7 +134,6 @@ public class NavigationController implements MusicottController {
      * @param mode The {@code NavigationMode} that the user choose
      */
     public void setNavigationMode(NavigationMode mode) {
-        showingMode = mode;
         navigationModeProperty.setValue(mode);
         switch (mode) {
             case ALL_TRACKS:
@@ -148,10 +152,6 @@ public class NavigationController implements MusicottController {
                 Platform.runLater(stageDemon.getRootController()::showPlaylistView);
                 break;
         }
-    }
-
-    public NavigationMode getNavigationMode() {
-        return showingMode;
     }
 
     public ObjectProperty<NavigationMode> navigationModeProperty() {

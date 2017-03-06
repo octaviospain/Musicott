@@ -19,7 +19,6 @@
 
 package com.transgressoft.musicott.model;
 
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.tasks.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
@@ -53,7 +52,6 @@ public class Playlist {
     private BooleanProperty isFolderProperty;
 
     private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-    private StageDemon stageDemon = StageDemon.getInstance();
     private TaskDemon taskDemon = TaskDemon.getInstance();
 
     public Playlist(String name, boolean isFolder) {
@@ -118,13 +116,6 @@ public class Playlist {
             changePlaylistCover();
             taskDemon.saveLibrary(false, false, true);
         }
-
-        Optional<Playlist> selectedPlaylist = stageDemon.getNavigationController().selectedPlaylistProperty().get();
-        selectedPlaylist.ifPresent(playlist -> {
-            if (playlist.equals(this)) {
-                musicLibrary.addToShowingTracks(tracksIds);
-            }
-        });
         return result;
     }
 
@@ -137,28 +128,14 @@ public class Playlist {
             changePlaylistCover();
             taskDemon.saveLibrary(false, false, true);
         }
-
-        Optional<Playlist> selectedPlaylist = stageDemon.getNavigationController().selectedPlaylistProperty().get();
-        selectedPlaylist.ifPresent(playlist -> {
-            if (playlist.equals(this))
-                musicLibrary.removeFromShowingTracks(tracksIds);
-        });
         return result;
-    }
-
-    public void showTracksOnTable() {
-        musicLibrary.clearShowingTracks();
-
-        List<Integer> tracks = getTracks();
-        if (! tracks.isEmpty())
-            musicLibrary.addToShowingTracks(tracks);
     }
 
     public List<Playlist> getContainedPlaylists() {
         return containedPlaylists;
     }
 
-    private List<Integer> getTracks() {
+    public List<Integer> getTracks() {
         List<Integer> allTracksWithin;
         if (isFolder) {
             allTracksWithin = new ArrayList<>();

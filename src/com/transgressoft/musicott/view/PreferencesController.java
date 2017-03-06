@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.services.lastfm.*;
 import com.transgressoft.musicott.tasks.*;
@@ -80,6 +81,11 @@ public class PreferencesController implements MusicottController {
     private LastFmPreferences lastFmPreferences;
 
     private ReadOnlyBooleanProperty usingLastFmProperty = ServiceDemon.getInstance().usingLastFmProperty();
+
+    private StageDemon stageDemon = StageDemon.getInstance();
+    private ServiceDemon serviceDemon = ServiceDemon.getInstance();
+    private MainPreferences preferences = MainPreferences.getInstance();
+    private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
     @FXML
     public void initialize() {

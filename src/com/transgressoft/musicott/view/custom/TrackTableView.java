@@ -19,11 +19,12 @@
 
 package com.transgressoft.musicott.view.custom;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
-import javafx.collections.*;
 import javafx.event.*;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
@@ -49,6 +50,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
 public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
     private static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
+    static EventHandler<KeyEvent> KEY_PRESSED_ON_TRACK_TABLE_HANDLER = getKeyPressedEventHandler();
 
     private TableColumn<Entry<Integer, Track>, String> nameCol;
     private TableColumn<Entry<Integer, Track>, String> artistCol;
@@ -69,15 +71,10 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
     private TableColumn<Entry<Integer, Track>, Duration> totalTimeCol;
 
     private TrackTableViewContextMenu trackTableContextMenu;
-    private ObservableList<Entry<Integer, Track>> selection;
-
-    private PlayerFacade player;
 
     @SuppressWarnings ("unchecked")
     public TrackTableView() {
         super();
-        player = PlayerFacade.getInstance();
-        selection = getSelectionModel().getSelectedItems();
         setId("trackTable");
         initColumns();
         getColumns().addAll(artistCol, nameCol, albumCol, genreCol, labelCol, bpmCol, totalTimeCol);
@@ -89,11 +86,9 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         setPrefHeight(USE_COMPUTED_SIZE);
         setColumnResizePolicy(UNCONSTRAINED_RESIZE_POLICY);
         getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        getSelectionModel().selectedIndexProperty().addListener(
-                listener -> selection = getSelectionModel().getSelectedItems());
         getSortOrder().add(dateAddedCol);
         setRowFactory(TrackTableRow::new);
-        addEventHandler(KeyEvent.KEY_PRESSED, getKeyPressedEventHandler());
+        addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
         getStylesheets().add(getClass().getResource(TRACK_TABLE_STYLE).toExternalForm());
 
         trackTableContextMenu = new TrackTableViewContextMenu();
@@ -152,7 +147,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         dateAddedCol.setCellValueFactory(
                 cellData -> new SimpleObjectProperty<>(cellData.getValue().getValue().getDateAdded()));
         dateAddedCol.setStyle(CENTER_RIGHT_STYLE);
-        dateAddedCol.setSortType(TableColumn.SortType.DESCENDING);    // Default sort of the table
+        dateAddedCol.setSortType(TableColumn.SortType.DESCENDING);
         dateAddedCol.setCellFactory(dateCellFactory);
 
         sizeCol = new TableColumn<>("Size");
@@ -212,8 +207,11 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
      *
      * @return The {@code EventHandler}
      */
-    private EventHandler<KeyEvent> getKeyPressedEventHandler() {
+    private static EventHandler<KeyEvent> getKeyPressedEventHandler() {
         return event -> {
+            PlayerFacade player = PlayerFacade.getInstance();
+            RootController rootController = StageDemon.getInstance().getRootController();
+            ListProperty<Entry<Integer, Track>> selection = rootController.selectedTracksProperty();
             if (event.getCode() == KeyCode.ENTER) {
                 List<Integer> selectionIDs = selection.stream().map(Entry::getKey).collect(Collectors.toList());
                 player.addTracksToPlayQueue(selectionIDs, true);

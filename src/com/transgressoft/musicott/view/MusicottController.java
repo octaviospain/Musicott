@@ -19,12 +19,6 @@
 
 package com.transgressoft.musicott.view;
 
-import com.transgressoft.musicott.*;
-import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.services.*;
-import com.transgressoft.musicott.tasks.*;
-
 /**
  * Interface that represent a controller of the Musicott application.
  * Stores constants of layout files, logos, css stylesheets and
@@ -65,12 +59,4 @@ public interface MusicottController {
     String TRACK_TABLE_STYLE = STYLES_PATH + "tracktable.css";
     String BASE_STYLE = STYLES_PATH + "base.css";
     String TRACKAREASET_TRACK_TABLE_STYLE = STYLES_PATH + "trackareaset-tracktable.css";
-
-    MusicLibrary musicLibrary = MusicLibrary.getInstance();
-    MainPreferences preferences = MainPreferences.getInstance();
-    PlayerFacade player = PlayerFacade.getInstance();
-    ServiceDemon serviceDemon = ServiceDemon.getInstance();
-    StageDemon stageDemon = StageDemon.getInstance();
-    ErrorDemon errorDemon = ErrorDemon.getInstance();
-    TaskDemon taskDemon = TaskDemon.getInstance();
 }

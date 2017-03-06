@@ -47,6 +47,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
     private List<MenuItem> playlistsInMenu;
 
     private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
+    private ListProperty<Entry<Integer, Track>> selectedTracks;
 
     public TrackTableViewContextMenu() {
         super();
@@ -58,29 +59,25 @@ public class TrackTableViewContextMenu extends ContextMenu {
 
         MenuItem playMenuItem = new MenuItem("Play");
         playMenuItem.setOnAction(event -> {
-            ListProperty<Entry<Integer, Track>> selectedTracks = stageDemon.getRootController().selectedTracksProperty();
-            if (! selectedTracks.getValue().isEmpty())
+            if (! selectedTracks.isEmpty())
                 PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(selectedTracks), true);
         });
 
         MenuItem editMenuItem = new MenuItem("Edit");
         editMenuItem.setOnAction(event -> {
-            ListProperty<Entry<Integer, Track>> selectedTracks = stageDemon.getRootController().selectedTracksProperty();
-            if (! selectedTracks.getValue().isEmpty())
-                stageDemon.editTracks(trackSelectionTracks(selectedTracks));
+            if (! selectedTracks.isEmpty())
+                stageDemon.editTracks(selectedTracks.size());
         });
 
         MenuItem deleteMenuItem = new MenuItem("Delete");
         deleteMenuItem.setOnAction(event -> {
-            ListProperty<Entry<Integer, Track>> selectedTracks = stageDemon.getRootController().selectedTracksProperty();
-            if (! selectedTracks.getValue().isEmpty())
+            if (! selectedTracks.isEmpty())
                 stageDemon.deleteTracks(trackSelectionIds(selectedTracks));
         });
 
         MenuItem addToQueueMenuItem = new MenuItem("Add to play queue");
         addToQueueMenuItem.setOnAction(event -> {
-            ListProperty<Entry<Integer, Track>> selectedTracks = stageDemon.getRootController().selectedTracksProperty();
-            if (! selectedTracks.getValue().isEmpty())
+            if (! selectedTracks.isEmpty())
                 PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(selectedTracks), false);
         });
 
@@ -88,9 +85,10 @@ public class TrackTableViewContextMenu extends ContextMenu {
         deleteFromPlaylistMenuItem.setId("deleteFromPlaylistMenuItem");
 
         deleteFromPlaylistMenuItem.setOnAction(event -> {
-            ListProperty<Entry<Integer, Track>> selectedTracks = stageDemon.getRootController().selectedTracksProperty();
-            if (! selectedTracks.get().isEmpty())
+            if (! selectedTracks.isEmpty()) {
                 selectedPlaylistProperty.getValue().get().removeTracks(trackSelectionIds(selectedTracks));
+                musicLibrary.removeFromShowingTracks(selectedTracks);
+            }
         });
 
         deleteFromPlaylistMenuItem.visibleProperty().bind(Bindings.createBooleanBinding(
@@ -106,14 +104,10 @@ public class TrackTableViewContextMenu extends ContextMenu {
         return entriesSelection.stream().map(Entry::getKey).collect(Collectors.toList());
     }
 
-    private List<Track> trackSelectionTracks(List<Entry<Integer, Track>> entriesSelection) {
-        return entriesSelection.stream().map(Entry::getValue).collect(Collectors.toList());
-    }
-
     @Override
     public void show(Node anchor, double screenX, double screenY) {
         playlistsInMenu.clear();
-
+        selectedTracks = stageDemon.getRootController().selectedTracksProperty();
         musicLibrary.getPlaylists().forEach(playlist -> {
             if (! playlist.isFolder())
                 addPlaylistToMenuList(playlist);
@@ -129,9 +123,13 @@ public class TrackTableViewContextMenu extends ContextMenu {
     private void addPlaylistToMenuList(Playlist playlist) {
         MenuItem playlistMenuItem = new MenuItem(playlist.getName());
         playlistMenuItem.setOnAction(event -> {
-            ListProperty<Entry<Integer, Track>> selectedTracks = stageDemon.getRootController().selectedTracksProperty();
-            if (! selectedTracks.isEmpty())
+            if (! selectedTracks.isEmpty()) {
                 playlist.addTracks(trackSelectionIds(selectedTracks));
+                selectedPlaylistProperty.getValue().ifPresent(selectedPlaylist -> {
+                    if (selectedPlaylist.equals(playlist))
+                        musicLibrary.addToShowingTracks(selectedTracks);
+                });
+            }
         });
         playlistsInMenu.add(playlistMenuItem);
     }

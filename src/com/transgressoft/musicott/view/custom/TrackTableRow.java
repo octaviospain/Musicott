@@ -52,8 +52,14 @@ public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
         setOnMouseClicked(this::playTrackOnMouseClickedHandler);
         setOnDragDetected(this::onDragDetectedMovingTracks);
         hoverProperty().addListener((observable, oldHovered, newHovered) -> {
-            if (newHovered && getItem() != null)
-                stageDemon.getRootController().updateTrackHoveredCover(getItem().getValue());
+            if (newHovered) {
+                Optional<byte[]> cover;
+                if (getItem() != null)
+                    cover = getItem().getValue().getCoverImage();
+                else
+                    cover = Optional.empty();
+                stageDemon.getRootController().updateTrackHoveredCover(cover);
+            }
         });
     }
 

@@ -23,6 +23,7 @@ import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
+import javafx.collections.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -65,8 +66,7 @@ public class UpdateMetadataTask extends Thread {
 			Set<String> newArtistsInvolved = Utils.getArtistsInvolvedInTrack(track);
 			Set<String> removedArtists = Sets.difference(oldArtistsInvolved, newArtistsInvolved).immutableCopy();
 			Set<String> addedArtists = Sets.difference(newArtistsInvolved, oldArtistsInvolved).immutableCopy();
-
-			track.setArtistsInvolved(newArtistsInvolved);
+			track.setArtistsInvolved(FXCollections.observableSet(newArtistsInvolved));
 			musicLibrary.updateArtistsInvolvedInTrack(track.getTrackId(), removedArtists, addedArtists);
 			try {
 				track.writeMetadata();

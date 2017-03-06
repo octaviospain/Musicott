@@ -44,7 +44,6 @@ public class TaskDemon {
 			 													  "Wait for it to perform another import task.";
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-	private static TaskDemon instance;
 	private ExecutorService parseExecutorService;
 	private Future parseFuture;
 	private BaseParseTask parseTask;
@@ -58,15 +57,17 @@ public class TaskDemon {
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
+	private static class InstanceHolder {
+		static final TaskDemon INSTANCE = new TaskDemon();
+	}
+
 	private TaskDemon() {
 		tracksToProcessQueue = new LinkedBlockingQueue<>();
 		parseExecutorService = Executors.newSingleThreadExecutor();
 	}
 
 	public static TaskDemon getInstance() {
-		if (instance == null)
-			instance = new TaskDemon();
-		return instance;
+		return InstanceHolder.INSTANCE;
 	}
 
 	public void shutDownTasks() {

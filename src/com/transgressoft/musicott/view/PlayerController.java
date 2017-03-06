@@ -20,6 +20,7 @@
 package com.transgressoft.musicott.view;
 
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.binding.*;
@@ -90,6 +91,9 @@ public class PlayerController implements MusicottController {
     private ProgressBar volumeProgressBar;
     private AnchorPane playQueuePane;
     private WaveformPanel mainWaveformPanel;
+
+    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private PlayerFacade player = PlayerFacade.getInstance();
 
     @FXML
     public void initialize() {

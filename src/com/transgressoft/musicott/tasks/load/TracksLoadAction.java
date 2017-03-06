@@ -104,6 +104,7 @@ public class TracksLoadAction extends BaseLoadAction {
         int totalTracks;
         try {
             JsonReader.assignInstantiator(ObservableMapWrapper.class, new ObservableMapWrapperCreator());
+            JsonReader.assignInstantiator(ObservableSetWrapper.class, new ObservableSetWrapperCreator());
             tracksMap = (ObservableMap<Integer, Track>) parseJsonFile(tracksFile);
             totalTracks = tracksMap.size();
 
@@ -142,5 +143,6 @@ public class TracksLoadAction extends BaseLoadAction {
         track.playCountProperty().setValue(track.getPlayCount());
         track.getCoverImage().ifPresent(coverBytes -> track.hasCoverProperty().set(true));
         track.isPlayableProperty().setValue(track.isPlayable());
+        track.artistsInvolvedProperty().setValue(track.getArtistsInvolved());
     }
 }

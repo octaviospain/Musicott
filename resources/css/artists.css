@@ -41,11 +41,15 @@
     -fx-border-width: 0 0 2 0;
 }
 
-#areaTitleLabel {
+#albumTitleLabel {
     -fx-font-size: 20px;
 }
 
 #albumLabelLabel {
+    -fx-font-size: 16px;
+}
+
+#relatedArtistsLabel {
     -fx-font-size: 17px;
 }
 

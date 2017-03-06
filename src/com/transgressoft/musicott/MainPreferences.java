@@ -67,9 +67,12 @@ public class MainPreferences {
      */
     private static final String ITUNES_IMPORT_METADATA_POLICY = "itunes_import_policy";
 
-    private static MainPreferences instance;
     private Preferences preferences;
     private Set<String> importExtensions;
+
+    private static class InstanceHolder {
+        static final MainPreferences INSTANCE = new MainPreferences();
+    }
 
     /**
      * Private constructor of the class to be called from {@link #getInstance()}.
@@ -90,10 +93,7 @@ public class MainPreferences {
     }
 
     public static MainPreferences getInstance() {
-        if (instance == null) {
-            instance = new MainPreferences();
-        }
-        return instance;
+        return InstanceHolder.INSTANCE;
     }
 
     /**

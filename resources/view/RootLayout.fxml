@@ -18,14 +18,14 @@
                      <center>
                         <StackPane fx:id="tableStackPane">
                            <children>
-                              <SplitPane fx:id="artistsViewSplitPane" dividerPositions="0.15" stylesheets="@../css/artists.css">
+                              <SplitPane fx:id="artistsViewSplitPane" dividerPositions="0.1" stylesheets="@../css/artists.css">
                                 <items>
                                   <AnchorPane>
                                        <children>
-                                          <ListView fx:id="artistsListView" layoutX="17.0" layoutY="114.0" maxWidth="300.0" minWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                          <ListView fx:id="artistsListView" layoutX="17.0" layoutY="114.0" minWidth="180.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                                        </children>
                                     </AnchorPane>
-                                  <AnchorPane minWidth="600.0">
+                                  <AnchorPane minWidth="620.0">
                                        <children>
                                           <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                              <top>
@@ -38,7 +38,7 @@
                                                          <children>
                                                             <Label fx:id="nameLabel">
                                                                 <font>
-                                                                    <Font size="20.0" />
+                                                                    <Font size="22.0" />
                                                                 </font>
                                                              </Label>
                                                             <HBox alignment="CENTER_LEFT" VBox.vgrow="SOMETIMES">
@@ -100,7 +100,7 @@
                            <children>
                               <Label fx:id="playlistTitleLabel" maxHeight="-Infinity">
                                  <font>
-                                    <Font size="20.0" />
+                                    <Font size="22.0" />
                                  </font>
                               </Label>
                               <HBox alignment="CENTER_LEFT" GridPane.rowIndex="1">

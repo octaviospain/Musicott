@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view;
 
+import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.collections.*;
 import javafx.fxml.*;
@@ -46,6 +47,8 @@ public class PlayQueueController implements MusicottController {
 
     private ObservableList<TrackQueueRow> playQueueList;
     private ObservableList<TrackQueueRow> historyQueueList;
+
+    private PlayerFacade player = PlayerFacade.getInstance();
 
     @FXML
     public void initialize() {

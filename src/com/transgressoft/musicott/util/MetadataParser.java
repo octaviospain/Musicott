@@ -20,6 +20,7 @@
 package com.transgressoft.musicott.util;
 
 import com.transgressoft.musicott.model.*;
+import javafx.collections.*;
 import javafx.util.*;
 import org.jaudiotagger.audio.*;
 import org.jaudiotagger.audio.exceptions.*;
@@ -60,7 +61,7 @@ public class MetadataParser {
             Tag tag = audioFile.getTag();
             parseBaseMetadata(track, tag);
             getCoverBytes(tag).ifPresent(coverBytes -> track.hasCoverProperty().set(true));
-            track.setArtistsInvolved(Utils.getArtistsInvolvedInTrack(track));
+            track.setArtistsInvolved(FXCollections.observableSet(Utils.getArtistsInvolvedInTrack(track)));
         }
         catch (IOException | CannotReadException | ReadOnlyFileException | TagException | InvalidAudioFrameException exception) {
             LOG.debug("Error creating track from {}: ", fileToParse, exception);

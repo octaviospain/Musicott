@@ -51,9 +51,7 @@ public class StageDemon {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private static StageDemon instance;
-    private static ErrorDemon errorDemon = ErrorDemon.getInstance();
-    private static MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
     private Stage mainStage;
     private Stage editStage;
@@ -67,15 +65,19 @@ public class StageDemon {
 
     private HostServices hostServices;
 
+    private static class InstanceHolder {
+        static final StageDemon INSTANCE = new StageDemon();
+    }
+
     private StageDemon() {
         errorDemon.setErrorAlertStage(initStage(ERROR_ALERT_LAYOUT, "Error"));
         errorDemon.setErrorAlertController((ErrorDialogController) controllers.get(ERROR_ALERT_LAYOUT));
+        editStage = initStage(EDIT_LAYOUT, "Edit");
+        ((EditController) controllers.get(EDIT_LAYOUT)).setStage(editStage);
     }
 
     public static StageDemon getInstance() {
-        if (instance == null)
-            instance = new StageDemon();
-        return instance;
+        return InstanceHolder.INSTANCE;
     }
 
     void setApplicationHostServices(HostServices hostServices) {
@@ -100,6 +102,10 @@ public class StageDemon {
 
     public PlayerController getPlayerController() {
         return (PlayerController) controllers.get(PLAYER_LAYOUT);
+    }
+
+    public EditController getEditController() {
+        return (EditController) controllers.get(EDIT_LAYOUT);
     }
 
     /**
@@ -132,7 +138,6 @@ public class StageDemon {
         BorderPane rootLayout = (BorderPane) loadLayout(ROOT_LAYOUT);
         LOG.debug("Root layout loaded");
 
-
         BorderPane wrapperBorderPane = (BorderPane) rootLayout.lookup("#wrapperBorderPane");
         wrapperBorderPane.setBottom(playerGridPane);
         wrapperBorderPane.setLeft(navigationLayout);
@@ -163,30 +168,20 @@ public class StageDemon {
      * Shows the edit window. If the size of track selection is greater than 1,
      * an {@code Alert} is opened asking for a confirmation of the user.
      */
-    public void editTracks(List<Track> trackSelection) {
-        if (! trackSelection.isEmpty()) {
-            boolean[] edit = {true};
-            if (trackSelection.size() > 1) {
+    public void editTracks(int trackNumber) {
+        if (trackNumber != 0)
+            if (trackNumber > 1) {
                 String alertHeader = "Are you sure you want to edit multiple files?";
                 Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
                 Optional<ButtonType> result = alert.showAndWait();
 
-                result.ifPresent(value -> {
-                    if (value.getButtonData().isCancelButton())
-                        edit[0] = false;
-                });
+                if (result.isPresent() && result.get().getButtonData().isDefaultButton())
+                    showStage(editStage);
+                else
+                    alert.close();
             }
-
-            if (edit[0]) {
-                if (editStage == null) {
-                    editStage = initStage(EDIT_LAYOUT, "Edit");
-                    ((EditController) controllers.get(EDIT_LAYOUT)).setStage(editStage);
-                }
-
+            else
                 showStage(editStage);
-                LOG.debug("Showing edit stage");
-            }
-        }
     }
 
     /**
@@ -201,8 +196,8 @@ public class StageDemon {
 
             if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
                 new Thread(() -> {
-                    PlayerFacade.getInstance().deleteFromQueues(trackSelection);
-                    musicLibrary.deleteTracks(trackSelection);
+                    Platform.runLater(() -> PlayerFacade.getInstance().deleteFromQueues(trackSelection));
+                    MusicLibrary.getInstance().deleteTracks(trackSelection);
                     Platform.runLater(this::closeIndeterminateProgress);
                 }).start();
                 showIndeterminateProgress();

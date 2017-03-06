@@ -22,6 +22,7 @@ package com.transgressoft.musicott.model;
 import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import javafx.beans.property.*;
+import javafx.collections.*;
 import javafx.util.Duration;
 import org.junit.*;
 import org.junit.runner.*;
@@ -174,7 +175,7 @@ public class TrackTest {
         track.setInDisk(true);
         track.setDateAdded(LocalDateTime.of(2006, 1, 1, 23, 59));
         track.setLastDateModified(LocalDateTime.of(2006, 1, 1, 23, 59));
-        track.setArtistsInvolved(Sets.newHashSet(artist, albumArtist));
+        track.setArtistsInvolved(FXCollections.observableSet(artist, albumArtist));
 
         assertEquals(trackId, track.getTrackId());
         assertEquals(name, track.getName());
