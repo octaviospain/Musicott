@@ -152,7 +152,7 @@ public class StageDemon {
 
     /**
      * Shows the edit window. If the size of track selection is greater than 1,
-     * an <tt>Alert</tt> is opened asking for a confirmation of the user.
+     * an {@code Alert} is opened asking for a confirmation of the user.
      */
     public void editTracks() {
         List<Track> trackSelection = getRootController().getSelectedTracks();
@@ -245,14 +245,14 @@ public class StageDemon {
 
     /**
      * Creates an {@link Alert} given a title, a header text, the content to be shown
-     * in the description, and the {@link AlertType} of the requested <tt>Alert</tt>
+     * in the description, and the {@link AlertType} of the requested {@code Alert}
      *
-     * @param title   The title of the <tt>Alert</tt> stage
-     * @param header  The header text of the <tt>Alert</tt>
-     * @param content The content text of the <tt>Alert</tt>
-     * @param type    The type of the <tt>Alert</tt>
+     * @param title   The title of the {@code Alert} stage
+     * @param header  The header text of the {@code Alert}
+     * @param content The content text of the {@code Alert}
+     * @param type    The type of the {@code Alert}
      *
-     * @return The <tt>Alert</tt> object
+     * @return The {@code Alert} object
      */
     public Alert createAlert(String title, String header, String content, AlertType type) {
         Alert alert = new Alert(type);
@@ -279,11 +279,11 @@ public class StageDemon {
     }
 
     /**
-     * Loads a given layout resource and sets it into a new <tt>Stage</tt> and <tt>Scene</tt>
+     * Loads a given layout resource and sets it into a new {@code Stage} and {@code Scene}
      *
-     * @param layout The <tt>*.fxml</tt> source to be loaded
+     * @param layout The {@code *.fxml} source to be loaded
      *
-     * @return The <tt>Stage</tt> with the layout
+     * @return The {@code Stage} with the layout
      */
     private Stage initStage(String layout, String title) {
         Stage newStage = new Stage();
@@ -309,11 +309,11 @@ public class StageDemon {
     /**
      * Loads the given layout resource
      *
-     * @param layout The <tt>*.fxml</tt> source to be loaded
+     * @param layout The {@code *.fxml} source to be loaded
      *
      * @return The {@link Parent} object that is the root of the layout
      *
-     * @throws IOException thrown if the <tt>*.fxml</tt> file wasn't found
+     * @throws IOException thrown if the {@code *.fxml} file wasn't found
      */
     private Parent loadLayout(String layout) throws IOException {
         FXMLLoader loader = new FXMLLoader();

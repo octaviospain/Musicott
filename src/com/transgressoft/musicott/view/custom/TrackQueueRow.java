@@ -34,7 +34,7 @@ import java.io.*;
 /**
  * Class that represents a single {@link Track} in the play queue or the history queue.
  * It contains labels showing the artist and track names, the cover image, and a button
- * to remove the <tt>TrackQueueRow</tt> from his list.
+ * to remove the {@code TrackQueueRow} from his list.
  *
  * @author Octavio Calleya
  * @version 0.9.2-b

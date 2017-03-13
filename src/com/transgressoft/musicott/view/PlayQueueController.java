@@ -100,7 +100,7 @@ public class PlayQueueController implements MusicottController {
     /**
      * Removes a {@link TrackQueueRow} from the play queue pane
      *
-     * @param trackQueueRow The <tt>TrackQueueRow</tt> the track queue row to remove
+     * @param trackQueueRow The {@code TrackQueueRow} the track queue row to remove
      */
     public void removeTrackQueueRow(TrackQueueRow trackQueueRow) {
         if (historyQueueButton.isSelected())

@@ -146,7 +146,7 @@ public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {
      *
      * @param itunesTrack The {@link ItunesTrack} object
      *
-     * @return The <tt>Track</tt> instance if the parse was successful
+     * @return The {@code Track} instance if the parse was successful
      */
     private Optional<Track> createTrackFromFileMetadata(ItunesTrack itunesTrack) {
         File itunesFile = Paths.get(URI.create(itunesTrack.getLocation())).toFile();
@@ -168,11 +168,11 @@ public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {
     }
 
     /**
-     * Creates a {@link Track} instance from the data stored on the <tt>iTunes</tt> library
+     * Creates a {@link Track} instance from the data stored on the {@code iTunes} library
      *
      * @param itunesTrack The {@link ItunesTrack} object
      *
-     * @return The <tt>Track</tt> instance if the parse was successful
+     * @return The {@code Track} instance if the parse was successful
      */
     private Optional<Track> createTrackFromItunesData(ItunesTrack itunesTrack) {
         Path itunesPath = Paths.get(URI.create(itunesTrack.getLocation()));
@@ -190,9 +190,7 @@ public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {
     private Track parseItunesFieldsToTrackFields(ItunesTrack itunesTrack, Path itunesPath) {
         String fileFolder = itunesPath.getParent().toString();
         String fileName = itunesPath.getName(itunesPath.getNameCount() - 1).toString();
-        Track newTrack = new Track();
-        newTrack.setFileFolder(fileFolder);
-        newTrack.setFileName(fileName);
+        Track newTrack = new Track(fileFolder, fileName);
         newTrack.setInDisk(true);
         newTrack.setSize(itunesTrack.getSize());
         newTrack.setTotalTime(Duration.millis(itunesTrack.getTotalTime()));

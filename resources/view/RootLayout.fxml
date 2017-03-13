@@ -5,7 +5,7 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<BorderPane fx:id="rootBorderPane" minHeight="-Infinity" minWidth="-Infinity" prefWidth="1200.0" stylesheets="@../css/base.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.RootController">
+<BorderPane fx:id="rootBorderPane" minHeight="-Infinity" minWidth="-Infinity" prefWidth="1200.0" stylesheets="@../css/base.css" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.RootController">
    <top>
       <VBox fx:id="headerVBox" BorderPane.alignment="CENTER" />
    </top>
@@ -60,6 +60,9 @@
                      </children>
                   </HBox>
                </top>
+               <center>
+                  <StackPane fx:id="tableStackPane" BorderPane.alignment="CENTER" />
+               </center>
             </BorderPane>
          </center>
       </BorderPane>

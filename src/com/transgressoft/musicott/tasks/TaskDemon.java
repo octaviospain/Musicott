@@ -82,7 +82,7 @@ public class TaskDemon {
 	 * Creates a new {@link Thread} that analyzes and imports the contents
 	 * of an iTunes library to the application.
 	 *
-	 * @param itunesLibraryPath The path where the <tt>iTunes Music Library.xml</tt> file is located.
+	 * @param itunesLibraryPath The path where the {@code iTunes Music Library.xml} file is located.
 	 */
 	public void importFromItunesLibrary(String itunesLibraryPath) {
 		if (parseFuture != null && ! parseFuture.isDone())

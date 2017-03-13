@@ -23,7 +23,7 @@ import com.cedarsoftware.util.io.JsonReader.*;
 import javafx.collections.*;
 
 /**
- * Class needed by the <tt>Json-io</tt> library in order to deserialize an {@link ObservableList}.
+ * Class needed by the {@code Json-io} library in order to deserialize an {@link ObservableList}.
  *
  * @author Octavio Calleya
  * @version 0.9.2-b

@@ -97,9 +97,9 @@ public class PlayerFacade {
     /**
      * Adds a {@link List} of tracks to the play queue. Checks if all tracks given are playable.
      *
-     * @param tracksId              The <tt>List</tt> of tracks ids to add.
-     * @param placeFirstInPlayQueue <tt>true</tt> if the tracks added should be placed in the beginning
-     *                              of the play queue, <tt>false</tt> otherwise
+     * @param tracksId              The {@code List} of tracks ids to add.
+     * @param placeFirstInPlayQueue {@code true} if the tracks added should be placed in the beginning
+     *                              of the play queue, {@code false} otherwise
      */
     public void addTracksToPlayQueue(Collection<Integer> tracksId, boolean placeFirstInPlayQueue) {
         Thread playableTracksThread = new Thread(() -> {
@@ -121,8 +121,8 @@ public class PlayerFacade {
     /**
      * Adds a {@link List} of tracks to the play queue.
      *
-     * @param playableTracks        The <tt>List</tt> of tracks ids that are playable.
-     * @param placeFirstInPlayQueue <tt>true</tt> if the tracks added should be placed in the head of the play queue
+     * @param playableTracks        The {@code List} of tracks ids that are playable.
+     * @param placeFirstInPlayQueue {@code true} if the tracks added should be placed in the head of the play queue
      */
     private void addPlayableTracksToPlayQueue(List<Integer> playableTracks, boolean placeFirstInPlayQueue) {
         if (playQueueController == null)
@@ -340,7 +340,7 @@ public class PlayerFacade {
     /**
      * Plays a {@link Track} that is on the history queue selected by the user.
      *
-     * @param index The position of the <tt>track</tt> in the history queue.
+     * @param index The position of the {@code track} in the history queue.
      */
     public void playHistoryIndex(int index) {
         setPlayer(historyList.get(index).getRepresentedTrackId());
@@ -351,7 +351,7 @@ public class PlayerFacade {
     /**
      * Plays a {@link Track} that is on the play queue selected by the user.
      *
-     * @param index The position of the <tt>track</tt> in the history queue.
+     * @param index The position of the {@code track} in the history queue.
      */
     public void playQueueIndex(int index) {
         setPlayer(playList.get(index).getRepresentedTrackId());

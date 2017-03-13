@@ -86,7 +86,7 @@ public class TrackTest {
 
     @Test
     public void constructorTest() {
-        track = new Track();
+        track = new Track("", "");
         assertEquals(1, track.getTrackId());
         assertEquals("", track.getFileFolder());
         assertEquals("", track.getFileName());
@@ -117,7 +117,7 @@ public class TrackTest {
 
     @Test
     public void propertiesTest() {
-        track = new Track();
+        track = new Track("", "");
         assertEquals("", track.nameProperty().get());
         assertEquals("", track.artistProperty().get());
         assertEquals("", track.albumProperty().get());
@@ -149,7 +149,7 @@ public class TrackTest {
 
     @Test
     public void settersTest() {
-        track = new Track();
+        track = new Track(fileFolder, fileName);
         track.setTrackId(trackId);
         track.setName(name);
         track.setAlbum(album);
@@ -162,8 +162,6 @@ public class TrackTest {
         track.setYear(year);
         track.setEncoding(encoding);
         track.setEncoder(encoder);
-        track.setFileFolder(fileFolder);
-        track.setFileName(fileName);
         track.setTotalTime(totalTime);
         track.setDiscNumber(discNumber);
         track.setTrackNumber(trackNumber);
@@ -214,9 +212,7 @@ public class TrackTest {
         int hash = Objects.hash(fileName, fileFolder, name, artist, album, comments,
                                 genre, trackNumber, year, albumArtist, bpm, label);
 
-        track = new Track();
-        track.setFileName(fileName);
-        track.setFileFolder(fileFolder);
+        track = new Track(fileFolder, fileName);
         track.setName(name);
         track.setArtist(artist);
         track.setAlbum(album);
@@ -233,9 +229,7 @@ public class TrackTest {
 
     @Test
     public void equalsTest() {
-        track = new Track();
-        track.setFileName(fileName);
-        track.setFileFolder(fileFolder);
+        track = new Track(fileFolder, fileName);
         track.setName(name);
         track.setArtist(artist);
         track.setAlbum(album);
@@ -247,9 +241,7 @@ public class TrackTest {
         track.setBpm(bpm);
         track.setLabel(label);
 
-        Track track2 = new Track();
-        track2.setFileName(fileName);
-        track2.setFileFolder(fileFolder);
+        Track track2 = new Track(fileFolder, fileName);
         track2.setName(name);
         track2.setArtist(artist);
         track2.setAlbum(album);
@@ -266,9 +258,7 @@ public class TrackTest {
 
     @Test
     public void notEqualsTest() {
-        track = new Track();
-        track.setFileName(fileName);
-        track.setFileFolder(fileFolder);
+        track = new Track(fileName, fileFolder);
         track.setName(name);
         track.setArtist(artist);
         track.setAlbum(album);
@@ -280,14 +270,14 @@ public class TrackTest {
         track.setBpm(bpm);
         track.setLabel(label);
 
-        Track track2 = new Track();
+        Track track2 = new Track("", "");
 
         assertFalse(track.equals(track2));
     }
 
     @Test
     public void toStringTest() {
-        track = new Track();
+        track = new Track("", "");
         track.setName(name);
         track.setArtist(artist);
         track.setGenre(genre);
@@ -302,7 +292,7 @@ public class TrackTest {
 
     @Test
     public void incrementPlayCountTest() {
-        track = new Track();
+        track = new Track("", "");
         assertEquals(0, track.getPlayCount());
         track.incrementPlayCount();
         assertEquals(1, track.getPlayCount());
@@ -311,46 +301,38 @@ public class TrackTest {
 
     @Test
     public void notPlayableIfNotExistsTest() {
-        track = new Track();
+        track = new Track("./test-resources/testfiles/", "nonexistentfile.mp3");
         track.setInDisk(true);
-        track.setFileFolder("./test-resources/testfiles/");
-        track.setFileName("nonexistentfile.mp3");
         assertFalse(track.isPlayable());
     }
 
     @Test
     public void notPlayableIfNotInDiskTest() {
-        track = new Track();
+        track = new Track("", "");
         track.setInDisk(false);
         assertFalse(track.isPlayable());
     }
 
     @Test
     public void notPlayableIfFlacTest() {
-        track = new Track();
+        track = new Track("./test-resources/testfiles/", "testeable.flac");
         track.setInDisk(true);
-        track.setFileFolder("./test-resources/testfiles/");
-        track.setFileName("testeable.flac");
         assertFalse(track.isPlayable());
     }
 
     @Test
     public void notPlayableIfAppleEncodingTest() {
-        track = new Track();
+        track = new Track("./test-resources/testfiles/", "testeable.mp3");
         track.setInDisk(true);
         track.setEncoding("Apple");
-        track.setFileFolder("./test-resources/testfiles/");
-        track.setFileName("testeable.mp3");
         assertFalse(track.isPlayable());
     }
 
     @Test
     public void notPlayableIfEncoderItunesTest() {
-        track = new Track();
+        track = new Track("./test-resources/testfiles/", "testeable.mp3");
         track.setInDisk(true);
         track.setEncoder("iTunes");
-        track.setFileFolder("./test-resources/testfiles/");
-        track.setFileName("testeable.mp3");
         assertFalse(track.isPlayable());
     }
 }

@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view.custom;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import javafx.collections.*;
@@ -43,12 +44,17 @@ public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
 
     private TableView<Entry<Integer, Track>> trackTableView;
     private PlayerFacade player = PlayerFacade.getInstance();
+    private StageDemon stageDemon = StageDemon.getInstance();
 
     public TrackTableRow(TableView<Entry<Integer, Track>> trackTableView) {
         super();
         this.trackTableView = trackTableView;
         setOnMouseClicked(this::playTrackOnMouseClickedHandler);
         setOnDragDetected(this::onDragDetectedMovingTracks);
+        hoverProperty().addListener((observable, oldHovered, newHovered) -> {
+            if (newHovered && getItem() != null)
+                stageDemon.getRootController().updateTrackHoveredCover(getItem().getValue());
+        });
     }
 
     /**

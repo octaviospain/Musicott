@@ -41,14 +41,14 @@ import static com.transgressoft.musicott.view.MusicottController.*;
 
 /**
  * Class that extends from {@link TableView} and models a table that represents {@link Track}
- * instances in their rows, showing almost all of the properties of a <tt>Track</tt> in the columns.
+ * instances in their rows, showing almost all of the properties of a {@code Track} in the columns.
  *
  * @author Octavio Calleya
  * @version 0.9.2-b
  */
 public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
-    protected static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
+    private static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
 
     private TableColumn<Entry<Integer, Track>, String> nameCol;
     private TableColumn<Entry<Integer, Track>, String> artistCol;
@@ -109,10 +109,10 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
     private void initColumns() {
         Callback<TableColumn<Entry<Integer, Track>, Number>, TableCell<Entry<Integer, Track>, Number>>
-                numericCellFactory = columns -> new NumericTableCell();
+                numericCellFactory = column -> new NumericTableCell();
 
         Callback<TableColumn<Entry<Integer, Track>, LocalDateTime>, TableCell<Entry<Integer, Track>, LocalDateTime>>
-				dateCellFactory = column -> new DateTimeTableCell();
+                dateCellFactory = column -> new DateTimeTableCell();
 
         nameCol = new TableColumn<>("Name");
         nameCol.setPrefWidth(170);
@@ -213,10 +213,10 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
     /**
      * Returns a {@link EventHandler} that fires the play of a {@link Track} when
-     * the user presses the <tt>Enter</tt> key, and pauses/resumes the player when the user
-     * presses the <tt>Space</tt> key.
+     * the user presses the {@code Enter} key, and pauses/resumes the player when the user
+     * presses the {@code Space} key.
      *
-     * @return The <tt>EventHandler</tt>
+     * @return The {@code EventHandler}
      */
     private EventHandler<KeyEvent> getKeyPressedEventHandler() {
         return event -> {

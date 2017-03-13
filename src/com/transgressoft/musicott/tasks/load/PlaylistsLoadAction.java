@@ -99,7 +99,7 @@ public class PlaylistsLoadAction extends BaseLoadAction {
 
     /**
      * Sets the values of the properties of a {@link Playlist} object,
-     * because those are not restored on the <tt>json</tt> file when deserialized
+     * because those are not restored on the {@code json} file when deserialized
      *
      * @param playlist The track to set its properties values
      */

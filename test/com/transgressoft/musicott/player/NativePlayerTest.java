@@ -62,8 +62,7 @@ public class NativePlayerTest extends JavaFxTestBase {
         PlayerFacade playerMock = mock(PlayerFacade.class);
         when(PlayerFacade.getInstance()).thenReturn(playerMock);
 
-        Track track = new Track();
-        track.setFileFolder(testFilesPath.toString() + "/testeable.mp3");
+        Track track = new Track(testFilesPath.toString(), "testeable.mp3");
         player = new NativePlayer();
         player.setTrack(track);
     }

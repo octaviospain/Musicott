@@ -93,9 +93,11 @@ public class Track {
     private MetadataUpdater updater;
     private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
-    public Track() {
+    public Track(String fileFolder, String fileName) {
         trackId = MainPreferences.getInstance().getTrackSequence();
         updater = new MetadataUpdater(this);
+        this.fileFolder = fileFolder;
+        setFileName(fileName);
 
         nameProperty = new SimpleStringProperty(this, "name", name);
         nameProperty.addListener((observable, oldString, newString) -> setName(newString));
@@ -123,7 +125,7 @@ public class Track {
         dateModifiedProperty.addListener((observable, oldDate, newDate) -> setLastDateModified(newDate));
         playCountProperty = new SimpleIntegerProperty(this, "play count", playCount);
         isPlayableProperty = new SimpleBooleanProperty(this, "is playable", isPlayable());
-        hasCoverProperty = new SimpleBooleanProperty(this, "cover bytes", false);
+        hasCoverProperty = new SimpleBooleanProperty(this, "cover flag", false);
 
         propertyMap = new EnumMap<>(TrackField.class);
         propertyMap.put(TrackField.NAME, nameProperty);
@@ -237,7 +239,7 @@ public class Track {
         return bpm;
     }
 
-    public void setFileName(String fileName) {
+    private void setFileName(String fileName) {
         this.fileName = fileName;
         int pos = fileName.lastIndexOf('.');
         fileFormat = fileName.substring(pos + 1);
@@ -245,10 +247,6 @@ public class Track {
 
     public String getFileName() {
         return fileName;
-    }
-
-    public void setFileFolder(String fileFolder) {
-        this.fileFolder = fileFolder;
     }
 
     public String getFileFolder() {

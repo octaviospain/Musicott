@@ -74,7 +74,7 @@ public class MainPreferences {
     /**
      * Private constructor of the class to be called from {@link #getInstance()}.
      * By default, if the application is used in the first time, the only valid
-     * extension when importing files is <tt>*.mp3</tt>.
+     * extension when importing files is {@code *.mp3}.
      */
     private MainPreferences() {
         preferences = Preferences.userNodeForPackage(getClass());
@@ -115,7 +115,7 @@ public class MainPreferences {
      *
      * @param path The path to the application folder
      *
-     * @return <tt>true</tt> if the creation/deletion of the directory was successful, <tt>false</tt> otherwise
+     * @return {@code true} if the creation/deletion of the directory was successful, {@code false} otherwise
      */
     public boolean setMusicottUserFolder(String path) {
         if (path == null)

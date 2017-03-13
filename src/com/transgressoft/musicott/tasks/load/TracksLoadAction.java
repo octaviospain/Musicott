@@ -122,7 +122,7 @@ public class TracksLoadAction extends BaseLoadAction {
 
     /**
      * Sets the values of the properties of a {@link Track} object,
-     * because they are not restored on the <tt>json</tt> file when deserialized
+     * because they are not restored on the {@code json} file when deserialized
      *
      * @param track The track to set its properties values
      */

@@ -43,9 +43,9 @@ public class Utils {
     private Utils() {}
 
     /**
-     * Retrieves a {@link List} with at most <tt>maxFiles</tt> files that are in a folder or
+     * Retrieves a {@link List} with at most {@code maxFiles} files that are in a folder or
      * any of the subfolders in that folder satisfying a condition.
-     * If <tt>maxFilesRequired</tt> is 0 all the files will be retrieved.
+     * If {@code maxFilesRequired} is 0 all the files will be retrieved.
      *
      * @param rootFolder       The folder from within to find the files
      * @param filter           The {@link FileFilter} condition
@@ -53,7 +53,7 @@ public class Utils {
      *
      * @return The list containing all the files
      *
-     * @throws IllegalArgumentException Thrown if <tt>maxFilesRequired</tt> argument is less than zero
+     * @throws IllegalArgumentException Thrown if {@code maxFilesRequired} argument is less than zero
      */
     public static List<File> getAllFilesInFolder(File rootFolder, FileFilter filter, int maxFilesRequired) {
         List<File> finalFiles = new ArrayList<>();
@@ -136,16 +136,16 @@ public class Utils {
     }
 
     /**
-     * Returns a {@link String} representing the given <tt>bytes</tt>, with a textual representation
+     * Returns a {@link String} representing the given {@code bytes}, with a textual representation
      * depending if the given amount can be represented as KB, MB, GB or TB, limiting the number
      * of decimals, if there are any
      *
-     * @param bytes       The <tt>bytes</tt> to be represented
+     * @param bytes       The {@code bytes} to be represented
      * @param numDecimals The maximum number of decimals to be shown after the comma
      *
-     * @return The <tt>String</tt> that represents the given bytes
+     * @return The {@code String} that represents the given bytes
      *
-     * @throws IllegalArgumentException Thrown if <tt>bytes</tt> or <tt>numDecimals</tt> are negative
+     * @throws IllegalArgumentException Thrown if {@code bytes} or {@code numDecimals} are negative
      */
     public static String byteSizeString(long bytes, int numDecimals) {
         if (numDecimals < 0)
@@ -167,14 +167,14 @@ public class Utils {
     }
 
     /**
-     * Returns a {@link String} representing the given <tt>bytes</tt>, with a textual representation
+     * Returns a {@link String} representing the given {@code bytes}, with a textual representation
      * depending if the given amount can be represented as KB, MB, GB or TB
      *
-     * @param bytes The <tt>bytes</tt> to be represented
+     * @param bytes The {@code bytes} to be represented
      *
-     * @return The <tt>String</tt> that represents the given bytes
+     * @return The {@code String} that represents the given bytes
      *
-     * @throws IllegalArgumentException Thrown if <tt>bytes</tt> is negative
+     * @throws IllegalArgumentException Thrown if {@code bytes} is negative
      */
     public static String byteSizeString(long bytes) {
         if (bytes < 0)
@@ -201,7 +201,7 @@ public class Utils {
      *
      * @param imageFile The image.
      *
-     * @return An {@link Optional} with the <tt>image</tt> or not.
+     * @return An {@link Optional} with the {@code image} or not.
      */
     public static Optional<Image> getImageFromFile(File imageFile) {
         Optional<Image> optionalImage = Optional.empty();

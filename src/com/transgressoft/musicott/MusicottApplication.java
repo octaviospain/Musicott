@@ -42,7 +42,7 @@ import java.util.logging.*;
 /**
  * Creates and launches Musicott. The creation of the application follows this steps:
  * <ol>
- * <li>Initialization of the <tt>Logger</tt></li>
+ * <li>Initialization of the {@code Logger}</li>
  * <li>The {@link MainPreloader} is created and shown</li>
  * <li>It is checked whether it is the first use, and if so, the user enters the application folder</li>
  * <li>Configuration properties, tracks, playlists and waveforms are loaded</li>
@@ -108,7 +108,7 @@ public class MusicottApplication extends Application {
     /**
      * Constructs a log message given a {@link LogRecord}
      *
-     * @param record The <tt>LogRecord</tt> instance
+     * @param record The {@code LogRecord} instance
      *
      * @return The formatted string of a log entries
      */
@@ -158,7 +158,7 @@ public class MusicottApplication extends Application {
     }
 
     /**
-     * Loads required configuration parameters from a <tt>.properties</tt> file
+     * Loads required configuration parameters from a {@code .properties} file
      */
     private void loadConfigProperties() {
         Properties properties = new Properties();

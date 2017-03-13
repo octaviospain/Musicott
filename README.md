@@ -3,7 +3,7 @@
 [![license](https://img.shields.io/badge/license-GPL3v2-brightgreen.svg)](https://github.com/octaviospain/Musicott/blob/master/license/gpl.txt)
 
 
-![Musicott title logo](https://dl.dropboxusercontent.com/u/3596661/musicott-title-logo.png)
+![Musicott title logo](http://imageshack.com/a/img921/1074/4WJ9yl.png)
 
 #
 Musicott is an application that manages and plays music files. Coded in Java 8 with JavaFX.
@@ -14,7 +14,7 @@ Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to 
 
 Testing with Junit 5, TestFX and maven is quite difficult, help is welcomed !
 
-![Musicott screenshot 1](https://dl.dropboxusercontent.com/u/3596661/main.png)
+![Musicott screenshot 1](http://imageshack.com/a/img923/9629/3UzBQE.png)
 
 ### Features
 * Play mp3, wav and m4a (with ALAC encoding) files
@@ -25,12 +25,11 @@ Testing with Junit 5, TestFX and maven is quite difficult, help is welcomed !
 
 ### Not yet
 * Advanced search feature
-* Show cover image on table
 * Music library statistics
 * Smart playlists
 
 ## Download
-[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.9-b);
+[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.9.2-b);
 
 ## How to build and run
 To build you need at least Java 8 update 40 and Maven
