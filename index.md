@@ -13,7 +13,7 @@ Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to 
 
 Testing with Junit 5, TestFX and maven is quite difficult, help is welcomed !
 
-![Musicott screenshot 1](https://dl.dropboxusercontent.com/u/3596661/main.png)
+![Musicott screenshot 1](http://imageshack.com/a/img923/9629/3UzBQE.png)
 
 ### Features
 * Play mp3, wav and m4a (with ALAC encoding) files
