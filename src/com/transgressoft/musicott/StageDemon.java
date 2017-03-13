@@ -168,9 +168,9 @@ public class StageDemon {
      * Shows the edit window. If the size of track selection is greater than 1,
      * an {@code Alert} is opened asking for a confirmation of the user.
      */
-    public void editTracks(int trackNumber) {
-        if (trackNumber != 0)
-            if (trackNumber > 1) {
+    public void editTracks(int numberOfTracks) {
+        if (numberOfTracks != 0)
+            if (numberOfTracks > 1) {
                 String alertHeader = "Are you sure you want to edit multiple files?";
                 Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
                 Optional<ButtonType> result = alert.showAndWait();

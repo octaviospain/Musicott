@@ -47,7 +47,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
     private List<MenuItem> playlistsInMenu;
 
     private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
-    private ListProperty<Entry<Integer, Track>> selectedTracks;
+    private List<Entry<Integer, Track>> selectedTracks;
 
     public TrackTableViewContextMenu() {
         super();
@@ -107,7 +107,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
     @Override
     public void show(Node anchor, double screenX, double screenY) {
         playlistsInMenu.clear();
-        selectedTracks = stageDemon.getRootController().selectedTracksProperty();
+        selectedTracks = stageDemon.getRootController().getSelectedTracks();
         musicLibrary.getPlaylists().forEach(playlist -> {
             if (! playlist.isFolder())
                 addPlaylistToMenuList(playlist);

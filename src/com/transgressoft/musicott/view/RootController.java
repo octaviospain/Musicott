@@ -98,14 +98,13 @@ public class RootController implements MusicottController {
     private ObjectProperty<Image> hoverCoverProperty;
     private TrackTableView trackTable = new TrackTableView();
 
+    private ObservableList<Entry<Integer, Track>> selectedTracks;
     private ObservableList<TrackSetAreaRow> trackSetAreaRows = FXCollections.observableArrayList();
 
-    private ListProperty<String> artistsProperty;
     private ListProperty<TrackSetAreaRow> trackSetsProperty;
     private ObjectProperty<NavigationMode> navigationModeProperty;
     private ReadOnlyObjectProperty<String> selectedArtistProperty;
     private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
-    private ListProperty<Entry<Integer, Track>> selectedTracksProperty;
     private BooleanProperty showingNavigationPaneProperty;
     private BooleanProperty showingTableInfoPaneProperty;
 
@@ -121,24 +120,23 @@ public class RootController implements MusicottController {
         selectedPlaylistProperty.addListener(
                 (obs, oldSelected, newSelected) -> newSelected.ifPresent(this::updateShowingInfoWithPlaylist));
         trackSetsProperty = new SimpleListProperty<>(trackSetAreaRows);
-        totalAlbumsLabel.textProperty().bind(
-                Bindings.createStringBinding(this::getAlbumString, trackSetsProperty));
+        trackSetsProperty.addListener((obs, oldList, newList) -> chooseSelectedTracks());
         navigationModeProperty = stageDemon.getNavigationController().navigationModeProperty();
-        selectedTracksProperty = new SimpleListProperty<>(this, "selection");
-        selectedTracksProperty.bind(
-                Bindings.createObjectBinding(this::chooseSelectedTracks, trackSetsProperty, navigationModeProperty));
+        navigationModeProperty.addListener((obs, oldList, newList) -> chooseSelectedTracks());
         showingNavigationPaneProperty = new SimpleBooleanProperty(this, "showing navigation pane", true);
         showingTableInfoPaneProperty = new SimpleBooleanProperty(this, "showing table info pane", true);
-
         selectedArtistProperty = artistsListView.getSelectionModel().selectedItemProperty();
         selectedArtistProperty.addListener(((observable, oldArtist, newArtist) -> musicLibrary.showArtist(newArtist)));
-        artistsProperty = musicLibrary.artistsProperty();
+
+        ListProperty<String> artistsProperty = musicLibrary.artistsProperty();
         artistsListView.setItems(artistsProperty);
         artistsProperty.addListener((obs, oldArtists, newArtists) -> {
             if (newArtists != null && ! newArtists.isEmpty())
                 artistsListView.getSelectionModel().clearAndSelect(0);
         });
 
+        totalAlbumsLabel.textProperty().bind(
+                Bindings.createStringBinding(this::getAlbumString, trackSetsProperty));
         totalTracksLabel.setText(String.valueOf(0) + " artists");
         nameLabel.textProperty().bind(Bindings.createStringBinding(this::getNameString, selectedArtistProperty));
         defaultCoverImage = new Image(DEFAULT_COVER_IMAGE);
@@ -372,32 +370,38 @@ public class RootController implements MusicottController {
     }
 
     public void addAlbumTrackSets(Multimap<String, Entry<Integer, Track>> tracksByAlbum) {
-        List<TrackSetAreaRow> newTrackSets = tracksByAlbum.asMap().entrySet().stream().map(multimapEntry ->
-            new TrackSetAreaRow(nameLabel.getText(), multimapEntry.getKey(), multimapEntry.getValue()))
-                                                          .collect(Collectors.toList());
+        List<TrackSetAreaRow> newTrackSets = tracksByAlbum.asMap().entrySet().stream().map(multimapEntry -> {
+            String artist = nameLabel.getText();
+            String album = multimapEntry.getKey();
+            Collection<Entry<Integer, Track>> tracks = multimapEntry.getValue();
+            TrackSetAreaRow trackSetAreaRow =  new TrackSetAreaRow(artist, album, tracks);
+            trackSetAreaRow.selectedTracksProperty().addListener((obs, oldList, newList) -> chooseSelectedTracks());
+            return trackSetAreaRow;
+        }).collect(Collectors.toList());
+
         trackSetAreaRows.clear();
         trackSetAreaRows.addAll(newTrackSets);
         trackSetAreaRows.sort((trackSet1, trackSet2) -> trackSet1.getAlbum().compareTo(trackSet2.getAlbum()));
         trackSetsAreaVBox.getChildren().clear();
         trackSetsAreaVBox.getChildren().addAll(this.trackSetAreaRows);
         totalTracksLabel.setText(getTotalArtistTracksString());
+        chooseSelectedTracks();
     }
 
     public void removeFromTrackSets(Entry<Integer, Track> trackEntry) {
         Iterator<TrackSetAreaRow> trackSetAreaRowIterator = trackSetAreaRows.iterator();
+        boolean removed;
         while (trackSetAreaRowIterator.hasNext()) {
             TrackSetAreaRow trackSetAreaRow = trackSetAreaRowIterator.next();
-            trackSetAreaRow.removeTrack(trackEntry);
-            totalTracksLabel.setText(getTotalArtistTracksString());
-            if (trackSetAreaRow.containedTracksProperty().isEmpty()) {
-                trackSetAreaRowIterator.remove();
-                trackSetsAreaVBox.getChildren().remove(trackSetAreaRow);
+            removed = trackSetAreaRow.removeTrack(trackEntry);
+            if (removed) {
+                totalTracksLabel.setText(getTotalArtistTracksString());
+                if (trackSetAreaRow.containedTracksProperty().isEmpty()) {
+                    trackSetAreaRow.selectedTracksProperty().removeListener((obs, oldList, newList) -> chooseSelectedTracks());
+                    trackSetAreaRowIterator.remove();
+                    trackSetsAreaVBox.getChildren().remove(trackSetAreaRow);
+                }
             }
-        }
-        if (artistsListView.getSelectionModel().getSelectedItem() == null) {
-            artistsListView.getSelectionModel().select(0);
-            artistsListView.getFocusModel().focus(0);
-            artistsListView.scrollTo(0);
         }
     }
 
@@ -545,7 +549,6 @@ public class RootController implements MusicottController {
     }
 
     private ObservableList<Entry<Integer, Track>> chooseSelectedTracks() {
-        ObservableList<Entry<Integer, Track>> selectedTracks = null;
         NavigationMode mode = navigationModeProperty.getValue();
         switch (mode) {
             case ALL_TRACKS:
@@ -561,8 +564,8 @@ public class RootController implements MusicottController {
         return selectedTracks;
     }
 
-    public ListProperty<Entry<Integer, Track>> selectedTracksProperty () {
-        return selectedTracksProperty;
+    public ObservableList<Entry<Integer, Track>> getSelectedTracks() {
+        return selectedTracks;
     }
 
     public ReadOnlyBooleanProperty showNavigationPaneProperty() {

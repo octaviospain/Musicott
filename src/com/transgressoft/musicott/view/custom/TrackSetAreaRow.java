@@ -294,8 +294,8 @@ public class TrackSetAreaRow extends HBox {
         return trackInTheRow.trackNumberProperty();
     }
 
-    public void removeTrack(Entry<Integer, Track> trackEntry) {
-        containedTracksProperty.remove(trackEntry);
+    public boolean removeTrack(Entry<Integer, Track> trackEntry) {
+        return containedTracksProperty.remove(trackEntry);
     }
 
     public void selectAllTracks() {

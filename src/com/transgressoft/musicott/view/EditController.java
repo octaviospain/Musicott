@@ -222,7 +222,7 @@ public class EditController implements MusicottController {
      * a dash ({@code -}) is placed in the {@link TextField}.
      */
     private void setEditFieldsValues() {
-        trackSelection = StageDemon.getInstance().getRootController().selectedTracksProperty().stream()
+        trackSelection = StageDemon.getInstance().getRootController().getSelectedTracks().stream()
                                    .map(Entry::getValue).collect(Collectors.toList());
 
         editableFieldsMap.entrySet().forEach(this::setFieldValue);

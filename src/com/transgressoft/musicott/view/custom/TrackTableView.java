@@ -211,7 +211,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         return event -> {
             PlayerFacade player = PlayerFacade.getInstance();
             RootController rootController = StageDemon.getInstance().getRootController();
-            ListProperty<Entry<Integer, Track>> selection = rootController.selectedTracksProperty();
+            List<Entry<Integer, Track>> selection = rootController.getSelectedTracks();
             if (event.getCode() == KeyCode.ENTER) {
                 List<Integer> selectionIDs = selection.stream().map(Entry::getKey).collect(Collectors.toList());
                 player.addTracksToPlayQueue(selectionIDs, true);

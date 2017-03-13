@@ -228,8 +228,10 @@ public class MusicottMenuBar extends MenuBar {
     }
 
     private void setEditMenuActions() {
-        ListProperty<Entry<Integer, Track>> selection = stageDemon.getRootController().selectedTracksProperty();
-        editMenuItem.setOnAction(e -> stageDemon.editTracks(selection.size()));
+        editMenuItem.setOnAction(e -> {
+            List<Entry<Integer, Track>> selection = stageDemon.getRootController().getSelectedTracks();
+            stageDemon.editTracks(selection.size());
+        });
         deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks(trackSelectionIds()));
         selectAllMenuItem.setOnAction(e -> stageDemon.getRootController().selectAllTracks());
         dontSelectAllMenuItem.setOnAction(e -> stageDemon.getRootController().deselectAllTracks());
@@ -296,7 +298,7 @@ public class MusicottMenuBar extends MenuBar {
     }
 
     private List<Integer> trackSelectionIds() {
-        List<Entry<Integer, Track>> trackSelection = stageDemon.getRootController().selectedTracksProperty();
+        List<Entry<Integer, Track>> trackSelection = stageDemon.getRootController().getSelectedTracks();
         return trackSelection.stream().map(Entry::getKey).collect(Collectors.toList());
     }
 
