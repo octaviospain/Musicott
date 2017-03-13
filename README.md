@@ -3,7 +3,7 @@
 [![license](https://img.shields.io/badge/license-GPL3v2-brightgreen.svg)](https://github.com/octaviospain/Musicott/blob/master/license/gpl.txt)
 
 
-![Musicott title logo](https://dl.dropboxusercontent.com/u/3596661/musicott-title-logo.png)
+![Musicott title logo](http://imageshack.com/a/img921/1074/4WJ9yl.png)
 
 #
 Musicott is an application that manages and plays music files. Coded in Java 8 with JavaFX.
@@ -14,7 +14,7 @@ Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to 
 
 Next version 0.9 is almost prepared but it needs more tests (as always)! Community help is welcomed ;)
 
-![Musicott screenshot 1](https://dl.dropboxusercontent.com/u/3596661/main.png)
+![Musicott screenshot 1](http://imageshack.com/a/img923/9629/3UzBQE.png)
 
 ### Features
 * Play mp3, wav and m4a (with ALAC encoding) files
