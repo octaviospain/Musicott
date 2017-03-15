@@ -69,6 +69,7 @@ public class MusicLibrary {
 
     private static class InstanceHolder {
         static final MusicLibrary INSTANCE = new MusicLibrary();
+        private InstanceHolder() {}
     }
 
     public static MusicLibrary getInstance() {
@@ -93,7 +94,7 @@ public class MusicLibrary {
      * @return The {@link MapChangeListener} reference
      */
     private MapChangeListener<Integer, Track> musicottTracksChangeListener() {
-        return (MapChangeListener.Change<? extends Integer, ? extends Track> change) -> {
+        return change -> {
             if (change.wasAdded())
                 addTrackToCollections(change.getValueAdded());
             else if (change.wasRemoved())
@@ -146,8 +147,7 @@ public class MusicLibrary {
         boolean[] added = new boolean[]{false};
         added[0] = musicottTrackEntriesList.add(trackEntry);
         added[0] |= albumsTracks.put(trackAlbum, trackEntry);
-        addedTrack.getArtistsInvolved().forEach(
-                artist -> added[0] |= addArtistTrack(artist, addedTrack.getTrackId()));
+        addedTrack.getArtistsInvolved().forEach(artist -> added[0] |= addArtistTrack(artist, addedTrack.getTrackId()));
         LOG.debug("Added {}", addedTrack);
 
         NavigationController navigationController = stageDemon.getNavigationController();
@@ -217,10 +217,7 @@ public class MusicLibrary {
     private boolean removeArtistTrack(String artist, int trackId) {
         boolean removed = artistsTracks.remove(artist, trackId);
         if (! artistsTracks.containsKey(artist))
-            Platform.runLater(() -> {
-                artistsList.remove(artist);
-                FXCollections.sort(artistsList);
-            });
+            Platform.runLater(() -> artistsList.remove(artist));
         return removed;
     }
 
@@ -269,13 +266,6 @@ public class MusicLibrary {
         synchronized (musicottTracks) {
             return Optional.ofNullable(musicottTracks.get(trackId));
         }
-    }
-
-    public Multimap<String, Entry<Integer, Track>> getAlbumTracksOfArtist(String artist) {
-        Set<String> artistAlbums = artistsTracks.get(artist).stream().map(musicottTracks::get)
-                                                .map(Track::getAlbum)
-                                                .collect(Collectors.toSet());
-        return Multimaps.filterKeys(albumsTracks, artistAlbums::contains);
     }
 
     public void addWaveform(int trackId, float[] waveform) {
@@ -366,6 +356,12 @@ public class MusicLibrary {
         }
     }
 
+    public boolean containsTrack(Track track) {
+        synchronized (musicottTracks) {
+            return musicottTracks.containsValue(track);
+        }
+    }
+
     public boolean containsWaveform(int trackId) {
         synchronized (waveforms) {
             return waveforms.containsKey(trackId);
@@ -397,8 +393,22 @@ public class MusicLibrary {
     public void showArtist(String artist) {
         new Thread(() -> {
             Multimap<String, Entry<Integer, Track>> newTrackSetsByAlbum = getAlbumTracksOfArtist(artist);
-            Platform.runLater(() -> stageDemon.getRootController().addAlbumTrackSets(newTrackSetsByAlbum));
+            Platform.runLater(() -> stageDemon.getRootController().setArtistTrackSets(newTrackSetsByAlbum));
         }).start();
+    }
+
+    public ImmutableMultimap<String, Entry<Integer, Track>> getAlbumTracksOfArtist(String artist) {
+        Set<String> artistAlbums;
+        ImmutableMultimap<String, Entry<Integer, Track>> artistAlbumTracks;
+        synchronized (artistsTracks) {
+            artistAlbums = artistsTracks.get(artist).stream()
+                                        .map(musicottTracks::get).map(Track::getAlbum)
+                                        .collect(Collectors.toSet());
+        }
+        synchronized (albumsTracks) {
+            artistAlbumTracks = ImmutableMultimap.copyOf(Multimaps.filterKeys(albumsTracks, artistAlbums::contains));
+        }
+        return artistAlbumTracks;
     }
 
     /**

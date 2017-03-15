@@ -23,6 +23,7 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
 import com.worldsworstsoftware.itunes.*;
+import javafx.collections.*;
 import javafx.util.*;
 import org.jaudiotagger.audio.*;
 import org.jaudiotagger.tag.*;
@@ -97,9 +98,11 @@ public class ItunesTracksParseAction extends ItunesParseAction {
                 currentTrack = createTrackFromItunesData(itunesTrack);
 
             currentTrack.ifPresent(track -> {
-                itunesIdToMusicottIdMap.put(itunesTrack.getTrackID(), track.getTrackId());
-                parsedTracks.put(track.getTrackId(), track);
-                tracksToArtistsMultimap.putAll(track.getTrackId(), track.getArtistsInvolved());
+                if (! musicLibrary.containsTrack(track)) {
+                    itunesIdToMusicottIdMap.put(itunesTrack.getTrackID(), track.getTrackId());
+                    parsedTracks.put(track.getTrackId(), track);
+                    tracksToArtistsMultimap.putAll(track.getTrackId(), track.getArtistsInvolved());
+                }
             });
         }
         parentTask.updateProgressTask();
@@ -158,6 +161,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
         Optional<Track> newTrack = Optional.empty();
         if (itunesFile.exists()) {
             Track track = parseItunesFieldsToTrackFields(itunesTrack, itunesPath);
+            track.setArtistsInvolved(FXCollections.observableSet(Utils.getArtistsInvolvedInTrack(track)));
             newTrack = Optional.of(track);
         }
         else
@@ -169,7 +173,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
         String fileFolder = itunesPath.getParent().toString();
         String fileName = itunesPath.getName(itunesPath.getNameCount() - 1).toString();
         Track newTrack = new Track(fileFolder, fileName);
-        newTrack.setInDisk(true);
+        newTrack.setIsInDisk(true);
         newTrack.setSize(itunesTrack.getSize());
         newTrack.setTotalTime(Duration.millis(itunesTrack.getTotalTime()));
         newTrack.setName(itunesTrack.getName() == null ? "" : itunesTrack.getName());

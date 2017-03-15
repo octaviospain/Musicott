@@ -25,7 +25,7 @@
                                           <ListView fx:id="artistsListView" layoutX="17.0" layoutY="114.0" minWidth="180.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                                        </children>
                                     </AnchorPane>
-                                  <AnchorPane minWidth="620.0">
+                                  <AnchorPane minWidth="700.0">
                                        <children>
                                           <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                              <top>

@@ -92,7 +92,7 @@ public class SaveMusicLibraryTask extends Thread {
         trackAttributes.add("discNumber");
         trackAttributes.add("year");
         trackAttributes.add("bpm");
-        trackAttributes.add("inDisk");
+        trackAttributes.add("isInDisk");
         trackAttributes.add("isPartOfCompilation");
         trackAttributes.add("lastDateModified");
         trackAttributes.add("dateAdded");

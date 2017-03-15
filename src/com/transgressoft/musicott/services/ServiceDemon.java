@@ -40,6 +40,7 @@ public class ServiceDemon {
 
     private static class InstanceHolder {
         static final ServiceDemon INSTANCE = new ServiceDemon();
+        private InstanceHolder() {}
     }
 
     private ServiceDemon() {

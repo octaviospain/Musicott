@@ -93,6 +93,8 @@ public class EditController implements MusicottController {
     private Map<TrackField, TextInputControl> editableFieldsMap;
     private List<Track> trackSelection;
     private Optional<byte[]> commonCover = Optional.empty();
+    private Optional<String> newChangedAlbum = Optional.empty();
+    private Set<String> changedAlbums = new HashSet<>();
 
     @FXML
     private void initialize() {
@@ -227,6 +229,8 @@ public class EditController implements MusicottController {
 
         editableFieldsMap.entrySet().forEach(this::setFieldValue);
         newCoverImage = null;
+        newChangedAlbum = Optional.empty();
+        changedAlbums.clear();
         coverImage.setImage(COVER_IMAGE);
         commonCover = commonCover();
         commonCover.ifPresent(coverBytes -> coverImage.setImage(new Image(new ByteArrayInputStream(coverBytes))));
@@ -283,10 +287,9 @@ public class EditController implements MusicottController {
      */
     private void editAndClose() {
         trackSelection.forEach(this::editTrack);
-        UpdateMetadataTask updateTask = new UpdateMetadataTask(trackSelection);
+        UpdateMusicLibraryTask updateTask = new UpdateMusicLibraryTask(trackSelection, changedAlbums, newChangedAlbum);
         updateTask.setDaemon(true);
         updateTask.start();
-        // TODO update changes if user is on artist navigation mode
         editStage.close();
     }
 
@@ -296,6 +299,7 @@ public class EditController implements MusicottController {
     private void close() {
         LOG.info("Edit stage cancelled");
         newCoverImage = null;
+        newChangedAlbum = Optional.empty();
         commonCover = Optional.empty();
         editStage.close();
     }
@@ -313,6 +317,8 @@ public class EditController implements MusicottController {
         editableFieldsMap.entrySet().forEach(entry -> {
             Property property = trackPropertiesMap.get(entry.getKey());
             changed[0] = editTrackTrackField(entry, property);
+            if (changed[0] && entry.getKey().equals(TrackField.ALBUM))
+                newChangedAlbum = Optional.of(track.getAlbum());
         });
 
         if (! isCompilationCheckBox.isIndeterminate()) {
@@ -402,9 +408,9 @@ public class EditController implements MusicottController {
      * @return
      */
     private Optional<String> commonAlbum() {
+        changedAlbums = trackSelection.stream().map(Track::getAlbum).collect(Collectors.toSet());
         String firstAlbum = trackSelection.get(0).getAlbum();
-        boolean areCommon = trackSelection.stream().allMatch(track -> track.getAlbum().equals(firstAlbum));
-        return areCommon ? Optional.of(firstAlbum) : Optional.empty();
+        return changedAlbums.size() <= 1 ? Optional.of(firstAlbum) : Optional.empty();
     }
 
     /**

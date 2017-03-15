@@ -67,6 +67,7 @@ public class StageDemon {
 
     private static class InstanceHolder {
         static final StageDemon INSTANCE = new StageDemon();
+        private InstanceHolder() {}
     }
 
     private StageDemon() {

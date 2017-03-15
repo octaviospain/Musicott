@@ -28,7 +28,10 @@ import org.slf4j.*;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.AbstractMap.*;
 import java.util.*;
+import java.util.Map.*;
+import java.util.stream.*;
 
 import static java.nio.file.StandardCopyOption.*;
 
@@ -39,50 +42,77 @@ import static java.nio.file.StandardCopyOption.*;
  * @author Octavio Calleya
  * @version 0.9.2-b
  */
-public class UpdateMetadataTask extends Thread {
+public class UpdateMusicLibraryTask extends Thread {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	private List<Track> tracks;
+	private Set<String> changedAlbums;
+	private Optional<String> newAlbum;
 	private CopyOption[] options;
 	private List<String> updateErrors;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 	private TaskDemon taskDemon = TaskDemon.getInstance();
 	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+	private StageDemon stageDemon = StageDemon.getInstance();
 
-	public UpdateMetadataTask(List<Track> tracks) {
+	public UpdateMusicLibraryTask(List<Track> tracks, Set<String> changedAlbums, Optional<String> newAlbum) {
 		this.tracks = tracks;
+		this.changedAlbums = changedAlbums;
+		this.newAlbum = newAlbum;
 		options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
 		updateErrors = new ArrayList<>();
 	}
 
 	@Override
 	public void run() {
-		tracks.stream().filter(Track::getInDisk).forEach(track -> {
-			File backup = makeBackup(track);
-
-			Set<String> oldArtistsInvolved = track.getArtistsInvolved();
-			Set<String> newArtistsInvolved = Utils.getArtistsInvolvedInTrack(track);
-			Set<String> removedArtists = Sets.difference(oldArtistsInvolved, newArtistsInvolved).immutableCopy();
-			Set<String> addedArtists = Sets.difference(newArtistsInvolved, oldArtistsInvolved).immutableCopy();
-			track.setArtistsInvolved(FXCollections.observableSet(newArtistsInvolved));
-			musicLibrary.updateArtistsInvolvedInTrack(track.getTrackId(), removedArtists, addedArtists);
-			try {
-				track.writeMetadata();
-				deleteBackup(track, backup);
-				LOG.debug("Updated (or not) metadata of {}", track.getFileFolder() + "/" + track.getFileName());
-			}
-			catch (TrackUpdateException exception) {
-				if (backup != null)
-					restoreBackup(track, backup);
-				updateErrors.add(exception.getMessage() + ": " + exception.getCause().getMessage());
-			}
-		});
-
+		updateMusicLibraryAlbums();
+		updateMusicLibraryTracks();
+		stageDemon.getRootController().updateShowingTrackSets();
         taskDemon.saveLibrary(true, false, false);
 		if (! updateErrors.isEmpty())
 			errorDemon.showExpandableErrorsDialog("Errors writing metadata on some tracks", null, updateErrors);
+	}
+
+	private void updateMusicLibraryAlbums() {
+		newAlbum.ifPresent(album -> {
+			List<Entry<Integer, Track>> trackEntries = tracks.stream()
+															 .map(track -> new SimpleEntry<>(track.getTrackId(), track))
+															 .collect(Collectors.toList());
+			musicLibrary.updateTrackAlbums(trackEntries, changedAlbums, album);
+		});
+	}
+
+	private void updateMusicLibraryTracks() {
+		tracks.forEach(track -> {
+			updateArtistsInvolved(track);
+			if (track.isInDisk())
+				updateFileMetadata(track);
+		});
+	}
+
+	private void updateArtistsInvolved(Track track) {
+		Set<String> oldArtistsInvolved = track.getArtistsInvolved();
+		Set<String> newArtistsInvolved = Utils.getArtistsInvolvedInTrack(track);
+		Set<String> removedArtists = Sets.difference(oldArtistsInvolved, newArtistsInvolved).immutableCopy();
+		Set<String> addedArtists = Sets.difference(newArtistsInvolved, oldArtistsInvolved).immutableCopy();
+		track.setArtistsInvolved(FXCollections.observableSet(newArtistsInvolved));
+		musicLibrary.updateArtistsInvolvedInTrack(track.getTrackId(), removedArtists, addedArtists);
+	}
+
+	private void updateFileMetadata(Track track) {
+		File backup = makeBackup(track);
+		try {
+			track.writeMetadata();
+			deleteBackup(track, backup);
+			LOG.debug("Updated (or not) metadata of {}", track.getFileFolder() + "/" + track.getFileName());
+		}
+		catch (TrackUpdateException exception) {
+			if (backup != null)
+				restoreBackup(track, backup);
+			updateErrors.add(exception.getMessage() + ": " + exception.getCause().getMessage());
+		}
 	}
 
 	private File makeBackup(Track track) {

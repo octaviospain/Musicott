@@ -43,15 +43,28 @@
 
 #albumTitleLabel {
     -fx-font-size: 20px;
+    -fx-padding: 0px 0px 10px 0px;
 }
 
 #albumLabelLabel {
     -fx-font-size: 16px;
+    -fx-padding: 0px 0px 5px 0px;
 }
 
 #relatedArtistsLabel {
-    -fx-font-size: 17px;
+    -fx-font-size: 15px;
+    -fx-padding: 0px 0px 5px 0px;
 }
+
+#genresLabel {
+    -fx-padding: 0px 0px 10px 0px;
+}
+
+#albumLabelLabel, #relatedArtistsLabel,
+#genresLabel, #sizeLabel, #yearLabel {
+    -fx-text-fill: rgb(182, 182, 182);
+}
+
 
 .list-view .scroll-bar .decrement-button,
 .list-view .scroll-bar .increment-button,

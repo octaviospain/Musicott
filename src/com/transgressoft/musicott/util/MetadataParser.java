@@ -48,7 +48,7 @@ public class MetadataParser {
         try {
             LOG.debug("Creating AudioFile instance with jAudioTagger of: {}", fileToParse);
             AudioFile audioFile = AudioFileIO.read(fileToParse);
-            track.setInDisk(true);
+            track.setIsInDisk(true);
             track.setSize((int) (fileToParse.length()));
             track.setTotalTime(Duration.seconds(audioFile.getAudioHeader().getTrackLength()));
             track.setEncoding(audioFile.getAudioHeader().getEncodingType());

@@ -109,7 +109,7 @@ public class TrackTest {
         assertEquals(Duration.UNKNOWN, track.getTotalTime());
         assertEquals(0, track.getBitRate());
         assertEquals(0, track.getPlayCount());
-        assertEquals(false, track.getInDisk());
+        assertEquals(false, track.isInDisk());
         assertEquals(false, track.isPartOfCompilation());
         assertEquals(false, track.isVariableBitRate());
         assertTrue(LocalDateTime.now().isAfter(track.getLastDateModified()));
@@ -172,7 +172,7 @@ public class TrackTest {
         track.setSize(size);
         track.setIsPartOfCompilation(true);
         track.setIsVariableBitRate(true);
-        track.setInDisk(true);
+        track.setIsInDisk(true);
         track.setDateAdded(LocalDateTime.of(2006, 1, 1, 23, 59));
         track.setLastDateModified(LocalDateTime.of(2006, 1, 1, 23, 59));
         track.setArtistsInvolved(FXCollections.observableSet(artist, albumArtist));
@@ -200,7 +200,7 @@ public class TrackTest {
         assertEquals(size, track.getSize());
         assertTrue(track.isPartOfCompilation());
         assertTrue(track.isVariableBitRate());
-        assertTrue(track.getInDisk());
+        assertTrue(track.isInDisk());
         assertEquals(LocalDateTime.of(2006, 1, 1, 23, 59), track.getDateAdded());
         assertEquals(LocalDateTime.of(2006, 1, 1, 23, 59), track.getLastDateModified());
         assertEquals(Sets.newHashSet(artist, albumArtist), track.getArtistsInvolved());
@@ -306,28 +306,28 @@ public class TrackTest {
     @Test
     public void notPlayableIfNotExistsTest() {
         track = new Track("./test-resources/testfiles/", "nonexistentfile.mp3");
-        track.setInDisk(true);
+        track.setIsInDisk(true);
         assertFalse(track.isPlayable());
     }
 
     @Test
     public void notPlayableIfNotInDiskTest() {
         track = new Track("", "");
-        track.setInDisk(false);
+        track.setIsInDisk(false);
         assertFalse(track.isPlayable());
     }
 
     @Test
     public void notPlayableIfFlacTest() {
         track = new Track("./test-resources/testfiles/", "testeable.flac");
-        track.setInDisk(true);
+        track.setIsInDisk(true);
         assertFalse(track.isPlayable());
     }
 
     @Test
     public void notPlayableIfAppleEncodingTest() {
         track = new Track("./test-resources/testfiles/", "testeable.mp3");
-        track.setInDisk(true);
+        track.setIsInDisk(true);
         track.setEncoding("Apple");
         assertFalse(track.isPlayable());
     }
@@ -335,7 +335,7 @@ public class TrackTest {
     @Test
     public void notPlayableIfEncoderItunesTest() {
         track = new Track("./test-resources/testfiles/", "testeable.mp3");
-        track.setInDisk(true);
+        track.setIsInDisk(true);
         track.setEncoder("iTunes");
         assertFalse(track.isPlayable());
     }

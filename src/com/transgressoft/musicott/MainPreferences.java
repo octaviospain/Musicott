@@ -21,6 +21,7 @@ package com.transgressoft.musicott;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.*;
 import java.util.prefs.*;
 
 import static com.transgressoft.musicott.tasks.parse.itunes.ItunesParseTask.*;
@@ -68,10 +69,12 @@ public class MainPreferences {
     private static final String ITUNES_IMPORT_METADATA_POLICY = "itunes_import_policy";
 
     private Preferences preferences;
+    private AtomicInteger sequence;
     private Set<String> importExtensions;
 
     private static class InstanceHolder {
         static final MainPreferences INSTANCE = new MainPreferences();
+        private InstanceHolder() {}
     }
 
     /**
@@ -81,6 +84,7 @@ public class MainPreferences {
      */
     private MainPreferences() {
         preferences = Preferences.userNodeForPackage(getClass());
+        sequence = new AtomicInteger();
         importExtensions = new HashSet<>();
         if (preferences.getBoolean(IMPORT_MP3, true))
             importExtensions.add("mp3");
@@ -103,10 +107,10 @@ public class MainPreferences {
      *
      * @return The next integer to use for the track map
      */
-    public int getTrackSequence() {
-        int sequence = preferences.getInt(TRACK_SEQUENCE, 0);
-        preferences.putInt(TRACK_SEQUENCE, ++ sequence);
-        return sequence;
+    public synchronized int getTrackSequence() {
+        sequence.set(preferences.getInt(TRACK_SEQUENCE, 0));
+        preferences.putInt(TRACK_SEQUENCE, sequence.incrementAndGet());
+        return sequence.get();
     }
 
     /**

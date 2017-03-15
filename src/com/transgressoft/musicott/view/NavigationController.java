@@ -162,7 +162,7 @@ public class NavigationController implements MusicottController {
         return playlistTreeView.selectedPlaylistProperty();
     }
 
-    public void addNewPlaylist(Playlist newPlaylist) {
+    public void addNewPlaylist(Playlist newPlaylist, boolean selectAfter) {
         TreeItem<Playlist> selectedPlaylistItem = playlistTreeView.getSelectionModel().selectedItemProperty().get();
 
         if (selectedPlaylistItem != null && selectedPlaylistItem.getValue().isFolder()) {
@@ -173,7 +173,7 @@ public class NavigationController implements MusicottController {
             }
         }
         else {
-            playlistTreeView.addPlaylist(newPlaylist);
+            playlistTreeView.addPlaylist(newPlaylist, selectAfter);
             musicLibrary.addPlaylist(newPlaylist);
         }
     }

@@ -20,6 +20,7 @@
 package com.transgressoft.musicott.tasks.parse;
 
 import com.google.common.collect.*;
+import com.transgressoft.musicott.model.*;
 import org.slf4j.*;
 
 import java.util.*;
@@ -46,6 +47,7 @@ public abstract class BaseParseAction<I, X, T extends BaseParseResult<X>> extend
     protected final Multimap<Integer, String> tracksToArtistsMultimap;
     protected final Collection<String> parseErrors;
     protected final BaseParseTask parentTask;
+    protected final MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
     public BaseParseAction(List<I> itemsToParse, BaseParseTask parentTask) {
         this.itemsToParse = itemsToParse;

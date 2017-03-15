@@ -71,8 +71,10 @@ public class AudioFilesParseAction extends FilesParseAction {
     protected void parseItem(File item) {
         Optional<Track> currentTrack = parseFileToTrack(item);
         currentTrack.ifPresent(track -> {
-            parsedTracks.put(track.getTrackId(), track);
-            tracksToArtistsMultimap.putAll(track.getTrackId(), track.getArtistsInvolved());
+            if (! musicLibrary.containsTrack(track)) {
+                parsedTracks.put(track.getTrackId(), track);
+                tracksToArtistsMultimap.putAll(track.getTrackId(), track.getArtistsInvolved());
+            }
         });
         parentTask.updateProgressTask();
     }

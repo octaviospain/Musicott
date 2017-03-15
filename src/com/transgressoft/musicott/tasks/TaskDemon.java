@@ -59,6 +59,7 @@ public class TaskDemon {
 
 	private static class InstanceHolder {
 		static final TaskDemon INSTANCE = new TaskDemon();
+		private InstanceHolder() {}
 	}
 
 	private TaskDemon() {

@@ -33,7 +33,6 @@ import javafx.scene.layout.*;
 import javafx.util.*;
 
 import java.io.*;
-import java.util.AbstractMap.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.Optional;
@@ -60,9 +59,9 @@ public class TrackSetAreaRow extends HBox {
     private TableView<Entry<Integer, Track>> tracksTableView;
     private TableColumn<Entry<Integer, Track>, String> nameCol;
     private TableColumn<Entry<Integer, Track>, String> artistCol;
-    private TableColumn<Entry<Integer, Track>, String> genreCol;
     private TableColumn<Entry<Integer, Track>, Duration> totalTimeCol;
     private TableColumn<Entry<Integer, Track>, Number> trackNumberCol;
+    private VBox albumInfoVBox;
     private String artist;
     private String album;
     private Label genresLabel;
@@ -91,6 +90,8 @@ public class TrackSetAreaRow extends HBox {
         getStylesheets().add(getClass().getResource(BASE_STYLE).toExternalForm());
         tracksTableView.setItems(containedTracks);
         tracksTableView.sort();
+        updateRelatedArtistsLabel();
+        updateAlbumLabelLabel();
         selectedTracksProperty = new SimpleListProperty<>(this, "selected artist tracks");
         selectedTracksProperty.bind(new SimpleObjectProperty<>(tracksTableView.getSelectionModel().getSelectedItems()));
     }
@@ -100,15 +101,25 @@ public class TrackSetAreaRow extends HBox {
         coverImageView.setFitWidth(COVER_SIZE);
         coverImageView.setFitHeight(COVER_SIZE);
         Label sizeLabel = new Label();
+        sizeLabel.setId("sizeLabel");
         sizeLabel.textProperty().bind(Bindings.createStringBinding(this::getAlbumSizeString, containedTracksProperty));
+        yearLabel = new Label(getYearsString());
+        yearLabel.setId("yearLabel");
+
+        GridPane underImageGridPane = new GridPane();
+        ColumnConstraints cc1 = new ColumnConstraints(COVER_SIZE / 2);
+        ColumnConstraints cc2 = new ColumnConstraints(COVER_SIZE / 2);
+        underImageGridPane.getColumnConstraints().addAll(cc1, cc2);
+        underImageGridPane.add(sizeLabel, 0, 0);
+        underImageGridPane.add(yearLabel, 1, 0);
+        GridPane.setHalignment(sizeLabel, HPos.LEFT);
+        GridPane.setHalignment(yearLabel, HPos.RIGHT);
 
         BorderPane coverBorderPane = new BorderPane();
         coverBorderPane.setTop(coverImageView);
-        coverBorderPane.setCenter(sizeLabel);
-        BorderPane.setMargin(sizeLabel, new Insets(10, 0, 0, 0));
-        BorderPane.setAlignment(sizeLabel, Pos.TOP_LEFT);
+        coverBorderPane.setCenter(underImageGridPane);
+        BorderPane.setMargin(underImageGridPane, new Insets(10, 0, 0, 0));
         VBox.setMargin(coverImageView, new Insets(0, 0, 10, 0));
-        HBox.setHgrow(coverBorderPane, Priority.NEVER);
         HBox.setMargin(coverBorderPane, new Insets(20, 20, 20, 20));
         getChildren().add(coverBorderPane);
     }
@@ -116,31 +127,21 @@ public class TrackSetAreaRow extends HBox {
     private void placeRightVBox() {
         Label albumLabel = new Label(album);
         albumLabel.setId("albumTitleLabel");
-        relatedArtistsLabel = new Label(getRelatedArtistsString());
+        relatedArtistsLabel = new Label();
         relatedArtistsLabel.setId("relatedArtistsLabel");
-        relatedArtistsLabel.setAlignment(Pos.BOTTOM_LEFT);
-        HBox albumAndRelatedArtistsHBox = new HBox(albumLabel, relatedArtistsLabel);
-        HBox.setMargin(albumLabel, new Insets(0, 20, 0, 0));
-        HBox.setMargin(relatedArtistsLabel, new Insets(0, 20, 0, 0));
-        HBox.setHgrow(albumLabel, Priority.SOMETIMES);
-        HBox.setHgrow(relatedArtistsLabel, Priority.SOMETIMES);
+        relatedArtistsLabel.setWrapText(true);
         genresLabel = new Label(getGenresString());
-        Label separatorLabel = new Label("·");
-        yearLabel = new Label(getYearsString());
-        albumLabelLabel = new Label(getLabelString());
+        genresLabel.setId("genresLabel");
+        genresLabel.setWrapText(true);
+        albumLabelLabel = new Label();
         albumLabelLabel.setId("albumLabelLabel");
-        HBox textLabelsHBox = new HBox(genresLabel, separatorLabel, yearLabel);
-        HBox.setMargin(separatorLabel, new Insets(0, 5, 0, 5));
         buildTracksTableView();
 
-        VBox tracksVBox = new VBox(albumAndRelatedArtistsHBox, albumLabelLabel, textLabelsHBox, tracksTableView);
-        VBox.setMargin(albumAndRelatedArtistsHBox, new Insets(0, 0, 5, 0));
-        VBox.setMargin(albumLabelLabel, new Insets(0, 0, 10, 0));
-        VBox.setMargin(textLabelsHBox, new Insets(0, 0, 10, 0));
+        albumInfoVBox = new VBox(albumLabel, genresLabel, tracksTableView);
         VBox.setVgrow(tracksTableView, Priority.ALWAYS);
-        HBox.setHgrow(tracksVBox, Priority.SOMETIMES);
-        HBox.setMargin(tracksVBox, new Insets(20, 20, 20, 0));
-        getChildren().add(tracksVBox);
+        HBox.setHgrow(albumInfoVBox, Priority.SOMETIMES);
+        HBox.setMargin(albumInfoVBox, new Insets(20, 20, 20, 0));
+        getChildren().add(albumInfoVBox);
     }
 
     private Image getTrackSetImage() {
@@ -162,16 +163,10 @@ public class TrackSetAreaRow extends HBox {
     }
 
     private String getYearsString() {
-        Set<String> differentYears = containedTracks.stream().map(entry -> String.valueOf(entry.getValue().getYear()))
+        Set<String> differentYears = containedTracks.stream().filter(entry -> entry.getValue().getYear() != 0)
+                                                    .map(entry -> String.valueOf(entry.getValue().getYear()))
                                                     .collect(Collectors.toSet());
         return Joiner.on(", ").join(differentYears);
-    }
-
-    private String getLabelString() {
-        Set<String> differentLabels = containedTracks.stream().map(entry -> entry.getValue().getLabel())
-                                                     .collect(Collectors.toSet());
-        differentLabels.remove("");
-        return Joiner.on(", ").join(differentLabels);
     }
 
     private String getAlbumSizeString() {
@@ -180,25 +175,41 @@ public class TrackSetAreaRow extends HBox {
         return String.valueOf(numberOfTracks) + appendix;
     }
 
-    private String getRelatedArtistsString() {
+    private void updateAlbumLabelLabel() {
+        Set<String> differentLabels = containedTracks.stream().map(entry -> entry.getValue().getLabel())
+                                                     .collect(Collectors.toSet());
+        differentLabels.remove("");
+        String labelString = Joiner.on(", ").join(differentLabels);
+        albumLabelLabel.setText(labelString);
+        if (labelString.isEmpty())
+            albumInfoVBox.getChildren().remove(albumLabelLabel);
+        else if (! albumInfoVBox.getChildren().contains(albumLabelLabel))
+            albumInfoVBox.getChildren().add(albumInfoVBox.getChildren().size() - 2, albumLabelLabel);
+    }
+
+    private void updateRelatedArtistsLabel() {
         Set<String> relatedArtists = new HashSet<>();
         containedTracks.forEach(entry -> relatedArtists.addAll(entry.getValue().getArtistsInvolved()));
         relatedArtists.remove(artist);
         String relatedArtistsString = "with " + Joiner.on(", ").join(relatedArtists);
-        return relatedArtists.isEmpty() ? "" : relatedArtistsString;
+        relatedArtistsLabel.setText(relatedArtistsString);
+        if (relatedArtists.isEmpty())
+            albumInfoVBox.getChildren().remove(relatedArtistsLabel);
+        else if (! albumInfoVBox.getChildren().contains(relatedArtistsLabel))
+            albumInfoVBox.getChildren().add(1, relatedArtistsLabel);
     }
 
     @SuppressWarnings ("unchecked")
     private void buildTracksTableView() {
         initColumns();
         tracksTableView = new TableView<>();
-        tracksTableView.getColumns().addAll(trackNumberCol, nameCol, artistCol, genreCol, totalTimeCol);
+        tracksTableView.getColumns().addAll(trackNumberCol, nameCol, artistCol, totalTimeCol);
         tracksTableView.getSortOrder().add(trackNumberCol);
         tracksTableView.setPrefWidth(USE_COMPUTED_SIZE);
         tracksTableView.setPrefHeight(USE_COMPUTED_SIZE);
         tracksTableView.setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
         tracksTableView.getStylesheets().add(getClass().getResource(TRACKAREASET_TRACK_TABLE_STYLE).toExternalForm());
-        tracksTableView.getStyleClass().add("noheader");
+        tracksTableView.getStyleClass().add("no-header");
         tracksTableView.setRowFactory(TrackTableRow::new);
         tracksTableView.addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
         tracksTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -228,22 +239,17 @@ public class TrackSetAreaRow extends HBox {
         trackNumberCol.setCellFactory(column -> new NumericTableCell());
 
         nameCol = new TableColumn<>("Name");
-        nameCol.setMinWidth(190);
+        nameCol.setMinWidth(280);
         nameCol.setPrefWidth(USE_COMPUTED_SIZE);
         nameCol.setStyle("-fx-alignment: CENTER-LEFT");
         nameCol.setCellValueFactory(cellData -> cellData.getValue().getValue().nameProperty());
 
         artistCol = new TableColumn<>("Artist");
-        artistCol.setMinWidth(60);
-        artistCol.setPrefWidth(USE_COMPUTED_SIZE);
+        artistCol.setMinWidth(130);
+        artistCol.setMaxWidth(130);
+        artistCol.setPrefWidth(130);
         artistCol.setStyle("-fx-alignment: CENTER-LEFT");
         artistCol.setCellValueFactory(cellData -> cellData.getValue().getValue().artistProperty());
-
-        genreCol = new TableColumn<>("Genre");
-        genreCol.setMinWidth(60);
-        genreCol.setPrefWidth(USE_COMPUTED_SIZE);
-        genreCol.setStyle("-fx-alignment: CENTER-RIGHT");
-        genreCol.setCellValueFactory(cellData -> cellData.getValue().getValue().genreProperty());
 
         totalTimeCol = new TableColumn<>("Duration");
         totalTimeCol.setMinWidth(60);
@@ -258,12 +264,12 @@ public class TrackSetAreaRow extends HBox {
     private Comparator<Entry<Integer, Track>> trackEntryComparator() {
         return (te1, te2) -> {
             // TODO change this when implementing other tables for other discs in the same album
-            int te1TrackNum = te1.getValue().getTrackNumber();
-            int te2TrackNum = te2.getValue().getTrackNumber();
-            int result = te1TrackNum - te2TrackNum;
             int te1DiscNum = te1.getValue().getDiscNumber();
             int te2DiscNum = te2.getValue().getDiscNumber();
-            return result == 0 ? te1DiscNum - te2DiscNum : result;
+            int result = te1DiscNum - te2DiscNum;
+            int te1TrackNum = te1.getValue().getTrackNumber();
+            int te2TrackNum = te2.getValue().getTrackNumber();
+            return result == 0 ? te1TrackNum - te2TrackNum : result;
         };
     }
 
@@ -275,22 +281,13 @@ public class TrackSetAreaRow extends HBox {
      * @return The {@link IntegerProperty} of the track number
      */
     private IntegerProperty listenTrackChangesAndSort(Track trackInTheRow) {
-        IntegerProperty trackNumProperty = trackInTheRow.trackNumberProperty();
-        StringProperty genreProperty = trackInTheRow.genreProperty();
-        IntegerProperty yearProperty = trackInTheRow.yearProperty();
-        StringProperty labelProperty = trackInTheRow.labelProperty();
-        StringProperty albumProperty = trackInTheRow.albumProperty();
-        SetProperty<String> artistsInvolvedProperty = trackInTheRow.artistsInvolvedProperty();
-        trackNumProperty.addListener((obs, oldTrackNum, newTrackNum) -> containedTracks.sort(trackEntryComparator));
-        genreProperty.addListener((obs, oldGenre, newGenre) -> genresLabel.setText(getGenresString()));
-        yearProperty.addListener((obs, oldYear, newYear) -> yearLabel.setText(getYearsString()));
-        labelProperty.addListener((obs, oldLabel, newLabel) -> albumLabelLabel.setText(getLabelString()));
-        albumProperty.addListener((obs, oldAlbum, newAlbum) -> {});
-        artistsInvolvedProperty.addListener((obs, oldArtists, newArtists) -> {
-            if (! newArtists.contains(artist))
-                containedTracksProperty.remove(new SimpleEntry<>(trackInTheRow.getTrackId(), trackInTheRow));
-            Platform.runLater(() -> relatedArtistsLabel.setText(getRelatedArtistsString()));
-        });
+        trackInTheRow.trackNumberProperty().addListener(
+                (obs, oldTrackNum, newTrackNum) -> containedTracks.sort(trackEntryComparator));
+        trackInTheRow.genreProperty().addListener((obs, oldGenre, newGenre) -> genresLabel.setText(getGenresString()));
+        trackInTheRow.yearProperty().addListener((obs, oldYear, newYear) -> yearLabel.setText(getYearsString()));
+        trackInTheRow.labelProperty().addListener((obs, oldLabel, newLabel) -> updateAlbumLabelLabel());
+        trackInTheRow.artistsInvolvedProperty().addListener((obs, oldArtists, newArtists) ->
+            Platform.runLater(this::updateRelatedArtistsLabel));
         return trackInTheRow.trackNumberProperty();
     }
 

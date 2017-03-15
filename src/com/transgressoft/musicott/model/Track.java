@@ -60,7 +60,7 @@ public class Track {
     private int bpm = 0;
     private Duration totalTime = Duration.UNKNOWN;
 
-    private boolean inDisk = false;
+    private boolean isInDisk = false;
     private boolean isPartOfCompilation = false;
     private boolean isVariableBitRate = false;
 
@@ -258,12 +258,12 @@ public class Track {
         return fileFolder;
     }
 
-    public void setInDisk(boolean inDisk) {
-        this.inDisk = inDisk;
+    public void setIsInDisk(boolean isInDisk) {
+        this.isInDisk = isInDisk;
     }
 
-    public boolean getInDisk() {
-        return inDisk;
+    public boolean isInDisk() {
+        return isInDisk;
     }
 
     public void setCoverImage(File cover) {
@@ -357,7 +357,7 @@ public class Track {
     public void setArtistsInvolved(ObservableSet<String> artistsInvolved) {
         this.artistsInvolved = artistsInvolved;
         if (artistsInvolved.isEmpty())
-            artistsInvolved.add("Unknown artist");
+            artistsInvolved.add(" ");
         artistsInvolvedProperty.set(artistsInvolved);
     }
 
@@ -384,11 +384,11 @@ public class Track {
 
     public boolean isPlayable() {
         boolean playable = true;
-        if (getInDisk()) {
+        if (isInDisk()) {
             File file = new File(fileFolder + "/" + fileName);
             if (! file.exists()) {
                 errorDemon.showErrorDialog(fileFolder + "/" + fileName + " not found");
-                setInDisk(false);
+                setIsInDisk(false);
                 playable = false;
             }
             else if ("flac".equals(fileFormat) || encoding.startsWith("Apple") || encoder.startsWith("iTunes"))
@@ -488,9 +488,7 @@ public class Track {
 
     @Override
     public int hashCode() {
-        return Objects
-                .hash(fileName, fileFolder, name, artist, album, comments, genre, trackNumber, year, albumArtist, bpm,
-                      label);
+        return Objects.hash(fileName, fileFolder);
     }
 
     @Override
@@ -499,15 +497,8 @@ public class Track {
 
         if (o instanceof Track) {
             Track oTrack = (Track) o;
-
-            if (oTrack.getFileName().equalsIgnoreCase(fileName) && oTrack.getFileFolder().equalsIgnoreCase(fileFolder) && oTrack
-                    .getName().equalsIgnoreCase(name) && oTrack.getArtist().equalsIgnoreCase(artist) && oTrack
-                    .getAlbum().equalsIgnoreCase(album) && oTrack.getComments().equalsIgnoreCase(comments) && oTrack
-                    .getGenre().equalsIgnoreCase(genre) && oTrack.getTrackNumber() == trackNumber && oTrack
-                    .getYear() == year && oTrack.getAlbumArtist().equalsIgnoreCase(albumArtist) && oTrack
-                    .getBpm() == bpm && oTrack.getLabel().equalsIgnoreCase(label)) {
+            if (oTrack.getFileName().equalsIgnoreCase(fileName) && oTrack.getFileFolder().equalsIgnoreCase(fileFolder))
                 equals = true;
-            }
         }
 
         return equals;

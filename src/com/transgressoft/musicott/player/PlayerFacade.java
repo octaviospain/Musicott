@@ -63,6 +63,7 @@ public class PlayerFacade {
 
     private static class InstanceHolder {
         static final PlayerFacade INSTANCE = new PlayerFacade();
+        private InstanceHolder() {}
     }
 
     private PlayerFacade() {

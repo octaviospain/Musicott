@@ -63,12 +63,12 @@ public class PlaylistTreeView extends TreeView<Playlist> {
             else
                 selectedPlaylistProperty.set(Optional.empty());
         });
-        selectedPlaylistProperty.addListener((obs, oldSelectedPlaylist, newSelectedPlaylist) -> {
+        selectedPlaylistProperty.addListener((obs, oldSelectedPlaylist, newSelectedPlaylist) ->
             newSelectedPlaylist.ifPresent(playlist -> {
                 musicLibrary.showPlaylist(playlist);
                 stageDemon.getNavigationController().setNavigationMode(NavigationMode.PLAYLIST);
-            });
-        });
+            })
+        );
 
         contextMenu = new PlaylistTreeViewContextMenu();
         setContextMenu(contextMenu);
@@ -99,10 +99,11 @@ public class PlaylistTreeView extends TreeView<Playlist> {
      *
      * @param newPlaylist The playlist value of the {@code TreeItem}
      */
-    public void addPlaylist(Playlist newPlaylist) {
+    public void addPlaylist(Playlist newPlaylist, boolean selectAfter) {
         TreeItem<Playlist> newItem = new TreeItem<>(newPlaylist);
         root.getChildren().add(newItem);
-        getSelectionModel().select(newItem);
+        if (selectAfter)
+            getSelectionModel().select(newItem);
     }
 
     /**

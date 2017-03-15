@@ -39,6 +39,7 @@ public class ErrorDemon {
 
     private static class InstanceHolder {
         static final ErrorDemon INSTANCE = new ErrorDemon();
+        private InstanceHolder() {}
     }
 
     private ErrorDemon() {}
