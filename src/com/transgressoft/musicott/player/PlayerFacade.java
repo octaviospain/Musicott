@@ -387,11 +387,9 @@ public class PlayerFacade {
                     }
                 });
             }
-            Platform.runLater(
-                    () -> stageDemon.getNavigationController().setStatusMessage("Playing a random " + "playlist"));
+            Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Playing a random"));
         }
-        else {
+        else
             Platform.runLater(stageDemon.getPlayerController()::setStopped);
-        }
     }
 }

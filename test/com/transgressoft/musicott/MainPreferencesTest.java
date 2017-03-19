@@ -21,8 +21,6 @@ package com.transgressoft.musicott;
 
 import com.google.common.collect.*;
 import org.junit.jupiter.api.*;
-import org.junit.platform.runner.*;
-import org.junit.runner.*;
 
 import java.io.*;
 import java.util.*;
@@ -33,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Octavio Calleya
  */
-@RunWith (JUnitPlatform.class)
 public class MainPreferencesTest {
 
 	@Test

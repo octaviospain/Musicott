@@ -35,7 +35,7 @@ import java.util.concurrent.*;
  * @version 0.9.2-b
  * @since 0.9.2-b
  */
-public abstract class BaseLoadAction extends RecursiveAction implements Callable<Void> {
+public abstract class BaseLoadAction extends RecursiveAction {
 
     protected final String applicationFolder;
     protected final MusicLibrary musicLibrary;
@@ -45,12 +45,6 @@ public abstract class BaseLoadAction extends RecursiveAction implements Callable
         this.applicationFolder = applicationFolder;
         this.musicLibrary = musicLibrary;
         this.musicottApplication = musicottApplication;
-    }
-
-    @Override
-    public Void call() throws Exception {
-        compute();
-        return null;
     }
 
     /**
@@ -84,12 +78,7 @@ public abstract class BaseLoadAction extends RecursiveAction implements Callable
     }
 
     public static void notifyPreloader(int step, int totalSteps, String detailMessage, Application app) {
-        int numPreloaderSteps;
-        if (totalSteps != 0)
-            numPreloaderSteps = totalSteps;
-        else
-            numPreloaderSteps = 3;
-        double progress = (double) step / numPreloaderSteps;
+        double progress = (step == - 1) ? step : ((double) step / totalSteps);
         LauncherImpl.notifyPreloader(app, new CustomProgressNotification(progress, detailMessage));
     }
 }

@@ -50,7 +50,7 @@ public class WaveformsLoadAction extends BaseLoadAction {
      */
     @Override
     protected void compute() {
-        notifyPreloader(1, 4, "Loading waveforms...");
+        notifyPreloader(-1, 0, "Loading waveforms...");
         File waveformsFile = new File(applicationFolder + File.separator + WAVEFORMS_PERSISTENCE_FILE);
         Map<Integer, float[]> waveformsMap;
         if (waveformsFile.exists())

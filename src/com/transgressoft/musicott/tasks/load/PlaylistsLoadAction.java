@@ -43,6 +43,7 @@ public class PlaylistsLoadAction extends BaseLoadAction {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private int step = 0;
+    private int totalPlaylists;
 
     public PlaylistsLoadAction(String applicationFolder, MusicLibrary musicLibrary, Application musicottApplication) {
         super(applicationFolder, musicLibrary, musicottApplication);
@@ -50,12 +51,18 @@ public class PlaylistsLoadAction extends BaseLoadAction {
 
     @Override
     protected void compute() {
-        notifyPreloader(3, 4, "Loading playlists...");
+        notifyPreloader(-1, 0, "Loading playlists...");
         String playlistsPath = applicationFolder + File.separator + PLAYLISTS_PERSISTENCE_FILE;
         File playlistsFile = new File(playlistsPath);
         List<Playlist> playlists;
-        if (playlistsFile.exists())
+        if (playlistsFile.exists()) {
             playlists = parsePlaylistFromJsonFile(playlistsFile);
+            playlists.forEach(playlist -> {
+                if (playlist.isFolder())
+                    playlist.getContainedPlaylists().forEach(this::setPlaylistProperties);
+                setPlaylistProperties(playlist);
+            });
+        }
         else {
             playlists = new ArrayList<>();
             playlists.add(new Playlist("My Top 10", false));
@@ -75,19 +82,10 @@ public class PlaylistsLoadAction extends BaseLoadAction {
     @SuppressWarnings ("unchecked")
     private List<Playlist> parsePlaylistFromJsonFile(File playlistsFile) {
         List<Playlist> playlists;
-        int totalPlaylists;
         try {
             JsonReader.assignInstantiator(ObservableListWrapper.class, new ObservableListWrapperCreator());
             playlists = (List<Playlist>) parseJsonFile(playlistsFile);
             totalPlaylists = playlists.size();
-
-            for (Playlist playlist : playlists) {
-                if (playlist.isFolder())
-                    playlist.getContainedPlaylists().forEach(this::setPlaylistProperties);
-                setPlaylistProperties(playlist);
-                notifyPreloader(++ step, totalPlaylists, "Loading playlists...");
-            }
-
             LOG.info("Loaded playlists from {}", playlistsFile);
         }
         catch (IOException exception) {
@@ -106,5 +104,6 @@ public class PlaylistsLoadAction extends BaseLoadAction {
     private void setPlaylistProperties(Playlist playlist) {
         playlist.nameProperty().setValue(playlist.getName());
         playlist.isFolderProperty().setValue(playlist.isFolder());
+        notifyPreloader(++ step, totalPlaylists, "Loading playlists...");
     }
 }

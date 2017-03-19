@@ -24,6 +24,7 @@ import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import javafx.scene.image.*;
+import org.apache.commons.lang3.text.*;
 
 import java.io.*;
 import java.math.*;
@@ -75,15 +76,12 @@ public class Utils {
      */
     public static Set<String> getArtistsInvolvedInTrack(Track track) {
         Set<String> artistsInvolved = new HashSet<>();
-        String sanitizedArtist = track.getArtist().replaceAll("vs\\.", "vs");
-        String sanitizedName = track.getName().replaceAll("ft\\.", "Ft").replaceAll("feat\\.", "Feat");
         List<String> albumArtistNames = Splitter.on(CharMatcher.anyOf(",&")).trimResults().omitEmptyStrings()
                                                 .splitToList(track.getAlbumArtist());
-
         artistsInvolved.addAll(albumArtistNames);
-        artistsInvolved.addAll(getArtistNamesInTrackArtist(sanitizedArtist));
-        artistsInvolved.addAll(getArtistNamesInTrackName(sanitizedName));
-        return artistsInvolved;
+        artistsInvolved.addAll(getArtistNamesInTrackArtist(track.getArtist()));
+        artistsInvolved.addAll(getArtistNamesInTrackName(track.getName()));
+        return artistsInvolved.stream().map(WordUtils::capitalize).collect(Collectors.toSet());
     }
 
     /**
@@ -114,9 +112,12 @@ public class Utils {
 
         if (splittedNames.isPresent())
             artistsInvolved = ImmutableSet.copyOf(splittedNames.get());
-        else
-            artistsInvolved = ImmutableSet
-                    .copyOf(Splitter.on(CharMatcher.anyOf(",&")).trimResults().omitEmptyStrings().splitToList(string));
+        else {
+            String cleanedArtist = string.replaceAll("(?i)(feat)(\\.|\\s)", ",").replaceAll("(?i)(ft)(\\.|\\s)", ",");
+            artistsInvolved = ImmutableSet.copyOf(Splitter.on(CharMatcher.anyOf(",&"))
+                                                          .trimResults().omitEmptyStrings()
+                                                          .splitToList(cleanedArtist));
+        }
         return artistsInvolved;
     }
 
@@ -139,21 +140,23 @@ public class Utils {
      *
      * @since 0.10-b
      */
-    private static ImmutableSet<String> getArtistNamesInTrackName(String string) {
-        Pattern endsWithRemix = Pattern.compile("[(|\\[](\\s*(&?\\s*(\\w+)\\s+)+[R|r]emix)[)|\\]]");
-        Pattern startsWithRemixBy = Pattern.compile("[(|\\[][R|r]emix [B|b]y(.+)[)|\\]]");
-        Pattern hasFt = Pattern.compile("[(|\\[]?[F|f]t (.+)");
-        Pattern hasFeat = Pattern.compile("[(|\\[]?[F|f]eat (.+)");
-        Pattern hasFeaturing = Pattern.compile("[(|\\[]?[F|f]eaturing (.+)");
-        Pattern startsWithWith = Pattern.compile("[(|\\[][W|w]ith (.+)[)|\\]]");
+    private static Set<String> getArtistNamesInTrackName(String string) {
+        Pattern endsWithRemix = Pattern.compile("[(|\\[](\\s*(&?\\s*(\\w+)\\s+)+(?i)(remix))[)|\\]]");
+        Pattern startsWithRemixBy = Pattern.compile("[(|\\[](?i)(remix) (?i)(by)(.+)[)|\\]]");
+        Pattern hasFt = Pattern.compile("[(|\\[|\\s](?i)(ft) (.+)");
+        Pattern hasFeat = Pattern.compile("[(|\\[|\\s](?i)(feat) (.+)");
+        Pattern hasFeaturing = Pattern.compile("[(|\\[|\\s](?i)(featuring) (.+)");
+        Pattern startsWithWith = Pattern.compile("[(|\\[](?i)(with) (.+)[)|\\]]");
 
         Map<Pattern, Pattern> regexMaps = ImmutableMap.<Pattern, Pattern> builder()
-                .put(Pattern.compile("[R|r]emix"), endsWithRemix)
-                .put(Pattern.compile("[R|r]emix [B|b]y"), startsWithRemixBy).put(Pattern.compile("[F|f]t"), hasFt)
-                .put(Pattern.compile("[F|f]eat"), hasFeat).put(Pattern.compile("[F|f]eaturing"), hasFeaturing)
-                .put(Pattern.compile("[W|w]ith"), startsWithWith).build();
+                .put(Pattern.compile(" (?i)(remix)"), endsWithRemix)
+                .put(Pattern.compile("(?i)(remix) (?i)(by) "),startsWithRemixBy)
+                .put(Pattern.compile("(?i)(ft) "), hasFt)
+                .put(Pattern.compile("(?i)(feat) "), hasFeat)
+                .put(Pattern.compile("(?i)(featuring) "), hasFeaturing)
+                .put(Pattern.compile("(?i)(with) "), startsWithWith).build();
 
-        ImmutableSet<String> artistsInsideParenthesis = ImmutableSet.of();
+        Set<String> artistsInsideParenthesis = new HashSet<>();
         for (Entry<Pattern, Pattern> regex : regexMaps.entrySet()) {
             Pattern keyPattern = regex.getKey();
             Matcher matcher = regex.getValue().matcher(string);
@@ -161,9 +164,9 @@ public class Utils {
                 String insideParenthesisString = string.substring(matcher.start()).replaceAll("[(|\\[|)|\\]]", "")
                                                        .replaceAll(keyPattern.pattern(), "");
 
-                artistsInsideParenthesis = ImmutableSet
-                        .copyOf(Splitter.on(CharMatcher.anyOf("&")).trimResults().omitEmptyStrings()
-                                        .splitToList(insideParenthesisString));
+                artistsInsideParenthesis.addAll(Splitter.on(CharMatcher.anyOf("&,"))
+                                                        .trimResults().omitEmptyStrings()
+                                                        .splitToList(insideParenthesisString.replaceAll("vs", "&")));
                 break;
             }
         }

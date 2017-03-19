@@ -54,6 +54,7 @@ public class TaskDemon {
 	private ObservableMap<Integer, Track> tracks;
 	private Map<Integer, float[]> waveforms;
 	private List<Playlist> playlists;
+	private boolean savingsActivated = true;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
@@ -69,6 +70,14 @@ public class TaskDemon {
 
 	public static TaskDemon getInstance() {
 		return InstanceHolder.INSTANCE;
+	}
+
+	public void deactivateLibrarySaving() {
+		savingsActivated = false;
+	}
+
+	public void activateLibrarySaving() {
+		savingsActivated = true;
 	}
 
 	public void shutDownTasks() {
@@ -103,7 +112,6 @@ public class TaskDemon {
 	 * to the application.
 	 *
 	 * @param filesToImport The {@link List} of the files to import.
-	 * @param playAtTheEnd  Specifies whether the application should play music at the end of the importation.
 	 */
 	public void importFiles(List<File> filesToImport, boolean playAtTheEnd) {
 		if (parseFuture != null && ! parseFuture.isDone())
@@ -116,13 +124,15 @@ public class TaskDemon {
 	}
 
     public void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
-        if (saveMusicLibraryTask == null) {
-			saveMusicLibraryTask = new SaveMusicLibraryTask(tracks, waveforms, playlists);
+		if (savingsActivated) {
+			if (saveMusicLibraryTask == null) {
+				saveMusicLibraryTask = new SaveMusicLibraryTask(tracks, waveforms, playlists);
+				saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
+				saveMusicLibraryTask.setDaemon(true);
+				saveMusicLibraryTask.start();
+			}
 			saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
-			saveMusicLibraryTask.setDaemon(true);
-			saveMusicLibraryTask.start();
-        }
-		saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
+		}
     }
 
 	public void analyzeTrackWaveform(Track trackToAnalyze) {

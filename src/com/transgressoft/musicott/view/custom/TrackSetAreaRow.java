@@ -27,6 +27,7 @@ import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.geometry.*;
 import javafx.scene.control.*;
+import javafx.scene.control.TableView;
 import javafx.scene.image.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
@@ -92,6 +93,7 @@ public class TrackSetAreaRow extends HBox {
         tracksTableView.sort();
         updateRelatedArtistsLabel();
         updateAlbumLabelLabel();
+        checkArtistColumn();
         selectedTracksProperty = new SimpleListProperty<>(this, "selected artist tracks");
         selectedTracksProperty.bind(new SimpleObjectProperty<>(tracksTableView.getSelectionModel().getSelectedItems()));
     }
@@ -130,6 +132,7 @@ public class TrackSetAreaRow extends HBox {
         relatedArtistsLabel = new Label();
         relatedArtistsLabel.setId("relatedArtistsLabel");
         relatedArtistsLabel.setWrapText(true);
+        relatedArtistsLabel.setPrefWidth(USE_COMPUTED_SIZE);
         genresLabel = new Label(getGenresString());
         genresLabel.setId("genresLabel");
         genresLabel.setWrapText(true);
@@ -145,7 +148,7 @@ public class TrackSetAreaRow extends HBox {
     }
 
     private Image getTrackSetImage() {
-        Image trackSetImage = new Image(DEFAULT_COVER_IMAGE);
+        Image trackSetImage = new Image(DEFAULT_COVER_PATH);
         for (Entry<Integer, Track> trackEntry : containedTracks) {
             Optional<byte[]> trackCover = trackEntry.getValue().getCoverImage();
             if (trackCover.isPresent()) {
@@ -157,7 +160,8 @@ public class TrackSetAreaRow extends HBox {
     }
 
     private String getGenresString() {
-        Set<String> genres = containedTracks.stream().map(entry -> entry.getValue().getGenre())
+        Set<String> genres = containedTracks.stream().filter(entry -> ! entry.getValue().getGenre().isEmpty())
+                                            .map(entry -> entry.getValue().getGenre())
                                             .collect(Collectors.toSet());
         return Joiner.on(", ").join(genres);
     }
@@ -203,7 +207,7 @@ public class TrackSetAreaRow extends HBox {
     private void buildTracksTableView() {
         initColumns();
         tracksTableView = new TableView<>();
-        tracksTableView.getColumns().addAll(trackNumberCol, nameCol, artistCol, totalTimeCol);
+        tracksTableView.getColumns().addAll(trackNumberCol, nameCol, totalTimeCol);
         tracksTableView.getSortOrder().add(trackNumberCol);
         tracksTableView.setPrefWidth(USE_COMPUTED_SIZE);
         tracksTableView.setPrefHeight(USE_COMPUTED_SIZE);
@@ -215,8 +219,7 @@ public class TrackSetAreaRow extends HBox {
         tracksTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tracksTableView.setFixedCellSize(25);
         tracksTableView.prefHeightProperty().bind(tracksTableView.fixedCellSizeProperty().multiply(
-                Bindings.createDoubleBinding(() -> tracksTableView.itemsProperty().getValue().size() * 1.07,
-                                             tracksTableView.itemsProperty())));
+                Bindings.createDoubleBinding(() -> containedTracksProperty.size() * 1.07, containedTracksProperty)));
         tracksTableView.minHeightProperty().bind(tracksTableView.prefHeightProperty());
         tracksTableView.maxHeightProperty().bind(tracksTableView.prefHeightProperty());
 
@@ -239,15 +242,15 @@ public class TrackSetAreaRow extends HBox {
         trackNumberCol.setCellFactory(column -> new NumericTableCell());
 
         nameCol = new TableColumn<>("Name");
-        nameCol.setMinWidth(280);
+        nameCol.setMinWidth(290);
         nameCol.setPrefWidth(USE_COMPUTED_SIZE);
         nameCol.setStyle("-fx-alignment: CENTER-LEFT");
         nameCol.setCellValueFactory(cellData -> cellData.getValue().getValue().nameProperty());
 
         artistCol = new TableColumn<>("Artist");
-        artistCol.setMinWidth(130);
-        artistCol.setMaxWidth(130);
-        artistCol.setPrefWidth(130);
+        artistCol.setMinWidth(140);
+        artistCol.setMaxWidth(140);
+        artistCol.setPrefWidth(140);
         artistCol.setStyle("-fx-alignment: CENTER-LEFT");
         artistCol.setCellValueFactory(cellData -> cellData.getValue().getValue().artistProperty());
 
@@ -283,16 +286,31 @@ public class TrackSetAreaRow extends HBox {
     private IntegerProperty listenTrackChangesAndSort(Track trackInTheRow) {
         trackInTheRow.trackNumberProperty().addListener(
                 (obs, oldTrackNum, newTrackNum) -> containedTracks.sort(trackEntryComparator));
+        trackInTheRow.discNumberProperty().addListener(
+                (obs, oldTrackNum, newTrackNum) -> containedTracks.sort(trackEntryComparator));
         trackInTheRow.genreProperty().addListener((obs, oldGenre, newGenre) -> genresLabel.setText(getGenresString()));
         trackInTheRow.yearProperty().addListener((obs, oldYear, newYear) -> yearLabel.setText(getYearsString()));
         trackInTheRow.labelProperty().addListener((obs, oldLabel, newLabel) -> updateAlbumLabelLabel());
         trackInTheRow.artistsInvolvedProperty().addListener((obs, oldArtists, newArtists) ->
-            Platform.runLater(this::updateRelatedArtistsLabel));
+                Platform.runLater(() -> {
+                    updateRelatedArtistsLabel();
+                    checkArtistColumn();
+                }));
         return trackInTheRow.trackNumberProperty();
     }
 
-    public boolean removeTrack(Entry<Integer, Track> trackEntry) {
-        return containedTracksProperty.remove(trackEntry);
+    /**
+     * Places the artist column only if there are more than 1 different artist on the columns,
+     * or removes it from the table if there aren't or the only common artist is the same of this
+     * showing {@code TrackSetAreaRow}
+     */
+    private void checkArtistColumn() {
+        Set<String> commonColumnArtists = containedTracks.stream().map(entry -> entry.getValue().getArtist())
+                                                         .collect(Collectors.toSet());
+        if (commonColumnArtists.isEmpty() || (commonColumnArtists.size() == 1 && commonColumnArtists.contains(artist)))
+            tracksTableView.getColumns().remove(artistCol);
+        else if (! tracksTableView.getColumns().contains(artistCol))
+            tracksTableView.getColumns().add(2, artistCol);
     }
 
     public void selectAllTracks() {

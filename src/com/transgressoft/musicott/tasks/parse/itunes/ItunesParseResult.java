@@ -19,7 +19,6 @@
 
 package com.transgressoft.musicott.tasks.parse.itunes;
 
-import com.google.common.collect.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 
@@ -38,9 +37,9 @@ public class ItunesParseResult extends BaseParseResult<Map<Integer, Track>> {
     private Map<Integer, Integer> itunesIdToMusicottIdMap;
     private List<String> notFoundFiles;
 
-    public ItunesParseResult(Map<Integer, Track> parsedTracks, Multimap<Integer, String> tracksToArtistsMultimap,
-            Map<Integer, Integer> itunesIdToMusicottIdMap, Collection<String> parseErrors, List<String> notFoundFiles) {
-        super(parsedTracks, tracksToArtistsMultimap, parseErrors);
+    public ItunesParseResult(Map<Integer, Track> parsedTracks, Map<Integer, Integer> itunesIdToMusicottIdMap,
+            Collection<String> parseErrors, List<String> notFoundFiles) {
+        super(parsedTracks, parseErrors);
         this.itunesIdToMusicottIdMap = itunesIdToMusicottIdMap;
         this.notFoundFiles = notFoundFiles;
     }

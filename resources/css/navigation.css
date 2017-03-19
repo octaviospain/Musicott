@@ -1,12 +1,20 @@
 @import url("base.css");
 @import url("scrollbar.css");
 
-#showMenuListView .list-cell {
+#navigationModeListView .list-cell:tracks {
 	-fx-graphic: url('../icons/menusongs-white-icon.png');
 }
 
-#showMenuListView .list-cell:selected {
+#navigationModeListView .list-cell:tracks-selected {
 	-fx-graphic: url('../icons/menusongs-black-icon.png');
+}
+
+#navigationModeListView .list-cell:artists {
+	-fx-graphic: url('../icons/menuartist-white-icon.png');
+}
+
+#navigationModeListView .list-cell:artists-selected {
+	-fx-graphic: url('../icons/menuartist-black-icon.png');
 }
 
 #navigationPaneVBox {
@@ -20,8 +28,8 @@
 	-fx-background-color: transparent;
 }
 
-#statusLabel {
-	-fx-text-fill: black;
+#taskProgressBar .track {
+	-fx-background-color: rgb(34, 34, 34);
 }
 
 .tree-cell, .list-cell, #navigationPaneVBox {
@@ -51,7 +59,7 @@
 	-fx-text-fill: black;
 }
 
-.tree-cell:empty, #showMenuListView .list-cell:empty {
+.tree-cell:empty, #navigationModeListView .list-cell:empty {
 	-fx-graphic: none;
 }
 

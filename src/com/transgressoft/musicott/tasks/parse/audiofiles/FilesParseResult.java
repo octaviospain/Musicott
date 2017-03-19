@@ -19,19 +19,21 @@
 
 package com.transgressoft.musicott.tasks.parse.audiofiles;
 
-import com.google.common.collect.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 
 import java.util.*;
 
 /**
+ * Extends from {@link BaseParseResult} to be used during a {@link AudioFilesParseAction}
+ *
  * @author Octavio Calleya
+ * @version 0.10-b
+ * @since 0.10-b
  */
 public class FilesParseResult extends BaseParseResult<Map<Integer, Track>> {
 
-    public FilesParseResult(Map<Integer, Track> parsedItems, Multimap<Integer, String> tracksToArtistsMultimap,
-            Collection<String> parseErrors) {
-        super(parsedItems, tracksToArtistsMultimap, parseErrors);
+    public FilesParseResult(Map<Integer, Track> parsedItems, Collection<String> parseErrors) {
+        super(parsedItems, parseErrors);
     }
 }

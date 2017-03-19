@@ -35,12 +35,13 @@ public class NavigationMenuListView extends ListView<NavigationMode> {
 
     public NavigationMenuListView() {
         super();
-        setId("showMenuListView");
+        setId("navigationModeListView");
         setPrefHeight(USE_COMPUTED_SIZE);
         setPrefWidth(USE_COMPUTED_SIZE);
         getSelectionModel().selectedItemProperty().addListener((obs, oldMenu, newMode) -> {
             if (newMode != null)
                 stageDemon.getNavigationController().setNavigationMode(newMode);
         });
+        setCellFactory(listView -> new NavigationListCell());
     }
 }

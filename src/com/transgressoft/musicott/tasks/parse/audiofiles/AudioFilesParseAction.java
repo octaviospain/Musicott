@@ -56,10 +56,12 @@ public class AudioFilesParseAction extends FilesParseAction {
     protected FilesParseResult compute() {
         if (itemsToParse.size() > MAX_FILES_TO_PARSE_PER_ACTION)
             forkIntoSubActions();
-        else
+        else {
             itemsToParse.forEach(this::parseItem);
+            musicLibrary.addTracks(parsedTracks);
+        }
 
-        return new FilesParseResult(parsedTracks, tracksToArtistsMultimap, parseErrors);
+        return new FilesParseResult(parsedTracks, parseErrors);
     }
 
     @Override
@@ -71,10 +73,8 @@ public class AudioFilesParseAction extends FilesParseAction {
     protected void parseItem(File item) {
         Optional<Track> currentTrack = parseFileToTrack(item);
         currentTrack.ifPresent(track -> {
-            if (! musicLibrary.containsTrack(track)) {
+            if (! musicLibrary.containsTrack(track))
                 parsedTracks.put(track.getTrackId(), track);
-                tracksToArtistsMultimap.putAll(track.getTrackId(), track.getArtistsInvolved());
-            }
         });
         parentTask.updateProgressTask();
     }

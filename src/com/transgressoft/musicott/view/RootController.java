@@ -28,6 +28,7 @@ import com.transgressoft.musicott.view.custom.*;
 import javafx.application.Platform;
 import javafx.beans.binding.*;
 import javafx.beans.property.*;
+import javafx.beans.value.*;
 import javafx.collections.*;
 import javafx.collections.transformation.*;
 import javafx.event.*;
@@ -90,7 +91,7 @@ public class RootController implements MusicottController {
     @FXML
     private Label totalTracksLabel;
     @FXML
-    private Button randomButton;
+    private Button artistRandomButton;
     private VBox navigationPaneVBox;
     private TextField playlistTitleTextField;
 
@@ -103,7 +104,6 @@ public class RootController implements MusicottController {
     private ObservableMap<String, TrackSetAreaRow> albumTrackSets;
 
     private ObjectProperty<NavigationMode> navigationModeProperty;
-    private ReadOnlyObjectProperty<String> selectedArtistProperty;
     private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
     private BooleanProperty showingNavigationPaneProperty;
     private BooleanProperty showingTableInfoPaneProperty;
@@ -127,14 +127,16 @@ public class RootController implements MusicottController {
         navigationModeProperty.addListener((obs, oldList, newList) -> chooseSelectedTracks());
         showingNavigationPaneProperty = new SimpleBooleanProperty(this, "showing navigation pane", true);
         showingTableInfoPaneProperty = new SimpleBooleanProperty(this, "showing table info pane", true);
-        selectedArtistProperty = artistsListView.getSelectionModel().selectedItemProperty();
-        selectedArtistProperty.addListener(((observable, oldArtist, newArtist) -> musicLibrary.showArtist(newArtist)));
         artistsListView.setItems(musicLibrary.artistsProperty());
+        artistsListView.getSelectionModel().selectedItemProperty().addListener(selectedArtistListener());
 
+        artistRandomButton.visibleProperty().bind(
+                Bindings.createBooleanBinding(() -> nameLabel.textProperty().isEmpty().not().get(),
+                                              nameLabel.textProperty()));
+        artistRandomButton.setOnAction(e -> playRandomTracksFromArtist());
         totalAlbumsLabel.setText(String.valueOf(0) + " albums");
         totalTracksLabel.setText(String.valueOf(0) + " tracks");
-        nameLabel.textProperty().bind(Bindings.createStringBinding(this::getNameString, selectedArtistProperty));
-        defaultCoverImage = new Image(DEFAULT_COVER_IMAGE);
+        defaultCoverImage = new Image(DEFAULT_COVER_PATH);
         hoverCoverProperty = new SimpleObjectProperty<>(this, "hover cover", defaultCoverImage);
         playlistCover.imageProperty().bind(hoverCoverProperty);
         initializeInfoPaneFields();
@@ -209,13 +211,6 @@ public class RootController implements MusicottController {
         trackTable.setItems(sortedTracks);
     }
 
-    private String getNameString() {
-        String selectedArtist = selectedArtistProperty.getValue();
-        if (selectedArtist == null)
-            selectedArtist = "";
-        return selectedArtist;
-    }
-
     private String getAlbumString() {
         int numberOfTrackSets = albumTrackSets.size();
         String appendix = numberOfTrackSets == 1 ? " album" : " albums";
@@ -256,6 +251,25 @@ public class RootController implements MusicottController {
         };
     }
 
+    private ChangeListener<String> selectedArtistListener() {
+        return (observable, oldArtist, newArtist) -> {
+            if (newArtist != null) {
+                if (! nameLabel.getText().equals(newArtist)) {
+                    nameLabel.setText(newArtist);
+                    musicLibrary.showArtist(newArtist);
+                }
+            }
+            else {
+                if (artistsListView.getItems().isEmpty()) {
+                    nameLabel.setText("");
+                    albumTrackSets.clear();
+                }
+                else
+                    checkArtistSelection();
+            }
+        };
+    }
+
     private void initializeHoverCoverImageView() {
         hoverCoverImageView = new ImageView();
         hoverCoverImageView.setFitWidth(HOVER_COVER_SIZE);
@@ -274,6 +288,10 @@ public class RootController implements MusicottController {
                 Bindings.createDoubleBinding(
                         () -> (tableStackPane.heightProperty().doubleValue() / 2) - (HOVER_COVER_SIZE / 2) - 27,
                         tableStackPane.heightProperty()));
+    }
+
+    private void playRandomTracksFromArtist() {
+        musicLibrary.makeRandomArtistPlaylist(nameLabel.getText());
     }
 
     /**
@@ -406,9 +424,11 @@ public class RootController implements MusicottController {
      */
     public void removeFromTrackSets(Entry<Integer, Track> trackEntry) {
         String trackAlbum = trackEntry.getValue().getAlbum();
+        trackAlbum = trackAlbum.isEmpty() ? "Unknown album" : trackAlbum;
         if (albumTrackSets.containsKey(trackAlbum)) {
             TrackSetAreaRow albumAreaRow = albumTrackSets.get(trackAlbum);
-            if (albumAreaRow.removeTrack(trackEntry) && albumAreaRow.containedTracksProperty().isEmpty())
+            boolean removed = albumAreaRow.containedTracksProperty().remove(trackEntry);
+            if (removed && albumAreaRow.containedTracksProperty().isEmpty())
                 albumTrackSets.remove(trackAlbum);
             if (albumTrackSets.isEmpty() && ! artistsListView.getItems().isEmpty())
                 checkArtistSelection();
@@ -426,8 +446,6 @@ public class RootController implements MusicottController {
         Set<String> removedAlbums = Sets.difference(oldAlbums, newAlbums).immutableCopy();
         Set<String> holdedAlbums = Sets.intersection(oldAlbums, newAlbums).immutableCopy();
 
-        addedAlbums.forEach(album -> Platform.runLater(() -> addTrackSet(album, updatedAlbumTrackSets.get(album))));
-        removedAlbums.forEach(album -> Platform.runLater(() -> albumTrackSets.remove(album)));
         holdedAlbums.forEach(album -> {
             TrackSetAreaRow albumTrackSet = albumTrackSets.get(album);
             Set<Entry<Integer, Track>> oldTracks = ImmutableSet.copyOf(albumTrackSet.containedTracksProperty());
@@ -440,6 +458,8 @@ public class RootController implements MusicottController {
                 albumTrackSets.get(album).containedTracksProperty().removeAll(removedTracks);
             });
         });
+        addedAlbums.forEach(album -> Platform.runLater(() -> addTrackSet(album, updatedAlbumTrackSets.get(album))));
+        removedAlbums.forEach(album -> Platform.runLater(() -> albumTrackSets.remove(album)));
 
         if (albumTrackSets.isEmpty() && ! artistsListView.getItems().isEmpty())
             checkArtistSelection();

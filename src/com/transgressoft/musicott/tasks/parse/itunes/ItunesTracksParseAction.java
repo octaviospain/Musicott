@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.tasks.parse.itunes;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
@@ -71,10 +72,12 @@ public class ItunesTracksParseAction extends ItunesParseAction {
     protected ItunesParseResult compute() {
         if (itemsToParse.size() > MAX_ITEMS_TO_PARSE_PER_ACTION)
             forkIntoSubActions();
-        else
+        else {
             itemsToParse.forEach(this::parseItem);
+            musicLibrary.addTracks(parsedTracks);
+        }
 
-        return new ItunesParseResult(parsedTracks, tracksToArtistsMultimap, itunesIdToMusicottIdMap, parseErrors, notFoundFiles);
+        return new ItunesParseResult(parsedTracks, itunesIdToMusicottIdMap, parseErrors, notFoundFiles);
     }
 
     @Override
@@ -91,35 +94,18 @@ public class ItunesTracksParseAction extends ItunesParseAction {
     @Override
     protected void parseItem(ItunesTrack itunesTrack) {
         Optional<Track> currentTrack = Optional.empty();
-        if (isValidItunesTrack(itunesTrack)) {
-            if (metadataPolicy == ItunesParseTask.METADATA_POLICY)
-                currentTrack = createTrackFromFileMetadata(itunesTrack);
-            else if (metadataPolicy == ItunesParseTask.ITUNES_DATA_POLICY)
-                currentTrack = createTrackFromItunesData(itunesTrack);
+        if (metadataPolicy == ItunesParseTask.METADATA_POLICY)
+            currentTrack = createTrackFromFileMetadata(itunesTrack);
+        else if (metadataPolicy == ItunesParseTask.ITUNES_DATA_POLICY)
+            currentTrack = createTrackFromItunesData(itunesTrack);
 
-            currentTrack.ifPresent(track -> {
-                if (! musicLibrary.containsTrack(track)) {
-                    itunesIdToMusicottIdMap.put(itunesTrack.getTrackID(), track.getTrackId());
-                    parsedTracks.put(track.getTrackId(), track);
-                    tracksToArtistsMultimap.putAll(track.getTrackId(), track.getArtistsInvolved());
-                }
-            });
-        }
+        currentTrack.ifPresent(track -> {
+            if (! musicLibrary.containsTrack(track)) {
+                itunesIdToMusicottIdMap.put(itunesTrack.getTrackID(), track.getTrackId());
+                parsedTracks.put(track.getTrackId(), track);
+            }
+        });
         parentTask.updateProgressTask();
-    }
-
-    private boolean isValidItunesTrack(ItunesTrack itunesTrack) {
-        boolean valid = true;
-        if ("URL".equals(itunesTrack.getTrackType()) || "Remote".equals(itunesTrack.getTrackType()))
-            valid = false;
-        else {
-            File itunesFile = Paths.get(URI.create(itunesTrack.getLocation())).toFile();
-            int index = itunesFile.toString().lastIndexOf('.');
-            String fileExtension = itunesFile.toString().substring(index + 1);
-            if (! ("mp3".equals(fileExtension) || "m4a".equals(fileExtension) || "wav".equals(fileExtension)))
-                valid = false;
-        }
-        return valid;
     }
 
     /**
@@ -172,7 +158,8 @@ public class ItunesTracksParseAction extends ItunesParseAction {
     private Track parseItunesFieldsToTrackFields(ItunesTrack itunesTrack, Path itunesPath) {
         String fileFolder = itunesPath.getParent().toString();
         String fileName = itunesPath.getName(itunesPath.getNameCount() - 1).toString();
-        Track newTrack = new Track(fileFolder, fileName);
+        int newId = MainPreferences.getInstance().getTrackSequence();
+        Track newTrack = new Track(newId, fileFolder, fileName);
         newTrack.setIsInDisk(true);
         newTrack.setSize(itunesTrack.getSize());
         newTrack.setTotalTime(Duration.millis(itunesTrack.getTotalTime()));

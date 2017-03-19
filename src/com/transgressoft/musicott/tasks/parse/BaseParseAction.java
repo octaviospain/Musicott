@@ -44,7 +44,6 @@ public abstract class BaseParseAction<I, X, T extends BaseParseResult<X>> extend
     protected final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     protected final List<I> itemsToParse;
-    protected final Multimap<Integer, String> tracksToArtistsMultimap;
     protected final Collection<String> parseErrors;
     protected final BaseParseTask parentTask;
     protected final MusicLibrary musicLibrary = MusicLibrary.getInstance();
@@ -52,7 +51,6 @@ public abstract class BaseParseAction<I, X, T extends BaseParseResult<X>> extend
     public BaseParseAction(List<I> itemsToParse, BaseParseTask parentTask) {
         this.itemsToParse = itemsToParse;
         this.parentTask = parentTask;
-        tracksToArtistsMultimap = TreeMultimap.create();
         parseErrors = new ArrayList<>();
     }
 

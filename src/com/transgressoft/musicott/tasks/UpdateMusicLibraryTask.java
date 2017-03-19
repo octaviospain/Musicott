@@ -67,8 +67,8 @@ public class UpdateMusicLibraryTask extends Thread {
 
 	@Override
 	public void run() {
-		updateMusicLibraryAlbums();
 		updateMusicLibraryTracks();
+		updateMusicLibraryAlbums();
 		stageDemon.getRootController().updateShowingTrackSets();
         taskDemon.saveLibrary(true, false, false);
 		if (! updateErrors.isEmpty())

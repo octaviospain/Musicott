@@ -30,8 +30,8 @@ import java.util.*;
 import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
 
 /**
- * Custom {@link TreeCell} that isolates the style of his {@link Playlist}
- * managed by pseudo classes
+ * Custom {@link TreeCell} that define the style of his {@link Playlist}
+ * managed by pseudo classes.
  *
  * @author Octavio Calleya
  * @version 0.9.2-b
@@ -60,7 +60,6 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
         };
 
         itemProperty().addListener((obs, oldPlaylist, newPlaylist) -> {
-
             if (oldPlaylist != null) {
                 textProperty().unbind();
                 setText("");

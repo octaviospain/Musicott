@@ -51,7 +51,7 @@ public class PlayerController implements MusicottController {
 
     private static final double VOLUME_AMOUNT = 0.05;
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
+    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_PATH));
 
     @FXML
     private GridPane playerGridPane;

@@ -20,8 +20,8 @@
 .table-view .scroll-bar:vertical .decrement-button,
 .tree-view  .scroll-bar:vertical .increment-button,
 .tree-view  .scroll-bar:vertical .decrement-button,
-.list-view  .scroll-bar:vertical .increment-button,
-.list-view  .scroll-bar:vertical .decrement-button,
+.list-view  .scroll-bar .increment-button,
+.list-view  .scroll-bar .decrement-button,
 .scroll-pane .scroll-bar:vertical .increment-button,
 .scroll-pane .scroll-bar:vertical .decrement-button,
 .scroll-pane .scroll-bar:horizontal .increment-button,
@@ -36,7 +36,7 @@
 .tree-view  .scroll-bar .increment-arrow,
 .tree-view  .scroll-bar .decrement-arrow,
 .list-view  .scroll-bar .increment-arrow,
-.list-view  .scroll-bar .decrement-button,
+.list-view  .scroll-bar .decrement-arrow,
 .scroll-pane .scroll-bar:vertical .increment-arrow,
 .scroll-pane .scroll-bar:vertical .decrement-arrow,
 .scroll-pane .scroll-bar:horizontal .increment-arrow,
@@ -64,6 +64,7 @@
 .table-view .scroll-bar:vertical   .thumb,
 .tree-view  .scroll-bar:horizontal .thumb,
 .tree-view  .scroll-bar:vertical   .thumb,
+.list-view  .scroll-bar:horizontal .thumb,
 .list-view  .scroll-bar:vertical   .thumb,
 .scroll-pane .scroll-bar:vertical .thumb,
 .scroll-pane .scroll-bar:vertical .thumb {
@@ -72,14 +73,15 @@
     -fx-background-radius: 2em;
 }
 
-/* The space that is not the tumb and is behind it, track  of the scroll bar  */
+/* The space that is not the thumb and is behind it, track  of the scroll bar  */
 .table-view .scroll-bar:horizontal .track,
 .table-view .scroll-bar:vertical   .track,
 .tree-view  .scroll-bar:horizontal .track,
 .tree-view  .scroll-bar:vertical   .track,
 .list-view  .scroll-bar:vertical   .track,
-.scroll-pane .scroll-bar:vertical .track,
-.scroll-pane .scroll-bar:vertical .track {
+.list-view  .scroll-bar:horizontal .track,
+.scroll-pane.scroll-bar:vertical   .track,
+.scroll-pane.scroll-bar:vertical   .track {
     -fx-background-color: rgb(34, 34, 34);
     -fx-opacity: 0;
     -fx-border-color:transparent;

@@ -24,6 +24,7 @@ import com.transgressoft.musicott.util.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.util.Duration;
+import org.apache.commons.lang3.text.*;
 
 import java.io.*;
 import java.time.*;
@@ -96,8 +97,8 @@ public class Track {
     private MetadataUpdater updater;
     private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
-    public Track(String fileFolder, String fileName) {
-        trackId = MainPreferences.getInstance().getTrackSequence();
+    public Track(int id, String fileFolder, String fileName) {
+        trackId = id;
         updater = new MetadataUpdater(this);
         this.fileFolder = fileFolder;
         setFileName(fileName);
@@ -147,7 +148,13 @@ public class Track {
     }
 
     public void setName(String name) {
-        this.name = name.trim().replaceAll("\\s+", " ");
+        this.name = name.trim().replaceAll("\\s+", " ")
+                        .replaceAll(" (?i)(remix)"," Remix")
+                        .replaceAll("(?i)(remix) (?i)(by) ","Remix by ")
+                        .replaceAll("(?i)(ft)(\\.|\\s) ","ft ")
+                        .replaceAll("(?i)(feat)(\\.|\\s) ","feat ")
+                        .replaceAll("(?i)(featuring) ", "featuring ")
+                        .replaceAll("(?i)(with) ", "with ");
         nameProperty.setValue(this.name);
     }
 
@@ -156,7 +163,10 @@ public class Track {
     }
 
     public void setArtist(String artist) {
-        this.artist = artist.trim().replaceAll("\\s+", " ");
+        this.artist = WordUtils.capitalize(artist).trim()
+                               .replaceAll("\\s+", " ")
+                               .replaceAll(" (?i)(vs)(\\.|\\s)", " vs ")
+                               .replaceAll(" (?i)(versus) ", " versus ");
         artistProperty.setValue(this.artist);
     }
 
@@ -192,7 +202,7 @@ public class Track {
     }
 
     public void setAlbumArtist(String albumArtist) {
-        this.albumArtist = albumArtist.trim().replaceAll("\\s+", " ");
+        this.albumArtist =  WordUtils.capitalize(albumArtist.trim().replaceAll("\\s+", " "));
         albumArtistProperty.setValue(this.albumArtist);
     }
 

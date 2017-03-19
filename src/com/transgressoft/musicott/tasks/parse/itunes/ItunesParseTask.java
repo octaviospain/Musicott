@@ -33,6 +33,8 @@ import javafx.stage.*;
 import org.slf4j.*;
 
 import java.io.*;
+import java.net.*;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.*;
@@ -61,11 +63,12 @@ public class ItunesParseTask extends BaseParseTask {
 
     private List<ItunesTrack> itunesTracks;
     private List<ItunesPlaylist> itunesPlaylists;
-    private List<Playlist> playlists;
     private List<String> notFoundFiles;
 
     private volatile int currentItunesItemsParsed;
     private int totalItunesItemsToParse;
+    private int parsedPlaylistsSize = 0;
+    private int parsedTracksSize = 0;
 
     public ItunesParseTask(String path) {
         super();
@@ -100,16 +103,25 @@ public class ItunesParseTask extends BaseParseTask {
 
         startMillis = System.currentTimeMillis();
         ForkJoinPool forkJoinPool = new ForkJoinPool(6);
-        ItunesTracksParseAction itunesTracksParseAction = new ItunesTracksParseAction(itunesTracks, metadataPolicy,
-                                                                                      holdPlayCount, this);
+        ItunesTracksParseAction itunesTracksParseAction =
+                new ItunesTracksParseAction(itunesTracks, metadataPolicy, holdPlayCount, this);
         ItunesParseResult itunesParseResult = forkJoinPool.invoke(itunesTracksParseAction);
 
-        parsedTracks = itunesParseResult.getParsedResults();
+        parsedTracksSize = itunesParseResult.getParsedResults().size();
         parseErrors = itunesParseResult.getParseErrors();
         notFoundFiles = itunesParseResult.getNotFoundFiles();
 
-        if (importPlaylists)
-            parseItunesPlaylists(ImmutableMap.copyOf(itunesParseResult.getItunesIdToMusicottIdMap()));
+        if (importPlaylists) {
+            currentItunesItemsParsed = 0;
+            totalItunesItemsToParse = itunesPlaylists.size();
+            Map<Integer, Integer> idsMap = ImmutableMap.copyOf(itunesParseResult.getItunesIdToMusicottIdMap());
+            ItunesPlaylistParseAction itunesPlaylistParseAction =
+                    new ItunesPlaylistParseAction(itunesPlaylists, idsMap, this);
+            forkJoinPool.invoke(itunesPlaylistParseAction);
+            parsedPlaylistsSize = itunesPlaylistParseAction.get().getParsedResults().size();
+        }
+
+        forkJoinPool.shutdown();
         return null;
     }
 
@@ -135,18 +147,17 @@ public class ItunesParseTask extends BaseParseTask {
 
     /**
      * Parses the iTunes Library file and asks the user for a confirmation to continue
-     * showing the number of parsedTracks and playlists to import.
+     * showing the number of itunes items and playlists to import.
      */
     @SuppressWarnings ("unchecked")
     private void parseItunesFile() {
-        Platform.runLater(() -> {
-            navigationController.setStatusMessage("Scanning itunes library...");
-            navigationController.setStatusProgress(- 1);
-        });
+        Platform.runLater(() -> updateTaskProgressOnView(- 1 ,"Scanning itunes library..."));
         ItunesParserLogger itunesLogger = new ItunesParserLogger();
         ItunesLibrary itunesLibrary = ItunesLibraryParser.parseLibrary(itunesLibraryXmlPath, itunesLogger);
         Map<Integer, ItunesTrack> itunesTrackMap = ImmutableMap.copyOf(itunesLibrary.getTracks());
-        itunesTracks = ImmutableList.copyOf(itunesTrackMap.values());
+        itunesTracks = (List<ItunesTrack>) itunesTrackMap.values();
+        itunesTracks = itunesTracks.stream().filter(this::isValidItunesTrack).collect(Collectors.toList());
+        itunesTracks = ImmutableList.copyOf(itunesTracks);
         totalItunesItemsToParse = itunesTracks.size();
 
         String playlistsAlertText[] = new String[]{""};
@@ -158,14 +169,6 @@ public class ItunesParseTask extends BaseParseTask {
             playlistsAlertText[0] += "and " + Integer.toString(totalPlaylists) + " playlists ";
         }
         Platform.runLater(() -> showConfirmationAlert(playlistsAlertText[0]));
-    }
-
-    private void parseItunesPlaylists(Map<Integer, Integer> idsMap) {
-        currentItunesItemsParsed = 0;
-        totalItunesItemsToParse = itunesPlaylists.size();
-        PlaylistsParseAction playlistsParseAction = new PlaylistsParseAction(itunesPlaylists, idsMap, this);
-        ForkJoinPool forkJoinPool = new ForkJoinPool(2);
-        playlists = forkJoinPool.invoke(playlistsParseAction).getParsedResults();
     }
 
     private void showConfirmationAlert(String playlistsAlertText) {
@@ -189,9 +192,28 @@ public class ItunesParseTask extends BaseParseTask {
         }
     }
 
+    private boolean isValidItunesTrack(ItunesTrack itunesTrack) {
+        boolean valid = true;
+        if ("URL".equals(itunesTrack.getTrackType()) || "Remote".equals(itunesTrack.getTrackType()))
+            valid = false;
+        else {
+            File itunesFile = Paths.get(URI.create(itunesTrack.getLocation())).toFile();
+            int index = itunesFile.toString().lastIndexOf('.');
+            String fileExtension = itunesFile.toString().substring(index + 1);
+            if (! ("mp3".equals(fileExtension) || "m4a".equals(fileExtension) || "wav".equals(fileExtension)))
+                valid = false;
+            Track auxTrack = new Track(- 1, itunesFile.getParent(), itunesFile.getName());
+            if (musicLibrary.containsTrack(auxTrack))
+                valid = false;
+        }
+        return valid;
+    }
+
     private boolean isValidItunesPlaylist(ItunesPlaylist itunesPlaylist) {
-        return ! "####!####".equals(itunesPlaylist.getName()) && itunesPlaylist.isAllItems() && ! itunesPlaylist
-                .getPlaylistItems().isEmpty();
+        boolean notStrangeName = ! "####!####".equals(itunesPlaylist.getName());
+        boolean notEmpty = ! itunesPlaylist.getPlaylistItems().isEmpty();
+        boolean notHugeSize = itunesPlaylist.getTrackIDs().size() < totalItunesItemsToParse;
+        return notStrangeName && notEmpty && notHugeSize;
     }
 
     @Override
@@ -199,24 +221,12 @@ public class ItunesParseTask extends BaseParseTask {
         super.succeeded();
         updateMessage("Itunes import succeeded");
         LOG.info("Itunes import task completed");
-
-        stageDemon.showIndeterminateProgress();
-        Thread addTracksAndPlaylistToMusicLibrary = new Thread(this::addResultsToMusicLibrary);
-        addTracksAndPlaylistToMusicLibrary.start();
+        computeAndShowElapsedTime(parsedTracksSize +  parsedPlaylistsSize);
 
         if (! notFoundFiles.isEmpty())
             errorDemon.showExpandableErrorsDialog("Some files were not found", "", notFoundFiles);
         if (! parseErrors.isEmpty())
             errorDemon.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
-    }
-
-    @Override
-    protected void addResultsToMusicLibrary() {
-        Platform.runLater(() -> updateTaskProgressOnView(- 1, ""));
-        playlists.forEach(playlist -> Platform.runLater(() -> navigationController.addNewPlaylist(playlist, false)));
-        musicLibrary.addTracks(parsedTracks);
-        Platform.runLater(stageDemon::closeIndeterminateProgress);
-        computeAndShowElapsedTime();
     }
 
     @Override

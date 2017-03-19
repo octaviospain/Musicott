@@ -34,11 +34,11 @@ import java.util.*;
  * @version 0.10-b
  * @since 0.10-b
  */
-public abstract class ItunesPlaylistsParseAction extends BaseParseAction<ItunesPlaylist, List<Playlist>, BaseParseResult<List<Playlist>>> {
+public abstract class PlaylistParseAction extends BaseParseAction<ItunesPlaylist, List<Playlist>, BaseParseResult<List<Playlist>>> {
 
     protected List<Playlist> parsedPlaylists;
 
-    public ItunesPlaylistsParseAction(List<ItunesPlaylist> itemsToParse, BaseParseTask parentTask) {
+    public PlaylistParseAction(List<ItunesPlaylist> itemsToParse, BaseParseTask parentTask) {
         super(itemsToParse, parentTask);
         parsedPlaylists = new ArrayList<>();
     }

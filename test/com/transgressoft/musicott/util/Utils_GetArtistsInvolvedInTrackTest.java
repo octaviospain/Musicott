@@ -1,3 +1,22 @@
+/*
+ * This file is part of Musicott software.
+ *
+ * Musicott software is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Musicott library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Copyright (C) 2015 - 2017 Octavio Calleya
+ */
+
 package com.transgressoft.musicott.util;
 
 import com.google.common.collect.*;
@@ -10,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Octavio Calleya
  */
-public class Utils_GetArtistsInvolvedInTrack {
+public class Utils_GetArtistsInvolvedInTrackTest {
 
     Track testTrack;
     ImmutableSet<String> expectedArtists;
@@ -28,17 +47,17 @@ public class Utils_GetArtistsInvolvedInTrack {
     @DisplayName ("In artist field")
     class namesInArtistField {
 
-        @Test
-        @DisplayName ("One name")
-        void oneNameInArtist() {
-            initTrackWithArtistAndResult("Adam Beyer", "Adam Beyer");
-            assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
-        }
-
         private void initTrackWithArtistAndResult(String artistString, String... expectedArtist) {
             testTrack = new Track(0, "", "");
             testTrack.setArtist(artistString);
             expectedArtists = ImmutableSet.<String> builder().add(expectedArtist).build();
+        }
+
+        @Test
+        @DisplayName ("One name")
+        void oneNameInArtist() {
+            initTrackWithArtistAndResult("DVS1", "DVS1");
+            assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
         }
 
         @Test
@@ -69,7 +88,7 @@ public class Utils_GetArtistsInvolvedInTrack {
             @Test
             @DisplayName ("Two names")
             void twoNamesCommaSeparated() {
-                initTrackWithArtistAndResult("Adam Beyer, Ida Engberg", "Adam Beyer", "Ida Engberg");
+                initTrackWithArtistAndResult("adam Beyer, ida engberg", "Adam Beyer", "Ida Engberg");
                 assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
             }
 
@@ -138,7 +157,7 @@ public class Utils_GetArtistsInvolvedInTrack {
             @Test
             @DisplayName ("Three names with leading and trailing spaces")
             void threeNamesAndpersandWithSpacesSeparated() {
-                initTrackWithArtistAndResult("Adam   Beyer  & Ida  Engberg &  UMEK ", "Adam Beyer", "Ida Engberg",
+                initTrackWithArtistAndResult("adam   beyer  & ida  engberg &  uMEK ", "Adam Beyer", "Ida Engberg",
                                              "UMEK");
                 assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
             }
@@ -165,7 +184,7 @@ public class Utils_GetArtistsInvolvedInTrack {
             @Test
             @DisplayName ("Three names")
             void threeNamesVsSeparated() {
-                initTrackWithArtistAndResult("Adam Beyer vs Ida Engberg vs UMEK", "Adam Beyer", "Ida Engberg", "UMEK");
+                initTrackWithArtistAndResult("Adam Beyer vs Ida Engberg VS UMEK", "Adam Beyer", "Ida Engberg", "UMEK");
                 assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
             }
 
@@ -191,8 +210,8 @@ public class Utils_GetArtistsInvolvedInTrack {
             @Test
             @DisplayName ("Three names")
             void threeNamesVersusSeparated() {
-                initTrackWithArtistAndResult("Adam Beyer versus Ida Engberg versus UMEK", "Adam Beyer", "Ida Engberg",
-                                             "UMEK");
+                initTrackWithArtistAndResult("adam Beyer versus Ida Engberg Versus umek", "Adam Beyer",
+                                             "Ida Engberg", "Umek");
                 assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
             }
 
@@ -218,15 +237,53 @@ public class Utils_GetArtistsInvolvedInTrack {
             @Test
             @DisplayName ("Three names")
             void threeNamesVsDotSeparated() {
-                initTrackWithArtistAndResult("Adam Beyer vs. Ida Engberg vs. UMEK", "Adam Beyer", "Ida Engberg",
-                                             "UMEK");
+                initTrackWithArtistAndResult("Adam Beyer vs. Ida Engberg Vs. UMEK", "Adam Beyer",
+                                             "Ida Engberg", "UMEK");
                 assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
             }
 
             @Test
             @DisplayName ("Two repeated names")
             void twoNamesRepeatedVsDotSeparated() {
-                initTrackWithArtistAndResult("Adam Beyer vs. Adam Beyer", "Adam Beyer");
+                initTrackWithArtistAndResult("Adam Beyer Vs. Adam Beyer", "Adam Beyer");
+                assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
+            }
+        }
+
+        @Nested
+        @DisplayName ("Feat(.) separated")
+        class featSeparated {
+
+            @Test
+            @DisplayName ("Two names feat. separated")
+            void twoNamesFeatDotSeparated() {
+                initTrackWithArtistAndResult("Benny Benassi Feat. Gary Go", "Benny Benassi", "Gary Go");
+                assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
+            }
+
+            @Test
+            @DisplayName ("Two names Feat separated")
+            void twoNamesFeatSeparated() {
+                initTrackWithArtistAndResult("Dragon Ash Feat Rappagariya", "Dragon Ash", "Rappagariya");
+                assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
+            }
+        }
+
+        @Nested
+        @DisplayName ("Ft(.) separated")
+        class ftSeparated {
+
+            @Test
+            @DisplayName ("Two names ft. separated")
+            void twoNamesFeatSeparated() {
+                initTrackWithArtistAndResult("Ludacris Ft. Shawnna", "Ludacris", "Shawnna");
+                assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
+            }
+
+            @Test
+            @DisplayName ("Two names ft separated")
+            void twoNamesFeatDotSeparated() {
+                initTrackWithArtistAndResult("Ludacris Ft Shawnna", "Ludacris", "Shawnna");
                 assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
             }
         }
@@ -245,7 +302,7 @@ public class Utils_GetArtistsInvolvedInTrack {
             @Test
             @DisplayName ("Four names")
             void fourNamesCommaAndpersandSeparated() {
-                initTrackWithArtistAndResult("Adam Beyer & Ida Engberg, UMEK & Ansome", "Adam Beyer", "Ida Engberg",
+                initTrackWithArtistAndResult("Adam beyer & Ida engberg, UMEK & ansome", "Adam Beyer", "Ida Engberg",
                                              "UMEK", "Ansome");
                 assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
             }
@@ -266,16 +323,37 @@ public class Utils_GetArtistsInvolvedInTrack {
                 assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
             }
         }
+
+        @Nested
+        @DisplayName ("Ft(.) and & separated")
+        class FtDotAndpersandSeparated {
+
+            @Test
+            @DisplayName ("Three names with & and Ft. separated")
+            void threeNamesWithFtDotAnpersandSeparated() {
+                initTrackWithArtistAndResult("Laidback Luke Feat. Chuckie & Martin Solveig", "Laidback Luke",
+                                             "Chuckie", "Martin Solveig");
+                assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
+            }
+
+            @Test
+            @DisplayName ("Three names with & and Ft separated")
+            void threeNamesWithFtAnpersandSeparated() {
+                initTrackWithArtistAndResult("Laidback Luke Feat Chuckie & Martin Solveig", "Laidback Luke",
+                                             "Chuckie", "Martin Solveig");
+                assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
+            }
+        }
     }
 
     @Nested
     @DisplayName ("In name field")
-    class namesInsideParenthesisInNameField {
+    class artistsInNameField {
 
         @Test
         @DisplayName ("Just the track name")
         void justTheTrackName() {
-            initTrackWithNameAndResult("Song name");
+            initTrackWithNameAndResult("Nothing Left Part 1");
             assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
         }
 
@@ -302,7 +380,7 @@ public class Utils_GetArtistsInvolvedInTrack {
         @Test
         @DisplayName ("Ends with 'Remix'")
         void endsWithRemix() {
-            initTrackWithNameAndResult("Song name (Adam Beyer Remix)", "Adam Beyer");
+            initTrackWithNameAndResult("Song name (adam beyer Remix)", "Adam Beyer");
             assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
         }
 
@@ -328,7 +406,7 @@ public class Utils_GetArtistsInvolvedInTrack {
         }
 
         @Test
-        @DisplayName ("Has 'Ft'")
+        @DisplayName ("Has 'Ft' outside parenthesis")
         void hasFt() {
             initTrackWithNameAndResult("Song name ft Adam Beyer", "Adam Beyer");
             assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
@@ -342,7 +420,7 @@ public class Utils_GetArtistsInvolvedInTrack {
         }
 
         @Test
-        @DisplayName ("Has 'Feat'")
+        @DisplayName ("Has 'Feat' outside parenthesis")
         void hasFeat() {
             initTrackWithNameAndResult("Song name feat Adam Beyer", "Adam Beyer");
             assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
@@ -356,7 +434,7 @@ public class Utils_GetArtistsInvolvedInTrack {
         }
 
         @Test
-        @DisplayName ("Has 'featuring'")
+        @DisplayName ("Has 'featuring' ouside parenthesis")
         void hasFeaturing() {
             initTrackWithNameAndResult("Song name featuring Adam Beyer", "Adam Beyer");
             assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
@@ -377,9 +455,32 @@ public class Utils_GetArtistsInvolvedInTrack {
         }
 
         @Test
-        @DisplayName ("Two artists inside parenthesis divided by & ending with Remix")
+        @DisplayName ("Has 'ft' and")
+        @Disabled("User should put the extra artist in the artist field, separated by a comma")
+        void twoArtistsDividedByFtWithRemix() {
+            initTrackWithNameAndResult("Pretendingtowalkslow ft Zeroh (M. Constant Remix)", "Zeroh", "M. Constant");
+            assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
+        }
+
+        @Test
+        @DisplayName ("Two names separated by '&' ending with 'Remix'")
         void twoArtistsDividedByAndpersandEndingWithRemix() {
-            initTrackWithNameAndResult("Song name (Adam Beyer & Pete Tong Remix)", "Adam Beyer", "Pete Tong");
+            initTrackWithNameAndResult("Song name (Adam beyer & pete tong Remix)", "Adam Beyer", "Pete Tong");
+            assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
+        }
+
+        @Test
+        @DisplayName ("Two names separated by 'vs' ending with 'Remix'")
+        void vsSeparatedWithRemix() {
+            initTrackWithNameAndResult("Fall (M83 vs Big Black Delta Remix)", "M83", "Big Black Delta");
+            assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
+        }
+
+        @Test
+        @DisplayName ("Four names separated by with comma and & starting with 'feat'")
+        void fourNamesCommaAndpersandFeatSeparated() {
+            initTrackWithNameAndResult("Jet Blue Jet (feat Leftside, GTA, Razz & Biggy)", "Leftside",
+                                       "GTA", "Razz", "Biggy");
             assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
         }
     }

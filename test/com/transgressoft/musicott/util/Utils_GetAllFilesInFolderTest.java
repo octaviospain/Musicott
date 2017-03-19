@@ -20,8 +20,6 @@
 package com.transgressoft.musicott.util;
 
 import org.junit.jupiter.api.*;
-import org.junit.platform.runner.*;
-import org.junit.runner.*;
 
 import java.io.*;
 import java.nio.file.*;
@@ -35,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Octavio Calleya
  */
-@RunWith (JUnitPlatform.class)
 public class Utils_GetAllFilesInFolderTest {
 
     private Path testPath = Paths.get("./test-resources", "/treefoldertest/");
@@ -88,7 +85,7 @@ public class Utils_GetAllFilesInFolderTest {
     @DisplayName ("with non existent folder")
     void nonExistentFolderArgumentTest() {
         File badFolder = new File("/nonexistenfolder");
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                                                           () -> Utils.getAllFilesInFolder(badFolder, allFilter, 0));
         assertEquals("rootFolder argument is not a directory", exception.getMessage());
     }
@@ -97,7 +94,7 @@ public class Utils_GetAllFilesInFolderTest {
     @DisplayName ("with a file as argument")
     void givenFileAsArgumentTest() {
         File badFolder = new File("/test-resources/testfiles/testeable.mp3");
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                                                           () -> Utils.getAllFilesInFolder(badFolder, allFilter, 0));
         assertEquals("rootFolder argument is not a directory", exception.getMessage());
     }
@@ -105,7 +102,7 @@ public class Utils_GetAllFilesInFolderTest {
     @Test
     @DisplayName ("with null folder")
     void givenNullFolderTest() {
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                                                           () -> Utils.getAllFilesInFolder(null, allFilter, 0));
         assertEquals("folder or filter null", exception.getMessage());
     }
@@ -113,7 +110,7 @@ public class Utils_GetAllFilesInFolderTest {
     @Test
     @DisplayName ("with null filter")
     void givenNullFilterTest() {
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                                                           () -> Utils.getAllFilesInFolder(testPath.toFile(), null, 0));
         assertEquals("folder or filter null", exception.getMessage());
     }
@@ -121,7 +118,7 @@ public class Utils_GetAllFilesInFolderTest {
     @Test
     @DisplayName ("with negative max files")
     void givenNegativeMaxFilesTest() {
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class, () -> Utils
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Utils
                 .getAllFilesInFolder(testPath.toFile(), allFilter, - 1));
         assertEquals("maxFilesRequired argument less than zero", exception.getMessage());
     }

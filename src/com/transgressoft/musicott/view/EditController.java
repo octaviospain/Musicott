@@ -49,7 +49,7 @@ import java.util.stream.*;
 public class EditController implements MusicottController {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
+    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_PATH));
 
     @FXML
     private TextField nameTextField;
@@ -318,7 +318,7 @@ public class EditController implements MusicottController {
             Property property = trackPropertiesMap.get(entry.getKey());
             changed[0] = editTrackTrackField(entry, property);
             if (changed[0] && entry.getKey().equals(TrackField.ALBUM))
-                newChangedAlbum = Optional.of(track.getAlbum());
+                newChangedAlbum = Optional.of(track.getAlbum().isEmpty() ? "Unknown album" : track.getAlbum());
         });
 
         if (! isCompilationCheckBox.isIndeterminate()) {
@@ -408,7 +408,9 @@ public class EditController implements MusicottController {
      * @return
      */
     private Optional<String> commonAlbum() {
-        changedAlbums = trackSelection.stream().map(Track::getAlbum).collect(Collectors.toSet());
+        changedAlbums = trackSelection.stream().map(track ->
+                                track.getAlbum().isEmpty() ? "Unknown album" : track.getAlbum())
+                                      .collect(Collectors.toSet());
         String firstAlbum = trackSelection.get(0).getAlbum();
         return changedAlbums.size() <= 1 ? Optional.of(firstAlbum) : Optional.empty();
     }

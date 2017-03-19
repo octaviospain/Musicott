@@ -21,9 +21,11 @@ package com.transgressoft.musicott.model;
 
 import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
+import com.transgressoft.musicott.util.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.util.Duration;
+import org.apache.commons.lang3.text.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.powermock.api.mockito.*;
@@ -50,17 +52,17 @@ public class TrackTest {
 
     private int trackId = 55;
     private String fileFormat = "mp3";
-    private String fileName = "File Name" + "." + "mp3";
-    private String fileFolder = "File Fodler";
+    private String fileName = "File Name" + "." + fileFormat;
+    private String fileFolder = "File Folder";
     private String name = "Name";
-    private String artist = "Artist";
+    private String artist = "artist name";
     private String album = "Album";
     private String comments = "Comments";
     private String genre = "Genre";
     private int trackNumber = 5;
     private int discNumber = 4;
     private int year = 2016;
-    private String albumArtist = "Album Artist";
+    private String albumArtist = "album artist";
     private int bpm = 128;
     private int bitRate = 320;
     private int playCount = 3;
@@ -88,8 +90,8 @@ public class TrackTest {
 
     @Test
     public void constructorTest() {
-        track = new Track("", "");
-        assertEquals(1, track.getTrackId());
+        track = new Track(0, "", "");
+        assertEquals(0, track.getTrackId());
         assertEquals("", track.getFileFolder());
         assertEquals("", track.getFileName());
         assertEquals("", track.getFileFormat());
@@ -119,7 +121,7 @@ public class TrackTest {
 
     @Test
     public void propertiesTest() {
-        track = new Track("", "");
+        track = new Track(0, "", "");
         assertEquals("", track.nameProperty().get());
         assertEquals("", track.artistProperty().get());
         assertEquals("", track.albumProperty().get());
@@ -151,7 +153,7 @@ public class TrackTest {
 
     @Test
     public void settersTest() {
-        track = new Track(fileFolder, fileName);
+        track = new Track(1, fileFolder, fileName);
         track.setTrackId(trackId);
         track.setName(name);
         track.setAlbum(album);
@@ -175,13 +177,13 @@ public class TrackTest {
         track.setIsInDisk(true);
         track.setDateAdded(LocalDateTime.of(2006, 1, 1, 23, 59));
         track.setLastDateModified(LocalDateTime.of(2006, 1, 1, 23, 59));
-        track.setArtistsInvolved(FXCollections.observableSet(artist, albumArtist));
+        track.setArtistsInvolved(FXCollections.observableSet(Utils.getArtistsInvolvedInTrack(track)));
 
         assertEquals(trackId, track.getTrackId());
         assertEquals(name, track.getName());
         assertEquals(album, track.getAlbum());
-        assertEquals(artist, track.getArtist());
-        assertEquals(albumArtist, track.getAlbumArtist());
+        assertEquals(WordUtils.capitalize(artist), track.getArtist());
+        assertEquals(WordUtils.capitalize(albumArtist), track.getAlbumArtist());
         assertEquals(label, track.getLabel());
         assertEquals(genre, track.getGenre());
         assertEquals(comments, track.getComments());
@@ -203,7 +205,8 @@ public class TrackTest {
         assertTrue(track.isInDisk());
         assertEquals(LocalDateTime.of(2006, 1, 1, 23, 59), track.getDateAdded());
         assertEquals(LocalDateTime.of(2006, 1, 1, 23, 59), track.getLastDateModified());
-        assertEquals(Sets.newHashSet(artist, albumArtist), track.getArtistsInvolved());
+        assertEquals(Sets.newHashSet(WordUtils.capitalize(artist),  WordUtils.capitalize(albumArtist)),
+                     track.getArtistsInvolved());
     }
 
     @Test
@@ -213,10 +216,9 @@ public class TrackTest {
 
     @Test
     public void hashCodeTest() {
-        int hash = Objects.hash(fileName, fileFolder, name, artist, album, comments,
-                                genre, trackNumber, year, albumArtist, bpm, label);
+        int hash = Objects.hash(fileName, fileFolder);
 
-        track = new Track(fileFolder, fileName);
+        track = new Track(1, fileFolder, fileName);
         track.setName(name);
         track.setArtist(artist);
         track.setAlbum(album);
@@ -233,7 +235,7 @@ public class TrackTest {
 
     @Test
     public void equalsTest() {
-        track = new Track(fileFolder, fileName);
+        track = new Track(1, fileFolder, fileName);
         track.setName(name);
         track.setArtist(artist);
         track.setAlbum(album);
@@ -245,7 +247,7 @@ public class TrackTest {
         track.setBpm(bpm);
         track.setLabel(label);
 
-        Track track2 = new Track(fileFolder, fileName);
+        Track track2 = new Track(1, fileFolder, fileName);
         track2.setName(name);
         track2.setArtist(artist);
         track2.setAlbum(album);
@@ -262,7 +264,7 @@ public class TrackTest {
 
     @Test
     public void notEqualsTest() {
-        track = new Track(fileName, fileFolder);
+        track = new Track(0, fileName, fileFolder);
         track.setName(name);
         track.setArtist(artist);
         track.setAlbum(album);
@@ -274,14 +276,14 @@ public class TrackTest {
         track.setBpm(bpm);
         track.setLabel(label);
 
-        Track track2 = new Track("", "");
+        Track track2 = new Track(0, "", "");
 
         assertFalse(track.equals(track2));
     }
 
     @Test
     public void toStringTest() {
-        track = new Track("", "");
+        track = new Track(0, "", "");
         track.setName(name);
         track.setArtist(artist);
         track.setGenre(genre);
@@ -290,13 +292,14 @@ public class TrackTest {
         track.setBpm(bpm);
         track.setLabel(label);
 
-        String expectedString = name + "|" + artist + "|" + genre + "|" + album + "(" + year + ")|" + bpm + "|" + label;
+        String expectedString = name + "|" +  WordUtils.capitalize(artist) +
+                "|" + genre + "|" + album + "(" + year + ")|" + bpm + "|" + label;
         assertEquals(expectedString, track.toString());
     }
 
     @Test
     public void incrementPlayCountTest() {
-        track = new Track("", "");
+        track = new Track(0, "", "");
         assertEquals(0, track.getPlayCount());
         track.incrementPlayCount();
         assertEquals(1, track.getPlayCount());
@@ -305,28 +308,28 @@ public class TrackTest {
 
     @Test
     public void notPlayableIfNotExistsTest() {
-        track = new Track("./test-resources/testfiles/", "nonexistentfile.mp3");
+        track = new Track(1, "./test-resources/testfiles/", "nonexistentfile.mp3");
         track.setIsInDisk(true);
         assertFalse(track.isPlayable());
     }
 
     @Test
     public void notPlayableIfNotInDiskTest() {
-        track = new Track("", "");
+        track = new Track(0, "", "");
         track.setIsInDisk(false);
         assertFalse(track.isPlayable());
     }
 
     @Test
     public void notPlayableIfFlacTest() {
-        track = new Track("./test-resources/testfiles/", "testeable.flac");
+        track = new Track(1, "./test-resources/testfiles/", "testeable.flac");
         track.setIsInDisk(true);
         assertFalse(track.isPlayable());
     }
 
     @Test
     public void notPlayableIfAppleEncodingTest() {
-        track = new Track("./test-resources/testfiles/", "testeable.mp3");
+        track = new Track(1, "./test-resources/testfiles/", "testeable.mp3");
         track.setIsInDisk(true);
         track.setEncoding("Apple");
         assertFalse(track.isPlayable());
@@ -334,7 +337,7 @@ public class TrackTest {
 
     @Test
     public void notPlayableIfEncoderItunesTest() {
-        track = new Track("./test-resources/testfiles/", "testeable.mp3");
+        track = new Track(1, "./test-resources/testfiles/", "testeable.mp3");
         track.setIsInDisk(true);
         track.setEncoder("iTunes");
         assertFalse(track.isPlayable());

@@ -251,9 +251,9 @@ public class MusicottMenuBar extends MenuBar {
         decreaseVolumeMenuItem.setOnAction(e -> stageDemon.getPlayerController().decreaseVolume());
 
         selectCurrentTrackMenuItem.setOnAction(e -> {
+            // TODO fix select current track
             Optional<Track> currentTrack = playerFacade.getCurrentTrack();
             TrackTableView trackTable = (TrackTableView) primaryStage.getScene().lookup("#trackTable");
-            // TODO Fix select current track when showing artists
             trackTable.getSelectionModel().clearSelection();
             currentTrack.ifPresent(track -> {
                 int currentTrackId = track.getTrackId();

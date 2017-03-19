@@ -187,6 +187,10 @@ public class NavigationController implements MusicottController {
     }
 
     public void setStatusMessage(String message) {
+        if (taskProgressBar.getProgress() == 0.0)
+            statusLabel.setStyle("-fx-text-fill: rgb(99, 255, 109);");
+        else
+            statusLabel.setStyle("-fx-text-fill: rgb(73, 73, 73);");
         statusLabel.setText(message);
     }
 }

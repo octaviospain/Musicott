@@ -19,8 +19,6 @@
 
 package com.transgressoft.musicott.tasks.parse;
 
-import com.google.common.collect.*;
-
 import java.util.*;
 
 /**
@@ -29,24 +27,17 @@ import java.util.*;
  * @param <T> The type of the parsed results
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
- * @since 0.9.2-b
+ * @version 0.10-b
+ * @since 0.10-b
  */
 public abstract class BaseParseResult<T> {
 
     private T parsedResults;
-    private Multimap<Integer, String> tracksToArtistsMultimap;
     private Collection<String> parseErrors;
 
-    public BaseParseResult(T parsedResults, Multimap<Integer, String> tracksToArtistsMultimap,
-            Collection<String> parseErrors) {
-        this(parsedResults, tracksToArtistsMultimap);
-        this.parseErrors = parseErrors;
-    }
-
-    public BaseParseResult(T parsedResults, Multimap<Integer, String> tracksToArtistsMultimap) {
+    public BaseParseResult(T parsedResults, Collection<String> parseErrors) {
         this(parsedResults);
-        this.tracksToArtistsMultimap = tracksToArtistsMultimap;
+        this.parseErrors = parseErrors;
     }
 
     public BaseParseResult(T parsedResults) {
@@ -59,9 +50,5 @@ public abstract class BaseParseResult<T> {
 
     public Collection<String> getParseErrors() {
         return parseErrors;
-    }
-
-    public Multimap<Integer, String> getTracksToArtistsMultimap() {
-        return tracksToArtistsMultimap;
     }
 }
