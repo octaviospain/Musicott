@@ -27,7 +27,7 @@ import javafx.scene.control.*;
  * ListView for the application navigation showing modes.
  *
  * @author Octavio Calleya
- * @vesion 0.9
+ * @version 0.9.2-b
  */
 public class NavigationMenuListView extends ListView<NavigationMode> {
 
@@ -35,12 +35,13 @@ public class NavigationMenuListView extends ListView<NavigationMode> {
 
     public NavigationMenuListView() {
         super();
-        setId("showMenuListView");
+        setId("navigationModeListView");
         setPrefHeight(USE_COMPUTED_SIZE);
         setPrefWidth(USE_COMPUTED_SIZE);
         getSelectionModel().selectedItemProperty().addListener((obs, oldMenu, newMode) -> {
             if (newMode != null)
                 stageDemon.getNavigationController().setNavigationMode(newMode);
         });
+        setCellFactory(listView -> new NavigationListCell());
     }
 }

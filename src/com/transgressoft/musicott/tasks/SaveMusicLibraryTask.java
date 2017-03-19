@@ -38,7 +38,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * each save request.</p>
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class SaveMusicLibraryTask extends Thread {
 
@@ -92,7 +92,7 @@ public class SaveMusicLibraryTask extends Thread {
         trackAttributes.add("discNumber");
         trackAttributes.add("year");
         trackAttributes.add("bpm");
-        trackAttributes.add("inDisk");
+        trackAttributes.add("isInDisk");
         trackAttributes.add("isPartOfCompilation");
         trackAttributes.add("lastDateModified");
         trackAttributes.add("dateAdded");
@@ -100,6 +100,7 @@ public class SaveMusicLibraryTask extends Thread {
         trackAttributes.add("isVariableBitRate");
         trackAttributes.add("encoder");
         trackAttributes.add("encoding");
+        trackAttributes.add("artistsInvolved");
 
         Map<Class<?>, List<String>> trackFields = new HashMap<>();
         trackFields.put(Track.class, trackAttributes);

@@ -38,7 +38,7 @@ public class NativePlayer implements TrackPlayer {
 
     @Override
     public String getStatus() {
-        return mediaPlayer.getStatus().name();
+        return mediaPlayer == null ? "STOPPED" : mediaPlayer.getStatus().name();
     }
 
     @Override

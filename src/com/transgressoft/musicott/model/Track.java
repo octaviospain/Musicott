@@ -22,7 +22,9 @@ package com.transgressoft.musicott.model;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.util.*;
 import javafx.beans.property.*;
+import javafx.collections.*;
 import javafx.util.Duration;
+import org.apache.commons.lang3.text.*;
 
 import java.io.*;
 import java.time.*;
@@ -32,7 +34,7 @@ import java.util.*;
  * Represents an audio file and its metadata information.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class Track {
 
@@ -59,7 +61,7 @@ public class Track {
     private int bpm = 0;
     private Duration totalTime = Duration.UNKNOWN;
 
-    private boolean inDisk = false;
+    private boolean isInDisk = false;
     private boolean isPartOfCompilation = false;
     private boolean isVariableBitRate = false;
 
@@ -80,6 +82,7 @@ public class Track {
     private IntegerProperty bpmProperty;
     private IntegerProperty playCountProperty;
 
+    private SetProperty<String> artistsInvolvedProperty;
     private ObjectProperty<LocalDateTime> dateModifiedProperty;
     private BooleanProperty hasCoverProperty;
     private BooleanProperty isPlayableProperty;
@@ -88,13 +91,14 @@ public class Track {
      * Map of the properties that are editable in the application
      */
     private Map<TrackField, Property> propertyMap;
+    private ObservableSet<String> artistsInvolved;
 
     private Optional<File> coverFileToUpdate = Optional.empty();
     private MetadataUpdater updater;
     private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
-    public Track(String fileFolder, String fileName) {
-        trackId = MainPreferences.getInstance().getTrackSequence();
+    public Track(int id, String fileFolder, String fileName) {
+        trackId = id;
         updater = new MetadataUpdater(this);
         this.fileFolder = fileFolder;
         setFileName(fileName);
@@ -126,6 +130,8 @@ public class Track {
         playCountProperty = new SimpleIntegerProperty(this, "play count", playCount);
         isPlayableProperty = new SimpleBooleanProperty(this, "is playable", isPlayable());
         hasCoverProperty = new SimpleBooleanProperty(this, "cover flag", false);
+        artistsInvolvedProperty = new SimpleSetProperty<>(this, "artists involved", artistsInvolved);
+        artistsInvolvedProperty.addListener((obs, oldArtists, newArtists) -> setArtistsInvolved(newArtists));
 
         propertyMap = new EnumMap<>(TrackField.class);
         propertyMap.put(TrackField.NAME, nameProperty);
@@ -142,7 +148,13 @@ public class Track {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = name.trim().replaceAll("\\s+", " ")
+                        .replaceAll(" (?i)(remix)"," Remix")
+                        .replaceAll("(?i)(remix) (?i)(by) ","Remix by ")
+                        .replaceAll("(?i)(ft)(\\.|\\s) ","ft ")
+                        .replaceAll("(?i)(feat)(\\.|\\s) ","feat ")
+                        .replaceAll("(?i)(featuring) ", "featuring ")
+                        .replaceAll("(?i)(with) ", "with ");
         nameProperty.setValue(this.name);
     }
 
@@ -151,7 +163,10 @@ public class Track {
     }
 
     public void setArtist(String artist) {
-        this.artist = artist;
+        this.artist = WordUtils.capitalize(artist).trim()
+                               .replaceAll("\\s+", " ")
+                               .replaceAll(" (?i)(vs)(\\.|\\s)", " vs ")
+                               .replaceAll(" (?i)(versus) ", " versus ");
         artistProperty.setValue(this.artist);
     }
 
@@ -160,7 +175,7 @@ public class Track {
     }
 
     public void setAlbum(String album) {
-        this.album = album;
+        this.album = album.trim().replaceAll("\\s+", " ");
         albumProperty.setValue(this.album);
     }
 
@@ -169,7 +184,7 @@ public class Track {
     }
 
     public void setGenre(String genre) {
-        this.genre = genre;
+        this.genre = genre.trim().replaceAll("\\s+", " ");
         genreProperty.setValue(this.genre);
     }
 
@@ -178,7 +193,7 @@ public class Track {
     }
 
     public void setComments(String comments) {
-        this.comments = comments;
+        this.comments = comments.trim().replaceAll("\\s+", " ");
         commentsProperty.setValue(this.comments);
     }
 
@@ -187,7 +202,7 @@ public class Track {
     }
 
     public void setAlbumArtist(String albumArtist) {
-        this.albumArtist = albumArtist;
+        this.albumArtist =  WordUtils.capitalize(albumArtist.trim().replaceAll("\\s+", " "));
         albumArtistProperty.setValue(this.albumArtist);
     }
 
@@ -196,7 +211,7 @@ public class Track {
     }
 
     public void setLabel(String label) {
-        this.label = label;
+        this.label = label.trim().replaceAll("\\s+", " ");
         labelProperty.setValue(this.label);
     }
 
@@ -253,12 +268,12 @@ public class Track {
         return fileFolder;
     }
 
-    public void setInDisk(boolean inDisk) {
-        this.inDisk = inDisk;
+    public void setIsInDisk(boolean isInDisk) {
+        this.isInDisk = isInDisk;
     }
 
-    public boolean getInDisk() {
-        return inDisk;
+    public boolean isInDisk() {
+        return isInDisk;
     }
 
     public void setCoverImage(File cover) {
@@ -349,6 +364,17 @@ public class Track {
         return isVariableBitRate;
     }
 
+    public void setArtistsInvolved(ObservableSet<String> artistsInvolved) {
+        this.artistsInvolved = artistsInvolved;
+        if (artistsInvolved.isEmpty())
+            artistsInvolved.add(" ");
+        artistsInvolvedProperty.set(artistsInvolved);
+    }
+
+    public ObservableSet<String> getArtistsInvolved() {
+        return artistsInvolved;
+    }
+
     public void setDateAdded(LocalDateTime dateAdded) {
         this.dateAdded = dateAdded;
     }
@@ -368,11 +394,11 @@ public class Track {
 
     public boolean isPlayable() {
         boolean playable = true;
-        if (getInDisk()) {
+        if (isInDisk()) {
             File file = new File(fileFolder + "/" + fileName);
             if (! file.exists()) {
                 errorDemon.showErrorDialog(fileFolder + "/" + fileName + " not found");
-                setInDisk(false);
+                setIsInDisk(false);
                 playable = false;
             }
             else if ("flac".equals(fileFormat) || encoding.startsWith("Apple") || encoder.startsWith("iTunes"))
@@ -447,6 +473,10 @@ public class Track {
         return isPlayableProperty;
     }
 
+    public SetProperty<String> artistsInvolvedProperty() {
+        return artistsInvolvedProperty;
+    }
+
     /**
      * Updates the cover image and the metadata of the audio file that is represented by
      * this {@link Track} instance with the information that has been entered by the application to it
@@ -468,9 +498,7 @@ public class Track {
 
     @Override
     public int hashCode() {
-        return Objects
-                .hash(fileName, fileFolder, name, artist, album, comments, genre, trackNumber, year, albumArtist, bpm,
-                      label);
+        return Objects.hash(fileName, fileFolder);
     }
 
     @Override
@@ -479,15 +507,8 @@ public class Track {
 
         if (o instanceof Track) {
             Track oTrack = (Track) o;
-
-            if (oTrack.getFileName().equalsIgnoreCase(fileName) && oTrack.getFileFolder().equalsIgnoreCase(fileFolder) && oTrack
-                    .getName().equalsIgnoreCase(name) && oTrack.getArtist().equalsIgnoreCase(artist) && oTrack
-                    .getAlbum().equalsIgnoreCase(album) && oTrack.getComments().equalsIgnoreCase(comments) && oTrack
-                    .getGenre().equalsIgnoreCase(genre) && oTrack.getTrackNumber() == trackNumber && oTrack
-                    .getYear() == year && oTrack.getAlbumArtist().equalsIgnoreCase(albumArtist) && oTrack
-                    .getBpm() == bpm && oTrack.getLabel().equalsIgnoreCase(label)) {
+            if (oTrack.getFileName().equalsIgnoreCase(fileName) && oTrack.getFileFolder().equalsIgnoreCase(fileFolder))
                 equals = true;
-            }
         }
 
         return equals;

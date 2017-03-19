@@ -19,7 +19,6 @@
 
 package com.transgressoft.musicott.model;
 
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.tasks.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
@@ -36,14 +35,14 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * is used when showing a {@link Playlist} on the application.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class Playlist {
 
     private static final String ADDITION_NOT_SUPPORTED = "Addition not supported on folder playlist";
     private static final String DELETION_NOT_SUPPORTED = "Deletion not supported on folder playlist";
 
-    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
+    private final Image DEFAULT_COVER = new Image(getClass().getResourceAsStream(DEFAULT_COVER_PATH));
     private final boolean isFolder;
     private String name;
     private ObservableList<Integer> playlistTrackIds;
@@ -53,7 +52,6 @@ public class Playlist {
     private BooleanProperty isFolderProperty;
 
     private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-    private StageDemon stageDemon = StageDemon.getInstance();
     private TaskDemon taskDemon = TaskDemon.getInstance();
 
     public Playlist(String name, boolean isFolder) {
@@ -63,7 +61,7 @@ public class Playlist {
         containedPlaylists = new ArrayList<>();
         nameProperty = new SimpleStringProperty(this, "name", name);
         nameProperty.addListener((obs, oldName, newName) -> setName(newName));
-        playlistCoverProperty = new SimpleObjectProperty<>(this, "cover", COVER_IMAGE);
+        playlistCoverProperty = new SimpleObjectProperty<>(this, "cover", DEFAULT_COVER);
         isFolderProperty = new SimpleBooleanProperty(this, "folder", isFolder);
     }
 
@@ -90,9 +88,9 @@ public class Playlist {
             if (childPlaylistNotEmpty.isPresent())
                 returnedCoverProperty = childPlaylistNotEmpty.get().playlistCoverProperty();
             else
-                returnedCoverProperty.set(COVER_IMAGE);
+                returnedCoverProperty.set(DEFAULT_COVER);
         }
-        else if (playlistCoverProperty.get().equals(COVER_IMAGE) && ! getTracks().isEmpty())
+        else if (playlistCoverProperty.get().equals(DEFAULT_COVER) && ! getTracks().isEmpty())
             changePlaylistCover();
         return returnedCoverProperty;
     }
@@ -110,21 +108,15 @@ public class Playlist {
     }
 
     public boolean addTracks(List<Integer> tracksIds) {
-        if (isFolder)
-            throw new UnsupportedOperationException(ADDITION_NOT_SUPPORTED);
+        boolean result = false;
+        if (! isFolder) {
 
-        boolean result = playlistTrackIds.addAll(tracksIds);
-        if (result) {
-            changePlaylistCover();
-            taskDemon.saveLibrary(false, false, true);
-        }
-
-        Optional<Playlist> selectedPlaylist = stageDemon.getNavigationController().selectedPlaylistProperty().get();
-        selectedPlaylist.ifPresent(playlist -> {
-            if (playlist.equals(this)) {
-                musicLibrary.addToShowingTracks(tracksIds);
+            result = playlistTrackIds.addAll(tracksIds);
+            if (result) {
+                changePlaylistCover();
+                taskDemon.saveLibrary(false, false, true);
             }
-        });
+        }
         return result;
     }
 
@@ -137,28 +129,22 @@ public class Playlist {
             changePlaylistCover();
             taskDemon.saveLibrary(false, false, true);
         }
-
-        Optional<Playlist> selectedPlaylist = stageDemon.getNavigationController().selectedPlaylistProperty().get();
-        selectedPlaylist.ifPresent(playlist -> {
-            if (playlist.equals(this))
-                musicLibrary.removeFromShowingTracks(tracksIds);
-        });
         return result;
     }
 
-    public void showTracksOnTable() {
-        musicLibrary.clearShowingTracks();
-
-        List<Integer> tracks = getTracks();
-        if (! tracks.isEmpty())
-            musicLibrary.addToShowingTracks(tracks);
+    public void clearTracks() {
+        if (isFolder)
+            throw new UnsupportedOperationException(DELETION_NOT_SUPPORTED);
+        playlistTrackIds.clear();
+        playlistCoverProperty.set(DEFAULT_COVER);
+        taskDemon.saveLibrary(false, false, true);
     }
 
     public List<Playlist> getContainedPlaylists() {
         return containedPlaylists;
     }
 
-    private List<Integer> getTracks() {
+    public List<Integer> getTracks() {
         List<Integer> allTracksWithin;
         if (isFolder) {
             allTracksWithin = new ArrayList<>();
@@ -191,10 +177,10 @@ public class Playlist {
                 });
             }
             else
-                playlistCoverProperty.set(COVER_IMAGE);
+                playlistCoverProperty.set(DEFAULT_COVER);
         }
         else
-            playlistCoverProperty.set(COVER_IMAGE);
+            playlistCoverProperty.set(DEFAULT_COVER);
     }
 
     @Override

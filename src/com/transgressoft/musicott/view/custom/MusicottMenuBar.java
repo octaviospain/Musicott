@@ -43,6 +43,8 @@ import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.*;
+import java.util.stream.*;
 
 import static com.transgressoft.musicott.view.MusicottController.*;
 import static javafx.scene.input.KeyCombination.*;
@@ -51,14 +53,14 @@ import static javafx.scene.input.KeyCombination.*;
  * Creates a MenuBar or a native OS X menu bar
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class MusicottMenuBar extends MenuBar {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
 	private static final String MUSICOTT_GITHUB_LINK = "https://github.com/octaviospain/Musicott/";
-	private static final String ABOUT_MUSICOTT_FIRST_LINE = " Version 0.9.1-b\n\n Copyright © 2015 Octavio Calleya.";
+	private static final String ABOUT_MUSICOTT_FIRST_LINE = " Version 0.9.2-b\n\n Copyright © 2015 Octavio Calleya.";
 	private static final String ABOUT_MUSICOTT_SECOND_LINE = " Licensed under GNU GPLv3. This product includes\n" + " " +
 																"software developed by other open source projects.";
 
@@ -89,8 +91,12 @@ public class MusicottMenuBar extends MenuBar {
     private MenuItem newPlaylistMenuItem;
     private MenuItem showHideNavigationPaneMenuItem;
     private MenuItem showHideTableInfoPaneMenuItem;
+    private MenuItem selectAllMenuItem;
+    private MenuItem dontSelectAllMenuItem;
     private Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
     private ImageView musicottLogoImageView = new ImageView(musicottLogo);
+
+    private TaskDemon taskDemon = TaskDemon.getInstance();
 
     public MusicottMenuBar(Stage primaryStage) {
         super();
@@ -150,7 +156,7 @@ public class MusicottMenuBar extends MenuBar {
 
     private void initializeMenus() {
         fileMenu = new Menu("File");
-        editMenu = new Menu("Menu");
+        editMenu = new Menu("Edit");
         controlsMenu = new Menu("Controls");
         viewMenu = new Menu("View");
         aboutMenu = new Menu("About");
@@ -169,9 +175,13 @@ public class MusicottMenuBar extends MenuBar {
         newPlaylistMenuItem = new MenuItem("Add new playlist");
         showHideNavigationPaneMenuItem = new MenuItem("Hide navigation pane");
         showHideTableInfoPaneMenuItem = new MenuItem("Hide table info pane");
+        selectAllMenuItem = new MenuItem("Select all");
+        dontSelectAllMenuItem = new MenuItem("Don't select all");
 
         fileMenu.getItems().addAll(openFileMenuItem, importFolderMenuItem, importItunesMenuItem);
-        editMenu.getItems().addAll(editMenuItem, deleteMenuItem, new SeparatorMenuItem(), newPlaylistMenuItem);
+        fileMenu.getItems().addAll(new SeparatorMenuItem(), newPlaylistMenuItem);
+        editMenu.getItems().addAll(editMenuItem, deleteMenuItem);
+        editMenu.getItems().addAll(new SeparatorMenuItem(), selectAllMenuItem, dontSelectAllMenuItem);
         controlsMenu.getItems().addAll(previousMenuItem, nextMenuItem, new SeparatorMenuItem());
         controlsMenu.getItems().addAll(increaseVolumeMenuItem, decreaseVolumeMenuItem, new SeparatorMenuItem());
         controlsMenu.getItems().add(selectCurrentTrackMenuItem);
@@ -214,12 +224,20 @@ public class MusicottMenuBar extends MenuBar {
                 TaskDemon.getInstance().importFromItunesLibrary(xmlFile.getAbsolutePath());
         });
         preferencesMenuItem.setOnAction(e -> stageDemon.showPreferences());
+        newPlaylistMenuItem.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
     }
 
     private void setEditMenuActions() {
-        editMenuItem.setOnAction(e -> stageDemon.editTracks());
-        deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks());
-        newPlaylistMenuItem.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
+        editMenuItem.setOnAction(e -> {
+            List<Entry<Integer, Track>> selection = stageDemon.getRootController().getSelectedTracks();
+            stageDemon.editTracks(selection.size());
+        });
+        deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks(trackSelectionIds()));
+        selectAllMenuItem.setOnAction(e -> stageDemon.getRootController().selectAllTracks());
+        dontSelectAllMenuItem.setOnAction(e -> stageDemon.getRootController().deselectAllTracks());
+        ReadOnlyBooleanProperty editingTracksProperty = stageDemon.getEditController().showingProperty();
+        selectAllMenuItem.disableProperty().bind(editingTracksProperty);
+        dontSelectAllMenuItem.disableProperty().bind(editingTracksProperty);
     }
 
     private void setControlsMenuActions() {
@@ -233,6 +251,7 @@ public class MusicottMenuBar extends MenuBar {
         decreaseVolumeMenuItem.setOnAction(e -> stageDemon.getPlayerController().decreaseVolume());
 
         selectCurrentTrackMenuItem.setOnAction(e -> {
+            // TODO fix select current track
             Optional<Track> currentTrack = playerFacade.getCurrentTrack();
             TrackTableView trackTable = (TrackTableView) primaryStage.getScene().lookup("#trackTable");
             trackTable.getSelectionModel().clearSelection();
@@ -276,6 +295,11 @@ public class MusicottMenuBar extends MenuBar {
             alert.showAndWait();
             LOG.debug("Showing about window");
         });
+    }
+
+    private List<Integer> trackSelectionIds() {
+        List<Entry<Integer, Track>> trackSelection = stageDemon.getRootController().getSelectedTracks();
+        return trackSelection.stream().map(Entry::getKey).collect(Collectors.toList());
     }
 
     /**
@@ -334,7 +358,7 @@ public class MusicottMenuBar extends MenuBar {
     private void countFilesToImportTask(File folder) {
         Set<String> extensions = MainPreferences.getInstance().getImportFilterExtensions();
         ExtensionFileFilter filter = new ExtensionFileFilter();
-        extensions.stream().forEach(filter::addExtension);
+        extensions.forEach(filter::addExtension);
         Platform.runLater(() -> {
             navigationController.setStatusMessage("");
             navigationController.setStatusProgress(0);
@@ -388,5 +412,7 @@ public class MusicottMenuBar extends MenuBar {
                 .setAccelerator(new KeyCodeCombination(KeyCode.R, operativeSystemModifier, shiftDown));
         showHideTableInfoPaneMenuItem
                 .setAccelerator(new KeyCodeCombination(KeyCode.U, operativeSystemModifier, shiftDown));
+        selectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemModifier));
+        dontSelectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemModifier, shiftDown));
     }
 }

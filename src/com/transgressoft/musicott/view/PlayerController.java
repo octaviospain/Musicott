@@ -20,6 +20,7 @@
 package com.transgressoft.musicott.view;
 
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.binding.*;
@@ -44,13 +45,13 @@ import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
  * Controller class of the bottom pane that includes the player and the search field.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class PlayerController implements MusicottController {
 
     private static final double VOLUME_AMOUNT = 0.05;
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
+    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_PATH));
 
     @FXML
     private GridPane playerGridPane;
@@ -90,6 +91,9 @@ public class PlayerController implements MusicottController {
     private ProgressBar volumeProgressBar;
     private AnchorPane playQueuePane;
     private WaveformPanel mainWaveformPanel;
+
+    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private PlayerFacade player = PlayerFacade.getInstance();
 
     @FXML
     public void initialize() {

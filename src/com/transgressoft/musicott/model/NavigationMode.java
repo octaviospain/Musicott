@@ -23,7 +23,7 @@ package com.transgressoft.musicott.model;
  * Class enum that represents a showing mode of the application
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public enum NavigationMode {
 
@@ -35,7 +35,12 @@ public enum NavigationMode {
     /**
      * The tracks of a selected {@link Playlist} are shown on the table
      */
-    PLAYLIST("Playlist");
+    PLAYLIST("Playlist"),
+
+    /**
+     * A section with all the artists is shown with an adapted view
+     */
+    ARTISTS("Artist");
 
     String name;
 

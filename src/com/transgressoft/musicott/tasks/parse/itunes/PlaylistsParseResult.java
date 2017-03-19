@@ -17,36 +17,24 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.tasks.parse;
+package com.transgressoft.musicott.tasks.parse.itunes;
+
+import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.tasks.parse.*;
 
 import java.util.*;
 
 /**
- * Class that isolates results and errors of a {@link BaseParseTask}
+ * Extends from {@link BaseParseResult} specifying a {@link List}
+ * of {@link Playlist}s as result
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
- * @since 0.9.2-b
+ * @version 0.10-b
+ * @since 0.10-b
  */
-public class ParseResult<T> {
+public class PlaylistsParseResult extends BaseParseResult<List<Playlist>> {
 
-    private T parsedItems;
-    private Collection<String> parseErrors;
-
-    public ParseResult(T parsedItems, Collection<String> parseErrors) {
-        this(parsedItems);
-        this.parseErrors = parseErrors;
-    }
-
-    public ParseResult(T parsedItems) {
-        this.parsedItems = parsedItems;
-    }
-
-    public T getParsedItems() {
-        return parsedItems;
-    }
-
-    public Collection<String> getParseErrors() {
-        return parseErrors;
+    public PlaylistsParseResult(List<Playlist> parsedItems) {
+        super(parsedItems);
     }
 }

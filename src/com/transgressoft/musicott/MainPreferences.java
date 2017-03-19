@@ -21,16 +21,17 @@ package com.transgressoft.musicott;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.*;
 import java.util.prefs.*;
 
-import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
+import static com.transgressoft.musicott.tasks.parse.itunes.ItunesParseTask.*;
 
 /**
  * Singleton class that isolates some user preferences, such as the application folder
  * or the the iTunes import options, using the java predefined class {@link Preferences}.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class MainPreferences {
 
@@ -67,9 +68,14 @@ public class MainPreferences {
      */
     private static final String ITUNES_IMPORT_METADATA_POLICY = "itunes_import_policy";
 
-    private static MainPreferences instance;
     private Preferences preferences;
+    private AtomicInteger sequence;
     private Set<String> importExtensions;
+
+    private static class InstanceHolder {
+        static final MainPreferences INSTANCE = new MainPreferences();
+        private InstanceHolder() {}
+    }
 
     /**
      * Private constructor of the class to be called from {@link #getInstance()}.
@@ -78,6 +84,7 @@ public class MainPreferences {
      */
     private MainPreferences() {
         preferences = Preferences.userNodeForPackage(getClass());
+        sequence = new AtomicInteger();
         importExtensions = new HashSet<>();
         if (preferences.getBoolean(IMPORT_MP3, true))
             importExtensions.add("mp3");
@@ -90,10 +97,7 @@ public class MainPreferences {
     }
 
     public static MainPreferences getInstance() {
-        if (instance == null) {
-            instance = new MainPreferences();
-        }
-        return instance;
+        return InstanceHolder.INSTANCE;
     }
 
     /**
@@ -103,10 +107,10 @@ public class MainPreferences {
      *
      * @return The next integer to use for the track map
      */
-    public int getTrackSequence() {
-        int sequence = preferences.getInt(TRACK_SEQUENCE, 0);
-        preferences.putInt(TRACK_SEQUENCE, ++ sequence);
-        return sequence;
+    public synchronized int getTrackSequence() {
+        sequence.set(preferences.getInt(TRACK_SEQUENCE, 0));
+        preferences.putInt(TRACK_SEQUENCE, sequence.incrementAndGet());
+        return sequence.get();
     }
 
     /**

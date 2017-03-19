@@ -17,31 +17,23 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.tests;
+package com.transgressoft.musicott.tasks.parse.audiofiles;
 
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.util.*;
-import org.junit.runner.*;
-import org.junit.runners.*;
-import org.junit.runners.Suite.*;
+import com.transgressoft.musicott.tasks.parse.*;
+
+import java.util.*;
 
 /**
- * Test suite for the test classes
+ * Extends from {@link BaseParseResult} to be used during a {@link AudioFilesParseAction}
  *
  * @author Octavio Calleya
+ * @version 0.10-b
+ * @since 0.10-b
  */
-@RunWith (Suite.class)
-@SuiteClasses ({
-        NavigationModeTest.class,
-        TrackTest.class,
-        TrackFieldTest.class,
-        NativePlayerTest.class,
-        MetadataParserTest.class,
-        Utils_GetAllFilesInFolderTest.class,
-        MainPreferencesTest.class,
-})
-public class MusicottTestSuite {
+public class FilesParseResult extends BaseParseResult<Map<Integer, Track>> {
 
+    public FilesParseResult(Map<Integer, Track> parsedItems, Collection<String> parseErrors) {
+        super(parsedItems, parseErrors);
+    }
 }

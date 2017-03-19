@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
@@ -43,12 +44,12 @@ import java.util.stream.*;
  * Controller class of the window that edits the information of tracks
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class EditController implements MusicottController {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
+    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_PATH));
 
     @FXML
     private TextField nameTextField;
@@ -89,24 +90,26 @@ public class EditController implements MusicottController {
 
     private File newCoverImage;
     private Stage editStage;
-    private Map<TrackField, TextInputControl> editFieldsMap;
+    private Map<TrackField, TextInputControl> editableFieldsMap;
     private List<Track> trackSelection;
     private Optional<byte[]> commonCover = Optional.empty();
+    private Optional<String> newChangedAlbum = Optional.empty();
+    private Set<String> changedAlbums = new HashSet<>();
 
     @FXML
     private void initialize() {
-        editFieldsMap = new EnumMap<>(TrackField.class);
-        editFieldsMap.put(TrackField.NAME, nameTextField);
-        editFieldsMap.put(TrackField.ARTIST, artistTextField);
-        editFieldsMap.put(TrackField.ALBUM, albumTextField);
-        editFieldsMap.put(TrackField.GENRE, genreTextField);
-        editFieldsMap.put(TrackField.COMMENTS, commentsTextField);
-        editFieldsMap.put(TrackField.ALBUM_ARTIST, albumArtistTextField);
-        editFieldsMap.put(TrackField.LABEL, labelTextField);
-        editFieldsMap.put(TrackField.TRACK_NUMBER, trackNumTextField);
-        editFieldsMap.put(TrackField.DISC_NUMBER, discNumTextField);
-        editFieldsMap.put(TrackField.YEAR, yearTextField);
-        editFieldsMap.put(TrackField.BPM, bpmTextField);
+        editableFieldsMap = new EnumMap<>(TrackField.class);
+        editableFieldsMap.put(TrackField.NAME, nameTextField);
+        editableFieldsMap.put(TrackField.ARTIST, artistTextField);
+        editableFieldsMap.put(TrackField.ALBUM, albumTextField);
+        editableFieldsMap.put(TrackField.GENRE, genreTextField);
+        editableFieldsMap.put(TrackField.COMMENTS, commentsTextField);
+        editableFieldsMap.put(TrackField.ALBUM_ARTIST, albumArtistTextField);
+        editableFieldsMap.put(TrackField.LABEL, labelTextField);
+        editableFieldsMap.put(TrackField.TRACK_NUMBER, trackNumTextField);
+        editableFieldsMap.put(TrackField.DISC_NUMBER, discNumTextField);
+        editableFieldsMap.put(TrackField.YEAR, yearTextField);
+        editableFieldsMap.put(TrackField.BPM, bpmTextField);
 
         titleNameLabel.textProperty().bind(nameTextField.textProperty());
         titleArtistLabel.textProperty().bind(artistTextField.textProperty());
@@ -211,17 +214,23 @@ public class EditController implements MusicottController {
         editStage.setOnShowing(e -> setEditFieldsValues());
     }
 
+    public ReadOnlyBooleanProperty showingProperty() {
+        return editStage.showingProperty();
+    }
+
     /**
      * Fills the text inputs on the edit window for each {@link TrackField}.
      * If there is not a common value for the selected tracks for each {@code TrackField},
      * a dash ({@code -}) is placed in the {@link TextField}.
      */
     private void setEditFieldsValues() {
-        trackSelection = stageDemon.getRootController().getSelectedTracks();
+        trackSelection = StageDemon.getInstance().getRootController().getSelectedTracks().stream()
+                                   .map(Entry::getValue).collect(Collectors.toList());
 
-        editFieldsMap.entrySet().forEach(this::setFieldValue);
-
+        editableFieldsMap.entrySet().forEach(this::setFieldValue);
         newCoverImage = null;
+        newChangedAlbum = Optional.empty();
+        changedAlbums.clear();
         coverImage.setImage(COVER_IMAGE);
         commonCover = commonCover();
         commonCover.ifPresent(coverBytes -> coverImage.setImage(new Image(new ByteArrayInputStream(coverBytes))));
@@ -278,7 +287,7 @@ public class EditController implements MusicottController {
      */
     private void editAndClose() {
         trackSelection.forEach(this::editTrack);
-        UpdateMetadataTask updateTask = new UpdateMetadataTask(trackSelection);
+        UpdateMusicLibraryTask updateTask = new UpdateMusicLibraryTask(trackSelection, changedAlbums, newChangedAlbum);
         updateTask.setDaemon(true);
         updateTask.start();
         editStage.close();
@@ -290,6 +299,7 @@ public class EditController implements MusicottController {
     private void close() {
         LOG.info("Edit stage cancelled");
         newCoverImage = null;
+        newChangedAlbum = Optional.empty();
         commonCover = Optional.empty();
         editStage.close();
     }
@@ -304,9 +314,11 @@ public class EditController implements MusicottController {
         Map<TrackField, Property> trackPropertiesMap = track.getPropertyMap();
         final boolean[] changed = {false};
 
-        editFieldsMap.entrySet().forEach(entry -> {
+        editableFieldsMap.entrySet().forEach(entry -> {
             Property property = trackPropertiesMap.get(entry.getKey());
             changed[0] = editTrackTrackField(entry, property);
+            if (changed[0] && entry.getKey().equals(TrackField.ALBUM))
+                newChangedAlbum = Optional.of(track.getAlbum().isEmpty() ? "Unknown album" : track.getAlbum());
         });
 
         if (! isCompilationCheckBox.isIndeterminate()) {
@@ -396,9 +408,11 @@ public class EditController implements MusicottController {
      * @return
      */
     private Optional<String> commonAlbum() {
+        changedAlbums = trackSelection.stream().map(track ->
+                                track.getAlbum().isEmpty() ? "Unknown album" : track.getAlbum())
+                                      .collect(Collectors.toSet());
         String firstAlbum = trackSelection.get(0).getAlbum();
-        boolean areCommon = trackSelection.stream().allMatch(track -> track.getAlbum().equals(firstAlbum));
-        return areCommon ? Optional.of(firstAlbum) : Optional.empty();
+        return changedAlbums.size() <= 1 ? Optional.of(firstAlbum) : Optional.empty();
     }
 
     /**

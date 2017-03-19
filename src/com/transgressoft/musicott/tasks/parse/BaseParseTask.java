@@ -26,18 +26,18 @@ import javafx.application.*;
 import javafx.concurrent.*;
 import javafx.util.*;
 
+import java.text.*;
 import java.util.*;
 
 /**
  * Base class of parse tasks of import music into the application.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
- * @since 0.9.2-b
+ * @version 0.10-b
+ * @since 0.10-b
  */
 public abstract class BaseParseTask extends Task<Void> {
 
-    protected Map<Integer, Track> parsedTracks;
     protected Collection<String> parseErrors;
     protected long startMillis;
 
@@ -46,7 +46,7 @@ public abstract class BaseParseTask extends Task<Void> {
     protected ErrorDemon errorDemon = ErrorDemon.getInstance();
     protected NavigationController navigationController = stageDemon.getNavigationController();
 
-    public synchronized void updateProgressTask() {
+    public void updateProgressTask() {
         int parsedItems = getNumberOfParsedItemsAndIncrement();
         int totalItemsToParse = getTotalItemsToParse();
         double progress = (double) parsedItems / totalItemsToParse;
@@ -67,14 +67,14 @@ public abstract class BaseParseTask extends Task<Void> {
         stageDemon.getNavigationController().setStatusMessage(message);
     }
 
-    protected abstract void addResultsToMusicLibrary();
-
-    protected void computeAndShowElapsedTime() {
+    protected void computeAndShowElapsedTime(int totalItemsParsed) {
         long endMillis = System.currentTimeMillis() - startMillis;
-        double totalTaskTime = Duration.millis(endMillis).toSeconds();
-        if (totalTaskTime > 60)
-            totalTaskTime = Duration.millis(endMillis).toMinutes();
-        String statusMessage = parsedTracks.size() + " in " + totalTaskTime + " mins";
+        Duration totalTaskTime = Duration.millis(endMillis);
+        double timeValue = totalTaskTime.toSeconds() > 60 ? totalTaskTime.toMinutes() : totalTaskTime.toSeconds();
+        DecimalFormat decimalFormat = new DecimalFormat("#.0");
+        String timeString = totalTaskTime.toSeconds() > 60 ? " mins" : " secs";
+        timeString = decimalFormat.format(timeValue) + timeString;
+        String statusMessage = totalItemsParsed + " items in " + timeString;
         Platform.runLater(() -> updateTaskProgressOnView(0.0, statusMessage));
     }
 }

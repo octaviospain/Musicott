@@ -35,7 +35,7 @@ import java.util.stream.*;
  * a track id as a key and the {@link Track} as value.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9.1-b
  */
 public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
@@ -52,8 +52,14 @@ public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
         setOnMouseClicked(this::playTrackOnMouseClickedHandler);
         setOnDragDetected(this::onDragDetectedMovingTracks);
         hoverProperty().addListener((observable, oldHovered, newHovered) -> {
-            if (newHovered && getItem() != null)
-                stageDemon.getRootController().updateTrackHoveredCover(getItem().getValue());
+            if (newHovered) {
+                Optional<byte[]> cover;
+                if (getItem() != null)
+                    cover = getItem().getValue().getCoverImage();
+                else
+                    cover = Optional.empty();
+                stageDemon.getRootController().updateTrackHoveredCover(cover);
+            }
         });
     }
 

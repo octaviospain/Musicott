@@ -19,19 +19,13 @@
 
 package com.transgressoft.musicott.view;
 
-import com.transgressoft.musicott.*;
-import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.services.*;
-import com.transgressoft.musicott.tasks.*;
-
 /**
  * Interface that represent a controller of the Musicott application.
  * Stores constants of layout files, logos, css stylesheets and
  * references to the singleton classes.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9
  */
 public interface MusicottController {
@@ -55,7 +49,7 @@ public interface MusicottController {
     String PLAYER_LAYOUT = LAYOUTS_PATH + "PlayerLayout.fxml";
     String ERROR_ALERT_LAYOUT = LAYOUTS_PATH + "ErrorDialogLayout.fxml";
 
-    String DEFAULT_COVER_IMAGE = IMAGES_PATH + "default-cover-image.png";
+    String DEFAULT_COVER_PATH = IMAGES_PATH + "default-cover-image.png";
     String COMMON_ERROR_IMAGE = IMAGES_PATH + "common-error.png";
     String LASTFM_LOGO = IMAGES_PATH + "lastfm-logo.png";
     String MUSICOTT_APP_ICON = IMAGES_PATH + "musicott-app-icon.png";
@@ -63,12 +57,6 @@ public interface MusicottController {
 
     String DIALOG_STYLE = STYLES_PATH + "dialog.css";
     String TRACK_TABLE_STYLE = STYLES_PATH + "tracktable.css";
-
-    MusicLibrary musicLibrary = MusicLibrary.getInstance();
-    MainPreferences preferences = MainPreferences.getInstance();
-    PlayerFacade player = PlayerFacade.getInstance();
-    ServiceDemon serviceDemon = ServiceDemon.getInstance();
-    StageDemon stageDemon = StageDemon.getInstance();
-    ErrorDemon errorDemon = ErrorDemon.getInstance();
-    TaskDemon taskDemon = TaskDemon.getInstance();
+    String BASE_STYLE = STYLES_PATH + "base.css";
+    String TRACKAREASET_TRACK_TABLE_STYLE = STYLES_PATH + "trackareaset-tracktable.css";
 }

@@ -19,21 +19,29 @@
 
 package com.transgressoft.musicott.util;
 
+import com.google.common.base.*;
+import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
+import com.transgressoft.musicott.model.*;
 import javafx.scene.image.*;
+import org.apache.commons.lang3.text.*;
 
 import java.io.*;
 import java.math.*;
 import java.nio.file.*;
 import java.text.*;
 import java.util.*;
+import java.util.Map.*;
+import java.util.Optional;
+import java.util.regex.*;
+import java.util.stream.*;
 
 /**
  * Class that does some useful operations with files, directories, strings
  * or other operations utilities to be used for the application
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class Utils {
 
@@ -41,6 +49,129 @@ public class Utils {
      * Private constructor to hide the implicit public one.
      */
     private Utils() {}
+
+    /**
+     * Returns the names of the artists that are involved in a {@link Track},
+     * that is, every artist that could appear in the {@link Track#artist} variable,
+     * or {@link Track#albumArtist} or in the {@link Track#name}.
+     *
+     * <h3>Example</h3>
+     *
+     * <p>The following Track intance: <pre>   {@code
+     *
+     *   Track.name = "Who Controls (Adam Beyer Remix)"
+     *   Track.artist = "David Meiser, Black Asteroid & Tiga"
+     *   Track.albumArtist = "Ida Engberg"
+     *
+     *   }</pre>
+     * ... produces the following (without order): <pre>   {@code
+     *      [David Meiser, Black Asteroid, Tiga, Adam Beyer, Ida Engberg]
+     *   }</pre>
+     *
+     * @param track The {@code Track} object
+     *
+     * @return A {@code Set} object with the names of the artists
+     *
+     * @since 0.10-b
+     */
+    public static Set<String> getArtistsInvolvedInTrack(Track track) {
+        Set<String> artistsInvolved = new HashSet<>();
+        List<String> albumArtistNames = Splitter.on(CharMatcher.anyOf(",&")).trimResults().omitEmptyStrings()
+                                                .splitToList(track.getAlbumArtist());
+        artistsInvolved.addAll(albumArtistNames);
+        artistsInvolved.addAll(getArtistNamesInTrackArtist(track.getArtist()));
+        artistsInvolved.addAll(getArtistNamesInTrackName(track.getName()));
+        return artistsInvolved.stream().map(WordUtils::capitalize).collect(Collectors.toSet());
+    }
+
+    /**
+     * Splits a given string if it's separated by ',' or '&' characters, or by
+     * the words 'versus' or 'vs', that are commonly used inside a song artist field indicating
+     * a non-solo artist work.
+     *
+     * <h3>Example</h3>
+     *
+     * <p>The given track artist field: <pre>   {@code
+     *   "David Meiser, Black Asteroid & Tiga"
+     *   }</pre>
+     * ... produces the following set (without order): <pre>   {@code
+     *      [David Meiser, Black Asteroid, Tiga]
+     *   }</pre>
+     *
+     * @param string The {@code String} where to find artist names
+     *
+     * @return An {@link ImmutableSet} with the artists found
+     *
+     * @since 0.10-b
+     */
+    private static ImmutableSet<String> getArtistNamesInTrackArtist(String string) {
+        ImmutableSet<String> artistsInvolved;
+        Optional<List<String>> splittedNames = Stream.of("versus", "vs").filter(string::contains)
+                                                     .map(s -> Splitter.on(s).trimResults().omitEmptyStrings()
+                                                                       .splitToList(string)).findAny();
+
+        if (splittedNames.isPresent())
+            artistsInvolved = ImmutableSet.copyOf(splittedNames.get());
+        else {
+            String cleanedArtist = string.replaceAll("(?i)(feat)(\\.|\\s)", ",").replaceAll("(?i)(ft)(\\.|\\s)", ",");
+            artistsInvolved = ImmutableSet.copyOf(Splitter.on(CharMatcher.anyOf(",&"))
+                                                          .trimResults().omitEmptyStrings()
+                                                          .splitToList(cleanedArtist));
+        }
+        return artistsInvolved;
+    }
+
+    /**
+     * Spits a given string matching a regular expression that specifies a song name
+     * in which other artists' are involved. For example:
+     *
+     * <h3>Example</h3>
+     *
+     * <p>The given track name field: <pre>   {@code
+     *   "Song name (Adam Beyer & Pete Tong Remix)"
+     *   }</pre>
+     * ... produces the following (without order): <pre>   {@code
+     *      [Adam Beyer, Pete Tong]
+     *   }</pre>
+     *
+     * @param string The {@code String} where to find artist names
+     *
+     * @return An {@link ImmutableSet} with the artists found
+     *
+     * @since 0.10-b
+     */
+    private static Set<String> getArtistNamesInTrackName(String string) {
+        Pattern endsWithRemix = Pattern.compile("[(|\\[](\\s*(&?\\s*(\\w+)\\s+)+(?i)(remix))[)|\\]]");
+        Pattern startsWithRemixBy = Pattern.compile("[(|\\[](?i)(remix) (?i)(by)(.+)[)|\\]]");
+        Pattern hasFt = Pattern.compile("[(|\\[|\\s](?i)(ft) (.+)");
+        Pattern hasFeat = Pattern.compile("[(|\\[|\\s](?i)(feat) (.+)");
+        Pattern hasFeaturing = Pattern.compile("[(|\\[|\\s](?i)(featuring) (.+)");
+        Pattern startsWithWith = Pattern.compile("[(|\\[](?i)(with) (.+)[)|\\]]");
+
+        Map<Pattern, Pattern> regexMaps = ImmutableMap.<Pattern, Pattern> builder()
+                .put(Pattern.compile(" (?i)(remix)"), endsWithRemix)
+                .put(Pattern.compile("(?i)(remix) (?i)(by) "),startsWithRemixBy)
+                .put(Pattern.compile("(?i)(ft) "), hasFt)
+                .put(Pattern.compile("(?i)(feat) "), hasFeat)
+                .put(Pattern.compile("(?i)(featuring) "), hasFeaturing)
+                .put(Pattern.compile("(?i)(with) "), startsWithWith).build();
+
+        Set<String> artistsInsideParenthesis = new HashSet<>();
+        for (Entry<Pattern, Pattern> regex : regexMaps.entrySet()) {
+            Pattern keyPattern = regex.getKey();
+            Matcher matcher = regex.getValue().matcher(string);
+            if (matcher.find()) {
+                String insideParenthesisString = string.substring(matcher.start()).replaceAll("[(|\\[|)|\\]]", "")
+                                                       .replaceAll(keyPattern.pattern(), "");
+
+                artistsInsideParenthesis.addAll(Splitter.on(CharMatcher.anyOf("&,"))
+                                                        .trimResults().omitEmptyStrings()
+                                                        .splitToList(insideParenthesisString.replaceAll("vs", "&")));
+                break;
+            }
+        }
+        return artistsInsideParenthesis;
+    }
 
     /**
      * Retrieves a {@link List} with at most {@code maxFiles} files that are in a folder or
@@ -111,17 +242,18 @@ public class Utils {
         return remainingFiles;
     }
 
-	/**
-	 * Adds files to a {@link List} from several folders depending of a maximum required files,
-	 * the remaining files to be added, using a {@link FileFilter}.
-	 *
-	 * @param files 		   The collection of final files
-	 * @param folders 		   The folders where the files are
-	 * @param maxFilesRequired The maximum number of files to add to the collection
-	 * @param remainingFiles   The remaining number of files to add
-	 * @param filter 		   The {@link FileFilter} to use to filter the files in the folders
-	 */
-	private static void addFilesFromFolders(List<File> files, File[] folders, int maxFilesRequired, int remainingFiles, FileFilter filter) {
+    /**
+     * Adds files to a {@link List} from several folders depending of a maximum required files,
+     * the remaining files to be added, using a {@link FileFilter}.
+     *
+     * @param files            The collection of final files
+     * @param folders          The folders where the files are
+     * @param maxFilesRequired The maximum number of files to add to the collection
+     * @param remainingFiles   The remaining number of files to add
+     * @param filter           The {@link FileFilter} to use to filter the files in the folders
+     */
+    private static void addFilesFromFolders(List<File> files, File[] folders, int maxFilesRequired, int remainingFiles,
+            FileFilter filter) {
         int subFoldersCount = 0;
         int remaining = remainingFiles;
         while ((subFoldersCount < folders.length) && ! Thread.currentThread().isInterrupted()) {

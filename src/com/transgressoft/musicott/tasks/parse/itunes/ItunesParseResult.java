@@ -17,27 +17,28 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.tasks.parse;
+package com.transgressoft.musicott.tasks.parse.itunes;
 
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.tasks.parse.*;
 
 import java.util.*;
 
 /**
- * Extends from {@link ParseResult} adding a {@link Map} of the associated itunes ids
+ * Extends from {@link BaseParseResult} adding a {@link Map} of the associated itunes ids
  * to system's track's ids, and a list of not found files during the {@link ItunesTracksParseAction}
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9.2-b
  */
-public class ItunesParseResult extends ParseResult<Map<Integer, Track>> {
+public class ItunesParseResult extends BaseParseResult<Map<Integer, Track>> {
 
     private Map<Integer, Integer> itunesIdToMusicottIdMap;
     private List<String> notFoundFiles;
 
-    public ItunesParseResult(Map<Integer, Track> parsedTracks, Collection<String> parseErrors,
-            Map<Integer, Integer> itunesIdToMusicottIdMap, List<String> notFoundFiles) {
+    public ItunesParseResult(Map<Integer, Track> parsedTracks, Map<Integer, Integer> itunesIdToMusicottIdMap,
+            Collection<String> parseErrors, List<String> notFoundFiles) {
         super(parsedTracks, parseErrors);
         this.itunesIdToMusicottIdMap = itunesIdToMusicottIdMap;
         this.notFoundFiles = notFoundFiles;

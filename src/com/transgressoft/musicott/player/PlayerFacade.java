@@ -41,11 +41,10 @@ import java.util.stream.*;
  * Singleton class that isolates the usage of the music player.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class PlayerFacade {
 
-    private static PlayerFacade instance;
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private PlayQueueController playQueueController;
     private PlayerController playerController;
@@ -62,6 +61,11 @@ public class PlayerFacade {
     private ServiceDemon services = ServiceDemon.getInstance();
     private TaskDemon taskDemon = TaskDemon.getInstance();
 
+    private static class InstanceHolder {
+        static final PlayerFacade INSTANCE = new PlayerFacade();
+        private InstanceHolder() {}
+    }
+
     private PlayerFacade() {
         playList = FXCollections.observableArrayList();
         historyList = FXCollections.observableArrayList();
@@ -72,10 +76,7 @@ public class PlayerFacade {
     }
 
     public static PlayerFacade getInstance() {
-        if (instance == null) {
-            instance = new PlayerFacade();
-        }
-        return instance;
+        return InstanceHolder.INSTANCE;
     }
 
     public ObservableList<TrackQueueRow> getPlayList() {
@@ -91,7 +92,7 @@ public class PlayerFacade {
     }
 
     public String getPlayerStatus() {
-        return trackPlayer.getStatus();
+        return trackPlayer == null ? Status.UNKNOWN.name() : trackPlayer.getStatus();
     }
 
     /**
@@ -290,7 +291,7 @@ public class PlayerFacade {
             }
         });
 
-        tracksToDelete.stream().forEach(trackId -> {
+        tracksToDelete.forEach(trackId -> {
             Iterator<TrackQueueRow> trackQueueRowIterator = playList.iterator();
             while (trackQueueRowIterator.hasNext())
                 if (trackQueueRowIterator.next().getRepresentedTrackId() == trackId)
@@ -386,11 +387,9 @@ public class PlayerFacade {
                     }
                 });
             }
-            Platform.runLater(
-                    () -> stageDemon.getNavigationController().setStatusMessage("Playing a random " + "playlist"));
+            Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Playing a random"));
         }
-        else {
+        else
             Platform.runLater(stageDemon.getPlayerController()::setStopped);
-        }
     }
 }

@@ -19,7 +19,9 @@
 
 package com.transgressoft.musicott.view;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
 import javafx.beans.binding.*;
@@ -38,7 +40,7 @@ import java.util.*;
  * music library menus, and the status progress and status messages.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class NavigationController implements MusicottController {
 
@@ -55,17 +57,20 @@ public class NavigationController implements MusicottController {
 
     private NavigationMenuListView navigationMenuListView;
     private PlaylistTreeView playlistTreeView;
-    private NavigationMode showingMode;
     private ObjectProperty<NavigationMode> navigationModeProperty;
+
+    private StageDemon stageDemon = StageDemon.getInstance();
+    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private TaskDemon taskDemon = TaskDemon.getInstance();
 
     @FXML
     public void initialize() {
-        navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", showingMode);
+        navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", NavigationMode.ALL_TRACKS);
         navigationModeProperty.addListener((obs, oldMode, newMode) -> setNavigationMode(newMode));
 
         playlistTreeView = new PlaylistTreeView();
         navigationMenuListView = new NavigationMenuListView();
-        NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS};
+        NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS, NavigationMode.ARTISTS};
         navigationMenuListView.setItems(FXCollections.observableArrayList(navigationModes));
 
         ContextMenu newPlaylistButtonContextMenu = newPlaylistButtonContextMenu();
@@ -129,24 +134,24 @@ public class NavigationController implements MusicottController {
      * @param mode The {@code NavigationMode} that the user choose
      */
     public void setNavigationMode(NavigationMode mode) {
-        showingMode = mode;
         navigationModeProperty.setValue(mode);
         switch (mode) {
             case ALL_TRACKS:
                 musicLibrary.showAllTracks();
                 navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
                 playlistTreeView.getSelectionModel().clearAndSelect(- 1);
-                Platform.runLater(stageDemon.getRootController()::hideTableInfoPane);
+                Platform.runLater(stageDemon.getRootController()::showAllTracksView);
+                break;
+            case ARTISTS:
+                navigationMenuListView.getSelectionModel().select(NavigationMode.ARTISTS);
+                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+                Platform.runLater(stageDemon.getRootController()::showArtistsView);
                 break;
             case PLAYLIST:
                 navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
-                Platform.runLater(stageDemon.getRootController()::showTableInfoPane);
+                Platform.runLater(stageDemon.getRootController()::showPlaylistView);
                 break;
         }
-    }
-
-    public NavigationMode getNavigationMode() {
-        return showingMode;
     }
 
     public ObjectProperty<NavigationMode> navigationModeProperty() {
@@ -157,7 +162,7 @@ public class NavigationController implements MusicottController {
         return playlistTreeView.selectedPlaylistProperty();
     }
 
-    public void addNewPlaylist(Playlist newPlaylist) {
+    public void addNewPlaylist(Playlist newPlaylist, boolean selectAfter) {
         TreeItem<Playlist> selectedPlaylistItem = playlistTreeView.getSelectionModel().selectedItemProperty().get();
 
         if (selectedPlaylistItem != null && selectedPlaylistItem.getValue().isFolder()) {
@@ -168,7 +173,7 @@ public class NavigationController implements MusicottController {
             }
         }
         else {
-            playlistTreeView.addPlaylist(newPlaylist);
+            playlistTreeView.addPlaylist(newPlaylist, selectAfter);
             musicLibrary.addPlaylist(newPlaylist);
         }
     }
@@ -182,6 +187,10 @@ public class NavigationController implements MusicottController {
     }
 
     public void setStatusMessage(String message) {
+        if (taskProgressBar.getProgress() == 0.0)
+            statusLabel.setStyle("-fx-text-fill: rgb(99, 255, 109);");
+        else
+            statusLabel.setStyle("-fx-text-fill: rgb(73, 73, 73);");
         statusLabel.setText(message);
     }
 }

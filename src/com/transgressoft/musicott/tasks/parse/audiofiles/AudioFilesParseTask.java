@@ -17,11 +17,11 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.tasks.parse;
+package com.transgressoft.musicott.tasks.parse.audiofiles;
 
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
-import javafx.application.*;
+import com.transgressoft.musicott.tasks.parse.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -33,20 +33,21 @@ import java.util.concurrent.*;
  * audio files and add them to the {@link MusicLibrary}.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
-public class FilesParseTask extends BaseParseTask {
+public class AudioFilesParseTask extends BaseParseTask {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     private List<File> filesToParse;
+    private Map<Integer, Track> parsedTracks;
     private int currentParsedFiles;
     private int totalFilesToParse;
     private boolean playAtTheEnd;
 
     private PlayerFacade player = PlayerFacade.getInstance();
 
-    public FilesParseTask(List<File> files, boolean playAtTheEnd) {
+    public AudioFilesParseTask(List<File> files, boolean playAtTheEnd) {
         filesToParse = files;
         this.playAtTheEnd = playAtTheEnd;
         currentParsedFiles = 0;
@@ -68,8 +69,8 @@ public class FilesParseTask extends BaseParseTask {
         startMillis = System.currentTimeMillis();
         LOG.debug("Starting file importing");
         ForkJoinPool forkJoinPool = new ForkJoinPool(4);
-        ParseResult<Map<Integer, Track>> result = forkJoinPool.invoke(new FilesParseAction(filesToParse, this));
-        parsedTracks = result.getParsedItems();
+        BaseParseResult<Map<Integer, Track>> result = forkJoinPool.invoke(new AudioFilesParseAction(filesToParse, this));
+        parsedTracks = result.getParsedResults();
         parseErrors = result.getParseErrors();
         return null;
     }
@@ -79,23 +80,12 @@ public class FilesParseTask extends BaseParseTask {
         super.succeeded();
         updateMessage("Parse succeeded");
         LOG.info("Parse task completed");
-
-        Thread addTracksToMusicLibraryThread = new Thread(this::addResultsToMusicLibrary);
-        addTracksToMusicLibraryThread.start();
-        stageDemon.showIndeterminateProgress();
+        computeAndShowElapsedTime(parsedTracks.size());
 
         if (! parseErrors.isEmpty())
             errorDemon.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
         if (playAtTheEnd)
             player.addTracksToPlayQueue(parsedTracks.keySet(), true);
-    }
-
-    @Override
-    protected void addResultsToMusicLibrary() {
-        Platform.runLater(() -> updateTaskProgressOnView(- 1, ""));
-        musicLibrary.addTracks(parsedTracks);
-        Platform.runLater(stageDemon::closeIndeterminateProgress);
-        computeAndShowElapsedTime();
     }
 
     @Override
