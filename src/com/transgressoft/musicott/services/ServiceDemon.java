@@ -59,14 +59,16 @@ public class ServiceDemon {
     public void lastFmLogIn(String username, String password) {
         lastFmPreferences.setLastFmUsername(username);
         lastFmPreferences.setLasFmPassword(password);
-        lastFmTask = new LastFmTask();
+        lastFmTask = new LastFmTask(this);
         lastFmTask.start();
     }
 
     public void lastFmLogOut() {
         lastFmPreferences.deleteLastFmUserData();
-        if (lastFmTask != null && lastFmTask.isAlive())
-            lastFmTask.interrupt();
+        if (lastFmTask != null && lastFmTask.isAlive()) {
+            lastFmTask.logout();
+            setUsingLastFm(false);
+        }
     }
 
     public void updateAndScrobbleTrack(Track track) {

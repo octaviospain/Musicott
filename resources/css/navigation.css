@@ -1,5 +1,5 @@
 @import url("base.css");
-@import url("scrollbar.css");
+@import url("scroll-bar-general.css");
 
 #navigationModeListView .list-cell:tracks {
 	-fx-graphic: url('../icons/menusongs-white-icon.png');

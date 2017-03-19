@@ -144,7 +144,7 @@ public class PlayerFacade {
             }
             LOG.info("Added {} tracks to player", playableTracks.size());
             if (placeFirstInPlayQueue)
-                play(false);
+                play(true);
         }
     }
 
@@ -387,7 +387,7 @@ public class PlayerFacade {
                     }
                 });
             }
-            Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Playing a random"));
+            Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Playing random playlist"));
         }
         else
             Platform.runLater(stageDemon.getPlayerController()::setStopped);

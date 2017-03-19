@@ -58,5 +58,5 @@ public interface MusicottController {
     String DIALOG_STYLE = STYLES_PATH + "dialog.css";
     String TRACK_TABLE_STYLE = STYLES_PATH + "tracktable.css";
     String BASE_STYLE = STYLES_PATH + "base.css";
-    String TRACKAREASET_TRACK_TABLE_STYLE = STYLES_PATH + "trackareaset-tracktable.css";
+    String TRACKAREASET_TRACK_TABLE_STYLE = STYLES_PATH + "tracktable-trackareaset.css";
 }

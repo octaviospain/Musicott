@@ -1,5 +1,5 @@
 @import url("base.css");
-@import url("scrollbar.css");
+@import url("scroll-bar-general.css");
 
 #artistsViewSplitPane {
     -fx-background-color: rgb(34, 34, 34);
@@ -69,12 +69,4 @@
 .random-button {
     -fx-graphic: url('../icons/random-icon.png');
     -fx-background-color: transparent;
-}
-
-.list-view .scroll-bar .decrement-button,
-.list-view .scroll-bar .increment-button,
-.list-view .scroll-bar .increment-arrow,
-.list-view .scroll-bar .decrement-arrow {
-    -fx-shape: " ";
-    -fx-padding:0;
 }
