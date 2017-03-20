@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
-<MenuBar fx:id="rootMenuBar" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.RootMenuBarController" stylesheets="@../css/base.css">
+<MenuBar fx:id="rootMenuBar" stylesheets="@../css/base.css" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.RootMenuBarController">
 <menus>
   <Menu fx:id="fileMenu" mnemonicParsing="false" text="File">
     <items>
@@ -27,6 +27,7 @@
   </Menu>
   <Menu fx:id="controlsMenu" mnemonicParsing="false" text="Controls">
     <items>
+            <MenuItem fx:id="playPauseMenuItem" mnemonicParsing="false" text="Pause" />
           <MenuItem fx:id="previousMenuItem" mnemonicParsing="false" text="Previous" />
           <MenuItem fx:id="nextMenuItem" mnemonicParsing="false" text="Next" />
           <SeparatorMenuItem mnemonicParsing="false" />

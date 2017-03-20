@@ -106,7 +106,7 @@ public class Utils {
      */
     private static ImmutableSet<String> getArtistNamesInTrackArtist(String string) {
         ImmutableSet<String> artistsInvolved;
-        Optional<List<String>> splittedNames = Stream.of("versus", "vs").filter(string::contains)
+        Optional<List<String>> splittedNames = Stream.of(" versus ", " vs ").filter(string::contains)
                                                      .map(s -> Splitter.on(s).trimResults().omitEmptyStrings()
                                                                        .splitToList(string)).findAny();
 
@@ -166,7 +166,7 @@ public class Utils {
 
                 artistsInsideParenthesis.addAll(Splitter.on(CharMatcher.anyOf("&,"))
                                                         .trimResults().omitEmptyStrings()
-                                                        .splitToList(insideParenthesisString.replaceAll("vs", "&")));
+                                                        .splitToList(insideParenthesisString.replaceAll("\\s(?i)(vs)\\s", "&")));
                 break;
             }
         }

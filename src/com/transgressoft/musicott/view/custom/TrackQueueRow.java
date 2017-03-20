@@ -19,7 +19,6 @@
 
 package com.transgressoft.musicott.view.custom;
 
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.*;
 import javafx.beans.binding.*;
@@ -50,10 +49,10 @@ public class TrackQueueRow extends GridPane {
     private VBox labelBox;
     private Button deleteTrackQueueRowButton;
 
-    public TrackQueueRow(int trackID) {
+    public TrackQueueRow(int trackID, PlayQueueController playQueueController) {
         super();
         track = MusicLibrary.getInstance().getTrack(trackID).get();
-        playQueueController = StageDemon.getInstance().getPlayQueueController();
+        this.playQueueController = playQueueController;
         placeCover();
         placeLabels();
         placeDeleteHoverButton();

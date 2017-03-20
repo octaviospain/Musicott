@@ -53,7 +53,7 @@ public class MetadataUpdater {
     /**
      * Writes the {@link Track} information to an audio file metadata.
      *
-     * @return {@code True} if the operation was successful, {@code False} otherwise
+     * @throws TrackUpdateException If something went bad updating the file metadata
      */
     public void writeAudioMetadata() throws TrackUpdateException {
         Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());

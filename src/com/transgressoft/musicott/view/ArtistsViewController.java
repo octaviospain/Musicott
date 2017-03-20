@@ -24,11 +24,11 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.Platform;
 import javafx.beans.binding.*;
+import javafx.beans.property.*;
 import javafx.beans.value.*;
 import javafx.collections.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
 
 import java.util.*;
 import java.util.Map.*;
@@ -46,7 +46,7 @@ public class ArtistsViewController {
     @FXML
     private ListView<String> artistsListView;
     @FXML
-    private VBox trackSetsAreaVBox;
+    private ListView<TrackSetAreaRow> trackSetsListView;
     @FXML
     private Label nameLabel;
     @FXML
@@ -57,6 +57,7 @@ public class ArtistsViewController {
     private Button artistRandomButton;
 
     private ObservableMap<String, TrackSetAreaRow> albumTrackSets;
+    private ObjectProperty<Optional<String>> selectedArtistProperty;
 
     private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
@@ -72,18 +73,27 @@ public class ArtistsViewController {
         artistRandomButton.visibleProperty()
                           .bind(Bindings.createBooleanBinding(() -> nameLabel.textProperty().isEmpty().not().get(),
                                                               nameLabel.textProperty()));
-        artistRandomButton.setOnAction(e -> musicLibrary.makeRandomArtistPlaylist(nameLabel.getText()));
+        artistRandomButton.setOnAction(e -> musicLibrary.makeRandomArtistPlaylist(selectedArtistProperty.get().get()));
+        selectedArtistProperty = new SimpleObjectProperty<>(this, "selected artist", Optional.empty());
+        nameLabel.textProperty().addListener((obs, oldArtist, newArtist) -> {
+            if (newArtist.isEmpty())
+                selectedArtistProperty.set(Optional.empty());
+            else
+                selectedArtistProperty.set(Optional.of(newArtist));
+        });
+        if (! artistsListView.getItems().isEmpty())
+            checkSelectedArtist();
     }
 
     private MapChangeListener<String, TrackSetAreaRow> albumTrackSetsListener() {
         return change -> {
             if (change.wasAdded())
-                trackSetsAreaVBox.getChildren().add(change.getValueAdded());
+                trackSetsListView.getItems().add(change.getValueAdded());
             else if (change.wasRemoved())
-                trackSetsAreaVBox.getChildren().remove(change.getValueRemoved());
+                trackSetsListView.getItems().remove(change.getValueRemoved());
             totalTracksLabel.setText(getTotalArtistTracksString());
             totalAlbumsLabel.setText(getAlbumString());
-            checkSelectedTracks();
+            checkSelectedArtist();
         };
     }
 
@@ -101,14 +111,14 @@ public class ArtistsViewController {
                     albumTrackSets.clear();
                 }
                 else
-                    checkSelectedTracks();
+                    checkSelectedArtist();
             }
         };
     }
 
     private String getTotalArtistTracksString() {
         int totalArtistTracks = albumTrackSets.values().stream()
-                                              .mapToInt(trackEntry -> trackEntry.containedTracksProperty().size())
+                                              .mapToInt(trackSet -> trackSet.containedTracksProperty().size())
                                               .sum();
         String appendix = totalArtistTracks == 1 ? " track" : " tracks";
         return String.valueOf(totalArtistTracks) + appendix;
@@ -120,7 +130,7 @@ public class ArtistsViewController {
         return String.valueOf(numberOfTrackSets) + appendix;
     }
 
-    void checkSelectedTracks() {
+    void checkSelectedArtist() {
         if (artistsListView.getSelectionModel().getSelectedItem() == null) {
             Platform.runLater(() -> {
                 artistsListView.getSelectionModel().select(0);
@@ -131,16 +141,26 @@ public class ArtistsViewController {
     }
 
     void updateShowingTrackSets() {
-        String showingArtist = nameLabel.getText();
-        Multimap<String, Entry<Integer, Track>> updatedAlbumTrackSets = musicLibrary
-                .getAlbumTracksOfArtist(showingArtist);
+        if (selectedArtistProperty.getValue().isPresent()) {
+            String showingArtist = selectedArtistProperty.getValue().get();
+            Multimap<String, Entry<Integer, Track>> updatedAlbumTrackSets = musicLibrary.getAlbumTracksOfArtist(showingArtist);
 
-        Set<String> oldAlbums = albumTrackSets.keySet();
-        Set<String> newAlbums = updatedAlbumTrackSets.keySet();
-        Set<String> addedAlbums = Sets.difference(newAlbums, oldAlbums).immutableCopy();
-        Set<String> removedAlbums = Sets.difference(oldAlbums, newAlbums).immutableCopy();
-        Set<String> holdedAlbums = Sets.intersection(oldAlbums, newAlbums).immutableCopy();
+            Set<String> oldAlbums = albumTrackSets.keySet();
+            Set<String> newAlbums = updatedAlbumTrackSets.keySet();
+            Set<String> addedAlbums = Sets.difference(newAlbums, oldAlbums).immutableCopy();
+            Set<String> removedAlbums = Sets.difference(oldAlbums, newAlbums).immutableCopy();
+            Set<String> holdedAlbums = Sets.intersection(oldAlbums, newAlbums).immutableCopy();
 
+            updateHoldedAlbums(updatedAlbumTrackSets, holdedAlbums);
+            addedAlbums.forEach(album -> Platform.runLater(() -> addTrackSet(album, updatedAlbumTrackSets.get(album))));
+            removedAlbums.forEach(album -> Platform.runLater(() -> albumTrackSets.remove(album)));
+
+            if (albumTrackSets.isEmpty() && ! artistsListView.getItems().isEmpty())
+                checkSelectedArtist();
+        }
+    }
+
+    private void updateHoldedAlbums(Multimap<String, Entry<Integer, Track>> updatedAlbumTrackSets, Set<String> holdedAlbums) {
         holdedAlbums.forEach(album -> {
             TrackSetAreaRow albumTrackSet = albumTrackSets.get(album);
             Set<Entry<Integer, Track>> oldTracks = ImmutableSet.copyOf(albumTrackSet.containedTracksProperty());
@@ -153,17 +173,14 @@ public class ArtistsViewController {
                 albumTrackSets.get(album).containedTracksProperty().removeAll(removedTracks);
             });
         });
-        addedAlbums.forEach(album -> Platform.runLater(() -> addTrackSet(album, updatedAlbumTrackSets.get(album))));
-        removedAlbums.forEach(album -> Platform.runLater(() -> albumTrackSets.remove(album)));
-
-        if (albumTrackSets.isEmpty() && ! artistsListView.getItems().isEmpty())
-            checkSelectedTracks();
     }
 
     private void addTrackSet(String album, Collection<Entry<Integer, Track>> tracks) {
-        TrackSetAreaRow trackSetAreaRow = new TrackSetAreaRow(nameLabel.getText(), album, tracks);
-        trackSetAreaRow.selectedTracksProperty().addListener((obs, oldList, newList) -> checkSelectedTracks());
-        albumTrackSets.put(album, trackSetAreaRow);
+        selectedArtistProperty.getValue().ifPresent(showingArtist -> {
+            TrackSetAreaRow trackSetAreaRow = new TrackSetAreaRow(showingArtist, album, tracks);
+            trackSetAreaRow.selectedTracksProperty().addListener((obs, oldList, newList) -> checkSelectedArtist());
+            albumTrackSets.put(album, trackSetAreaRow);
+        });
     }
 
     /**
@@ -174,7 +191,7 @@ public class ArtistsViewController {
      */
     public void setArtistTrackSets(Multimap<String, Entry<Integer, Track>> tracksByAlbum) {
         albumTrackSets.clear();
-        trackSetsAreaVBox.getChildren().clear();
+        trackSetsListView.getItems().clear();
         tracksByAlbum.asMap().entrySet().forEach(multimapEntry -> {
             String album = multimapEntry.getKey();
             Collection<Entry<Integer, Track>> tracks = multimapEntry.getValue();
@@ -197,7 +214,7 @@ public class ArtistsViewController {
             if (removed && albumAreaRow.containedTracksProperty().isEmpty())
                 albumTrackSets.remove(trackAlbum);
             if (albumTrackSets.isEmpty() && ! artistsListView.getItems().isEmpty())
-                checkSelectedTracks();
+                checkSelectedArtist();
         }
     }
 
@@ -206,11 +223,37 @@ public class ArtistsViewController {
                              .collect(Collectors.toCollection(FXCollections::observableArrayList));
     }
 
+    public void selectTrack(Entry<Integer, Track> trackEntry) {
+        Set<String> artistsInvolved = trackEntry.getValue().getArtistsInvolved();
+        Optional<String> selectedArtist = selectedArtistProperty.getValue();
+        if (selectedArtist.isPresent() && ! artistsInvolved.contains(selectedArtist.get())) {
+            String newArtist = artistsInvolved.stream().findFirst().get();
+            musicLibrary.showArtistAndSelectTrack(newArtist, trackEntry);
+            nameLabel.setText(newArtist);
+        }
+        else {
+            Track track = trackEntry.getValue();
+            String trackAlbum = track.getAlbum().isEmpty() ? "Unknown album" : track.getAlbum();
+            albumTrackSets.values().forEach(trackSet -> {
+                if (trackSet.getAlbum().equals(trackAlbum)) {
+                    trackSet.selectTrack(trackEntry);
+                    trackSetsListView.scrollTo(trackSet);
+                }
+                else
+                    trackSet.deselectAllTracks();
+            });
+        }
+    }
+
     public void selectAllTracks() {
         albumTrackSets.values().forEach(TrackSetAreaRow::selectAllTracks);
     }
 
     public void deselectAllTracks() {
         albumTrackSets.values().forEach(TrackSetAreaRow::deselectAllTracks);
+    }
+
+    public ReadOnlyObjectProperty<Optional<String>> selectedArtistProperty() {
+        return selectedArtistProperty;
     }
 }

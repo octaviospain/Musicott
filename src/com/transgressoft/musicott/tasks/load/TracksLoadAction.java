@@ -150,6 +150,6 @@ public class TracksLoadAction extends BaseLoadAction {
         track.getCoverImage().ifPresent(coverBytes -> track.hasCoverProperty().set(true));
         track.isPlayableProperty().setValue(track.isPlayable());
         track.artistsInvolvedProperty().setValue(track.getArtistsInvolved());
-        notifyPreloader(tracksStep.incrementAndGet(), totalTracks, "Loading Tracks...");
+        notifyPreloader(tracksStep.incrementAndGet(), totalTracks, "Loading tracks...");
     }
 }

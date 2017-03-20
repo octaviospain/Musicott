@@ -101,8 +101,6 @@ public class RootController implements MusicottController {
     private ObjectProperty<Image> hoverCoverProperty;
     private TrackTableView trackTable;
 
-    private ObservableList<Entry<Integer, Track>> selectedTracks;
-
     private ObjectProperty<NavigationMode> navigationModeProperty;
     private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
     private BooleanProperty showingNavigationPaneProperty;
@@ -116,13 +114,11 @@ public class RootController implements MusicottController {
     @FXML
     public void initialize() {
         trackTable = new TrackTableView();
-        selectedTracks = trackTable.getSelectionModel().getSelectedItems();
         selectedPlaylistProperty = navigationLayoutController.selectedPlaylistProperty();
         selectedPlaylistProperty.addListener(
                 (obs, oldSelected, newSelected) -> newSelected.ifPresent(this::updateShowingInfoWithPlaylist));
 
         navigationModeProperty = navigationLayoutController.navigationModeProperty();
-        navigationModeProperty.addListener((obs, oldList, newList) -> chooseSelectedTracks());
         showingNavigationPaneProperty = new SimpleBooleanProperty(this, "showing navigation pane", true);
         showingTableInfoPaneProperty = new SimpleBooleanProperty(this, "showing table info pane", true);
 
@@ -135,7 +131,7 @@ public class RootController implements MusicottController {
         bindSearchTextField();
         hideTableInfoPane();
         navigationLayoutController.setRootController(this);
-        navigationLayoutController.setNavigationMode(NavigationMode.ALL_TRACKS);
+        navigationLayoutController.setNavigationMode(NavigationMode.ARTISTS);
     }
 
     public void setStage(Stage mainStage) {
@@ -370,7 +366,7 @@ public class RootController implements MusicottController {
     public void showArtistsView() {
         removeTablePane();
         hideTableInfoPane();
-        artistsLayoutController.checkSelectedTracks();
+        artistsLayoutController.checkSelectedArtist();
         if (! tableStackPane.getChildren().contains(artistsLayout)) {
             tableStackPane.getChildren().remove(tableBorderPane);
             tableStackPane.getChildren().add(artistsLayout);
@@ -475,6 +471,20 @@ public class RootController implements MusicottController {
         hoverCoverProperty.setValue(trackHoveredImage);
     }
 
+    public void selectTrack(Entry<Integer, Track> entryToSelect) {
+        NavigationMode mode = navigationModeProperty.getValue();
+        switch (mode) {
+            case ALL_TRACKS:
+                trackTable.selectFocusAndScroll(entryToSelect);
+                break;
+            case PLAYLIST:
+                break;
+            case ARTISTS:
+                artistsLayoutController.selectTrack(entryToSelect);
+                break;
+        }
+    }
+
     public void selectAllTracks() {
         NavigationMode mode = navigationModeProperty.getValue();
         switch (mode) {
@@ -501,20 +511,6 @@ public class RootController implements MusicottController {
         }
     }
 
-    private ObservableList<Entry<Integer, Track>> chooseSelectedTracks() {
-        NavigationMode mode = navigationModeProperty.getValue();
-        switch (mode) {
-            case ALL_TRACKS:
-            case PLAYLIST:
-                selectedTracks = trackTable.getSelectionModel().getSelectedItems();
-                break;
-            case ARTISTS:
-                selectedTracks = artistsLayoutController.getSelectedTracks();
-                break;
-        }
-        return selectedTracks;
-    }
-
     public NavigationController getNavigationController() {
         return navigationLayoutController;
     }
@@ -524,6 +520,17 @@ public class RootController implements MusicottController {
     }
 
     public ObservableList<Entry<Integer, Track>> getSelectedTracks() {
+        NavigationMode mode = navigationModeProperty.getValue();
+        ObservableList<Entry<Integer, Track>> selectedTracks = null;
+        switch (mode) {
+            case ALL_TRACKS:
+            case PLAYLIST:
+                selectedTracks = trackTable.getSelectionModel().getSelectedItems();
+                break;
+            case ARTISTS:
+                selectedTracks = artistsLayoutController.getSelectedTracks();
+                break;
+        }
         return selectedTracks;
     }
 

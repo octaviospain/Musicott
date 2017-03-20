@@ -95,6 +95,14 @@ public class PlayerFacade {
         return trackPlayer == null ? Status.UNKNOWN.name() : trackPlayer.getStatus();
     }
 
+    public void setPlayerController(PlayerController playerController) {
+        this.playerController = playerController;
+    }
+
+    public void setPlayQueueController(PlayQueueController playQueueController) {
+        this.playQueueController = playQueueController;
+    }
+
     /**
      * Adds a {@link List} of tracks to the play queue. Checks if all tracks given are playable.
      *
@@ -126,15 +134,14 @@ public class PlayerFacade {
      * @param placeFirstInPlayQueue {@code true} if the tracks added should be placed in the head of the play queue
      */
     private void addPlayableTracksToPlayQueue(List<Integer> playableTracks, boolean placeFirstInPlayQueue) {
-        if (playQueueController == null)
-            playQueueController = stageDemon.getPlayQueueController();
         if (playingRandom) {
             playList.clear();
-            playableTracks.forEach(trackID -> playList.add(new TrackQueueRow(trackID)));
+            playableTracks.forEach(trackID -> playList.add(new TrackQueueRow(trackID, playQueueController)));
             playingRandom = false;
         }
         else if (! playableTracks.isEmpty()) {
-            List<TrackQueueRow> newTrackRows = playableTracks.stream().map(TrackQueueRow::new)
+            List<TrackQueueRow> newTrackRows = playableTracks.stream()
+                                                             .map(id -> new TrackQueueRow(id, playQueueController))
                                                              .collect(Collectors.toList());
             synchronized (playList) {
                 if (placeFirstInPlayQueue)
@@ -149,7 +156,7 @@ public class PlayerFacade {
     }
 
     public void play(boolean playRandom) {
-        if (trackPlayer == null || "STOPPED".equals(trackPlayer.getStatus())) {
+        if (trackPlayer == null || "STOPPED".equals(trackPlayer.getStatus()) || "PAUSED".equals(trackPlayer.getStatus())) {
             if (! playList.isEmpty())
                 setCurrentTrack();
             else if (playRandom)
@@ -178,8 +185,6 @@ public class PlayerFacade {
     private void setPlayer(int trackId) {
         scrobbled = false;
         played = false;
-        if (playerController == null)
-            playerController = stageDemon.getPlayerController();
         currentTrack = musicLibrary.getTrack(trackId);
 
         currentTrack.ifPresent(track -> {
@@ -372,16 +377,13 @@ public class PlayerFacade {
     }
 
     public void setRandomList(List<Integer> randomTrackIds) {
-        if (playQueueController == null)
-            playQueueController = stageDemon.getPlayQueueController();
-
         if (! randomTrackIds.isEmpty()) {
             LOG.info("Created random list of tracks");
             playingRandom = true;
             for (int index = 0; index < randomTrackIds.size(); index++) {
                 int i = index;
                 Platform.runLater(() -> {
-                    playList.add(new TrackQueueRow(randomTrackIds.get(i)));
+                    playList.add(new TrackQueueRow(randomTrackIds.get(i), playQueueController));
                     if (i == 0) {
                         setCurrentTrack();
                     }
@@ -390,6 +392,6 @@ public class PlayerFacade {
             Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Playing random playlist"));
         }
         else
-            Platform.runLater(stageDemon.getPlayerController()::setStopped);
+            Platform.runLater(playerController::setStopped);
     }
 }

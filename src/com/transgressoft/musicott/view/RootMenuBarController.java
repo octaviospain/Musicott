@@ -25,7 +25,6 @@ import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.Utils.*;
-import com.transgressoft.musicott.view.custom.*;
 import de.codecentric.centerdevice.*;
 import javafx.application.*;
 import javafx.beans.binding.*;
@@ -93,6 +92,8 @@ public class RootMenuBarController {
     @FXML
     private Menu controlsMenu;
     @FXML
+    private MenuItem playPauseMenuItem;
+    @FXML
     private MenuItem previousMenuItem;
     @FXML
     private MenuItem nextMenuItem;
@@ -123,6 +124,7 @@ public class RootMenuBarController {
     private StageDemon stageDemon = StageDemon.getInstance();
     private TaskDemon taskDemon = TaskDemon.getInstance();
     private PlayerFacade playerFacade = PlayerFacade.getInstance();
+    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
     @FXML
     public void initialize() {}
@@ -244,6 +246,17 @@ public class RootMenuBarController {
     }
 
     private void setControlsMenuActions() {
+        playPauseTextBinding();
+        playPauseMenuItem.disableProperty().bind(musicLibrary.emptyLibraryProperty());
+        playPauseMenuItem.setOnAction(e -> {
+            String playerStatus = playerFacade.getPlayerStatus();
+            if ("PLAYING".equals(playerStatus))
+                playerFacade.pause();
+            else if ("PAUSED".equals(playerStatus))
+                playerFacade.resume();
+            else if ("STOPPED".equals(playerStatus))
+                playerFacade.play(true);
+        });
         previousMenuItem.disableProperty().bind(playerController.previousButtonDisabledProperty());
         previousMenuItem.setOnAction(e -> playerFacade.previous());
 
@@ -254,15 +267,11 @@ public class RootMenuBarController {
         decreaseVolumeMenuItem.setOnAction(e -> playerController.decreaseVolume());
 
         selectCurrentTrackMenuItem.setOnAction(e -> {
-            // TODO fix select current track
             Optional<Track> currentTrack = playerFacade.getCurrentTrack();
-            TrackTableView trackTable = (TrackTableView) rootStage.getScene().lookup("#trackTable");
-            trackTable.getSelectionModel().clearSelection();
             currentTrack.ifPresent(track -> {
                 int currentTrackId = track.getTrackId();
                 Map.Entry<Integer, Track> currentEntry = new AbstractMap.SimpleEntry<>(currentTrackId, track);
-                trackTable.getSelectionModel().select(currentEntry);
-                trackTable.scrollTo(currentEntry);
+                rootController.selectTrack(currentEntry);
             });
             LOG.debug("Current track in the player selected in the table");
         });
@@ -303,6 +312,18 @@ public class RootMenuBarController {
     private List<Integer> trackSelectionIds() {
         List<Entry<Integer, Track>> trackSelection = rootController.getSelectedTracks();
         return trackSelection.stream().map(Entry::getKey).collect(Collectors.toList());
+    }
+
+    private void playPauseTextBinding() {
+        BooleanProperty playPauseProperty = playerController.playButtonSelectedProperty();
+        playPauseMenuItem.textProperty().bind(Bindings.createStringBinding(() -> {
+            String menuText;
+            if (playPauseProperty.get())
+                menuText = "Pause";
+            else
+                menuText = "Play";
+            return menuText;
+        }, playPauseProperty));
     }
 
     /**
@@ -405,6 +426,7 @@ public class RootMenuBarController {
         preferencesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.COMMA, operativeSystemModifier));
         editMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, operativeSystemModifier));
         deleteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.BACK_SPACE, operativeSystemModifier));
+        playPauseMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE));
         previousMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, operativeSystemModifier));
         nextMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.LEFT, operativeSystemModifier));
         increaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, operativeSystemModifier));

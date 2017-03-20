@@ -87,7 +87,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         setColumnResizePolicy(UNCONSTRAINED_RESIZE_POLICY);
         getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         getSortOrder().add(dateAddedCol);
-        setRowFactory(TrackTableRow::new);
+        setRowFactory(tableView -> new TrackTableRow());
         addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
         getStylesheets().add(getClass().getResource(TRACK_TABLE_STYLE).toExternalForm());
 
@@ -200,6 +200,14 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         bpmCol.setCellFactory(numericCellFactory);
     }
 
+    public void selectFocusAndScroll(Entry<Integer, Track> trackEntry) {
+        getSelectionModel().clearSelection();
+        getSelectionModel().select(trackEntry);
+        scrollTo(trackEntry);
+        int entryPos = getSelectionModel().getSelectedIndex();
+        getSelectionModel().focus(entryPos);
+    }
+
     /**
      * Returns a {@link EventHandler} that fires the play of a {@link Track} when
      * the user presses the {@code Enter} key, and pauses/resumes the player when the user
@@ -210,9 +218,9 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
     private static EventHandler<KeyEvent> getKeyPressedEventHandler() {
         return event -> {
             PlayerFacade player = PlayerFacade.getInstance();
-            RootController rootController = StageDemon.getInstance().getRootController();
-            List<Entry<Integer, Track>> selection = rootController.getSelectedTracks();
             if (event.getCode() == KeyCode.ENTER) {
+                RootController rootController = StageDemon.getInstance().getRootController();
+                List<Entry<Integer, Track>> selection = rootController.getSelectedTracks();
                 List<Integer> selectionIDs = selection.stream().map(Entry::getKey).collect(Collectors.toList());
                 player.addTracksToPlayQueue(selectionIDs, true);
             }

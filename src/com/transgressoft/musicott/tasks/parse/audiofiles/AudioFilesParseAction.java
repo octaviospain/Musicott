@@ -22,6 +22,7 @@ package com.transgressoft.musicott.tasks.parse.audiofiles;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
+import javafx.application.*;
 
 import java.io.*;
 import java.util.*;
@@ -58,7 +59,7 @@ public class AudioFilesParseAction extends FilesParseAction {
             forkIntoSubActions();
         else {
             itemsToParse.forEach(this::parseItem);
-            musicLibrary.addTracks(parsedTracks);
+            Platform.runLater(() -> musicLibrary.addTracks(parsedTracks));
         }
 
         return new FilesParseResult(parsedTracks, parseErrors);

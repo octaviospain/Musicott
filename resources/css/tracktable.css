@@ -8,10 +8,14 @@
     -fx-font-family: "Avenir", sans-serif;
 }
 
+.table-view .column-header {
+    -fx-border-color: white;
+    -fx-border-width: 0 0 1 0;
+}
+
 .table-view {
     -fx-border-color: rgb(73, 73, 73);
-    -fx-border-width: 2px;
-    -fx-border-insets: -2 -2 0 -2;
+    -fx-border-width: 0px 0px 2px 0px;
 }
 
 .table-row-cell:empty .table-cell {

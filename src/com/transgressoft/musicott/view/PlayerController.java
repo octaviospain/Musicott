@@ -143,6 +143,8 @@ public class PlayerController implements MusicottController {
                 playQueueButton.setSelected(false);
         });
         StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
+        player.setPlayerController(this);
+        player.setPlayQueueController(playQueueLayoutController);
     }
 
     private void playPause() {

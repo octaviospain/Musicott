@@ -42,13 +42,11 @@ public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
 
     public static final DataFormat TRACK_ID_MIME_TYPE = new DataFormat("application/x-java-tracks-id");
 
-    private TableView<Entry<Integer, Track>> trackTableView;
     private PlayerFacade player = PlayerFacade.getInstance();
     private StageDemon stageDemon = StageDemon.getInstance();
 
-    public TrackTableRow(TableView<Entry<Integer, Track>> trackTableView) {
+    public TrackTableRow() {
         super();
-        this.trackTableView = trackTableView;
         setOnMouseClicked(this::playTrackOnMouseClickedHandler);
         setOnDragDetected(this::onDragDetectedMovingTracks);
         hoverProperty().addListener((observable, oldHovered, newHovered) -> {
@@ -79,7 +77,7 @@ public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
             Dragboard dragboard = startDragAndDrop(TransferMode.ANY);
             dragboard.setDragView(snapshot(null, null));
 
-            ObservableList<Entry<Integer, Track>> selection = trackTableView.getSelectionModel().getSelectedItems();
+            ObservableList<Entry<Integer, Track>> selection = stageDemon.getRootController().getSelectedTracks();
             List<Integer> selectionIds = selection.stream().map(Entry::getKey).collect(Collectors.toList());
             ClipboardContent clipboardContent = new ClipboardContent();
             clipboardContent.put(TRACK_ID_MIME_TYPE, selectionIds);

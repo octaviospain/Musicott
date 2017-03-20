@@ -132,6 +132,7 @@ public class TrackSetAreaRow extends HBox {
         relatedArtistsLabel = new Label();
         relatedArtistsLabel.setId("relatedArtistsLabel");
         relatedArtistsLabel.setWrapText(true);
+        relatedArtistsLabel.setMaxWidth(480);
         relatedArtistsLabel.setPrefWidth(USE_COMPUTED_SIZE);
         genresLabel = new Label(getGenresString());
         genresLabel.setId("genresLabel");
@@ -143,7 +144,7 @@ public class TrackSetAreaRow extends HBox {
         albumInfoVBox = new VBox(albumLabel, genresLabel, tracksTableView);
         VBox.setVgrow(tracksTableView, Priority.ALWAYS);
         HBox.setHgrow(albumInfoVBox, Priority.SOMETIMES);
-        HBox.setMargin(albumInfoVBox, new Insets(20, 20, 20, 0));
+        HBox.setMargin(albumInfoVBox, new Insets(20, 20, 5, 0));
         getChildren().add(albumInfoVBox);
     }
 
@@ -214,12 +215,13 @@ public class TrackSetAreaRow extends HBox {
         tracksTableView.setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
         tracksTableView.getStylesheets().add(getClass().getResource(TRACKAREASET_TRACK_TABLE_STYLE).toExternalForm());
         tracksTableView.getStyleClass().add("no-header");
-        tracksTableView.setRowFactory(TrackTableRow::new);
+        tracksTableView.setRowFactory(tableView -> new TrackTableRow());
         tracksTableView.addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
         tracksTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tracksTableView.setFixedCellSize(25);
         tracksTableView.prefHeightProperty().bind(tracksTableView.fixedCellSizeProperty().multiply(
-                Bindings.createDoubleBinding(() -> containedTracksProperty.size() * 1.07, containedTracksProperty)));
+                Bindings.createDoubleBinding(() -> containedTracksProperty.size() * 1.06,
+                                             containedTracksProperty)));
         tracksTableView.minHeightProperty().bind(tracksTableView.prefHeightProperty());
         tracksTableView.maxHeightProperty().bind(tracksTableView.prefHeightProperty());
 
@@ -242,22 +244,20 @@ public class TrackSetAreaRow extends HBox {
         trackNumberCol.setCellFactory(column -> new NumericTableCell());
 
         nameCol = new TableColumn<>("Name");
-        nameCol.setMinWidth(290);
+        nameCol.setMinWidth(150);
         nameCol.setPrefWidth(USE_COMPUTED_SIZE);
         nameCol.setStyle("-fx-alignment: CENTER-LEFT");
         nameCol.setCellValueFactory(cellData -> cellData.getValue().getValue().nameProperty());
 
         artistCol = new TableColumn<>("Artist");
-        artistCol.setMinWidth(140);
-        artistCol.setMaxWidth(140);
-        artistCol.setPrefWidth(140);
+        artistCol.setPrefWidth(150);
         artistCol.setStyle("-fx-alignment: CENTER-LEFT");
         artistCol.setCellValueFactory(cellData -> cellData.getValue().getValue().artistProperty());
 
         totalTimeCol = new TableColumn<>("Duration");
         totalTimeCol.setMinWidth(60);
         totalTimeCol.setPrefWidth(60);
-        totalTimeCol.setMinWidth(60);
+        totalTimeCol.setMaxWidth(60);
         totalTimeCol.setCellValueFactory(
                 cellData -> new SimpleObjectProperty<>(cellData.getValue().getValue().getTotalTime()));
         totalTimeCol.setStyle("-fx-alignment: CENTER-RIGHT");
@@ -311,6 +311,13 @@ public class TrackSetAreaRow extends HBox {
             tracksTableView.getColumns().remove(artistCol);
         else if (! tracksTableView.getColumns().contains(artistCol))
             tracksTableView.getColumns().add(2, artistCol);
+    }
+
+    public void selectTrack(Entry<Integer, Track> trackEntry) {
+        tracksTableView.getSelectionModel().clearSelection();
+        tracksTableView.getSelectionModel().select(trackEntry);
+        int entryPos = tracksTableView.getSelectionModel().getSelectedIndex();
+        tracksTableView.getSelectionModel().focus(entryPos);
     }
 
     public void selectAllTracks() {

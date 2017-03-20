@@ -424,9 +424,18 @@ public class MusicLibrary {
     }
 
     public void showArtist(String artist) {
+        showArtistAndSelectTrack(artist, null);
+    }
+
+    public void showArtistAndSelectTrack(String artist, Entry<Integer, Track> trackToSelect) {
         new Thread(() -> {
             Multimap<String, Entry<Integer, Track>> newTrackSetsByAlbum = getAlbumTracksOfArtist(artist);
-            Platform.runLater(() -> stageDemon.getRootController().setArtistTrackSets(newTrackSetsByAlbum));
+            if (trackToSelect != null) {
+                Platform.runLater(() -> {
+                    stageDemon.getRootController().setArtistTrackSets(newTrackSetsByAlbum);
+                    stageDemon.getRootController().selectTrack(trackToSelect);
+                });
+            }
         }).start();
     }
 

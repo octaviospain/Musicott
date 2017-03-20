@@ -56,7 +56,7 @@ public class Utils_GetArtistsInvolvedInTrackTest {
         @Test
         @DisplayName ("One name")
         void oneNameInArtist() {
-            initTrackWithArtistAndResult("DVS1", "DVS1");
+            initTrackWithArtistAndResult("Dvs1", "Dvs1");
             assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
         }
 

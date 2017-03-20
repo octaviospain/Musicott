@@ -93,10 +93,6 @@ public class StageDemon {
         return getRootController() == null ? null : getRootController().getNavigationController();
     }
 
-    public PlayQueueController getPlayQueueController() {
-        return (PlayQueueController) controllers.get(PLAYQUEUE_LAYOUT);
-    }
-
     public PlayerController getPlayerController() {
         return getRootController().getPlayerController();
     }
