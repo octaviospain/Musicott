@@ -59,6 +59,7 @@ public class NavigationController implements MusicottController {
     private PlaylistTreeView playlistTreeView;
     private ObjectProperty<NavigationMode> navigationModeProperty;
 
+    private RootController rootController;
     private StageDemon stageDemon = StageDemon.getInstance();
     private MusicLibrary musicLibrary = MusicLibrary.getInstance();
     private TaskDemon taskDemon = TaskDemon.getInstance();
@@ -69,7 +70,7 @@ public class NavigationController implements MusicottController {
         navigationModeProperty.addListener((obs, oldMode, newMode) -> setNavigationMode(newMode));
 
         playlistTreeView = new PlaylistTreeView();
-        navigationMenuListView = new NavigationMenuListView();
+        navigationMenuListView = new NavigationMenuListView(this);
         NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS, NavigationMode.ARTISTS};
         navigationMenuListView.setItems(FXCollections.observableArrayList(navigationModes));
 
@@ -82,14 +83,42 @@ public class NavigationController implements MusicottController {
             newPlaylistButtonContextMenu.show(newPlaylistButton, newPlaylistButtonX, newPlaylistButtonY);
         });
 
-		navigationVBox.getChildren().add(1, navigationMenuListView);
-		playlistsVBox.getChildren().add(1, playlistTreeView);
-		taskProgressBar.visibleProperty().bind(Bindings.createBooleanBinding(
-				taskProgressBar.progressProperty().isEqualTo(0).not()::get, taskProgressBar.progressProperty()));
-		taskProgressBar.setProgress(0);
+        navigationVBox.getChildren().add(1, navigationMenuListView);
+        playlistsVBox.getChildren().add(1, playlistTreeView);
+        taskProgressBar.visibleProperty()
+                       .bind(Bindings.createBooleanBinding(taskProgressBar.progressProperty().isEqualTo(0).not()::get,
+                                                           taskProgressBar.progressProperty()));
+        taskProgressBar.setProgress(0);
 
         VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
         VBox.setVgrow(navigationVBox, Priority.ALWAYS);
+    }
+
+    /**
+     * Changes the view depending of the choose {@link NavigationMode}
+     *
+     * @param mode The {@code NavigationMode} that the user choose
+     */
+    public void setNavigationMode(NavigationMode mode) {
+        navigationModeProperty.setValue(mode);
+
+        switch (mode) {
+            case ALL_TRACKS:
+                musicLibrary.showAllTracks();
+                navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
+                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+                Platform.runLater(rootController::showAllTracksView);
+                break;
+            case ARTISTS:
+                navigationMenuListView.getSelectionModel().select(NavigationMode.ARTISTS);
+                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+                Platform.runLater(rootController::showArtistsView);
+                break;
+            case PLAYLIST:
+                navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
+                Platform.runLater(rootController::showPlaylistView);
+                break;
+        }
     }
 
     private ContextMenu newPlaylistButtonContextMenu() {
@@ -128,37 +157,15 @@ public class NavigationController implements MusicottController {
         return keyModifierOS;
     }
 
-    /**
-     * Changes the view depending of the choose {@link NavigationMode}
-     *
-     * @param mode The {@code NavigationMode} that the user choose
-     */
-    public void setNavigationMode(NavigationMode mode) {
-        navigationModeProperty.setValue(mode);
-        switch (mode) {
-            case ALL_TRACKS:
-                musicLibrary.showAllTracks();
-                navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
-                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
-                Platform.runLater(stageDemon.getRootController()::showAllTracksView);
-                break;
-            case ARTISTS:
-                navigationMenuListView.getSelectionModel().select(NavigationMode.ARTISTS);
-                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
-                Platform.runLater(stageDemon.getRootController()::showArtistsView);
-                break;
-            case PLAYLIST:
-                navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
-                Platform.runLater(stageDemon.getRootController()::showPlaylistView);
-                break;
-        }
+    void setRootController(RootController rootController) {
+        this.rootController = rootController;
     }
 
     public ObjectProperty<NavigationMode> navigationModeProperty() {
         return navigationModeProperty;
     }
 
-    public ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
+    ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
         return playlistTreeView.selectedPlaylistProperty();
     }
 

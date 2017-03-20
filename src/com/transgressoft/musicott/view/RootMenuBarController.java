@@ -17,20 +17,20 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.view.custom;
+package com.transgressoft.musicott.view;
 
-import com.google.common.collect.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.Utils.*;
-import com.transgressoft.musicott.view.*;
+import com.transgressoft.musicott.view.custom.*;
 import de.codecentric.centerdevice.*;
-import javafx.application.Platform;
+import javafx.application.*;
 import javafx.beans.binding.*;
 import javafx.beans.property.*;
+import javafx.fxml.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
 import javafx.scene.image.*;
@@ -50,12 +50,13 @@ import static com.transgressoft.musicott.view.MusicottController.*;
 import static javafx.scene.input.KeyCombination.*;
 
 /**
- * Creates a MenuBar or a native OS X menu bar
+ * Controller of the MenuBar of the application. If the Operative System
+ * is Max OS X, creates native OS X menu bar with the same behaviour.
  *
  * @author Octavio Calleya
  * @version 0.9.2-b
  */
-public class MusicottMenuBar extends MenuBar {
+public class RootMenuBarController {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
@@ -63,53 +64,75 @@ public class MusicottMenuBar extends MenuBar {
 	private static final String ABOUT_MUSICOTT_FIRST_LINE = " Version 0.9.2-b\n\n Copyright © 2015 Octavio Calleya.";
 	private static final String ABOUT_MUSICOTT_SECOND_LINE = " Licensed under GNU GPLv3. This product includes\n" + " " +
 																"software developed by other open source projects.";
-
-	private StageDemon stageDemon = StageDemon.getInstance();
-	private PlayerFacade playerFacade = PlayerFacade.getInstance();
-	private RootController rootController = stageDemon.getRootController();
-	private NavigationController navigationController = stageDemon.getNavigationController();
-
-    private Stage primaryStage;
-
+    @FXML
+    private MenuBar rootMenuBar;
+	@FXML
     private Menu fileMenu;
-    private Menu editMenu;
-    private Menu controlsMenu;
-    private Menu viewMenu;
-    private Menu aboutMenu;
+    @FXML
     private MenuItem openFileMenuItem;
+    @FXML
     private MenuItem importFolderMenuItem;
+    @FXML
     private MenuItem importItunesMenuItem;
-    private MenuItem preferencesMenuItem;
-    private MenuItem editMenuItem;
-    private MenuItem deleteMenuItem;
-    private MenuItem previousMenuItem;
-    private MenuItem nextMenuItem;
-    private MenuItem increaseVolumeMenuItem;
-    private MenuItem decreaseVolumeMenuItem;
-    private MenuItem selectCurrentTrackMenuItem;
-    private MenuItem aboutMenuItem;
+    @FXML
     private MenuItem newPlaylistMenuItem;
-    private MenuItem showHideNavigationPaneMenuItem;
-    private MenuItem showHideTableInfoPaneMenuItem;
+    @FXML
+    private MenuItem preferencesMenuItem;
+    @FXML
+    private MenuItem closeMenuItem;
+    @FXML
+    private Menu editMenu;
+    @FXML
+    private MenuItem editMenuItem;
+    @FXML
+    private MenuItem deleteMenuItem;
+    @FXML
     private MenuItem selectAllMenuItem;
+    @FXML
     private MenuItem dontSelectAllMenuItem;
+    @FXML
+    private Menu controlsMenu;
+    @FXML
+    private MenuItem previousMenuItem;
+    @FXML
+    private MenuItem nextMenuItem;
+    @FXML
+    private MenuItem increaseVolumeMenuItem;
+    @FXML
+    private MenuItem decreaseVolumeMenuItem;
+    @FXML
+    private MenuItem selectCurrentTrackMenuItem;
+    @FXML
+    private Menu viewMenu;
+    @FXML
+    private MenuItem showHideNavigationPaneMenuItem;
+    @FXML
+    private MenuItem showHideTableInfoPaneMenuItem;
+    @FXML
+    private Menu aboutMenu;
+    @FXML
+    private MenuItem aboutMenuItem;
+
     private Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
     private ImageView musicottLogoImageView = new ImageView(musicottLogo);
 
+    private Stage rootStage;
+    private RootController rootController;
+    private NavigationController navigationController;
+    private PlayerController playerController;
+    private StageDemon stageDemon = StageDemon.getInstance();
     private TaskDemon taskDemon = TaskDemon.getInstance();
+    private PlayerFacade playerFacade = PlayerFacade.getInstance();
 
-    public MusicottMenuBar(Stage primaryStage) {
-        super();
-        this.primaryStage = primaryStage;
-        initializeMenus();
-        setFileMenuActions();
-        setEditMenuActions();
-        setControlsMenuActions();
-        setViewMenuActions();
-        setAboutMenuActions();
-        showHideTableInfoDisableBinding();
-        showHideNavigationPaneTextBinding();
-        showHideTableInfoPaneTextBinding();
+    @FXML
+    public void initialize() {}
+
+    void setControllers(Stage rootStage, RootController rootController,
+            NavigationController navigationController, PlayerController playerController) {
+        this.rootStage = rootStage;
+        this.rootController = rootController;
+        this.navigationController = navigationController;
+        this.playerController = playerController;
     }
 
     /**
@@ -117,7 +140,7 @@ public class MusicottMenuBar extends MenuBar {
      *
      * @see <a href="https://github.com/codecentric/NSMenuFX">NSMenuFX</a>
      */
-    public void macMenuBar() {
+    void macMenuBar() {
         MenuToolkit menuToolkit = MenuToolkit.toolkit();
         Menu appMenu = new Menu("Musicott");
         appMenu.getItems().addAll(preferencesMenuItem, new SeparatorMenuItem());
@@ -128,65 +151,45 @@ public class MusicottMenuBar extends MenuBar {
         windowMenu.getItems().addAll(menuToolkit.createHideOthersMenuItem(), menuToolkit.createUnhideAllMenuItem());
         windowMenu.getItems().addAll(menuToolkit.createBringAllToFrontItem());
 
+        fileMenu.getItems().remove(5, 8);
         menuToolkit.setApplicationMenu(appMenu);
-        getMenus().addAll(appMenu, fileMenu, editMenu, controlsMenu, viewMenu, windowMenu, aboutMenu);
+        rootMenuBar.getMenus().add(0, appMenu);
+        rootMenuBar.getMenus().add(5, windowMenu);
         menuToolkit.autoAddWindowMenuItems(windowMenu);
-        menuToolkit.setGlobalMenuBar(this);
+        menuToolkit.setGlobalMenuBar(rootMenuBar);
 
         setAccelerators(KeyCodeCombination.META_DOWN);
+        setFileMenuActions();
+        setEditMenuActions();
+        setControlsMenuActions();
+        setViewMenuActions();
+        setAboutMenuActions();
+        showHideTableInfoDisableBinding();
+        showHideNavigationPaneTextBinding();
+        showHideTableInfoPaneTextBinding();
         LOG.debug("OS X native menubar created");
     }
 
     /**
      * Configures the {@link MenuBar} bar with default accelerators and menus.
      */
-    public void defaultMenuBar() {
-        MenuItem closeMI = new MenuItem("Close");
-        closeMI.setAccelerator(new KeyCodeCombination(KeyCode.F4, ALT_DOWN));
-        closeMI.setOnAction(event -> {
+    void defaultMenuBar() {
+        closeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.F4, ALT_DOWN));
+        closeMenuItem.setOnAction(event -> {
             LOG.info("Exiting Musicott");
             taskDemon.shutDownTasks();
             System.exit(0);
         });
-        fileMenu.getItems().addAll(new SeparatorMenuItem(), preferencesMenuItem, new SeparatorMenuItem(), closeMI);
-        getMenus().addAll(fileMenu, editMenu, controlsMenu, viewMenu, aboutMenu);
         setAccelerators(KeyCodeCombination.CONTROL_DOWN);
-        LOG.debug("Default menu bar created");
-    }
-
-    private void initializeMenus() {
-        fileMenu = new Menu("File");
-        editMenu = new Menu("Edit");
-        controlsMenu = new Menu("Controls");
-        viewMenu = new Menu("View");
-        aboutMenu = new Menu("About");
-        openFileMenuItem = new MenuItem("Open File(s)...");
-        importFolderMenuItem = new MenuItem("Import Folder...");
-        importItunesMenuItem = new MenuItem("Import from iTunes Library...");
-        preferencesMenuItem = new MenuItem("Preferences");
-        editMenuItem = new MenuItem("Edit");
-        deleteMenuItem = new MenuItem("Delete");
-        previousMenuItem = new MenuItem("Previous");
-        nextMenuItem = new MenuItem("Next");
-        increaseVolumeMenuItem = new MenuItem("Increase volume");
-        decreaseVolumeMenuItem = new MenuItem("Decrease volume");
-        selectCurrentTrackMenuItem = new MenuItem("Select Current Track");
-        aboutMenuItem = new MenuItem("About");
-        newPlaylistMenuItem = new MenuItem("Add new playlist");
-        showHideNavigationPaneMenuItem = new MenuItem("Hide navigation pane");
-        showHideTableInfoPaneMenuItem = new MenuItem("Hide table info pane");
-        selectAllMenuItem = new MenuItem("Select all");
-        dontSelectAllMenuItem = new MenuItem("Don't select all");
-
-        fileMenu.getItems().addAll(openFileMenuItem, importFolderMenuItem, importItunesMenuItem);
-        fileMenu.getItems().addAll(new SeparatorMenuItem(), newPlaylistMenuItem);
-        editMenu.getItems().addAll(editMenuItem, deleteMenuItem);
-        editMenu.getItems().addAll(new SeparatorMenuItem(), selectAllMenuItem, dontSelectAllMenuItem);
-        controlsMenu.getItems().addAll(previousMenuItem, nextMenuItem, new SeparatorMenuItem());
-        controlsMenu.getItems().addAll(increaseVolumeMenuItem, decreaseVolumeMenuItem, new SeparatorMenuItem());
-        controlsMenu.getItems().add(selectCurrentTrackMenuItem);
-        viewMenu.getItems().addAll(showHideNavigationPaneMenuItem, showHideTableInfoPaneMenuItem);
-        aboutMenu.getItems().add(aboutMenuItem);
+        setFileMenuActions();
+        setEditMenuActions();
+        setControlsMenuActions();
+        setViewMenuActions();
+        setAboutMenuActions();
+        showHideTableInfoDisableBinding();
+        showHideNavigationPaneTextBinding();
+        showHideTableInfoPaneTextBinding();
+        LOG.debug("Default menu bar configured");
     }
 
     private void setFileMenuActions() {
@@ -200,9 +203,9 @@ public class MusicottMenuBar extends MenuBar {
                            new ExtensionFilter("flac files (*.flac)", "*.flac"),
                            new ExtensionFilter("wav files (*.wav)", "*.wav"),
                            new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
-            ImmutableList<File> files = ImmutableList.copyOf(chooser.showOpenMultipleDialog(primaryStage));
-            if (files != null) {
-                TaskDemon.getInstance().importFiles(files, true);
+            List<File> filesToImport = chooser.showOpenMultipleDialog(rootStage);
+            if (filesToImport != null) {
+                TaskDemon.getInstance().importFiles(filesToImport, true);
                 navigationController.setStatusMessage("Opening files");
             }
         });
@@ -210,7 +213,7 @@ public class MusicottMenuBar extends MenuBar {
             LOG.debug("Choosing folder to being imported");
             DirectoryChooser chooser = new DirectoryChooser();
             chooser.setTitle("Choose folder");
-            File folder = chooser.showDialog(primaryStage);
+            File folder = chooser.showDialog(rootStage);
             if (folder != null)
                 countFilesToImport(folder);
         });
@@ -219,41 +222,41 @@ public class MusicottMenuBar extends MenuBar {
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Select 'iTunes Music Library.xml' file");
             chooser.getExtensionFilters().add(new ExtensionFilter("xml files (*.xml)", "*.xml"));
-            File xmlFile = chooser.showOpenDialog(primaryStage);
+            File xmlFile = chooser.showOpenDialog(rootStage);
             if (xmlFile != null)
                 TaskDemon.getInstance().importFromItunesLibrary(xmlFile.getAbsolutePath());
         });
         preferencesMenuItem.setOnAction(e -> stageDemon.showPreferences());
-        newPlaylistMenuItem.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
+        newPlaylistMenuItem.setOnAction(e -> rootController.enterNewPlaylistName(false));
     }
 
     private void setEditMenuActions() {
         editMenuItem.setOnAction(e -> {
-            List<Entry<Integer, Track>> selection = stageDemon.getRootController().getSelectedTracks();
+            List<Entry<Integer, Track>> selection = rootController.getSelectedTracks();
             stageDemon.editTracks(selection.size());
         });
         deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks(trackSelectionIds()));
-        selectAllMenuItem.setOnAction(e -> stageDemon.getRootController().selectAllTracks());
-        dontSelectAllMenuItem.setOnAction(e -> stageDemon.getRootController().deselectAllTracks());
+        selectAllMenuItem.setOnAction(e -> rootController.selectAllTracks());
+        dontSelectAllMenuItem.setOnAction(e -> rootController.deselectAllTracks());
         ReadOnlyBooleanProperty editingTracksProperty = stageDemon.getEditController().showingProperty();
         selectAllMenuItem.disableProperty().bind(editingTracksProperty);
         dontSelectAllMenuItem.disableProperty().bind(editingTracksProperty);
     }
 
     private void setControlsMenuActions() {
-        previousMenuItem.disableProperty().bind(stageDemon.getPlayerController().previousButtonDisabledProperty());
+        previousMenuItem.disableProperty().bind(playerController.previousButtonDisabledProperty());
         previousMenuItem.setOnAction(e -> playerFacade.previous());
 
-        nextMenuItem.disableProperty().bind(stageDemon.getPlayerController().nextButtonDisabledProperty());
+        nextMenuItem.disableProperty().bind(playerController.nextButtonDisabledProperty());
         nextMenuItem.setOnAction(e -> playerFacade.next());
 
-        increaseVolumeMenuItem.setOnAction(e -> stageDemon.getPlayerController().increaseVolume());
-        decreaseVolumeMenuItem.setOnAction(e -> stageDemon.getPlayerController().decreaseVolume());
+        increaseVolumeMenuItem.setOnAction(e -> playerController.increaseVolume());
+        decreaseVolumeMenuItem.setOnAction(e -> playerController.decreaseVolume());
 
         selectCurrentTrackMenuItem.setOnAction(e -> {
             // TODO fix select current track
             Optional<Track> currentTrack = playerFacade.getCurrentTrack();
-            TrackTableView trackTable = (TrackTableView) primaryStage.getScene().lookup("#trackTable");
+            TrackTableView trackTable = (TrackTableView) rootStage.getScene().lookup("#trackTable");
             trackTable.getSelectionModel().clearSelection();
             currentTrack.ifPresent(track -> {
                 int currentTrackId = track.getTrackId();
@@ -298,7 +301,7 @@ public class MusicottMenuBar extends MenuBar {
     }
 
     private List<Integer> trackSelectionIds() {
-        List<Entry<Integer, Track>> trackSelection = stageDemon.getRootController().getSelectedTracks();
+        List<Entry<Integer, Track>> trackSelection = rootController.getSelectedTracks();
         return trackSelection.stream().map(Entry::getKey).collect(Collectors.toList());
     }
 
@@ -319,7 +322,7 @@ public class MusicottMenuBar extends MenuBar {
     private void showHideNavigationPaneTextBinding() {
         ReadOnlyBooleanProperty showingNavigationPaneProperty = rootController.showNavigationPaneProperty();
         showHideNavigationPaneMenuItem.textProperty().bind(Bindings.createStringBinding(() -> {
-            String menuText = "";
+            String menuText;
             if (showingNavigationPaneProperty.get())
                 menuText = "Hide navigation pane";
             else
@@ -389,7 +392,7 @@ public class MusicottMenuBar extends MenuBar {
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get().equals(ButtonType.OK)) {
                 TaskDemon.getInstance().importFiles(filesToImport, false);
-                stageDemon.getNavigationController().setStatusMessage("Importing files");
+                navigationController.setStatusMessage("Importing files");
             }
         });
     }

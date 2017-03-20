@@ -23,7 +23,6 @@ import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.view.*;
-import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -44,16 +43,13 @@ public class TrackTableViewContextMenu extends ContextMenu {
     private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
     private Menu addToPlaylistMenu;
+    private MenuItem deleteFromPlaylistMenuItem;
     private List<MenuItem> playlistsInMenu;
 
-    private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
     private List<Entry<Integer, Track>> selectedTracks;
 
     public TrackTableViewContextMenu() {
         super();
-        NavigationController navigationController = stageDemon.getNavigationController();
-        selectedPlaylistProperty = navigationController.selectedPlaylistProperty();
-
         playlistsInMenu = new ArrayList<>();
         addToPlaylistMenu = new Menu("Add to playlist");
 
@@ -81,20 +77,15 @@ public class TrackTableViewContextMenu extends ContextMenu {
                 PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(selectedTracks), false);
         });
 
-        MenuItem deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
+        deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
         deleteFromPlaylistMenuItem.setId("deleteFromPlaylistMenuItem");
 
         deleteFromPlaylistMenuItem.setOnAction(event -> {
             if (! selectedTracks.isEmpty()) {
-                selectedPlaylistProperty.getValue().get().removeTracks(trackSelectionIds(selectedTracks));
+                getSelectedPlaylist().get().removeTracks(trackSelectionIds(selectedTracks));
                 musicLibrary.removeFromShowingTracks(selectedTracks);
             }
         });
-
-        deleteFromPlaylistMenuItem.visibleProperty().bind(Bindings.createBooleanBinding(
-                () -> selectedPlaylistProperty.getValue().isPresent() &&
-                        ! selectedPlaylistProperty.getValue().get().isFolder(),
-                selectedPlaylistProperty));
 
         getItems().addAll(playMenuItem, editMenuItem, deleteMenuItem, addToQueueMenuItem, new SeparatorMenuItem());
         getItems().addAll(deleteFromPlaylistMenuItem, addToPlaylistMenu);
@@ -102,6 +93,13 @@ public class TrackTableViewContextMenu extends ContextMenu {
 
     private List<Integer> trackSelectionIds(List<Entry<Integer, Track>> entriesSelection) {
         return entriesSelection.stream().map(Entry::getKey).collect(Collectors.toList());
+    }
+
+    private Optional<Playlist> getSelectedPlaylist() {
+        RootController navigationController = stageDemon.getRootController();
+        ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty =
+                navigationController.selectedPlaylistProperty();
+        return selectedPlaylistProperty.getValue();
     }
 
     @Override
@@ -115,6 +113,10 @@ public class TrackTableViewContextMenu extends ContextMenu {
                 playlist.getContainedPlaylists().forEach(this::addPlaylistToMenuList);
         });
 
+        if (getSelectedPlaylist().isPresent() && ! getSelectedPlaylist().get().isFolder())
+            deleteFromPlaylistMenuItem.setVisible(true);
+        else
+            deleteFromPlaylistMenuItem.setVisible(false);
         addToPlaylistMenu.getItems().clear();
         addToPlaylistMenu.getItems().addAll(playlistsInMenu);
         super.show(anchor, screenX, screenY);
@@ -125,7 +127,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
         playlistMenuItem.setOnAction(event -> {
             if (! selectedTracks.isEmpty()) {
                 playlist.addTracks(trackSelectionIds(selectedTracks));
-                selectedPlaylistProperty.getValue().ifPresent(selectedPlaylist -> {
+                getSelectedPlaylist().ifPresent(selectedPlaylist -> {
                     if (selectedPlaylist.equals(playlist))
                         musicLibrary.addToShowingTracks(selectedTracks);
                 });

@@ -19,8 +19,8 @@
 
 package com.transgressoft.musicott.view.custom;
 
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.view.*;
 import javafx.scene.control.*;
 
 /**
@@ -31,16 +31,14 @@ import javafx.scene.control.*;
  */
 public class NavigationMenuListView extends ListView<NavigationMode> {
 
-    private StageDemon stageDemon = StageDemon.getInstance();
-
-    public NavigationMenuListView() {
+    public NavigationMenuListView(NavigationController navigationController) {
         super();
         setId("navigationModeListView");
         setPrefHeight(USE_COMPUTED_SIZE);
         setPrefWidth(USE_COMPUTED_SIZE);
         getSelectionModel().selectedItemProperty().addListener((obs, oldMenu, newMode) -> {
             if (newMode != null)
-                stageDemon.getNavigationController().setNavigationMode(newMode);
+                navigationController.setNavigationMode(newMode);
         });
         setCellFactory(listView -> new NavigationListCell());
     }

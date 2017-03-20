@@ -4,11 +4,11 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<VBox fx:id="navigationPaneVBox" alignment="BOTTOM_LEFT" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@../css/navigation.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.NavigationController">
+<VBox fx:id="navigationPaneVBox" alignment="BOTTOM_LEFT" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@../css/navigation.css" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.NavigationController">
 <children>
       <StackPane>
          <VBox.margin>
-            <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+            <Insets bottom="5.0" left="15.0" right="15.0" top="15.0" />
          </VBox.margin>
          <children>
             <ProgressBar fx:id="taskProgressBar" prefWidth="200.0" progress="0.0" />
@@ -22,7 +22,7 @@
             </Label>
          </children>
       </StackPane>
-   <VBox fx:id="navigationVBox" maxHeight="100.0" prefHeight="70.0" VBox.vgrow="NEVER">
+   <VBox fx:id="navigationVBox" maxHeight="-Infinity" prefHeight="100.0">
 	   <children>
 	      <Label fx:id="libraryLabel" text="Musicott library" textFill="#9e9e9e">
 	         <font>
@@ -33,7 +33,7 @@
 	         </VBox.margin></Label>
 	   </children>
    </VBox>
-   <VBox fx:id="playlistsVBox" prefHeight="550.0" VBox.vgrow="ALWAYS">
+   <VBox fx:id="playlistsVBox" minHeight="450.0" VBox.vgrow="SOMETIMES">
 	   <children>
 	      <Label fx:id="playlistsLabel" text="Playlists" textFill="#9e9e9e">
 	         <font>

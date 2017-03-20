@@ -89,7 +89,10 @@ public class PlayerController implements MusicottController {
     private TextField searchTextField;
     @FXML
     private ProgressBar volumeProgressBar;
-    private AnchorPane playQueuePane;
+    @FXML
+    private AnchorPane playQueueLayout;
+    @FXML
+    private PlayQueueController playQueueLayoutController;
     private WaveformPanel mainWaveformPanel;
 
     private MusicLibrary musicLibrary = MusicLibrary.getInstance();
@@ -115,7 +118,7 @@ public class PlayerController implements MusicottController {
         playerStackPane.getChildren().add(0, waveformSwingNode);
 
         playQueueButton.setOnAction(event -> {
-            if (playQueuePane.isVisible())
+            if (playQueueLayout.isVisible())
                 hidePlayQueue();
             else
                 showPlayQueue();
@@ -133,6 +136,13 @@ public class PlayerController implements MusicottController {
             List<Integer> selectedTracks = (List<Integer>) dragBoard.getContent(TRACK_ID_MIME_TYPE);
             player.addTracksToPlayQueue(selectedTracks, false);
         });
+        playQueueLayout.visibleProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue)
+                playQueueButton.setSelected(true);
+            else
+                playQueueButton.setSelected(false);
+        });
+        StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
     }
 
     private void playPause() {
@@ -148,16 +158,16 @@ public class PlayerController implements MusicottController {
     }
 
     public void hidePlayQueue() {
-        if (playQueueStackPane.getChildren().contains(playQueuePane)) {
-            playQueueStackPane.getChildren().remove(playQueuePane);
-            playQueuePane.setVisible(false);
+        if (playQueueStackPane.getChildren().contains(playQueueLayout)) {
+            playQueueStackPane.getChildren().remove(playQueueLayout);
+            playQueueLayout.setVisible(false);
         }
     }
 
     public void showPlayQueue() {
-        if (! playQueueStackPane.getChildren().contains(playQueuePane)) {
-            playQueueStackPane.getChildren().add(0, playQueuePane);
-            playQueuePane.setVisible(true);
+        if (! playQueueStackPane.getChildren().contains(playQueueLayout)) {
+            playQueueStackPane.getChildren().add(0, playQueueLayout);
+            playQueueLayout.setVisible(true);
         }
     }
 
@@ -195,23 +205,6 @@ public class PlayerController implements MusicottController {
 
     public DoubleProperty volumeSliderValueProperty() {
         return volumeSlider.valueProperty();
-    }
-
-    /**
-     * Sets the play queue pane node that contains the play queue and history queue lists.
-     *
-     * @param pane
-     */
-    public void setPlayQueuePane(AnchorPane pane) {
-        playQueuePane = pane;
-        playQueuePane.setVisible(false);
-        playQueuePane.visibleProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue)
-                playQueueButton.setSelected(true);
-            else
-                playQueueButton.setSelected(false);
-        });
-        StackPane.setMargin(playQueuePane, new Insets(0, 0, 480, 0));
     }
 
     public void setStopped() {

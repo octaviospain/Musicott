@@ -7,7 +7,14 @@
 <?import javafx.scene.text.*?>
 <BorderPane fx:id="rootBorderPane" minHeight="-Infinity" minWidth="-Infinity" prefWidth="1200.0" stylesheets="@../css/base.css" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.RootController">
    <top>
-      <VBox fx:id="headerVBox" BorderPane.alignment="CENTER" />
+      <VBox fx:id="headerVBox" BorderPane.alignment="CENTER">
+         <children>
+            <fx:include fx:id="menuBar" source="RootMenuBarLayout.fxml" />
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="3.0" />
+         </BorderPane.margin>
+      </VBox>
    </top>
    <center>
       <BorderPane fx:id="wrapperBorderPane" BorderPane.alignment="CENTER">
@@ -18,66 +25,9 @@
                      <center>
                         <StackPane fx:id="tableStackPane">
                            <children>
-                              <SplitPane fx:id="artistsViewSplitPane" dividerPositions="0.1" stylesheets="@../css/artists.css">
-                                <items>
-                                  <AnchorPane>
-                                       <children>
-                                          <ListView fx:id="artistsListView" layoutX="17.0" layoutY="114.0" minWidth="180.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" stylesheets="@../css/scroll-bar-general.css"/>
-                                       </children>
-                                    </AnchorPane>
-                                  <AnchorPane minWidth="700.0">
-                                       <children>
-                                          <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                             <top>
-                                                <HBox fx:id="infoHBox" alignment="CENTER" BorderPane.alignment="CENTER">
-                                                   <BorderPane.margin>
-                                                      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                                                   </BorderPane.margin>
-                                                   <children>
-                                                      <VBox alignment="CENTER_LEFT" prefHeight="80.0" HBox.hgrow="SOMETIMES">
-                                                         <children>
-                                                            <Label fx:id="nameLabel">
-                                                                <font>
-                                                                    <Font size="22.0" />
-                                                                </font>
-                                                             </Label>
-                                                            <HBox alignment="CENTER_LEFT" VBox.vgrow="SOMETIMES">
-                                                               <children>
-                                                                  <Label fx:id="totalAlbumsLabel" />
-                                                                  <Label text="," />
-                                                                  <Label fx:id="totalTracksLabel">
-                                                                     <HBox.margin>
-                                                                        <Insets left="5.0" />
-                                                                     </HBox.margin>
-                                                                  </Label>
-                                                               </children>
-                                                            </HBox>
-                                                         </children>
-                                                      </VBox>
-                                                      <Button fx:id="artistRandomButton" mnemonicParsing="false" styleClass="random-button">
-                                                         <padding>
-                                                            <Insets right="1.0" />
-                                                         </padding></Button>
-                                                   </children>
-                                                </HBox>
-                                             </top>
-                                             <center>
-                                                <AnchorPane BorderPane.alignment="CENTER">
-                                                   <children>
-                                                      <ScrollPane fitToHeight="true" fitToWidth="true" stylesheets="@../css/scroll-bar-tracksetsarea.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                                         <content>
-                                                            <VBox fx:id="trackSetsAreaVBox" prefHeight="200.0" prefWidth="100.0" />
-                                                         </content>
-                                                      </ScrollPane>
-                                                   </children>
-                                                </AnchorPane>
-                                             </center>
-                                          </BorderPane>
-                                       </children>
-                                    </AnchorPane>
-                                </items>
-                              </SplitPane>
-                           </children></StackPane>
+                              <fx:include fx:id="artistsLayout" source="ArtistsLayout.fxml" />
+                           </children>
+                        </StackPane>
                      </center>
                   </BorderPane>
                </center>
@@ -130,6 +80,12 @@
                </top>
             </BorderPane>
          </center>
+         <left>
+            <fx:include fx:id="navigationLayout" source="NavigationLayout.fxml" />
+         </left>
+         <bottom>
+            <fx:include fx:id="playerLayout" source="PlayerLayout.fxml" />
+         </bottom>
       </BorderPane>
    </center>
 </BorderPane>

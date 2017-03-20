@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<MenuBar fx:id="rootMenuBar" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.RootMenuBarController" stylesheets="@../css/base.css">
+<menus>
+  <Menu fx:id="fileMenu" mnemonicParsing="false" text="File">
+    <items>
+      <MenuItem fx:id="openFileMenuItem" mnemonicParsing="false" text="Open File(s)..." />
+      <MenuItem fx:id="importFolderMenuItem" mnemonicParsing="false" text="Import Folder..." />
+          <MenuItem fx:id="importItunesMenuItem" mnemonicParsing="false" text="Import from iTunes Library..." />
+          <SeparatorMenuItem mnemonicParsing="false" />
+          <MenuItem fx:id="newPlaylistMenuItem" mnemonicParsing="false" text="Add new playlist" />
+          <SeparatorMenuItem mnemonicParsing="false" />
+          <MenuItem fx:id="preferencesMenuItem" mnemonicParsing="false" text="Preferences" />
+          <SeparatorMenuItem mnemonicParsing="false" />
+          <MenuItem fx:id="closeMenuItem" mnemonicParsing="false" text="Close" />
+    </items>
+  </Menu>
+  <Menu fx:id="editMenu" mnemonicParsing="false" text="Edit">
+       <items>
+      <MenuItem fx:id="editMenuItem" mnemonicParsing="false" text="Edit" />
+          <MenuItem fx:id="deleteMenuItem" mnemonicParsing="false" text="Delete" />
+          <SeparatorMenuItem mnemonicParsing="false" />
+          <MenuItem fx:id="selectAllMenuItem" mnemonicParsing="false" text="Select all" />
+          <MenuItem fx:id="dontSelectAllMenuItem" mnemonicParsing="false" text="Don't select all" />
+       </items>
+  </Menu>
+  <Menu fx:id="controlsMenu" mnemonicParsing="false" text="Controls">
+    <items>
+          <MenuItem fx:id="previousMenuItem" mnemonicParsing="false" text="Previous" />
+          <MenuItem fx:id="nextMenuItem" mnemonicParsing="false" text="Next" />
+          <SeparatorMenuItem mnemonicParsing="false" />
+          <MenuItem fx:id="increaseVolumeMenuItem" mnemonicParsing="false" text="Increase volume" />
+          <MenuItem fx:id="decreaseVolumeMenuItem" mnemonicParsing="false" text="Decrease volume" />
+          <SeparatorMenuItem mnemonicParsing="false" />
+          <MenuItem fx:id="selectCurrentTrackMenuItem" mnemonicParsing="false" text="Select current track" />
+    </items>
+  </Menu>
+    <Menu fx:id="viewMenu" mnemonicParsing="false" text="View">
+       <items>
+          <MenuItem fx:id="showHideNavigationPaneMenuItem" mnemonicParsing="false" text="Hide navigation panel" />
+          <MenuItem fx:id="showHideTableInfoPaneMenuItem" mnemonicParsing="false" text="Hide table info panel" />
+       </items>
+    </Menu>
+    <Menu fx:id="aboutMenu" mnemonicParsing="false" text="About">
+       <items>
+          <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="About Musicott" />
+       </items>
+    </Menu>
+</menus>
+</MenuBar>

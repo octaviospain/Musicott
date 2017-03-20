@@ -68,3 +68,9 @@
     -fx-border-insets: 0 0 -1 0;
     -fx-border-radius: 2;
 }
+
+#tableInfoHBox {
+    -fx-border-color: rgb(73, 73, 73);
+    -fx-border-width: 2px 0px 0px 0px;
+    -fx-border-insets: -2 0 0 0;
+}

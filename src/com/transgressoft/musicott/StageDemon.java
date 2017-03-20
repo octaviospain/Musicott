@@ -19,19 +19,15 @@
 
 package com.transgressoft.musicott;
 
-import com.google.common.collect.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.view.*;
-import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
-import javafx.application.Platform;
 import javafx.fxml.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
 import javafx.scene.image.*;
-import javafx.scene.layout.*;
 import javafx.stage.*;
 import org.slf4j.*;
 
@@ -94,7 +90,7 @@ public class StageDemon {
     }
 
     public NavigationController getNavigationController() {
-        return (NavigationController) controllers.get(NAVIGATION_LAYOUT);
+        return getRootController() == null ? null : getRootController().getNavigationController();
     }
 
     public PlayQueueController getPlayQueueController() {
@@ -102,7 +98,7 @@ public class StageDemon {
     }
 
     public PlayerController getPlayerController() {
-        return (PlayerController) controllers.get(PLAYER_LAYOUT);
+        return getRootController().getPlayerController();
     }
 
     public EditController getEditController() {
@@ -118,51 +114,15 @@ public class StageDemon {
      */
     void showMusicott(Stage primaryStage) throws IOException {
         mainStage = primaryStage;
-        Parent rootLayout = loadAndLinkLayouts();
-        Scene mainScene = new Scene(rootLayout);
-        mainStage.setScene(mainScene);
+        Parent rootLayout = loadLayout(ROOT_LAYOUT);
+        rootLayout.setOnMouseClicked(e -> getRootController().getPlayerController().hidePlayQueue());
+        getRootController().setStage(mainStage);
+        mainStage.setScene(new Scene(rootLayout));
         mainStage.setTitle("Musicott");
         mainStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
         mainStage.setMinWidth(1200);
         mainStage.setMinHeight(805);
         mainStage.show();
-    }
-
-    private Parent loadAndLinkLayouts() throws IOException {
-        VBox navigationLayout = (VBox) loadLayout(NAVIGATION_LAYOUT);
-        LOG.debug("Navigation layout loaded");
-        GridPane playerGridPane = (GridPane) loadLayout(PLAYER_LAYOUT);
-        LOG.debug("Player layout loaded");
-        AnchorPane playQueuePane = (AnchorPane) loadLayout(PLAYQUEUE_LAYOUT);
-        getPlayerController().setPlayQueuePane(playQueuePane);
-        LOG.debug("Play queue layout loaded");
-        BorderPane rootLayout = (BorderPane) loadLayout(ROOT_LAYOUT);
-        LOG.debug("Root layout loaded");
-
-        BorderPane wrapperBorderPane = (BorderPane) rootLayout.lookup("#wrapperBorderPane");
-        wrapperBorderPane.setBottom(playerGridPane);
-        wrapperBorderPane.setLeft(navigationLayout);
-        getRootController().setNavigationPane(navigationLayout);
-        getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
-        loadMenuBar(rootLayout);
-        setHidePlayQueueActionOnLayouts(ImmutableList.of(navigationLayout, wrapperBorderPane, rootLayout));
-        return rootLayout;
-    }
-
-    private void loadMenuBar(Node rootLayout) {
-        MusicottMenuBar menuBar = new MusicottMenuBar(mainStage);
-        String os = System.getProperty("os.name");
-        if (os != null && os.startsWith("Mac"))
-            menuBar.macMenuBar();
-        else {
-            menuBar.defaultMenuBar();
-            VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
-            headerVBox.getChildren().add(0, menuBar);
-        }
-    }
-
-    private void setHidePlayQueueActionOnLayouts(Collection<Node> nodes) {
-        nodes.forEach(node -> node.setOnMouseClicked(e -> getPlayerController().hidePlayQueue()));
     }
 
     /**
