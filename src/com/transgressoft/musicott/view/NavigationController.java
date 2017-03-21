@@ -24,7 +24,6 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
-import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.fxml.*;
@@ -34,6 +33,9 @@ import javafx.scene.input.KeyCombination.*;
 import javafx.scene.layout.*;
 
 import java.util.*;
+import java.util.function.*;
+
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Controller class of the left pane that contains the playlists, the
@@ -67,8 +69,6 @@ public class NavigationController implements MusicottController {
     @FXML
     public void initialize() {
         navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", NavigationMode.ALL_TRACKS);
-        navigationModeProperty.addListener((obs, oldMode, newMode) -> setNavigationMode(newMode));
-
         playlistTreeView = new PlaylistTreeView();
         navigationMenuListView = new NavigationMenuListView(this);
         NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS, NavigationMode.ARTISTS};
@@ -85,9 +85,8 @@ public class NavigationController implements MusicottController {
 
         navigationVBox.getChildren().add(1, navigationMenuListView);
         playlistsVBox.getChildren().add(1, playlistTreeView);
-        taskProgressBar.visibleProperty()
-                       .bind(Bindings.createBooleanBinding(taskProgressBar.progressProperty().isEqualTo(0).not()::get,
-                                                           taskProgressBar.progressProperty()));
+        taskProgressBar.visibleProperty().bind(
+                map(taskProgressBar.progressProperty().isEqualTo(0).not(), Function.identity()));
         taskProgressBar.setProgress(0);
 
         VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
@@ -159,6 +158,7 @@ public class NavigationController implements MusicottController {
 
     void setRootController(RootController rootController) {
         this.rootController = rootController;
+        subscribe(navigationModeProperty, this::setNavigationMode);
     }
 
     public ObjectProperty<NavigationMode> navigationModeProperty() {

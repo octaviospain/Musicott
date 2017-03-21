@@ -21,10 +21,10 @@ package com.transgressoft.musicott.view;
 
 import com.google.common.collect.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.model.NavigationMode;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.view.custom.*;
-import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.collections.transformation.*;
@@ -43,6 +43,9 @@ import java.io.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.function.*;
+
+import static com.transgressoft.musicott.model.NavigationMode.*;
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Controller class of the root layout of the whole application.
@@ -115,8 +118,7 @@ public class RootController implements MusicottController {
     public void initialize() {
         trackTable = new TrackTableView();
         selectedPlaylistProperty = navigationLayoutController.selectedPlaylistProperty();
-        selectedPlaylistProperty.addListener(
-                (obs, oldSelected, newSelected) -> newSelected.ifPresent(this::updateShowingInfoWithPlaylist));
+        subscribe(selectedPlaylistProperty, selected -> selected.ifPresent(this::updateShowingInfoWithPlaylist));
 
         navigationModeProperty = navigationLayoutController.navigationModeProperty();
         showingNavigationPaneProperty = new SimpleBooleanProperty(this, "showing navigation pane", true);
@@ -131,7 +133,7 @@ public class RootController implements MusicottController {
         bindSearchTextField();
         hideTableInfoPane();
         navigationLayoutController.setRootController(this);
-        navigationLayoutController.setNavigationMode(NavigationMode.ARTISTS);
+        navigationLayoutController.setNavigationMode(ARTISTS);
     }
 
     public void setStage(Stage mainStage) {
@@ -156,7 +158,7 @@ public class RootController implements MusicottController {
             hoverCoverProperty.setValue(defaultCoverImage);
         else
             hoverCoverProperty.setValue(playlist.playlistCoverProperty().getValue());
-        playlist.playlistCoverProperty().addListener((obs, oldCover, newCover) -> hoverCoverProperty.setValue(newCover));
+        subscribe(playlist.playlistCoverProperty(), hoverCoverProperty::setValue);
         removePlaylistTextField();
     }
 
@@ -164,25 +166,21 @@ public class RootController implements MusicottController {
         initializePlaylistTitleTextField();
         ListProperty<Entry<Integer, Track>> showingTracksProperty = musicLibrary.showingTracksProperty();
 
-        playlistTracksNumberLabel.textProperty().bind(Bindings.createStringBinding(
-                () -> showingTracksProperty.sizeProperty().get() + " songs", showingTracksProperty));
-
-        playlistSizeLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-            long sizeOfAllShowingTracks = showingTracksProperty.stream().mapToLong(
-                    trackEntry -> (long) trackEntry.getValue().getSize()).sum();
-
-            String sizeString = Utils.byteSizeString(sizeOfAllShowingTracks, 2);
-            if ("0 B".equals(sizeString))
-                sizeString = "";
-            return sizeString;
-        }, showingTracksProperty));
-
+        playlistTracksNumberLabel.textProperty().bind(map(showingTracksProperty.sizeProperty(), s -> s + " songs"));
+        playlistSizeLabel.textProperty().bind(map(showingTracksProperty, this::tracksSizeString));
         playlistTitleLabel.textProperty().bind(playlistTitleTextField.textProperty());
-
         playlistTitleLabel.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2)    // double click to edit the playlist name
                 placePlaylistTextField();
         });
+    }
+
+    private String tracksSizeString(List<Entry<Integer, Track>> entries) {
+        long sizeOfAllShowingTracks = entries.stream().mapToLong(trackEntry -> trackEntry.getValue().getSize()).sum();
+        String sizeString = Utils.byteSizeString(sizeOfAllShowingTracks, 2);
+        if ("0 B".equals(sizeString))
+            sizeString = "";
+        return sizeString;
     }
 
     private void initializePlaylistTitleTextField() {
@@ -231,19 +229,14 @@ public class RootController implements MusicottController {
         hoverCoverImageView.setFitWidth(HOVER_COVER_SIZE);
         hoverCoverImageView.setFitHeight(HOVER_COVER_SIZE);
         hoverCoverImageView.visibleProperty().bind(
-                Bindings.createBooleanBinding(
-                        () -> navigationModeProperty.getValue().equals(NavigationMode.ALL_TRACKS) &&
-                                ! musicLibrary.emptyLibraryProperty().get(),
-                        navigationModeProperty, musicLibrary.emptyLibraryProperty()));
-
+                combine(navigationModeProperty, musicLibrary.emptyLibraryProperty(),
+                             (mode, empty) -> mode.equals(ALL_TRACKS) && ! empty));
         hoverCoverImageView.translateXProperty().bind(
-                Bindings.createDoubleBinding(
-                        () -> (tableStackPane.widthProperty().doubleValue() / 2) - (HOVER_COVER_SIZE / 2) - 10,
-                        tableStackPane.widthProperty()));
+                map(tableStackPane.widthProperty(),
+                             width -> (width.doubleValue() / 2) - (HOVER_COVER_SIZE / 2) - 10));
         hoverCoverImageView.translateYProperty().bind(
-                Bindings.createDoubleBinding(
-                        () -> (tableStackPane.heightProperty().doubleValue() / 2) - (HOVER_COVER_SIZE / 2) - 27,
-                        tableStackPane.heightProperty()));
+                map(tableStackPane.heightProperty(),
+                             height -> (height.doubleValue() / 2) - (HOVER_COVER_SIZE / 2) - 27));
     }
 
     /**

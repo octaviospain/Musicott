@@ -42,6 +42,7 @@ import java.util.stream.*;
 import static com.transgressoft.musicott.view.MusicottController.*;
 import static com.transgressoft.musicott.view.custom.TrackTableView.*;
 import static javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY;
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Custom {@link HBox} that represents an set of {@link Track}s,
@@ -104,7 +105,7 @@ public class TrackSetAreaRow extends HBox {
         coverImageView.setFitHeight(COVER_SIZE);
         Label sizeLabel = new Label();
         sizeLabel.setId("sizeLabel");
-        sizeLabel.textProperty().bind(Bindings.createStringBinding(this::getAlbumSizeString, containedTracksProperty));
+        sizeLabel.textProperty().bind(map(containedTracksProperty.sizeProperty(), this::getAlbumSizeString));
         yearLabel = new Label(getYearsString());
         yearLabel.setId("yearLabel");
 
@@ -174,9 +175,8 @@ public class TrackSetAreaRow extends HBox {
         return Joiner.on(", ").join(differentYears);
     }
 
-    private String getAlbumSizeString() {
-        int numberOfTracks = containedTracksProperty.size();
-        String appendix = numberOfTracks == 1 ? " track" : " tracks";
+    private String getAlbumSizeString(Number numberOfTracks) {
+        String appendix = numberOfTracks.intValue() == 1 ? " track" : " tracks";
         return String.valueOf(numberOfTracks) + appendix;
     }
 
@@ -219,9 +219,8 @@ public class TrackSetAreaRow extends HBox {
         tracksTableView.addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
         tracksTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tracksTableView.setFixedCellSize(25);
-        tracksTableView.prefHeightProperty().bind(tracksTableView.fixedCellSizeProperty().multiply(
-                Bindings.createDoubleBinding(() -> containedTracksProperty.size() * 1.06,
-                                             containedTracksProperty)));
+        Binding<Double> rows = map(containedTracksProperty.sizeProperty(), s -> s.intValue() * 1.06);
+        tracksTableView.prefHeightProperty().bind(tracksTableView.fixedCellSizeProperty().multiply(rows.getValue()));
         tracksTableView.minHeightProperty().bind(tracksTableView.prefHeightProperty());
         tracksTableView.maxHeightProperty().bind(tracksTableView.prefHeightProperty());
 
@@ -284,14 +283,12 @@ public class TrackSetAreaRow extends HBox {
      * @return The {@link IntegerProperty} of the track number
      */
     private IntegerProperty listenTrackChangesAndSort(Track trackInTheRow) {
-        trackInTheRow.trackNumberProperty().addListener(
-                (obs, oldTrackNum, newTrackNum) -> containedTracks.sort(trackEntryComparator));
-        trackInTheRow.discNumberProperty().addListener(
-                (obs, oldTrackNum, newTrackNum) -> containedTracks.sort(trackEntryComparator));
-        trackInTheRow.genreProperty().addListener((obs, oldGenre, newGenre) -> genresLabel.setText(getGenresString()));
-        trackInTheRow.yearProperty().addListener((obs, oldYear, newYear) -> yearLabel.setText(getYearsString()));
-        trackInTheRow.labelProperty().addListener((obs, oldLabel, newLabel) -> updateAlbumLabelLabel());
-        trackInTheRow.artistsInvolvedProperty().addListener((obs, oldArtists, newArtists) ->
+        subscribe(trackInTheRow.trackNumberProperty(), tn -> containedTracks.sort(trackEntryComparator));
+        subscribe(trackInTheRow.discNumberProperty(), dn -> containedTracks.sort(trackEntryComparator));
+        subscribe(trackInTheRow.genreProperty(), g -> genresLabel.setText(getGenresString()));
+        subscribe(trackInTheRow.yearProperty(), y -> yearLabel.setText(getYearsString()));
+        subscribe(trackInTheRow.labelProperty(), l -> updateAlbumLabelLabel());
+        subscribe(trackInTheRow.artistsInvolvedProperty(), ai ->
                 Platform.runLater(() -> {
                     updateRelatedArtistsLabel();
                     checkArtistColumn();

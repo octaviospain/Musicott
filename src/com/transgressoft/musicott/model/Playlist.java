@@ -23,6 +23,7 @@ import com.transgressoft.musicott.tasks.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.scene.image.*;
+import org.fxmisc.easybind.*;
 
 import java.io.*;
 import java.util.*;
@@ -60,7 +61,7 @@ public class Playlist {
         playlistTrackIds = FXCollections.observableArrayList();
         containedPlaylists = new ArrayList<>();
         nameProperty = new SimpleStringProperty(this, "name", name);
-        nameProperty.addListener((obs, oldName, newName) -> setName(newName));
+        EasyBind.subscribe(nameProperty, this::setName);
         playlistCoverProperty = new SimpleObjectProperty<>(this, "cover", DEFAULT_COVER);
         isFolderProperty = new SimpleBooleanProperty(this, "folder", isFolder);
     }

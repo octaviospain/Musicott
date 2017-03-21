@@ -28,6 +28,10 @@
 	-fx-background-color: transparent;
 }
 
+#newPlaylistButton:pressed {
+	-fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 15, 0.3, 0, 0);
+}
+
 #taskProgressBar .track {
 	-fx-background-color: rgb(34, 34, 34);
 }

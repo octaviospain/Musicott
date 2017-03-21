@@ -21,7 +21,6 @@ package com.transgressoft.musicott.view.custom;
 
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.*;
-import javafx.beans.binding.*;
 import javafx.geometry.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
@@ -29,6 +28,8 @@ import javafx.scene.image.*;
 import javafx.scene.layout.*;
 
 import java.io.*;
+
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Class that represents a single {@link Track} in the play queue or the history queue.
@@ -96,9 +97,8 @@ public class TrackQueueRow extends GridPane {
         nameLabel.textProperty().bind(track.nameProperty());
         Label artistAlbumLabel = new Label();
         artistAlbumLabel.setId("artistAlbumLabel");
-        artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
-                () -> track.artistProperty().get() + " - " + track.albumProperty().get(), track.artistProperty(),
-                track.albumProperty()));
+        artistAlbumLabel.textProperty().bind(
+                combine(track.artistProperty(), track.albumProperty(), (art, alb) -> art + " - " + alb));
         labelBox = new VBox();
         VBox.setMargin(nameLabel, new Insets(0, 0, 1, 0));
         VBox.setMargin(artistAlbumLabel, new Insets(1, 0, 0, 0));

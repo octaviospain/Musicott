@@ -27,7 +27,6 @@ import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.Utils.*;
 import de.codecentric.centerdevice.*;
 import javafx.application.*;
-import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
@@ -45,8 +44,10 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
+import static com.transgressoft.musicott.model.NavigationMode.*;
 import static com.transgressoft.musicott.view.MusicottController.*;
 import static javafx.scene.input.KeyCombination.*;
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Controller of the MenuBar of the application. If the Operative System
@@ -316,14 +317,7 @@ public class RootMenuBarController {
 
     private void playPauseTextBinding() {
         BooleanProperty playPauseProperty = playerController.playButtonSelectedProperty();
-        playPauseMenuItem.textProperty().bind(Bindings.createStringBinding(() -> {
-            String menuText;
-            if (playPauseProperty.get())
-                menuText = "Pause";
-            else
-                menuText = "Play";
-            return menuText;
-        }, playPauseProperty));
+        playPauseMenuItem.textProperty().bind(map(playPauseProperty, play -> play ? "Pause" : "Play"));
     }
 
     /**
@@ -332,8 +326,7 @@ public class RootMenuBarController {
      */
     private void showHideTableInfoDisableBinding() {
         ReadOnlyObjectProperty<NavigationMode> selectedMenu = navigationController.navigationModeProperty();
-        showHideTableInfoPaneMenuItem.disableProperty().bind(Bindings.createBooleanBinding(
-                () -> selectedMenu.getValue().equals(NavigationMode.PLAYLIST), selectedMenu).not());
+        showHideTableInfoPaneMenuItem.disableProperty().bind(map(selectedMenu, menu -> ! menu.equals(PLAYLIST)));
     }
 
     /**
@@ -342,14 +335,9 @@ public class RootMenuBarController {
      */
     private void showHideNavigationPaneTextBinding() {
         ReadOnlyBooleanProperty showingNavigationPaneProperty = rootController.showNavigationPaneProperty();
-        showHideNavigationPaneMenuItem.textProperty().bind(Bindings.createStringBinding(() -> {
-            String menuText;
-            if (showingNavigationPaneProperty.get())
-                menuText = "Hide navigation pane";
-            else
-                menuText = "Show navigation pane";
-            return menuText;
-        }, showingNavigationPaneProperty));
+        showHideNavigationPaneMenuItem.textProperty().bind(
+                map(showingNavigationPaneProperty,
+                    s -> s ? "Hide navigation pane" : "Show navigation pane"));
     }
 
     /**
@@ -358,14 +346,9 @@ public class RootMenuBarController {
      */
     private void showHideTableInfoPaneTextBinding() {
         ReadOnlyBooleanProperty showingTableInfoPaneProperty = rootController.showTableInfoPaneProperty();
-        showHideTableInfoPaneMenuItem.textProperty().bind(Bindings.createStringBinding(() -> {
-            String menuText = "";
-            if (showingTableInfoPaneProperty.get())
-                menuText = "Hide table information pane";
-            else
-                menuText = "Show table information pane";
-            return menuText;
-        }, showingTableInfoPaneProperty));
+        showHideTableInfoPaneMenuItem.textProperty().bind(
+                map(showingTableInfoPaneProperty,
+                    s -> s ? "Hide table information pane" : "Show table information pane"));
     }
 
     private void countFilesToImport(File folder) {

@@ -43,6 +43,10 @@
 	-fx-background-color: transparent;
 }
 
+#nextButton:pressed, #prevButton:pressed {
+	-fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 15, 0.3, 0, 0);
+}
+
 #playQueueButton {
 	-fx-graphic: url('../icons/playqueue-button-white-icon.png');
 	-fx-background-color: transparent;

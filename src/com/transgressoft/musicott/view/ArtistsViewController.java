@@ -23,7 +23,6 @@ import com.google.common.collect.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.Platform;
-import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.beans.value.*;
 import javafx.collections.*;
@@ -32,7 +31,10 @@ import javafx.scene.control.*;
 
 import java.util.*;
 import java.util.Map.*;
+import java.util.function.*;
 import java.util.stream.*;
+
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Controller class that isolates the behaviour of the artists view.
@@ -70,9 +72,7 @@ public class ArtistsViewController {
 
         totalAlbumsLabel.setText(String.valueOf(0) + " albums");
         totalTracksLabel.setText(String.valueOf(0) + " tracks");
-        artistRandomButton.visibleProperty()
-                          .bind(Bindings.createBooleanBinding(() -> nameLabel.textProperty().isEmpty().not().get(),
-                                                              nameLabel.textProperty()));
+        artistRandomButton.visibleProperty().bind(map(nameLabel.textProperty().isEmpty().not(), Function.identity()));
         artistRandomButton.setOnAction(e -> musicLibrary.makeRandomArtistPlaylist(selectedArtistProperty.get().get()));
         selectedArtistProperty = new SimpleObjectProperty<>(this, "selected artist", Optional.empty());
         nameLabel.textProperty().addListener((obs, oldArtist, newArtist) -> {
@@ -178,7 +178,7 @@ public class ArtistsViewController {
     private void addTrackSet(String album, Collection<Entry<Integer, Track>> tracks) {
         selectedArtistProperty.getValue().ifPresent(showingArtist -> {
             TrackSetAreaRow trackSetAreaRow = new TrackSetAreaRow(showingArtist, album, tracks);
-            trackSetAreaRow.selectedTracksProperty().addListener((obs, oldList, newList) -> checkSelectedArtist());
+            subscribe(trackSetAreaRow.selectedTracksProperty(), selection -> checkSelectedArtist());
             albumTrackSets.put(album, trackSetAreaRow);
         });
     }

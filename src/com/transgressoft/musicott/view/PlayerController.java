@@ -23,7 +23,6 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.view.custom.*;
-import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.embed.swing.*;
 import javafx.fxml.*;
@@ -40,6 +39,7 @@ import java.io.*;
 import java.util.*;
 
 import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Controller class of the bottom pane that includes the player and the search field.
@@ -104,12 +104,10 @@ public class PlayerController implements MusicottController {
         playButton.setOnAction(event -> playPause());
         prevButton.setOnAction(e -> player.previous());
         nextButton.setOnAction(e -> player.next());
-        volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {
-            if (! isChanging)
-                volumeProgressBar.setProgress(volumeSlider.getValue());
-        });
-        volumeSlider.valueProperty().addListener(
-                (observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
+        subscribe(volumeSlider.valueChangingProperty(), changing -> {
+                    if (! changing)
+                        volumeProgressBar.setProgress(volumeSlider.getValue());});
+        subscribe(volumeSlider.valueProperty(), p -> volumeProgressBar.setProgress(p.doubleValue()));
 
         SwingUtilities.invokeLater(() -> {
             mainWaveformPanel = new WaveformPanel(520, 50);
@@ -136,12 +134,7 @@ public class PlayerController implements MusicottController {
             List<Integer> selectedTracks = (List<Integer>) dragBoard.getContent(TRACK_ID_MIME_TYPE);
             player.addTracksToPlayQueue(selectedTracks, false);
         });
-        playQueueLayout.visibleProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue)
-                playQueueButton.setSelected(true);
-            else
-                playQueueButton.setSelected(false);
-        });
+        subscribe(playQueueLayout.visibleProperty(), playQueueButton::setSelected);
         StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
         player.setPlayerController(this);
         player.setPlayQueueController(playQueueLayoutController);
@@ -260,9 +253,9 @@ public class PlayerController implements MusicottController {
 
         SwingUtilities.invokeLater(() -> mainWaveformPanel.setTrack(currentTrack));
         songTitleLabel.textProperty().bind(currentTrack.nameProperty());
-        artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
-                () -> currentTrack.artistProperty().get() + " - " + currentTrack.albumProperty().get(),
-                currentTrack.artistProperty(), currentTrack.albumProperty()));
+        artistAlbumLabel.textProperty().bind(
+                combine(currentTrack.artistProperty(), currentTrack.albumProperty(), (art, alb) -> art + " - " + alb));
+
         if (currentTrack.getCoverImage().isPresent()) {
             byte[] coverBytes = currentTrack.getCoverImage().get();
             Image image = new Image(new ByteArrayInputStream(coverBytes));

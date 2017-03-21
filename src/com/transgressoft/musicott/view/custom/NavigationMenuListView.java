@@ -22,6 +22,7 @@ package com.transgressoft.musicott.view.custom;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.*;
 import javafx.scene.control.*;
+import org.fxmisc.easybind.*;
 
 /**
  * ListView for the application navigation showing modes.
@@ -36,9 +37,9 @@ public class NavigationMenuListView extends ListView<NavigationMode> {
         setId("navigationModeListView");
         setPrefHeight(USE_COMPUTED_SIZE);
         setPrefWidth(USE_COMPUTED_SIZE);
-        getSelectionModel().selectedItemProperty().addListener((obs, oldMenu, newMode) -> {
-            if (newMode != null)
-                navigationController.setNavigationMode(newMode);
+        EasyBind.subscribe(getSelectionModel().selectedItemProperty(), mode -> {
+            if (mode != null)
+                navigationController.setNavigationMode(mode);
         });
         setCellFactory(listView -> new NavigationListCell());
     }

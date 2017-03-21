@@ -24,6 +24,7 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
 import com.worldsworstsoftware.itunes.*;
+import javafx.application.*;
 import javafx.collections.*;
 import javafx.util.*;
 import org.jaudiotagger.audio.*;
@@ -74,7 +75,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
             forkIntoSubActions();
         else {
             itemsToParse.forEach(this::parseItem);
-            musicLibrary.addTracks(parsedTracks);
+            Platform.runLater(() -> musicLibrary.addTracks(parsedTracks));
         }
 
         return new ItunesParseResult(parsedTracks, itunesIdToMusicottIdMap, parseErrors, notFoundFiles);

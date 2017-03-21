@@ -430,12 +430,11 @@ public class MusicLibrary {
     public void showArtistAndSelectTrack(String artist, Entry<Integer, Track> trackToSelect) {
         new Thread(() -> {
             Multimap<String, Entry<Integer, Track>> newTrackSetsByAlbum = getAlbumTracksOfArtist(artist);
-            if (trackToSelect != null) {
-                Platform.runLater(() -> {
-                    stageDemon.getRootController().setArtistTrackSets(newTrackSetsByAlbum);
+            Platform.runLater(() -> {
+                stageDemon.getRootController().setArtistTrackSets(newTrackSetsByAlbum);
+                if (trackToSelect != null)
                     stageDemon.getRootController().selectTrack(trackToSelect);
-                });
-            }
+            });
         }).start();
     }
 

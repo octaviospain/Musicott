@@ -37,6 +37,8 @@ import org.slf4j.*;
 import java.util.*;
 import java.util.stream.*;
 
+import static org.fxmisc.easybind.EasyBind.*;
+
 /**
  * Singleton class that isolates the usage of the music player.
  *
@@ -215,12 +217,12 @@ public class PlayerFacade {
 
         bindPlayerConfiguration(mediaPlayer);
 
-        mediaPlayer.statusProperty().addListener((observable, oldStatus, newStatus) -> {
-            if (Status.PLAYING == newStatus)
+        subscribe(mediaPlayer.statusProperty(), status -> {
+            if (Status.PLAYING == status)
                 playerController.setPlaying();
-            else if (Status.PAUSED == newStatus)
+            else if (Status.PAUSED == status)
                 playerController.playButtonSelectedProperty().setValue(false);
-            else if (Status.STOPPED == newStatus) {
+            else if (Status.STOPPED == status) {
                 playerController.setStopped();
                 playerController.volumeSliderValueProperty().unbindBidirectional(mediaPlayer.volumeProperty());
             }
@@ -228,11 +230,11 @@ public class PlayerFacade {
     }
 
     private void bindPlayerConfiguration(MediaPlayer mediaPlayer) {
-        mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> {
+        subscribe(mediaPlayer.currentTimeProperty(), time -> {
             Duration halfTime = mediaPlayer.getStopTime().divide(2.0);
-            if (newTime.greaterThanOrEqualTo(halfTime))
+            if (time.greaterThanOrEqualTo(halfTime))
                 incrementCurrentTrackPlayCount();
-            if (isCurrentTrackValidToScrobble(mediaPlayer, newTime)) {
+            if (isCurrentTrackValidToScrobble(mediaPlayer, time)) {
                 scrobbled = true;
                 if (services.usingLastFm()) {
                     services.updateAndScrobbleTrack(currentTrack.get());
@@ -245,26 +247,25 @@ public class PlayerFacade {
 
         BooleanProperty trackSliderValueChangingProperty = playerController.trackSliderValueChangingProperty();
         DoubleProperty trackSliderValueProperty = playerController.trackSliderValueProperty();
-        mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> {
+        subscribe(mediaPlayer.currentTimeProperty(), time -> {
             if (! trackSliderValueChangingProperty.get())
-                trackSliderValueProperty.setValue(newTime.toMillis());
+                trackSliderValueProperty.setValue(time.toMillis());
         });
 
         DoubleProperty trackProgressBarProgressProperty = playerController.trackProgressBarProgressProperty();
-        trackSliderValueProperty.addListener((observable, oldValue, newValue) -> {
+        subscribe(trackSliderValueProperty, value -> {
             Double endTime = mediaPlayer.getStopTime().toMillis();
             if (trackSliderValueChangingProperty.get() && (! endTime.equals(Double.POSITIVE_INFINITY) || ! endTime
                     .equals(Double.NaN))) {
-                trackProgressBarProgressProperty.set(newValue.doubleValue() / endTime);
-                mediaPlayer.seek(Duration.millis(newValue.doubleValue()));
+                trackProgressBarProgressProperty.set(value.doubleValue() / endTime);
+                mediaPlayer.seek(Duration.millis(value.doubleValue()));
             }
         });
 
-        mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> trackProgressBarProgressProperty
-                .set(newTime.toMillis() / trackSliderMaxProperty.get()));
-
-        mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> playerController
-                .updateTrackLabels(newTime, mediaPlayer.getMedia().getDuration()));
+        subscribe(mediaPlayer.currentTimeProperty(),
+                  t -> trackProgressBarProgressProperty.set(t.toMillis() / trackSliderMaxProperty.get()));
+        subscribe(mediaPlayer.currentTimeProperty(),
+                  t -> playerController.updateTrackLabels(t, mediaPlayer.getMedia().getDuration()));
     }
 
     private void incrementCurrentTrackPlayCount() {
