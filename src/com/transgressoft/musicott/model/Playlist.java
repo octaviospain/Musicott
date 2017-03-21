@@ -40,10 +40,8 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  */
 public class Playlist {
 
-    private static final String ADDITION_NOT_SUPPORTED = "Addition not supported on folder playlist";
     private static final String DELETION_NOT_SUPPORTED = "Deletion not supported on folder playlist";
 
-    private final Image DEFAULT_COVER = new Image(getClass().getResourceAsStream(DEFAULT_COVER_PATH));
     private final boolean isFolder;
     private String name;
     private ObservableList<Integer> playlistTrackIds;

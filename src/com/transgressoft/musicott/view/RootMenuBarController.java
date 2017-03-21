@@ -35,6 +35,7 @@ import javafx.scene.image.*;
 import javafx.scene.input.*;
 import javafx.scene.input.KeyCombination.*;
 import javafx.scene.layout.*;
+import javafx.scene.media.MediaPlayer.*;
 import javafx.stage.*;
 import javafx.stage.FileChooser.*;
 import org.slf4j.*;
@@ -47,6 +48,7 @@ import java.util.stream.*;
 import static com.transgressoft.musicott.model.NavigationMode.*;
 import static com.transgressoft.musicott.view.MusicottController.*;
 import static javafx.scene.input.KeyCombination.*;
+import static javafx.scene.media.MediaPlayer.Status.*;
 import static org.fxmisc.easybind.EasyBind.*;
 
 /**
@@ -250,12 +252,12 @@ public class RootMenuBarController {
         playPauseTextBinding();
         playPauseMenuItem.disableProperty().bind(musicLibrary.emptyLibraryProperty());
         playPauseMenuItem.setOnAction(e -> {
-            String playerStatus = playerFacade.getPlayerStatus();
-            if ("PLAYING".equals(playerStatus))
+            Status playerStatus = playerFacade.getPlayerStatus();
+            if (playerStatus.equals(PLAYING))
                 playerFacade.pause();
-            else if ("PAUSED".equals(playerStatus))
+            else if (playerStatus.equals(PAUSED))
                 playerFacade.resume();
-            else if ("STOPPED".equals(playerStatus))
+            else if (playerStatus.equals(STOPPED))
                 playerFacade.play(true);
         });
         previousMenuItem.disableProperty().bind(playerController.previousButtonDisabledProperty());

@@ -23,6 +23,7 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tests.*;
 import javafx.application.*;
 import javafx.stage.*;
+import javafx.util.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.powermock.api.mockito.*;
@@ -39,10 +40,10 @@ import static org.powermock.api.mockito.PowerMockito.*;
  */
 @RunWith (PowerMockRunner.class)
 @PrepareForTest (PlayerFacade.class)
-public class NativePlayerTest extends JavaFxTestBase {
+public class JavaFxPlayerTest extends JavaFxTestBase {
 
     private Path testFilesPath = Paths.get("test-resources", "testfiles");
-    private NativePlayer player;
+    private TrackPlayer player;
 
     @BeforeClass
     public static void setupSpec() throws Exception {
@@ -63,7 +64,7 @@ public class NativePlayerTest extends JavaFxTestBase {
         when(PlayerFacade.getInstance()).thenReturn(playerMock);
 
         Track track = new Track(0, testFilesPath.toString(), "testeable.mp3");
-        player = new NativePlayer();
+        player = new JavaFxPlayer();
         player.setTrack(track);
     }
 
@@ -71,8 +72,6 @@ public class NativePlayerTest extends JavaFxTestBase {
     @After
     public void afterEachTest() throws Exception {
         super.afterEachTest();
-        player.dispose();
-        player = null;
         verifyStatic();
     }
 
@@ -88,13 +87,13 @@ public class NativePlayerTest extends JavaFxTestBase {
     public void playerVolumeTest() {
         Platform.runLater(() -> player.setVolume(- 1.0));
         sleep(1000);
-        assertEquals(0.0, player.getMediaPlayer().getVolume());
+        assertEquals(0.0, player.volumeProperty().get());
     }
 
     @Test
     @Ignore
     public void playerSeekTest() {
-        Platform.runLater(() -> player.seek(0.0));
+        Platform.runLater(() -> player.seek(Duration.millis(0.0)));
     }
 
     @Test

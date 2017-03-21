@@ -49,7 +49,6 @@ import java.util.stream.*;
 public class EditController implements MusicottController {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_PATH));
 
     @FXML
     private TextField nameTextField;
@@ -117,7 +116,7 @@ public class EditController implements MusicottController {
 
         setNumericValidationFilters();
 
-        coverImage.setImage(COVER_IMAGE);
+        coverImage.setImage(DEFAULT_COVER);
         coverImage.setCacheHint(CacheHint.QUALITY);
         coverImage.setOnDragOver(this::onDragOverCoverImage);
         coverImage.setOnDragExited(this::onDragExitedOutOfCoverImage);
@@ -203,7 +202,7 @@ public class EditController implements MusicottController {
             if (commonCover.isPresent())
                 coverImage.setImage(new Image(new ByteArrayInputStream(commonCover.get())));
             else
-                coverImage.setImage(COVER_IMAGE);
+                coverImage.setImage(DEFAULT_COVER);
         }
         event.consume();
     }
@@ -231,7 +230,7 @@ public class EditController implements MusicottController {
         newCoverImage = null;
         newChangedAlbum = Optional.empty();
         changedAlbums.clear();
-        coverImage.setImage(COVER_IMAGE);
+        coverImage.setImage(DEFAULT_COVER);
         commonCover = commonCover();
         commonCover.ifPresent(coverBytes -> coverImage.setImage(new Image(new ByteArrayInputStream(coverBytes))));
 

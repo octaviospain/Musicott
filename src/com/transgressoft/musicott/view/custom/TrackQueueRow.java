@@ -20,14 +20,13 @@
 package com.transgressoft.musicott.view.custom;
 
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.view.*;
 import javafx.geometry.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
-
-import java.io.*;
 
 import static org.fxmisc.easybind.EasyBind.*;
 
@@ -42,7 +41,6 @@ import static org.fxmisc.easybind.EasyBind.*;
 public class TrackQueueRow extends GridPane {
 
     private static final double COVER_SIZE = 42.0;
-    private static final String DELETE_BUTTON_STYLE = "deleteButton-white";
 
     private PlayQueueController playQueueController;
     private Track track;
@@ -74,15 +72,8 @@ public class TrackQueueRow extends GridPane {
 
     private void placeCover() {
         coverImage = new ImageView();
-        coverImage.setFitHeight(40.0);
-        coverImage.setFitHeight(40.0);
-        if (track.getCoverImage().isPresent()) {
-            byte[] coverBytes = track.getCoverImage().get();
-            Image image = new Image(new ByteArrayInputStream(coverBytes));
-            coverImage.setImage(image);
-        }
-        else
-            coverImage.setId("coverImage");
+        coverImage.setId("coverImage");
+        subscribe(track.hasCoverProperty(), c -> Utils.updateCoverImage(track, coverImage));
         coverImage.setCacheHint(CacheHint.QUALITY);
         coverImage.setCache(false);
         coverImage.setSmooth(true);
@@ -110,8 +101,7 @@ public class TrackQueueRow extends GridPane {
 
     private void placeDeleteHoverButton() {
         deleteTrackQueueRowButton = new Button();
-        deleteTrackQueueRowButton.setId(DELETE_BUTTON_STYLE);
-        deleteTrackQueueRowButton.setPrefSize(3, 3);
+        deleteTrackQueueRowButton.setId("deleteButton-white");
         deleteTrackQueueRowButton.setVisible(false);
         deleteTrackQueueRowButton.setOnAction(event -> playQueueController.removeTrackQueueRow(this));
         add(deleteTrackQueueRowButton, 1, 0);

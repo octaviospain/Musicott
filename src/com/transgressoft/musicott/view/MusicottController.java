@@ -19,6 +19,8 @@
 
 package com.transgressoft.musicott.view;
 
+import javafx.scene.image.*;
+
 /**
  * Interface that represent a controller of the Musicott application.
  * Stores constants of layout files, logos, css stylesheets and
@@ -39,14 +41,11 @@ public interface MusicottController {
     String STYLES_PATH = "/css/";
 
     String ROOT_LAYOUT = LAYOUTS_PATH + "RootLayout.fxml";
-    String NAVIGATION_LAYOUT = LAYOUTS_PATH + "NavigationLayout.fxml";
     String PRELOADER_INIT_LAYOUT = LAYOUTS_PATH + "PreloaderLayout.fxml";
     String PRELOADER_FIRST_USE_PROMPT = LAYOUTS_PATH + "PreloaderPromptLayout.fxml";
     String EDIT_LAYOUT = LAYOUTS_PATH + "EditLayout.fxml";
-    String PLAYQUEUE_LAYOUT = LAYOUTS_PATH + "PlayQueueLayout.fxml";
     String PROGRESS_LAYOUT = LAYOUTS_PATH + "ProgressLayout.fxml";
     String PREFERENCES_LAYOUT = LAYOUTS_PATH + "PreferencesLayout.fxml";
-    String PLAYER_LAYOUT = LAYOUTS_PATH + "PlayerLayout.fxml";
     String ERROR_ALERT_LAYOUT = LAYOUTS_PATH + "ErrorDialogLayout.fxml";
 
     String DEFAULT_COVER_PATH = IMAGES_PATH + "default-cover-image.png";
@@ -59,4 +58,6 @@ public interface MusicottController {
     String TRACK_TABLE_STYLE = STYLES_PATH + "tracktable.css";
     String BASE_STYLE = STYLES_PATH + "base.css";
     String TRACKAREASET_TRACK_TABLE_STYLE = STYLES_PATH + "tracktable-trackareaset.css";
+
+    Image DEFAULT_COVER = new Image(MusicottController.class.getResourceAsStream(DEFAULT_COVER_PATH));
 }

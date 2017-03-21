@@ -37,6 +37,7 @@ import org.slf4j.*;
 import java.util.*;
 import java.util.stream.*;
 
+import static javafx.scene.media.MediaPlayer.Status.*;
 import static org.fxmisc.easybind.EasyBind.*;
 
 /**
@@ -75,6 +76,8 @@ public class PlayerFacade {
         played = false;
         scrobbled = false;
         currentTrack = Optional.empty();
+        trackPlayer = new JavaFxPlayer();
+        trackPlayer.setOnEndOfMedia(this::next);
     }
 
     public static PlayerFacade getInstance() {
@@ -93,8 +96,8 @@ public class PlayerFacade {
         return currentTrack;
     }
 
-    public String getPlayerStatus() {
-        return trackPlayer == null ? Status.UNKNOWN.name() : trackPlayer.getStatus();
+    public Status getPlayerStatus() {
+        return trackPlayer.getStatus();
     }
 
     public void setPlayerController(PlayerController playerController) {
@@ -158,13 +161,15 @@ public class PlayerFacade {
     }
 
     public void play(boolean playRandom) {
-        if (trackPlayer == null || "STOPPED".equals(trackPlayer.getStatus()) || "PAUSED".equals(trackPlayer.getStatus())) {
+        if (trackPlayer.getStatus().equals(STOPPED) ||
+                trackPlayer.getStatus().equals(PAUSED) ||
+                trackPlayer.getStatus().equals(UNKNOWN)) {
             if (! playList.isEmpty())
                 setCurrentTrack();
             else if (playRandom)
                 musicLibrary.makeRandomPlaylist();
         }
-        else if ("PLAYING".equals(trackPlayer.getStatus()))
+        else if (trackPlayer.getStatus().equals(PLAYING))
             if (playList.isEmpty())
                 stop();
             else
@@ -188,23 +193,13 @@ public class PlayerFacade {
         scrobbled = false;
         played = false;
         currentTrack = musicLibrary.getTrack(trackId);
-
         currentTrack.ifPresent(track -> {
-            if (trackPlayer != null) {
-                trackPlayer.dispose();
-                LOG.debug("Disposed recent player");
+            if (track.isPlayable()) {
+                trackPlayer.setTrack(track);
+                playerController.updatePlayer(track);
+                bindMediaPlayer();
+                LOG.debug("Created new player");
             }
-            String fileExtension = track.getFileFormat();
-            if ("mp3".equals(fileExtension) || "wav".equals(fileExtension) || "m4a".equals(fileExtension))
-                trackPlayer = new NativePlayer();
-            else if ("flac".equals(fileExtension)) {
-                trackPlayer = new FlacPlayer();
-                //TODO
-            }
-            playerController.updatePlayer(track);
-            trackPlayer.setTrack(track);
-            bindMediaPlayer();
-            LOG.debug("Created new player");
         });
     }
 
@@ -212,29 +207,28 @@ public class PlayerFacade {
      * Binds the properties of the {@link MediaPlayer} to the components of the view.
      */
     private void bindMediaPlayer() {
-        MediaPlayer mediaPlayer = ((NativePlayer) trackPlayer).getMediaPlayer();
-        mediaPlayer.volumeProperty().bindBidirectional(playerController.volumeSliderValueProperty());
+        trackPlayer.volumeProperty().bindBidirectional(playerController.volumeSliderValueProperty());
 
-        bindPlayerConfiguration(mediaPlayer);
+        bindPlayerConfiguration(trackPlayer);
 
-        subscribe(mediaPlayer.statusProperty(), status -> {
+        subscribe(trackPlayer.statusProperty(), status -> {
             if (Status.PLAYING == status)
                 playerController.setPlaying();
             else if (Status.PAUSED == status)
                 playerController.playButtonSelectedProperty().setValue(false);
-            else if (Status.STOPPED == status) {
+            else if (STOPPED == status) {
                 playerController.setStopped();
-                playerController.volumeSliderValueProperty().unbindBidirectional(mediaPlayer.volumeProperty());
+                playerController.volumeSliderValueProperty().unbindBidirectional(trackPlayer.volumeProperty());
             }
         });
     }
 
-    private void bindPlayerConfiguration(MediaPlayer mediaPlayer) {
-        subscribe(mediaPlayer.currentTimeProperty(), time -> {
-            Duration halfTime = mediaPlayer.getStopTime().divide(2.0);
+    private void bindPlayerConfiguration(TrackPlayer trackPlayer) {
+        subscribe(trackPlayer.currentTimeProperty(), time -> {
+            Duration halfTime = trackPlayer.getStopTime().divide(2.0);
             if (time.greaterThanOrEqualTo(halfTime))
                 incrementCurrentTrackPlayCount();
-            if (isCurrentTrackValidToScrobble(mediaPlayer, time)) {
+            if (isCurrentTrackValidToScrobble(trackPlayer, time)) {
                 scrobbled = true;
                 if (services.usingLastFm()) {
                     services.updateAndScrobbleTrack(currentTrack.get());
@@ -247,25 +241,25 @@ public class PlayerFacade {
 
         BooleanProperty trackSliderValueChangingProperty = playerController.trackSliderValueChangingProperty();
         DoubleProperty trackSliderValueProperty = playerController.trackSliderValueProperty();
-        subscribe(mediaPlayer.currentTimeProperty(), time -> {
+        subscribe(trackPlayer.currentTimeProperty(), time -> {
             if (! trackSliderValueChangingProperty.get())
                 trackSliderValueProperty.setValue(time.toMillis());
         });
 
         DoubleProperty trackProgressBarProgressProperty = playerController.trackProgressBarProgressProperty();
         subscribe(trackSliderValueProperty, value -> {
-            Double endTime = mediaPlayer.getStopTime().toMillis();
+            Double endTime = trackPlayer.getStopTime().toMillis();
             if (trackSliderValueChangingProperty.get() && (! endTime.equals(Double.POSITIVE_INFINITY) || ! endTime
                     .equals(Double.NaN))) {
                 trackProgressBarProgressProperty.set(value.doubleValue() / endTime);
-                mediaPlayer.seek(Duration.millis(value.doubleValue()));
+                trackPlayer.seek(Duration.millis(value.doubleValue()));
             }
         });
 
-        subscribe(mediaPlayer.currentTimeProperty(),
+        subscribe(trackPlayer.currentTimeProperty(),
                   t -> trackProgressBarProgressProperty.set(t.toMillis() / trackSliderMaxProperty.get()));
-        subscribe(mediaPlayer.currentTimeProperty(),
-                  t -> playerController.updateTrackLabels(t, mediaPlayer.getMedia().getDuration()));
+        subscribe(trackPlayer.currentTimeProperty(),
+                  t -> playerController.updateTrackLabels(t, trackPlayer.getMedia().getDuration()));
     }
 
     private void incrementCurrentTrackPlayCount() {
@@ -276,9 +270,9 @@ public class PlayerFacade {
         }
     }
 
-    private boolean isCurrentTrackValidToScrobble(MediaPlayer mediaPlayer, Duration newTime) {
-        boolean isDurationBeyond30Seconds = mediaPlayer.getTotalDuration().greaterThanOrEqualTo(Duration.seconds(30));
-        boolean isDurationBeyondMidTime = newTime.greaterThanOrEqualTo(mediaPlayer.getStopTime().divide(2.0));
+    private boolean isCurrentTrackValidToScrobble(TrackPlayer trackPlayer, Duration newTime) {
+        boolean isDurationBeyond30Seconds = trackPlayer.getTotalDuration().greaterThanOrEqualTo(Duration.seconds(30));
+        boolean isDurationBeyondMidTime = newTime.greaterThanOrEqualTo(trackPlayer.getStopTime().divide(2.0));
         boolean isDurationLongerThan4Minutes = newTime.greaterThanOrEqualTo(Duration.minutes(4));
 
         return ! scrobbled && isDurationBeyond30Seconds && (isDurationBeyondMidTime || isDurationLongerThan4Minutes);
@@ -311,7 +305,7 @@ public class PlayerFacade {
     }
 
     public void pause() {
-        if (trackPlayer != null && "PLAYING".equals(trackPlayer.getStatus())) {
+        if (trackPlayer.getStatus().equals(PLAYING)) {
             trackPlayer.pause();
             LOG.info("Player paused");
         }
@@ -339,9 +333,9 @@ public class PlayerFacade {
         LOG.info("Player resumed");
     }
 
-    public void seek(double seekValue) {
-        trackPlayer.seek(seekValue);
-        LOG.debug("Player seeked value {}", seekValue);
+    public void seek(Duration seekTime) {
+        trackPlayer.seek(seekTime);
+        LOG.debug("Player seeked value {}", seekTime);
     }
 
     /**
@@ -367,14 +361,14 @@ public class PlayerFacade {
         trackPlayer.play();
     }
 
-    public void increaseVolume(double amount) {
-        if (trackPlayer != null)
-            trackPlayer.setVolume(amount);
+    public void increaseVolume(double value) {
+        double currentVolume = trackPlayer.volumeProperty().get();
+        trackPlayer.setVolume(currentVolume + value);
     }
 
-    public void decreaseVolume(double amount) {
-        if (trackPlayer != null)
-            trackPlayer.setVolume(- 1 * amount);
+    public void decreaseVolume(double value) {
+        double currentVolume = trackPlayer.volumeProperty().get();
+        trackPlayer.setVolume(currentVolume - value);
     }
 
     public void setRandomList(List<Integer> randomTrackIds) {

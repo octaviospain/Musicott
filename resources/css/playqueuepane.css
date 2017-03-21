@@ -49,6 +49,8 @@
 	-fx-graphic: url('../icons/remove-button-white-icon.png');
 	-fx-background-insets: 1 1 1 1;
 	-fx-background-color: transparent;
+	-fx-pref-width: 3;
+	-fx-pref-height: 3;
 }
 
 #nameLabel {
@@ -68,9 +70,4 @@
 #historyQueueButton:selected{
 	-fx-graphic: url('../icons/historyqueue-button-black-icon.png');
  	-fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 9, 0.4, 0, 0);
-}
-
-#coverImage {
-	-fx-image: url('../images/default-cover-image-queue.png');
-	-fx-background-insets: 0 0 0 0;
 }

@@ -29,6 +29,7 @@ import javafx.event.*;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
+import javafx.scene.media.MediaPlayer.*;
 import javafx.util.*;
 import javafx.util.Duration;
 
@@ -39,6 +40,7 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 import static com.transgressoft.musicott.view.MusicottController.*;
+import static javafx.scene.media.MediaPlayer.Status.*;
 
 /**
  * Class that extends from {@link TableView} and models a table that represents {@link Track}
@@ -225,12 +227,12 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
                 player.addTracksToPlayQueue(selectionIDs, true);
             }
             else if (event.getCode() == KeyCode.SPACE) {
-                String playerStatus = player.getPlayerStatus();
-                if ("PLAYING".equals(playerStatus))
+                Status playerStatus = player.getPlayerStatus();
+                if (playerStatus.equals(PLAYING))
                     player.pause();
-                else if ("PAUSED".equals(playerStatus))
+                else if (playerStatus.equals(PAUSED))
                     player.resume();
-                else if ("STOPPED".equals(playerStatus))
+                else if (playerStatus.equals(STOPPED))
                     player.play(true);
             }
         };

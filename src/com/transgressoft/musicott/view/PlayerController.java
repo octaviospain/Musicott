@@ -22,6 +22,7 @@ package com.transgressoft.musicott.view;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 import javafx.embed.swing.*;
@@ -35,7 +36,6 @@ import javafx.util.*;
 import org.slf4j.*;
 
 import javax.swing.*;
-import java.io.*;
 import java.util.*;
 
 import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
@@ -51,7 +51,6 @@ public class PlayerController implements MusicottController {
 
     private static final double VOLUME_AMOUNT = 0.05;
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_PATH));
 
     @FXML
     private GridPane playerGridPane;
@@ -138,6 +137,7 @@ public class PlayerController implements MusicottController {
         StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
         player.setPlayerController(this);
         player.setPlayQueueController(playQueueLayoutController);
+        hidePlayQueue();
     }
 
     private void playPause() {
@@ -256,19 +256,12 @@ public class PlayerController implements MusicottController {
         artistAlbumLabel.textProperty().bind(
                 combine(currentTrack.artistProperty(), currentTrack.albumProperty(), (art, alb) -> art + " - " + alb));
 
-        if (currentTrack.getCoverImage().isPresent()) {
-            byte[] coverBytes = currentTrack.getCoverImage().get();
-            Image image = new Image(new ByteArrayInputStream(coverBytes));
-            currentCover.setImage(image);
-        }
-        else
-            currentCover.setImage(COVER_IMAGE);
-
+        Utils.updateCoverImage(currentTrack, currentCover);
         trackSlider.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             Double endTime = trackSlider.getMax();
             if (! endTime.equals(Double.POSITIVE_INFINITY) || ! endTime.equals(Double.NaN)) {
                 trackProgressBar.setProgress(trackSlider.getValue() / endTime);
-                player.seek(trackSlider.getValue());
+                player.seek(Duration.millis(trackSlider.getValue()));
             }
         });
     }
@@ -287,7 +280,8 @@ public class PlayerController implements MusicottController {
     public void updateTrackLabels(Duration elapsed, Duration total) {
         int currentHours = (int) elapsed.toHours();
         int currentMins = (int) elapsed.subtract(Duration.hours(currentHours)).toMinutes();
-        int currentSecs = (int) elapsed.subtract(Duration.minutes(currentMins)).subtract(Duration.hours(currentHours))
+        int currentSecs = (int) elapsed.subtract(Duration.minutes(currentMins))
+                                       .subtract(Duration.hours(currentHours))
                                        .toSeconds();
 
         String currentTimeText = getFormattedTimeString(currentHours, currentMins, currentSecs, (int) total.toHours());

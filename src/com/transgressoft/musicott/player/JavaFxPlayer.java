@@ -20,43 +20,66 @@
 package com.transgressoft.musicott.player;
 
 import com.transgressoft.musicott.model.Track;
+import javafx.beans.property.*;
 import javafx.scene.media.*;
+import javafx.scene.media.MediaPlayer.*;
 import javafx.util.*;
 
 import java.io.*;
 
 /**
+ * Basic player that uses the native {@link MediaPlayer}
+ *
  * @author Octavio Calleya
+ * @version 0.10-b
  */
-public class NativePlayer implements TrackPlayer {
+public class JavaFxPlayer implements TrackPlayer {
 
     private MediaPlayer mediaPlayer;
+    private Runnable endOfMediaAction;
+    private Track track;
 
-    MediaPlayer getMediaPlayer() {
-        return mediaPlayer;
+    @Override
+    public Status getStatus() {
+        return mediaPlayer == null ? Status.UNKNOWN : mediaPlayer.getStatus();
     }
 
     @Override
-    public String getStatus() {
-        return mediaPlayer == null ? "STOPPED" : mediaPlayer.getStatus().name();
+    public void setOnEndOfMedia(Runnable value) {
+        endOfMediaAction = value;
+        if (mediaPlayer != null)
+            mediaPlayer.setOnEndOfMedia(value);
+    }
+
+    @Override
+    public Track getTrack() {
+        return track;
     }
 
     @Override
     public void setTrack(Track track) {
+        this.track = track;
+        if (mediaPlayer != null)
+            mediaPlayer.dispose();
         File mp3File = new File(track.getFileFolder() + "/" + track.getFileName());
         Media media = new Media(mp3File.toURI().toString());
         mediaPlayer = new MediaPlayer(media);
-        mediaPlayer.setOnEndOfMedia(PlayerFacade.getInstance()::next);
+        mediaPlayer.setOnEndOfMedia(endOfMediaAction);
     }
 
     @Override
-    public void seek(double seekValue) {
-        mediaPlayer.seek(Duration.millis(seekValue));
+    public Media getMedia() {
+        return mediaPlayer.getMedia();
     }
 
     @Override
     public void setVolume(double value) {
-        mediaPlayer.setVolume(mediaPlayer.getVolume() + value);
+        mediaPlayer.setVolume(value);
+    }
+
+    @Override
+    public void seek(Duration seekTime) {
+        mediaPlayer.seek(seekTime);
     }
 
     @Override
@@ -75,8 +98,27 @@ public class NativePlayer implements TrackPlayer {
     }
 
     @Override
-    public void dispose() {
-        mediaPlayer.dispose();
-        mediaPlayer = null;
+    public Duration getStopTime() {
+        return mediaPlayer.getStopTime();
+    }
+
+    @Override
+    public Duration getTotalDuration() {
+        return mediaPlayer.getTotalDuration();
+    }
+
+    @Override
+    public DoubleProperty volumeProperty() {
+        return mediaPlayer.volumeProperty();
+    }
+
+    @Override
+    public ReadOnlyObjectProperty<Status> statusProperty() {
+        return mediaPlayer.statusProperty();
+    }
+
+    @Override
+    public ReadOnlyObjectProperty<Duration> currentTimeProperty() {
+        return mediaPlayer.currentTimeProperty();
     }
 }

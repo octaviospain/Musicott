@@ -99,7 +99,6 @@ public class RootController implements MusicottController {
 
     private TextField playlistTitleTextField;
 
-    private Image defaultCoverImage;
     private ImageView hoverCoverImageView;
     private ObjectProperty<Image> hoverCoverProperty;
     private TrackTableView trackTable;
@@ -124,8 +123,7 @@ public class RootController implements MusicottController {
         showingNavigationPaneProperty = new SimpleBooleanProperty(this, "showing navigation pane", true);
         showingTableInfoPaneProperty = new SimpleBooleanProperty(this, "showing table info pane", true);
 
-        defaultCoverImage = new Image(DEFAULT_COVER_PATH);
-        hoverCoverProperty = new SimpleObjectProperty<>(this, "hover cover", defaultCoverImage);
+        hoverCoverProperty = new SimpleObjectProperty<>(this, "hover cover", DEFAULT_COVER);
         playlistCover.imageProperty().bind(hoverCoverProperty);
 
         initializeInfoPaneFields();
@@ -155,7 +153,7 @@ public class RootController implements MusicottController {
     private void updateShowingInfoWithPlaylist(Playlist playlist) {
         playlistTitleTextField.setText(playlist.getName());
         if (playlist.isEmpty())
-            hoverCoverProperty.setValue(defaultCoverImage);
+            hoverCoverProperty.setValue(DEFAULT_COVER);
         else
             hoverCoverProperty.setValue(playlist.playlistCoverProperty().getValue());
         subscribe(playlist.playlistCoverProperty(), hoverCoverProperty::setValue);
@@ -457,10 +455,7 @@ public class RootController implements MusicottController {
     public void updateTrackHoveredCover(Optional<byte[]> coverBytes) {
         hoverCoverImageView.imageProperty().bind(hoverCoverProperty);
         Image trackHoveredImage;
-        if (coverBytes.isPresent())
-            trackHoveredImage = new Image(new ByteArrayInputStream(coverBytes.get()));
-        else
-            trackHoveredImage = defaultCoverImage;
+        trackHoveredImage = coverBytes.map(bytes -> new Image(new ByteArrayInputStream(bytes))).orElse(DEFAULT_COVER);
         hoverCoverProperty.setValue(trackHoveredImage);
     }
 

@@ -129,7 +129,8 @@ public class MetadataUpdater {
         Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
         File trackFile = trackPath.toFile();
         updateCoverOnTag(trackFile, coverFile);
-        track.hasCoverProperty().set(true);
+        track.hasCoverProperty().setValue(false);   // Double update to force the listeners to hear the changes
+        track.hasCoverProperty().setValue(true);
     }
 
     private void updateCoverOnTag(File trackFile, File coverFile) throws TrackUpdateException {

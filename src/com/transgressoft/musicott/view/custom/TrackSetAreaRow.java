@@ -33,12 +33,11 @@ import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.util.*;
 
-import java.io.*;
 import java.util.*;
 import java.util.Map.*;
-import java.util.Optional;
 import java.util.stream.*;
 
+import static com.transgressoft.musicott.util.Utils.*;
 import static com.transgressoft.musicott.view.MusicottController.*;
 import static com.transgressoft.musicott.view.custom.TrackTableView.*;
 import static javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY;
@@ -63,6 +62,7 @@ public class TrackSetAreaRow extends HBox {
     private TableColumn<Entry<Integer, Track>, String> artistCol;
     private TableColumn<Entry<Integer, Track>, Duration> totalTimeCol;
     private TableColumn<Entry<Integer, Track>, Number> trackNumberCol;
+    private ImageView coverImageView;
     private VBox albumInfoVBox;
     private String artist;
     private String album;
@@ -100,9 +100,10 @@ public class TrackSetAreaRow extends HBox {
     }
 
     private void placeLeftVBox() {
-        ImageView coverImageView = new ImageView(getTrackSetImage());
+        coverImageView = new ImageView();
         coverImageView.setFitWidth(COVER_SIZE);
         coverImageView.setFitHeight(COVER_SIZE);
+        updateTrackSetImage();
         Label sizeLabel = new Label();
         sizeLabel.setId("sizeLabel");
         sizeLabel.textProperty().bind(map(containedTracksProperty.sizeProperty(), this::getAlbumSizeString));
@@ -149,18 +150,6 @@ public class TrackSetAreaRow extends HBox {
         getChildren().add(albumInfoVBox);
     }
 
-    private Image getTrackSetImage() {
-        Image trackSetImage = new Image(DEFAULT_COVER_PATH);
-        for (Entry<Integer, Track> trackEntry : containedTracks) {
-            Optional<byte[]> trackCover = trackEntry.getValue().getCoverImage();
-            if (trackCover.isPresent()) {
-                trackSetImage = new Image(new ByteArrayInputStream(trackCover.get()));
-                break;
-            }
-        }
-        return trackSetImage;
-    }
-
     private String getGenresString() {
         Set<String> genres = containedTracks.stream().filter(entry -> ! entry.getValue().getGenre().isEmpty())
                                             .map(entry -> entry.getValue().getGenre())
@@ -178,6 +167,13 @@ public class TrackSetAreaRow extends HBox {
     private String getAlbumSizeString(Number numberOfTracks) {
         String appendix = numberOfTracks.intValue() == 1 ? " track" : " tracks";
         return String.valueOf(numberOfTracks) + appendix;
+    }
+
+
+    private void updateTrackSetImage() {
+        for (Entry<Integer, Track> trackEntry : containedTracks)
+            if (updateCoverImage(trackEntry.getValue(), coverImageView))
+                break;
     }
 
     private void updateAlbumLabelLabel() {
@@ -288,6 +284,7 @@ public class TrackSetAreaRow extends HBox {
         subscribe(trackInTheRow.genreProperty(), g -> genresLabel.setText(getGenresString()));
         subscribe(trackInTheRow.yearProperty(), y -> yearLabel.setText(getYearsString()));
         subscribe(trackInTheRow.labelProperty(), l -> updateAlbumLabelLabel());
+        subscribe(trackInTheRow.hasCoverProperty(), c -> updateTrackSetImage());
         subscribe(trackInTheRow.artistsInvolvedProperty(), ai ->
                 Platform.runLater(() -> {
                     updateRelatedArtistsLabel();

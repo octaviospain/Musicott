@@ -36,6 +36,8 @@ import java.util.Optional;
 import java.util.regex.*;
 import java.util.stream.*;
 
+import static com.transgressoft.musicott.view.MusicottController.*;
+
 /**
  * Class that does some useful operations with files, directories, strings
  * or other operations utilities to be used for the application
@@ -114,8 +116,7 @@ public class Utils {
             artistsInvolved = ImmutableSet.copyOf(splittedNames.get());
         else {
             String cleanedArtist = string.replaceAll("(?i)(feat)(\\.|\\s)", ",").replaceAll("(?i)(ft)(\\.|\\s)", ",");
-            artistsInvolved = ImmutableSet.copyOf(Splitter.on(CharMatcher.anyOf(",&"))
-                                                          .trimResults().omitEmptyStrings()
+            artistsInvolved = ImmutableSet.copyOf(Splitter.on(CharMatcher.anyOf(",&")).trimResults().omitEmptyStrings()
                                                           .splitToList(cleanedArtist));
         }
         return artistsInvolved;
@@ -150,9 +151,8 @@ public class Utils {
 
         Map<Pattern, Pattern> regexMaps = ImmutableMap.<Pattern, Pattern> builder()
                 .put(Pattern.compile(" (?i)(remix)"), endsWithRemix)
-                .put(Pattern.compile("(?i)(remix) (?i)(by) "),startsWithRemixBy)
-                .put(Pattern.compile("(?i)(ft) "), hasFt)
-                .put(Pattern.compile("(?i)(feat) "), hasFeat)
+                .put(Pattern.compile("(?i)(remix) (?i)(by) "), startsWithRemixBy)
+                .put(Pattern.compile("(?i)(ft) "), hasFt).put(Pattern.compile("(?i)(feat) "), hasFeat)
                 .put(Pattern.compile("(?i)(featuring) "), hasFeaturing)
                 .put(Pattern.compile("(?i)(with) "), startsWithWith).build();
 
@@ -164,9 +164,9 @@ public class Utils {
                 String insideParenthesisString = string.substring(matcher.start()).replaceAll("[(|\\[|)|\\]]", "")
                                                        .replaceAll(keyPattern.pattern(), "");
 
-                artistsInsideParenthesis.addAll(Splitter.on(CharMatcher.anyOf("&,"))
-                                                        .trimResults().omitEmptyStrings()
-                                                        .splitToList(insideParenthesisString.replaceAll("\\s(?i)(vs)\\s", "&")));
+                artistsInsideParenthesis.addAll(Splitter.on(CharMatcher.anyOf("&,")).trimResults().omitEmptyStrings()
+                                                        .splitToList(insideParenthesisString
+                                                                             .replaceAll("\\s(?i)(vs)\\s", "&")));
                 break;
             }
         }
@@ -348,7 +348,30 @@ public class Utils {
     }
 
     /**
-     * This class implements <code>{@link java.io.FileFilter}</code> to
+     * Updates an {@link ImageView}, if possible, with the cover
+     * image of a {@link Track}.
+     *
+     * @param track     The given {@code Track}
+     * @param imageView The given {@code ImageView}
+     *
+     * @return {@code True} if the {@code ImageView} was updated with the
+     *          cover of the {@code Track}, {@code False} otherwise.
+     */
+    public static boolean updateCoverImage(Track track, ImageView imageView) {
+        boolean updatedWithCustomImage = false;
+        if (track.getCoverImage().isPresent()) {
+            byte[] coverBytes = track.getCoverImage().get();
+            Image image = new Image(new ByteArrayInputStream(coverBytes));
+            imageView.setImage(image);
+            updatedWithCustomImage = true;
+        }
+        else
+            imageView.setImage(DEFAULT_COVER);
+        return updatedWithCustomImage;
+    }
+
+    /**
+     * This class implements {@link FileFilter} to
      * accept a file with some of the given extensions. If no extensions are given
      * the file is not accepted. The extensions must be given without the dot.
      *

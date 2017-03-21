@@ -19,20 +19,33 @@
 
 package com.transgressoft.musicott.player;
 
-import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.model.Track;
+import javafx.beans.property.*;
+import javafx.scene.media.*;
+import javafx.scene.media.MediaPlayer.*;
+import javafx.util.*;
 
 /**
+ * Track player interface
+ *
  * @author Octavio Calleya
+ * @version 0.10-b
  */
 public interface TrackPlayer {
 
-    String getStatus();
+    Status getStatus();
+
+    void setOnEndOfMedia(Runnable value);
 
     void setTrack(Track track);
 
+    Track getTrack();
+
+    Media getMedia();
+
     void setVolume(double value);
 
-    void seek(double seekValue);
+    void seek(Duration seekTime);
 
     void play();
 
@@ -40,5 +53,13 @@ public interface TrackPlayer {
 
     void stop();
 
-    void dispose();
+    Duration getStopTime();
+
+    Duration getTotalDuration();
+
+    DoubleProperty volumeProperty();
+
+    ReadOnlyObjectProperty<Status> statusProperty();
+
+    ReadOnlyObjectProperty<Duration> currentTimeProperty();
 }
