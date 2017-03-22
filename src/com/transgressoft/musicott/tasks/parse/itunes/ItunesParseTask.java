@@ -203,7 +203,7 @@ public class ItunesParseTask extends BaseParseTask {
             if (! ("mp3".equals(fileExtension) || "m4a".equals(fileExtension) || "wav".equals(fileExtension)))
                 valid = false;
             Track auxTrack = new Track(- 1, itunesFile.getParent(), itunesFile.getName());
-            if (musicLibrary.containsTrack(auxTrack))
+            if (musicLibrary.tracks.contains(auxTrack))
                 valid = false;
         }
         return valid;

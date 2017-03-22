@@ -85,7 +85,7 @@ public class WaveformTask extends Thread {
 					resultingWaveform = processFromNoWavFile(fileFormat);
 
 				if (resultingWaveform != null) {
-					musicLibrary.addWaveform(trackToAnalyze.getTrackId(), resultingWaveform);
+					musicLibrary.waveforms.addWaveform(trackToAnalyze.getTrackId(), resultingWaveform);
 					Optional<Track> currentTrack = PlayerFacade.getInstance().getCurrentTrack();
 					currentTrack.ifPresent(this::checkAnalyzedTrackIsCurrentPlaying);
 					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage(""));

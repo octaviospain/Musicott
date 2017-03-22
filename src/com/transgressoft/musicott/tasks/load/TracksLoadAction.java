@@ -79,7 +79,7 @@ public class TracksLoadAction extends BaseLoadAction {
             tracksToSetProperties.forEach(this::setTrackProperties);
             Map<Integer, Track> tracksMap = tracksToSetProperties.stream()
                                                     .collect(Collectors.toMap(Track::getTrackId, Function.identity()));
-            musicLibrary.addTracks(tracksMap);
+            musicLibrary.tracks.add(tracksMap);
         }
     }
 

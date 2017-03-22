@@ -301,7 +301,7 @@ public class RootController implements MusicottController {
      */
     public void enterNewPlaylistName(boolean isFolder) {
         LOG.debug("Editing playlist name");
-        musicLibrary.clearShowingTracks();
+        musicLibrary.showingTracksProperty().clear();
         removeArtistsViewPane();
         placePlaylistTextField();
 
@@ -335,7 +335,7 @@ public class RootController implements MusicottController {
      */
     private boolean isValidPlaylistName(String newName) {
         Playlist blankPlaylist = new Playlist(newName, false);
-        return ! newName.isEmpty() && ! musicLibrary.containsPlaylist(blankPlaylist);
+        return ! newName.isEmpty() && ! musicLibrary.playlists.containsPlaylist(blankPlaylist);
     }
 
     public void setArtistTrackSets(Multimap<String, Entry<Integer, Track>> tracksByAlbum) {

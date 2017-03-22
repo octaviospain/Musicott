@@ -58,8 +58,8 @@ public class WaveformPanel extends JPanel {
     }
 
     public void setTrack(Track track) {
-        if (musicLibrary.containsWaveform(track.getTrackId())) {
-            waveData = musicLibrary.getWaveform(track.getTrackId());
+        if (musicLibrary.waveforms.containsWaveform(track.getTrackId())) {
+            waveData = musicLibrary.waveforms.getWaveform(track.getTrackId());
             if (getForeground().equals(backgroundColor))
                 setForeground(foregroundColor);
             repaint();

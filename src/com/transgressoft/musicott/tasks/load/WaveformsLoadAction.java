@@ -57,7 +57,7 @@ public class WaveformsLoadAction extends BaseLoadAction {
             waveformsMap = parseWaveformsFromJsonFile(waveformsFile);
         else
             waveformsMap = new HashMap<>();
-        musicLibrary.addWaveforms(waveformsMap);
+        musicLibrary.waveforms.addWaveforms(waveformsMap);
     }
 
     /**

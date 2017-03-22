@@ -75,7 +75,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
             forkIntoSubActions();
         else {
             itemsToParse.forEach(this::parseItem);
-            Platform.runLater(() -> musicLibrary.addTracks(parsedTracks));
+            Platform.runLater(() -> musicLibrary.tracks.add(parsedTracks));
         }
 
         return new ItunesParseResult(parsedTracks, itunesIdToMusicottIdMap, parseErrors, notFoundFiles);
@@ -101,7 +101,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
             currentTrack = createTrackFromItunesData(itunesTrack);
 
         currentTrack.ifPresent(track -> {
-            if (! musicLibrary.containsTrack(track)) {
+            if (! musicLibrary.tracks.contains(track)) {
                 itunesIdToMusicottIdMap.put(itunesTrack.getTrackID(), track.getTrackId());
                 parsedTracks.put(track.getTrackId(), track);
             }

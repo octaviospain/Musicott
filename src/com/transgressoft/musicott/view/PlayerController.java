@@ -246,7 +246,7 @@ public class PlayerController implements MusicottController {
     public void updatePlayer(Track currentTrack) {
         LOG.debug("Setting up player and view for track {}", currentTrack);
         String fileFormat = currentTrack.getFileFormat();
-        if (musicLibrary.containsWaveform(currentTrack.getTrackId()))
+        if (musicLibrary.waveforms.containsWaveform(currentTrack.getTrackId()))
             setWaveform(currentTrack);
         else if ("wav".equals(fileFormat) || "mp3".equals(fileFormat) || "m4a".equals(fileFormat))
             TaskDemon.getInstance().analyzeTrackWaveform(currentTrack);

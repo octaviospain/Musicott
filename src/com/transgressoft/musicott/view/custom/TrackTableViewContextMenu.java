@@ -83,7 +83,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
         deleteFromPlaylistMenuItem.setOnAction(event -> {
             if (! selectedTracks.isEmpty()) {
                 getSelectedPlaylist().get().removeTracks(trackSelectionIds(selectedTracks));
-                musicLibrary.removeFromShowingTracks(selectedTracks);
+                musicLibrary.showingTracksProperty().removeAll(selectedTracks);
             }
         });
 
@@ -106,7 +106,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
     public void show(Node anchor, double screenX, double screenY) {
         playlistsInMenu.clear();
         selectedTracks = stageDemon.getRootController().getSelectedTracks();
-        musicLibrary.getPlaylists().forEach(playlist -> {
+        musicLibrary.playlists.getPlaylists().forEach(playlist -> {
             if (! playlist.isFolder())
                 addPlaylistToMenuList(playlist);
             else
@@ -129,7 +129,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
                 playlist.addTracks(trackSelectionIds(selectedTracks));
                 getSelectedPlaylist().ifPresent(selectedPlaylist -> {
                     if (selectedPlaylist.equals(playlist))
-                        musicLibrary.addToShowingTracks(selectedTracks);
+                        musicLibrary.showingTracksProperty().addAll(selectedTracks);
                 });
             }
         });

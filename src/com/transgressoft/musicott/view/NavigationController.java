@@ -181,7 +181,7 @@ public class NavigationController implements MusicottController {
         }
         else {
             playlistTreeView.addPlaylist(newPlaylist, selectAfter);
-            musicLibrary.addPlaylist(newPlaylist);
+            musicLibrary.playlists.addPlaylist(newPlaylist);
         }
     }
 

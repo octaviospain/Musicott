@@ -119,7 +119,7 @@ public class PlayerFacade {
         Thread playableTracksThread = new Thread(() -> {
 
             List<Integer> playableTracks = tracksId.stream().filter(trackID -> {
-                Optional<Track> track = musicLibrary.getTrack(trackID);
+                Optional<Track> track = musicLibrary.tracks.getTrack(trackID);
                 boolean[] isPlayable = new boolean[1];
                 track.ifPresent(t -> isPlayable[0] = t.isPlayable());
                 if (! isPlayable[0])
@@ -192,7 +192,7 @@ public class PlayerFacade {
     private void setPlayer(int trackId) {
         scrobbled = false;
         played = false;
-        currentTrack = musicLibrary.getTrack(trackId);
+        currentTrack = musicLibrary.tracks.getTrack(trackId);
         currentTrack.ifPresent(track -> {
             if (track.isPlayable()) {
                 trackPlayer.setTrack(track);

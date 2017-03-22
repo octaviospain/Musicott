@@ -59,7 +59,7 @@ public class AudioFilesParseAction extends FilesParseAction {
             forkIntoSubActions();
         else {
             itemsToParse.forEach(this::parseItem);
-            Platform.runLater(() -> musicLibrary.addTracks(parsedTracks));
+            Platform.runLater(() -> musicLibrary.tracks.add(parsedTracks));
         }
 
         return new FilesParseResult(parsedTracks, parseErrors);
@@ -74,7 +74,7 @@ public class AudioFilesParseAction extends FilesParseAction {
     protected void parseItem(File item) {
         Optional<Track> currentTrack = parseFileToTrack(item);
         currentTrack.ifPresent(track -> {
-            if (! musicLibrary.containsTrack(track))
+            if (! musicLibrary.tracks.contains(track))
                 parsedTracks.put(track.getTrackId(), track);
         });
         parentTask.updateProgressTask();

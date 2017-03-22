@@ -79,8 +79,8 @@ public class PlaylistTreeView extends TreeView<Playlist> {
      * Initializes the {@link TreeView} with all the playlists.
      */
     private void createPlaylistsItems() {
-        synchronized (musicLibrary.getPlaylists()) {
-            musicLibrary.getPlaylists().forEach(playlist -> {
+        synchronized (musicLibrary.playlists.getPlaylists()) {
+            musicLibrary.playlists.getPlaylists().forEach(playlist -> {
                 if (playlist.isFolder()) {
                     TreeItem<Playlist> folderItem = new TreeItem<>(playlist);
                     playlist.getContainedPlaylists()
@@ -131,7 +131,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
     public void deletePlaylist() {
         Optional<Playlist> selectedItem = selectedPlaylistProperty.getValue();
         selectedItem.ifPresent(selectedPlaylist -> {
-            musicLibrary.deletePlaylist(selectedPlaylist);
+            musicLibrary.playlists.deletePlaylist(selectedPlaylist);
             boolean removed = root.getChildren().removeIf(treeItem -> treeItem.getValue().equals(selectedPlaylist));
 
             if (! removed)

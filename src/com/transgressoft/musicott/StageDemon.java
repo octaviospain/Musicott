@@ -153,9 +153,13 @@ public class StageDemon {
 
             if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
                 new Thread(() -> {
-                    Platform.runLater(() -> PlayerFacade.getInstance().deleteFromQueues(trackSelection));
+                    PlayerFacade.getInstance().deleteFromQueues(trackSelection);
                     MusicLibrary.getInstance().deleteTracks(trackSelection);
-                    Platform.runLater(this::closeIndeterminateProgress);
+                    String message = "Deleted " + Integer.toString(trackSelection.size()) + " tracks";
+                    Platform.runLater(() -> {
+                        getNavigationController().setStatusMessage(message);
+                        closeIndeterminateProgress();
+                    });
                 }).start();
                 showIndeterminateProgress();
             }

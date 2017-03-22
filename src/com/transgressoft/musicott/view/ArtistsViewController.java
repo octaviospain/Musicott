@@ -210,8 +210,9 @@ public class ArtistsViewController {
         trackAlbum = trackAlbum.isEmpty() ? "Unknown album" : trackAlbum;
         if (albumTrackSets.containsKey(trackAlbum)) {
             TrackSetAreaRow albumAreaRow = albumTrackSets.get(trackAlbum);
-            boolean removed = albumAreaRow.containedTracksProperty().remove(trackEntry);
-            if (removed && albumAreaRow.containedTracksProperty().isEmpty())
+            boolean[] removed = new boolean[]{false};
+            Platform.runLater(() -> removed[0] = albumAreaRow.containedTracksProperty().remove(trackEntry));
+            if (removed[0] && albumAreaRow.containedTracksProperty().isEmpty())
                 albumTrackSets.remove(trackAlbum);
             if (albumTrackSets.isEmpty() && ! artistsListView.getItems().isEmpty())
                 checkSelectedArtist();

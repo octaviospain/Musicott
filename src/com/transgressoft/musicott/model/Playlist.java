@@ -161,15 +161,10 @@ public class Playlist {
     private void changePlaylistCover() {
         List<Integer> tracks = getTracks();
         if (! tracks.isEmpty()) {
-            Optional<Integer> trackWithCover = tracks.stream()
-                                                     .filter(trackId -> musicLibrary.getTrack(trackId).isPresent())
-                                                     .filter(trackId -> musicLibrary.getTrack(trackId).get()
-                                                                                    .getCoverImage().isPresent())
-                                                     .findAny();
-
+            Optional<Integer> trackWithCover = tracks.stream().filter(this::existsTrackWithCover).findAny();
             if (trackWithCover.isPresent()) {
                 int trackId = trackWithCover.get();
-                musicLibrary.getTrack(trackId).ifPresent(track -> {
+                musicLibrary.tracks.getTrack(trackId).ifPresent(track -> {
                     byte[] coverBytes = track.getCoverImage().get();
                     Image image = new Image(new ByteArrayInputStream(coverBytes));
                     playlistCoverProperty.set(image);
@@ -180,6 +175,11 @@ public class Playlist {
         }
         else
             playlistCoverProperty.set(DEFAULT_COVER);
+    }
+
+    private boolean existsTrackWithCover(int trackId) {
+        Optional<Track> optT = musicLibrary.tracks.getTrack(trackId);
+        return optT.isPresent() && optT.get().getCoverImage().isPresent();
     }
 
     @Override

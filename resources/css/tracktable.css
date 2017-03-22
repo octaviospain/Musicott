@@ -23,28 +23,38 @@
     -fx-background-color: rgb(34, 34, 34);
 }
 
+.table-row-cell,
+.table-row-cell:odd {
+    -fx-background-color: rgb(34, 34, 34);
+}
+
+.table-row-cell .text,
+.table-row-cell:odd .text,
+.table-row-cell:hover .text{
+    -fx-fill: white;
+}
+
 .table-row-cell:selected,
-.table-row-cell:odd:selected {
+.table-row-cell:odd:selected,
+.table-row-cell:even:selected {
     -fx-background-color: rgb(99, 255, 109);
 }
 
 .table-row-cell:selected .text,
-.table-row-cell:odd:selected .text{
+.table-row-cell:odd:selected .text,
+.table-row-cell:even:selected .text {
     -fx-fill: black;
 }
 
-.table-row-cell, .table-row-cell:odd {
-    -fx-background-color: rgb(34, 34, 34);
-}
-
-.table-row-cell .text, .table-row-cell:odd .text {
-    -fx-fill: white;
-}
-
-.table-row-cell:hover {
+.table-row-cell:hover,
+.table-row-cell:odd:hover,
+.table-row-cell:even:hover {
     -fx-background-color: rgb(73, 73, 73);
 }
 
-.table-row-cell:hover .text {
+
+.table-row-cell:hover .text,
+.table-row-cell:odd:hover .text,
+.table-row-cell:even:hover .text {
     -fx-fill: white;
 }

@@ -69,9 +69,12 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
         else {
             itemsToParse.forEach(this::parseItem);
             parsedPlaylists.forEach(playlist -> {
-                if (musicLibrary.containsPlaylist(playlist)) {
-                    int playlistPos = musicLibrary.getPlaylists().indexOf(playlist);
-                    musicLibrary.getPlaylists().get(playlistPos).addTracks(playlist.getTracks());
+                if (musicLibrary.playlists.containsPlaylist(playlist)) {
+                    List<Playlist> playlists = musicLibrary.playlists.getPlaylists();
+                    synchronized (playlists) {
+                        int playlistPos = playlists.indexOf(playlist);
+                        playlists.get(playlistPos).addTracks(playlist.getTracks());
+                    }
                 }
                 else {
                     NavigationController navigationController = StageDemon.getInstance().getNavigationController();

@@ -69,7 +69,7 @@ public class PlaylistsLoadAction extends BaseLoadAction {
             playlists.add(new Playlist("Favourites", false));
             playlists.add(new Playlist("Listen later", false));
         }
-        musicLibrary.addPlaylists(playlists);
+        musicLibrary.playlists.addPlaylists(playlists);
     }
 
     /**

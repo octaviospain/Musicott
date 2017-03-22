@@ -57,6 +57,7 @@ public class SaveMusicLibraryTask extends Thread {
     private volatile boolean saveWaveforms;
     private volatile boolean savePlaylists;
     private ErrorDemon errorDemon = ErrorDemon.getInstance();
+    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
     public SaveMusicLibraryTask(ObservableMap<Integer, Track> tracks, Map<Integer, float[]> waveforms,
             List<Playlist> playlists) {
@@ -166,7 +167,8 @@ public class SaveMusicLibraryTask extends Thread {
     }
 
     private void serializeTracks() throws IOException {
-        synchronized (musicottTracks) {
+        TracksLibrary tracksLibrary = musicLibrary.tracks;
+        synchronized (tracksLibrary) {
             writeObjectToJsonFile(musicottTracks, tracksFile, tracksArgs);
         }
         saveTracks = false;
@@ -174,7 +176,8 @@ public class SaveMusicLibraryTask extends Thread {
     }
 
     private void serializeWaveforms() throws IOException {
-        synchronized (trackWaveforms) {
+        WaveformsLibrary waveformsLibrary = musicLibrary.waveforms;
+        synchronized (waveformsLibrary) {
             writeObjectToJsonFile(trackWaveforms, waveformsFile, null);
         }
         saveWaveforms = false;
@@ -182,7 +185,8 @@ public class SaveMusicLibraryTask extends Thread {
     }
 
     private void serializePlaylists() throws IOException {
-        synchronized (musicottPlaylists) {
+        PlaylistsLibrary playlistsLibrary = musicLibrary.playlists;
+        synchronized (playlistsLibrary) {
             writeObjectToJsonFile(musicottPlaylists, playlistsFile, playlistArgs);
         }
         savePlaylists = false;

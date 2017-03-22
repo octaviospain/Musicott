@@ -129,8 +129,9 @@ public class TrackSetAreaRow extends HBox {
     }
 
     private void placeRightVBox() {
-        Label albumLabel = new Label(album);
-        albumLabel.setId("albumTitleLabel");
+        Label albumTitleLabel = new Label(album);
+        albumTitleLabel.setId("albumTitleLabel");
+        albumTitleLabel.setMaxWidth(480);
         relatedArtistsLabel = new Label();
         relatedArtistsLabel.setId("relatedArtistsLabel");
         relatedArtistsLabel.setWrapText(true);
@@ -143,7 +144,7 @@ public class TrackSetAreaRow extends HBox {
         albumLabelLabel.setId("albumLabelLabel");
         buildTracksTableView();
 
-        albumInfoVBox = new VBox(albumLabel, genresLabel, tracksTableView);
+        albumInfoVBox = new VBox(albumTitleLabel, genresLabel, tracksTableView);
         VBox.setVgrow(tracksTableView, Priority.ALWAYS);
         HBox.setHgrow(albumInfoVBox, Priority.SOMETIMES);
         HBox.setMargin(albumInfoVBox, new Insets(20, 20, 5, 0));
