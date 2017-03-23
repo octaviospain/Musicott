@@ -40,7 +40,7 @@
                                         </HBox>
                                     </children>
                                 </VBox>
-                                <Button fx:id="artistRandomButton" mnemonicParsing="false">
+                                <Button fx:id="artistRandomButton" mnemonicParsing="false" styleClass="random-button">
                                     <padding>
                                         <Insets right="1.0" />
                                     </padding></Button>

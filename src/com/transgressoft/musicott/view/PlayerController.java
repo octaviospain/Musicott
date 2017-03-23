@@ -166,8 +166,16 @@ public class PlayerController implements MusicottController {
         }
     }
 
+    public void focusSearchField() {
+        searchTextField.requestFocus();
+    }
+
     public StringProperty searchTextProperty() {
         return searchTextField.textProperty();
+    }
+
+    public ReadOnlyBooleanProperty searchFieldFocusedProperty() {
+        return searchTextField.focusedProperty();
     }
 
     public ReadOnlyBooleanProperty previousButtonDisabledProperty() {

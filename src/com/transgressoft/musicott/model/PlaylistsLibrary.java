@@ -35,6 +35,7 @@ public class PlaylistsLibrary {
 
     private final TaskDemon taskDemon = TaskDemon.getInstance();
     final List<Playlist> playlists = new ArrayList<>();
+    private Random random = new Random();
 
     public synchronized void addPlaylist(Playlist playlist) {
         playlists.add(playlist);
@@ -68,6 +69,7 @@ public class PlaylistsLibrary {
     synchronized void removeFromPlaylists(int trackId) {
         playlists.stream().filter(playlist -> ! playlist.isFolder())
                  .forEach(playlist -> playlist.removeTracks(Collections.singletonList(trackId)));
+        taskDemon.saveLibrary(false, false, true);
     }
 
     public synchronized boolean containsPlaylist(Playlist playlist) {
@@ -76,6 +78,12 @@ public class PlaylistsLibrary {
 
     synchronized void clearPlaylists() {
         playlists.stream().filter(playlist -> ! playlist.isFolder()).forEach(Playlist::clearTracks);
+    }
+
+    synchronized List<Integer> getRandomSortedList(Playlist playlist) {
+        List<Integer> randomSortedList = new ArrayList<>(playlist.getTracks());
+        Collections.shuffle(randomSortedList, random);
+        return randomSortedList;
     }
 
     public List<Playlist> getPlaylists() {

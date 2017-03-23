@@ -40,6 +40,8 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
+import static com.transgressoft.musicott.model.AlbumsLibrary.*;
+
 /**
  * Controller class of the window that edits the information of tracks
  *
@@ -317,7 +319,7 @@ public class EditController implements MusicottController {
             Property property = trackPropertiesMap.get(entry.getKey());
             changed[0] = editTrackTrackField(entry, property);
             if (changed[0] && entry.getKey().equals(TrackField.ALBUM))
-                newChangedAlbum = Optional.of(track.getAlbum().isEmpty() ? "Unknown album" : track.getAlbum());
+                newChangedAlbum = Optional.of(track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum());
         });
 
         if (! isCompilationCheckBox.isIndeterminate()) {
@@ -408,7 +410,7 @@ public class EditController implements MusicottController {
      */
     private Optional<String> commonAlbum() {
         changedAlbums = trackSelection.stream().map(track ->
-                                track.getAlbum().isEmpty() ? "Unknown album" : track.getAlbum())
+                                track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum())
                                       .collect(Collectors.toSet());
         String firstAlbum = trackSelection.get(0).getAlbum();
         return changedAlbums.size() <= 1 ? Optional.of(firstAlbum) : Optional.empty();

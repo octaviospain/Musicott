@@ -23,6 +23,8 @@
           <SeparatorMenuItem mnemonicParsing="false" />
           <MenuItem fx:id="selectAllMenuItem" mnemonicParsing="false" text="Select all" />
           <MenuItem fx:id="dontSelectAllMenuItem" mnemonicParsing="false" text="Don't select all" />
+            <SeparatorMenuItem mnemonicParsing="false" />
+            <MenuItem fx:id="findMenuItem" mnemonicParsing="false" text="Find" />
        </items>
   </Menu>
   <Menu fx:id="controlsMenu" mnemonicParsing="false" text="Controls">

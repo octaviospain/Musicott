@@ -167,7 +167,7 @@ public class PlayerFacade {
             if (! playList.isEmpty())
                 setCurrentTrack();
             else if (playRandom)
-                musicLibrary.makeRandomPlaylist();
+                musicLibrary.playRandomPlaylist();
         }
         else if (trackPlayer.getStatus().equals(PLAYING))
             if (playList.isEmpty())
@@ -371,17 +371,16 @@ public class PlayerFacade {
         trackPlayer.setVolume(currentVolume - value);
     }
 
-    public void setRandomList(List<Integer> randomTrackIds) {
+    public void setRandomListAndPlay(List<Integer> randomTrackIds) {
         if (! randomTrackIds.isEmpty()) {
             LOG.info("Created random list of tracks");
             playingRandom = true;
             for (int index = 0; index < randomTrackIds.size(); index++) {
                 int i = index;
                 Platform.runLater(() -> {
-                    playList.add(new TrackQueueRow(randomTrackIds.get(i), playQueueController));
-                    if (i == 0) {
+                    playList.add(0, new TrackQueueRow(randomTrackIds.get(i), playQueueController));
+                    if (i == 0)
                         setCurrentTrack();
-                    }
                 });
             }
             Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Playing random playlist"));

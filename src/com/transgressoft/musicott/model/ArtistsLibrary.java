@@ -92,6 +92,11 @@ public class ArtistsLibrary {
         return artistsTracks.containsKey(artist);
     }
 
+    boolean artistContainsMatchedTrack(String artist, String query) {
+        return artistsTracks.get(artist).stream().anyMatch(
+                trackId ->TracksLibrary.trackMatchesString(tracksLibrary.getTrack(trackId).get(), query));
+    }
+
     void clear() {
         artistsTracks.clear();
         artistsList.clear();

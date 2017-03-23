@@ -33,7 +33,7 @@ import java.util.Map.*;
  */
 public class AlbumsLibrary {
 
-    static final String UNK_ALBUM = "Unknown album";
+    public static final String UNK_ALBUM = "Unknown album";
 
     private final Multimap<String, Entry<Integer, Track>> albumsTracks;
 

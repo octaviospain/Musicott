@@ -69,6 +69,7 @@ public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
         if (event.getClickCount() == 2 && ! isEmpty()) {
             List<Integer> singleTrackIdList = Collections.singletonList(getItem().getKey());
             player.addTracksToPlayQueue(singleTrackIdList, true);
+            stageDemon.getNavigationController().updateCurrentPlayingPlaylist();
         }
     }
 

@@ -46,6 +46,7 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
 
     public PlaylistTreeCell() {
         super();
+        setOnMouseClicked(this::doubleClickOnPlaylistHandler);
 
         ChangeListener<Boolean> isFolderListener = (obs, oldPlaylistIsFolder, newPlaylistIsFolder) -> {
             boolean isFolder = newPlaylistIsFolder;
@@ -109,5 +110,10 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
             treeCellPlaylist.addTracks(selectedTracks);
             event.consume();
         }
+    }
+
+    private void doubleClickOnPlaylistHandler(MouseEvent event) {
+        if (event.getClickCount() == 2 && ! getItem().isEmpty())
+            MusicLibrary.getInstance().playPlaylistRandomly(getItem());
     }
 }

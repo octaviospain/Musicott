@@ -226,16 +226,19 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
                 List<Integer> selectionIDs = selection.stream().map(Entry::getKey).collect(Collectors.toList());
                 player.addTracksToPlayQueue(selectionIDs, true);
             }
-            else if (event.getCode() == KeyCode.SPACE) {
-                Status playerStatus = player.getPlayerStatus();
-                if (playerStatus.equals(PLAYING))
-                    player.pause();
-                else if (playerStatus.equals(PAUSED))
-                    player.resume();
-                else if (playerStatus.equals(STOPPED))
-                    player.play(true);
-            }
+            else if (event.getCode() == KeyCode.SPACE)
+                spacePressedOnTableAction(player.getPlayerStatus());
         };
+    }
+
+    public static void spacePressedOnTableAction(Status playerStatus) {
+        PlayerFacade player = PlayerFacade.getInstance();
+        if (playerStatus.equals(PLAYING))
+            player.pause();
+        else if (playerStatus.equals(PAUSED))
+            player.resume();
+        else if (playerStatus.equals(STOPPED))
+            player.play(true);
     }
 }
 

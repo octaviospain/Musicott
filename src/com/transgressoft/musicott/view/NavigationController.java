@@ -32,6 +32,7 @@ import javafx.scene.input.*;
 import javafx.scene.input.KeyCombination.*;
 import javafx.scene.layout.*;
 
+import java.util.Map.*;
 import java.util.*;
 import java.util.function.*;
 
@@ -60,6 +61,7 @@ public class NavigationController implements MusicottController {
     private NavigationMenuListView navigationMenuListView;
     private PlaylistTreeView playlistTreeView;
     private ObjectProperty<NavigationMode> navigationModeProperty;
+    private Optional<Playlist> currentPlayingPlaylist;
 
     private RootController rootController;
     private StageDemon stageDemon = StageDemon.getInstance();
@@ -68,6 +70,7 @@ public class NavigationController implements MusicottController {
 
     @FXML
     public void initialize() {
+        currentPlayingPlaylist = Optional.empty();
         navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", NavigationMode.ALL_TRACKS);
         playlistTreeView = new PlaylistTreeView();
         navigationMenuListView = new NavigationMenuListView(this);
@@ -161,14 +164,6 @@ public class NavigationController implements MusicottController {
         subscribe(navigationModeProperty, this::setNavigationMode);
     }
 
-    public ObjectProperty<NavigationMode> navigationModeProperty() {
-        return navigationModeProperty;
-    }
-
-    ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
-        return playlistTreeView.selectedPlaylistProperty();
-    }
-
     public void addNewPlaylist(Playlist newPlaylist, boolean selectAfter) {
         TreeItem<Playlist> selectedPlaylistItem = playlistTreeView.getSelectionModel().selectedItemProperty().get();
 
@@ -185,6 +180,21 @@ public class NavigationController implements MusicottController {
         }
     }
 
+    public void updateCurrentPlayingPlaylist() {
+        currentPlayingPlaylist = selectedPlaylistProperty().get();
+    }
+
+    public boolean selectPlaylistOfTrack(Entry<Integer, Track> trackEntry) {
+        boolean success = currentPlayingPlaylist.isPresent();
+        if (success) {
+            Playlist playlist = currentPlayingPlaylist.get();
+            success = playlist.getTracks().contains(trackEntry.getKey());
+            if (success)
+                playlistTreeView.selectPlaylist(playlist);
+        }
+        return success;
+    }
+
     public void deleteSelectedPlaylist() {
         playlistTreeView.deletePlaylist();
     }
@@ -199,5 +209,13 @@ public class NavigationController implements MusicottController {
         else
             statusLabel.setStyle("-fx-text-fill: rgb(73, 73, 73);");
         statusLabel.setText(message);
+    }
+
+    public ObjectProperty<NavigationMode> navigationModeProperty() {
+        return navigationModeProperty;
+    }
+
+    ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
+        return playlistTreeView.selectedPlaylistProperty();
     }
 }

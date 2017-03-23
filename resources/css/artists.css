@@ -66,11 +66,11 @@
     -fx-text-fill: rgb(182, 182, 182);
 }
 
-#artistRandomButton {
+.random-button {
     -fx-graphic: url('../icons/random-icon.png');
     -fx-background-color: transparent;
 }
 
-#artistRandomButton:pressed {
+.random-button:pressed {
     -fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 15, 0.3, 0, 0);
 }

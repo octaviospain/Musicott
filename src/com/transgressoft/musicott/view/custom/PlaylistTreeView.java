@@ -37,8 +37,8 @@ import java.util.stream.*;
  */
 public class PlaylistTreeView extends TreeView<Playlist> {
 
+    private Map<Playlist, TreeItem<Playlist>> playlistsItemsMap;
     private TreeItem<Playlist> root;
-    private PlaylistTreeViewContextMenu contextMenu;
     private ObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
     private StageDemon stageDemon = StageDemon.getInstance();
@@ -46,6 +46,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 
     public PlaylistTreeView() {
         super();
+        playlistsItemsMap = new HashMap<>();
         root = new TreeItem<>();
         setRoot(root);
         setShowRoot(false);
@@ -70,8 +71,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
             })
         );
 
-        contextMenu = new PlaylistTreeViewContextMenu();
-        setContextMenu(contextMenu);
+        setContextMenu(new PlaylistTreeViewContextMenu());
         createPlaylistsItems();
     }
 
@@ -84,14 +84,24 @@ public class PlaylistTreeView extends TreeView<Playlist> {
                 if (playlist.isFolder()) {
                     TreeItem<Playlist> folderItem = new TreeItem<>(playlist);
                     playlist.getContainedPlaylists()
-                            .forEach(childPlaylist -> folderItem.getChildren().add(new TreeItem<>(childPlaylist)));
+                            .forEach(childPlaylist -> addPlaylistItem(folderItem, childPlaylist));
 
+                    addPlaylistItem(root, playlist);
                     root.getChildren().add(folderItem);
                 }
-                else
-                    root.getChildren().add(new TreeItem<>(playlist));
+                addPlaylistItem(root, playlist);
             });
         }
+    }
+
+    private void addPlaylistItem(TreeItem<Playlist> root, Playlist playlist) {
+        TreeItem<Playlist> item = new TreeItem<>(playlist);
+        root.getChildren().add(item);
+        playlistsItemsMap.put(playlist, item);
+    }
+
+    public void selectPlaylist(Playlist playlist) {
+        getSelectionModel().select(playlistsItemsMap.get(playlist));
     }
 
     /**
@@ -100,10 +110,9 @@ public class PlaylistTreeView extends TreeView<Playlist> {
      * @param newPlaylist The playlist value of the {@code TreeItem}
      */
     public void addPlaylist(Playlist newPlaylist, boolean selectAfter) {
-        TreeItem<Playlist> newItem = new TreeItem<>(newPlaylist);
-        root.getChildren().add(newItem);
+        addPlaylistItem(root, newPlaylist);
         if (selectAfter)
-            getSelectionModel().select(newItem);
+            selectPlaylist(newPlaylist);
     }
 
     /**
@@ -118,11 +127,9 @@ public class PlaylistTreeView extends TreeView<Playlist> {
                                                 .filter(child -> child.getValue().equals(folder))
                                                 .findFirst().get();
 
-        TreeItem<Playlist> newPlaylistItem = new TreeItem<>(newPlaylistChild);
-        folderTreeItem.getChildren().add(newPlaylistItem);
-
+        addPlaylistItem(folderTreeItem, newPlaylistChild);
         folder.getContainedPlaylists().add(newPlaylistChild);
-        getSelectionModel().select(newPlaylistItem);
+        selectPlaylist(newPlaylistChild);
     }
 
     /**
@@ -133,7 +140,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
         selectedItem.ifPresent(selectedPlaylist -> {
             musicLibrary.playlists.deletePlaylist(selectedPlaylist);
             boolean removed = root.getChildren().removeIf(treeItem -> treeItem.getValue().equals(selectedPlaylist));
-
+            playlistsItemsMap.remove(selectedPlaylist);
             if (! removed)
                 deletePlaylistInSomeFolder(selectedPlaylist);
 
@@ -159,6 +166,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
             while (childrenIterator.hasNext()) {
                 if (childrenIterator.next().getValue().equals(playlistToDelete)) {
                     childrenIterator.remove();
+                    playlistsItemsMap.remove(playlistToDelete);
                     break;
                 }
             }

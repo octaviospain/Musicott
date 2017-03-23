@@ -129,6 +129,10 @@ public class MusicLibrary {
         return removed[0];
     }
 
+    public boolean artistContainsMatchedTrack(String artist, String query) {
+        return artists.artistContainsMatchedTrack(artist, query);
+    }
+
     public void showAllTracks() {
         tracks.resetShowingTracks();
     }
@@ -212,10 +216,10 @@ public class MusicLibrary {
      *
      * @param artist The given artist
      */
-    public void makeRandomArtistPlaylist(String artist) {
+    public void playRandomArtistPlaylist(String artist) {
         Thread randomArtistPlaylistThread = new Thread(() -> {
             List<Integer> randomList = artists.getRandomListOfArtistTracks(artist);
-            PlayerFacade.getInstance().setRandomList(randomList);
+            PlayerFacade.getInstance().setRandomListAndPlay(randomList);
         }, "Random Artist Playlist Thread");
         randomArtistPlaylistThread.start();
     }
@@ -223,12 +227,20 @@ public class MusicLibrary {
     /**
      * Makes a random playlist of tracks and adds it to the {@link PlayerFacade}
      */
-    public void makeRandomPlaylist() {
+    public void playRandomPlaylist() {
         Thread randomPlaylistThread = new Thread(() -> {
             List<Integer> randomPlaylist = tracks.getRandomList();
-            PlayerFacade.getInstance().setRandomList(randomPlaylist);
+            PlayerFacade.getInstance().setRandomListAndPlay(randomPlaylist);
         }, "Random Playlist Thread");
         randomPlaylistThread.start();
+    }
+
+    public void playPlaylistRandomly(Playlist playlist) {
+        Thread randomPlaylistPlayThread = new Thread(() -> {
+            List<Integer> randomList = playlists.getRandomSortedList(playlist);
+            PlayerFacade.getInstance().setRandomListAndPlay(randomList);
+        }, "Shuffle Playlist Thread");
+        randomPlaylistPlayThread.start();
     }
 
     public ListProperty<String> artistsProperty() {

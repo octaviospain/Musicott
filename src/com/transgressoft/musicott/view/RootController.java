@@ -79,6 +79,8 @@ public class RootController implements MusicottController {
     @FXML
     private GridPane playlistInfoGridPane;
     @FXML
+    private Button playRandomButton;
+    @FXML
     private StackPane tableStackPane;
     @FXML
     private SplitPane artistsLayout;
@@ -116,6 +118,7 @@ public class RootController implements MusicottController {
     @FXML
     public void initialize() {
         trackTable = new TrackTableView();
+        trackTable.setItems(bindedToSearchTextFieldTracks());
         selectedPlaylistProperty = navigationLayoutController.selectedPlaylistProperty();
         subscribe(selectedPlaylistProperty, selected -> selected.ifPresent(this::updateShowingInfoWithPlaylist));
 
@@ -128,8 +131,8 @@ public class RootController implements MusicottController {
 
         initializeInfoPaneFields();
         initializeHoverCoverImageView();
-        bindSearchTextField();
         hideTableInfoPane();
+        artistsLayoutController.setPlayerController(playerLayoutController);
         navigationLayoutController.setRootController(this);
         navigationLayoutController.setNavigationMode(ARTISTS);
     }
@@ -164,6 +167,11 @@ public class RootController implements MusicottController {
         initializePlaylistTitleTextField();
         ListProperty<Entry<Integer, Track>> showingTracksProperty = musicLibrary.showingTracksProperty();
 
+        playRandomButton.visibleProperty().bind(showingTracksProperty.emptyProperty().not());
+        playRandomButton.setOnAction(e -> {
+            if (selectedPlaylistProperty().get().isPresent())
+                musicLibrary.playPlaylistRandomly(selectedPlaylistProperty().get().get());
+        });
         playlistTracksNumberLabel.textProperty().bind(map(showingTracksProperty.sizeProperty(), s -> s + " songs"));
         playlistSizeLabel.textProperty().bind(map(showingTracksProperty, this::tracksSizeString));
         playlistTitleLabel.textProperty().bind(playlistTitleTextField.textProperty());
@@ -194,17 +202,16 @@ public class RootController implements MusicottController {
     /**
      * Binds the text typed on the search text field to a filtered subset of items shown on the table
      */
-    private void bindSearchTextField() {
+    private SortedList<Entry<Integer, Track>> bindedToSearchTextFieldTracks() {
         ObservableList<Entry<Integer, Track>> tracks = musicLibrary.showingTracksProperty().get();
-        FilteredList<Entry<Integer, Track>> filteredTracks = new FilteredList<>(tracks, predicate -> true);
+        FilteredList<Entry<Integer, Track>> filteredTracks = new FilteredList<>(tracks, entry -> true);
 
         StringProperty searchTextProperty = playerLayoutController.searchTextProperty();
-        searchTextProperty.addListener((observable, oldText, newText) -> filteredTracks
-                .setPredicate(findTracksContainingTextPredicate(newText)));
+        subscribe(searchTextProperty, query -> filteredTracks.setPredicate(filterTracksByQuery(query)));
 
-        SortedList<Map.Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
+        SortedList<Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
         sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
-        trackTable.setItems(sortedTracks);
+        return sortedTracks;
     }
 
     private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler() {
@@ -263,34 +270,17 @@ public class RootController implements MusicottController {
     /**
      * Returns a {@link Predicate} that evaluates the match of a given {@code String} to a given track {@link Entry}
      *
-     * @param string The {@code String} to match against the track
+     * @param query The {@code String} to match against the track
      *
      * @return The {@code Predicate}
      */
-    private Predicate<Entry<Integer, Track>> findTracksContainingTextPredicate(String string) {
+    private Predicate<Entry<Integer, Track>> filterTracksByQuery(String query) {
         return trackEntry -> {
-            boolean result = string == null || string.isEmpty();
+            boolean result = query == null || query.isEmpty();
             if (! result)
-                result = trackMatchesString(trackEntry.getValue(), string);
+                result = TracksLibrary.trackMatchesString(trackEntry.getValue(), query);
             return result;
         };
-    }
-
-    /**
-     * Determines if a track matches a given string by its name, artist, label, genre or album.
-     *
-     * @param track  The {@link Track} to match
-     * @param string The string to match against the {@code Track}
-     *
-     * @return {@code true} if the {@code Track matches}, {@code false} otherwise
-     */
-    private boolean trackMatchesString(Track track, String string) {
-        boolean matchesName = track.getName().toLowerCase().contains(string.toLowerCase());
-        boolean matchesArtist = track.getArtist().toLowerCase().contains(string.toLowerCase());
-        boolean matchesLabel = track.getLabel().toLowerCase().contains(string.toLowerCase());
-        boolean matchesGenre = track.getGenre().toLowerCase().contains(string.toLowerCase());
-        boolean matchesAlbum = track.getAlbum().toLowerCase().contains(string.toLowerCase());
-        return matchesName || matchesArtist || matchesLabel || matchesGenre || matchesAlbum;
     }
 
     /**
@@ -466,6 +456,9 @@ public class RootController implements MusicottController {
                 trackTable.selectFocusAndScroll(entryToSelect);
                 break;
             case PLAYLIST:
+                if (! navigationLayoutController.selectPlaylistOfTrack(entryToSelect))
+                    navigationLayoutController.setNavigationMode(ALL_TRACKS);
+                trackTable.selectFocusAndScroll(entryToSelect);
                 break;
             case ARTISTS:
                 artistsLayoutController.selectTrack(entryToSelect);

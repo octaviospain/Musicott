@@ -126,4 +126,21 @@ public class TracksLibrary {
     ListProperty<Entry<Integer, Track>> showingTracksProperty() {
         return showingTracksProperty;
     }
+
+    /**
+     * Determines if a track matches a given string by its name, artist, label, genre or album.
+     *
+     * @param track  The {@link Track} to match
+     * @param string The string to match against the {@code Track}
+     *
+     * @return {@code true} if the {@code Track matches}, {@code false} otherwise
+     */
+    public static boolean trackMatchesString(Track track, String string) {
+        boolean matchesName = track.getName().toLowerCase().contains(string.toLowerCase());
+        boolean matchesArtist = track.getArtist().toLowerCase().contains(string.toLowerCase());
+        boolean matchesLabel = track.getLabel().toLowerCase().contains(string.toLowerCase());
+        boolean matchesGenre = track.getGenre().toLowerCase().contains(string.toLowerCase());
+        boolean matchesAlbum = track.getAlbum().toLowerCase().contains(string.toLowerCase());
+        return matchesName || matchesArtist || matchesLabel || matchesGenre || matchesAlbum;
+    }
 }

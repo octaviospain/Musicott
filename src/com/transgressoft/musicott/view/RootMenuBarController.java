@@ -25,6 +25,7 @@ import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.Utils.*;
+import com.transgressoft.musicott.view.custom.*;
 import de.codecentric.centerdevice.*;
 import javafx.application.*;
 import javafx.beans.property.*;
@@ -35,12 +36,12 @@ import javafx.scene.image.*;
 import javafx.scene.input.*;
 import javafx.scene.input.KeyCombination.*;
 import javafx.scene.layout.*;
-import javafx.scene.media.MediaPlayer.*;
 import javafx.stage.*;
 import javafx.stage.FileChooser.*;
 import org.slf4j.*;
 
 import java.io.*;
+import java.util.AbstractMap.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
@@ -48,7 +49,6 @@ import java.util.stream.*;
 import static com.transgressoft.musicott.model.NavigationMode.*;
 import static com.transgressoft.musicott.view.MusicottController.*;
 import static javafx.scene.input.KeyCombination.*;
-import static javafx.scene.media.MediaPlayer.Status.*;
 import static org.fxmisc.easybind.EasyBind.*;
 
 /**
@@ -92,6 +92,8 @@ public class RootMenuBarController {
     private MenuItem selectAllMenuItem;
     @FXML
     private MenuItem dontSelectAllMenuItem;
+    @FXML
+    private MenuItem findMenuItem;
     @FXML
     private Menu controlsMenu;
     @FXML
@@ -243,23 +245,18 @@ public class RootMenuBarController {
         deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks(trackSelectionIds()));
         selectAllMenuItem.setOnAction(e -> rootController.selectAllTracks());
         dontSelectAllMenuItem.setOnAction(e -> rootController.deselectAllTracks());
-        ReadOnlyBooleanProperty editingTracksProperty = stageDemon.getEditController().showingProperty();
-        selectAllMenuItem.disableProperty().bind(editingTracksProperty);
-        dontSelectAllMenuItem.disableProperty().bind(editingTracksProperty);
+
+        ReadOnlyBooleanProperty editingProperty = stageDemon.getEditController().showingProperty();
+        ReadOnlyBooleanProperty searchingProperty = playerController.searchFieldFocusedProperty();
+        selectAllMenuItem.disableProperty().bind(combine(editingProperty, searchingProperty, (e, s) -> e || s));
+        dontSelectAllMenuItem.disableProperty().bind(editingProperty);
+        findMenuItem.setOnAction(e -> playerController.focusSearchField());
     }
 
     private void setControlsMenuActions() {
         playPauseTextBinding();
         playPauseMenuItem.disableProperty().bind(musicLibrary.emptyLibraryProperty());
-        playPauseMenuItem.setOnAction(e -> {
-            Status playerStatus = playerFacade.getPlayerStatus();
-            if (playerStatus.equals(PLAYING))
-                playerFacade.pause();
-            else if (playerStatus.equals(PAUSED))
-                playerFacade.resume();
-            else if (playerStatus.equals(STOPPED))
-                playerFacade.play(true);
-        });
+        playPauseMenuItem.setOnAction(e -> TrackTableView.spacePressedOnTableAction(playerFacade.getPlayerStatus()));
         previousMenuItem.disableProperty().bind(playerController.previousButtonDisabledProperty());
         previousMenuItem.setOnAction(e -> playerFacade.previous());
 
@@ -273,7 +270,7 @@ public class RootMenuBarController {
             Optional<Track> currentTrack = playerFacade.getCurrentTrack();
             currentTrack.ifPresent(track -> {
                 int currentTrackId = track.getTrackId();
-                Map.Entry<Integer, Track> currentEntry = new AbstractMap.SimpleEntry<>(currentTrackId, track);
+                Entry<Integer, Track> currentEntry = new SimpleEntry<>(currentTrackId, track);
                 rootController.selectTrack(currentEntry);
             });
             LOG.debug("Current track in the player selected in the table");
@@ -412,8 +409,8 @@ public class RootMenuBarController {
         editMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, operativeSystemModifier));
         deleteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.BACK_SPACE, operativeSystemModifier));
         playPauseMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE));
-        previousMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, operativeSystemModifier));
-        nextMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.LEFT, operativeSystemModifier));
+        previousMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.LEFT, operativeSystemModifier));
+        nextMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, operativeSystemModifier));
         increaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, operativeSystemModifier));
         decreaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, operativeSystemModifier));
         selectCurrentTrackMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.L, operativeSystemModifier));
@@ -424,5 +421,6 @@ public class RootMenuBarController {
                 .setAccelerator(new KeyCodeCombination(KeyCode.U, operativeSystemModifier, shiftDown));
         selectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemModifier));
         dontSelectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemModifier, shiftDown));
+        findMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.F, operativeSystemModifier));
     }
 }
