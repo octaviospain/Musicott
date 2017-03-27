@@ -10,6 +10,7 @@
           <MenuItem fx:id="importItunesMenuItem" mnemonicParsing="false" text="Import from iTunes Library..." />
           <SeparatorMenuItem mnemonicParsing="false" />
           <MenuItem fx:id="newPlaylistMenuItem" mnemonicParsing="false" text="Add new playlist" />
+            <MenuItem fx:id="newPlaylistFolderMenuItem" mnemonicParsing="false" text="Add new playlist folder" />
           <SeparatorMenuItem mnemonicParsing="false" />
           <MenuItem fx:id="preferencesMenuItem" mnemonicParsing="false" text="Preferences" />
           <SeparatorMenuItem mnemonicParsing="false" />

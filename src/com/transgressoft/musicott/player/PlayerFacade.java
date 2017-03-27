@@ -60,7 +60,6 @@ public class PlayerFacade {
     private boolean scrobbled;
 
     private StageDemon stageDemon = StageDemon.getInstance();
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
     private ServiceDemon services = ServiceDemon.getInstance();
     private TaskDemon taskDemon = TaskDemon.getInstance();
 
@@ -111,20 +110,17 @@ public class PlayerFacade {
     /**
      * Adds a {@link List} of tracks to the play queue. Checks if all tracks given are playable.
      *
-     * @param tracksId              The {@code List} of tracks ids to add.
+     * @param tracks                The {@code List} of tracks to add.
      * @param placeFirstInPlayQueue {@code true} if the tracks added should be placed in the beginning
      *                              of the play queue, {@code false} otherwise
      */
-    public void addTracksToPlayQueue(Collection<Integer> tracksId, boolean placeFirstInPlayQueue) {
+    public void addTracksToPlayQueue(Collection<Track> tracks, boolean placeFirstInPlayQueue) {
         Thread playableTracksThread = new Thread(() -> {
-
-            List<Integer> playableTracks = tracksId.stream().filter(trackID -> {
-                Optional<Track> track = musicLibrary.tracks.getTrack(trackID);
-                boolean[] isPlayable = new boolean[1];
-                track.ifPresent(t -> isPlayable[0] = t.isPlayable());
-                if (! isPlayable[0])
+            List<Track> playableTracks = tracks.stream().filter(track -> {
+                boolean isPlayable = track.isPlayable();
+                if (! isPlayable)
                     Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Unplayable file"));
-                return isPlayable[0];
+                return isPlayable;
             }).collect(Collectors.toList());
 
             Platform.runLater(() -> addPlayableTracksToPlayQueue(playableTracks, placeFirstInPlayQueue));
@@ -138,10 +134,10 @@ public class PlayerFacade {
      * @param playableTracks        The {@code List} of tracks ids that are playable.
      * @param placeFirstInPlayQueue {@code true} if the tracks added should be placed in the head of the play queue
      */
-    private void addPlayableTracksToPlayQueue(List<Integer> playableTracks, boolean placeFirstInPlayQueue) {
+    private void addPlayableTracksToPlayQueue(List<Track> playableTracks, boolean placeFirstInPlayQueue) {
         if (playingRandom) {
             playList.clear();
-            playableTracks.forEach(trackID -> playList.add(new TrackQueueRow(trackID, playQueueController)));
+            playableTracks.forEach(track -> playList.add(new TrackQueueRow(track, playQueueController)));
             playingRandom = false;
         }
         else if (! playableTracks.isEmpty()) {
@@ -167,7 +163,7 @@ public class PlayerFacade {
             if (! playList.isEmpty())
                 setCurrentTrack();
             else if (playRandom)
-                musicLibrary.playRandomPlaylist();
+                MusicLibrary.getInstance().playRandomPlaylist();
         }
         else if (trackPlayer.getStatus().equals(PLAYING))
             if (playList.isEmpty())
@@ -178,7 +174,7 @@ public class PlayerFacade {
 
     private void setCurrentTrack() {
         historyList.add(0, playList.get(0));
-        setPlayer(playList.get(0).getRepresentedTrackId());
+        setPlayer(playList.get(0).getRepresentedTrack());
         playList.remove(0);
         trackPlayer.play();
         LOG.info("Playing {}", currentTrack);
@@ -189,18 +185,16 @@ public class PlayerFacade {
         currentTrack = Optional.empty();
     }
 
-    private void setPlayer(int trackId) {
+    private void setPlayer(Track track) {
         scrobbled = false;
         played = false;
-        currentTrack = musicLibrary.tracks.getTrack(trackId);
-        currentTrack.ifPresent(track -> {
-            if (track.isPlayable()) {
-                trackPlayer.setTrack(track);
-                playerController.updatePlayer(track);
-                bindMediaPlayer();
-                LOG.debug("Created new player");
-            }
-        });
+        if (track.isPlayable()) {
+            currentTrack = Optional.of(track);
+            trackPlayer.setTrack(track);
+            playerController.updatePlayer(track);
+            bindMediaPlayer();
+            LOG.debug("Created new player");
+        }
     }
 
     /**
@@ -283,23 +277,23 @@ public class PlayerFacade {
      *
      * @param tracksToDelete The {@link List} of track ids
      */
-    public void deleteFromQueues(List<Integer> tracksToDelete) {
+    public void deleteFromQueues(List<Track> tracksToDelete) {
         currentTrack.ifPresent(track -> {
-            if (tracksToDelete.contains(track.getTrackId())) {
+            if (tracksToDelete.contains(track)) {
                 currentTrack = Optional.empty();
                 stop();
             }
         });
 
-        tracksToDelete.forEach(trackId -> {
+        tracksToDelete.forEach(track -> {
             Iterator<TrackQueueRow> trackQueueRowIterator = playList.iterator();
             while (trackQueueRowIterator.hasNext())
-                if (trackQueueRowIterator.next().getRepresentedTrackId() == trackId)
+                if (trackQueueRowIterator.next().getRepresentedTrack().equals(track))
                     trackQueueRowIterator.remove();
 
             trackQueueRowIterator = historyList.iterator();
             while (trackQueueRowIterator.hasNext())
-                if (trackQueueRowIterator.next().getRepresentedTrackId() == trackId)
+                if (trackQueueRowIterator.next().getRepresentedTrack().equals(track))
                     trackQueueRowIterator.remove();
         });
     }
@@ -320,7 +314,7 @@ public class PlayerFacade {
 
     public void previous() {
         if (! historyList.isEmpty()) {
-            setPlayer(historyList.get(0).getRepresentedTrackId());
+            setPlayer(historyList.get(0).getRepresentedTrack());
             historyList.remove(0);
             trackPlayer.play();
         }
@@ -344,7 +338,7 @@ public class PlayerFacade {
      * @param index The position of the {@code track} in the history queue.
      */
     public void playHistoryIndex(int index) {
-        setPlayer(historyList.get(index).getRepresentedTrackId());
+        setPlayer(historyList.get(index).getRepresentedTrack());
         historyList.remove(index);
         trackPlayer.play();
     }
@@ -355,7 +349,7 @@ public class PlayerFacade {
      * @param index The position of the {@code track} in the history queue.
      */
     public void playQueueIndex(int index) {
-        setPlayer(playList.get(index).getRepresentedTrackId());
+        setPlayer(playList.get(index).getRepresentedTrack());
         historyList.add(0, playList.get(index));
         playList.remove(index);
         trackPlayer.play();
@@ -371,14 +365,14 @@ public class PlayerFacade {
         trackPlayer.setVolume(currentVolume - value);
     }
 
-    public void setRandomListAndPlay(List<Integer> randomTrackIds) {
-        if (! randomTrackIds.isEmpty()) {
+    public void setRandomListAndPlay(List<Track> randomTracks) {
+        if (! randomTracks.isEmpty()) {
             LOG.info("Created random list of tracks");
             playingRandom = true;
-            for (int index = 0; index < randomTrackIds.size(); index++) {
+            for (int index = 0; index < randomTracks.size(); index++) {
                 int i = index;
                 Platform.runLater(() -> {
-                    playList.add(0, new TrackQueueRow(randomTrackIds.get(i), playQueueController));
+                    playList.add(0, new TrackQueueRow(randomTracks.get(i), playQueueController));
                     if (i == 0)
                         setCurrentTrack();
                 });

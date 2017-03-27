@@ -114,7 +114,7 @@ public class ItunesParseTask extends BaseParseTask {
         if (importPlaylists) {
             currentItunesItemsParsed = 0;
             totalItunesItemsToParse = itunesPlaylists.size();
-            Map<Integer, Integer> idsMap = ImmutableMap.copyOf(itunesParseResult.getItunesIdToMusicottIdMap());
+            Map<Integer, Track> idsMap = ImmutableMap.copyOf(itunesParseResult.getItunesIdToMusicottTrackMap());
             ItunesPlaylistParseAction itunesPlaylistParseAction =
                     new ItunesPlaylistParseAction(itunesPlaylists, idsMap, this);
             forkJoinPool.invoke(itunesPlaylistParseAction);

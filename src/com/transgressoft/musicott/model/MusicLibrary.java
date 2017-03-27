@@ -48,8 +48,8 @@ public class MusicLibrary {
 
     public final TracksLibrary tracks = new TracksLibrary();
     public final WaveformsLibrary waveforms = new WaveformsLibrary();
-    public final PlaylistsLibrary playlists = new PlaylistsLibrary();
-    private final ArtistsLibrary artists = new ArtistsLibrary(tracks);
+    public final PlaylistsLibrary playlists = new PlaylistsLibrary(this);
+    private final ArtistsLibrary artists = new ArtistsLibrary();
     private final AlbumsLibrary albums = new AlbumsLibrary();
 
     private final MapChangeListener<Integer, Track> musicottTracksListener = musicottTracksChangeListener();
@@ -68,7 +68,7 @@ public class MusicLibrary {
 
     private MusicLibrary() {
         tracks.addListener(musicottTracksListener);
-        taskDemon.setMusicCollections(tracks.musicottTracks, waveforms.waveforms, playlists.playlists);
+        taskDemon.setMusicCollections(tracks.musicottTracks, waveforms.waveforms, playlists.playlistsTree);
     }
 
     /**
@@ -79,30 +79,23 @@ public class MusicLibrary {
      */
     private MapChangeListener<Integer, Track> musicottTracksChangeListener() {
         return change -> {
-            if (change.wasAdded()) {
-                Track track = change.getValueAdded();
-                int trackId  = track.getTrackId();
-                addTrackToCollections(new SimpleEntry<>(trackId, track));
-            }
-            else if (change.wasRemoved()) {
-                Track track = change.getValueRemoved();
-                int trackId = track.getTrackId();
-                removeTrackFromCollections(new SimpleEntry<>(trackId, track));
-            }
+            if (change.wasAdded())
+                addTrackToCollections(change.getValueAdded());
+            else if (change.wasRemoved())
+                removeTrackFromCollections(change.getValueRemoved());
             taskDemon.saveLibrary(true, true, false);
         };
     }
 
-    private boolean addTrackToCollections(Entry<Integer, Track> trackEntry) {
-        int trackId = trackEntry.getKey();
-        Track addedTrack = trackEntry.getValue();
-        String trackAlbum = addedTrack.getAlbum().isEmpty() ? UNK_ALBUM : addedTrack.getAlbum();
+    private boolean addTrackToCollections(Track track) {
+        String trackAlbum = track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum();
         boolean[] added = new boolean[]{false};
+        Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);
 
         Platform.runLater(() -> added[0] = tracks.tracksProperty().add(trackEntry));
         Platform.runLater(() -> added[0] |= albums.addTracks(trackAlbum, Collections.singletonList(trackEntry)));
-        addedTrack.getArtistsInvolved().forEach(artist -> added[0] |= artists.addArtistTrack(artist, trackId));
-        LOG.debug("Added {}", addedTrack);
+        track.getArtistsInvolved().forEach(artist -> added[0] |= artists.addArtistTrack(artist, track));
+        LOG.debug("Added {}", track);
 
         NavigationController navigationController = stageDemon.getNavigationController();
         NavigationMode mode = navigationController == null ? null :
@@ -112,20 +105,19 @@ public class MusicLibrary {
         return added[0];
     }
 
-    private boolean removeTrackFromCollections(Entry<Integer, Track> trackEntry) {
-        stageDemon.getRootController().removeFromTrackSets(trackEntry);
-        int trackId = trackEntry.getKey();
-        Track removedTrack = trackEntry.getValue();
-        String trackAlbum = removedTrack.getAlbum().isEmpty() ? UNK_ALBUM : removedTrack.getAlbum();
+    private boolean removeTrackFromCollections(Track track) {
+        String trackAlbum = track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum();
         boolean[] removed = new boolean[]{false};
+        Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);
+        stageDemon.getRootController().removeFromTrackSets(trackEntry);
 
         Platform.runLater(() -> removed [0] = tracks.tracksProperty().remove(trackEntry));
         Platform.runLater(() -> removed[0] |= showingTracksProperty().remove(trackEntry));
         removed[0] |= albums.removeTracks(trackAlbum, Collections.singletonList(trackEntry));
-        removedTrack.getArtistsInvolved().forEach(artist -> removed[0] |= artists.removeArtistTrack(artist, trackId));
-        waveforms.removeWaveform(removedTrack.getTrackId());
-        playlists.removeFromPlaylists(removedTrack.getTrackId());
-        LOG.debug("Removed {}", removedTrack);
+        track.getArtistsInvolved().forEach(artist -> removed[0] |= artists.removeArtistTrack(artist, track));
+        waveforms.removeWaveform(track.getTrackId());
+        playlists.removeFromPlaylists(track);
+        LOG.debug("Removed {}", track);
         return removed[0];
     }
 
@@ -139,9 +131,8 @@ public class MusicLibrary {
 
     public void showPlaylist(Playlist playlist) {
         showingTracksProperty().clear();
-        playlist.getTracks().stream().filter(id -> tracks.getTrack(id).isPresent())
-                .map(id -> new SimpleEntry<>(id, tracks.getTrack(id).get()))
-                .forEach(trackEntry -> showingTracksProperty().add(trackEntry));
+        List<Entry<Integer, Track>> tracksUnderPlaylist = playlists.getTrackEntriesUnderPlaylist(playlist);
+        showingTracksProperty().addAll(tracksUnderPlaylist);
     }
 
     public void showArtist(String artist) {
@@ -159,9 +150,9 @@ public class MusicLibrary {
         }).start();
     }
 
-    public void updateArtistsInvolvedInTrack(int trackId, Set<String> removedArtists, Set<String> addedArtists) {
-        removedArtists.forEach(artist -> artists.removeArtistTrack(artist, trackId));
-        addedArtists.forEach(artist -> artists.addArtistTrack(artist, trackId));
+    public void updateArtistsInvolvedInTrack(Track track, Set<String> removedArtists, Set<String> addedArtists) {
+        removedArtists.forEach(artist -> artists.removeArtistTrack(artist, track));
+        addedArtists.forEach(artist -> artists.addArtistTrack(artist, track));
     }
 
     public void updateTrackAlbums(List<Entry<Integer, Track>> modifiedTracks, Set<String> oldAlbums, String newAlbum) {
@@ -174,13 +165,13 @@ public class MusicLibrary {
      * the playlists and the waveforms collections.
      * This method is called on an independent Thread in {@link StageDemon#deleteTracks}
      *
-     * @param trackIds A {@code List} of track ids
+     * @param tracksToDelete A {@code List} of track ids
      */
-    public void deleteTracks(Collection<Integer> trackIds) {
-        if (trackIds.size() == tracks.getSize())
+    public void deleteTracks(Collection<Track> tracksToDelete) {
+        if (tracksToDelete.size() == tracks.getSize())
             Platform.runLater(this::clearCollections);
         else
-            tracks.remove(trackIds);
+            tracks.remove(tracksToDelete);
     }
 
     private void clearCollections() {
@@ -218,7 +209,7 @@ public class MusicLibrary {
      */
     public void playRandomArtistPlaylist(String artist) {
         Thread randomArtistPlaylistThread = new Thread(() -> {
-            List<Integer> randomList = artists.getRandomListOfArtistTracks(artist);
+            List<Track> randomList = artists.getRandomListOfArtistTracks(artist);
             PlayerFacade.getInstance().setRandomListAndPlay(randomList);
         }, "Random Artist Playlist Thread");
         randomArtistPlaylistThread.start();
@@ -229,7 +220,7 @@ public class MusicLibrary {
      */
     public void playRandomPlaylist() {
         Thread randomPlaylistThread = new Thread(() -> {
-            List<Integer> randomPlaylist = tracks.getRandomList();
+            List<Track> randomPlaylist = tracks.getRandomList();
             PlayerFacade.getInstance().setRandomListAndPlay(randomPlaylist);
         }, "Random Playlist Thread");
         randomPlaylistThread.start();
@@ -237,7 +228,7 @@ public class MusicLibrary {
 
     public void playPlaylistRandomly(Playlist playlist) {
         Thread randomPlaylistPlayThread = new Thread(() -> {
-            List<Integer> randomList = playlists.getRandomSortedList(playlist);
+            List<Track> randomList = playlists.getRandomSortedTrackList(playlist);
             PlayerFacade.getInstance().setRandomListAndPlay(randomList);
         }, "Shuffle Playlist Thread");
         randomPlaylistPlayThread.start();

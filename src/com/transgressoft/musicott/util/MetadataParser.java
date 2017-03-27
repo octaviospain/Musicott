@@ -59,6 +59,8 @@ public class MetadataParser {
                 track.setIsVariableBitRate(true);
                 bitRate = bitRate.substring(1);
             }
+            else
+                track.setIsVariableBitRate(false);
             track.setBitRate(Integer.parseInt(bitRate));
             Tag tag = audioFile.getTag();
             parseBaseMetadata(track, tag);

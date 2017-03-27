@@ -21,7 +21,6 @@ package com.transgressoft.musicott.view;
 
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
 import javafx.beans.property.*;
@@ -32,8 +31,8 @@ import javafx.scene.input.*;
 import javafx.scene.input.KeyCombination.*;
 import javafx.scene.layout.*;
 
-import java.util.Map.*;
 import java.util.*;
+import java.util.Map.*;
 import java.util.function.*;
 
 import static org.fxmisc.easybind.EasyBind.*;
@@ -46,6 +45,9 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @version 0.9.2-b
  */
 public class NavigationController implements MusicottController {
+
+    private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
+    private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(73, 73, 73);";
 
     @FXML
     private VBox navigationVBox;
@@ -66,7 +68,6 @@ public class NavigationController implements MusicottController {
     private RootController rootController;
     private StageDemon stageDemon = StageDemon.getInstance();
     private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-    private TaskDemon taskDemon = TaskDemon.getInstance();
 
     @FXML
     public void initialize() {
@@ -74,6 +75,10 @@ public class NavigationController implements MusicottController {
         navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", NavigationMode.ALL_TRACKS);
         playlistTreeView = new PlaylistTreeView();
         navigationMenuListView = new NavigationMenuListView(this);
+        subscribe(selectedPlaylistProperty(), newPlaylist -> newPlaylist.ifPresent(playlist -> {
+            musicLibrary.showPlaylist(playlist);
+            setNavigationMode(NavigationMode.PLAYLIST);
+        }));
         NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS, NavigationMode.ARTISTS};
         navigationMenuListView.setItems(FXCollections.observableArrayList(navigationModes));
 
@@ -88,8 +93,7 @@ public class NavigationController implements MusicottController {
 
         navigationVBox.getChildren().add(1, navigationMenuListView);
         playlistsVBox.getChildren().add(1, playlistTreeView);
-        taskProgressBar.visibleProperty().bind(
-                map(taskProgressBar.progressProperty().isEqualTo(0).not(), Function.identity()));
+        taskProgressBar.visibleProperty().bind(map(taskProgressBar.progressProperty().isEqualTo(0).not(), Function.identity()));
         taskProgressBar.setProgress(0);
 
         VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
@@ -135,6 +139,7 @@ public class NavigationController implements MusicottController {
             navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
         });
         newFolderPlaylistMI = new MenuItem("New Playlist Folder");
+        newFolderPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier(), KeyCombination.SHIFT_DOWN));
         newFolderPlaylistMI.setOnAction(e -> {
             stageDemon.getRootController().enterNewPlaylistName(true);
             playlistTreeView.getSelectionModel().clearAndSelect(- 1);
@@ -164,20 +169,10 @@ public class NavigationController implements MusicottController {
         subscribe(navigationModeProperty, this::setNavigationMode);
     }
 
-    public void addNewPlaylist(Playlist newPlaylist, boolean selectAfter) {
-        TreeItem<Playlist> selectedPlaylistItem = playlistTreeView.getSelectionModel().selectedItemProperty().get();
-
-        if (selectedPlaylistItem != null && selectedPlaylistItem.getValue().isFolder()) {
-            Playlist selectedPlaylist = selectedPlaylistItem.getValue();
-            if (selectedPlaylist.isFolder()) {
-                playlistTreeView.addPlaylistChild(selectedPlaylist, newPlaylist);
-                taskDemon.saveLibrary(false, false, true);
-            }
-        }
-        else {
-            playlistTreeView.addPlaylist(newPlaylist, selectAfter);
-            musicLibrary.playlists.addPlaylist(newPlaylist);
-        }
+    public void addNewPlaylist(Playlist parent, Playlist newPlaylist, boolean selectAfter) {
+        playlistTreeView.addPlaylistsToFolder(parent, Collections.singleton(newPlaylist));
+        if (selectAfter)
+            playlistTreeView.selectPlaylist(newPlaylist);
     }
 
     public void updateCurrentPlayingPlaylist() {
@@ -196,7 +191,11 @@ public class NavigationController implements MusicottController {
     }
 
     public void deleteSelectedPlaylist() {
-        playlistTreeView.deletePlaylist();
+        Playlist selectedPlaylist = selectedPlaylistProperty().get().get();
+        playlistTreeView.deletePlaylist(selectedPlaylist);
+        musicLibrary.playlists.deletePlaylist(selectedPlaylist);
+        if (musicLibrary.playlists.isEmpty())
+            setNavigationMode(NavigationMode.ALL_TRACKS);
     }
 
     public void setStatusProgress(double progress) {
@@ -205,9 +204,9 @@ public class NavigationController implements MusicottController {
 
     public void setStatusMessage(String message) {
         if (taskProgressBar.getProgress() == 0.0)
-            statusLabel.setStyle("-fx-text-fill: rgb(99, 255, 109);");
+            statusLabel.setStyle(GREEN_STATUS_COLOUR);
         else
-            statusLabel.setStyle("-fx-text-fill: rgb(73, 73, 73);");
+            statusLabel.setStyle(GRAY_STATUS_COLOUR);
         statusLabel.setText(message);
     }
 

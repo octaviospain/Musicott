@@ -40,7 +40,7 @@ import java.nio.file.*;
  * @version 0.9.2-b
  * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
-public class MetadataUpdater {
+public class MetadataUpdater implements Serializable {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 

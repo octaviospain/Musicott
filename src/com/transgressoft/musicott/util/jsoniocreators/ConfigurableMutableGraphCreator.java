@@ -17,25 +17,24 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.util;
+package com.transgressoft.musicott.util.jsoniocreators;
 
 import com.cedarsoftware.util.io.JsonReader.*;
-import javafx.collections.*;
-
-import java.util.*;
+import com.google.common.graph.*;
 
 /**
- * Class needed by the {@code Json-io} library in order to deserialize an {@link ObservableSet}.
+ * Class needed by the {@code Json-io} library in order to deserialize an {@link ConfigurableMutableGraph}.
  *
  * @author Octavio Calleya
  * @version 0.10-b
  * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
+ * @see com.google.common.graph.ConfigurableMutableGraph
  */
-public class ObservableSetWrapperCreator implements ClassFactory {
+public class ConfigurableMutableGraphCreator implements ClassFactory {
 
     @SuppressWarnings ("rawtypes")
     @Override
     public Object newInstance(Class c) {
-        return FXCollections.observableSet(new HashSet<>());
+        return GraphBuilder.directed().build();
     }
 }

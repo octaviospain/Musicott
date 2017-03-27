@@ -98,7 +98,7 @@ public class UpdateMusicLibraryTask extends Thread {
 		Set<String> removedArtists = Sets.difference(oldArtistsInvolved, newArtistsInvolved).immutableCopy();
 		Set<String> addedArtists = Sets.difference(newArtistsInvolved, oldArtistsInvolved).immutableCopy();
 		track.setArtistsInvolved(FXCollections.observableSet(newArtistsInvolved));
-		musicLibrary.updateArtistsInvolvedInTrack(track.getTrackId(), removedArtists, addedArtists);
+		musicLibrary.updateArtistsInvolvedInTrack(track, removedArtists, addedArtists);
 	}
 
 	private void updateFileMetadata(Track track) {

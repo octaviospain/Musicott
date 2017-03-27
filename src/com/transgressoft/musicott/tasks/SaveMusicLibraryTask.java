@@ -20,6 +20,7 @@
 package com.transgressoft.musicott.tasks;
 
 import com.cedarsoftware.util.io.*;
+import com.google.common.graph.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import javafx.application.*;
@@ -45,7 +46,7 @@ public class SaveMusicLibraryTask extends Thread {
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private final ObservableMap<Integer, Track> musicottTracks;
     private final Map<Integer, float[]> trackWaveforms;
-    private final List<Playlist> musicottPlaylists;
+    private final MutableGraph<Playlist> musicottPlaylists;
     private String musicottUserPath;
     private File tracksFile;
     private File waveformsFile;
@@ -60,11 +61,11 @@ public class SaveMusicLibraryTask extends Thread {
     private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
     public SaveMusicLibraryTask(ObservableMap<Integer, Track> tracks, Map<Integer, float[]> waveforms,
-            List<Playlist> playlists) {
+            MutableGraph<Playlist> playlistsGraph) {
         setName("Save Library Thread");
         musicottTracks = tracks;
         trackWaveforms = waveforms;
-        musicottPlaylists = playlists;
+        musicottPlaylists = playlistsGraph;
         musicottUserPath = "";
         saveSemaphore = new Semaphore(0);
         tracksArgs = new HashMap<>();

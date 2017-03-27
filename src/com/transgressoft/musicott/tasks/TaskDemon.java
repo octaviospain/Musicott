@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.tasks;
 
+import com.google.common.graph.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
@@ -53,7 +54,7 @@ public class TaskDemon {
 
 	private ObservableMap<Integer, Track> tracks;
 	private Map<Integer, float[]> waveforms;
-	private List<Playlist> playlists;
+	private MutableGraph<Playlist> playlistsGraph;
 	private boolean savingsActivated = true;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
@@ -85,10 +86,10 @@ public class TaskDemon {
 	}
 
 	public void setMusicCollections(ObservableMap<Integer, Track> musicottTracks, Map<Integer, float[]> waveforms,
-			List<Playlist> playlists) {
+			MutableGraph<Playlist> playlistsGraph) {
 		tracks = musicottTracks;
 		this.waveforms = waveforms;
-		this.playlists = playlists;
+		this.playlistsGraph = playlistsGraph;
 	}
 
 	/**
@@ -126,7 +127,7 @@ public class TaskDemon {
     public void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
 		if (savingsActivated) {
 			if (saveMusicLibraryTask == null) {
-				saveMusicLibraryTask = new SaveMusicLibraryTask(tracks, waveforms, playlists);
+				saveMusicLibraryTask = new SaveMusicLibraryTask(tracks, waveforms, playlistsGraph);
 				saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
 				saveMusicLibraryTask.setDaemon(true);
 				saveMusicLibraryTask.start();

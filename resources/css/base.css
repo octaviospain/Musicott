@@ -74,3 +74,12 @@
     -fx-border-width: 2px 0px 0px 0px;
     -fx-border-insets: -2 0 0 0;
 }
+
+.random-button {
+    -fx-graphic: url('../icons/random-icon.png');
+    -fx-background-color: transparent;
+}
+
+.random-button:pressed {
+    -fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 15, 0.3, 0, 0);
+}

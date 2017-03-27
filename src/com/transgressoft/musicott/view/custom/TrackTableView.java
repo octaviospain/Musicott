@@ -222,9 +222,10 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
             PlayerFacade player = PlayerFacade.getInstance();
             if (event.getCode() == KeyCode.ENTER) {
                 RootController rootController = StageDemon.getInstance().getRootController();
-                List<Entry<Integer, Track>> selection = rootController.getSelectedTracks();
-                List<Integer> selectionIDs = selection.stream().map(Entry::getKey).collect(Collectors.toList());
-                player.addTracksToPlayQueue(selectionIDs, true);
+                List<Track> selection = rootController.getSelectedTracks()
+                                                      .stream()
+                                                      .map(Entry::getValue).collect(Collectors.toList());
+                player.addTracksToPlayQueue(selection, true);
             }
             else if (event.getCode() == KeyCode.SPACE)
                 spacePressedOnTableAction(player.getPlayerStatus());

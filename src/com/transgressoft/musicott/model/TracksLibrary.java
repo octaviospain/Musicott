@@ -25,6 +25,7 @@ import javafx.collections.*;
 
 import java.util.*;
 import java.util.Map.*;
+import java.util.stream.*;
 
 /**
  * Class that isolates the operations over the map of {@link Track}s
@@ -70,12 +71,16 @@ public class TracksLibrary {
         musicottTracks.putAll(tracksMap);
     }
 
-    synchronized void remove(Collection<Integer> trackIds) {
-        musicottTracks.keySet().removeAll(trackIds);
+    synchronized void remove(Collection<Track> tracks) {
+        musicottTracks.values().removeAll(tracks);
     }
 
     public synchronized Optional<Track> getTrack(int trackId) {
         return Optional.ofNullable(musicottTracks.get(trackId));
+    }
+
+    public synchronized List<Track> getTracks(Collection<Integer> trackIds) {
+        return trackIds.stream().map(musicottTracks::get).collect(Collectors.toList());
     }
 
     public synchronized boolean contains(Track track) {
@@ -99,8 +104,8 @@ public class TracksLibrary {
         }
     }
 
-    List<Integer> getRandomList() {
-        List<Integer> randomList = new ArrayList<>();
+    List<Track> getRandomList() {
+        List<Track> randomList = new ArrayList<>();
         ImmutableList<Integer> trackIds;
         synchronized (this) {
             trackIds = ImmutableList.copyOf(musicottTracks.keySet());
@@ -108,13 +113,13 @@ public class TracksLibrary {
         Random randomGenerator = new Random();
         do {
             int rnd = randomGenerator.nextInt(trackIds.size());
-            int randomTrackID = trackIds.get(rnd);
+            int randomTrackId = trackIds.get(rnd);
             Track randomTrack;
             synchronized (this) {
-                randomTrack = musicottTracks.get(randomTrackID);
+                randomTrack = musicottTracks.get(randomTrackId);
             }
             if (randomTrack.isPlayable())
-                randomList.add(randomTrackID);
+                randomList.add(randomTrack);
         } while (randomList.size() < DEFAULT_RANDOM_QUEUE_SIZE);
         return randomList;
     }

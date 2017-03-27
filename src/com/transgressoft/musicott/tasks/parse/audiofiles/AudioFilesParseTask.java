@@ -85,7 +85,7 @@ public class AudioFilesParseTask extends BaseParseTask {
         if (! parseErrors.isEmpty())
             errorDemon.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
         if (playAtTheEnd)
-            player.addTracksToPlayQueue(parsedTracks.keySet(), true);
+            player.addTracksToPlayQueue(parsedTracks.values(), true);
     }
 
     @Override

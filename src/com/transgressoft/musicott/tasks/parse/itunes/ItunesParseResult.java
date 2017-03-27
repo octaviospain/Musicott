@@ -34,18 +34,18 @@ import java.util.*;
  */
 public class ItunesParseResult extends BaseParseResult<Map<Integer, Track>> {
 
-    private Map<Integer, Integer> itunesIdToMusicottIdMap;
+    private Map<Integer, Track> itunesIdToMusicottTrackMap;
     private List<String> notFoundFiles;
 
-    public ItunesParseResult(Map<Integer, Track> parsedTracks, Map<Integer, Integer> itunesIdToMusicottIdMap,
+    public ItunesParseResult(Map<Integer, Track> parsedTracks, Map<Integer, Track> itunesIdToMusicottTrackMap,
             Collection<String> parseErrors, List<String> notFoundFiles) {
         super(parsedTracks, parseErrors);
-        this.itunesIdToMusicottIdMap = itunesIdToMusicottIdMap;
+        this.itunesIdToMusicottTrackMap = itunesIdToMusicottTrackMap;
         this.notFoundFiles = notFoundFiles;
     }
 
-    public Map<Integer, Integer> getItunesIdToMusicottIdMap() {
-        return itunesIdToMusicottIdMap;
+    public Map<Integer, Track> getItunesIdToMusicottTrackMap() {
+        return itunesIdToMusicottTrackMap;
     }
 
     public List<String> getNotFoundFiles() {

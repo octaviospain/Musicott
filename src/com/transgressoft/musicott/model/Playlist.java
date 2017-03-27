@@ -45,7 +45,7 @@ public class Playlist {
     private final boolean isFolder;
     private String name;
     private ObservableList<Integer> playlistTrackIds;
-    private List<Playlist> containedPlaylists;
+    private Set<Playlist> containedPlaylists;
     private StringProperty nameProperty;
     private ObjectProperty<Image> playlistCoverProperty;
     private BooleanProperty isFolderProperty;
@@ -57,7 +57,7 @@ public class Playlist {
         this.name = name;
         this.isFolder = isFolder;
         playlistTrackIds = FXCollections.observableArrayList();
-        containedPlaylists = new ArrayList<>();
+        containedPlaylists = new HashSet<>();
         nameProperty = new SimpleStringProperty(this, "name", name);
         EasyBind.subscribe(nameProperty, this::setName);
         playlistCoverProperty = new SimpleObjectProperty<>(this, "cover", DEFAULT_COVER);
@@ -78,20 +78,9 @@ public class Playlist {
     }
 
     public ObjectProperty<Image> playlistCoverProperty() {
-        ObjectProperty<Image> returnedCoverProperty = playlistCoverProperty;
-        if (isFolder) {
-            Optional<Playlist> childPlaylistNotEmpty = containedPlaylists.stream()
-                                                                         .filter(playlist -> ! playlist.getTracks()
-                                                                                                       .isEmpty())
-                                                                         .findAny();
-            if (childPlaylistNotEmpty.isPresent())
-                returnedCoverProperty = childPlaylistNotEmpty.get().playlistCoverProperty();
-            else
-                returnedCoverProperty.set(DEFAULT_COVER);
-        }
-        else if (playlistCoverProperty.get().equals(DEFAULT_COVER) && ! getTracks().isEmpty())
+        if (playlistCoverProperty.get().equals(DEFAULT_COVER) && ! getTracks().isEmpty())
             changePlaylistCover();
-        return returnedCoverProperty;
+        return playlistCoverProperty;
     }
 
     public BooleanProperty isFolderProperty() {
@@ -139,7 +128,7 @@ public class Playlist {
         taskDemon.saveLibrary(false, false, true);
     }
 
-    public List<Playlist> getContainedPlaylists() {
+    public Set<Playlist> getContainedPlaylists() {
         return containedPlaylists;
     }
 
@@ -155,7 +144,7 @@ public class Playlist {
     }
 
     /**
-     * Search in the contained tracks for one that has cover and sets it as the cove of the playlist.
+     * Search in the contained tracks for one that has cover and sets it as the cover of the playlist.
      * If there is no track or any of them has cover, the default cover is used.
      */
     private void changePlaylistCover() {
@@ -178,8 +167,8 @@ public class Playlist {
     }
 
     private boolean existsTrackWithCover(int trackId) {
-        Optional<Track> optT = musicLibrary.tracks.getTrack(trackId);
-        return optT.isPresent() && optT.get().getCoverImage().isPresent();
+        Optional<Track> track = musicLibrary.tracks.getTrack(trackId);
+        return track.isPresent() && track.get().getCoverImage().isPresent();
     }
 
     @Override
@@ -198,6 +187,8 @@ public class Playlist {
 
     @Override
     public String toString() {
-        return name + "[" + playlistTrackIds.size() + "]";
+        String folderString = isFolder ? "[FOLDER]" : "";
+        int containedItems = isFolder ? containedPlaylists.size() : playlistTrackIds.size();
+        return name + folderString + "[" + String.valueOf(containedItems) + "]";
     }
 }

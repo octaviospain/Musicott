@@ -107,11 +107,11 @@ public class WaveformTask extends Thread {
 
 	private float[] processFromNoWavFile(String fileFormat) throws IOException, UnsupportedAudioFileException,
 																   EncoderException {
-		int trackID = trackToAnalyze.getTrackId();
+		int trackId = trackToAnalyze.getTrackId();
 		Path trackPath = FileSystems.getDefault().getPath(trackToAnalyze.getFileFolder(), trackToAnalyze.getFileName
 				());
-		File temporalDecodedFile = File.createTempFile("decoded_" + trackID, ".wav");
-		File temporalCopiedFile = File.createTempFile("original_" + trackID, "." + fileFormat);
+		File temporalDecodedFile = File.createTempFile("decoded_" + trackId, ".wav");
+		File temporalCopiedFile = File.createTempFile("original_" + trackId, "." + fileFormat);
 
 		Files.copy(trackPath, temporalCopiedFile.toPath(), options);
 		transcodeToWav(temporalCopiedFile, temporalDecodedFile);

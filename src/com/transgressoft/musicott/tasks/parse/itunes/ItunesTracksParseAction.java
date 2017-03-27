@@ -78,7 +78,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
             Platform.runLater(() -> musicLibrary.tracks.add(parsedTracks));
         }
 
-        return new ItunesParseResult(parsedTracks, itunesIdToMusicottIdMap, parseErrors, notFoundFiles);
+        return new ItunesParseResult(parsedTracks, itunesIdToMusicottTrackMap, parseErrors, notFoundFiles);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
 
         currentTrack.ifPresent(track -> {
             if (! musicLibrary.tracks.contains(track)) {
-                itunesIdToMusicottIdMap.put(itunesTrack.getTrackID(), track.getTrackId());
+                itunesIdToMusicottTrackMap.put(itunesTrack.getTrackID(), track);
                 parsedTracks.put(track.getTrackId(), track);
             }
         });
@@ -192,6 +192,8 @@ public class ItunesTracksParseAction extends ItunesParseAction {
                 track.setIsVariableBitRate(true);
                 bitRate = bitRate.substring(1);
             }
+            else
+                track.setIsVariableBitRate(false);
             track.setBitRate(Integer.parseInt(bitRate));
         }
         catch (Exception exception) {

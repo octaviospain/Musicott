@@ -39,6 +39,7 @@ public interface MusicottController {
     String LAYOUTS_PATH = "/view/";
     String IMAGES_PATH = "/images/";
     String STYLES_PATH = "/css/";
+    String ICONS_PATH = "/icons/";
 
     String ROOT_LAYOUT = LAYOUTS_PATH + "RootLayout.fxml";
     String PRELOADER_INIT_LAYOUT = LAYOUTS_PATH + "PreloaderLayout.fxml";
@@ -53,6 +54,7 @@ public interface MusicottController {
     String LASTFM_LOGO = IMAGES_PATH + "lastfm-logo.png";
     String MUSICOTT_APP_ICON = IMAGES_PATH + "musicott-app-icon.png";
     String MUSICOTT_ABOUT_LOGO = IMAGES_PATH + "musicott-about-logo.png";
+    String DRAGBOARD_ICON_PATH = ICONS_PATH + "dragboard-icon.png";
 
     String DIALOG_STYLE = STYLES_PATH + "dialog.css";
     String TRACK_TABLE_STYLE = STYLES_PATH + "tracktable.css";
@@ -60,4 +62,5 @@ public interface MusicottController {
     String TRACKAREASET_TRACK_TABLE_STYLE = STYLES_PATH + "tracktable-trackareaset.css";
 
     Image DEFAULT_COVER = new Image(MusicottController.class.getResourceAsStream(DEFAULT_COVER_PATH));
+    Image DRAGBOARD_ICON = new Image(MusicottController.class.getResourceAsStream(DRAGBOARD_ICON_PATH));
 }

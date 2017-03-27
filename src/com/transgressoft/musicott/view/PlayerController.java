@@ -124,20 +124,35 @@ public class PlayerController implements MusicottController {
         playerGridPane.setOnMouseClicked(event -> hidePlayQueue());
         playButton.setOnMouseClicked(event -> hidePlayQueue());
 
-        playQueueStackPane.setOnDragOver(event -> {
-            event.acceptTransferModes(TransferMode.ANY);
-            event.consume();
-        });
-        playQueueStackPane.setOnDragDropped(event -> {
-            Dragboard dragBoard = event.getDragboard();
-            List<Integer> selectedTracks = (List<Integer>) dragBoard.getContent(TRACK_ID_MIME_TYPE);
-            player.addTracksToPlayQueue(selectedTracks, false);
-        });
+        playQueueButton.setOnDragDropped(this::onDragDroppedOnPlayQueueButton);
+        playQueueButton.setOnDragOver(this::onDragOverOnPlayQueueButton);
+        playQueueButton.setOnDragExited(this::onDragExitedOnPlayQueueButton);
         subscribe(playQueueLayout.visibleProperty(), playQueueButton::setSelected);
         StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
         player.setPlayerController(this);
         player.setPlayQueueController(playQueueLayoutController);
         hidePlayQueue();
+    }
+
+    private void onDragDroppedOnPlayQueueButton(DragEvent event) {
+        Dragboard dragBoard = event.getDragboard();
+        List<Integer> selectedTracksIds = (List<Integer>) dragBoard.getContent(TRACK_IDS_MIME_TYPE);
+        List<Track> selectedTracks = MusicLibrary.getInstance().tracks.getTracks(selectedTracksIds);
+        player.addTracksToPlayQueue(selectedTracks, false);
+        event.consume();
+    }
+
+    private void onDragOverOnPlayQueueButton(DragEvent event) {
+        event.acceptTransferModes(TransferMode.COPY);
+        playQueueButton.setStyle("-fx-effect: dropshadow(one-pass-box, rgb(99, 255, 109), 3, 0.2, 0, 0);");
+        playQueueButton.setOpacity(0.9);
+        event.consume();
+    }
+
+    private void onDragExitedOnPlayQueueButton(DragEvent event) {
+        playQueueButton.setStyle("");
+        playQueueButton.setOpacity(1.0);
+        event.consume();
     }
 
     private void playPause() {

@@ -37,13 +37,13 @@ import java.util.*;
 public abstract class ItunesParseAction extends BaseParseAction<ItunesTrack, Map<Integer, Track>, ItunesParseResult> {
 
     protected Map<Integer, Track> parsedTracks;
-    protected Map<Integer, Integer> itunesIdToMusicottIdMap;
+    protected Map<Integer, Track> itunesIdToMusicottTrackMap;
     protected List<String> notFoundFiles;
 
     public ItunesParseAction(List<ItunesTrack> itemsToParse, BaseParseTask parentTask) {
         super(itemsToParse, parentTask);
         parsedTracks = new HashMap<>();
-        itunesIdToMusicottIdMap = new HashMap<>();
+        itunesIdToMusicottTrackMap = new HashMap<>();
         notFoundFiles = new ArrayList<>();
     }
 
@@ -52,7 +52,7 @@ public abstract class ItunesParseAction extends BaseParseAction<ItunesTrack, Map
         parsedTracks.putAll(partialResult.getParsedResults());
         parseErrors.addAll(partialResult.getParseErrors());
         ItunesParseResult itunesParseResult = (ItunesParseResult) partialResult;
-        itunesIdToMusicottIdMap.putAll(itunesParseResult.getItunesIdToMusicottIdMap());
+        itunesIdToMusicottTrackMap.putAll(itunesParseResult.getItunesIdToMusicottTrackMap());
         notFoundFiles.addAll(itunesParseResult.getNotFoundFiles());
     }
 }

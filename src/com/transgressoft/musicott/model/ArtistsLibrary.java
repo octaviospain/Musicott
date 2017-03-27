@@ -37,13 +37,11 @@ import static com.transgressoft.musicott.model.AlbumsLibrary.*;
  */
 public class ArtistsLibrary {
 
-    private final TracksLibrary tracksLibrary;
-    private final Multimap<String, Integer> artistsTracks;
+    private final Multimap<String, Track> artistsTracks;
     private final ObservableList<String> artistsList;
     private final ListProperty<String> artistsListProperty;
 
-    public ArtistsLibrary(TracksLibrary tracksLibrary) {
-        this.tracksLibrary = tracksLibrary;
+    public ArtistsLibrary() {
         artistsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
         // Binds the set of artists to a ListProperty of their elements to be
         // shown on the artists' navigation mode list view.
@@ -58,17 +56,17 @@ public class ArtistsLibrary {
      * artists if it isn't in it yet.
      *
      * @param artist  The artist name
-     * @param trackId The id of the track
+     * @param track The {@code Track}
      *
      * @return {@code True} if the collections were modified {@code False} otherwise
      */
-    boolean addArtistTrack(String artist, int trackId) {
+    boolean addArtistTrack(String artist, Track track) {
         if (! artistsTracks.containsKey(artist))
             Platform.runLater(() -> {
                 artistsList.add(artist);
                 FXCollections.sort(artistsList);
             });
-        return artistsTracks.put(artist, trackId);
+        return artistsTracks.put(artist, track);
     }
 
     /**
@@ -76,13 +74,13 @@ public class ArtistsLibrary {
      * artists if it isn't related to any tracks.
      *
      * @param artist  The artist name
-     * @param trackId The id of the track
+     * @param track The {@code Track}
      *
      * @return {@code True} if the collections were modified {@code False} otherwise
      */
-    boolean removeArtistTrack(String artist, int trackId) {
+    boolean removeArtistTrack(String artist, Track track) {
         boolean removed;
-        removed = artistsTracks.remove(artist, trackId);
+        removed = artistsTracks.remove(artist, track);
         if (! artistsTracks.containsKey(artist))
             Platform.runLater(() -> artistsList.remove(artist));
         return removed;
@@ -93,8 +91,7 @@ public class ArtistsLibrary {
     }
 
     boolean artistContainsMatchedTrack(String artist, String query) {
-        return artistsTracks.get(artist).stream().anyMatch(
-                trackId ->TracksLibrary.trackMatchesString(tracksLibrary.getTrack(trackId).get(), query));
+        return artistsTracks.get(artist).stream().anyMatch(track -> TracksLibrary.trackMatchesString(track, query));
     }
 
     void clear() {
@@ -105,15 +102,13 @@ public class ArtistsLibrary {
     ImmutableSet<String> getArtistAlbums(String artist) {
         synchronized (artistsTracks) {
             return artistsTracks.get(artist).stream()
-                                .map(trackId -> {
-                                    Track track = tracksLibrary.getTrack(trackId).get();
-                                    return track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum();
-                                }).collect(ImmutableSet.toImmutableSet());
+                                .map(track -> track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum())
+                                .collect(ImmutableSet.toImmutableSet());
         }
     }
 
-    List<Integer> getRandomListOfArtistTracks(String artist) {
-        List<Integer> randomArtistTracks = new ArrayList<>(artistsTracks.get(artist));
+    List<Track> getRandomListOfArtistTracks(String artist) {
+        List<Track> randomArtistTracks = new ArrayList<>(artistsTracks.get(artist));
         synchronized (artistsTracks) {
             Collections.shuffle(randomArtistTracks);
         }

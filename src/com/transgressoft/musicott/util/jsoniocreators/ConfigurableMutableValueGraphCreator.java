@@ -17,39 +17,24 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.model;
+package com.transgressoft.musicott.util.jsoniocreators;
+
+import com.cedarsoftware.util.io.JsonReader.*;
+import com.google.common.graph.*;
 
 /**
- * Class enum that represents a showing mode of the application
+ * Class needed by the {@code Json-io} library in order to deserialize an {@link ConfigurableMutableValueGraph}.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
+ * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
+ * @see com.google.common.graph.ConfigurableMutableValueGraph
  */
-public enum NavigationMode {
+public class ConfigurableMutableValueGraphCreator implements ClassFactory {
 
-    /**
-     * All tracks in Musicott are shown on the table
-     */
-    ALL_TRACKS("All songs"),
-
-    /**
-     * The tracks of a selected {@link Playlist} are shown on the table
-     */
-    PLAYLIST("Playlists"),
-
-    /**
-     * A section with all the artists is shown with an adapted view
-     */
-    ARTISTS("Artists");
-
-    String name;
-
-    NavigationMode(String name) {
-        this.name = name;
-    }
-
+    @SuppressWarnings ("rawtypes")
     @Override
-    public String toString() {
-        return name;
+    public Object newInstance(Class c) {
+        return ValueGraphBuilder.directed().build();
     }
 }

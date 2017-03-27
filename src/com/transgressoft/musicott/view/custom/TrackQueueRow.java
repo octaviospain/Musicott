@@ -48,9 +48,9 @@ public class TrackQueueRow extends GridPane {
     private VBox labelBox;
     private Button deleteTrackQueueRowButton;
 
-    public TrackQueueRow(int trackID, PlayQueueController playQueueController) {
+    public TrackQueueRow(Track track, PlayQueueController playQueueController) {
         super();
-        track = MusicLibrary.getInstance().tracks.getTrack(trackID).get();
+        this.track = track;
         this.playQueueController = playQueueController;
         placeCover();
         placeLabels();
@@ -66,8 +66,8 @@ public class TrackQueueRow extends GridPane {
         setAlignment(Pos.CENTER_LEFT);
     }
 
-    public int getRepresentedTrackId() {
-        return track.getTrackId();
+    public Track getRepresentedTrack() {
+        return track;
     }
 
     private void placeCover() {

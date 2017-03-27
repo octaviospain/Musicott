@@ -79,6 +79,8 @@ public class RootMenuBarController {
     @FXML
     private MenuItem newPlaylistMenuItem;
     @FXML
+    private MenuItem newPlaylistFolderMenuItem;
+    @FXML
     private MenuItem preferencesMenuItem;
     @FXML
     private MenuItem closeMenuItem;
@@ -235,6 +237,7 @@ public class RootMenuBarController {
         });
         preferencesMenuItem.setOnAction(e -> stageDemon.showPreferences());
         newPlaylistMenuItem.setOnAction(e -> rootController.enterNewPlaylistName(false));
+        newPlaylistFolderMenuItem.setOnAction(e -> rootController.enterNewPlaylistName(true));
     }
 
     private void setEditMenuActions() {
@@ -309,9 +312,9 @@ public class RootMenuBarController {
         });
     }
 
-    private List<Integer> trackSelectionIds() {
+    private List<Track> trackSelectionIds() {
         List<Entry<Integer, Track>> trackSelection = rootController.getSelectedTracks();
-        return trackSelection.stream().map(Entry::getKey).collect(Collectors.toList());
+        return trackSelection.stream().map(Entry::getValue).collect(Collectors.toList());
     }
 
     private void playPauseTextBinding() {
@@ -415,6 +418,7 @@ public class RootMenuBarController {
         decreaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, operativeSystemModifier));
         selectCurrentTrackMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.L, operativeSystemModifier));
         newPlaylistMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, operativeSystemModifier));
+        newPlaylistFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, operativeSystemModifier, shiftDown));
         showHideNavigationPaneMenuItem
                 .setAccelerator(new KeyCodeCombination(KeyCode.R, operativeSystemModifier, shiftDown));
         showHideTableInfoPaneMenuItem

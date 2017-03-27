@@ -55,6 +55,8 @@ public class PlayQueueController implements MusicottController {
         playQueueList = player.getPlayList();
         historyQueueList = player.getHistoryList();
         historyQueueButton.setId("historyQueueButton");
+        queuesListView.setCellFactory(listView -> new TrackQueueListCell(this));
+        queuesListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         queuesListView.setItems(playQueueList);
         queuesListView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2)
@@ -90,14 +92,20 @@ public class PlayQueueController implements MusicottController {
 
     private void showHistoryQueue() {
         queuesListView.setItems(historyQueueList);
+        queuesListView.getSelectionModel().clearSelection();
         titleQueueLabel.setText("Recently played");
         LOG.trace("Showing history queue on the pane");
     }
 
     private void showPlayQueue() {
         queuesListView.setItems(playQueueList);
+        queuesListView.getSelectionModel().clearSelection();
         titleQueueLabel.setText("Play Queue");
         LOG.trace("Showing play queue on the pane");
+    }
+
+    public boolean isShowingHistoryQueue() {
+        return queuesListView.getItems().equals(historyQueueList);
     }
 
     /**

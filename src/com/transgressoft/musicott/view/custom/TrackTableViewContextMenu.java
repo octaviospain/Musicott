@@ -46,7 +46,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
     private MenuItem deleteFromPlaylistMenuItem;
     private List<MenuItem> playlistsInMenu;
 
-    private List<Entry<Integer, Track>> selectedTracks;
+    private List<Entry<Integer, Track>> selectedEntries;
 
     public TrackTableViewContextMenu() {
         super();
@@ -55,35 +55,35 @@ public class TrackTableViewContextMenu extends ContextMenu {
 
         MenuItem playMenuItem = new MenuItem("Play");
         playMenuItem.setOnAction(event -> {
-            if (! selectedTracks.isEmpty())
-                PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(selectedTracks), true);
+            if (! selectedEntries.isEmpty())
+                PlayerFacade.getInstance().addTracksToPlayQueue(trackSelection(selectedEntries), true);
         });
 
         MenuItem editMenuItem = new MenuItem("Edit");
         editMenuItem.setOnAction(event -> {
-            if (! selectedTracks.isEmpty())
-                stageDemon.editTracks(selectedTracks.size());
+            if (! selectedEntries.isEmpty())
+                stageDemon.editTracks(selectedEntries.size());
         });
 
         MenuItem deleteMenuItem = new MenuItem("Delete");
         deleteMenuItem.setOnAction(event -> {
-            if (! selectedTracks.isEmpty())
-                stageDemon.deleteTracks(trackSelectionIds(selectedTracks));
+            if (! selectedEntries.isEmpty())
+                stageDemon.deleteTracks(trackSelection(selectedEntries));
         });
 
         MenuItem addToQueueMenuItem = new MenuItem("Add to play queue");
         addToQueueMenuItem.setOnAction(event -> {
-            if (! selectedTracks.isEmpty())
-                PlayerFacade.getInstance().addTracksToPlayQueue(trackSelectionIds(selectedTracks), false);
+            if (! selectedEntries.isEmpty())
+                PlayerFacade.getInstance().addTracksToPlayQueue(trackSelection(selectedEntries), false);
         });
 
         deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
         deleteFromPlaylistMenuItem.setId("deleteFromPlaylistMenuItem");
 
         deleteFromPlaylistMenuItem.setOnAction(event -> {
-            if (! selectedTracks.isEmpty()) {
-                getSelectedPlaylist().get().removeTracks(trackSelectionIds(selectedTracks));
-                musicLibrary.showingTracksProperty().removeAll(selectedTracks);
+            if (! selectedEntries.isEmpty()) {
+                getSelectedPlaylist().get().removeTracks(trackSelectionIds(selectedEntries));
+                musicLibrary.showingTracksProperty().removeAll(selectedEntries);
             }
         });
 
@@ -93,6 +93,10 @@ public class TrackTableViewContextMenu extends ContextMenu {
 
     private List<Integer> trackSelectionIds(List<Entry<Integer, Track>> entriesSelection) {
         return entriesSelection.stream().map(Entry::getKey).collect(Collectors.toList());
+    }
+
+    private List<Track> trackSelection(List<Entry<Integer, Track>> entriesSelection) {
+        return entriesSelection.stream().map(Entry::getValue).collect(Collectors.toList());
     }
 
     private Optional<Playlist> getSelectedPlaylist() {
@@ -105,34 +109,30 @@ public class TrackTableViewContextMenu extends ContextMenu {
     @Override
     public void show(Node anchor, double screenX, double screenY) {
         playlistsInMenu.clear();
-        selectedTracks = stageDemon.getRootController().getSelectedTracks();
-        musicLibrary.playlists.getPlaylists().forEach(playlist -> {
-            if (! playlist.isFolder())
-                addPlaylistToMenuList(playlist);
-            else
-                playlist.getContainedPlaylists().forEach(this::addPlaylistToMenuList);
-        });
+        if (getSelectedPlaylist().isPresent() && ! getSelectedPlaylist().get().isFolder())  {
+            selectedEntries = stageDemon.getRootController().getSelectedTracks();
+            musicLibrary.playlists.getPlaylistsTree().nodes()
+                                  .stream().filter(p -> ! p.isFolder())
+                                  .forEach(this::addPlaylistToMenuList);
 
-        if (getSelectedPlaylist().isPresent() && ! getSelectedPlaylist().get().isFolder())
+            addToPlaylistMenu.getItems().clear();
+            addToPlaylistMenu.getItems().addAll(playlistsInMenu);
             deleteFromPlaylistMenuItem.setVisible(true);
+        }
         else
             deleteFromPlaylistMenuItem.setVisible(false);
-        addToPlaylistMenu.getItems().clear();
-        addToPlaylistMenu.getItems().addAll(playlistsInMenu);
         super.show(anchor, screenX, screenY);
     }
 
     private void addPlaylistToMenuList(Playlist playlist) {
-        MenuItem playlistMenuItem = new MenuItem(playlist.getName());
-        playlistMenuItem.setOnAction(event -> {
-            if (! selectedTracks.isEmpty()) {
-                playlist.addTracks(trackSelectionIds(selectedTracks));
-                getSelectedPlaylist().ifPresent(selectedPlaylist -> {
-                    if (selectedPlaylist.equals(playlist))
-                        musicLibrary.showingTracksProperty().addAll(selectedTracks);
-                });
-            }
-        });
-        playlistsInMenu.add(playlistMenuItem);
+        Optional<Playlist> selectedPlaylist = getSelectedPlaylist();
+        if (! (selectedPlaylist.isPresent() && selectedPlaylist.get().equals(playlist))) {
+            MenuItem playlistMenuItem = new MenuItem(playlist.getName());
+            playlistMenuItem.setOnAction(event -> {
+                if (! selectedEntries.isEmpty())
+                    playlist.addTracks(trackSelectionIds(selectedEntries));
+            });
+            playlistsInMenu.add(playlistMenuItem);
+        }
     }
 }

@@ -145,7 +145,7 @@ public class StageDemon {
      * Deletes the tracks selected in the table. An {@link Alert} is opened
      * asking for a confirmation of the user.
      */
-    public void deleteTracks(List<Integer> trackSelection) {
+    public void deleteTracks(List<Track> trackSelection) {
         if (! trackSelection.isEmpty()) {
             String alertHeader = "Delete " + trackSelection.size() + " files from Musicott?";
             Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);

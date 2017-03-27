@@ -19,9 +19,12 @@
 
 package com.transgressoft.musicott.model;
 
+import com.google.common.graph.*;
 import com.transgressoft.musicott.tasks.*;
 
+import java.util.AbstractMap.*;
 import java.util.*;
+import java.util.Map.*;
 import java.util.stream.*;
 
 /**
@@ -33,60 +36,97 @@ import java.util.stream.*;
  */
 public class PlaylistsLibrary {
 
-    private final TaskDemon taskDemon = TaskDemon.getInstance();
-    final List<Playlist> playlists = new ArrayList<>();
-    private Random random = new Random();
+    public static final Playlist ROOT_PLAYLIST = new Playlist("ROOT", true);
 
-    public synchronized void addPlaylist(Playlist playlist) {
-        playlists.add(playlist);
+    final MutableGraph<Playlist> playlistsTree = GraphBuilder.directed().build();
+
+    private final Random random = new Random();
+    private final TaskDemon taskDemon = TaskDemon.getInstance();
+    private final MusicLibrary musicLibrary;
+
+    public PlaylistsLibrary(MusicLibrary musicLibrary) {
+        this.musicLibrary = musicLibrary;
+        playlistsTree.addNode(ROOT_PLAYLIST);
+    }
+
+    public synchronized void addPlaylist(Playlist parent, Playlist playlist) {
+        playlistsTree.putEdge(parent, playlist);
         taskDemon.saveLibrary(false, false, true);
     }
 
-    public synchronized void addPlaylists(List<Playlist> newPlaylists) {
-        playlists.addAll(newPlaylists);
+    public synchronized void addPlaylistsRecursively(Playlist parent, Set<Playlist> playlists) {
+        playlists.forEach(childPlaylist -> {
+            addPlaylist(parent, childPlaylist);
+            if (childPlaylist.isFolder())
+                addPlaylistsRecursively(childPlaylist, childPlaylist.getContainedPlaylists());
+        });
     }
 
     public synchronized void deletePlaylist(Playlist playlist) {
-        boolean removed = playlists.remove(playlist);
-        if (! removed) {
-            List<Playlist> folders = playlists.stream().filter(Playlist::isFolder).collect(Collectors.toList());
-            deletePlaylistFromFolders(playlist, folders);
-        }
+        Playlist parent = getParentPlaylist(playlist);
+        playlistsTree.removeEdge(getParentPlaylist(playlist), playlist);
+        playlistsTree.removeNode(playlist);
+        parent.getContainedPlaylists().remove(playlist);
         taskDemon.saveLibrary(false, false, true);
     }
 
-    private void deletePlaylistFromFolders(Playlist playlist, List<Playlist> folders) {
-        for (Playlist folder : folders) {
-            ListIterator<Playlist> folderChildsIterator = folder.getContainedPlaylists().listIterator();
-            while (folderChildsIterator.hasNext())
-                if (folderChildsIterator.next().equals(playlist)) {
-                    folderChildsIterator.remove();
-                    break;
-                }
-        }
-    }
-
-    synchronized void removeFromPlaylists(int trackId) {
-        playlists.stream().filter(playlist -> ! playlist.isFolder())
-                 .forEach(playlist -> playlist.removeTracks(Collections.singletonList(trackId)));
+    public synchronized void movePlaylist(Playlist movedPlaylist, Playlist targetFolder) {
+        Playlist parentOfMovedPlaylist = getParentPlaylist(movedPlaylist);
+        playlistsTree.removeEdge(parentOfMovedPlaylist, movedPlaylist);
+        parentOfMovedPlaylist.getContainedPlaylists().remove(movedPlaylist);
+        playlistsTree.putEdge(targetFolder, movedPlaylist);
+        targetFolder.getContainedPlaylists().add(movedPlaylist);
         taskDemon.saveLibrary(false, false, true);
     }
 
-    public synchronized boolean containsPlaylist(Playlist playlist) {
-        return playlists.contains(playlist);
+    synchronized void removeFromPlaylists(Track track) {
+        playlistsTree.nodes().stream()
+                     .filter(playlist -> ! playlist.isFolder())
+                     .forEach(playlist -> playlist.removeTracks(Collections.singletonList(track.getTrackId())));
+    }
+
+    public synchronized boolean containsPlaylistName(String playlistName) {
+        return playlistsTree.nodes().stream().anyMatch(playlist -> playlist.getName().equals(playlistName));
+    }
+
+    public synchronized boolean isEmpty() {
+        return playlistsTree.nodes().size() == 1  && playlistsTree.nodes().contains(ROOT_PLAYLIST);
     }
 
     synchronized void clearPlaylists() {
-        playlists.stream().filter(playlist -> ! playlist.isFolder()).forEach(Playlist::clearTracks);
+        playlistsTree.nodes().stream().filter(playlist -> ! playlist.isFolder()).forEach(Playlist::clearTracks);
     }
 
-    synchronized List<Integer> getRandomSortedList(Playlist playlist) {
+    synchronized List<Entry<Integer, Track>> getTrackEntriesUnderPlaylist(Playlist playlist) {
+        return playlist.getTracks().stream()
+                       .map(i -> new SimpleEntry<>(i, musicLibrary.tracks.getTrack(i).get()))
+                       .collect(Collectors.toList());
+    }
+
+    synchronized List<Track> getRandomSortedTrackList(Playlist playlist) {
         List<Integer> randomSortedList = new ArrayList<>(playlist.getTracks());
         Collections.shuffle(randomSortedList, random);
-        return randomSortedList;
+        return randomSortedList.stream()
+                               .map(trackId -> musicLibrary.tracks.getTrack(trackId).get())
+                               .collect(Collectors.toList());
     }
 
-    public List<Playlist> getPlaylists() {
-        return playlists;
+    /**
+     * Returns the parent playlist of a given one. That is, the playlist folder that contains
+     * a playlist. As we know that every possible selectable playlist on the view has
+     * an unique parent playlist, return the first one of the {@code Set}
+     *
+     * @param playlist The given {@link Playlist} object
+     * @return The playlist in which the given one is contained
+     *
+     * @throws NullPointerException If the given playlist is not in a folder, something is wrong here
+     * @throws IllegalArgumentException If the given playlist is not in the tree, something is wrong here
+     */
+    public synchronized Playlist getParentPlaylist(Playlist playlist) {
+        return playlistsTree.predecessors(playlist).stream().findFirst().get();
+    }
+
+    public synchronized Graph<Playlist> getPlaylistsTree() {
+        return ImmutableGraph.copyOf(playlistsTree);
     }
 }

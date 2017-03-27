@@ -45,6 +45,7 @@ import java.util.Map.*;
 import java.util.function.*;
 
 import static com.transgressoft.musicott.model.NavigationMode.*;
+import static com.transgressoft.musicott.model.PlaylistsLibrary.*;
 import static org.fxmisc.easybind.EasyBind.*;
 
 /**
@@ -155,10 +156,6 @@ public class RootController implements MusicottController {
      */
     private void updateShowingInfoWithPlaylist(Playlist playlist) {
         playlistTitleTextField.setText(playlist.getName());
-        if (playlist.isEmpty())
-            hoverCoverProperty.setValue(DEFAULT_COVER);
-        else
-            hoverCoverProperty.setValue(playlist.playlistCoverProperty().getValue());
         subscribe(playlist.playlistCoverProperty(), hoverCoverProperty::setValue);
         removePlaylistTextField();
     }
@@ -191,7 +188,7 @@ public class RootController implements MusicottController {
 
     private void initializePlaylistTitleTextField() {
         playlistTitleTextField = new TextField();
-        playlistTitleTextField.setMaxWidth(150);
+        playlistTitleTextField.setMaxWidth(350);
         playlistTitleTextField.setPrefHeight(25);
         playlistTitleTextField.setPadding(new Insets(- 10, 0, - 10, 0));
         playlistTitleTextField.setFont(new Font("Avenir", 19));
@@ -297,22 +294,21 @@ public class RootController implements MusicottController {
 
         Playlist newPlaylist = new Playlist("", isFolder);
         playlistCover.imageProperty().bind(newPlaylist.playlistCoverProperty());
+        playlistTitleTextField.clear();
+        playlistTitleTextField.setOnKeyPressed(getNameTextFieldHandler(newPlaylist));
+    }
 
-        EventHandler<KeyEvent> newPlaylistNameTextFieldHandler = event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                String newPlaylistName = playlistTitleTextField.getText();
-
-                if (isValidPlaylistName(newPlaylistName)) {
-                    newPlaylist.setName(newPlaylistName);
-                    removePlaylistTextField();
-                    navigationLayoutController.addNewPlaylist(newPlaylist, true);
-                    playlistTitleTextField.setOnKeyPressed(changePlaylistNameTextFieldHandler);
-                }
+    public EventHandler<KeyEvent> getNameTextFieldHandler(Playlist playlist) {
+        return event -> {
+            String newPlaylistName = playlistTitleTextField.getText();
+            if (event.getCode() == KeyCode.ENTER && isValidPlaylistName(newPlaylistName)) {
+                playlist.setName(newPlaylistName);
+                removePlaylistTextField();
+                playlistTitleTextField.setOnKeyPressed(changePlaylistNameTextFieldHandler);
+                addPlaylistToRoot(playlist);
                 event.consume();
             }
         };
-        playlistTitleTextField.clear();
-        playlistTitleTextField.setOnKeyPressed(newPlaylistNameTextFieldHandler);
     }
 
     /**
@@ -324,8 +320,12 @@ public class RootController implements MusicottController {
      * @return {@code true} if its a valid name, {@code false} otherwise
      */
     private boolean isValidPlaylistName(String newName) {
-        Playlist blankPlaylist = new Playlist(newName, false);
-        return ! newName.isEmpty() && ! musicLibrary.playlists.containsPlaylist(blankPlaylist);
+        return ! newName.isEmpty() && ! musicLibrary.playlists.containsPlaylistName(newName);
+    }
+
+    private void addPlaylistToRoot(Playlist playlist) {
+        navigationLayoutController.addNewPlaylist(ROOT_PLAYLIST, playlist, true);
+        musicLibrary.playlists.addPlaylist(ROOT_PLAYLIST, playlist);
     }
 
     public void setArtistTrackSets(Multimap<String, Entry<Integer, Track>> tracksByAlbum) {
