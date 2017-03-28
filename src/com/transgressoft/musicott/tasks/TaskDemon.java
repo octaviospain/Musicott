@@ -19,9 +19,12 @@
 
 package com.transgressoft.musicott.tasks;
 
+import com.google.common.graph.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
+import com.transgressoft.musicott.tasks.parse.audiofiles.*;
+import com.transgressoft.musicott.tasks.parse.itunes.*;
 import javafx.collections.*;
 import org.slf4j.*;
 
@@ -34,7 +37,7 @@ import java.util.concurrent.*;
  * flow between concurrent task threads in the application.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class TaskDemon {
 
@@ -42,7 +45,6 @@ public class TaskDemon {
 			 													  "Wait for it to perform another import task.";
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-	private static TaskDemon instance;
 	private ExecutorService parseExecutorService;
 	private Future parseFuture;
 	private BaseParseTask parseTask;
@@ -52,9 +54,15 @@ public class TaskDemon {
 
 	private ObservableMap<Integer, Track> tracks;
 	private Map<Integer, float[]> waveforms;
-	private List<Playlist> playlists;
+	private MutableGraph<Playlist> playlistsGraph;
+	private boolean savingsActivated = true;
 
 	private ErrorDemon errorDemon = ErrorDemon.getInstance();
+
+	private static class InstanceHolder {
+		static final TaskDemon INSTANCE = new TaskDemon();
+		private InstanceHolder() {}
+	}
 
 	private TaskDemon() {
 		tracksToProcessQueue = new LinkedBlockingQueue<>();
@@ -62,9 +70,15 @@ public class TaskDemon {
 	}
 
 	public static TaskDemon getInstance() {
-		if (instance == null)
-			instance = new TaskDemon();
-		return instance;
+		return InstanceHolder.INSTANCE;
+	}
+
+	public void deactivateLibrarySaving() {
+		savingsActivated = false;
+	}
+
+	public void activateLibrarySaving() {
+		savingsActivated = true;
 	}
 
 	public void shutDownTasks() {
@@ -72,17 +86,17 @@ public class TaskDemon {
 	}
 
 	public void setMusicCollections(ObservableMap<Integer, Track> musicottTracks, Map<Integer, float[]> waveforms,
-			List<Playlist> playlists) {
+			MutableGraph<Playlist> playlistsGraph) {
 		tracks = musicottTracks;
 		this.waveforms = waveforms;
-		this.playlists = playlists;
+		this.playlistsGraph = playlistsGraph;
 	}
 
 	/**
 	 * Creates a new {@link Thread} that analyzes and imports the contents
 	 * of an iTunes library to the application.
 	 *
-	 * @param itunesLibraryPath The path where the <tt>iTunes Music Library.xml</tt> file is located.
+	 * @param itunesLibraryPath The path where the {@code iTunes Music Library.xml} file is located.
 	 */
 	public void importFromItunesLibrary(String itunesLibraryPath) {
 		if (parseFuture != null && ! parseFuture.isDone())
@@ -99,26 +113,27 @@ public class TaskDemon {
 	 * to the application.
 	 *
 	 * @param filesToImport The {@link List} of the files to import.
-	 * @param playAtTheEnd  Specifies whether the application should play music at the end of the importation.
 	 */
 	public void importFiles(List<File> filesToImport, boolean playAtTheEnd) {
 		if (parseFuture != null && ! parseFuture.isDone())
 			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
-			parseTask = new FilesParseTask(filesToImport, playAtTheEnd);
+			parseTask = new AudioFilesParseTask(filesToImport, playAtTheEnd);
 			parseFuture = parseExecutorService.submit(parseTask);
 			LOG.debug("Importing {} files from folder", filesToImport.size());
 		}
 	}
 
     public void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
-        if (saveMusicLibraryTask == null) {
-			saveMusicLibraryTask = new SaveMusicLibraryTask(tracks, waveforms, playlists);
+		if (savingsActivated) {
+			if (saveMusicLibraryTask == null) {
+				saveMusicLibraryTask = new SaveMusicLibraryTask(tracks, waveforms, playlistsGraph);
+				saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
+				saveMusicLibraryTask.setDaemon(true);
+				saveMusicLibraryTask.start();
+			}
 			saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
-			saveMusicLibraryTask.setDaemon(true);
-			saveMusicLibraryTask.start();
-        }
-		saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
+		}
     }
 
 	public void analyzeTrackWaveform(Track trackToAnalyze) {

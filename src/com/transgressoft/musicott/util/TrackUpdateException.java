@@ -24,20 +24,20 @@ package com.transgressoft.musicott.util;
  * information of a {@link com.transgressoft.musicott.model.Track} instance was unsuccessful.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9
  */
 public class TrackUpdateException extends Exception {
 
-	public TrackUpdateException() {
-		super();
-	}
+    public TrackUpdateException() {
+        super();
+    }
 
-	public TrackUpdateException(String message) {
-		super(message);
-	}
+    public TrackUpdateException(String message) {
+        super(message);
+    }
 
-	public TrackUpdateException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public TrackUpdateException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

@@ -34,7 +34,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * of the application, stored on a {@code json} file.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9.2-b
  */
 public class WaveformsLoadAction extends BaseLoadAction {
@@ -50,14 +50,14 @@ public class WaveformsLoadAction extends BaseLoadAction {
      */
     @Override
     protected void compute() {
-        notifyPreloader(1, 4, "Loading waveforms...");
+        notifyPreloader(-1, 0, "Loading waveforms...");
         File waveformsFile = new File(applicationFolder + File.separator + WAVEFORMS_PERSISTENCE_FILE);
         Map<Integer, float[]> waveformsMap;
         if (waveformsFile.exists())
             waveformsMap = parseWaveformsFromJsonFile(waveformsFile);
         else
             waveformsMap = new HashMap<>();
-        musicLibrary.addWaveforms(waveformsMap);
+        musicLibrary.waveforms.addWaveforms(waveformsMap);
     }
 
     /**

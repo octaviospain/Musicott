@@ -19,10 +19,10 @@
 
 package com.transgressoft.musicott.view;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
-import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.fxml.*;
@@ -32,156 +32,189 @@ import javafx.scene.input.KeyCombination.*;
 import javafx.scene.layout.*;
 
 import java.util.*;
+import java.util.Map.*;
+import java.util.function.*;
+
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Controller class of the left pane that contains the playlists, the
  * music library menus, and the status progress and status messages.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class NavigationController implements MusicottController {
 
-	@FXML
-	private VBox navigationVBox;
-	@FXML
-	private VBox playlistsVBox;
-	@FXML
-	private Button newPlaylistButton;
-	@FXML
-	private ProgressBar taskProgressBar;
-	@FXML
-	private Label statusLabel;
+    private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
+    private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(73, 73, 73);";
 
-	private NavigationMenuListView navigationMenuListView;
-	private PlaylistTreeView playlistTreeView;
-	private NavigationMode showingMode;
-	private ObjectProperty<NavigationMode> navigationModeProperty;
+    @FXML
+    private VBox navigationVBox;
+    @FXML
+    private VBox playlistsVBox;
+    @FXML
+    private Button newPlaylistButton;
+    @FXML
+    private ProgressBar taskProgressBar;
+    @FXML
+    private Label statusLabel;
 
-	@FXML
-	public void initialize() {
-		navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", showingMode);
-		navigationModeProperty.addListener((obs, oldMode, newMode) -> setNavigationMode(newMode));
+    private NavigationMenuListView navigationMenuListView;
+    private PlaylistTreeView playlistTreeView;
+    private ObjectProperty<NavigationMode> navigationModeProperty;
+    private Optional<Playlist> currentPlayingPlaylist;
 
-		playlistTreeView = new PlaylistTreeView();
-		navigationMenuListView = new NavigationMenuListView();
-		NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS};
-		navigationMenuListView.setItems(FXCollections.observableArrayList(navigationModes));
+    private RootController rootController;
+    private StageDemon stageDemon = StageDemon.getInstance();
+    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
-		ContextMenu newPlaylistButtonContextMenu = newPlaylistButtonContextMenu();
+    @FXML
+    public void initialize() {
+        currentPlayingPlaylist = Optional.empty();
+        navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", NavigationMode.ALL_TRACKS);
+        playlistTreeView = new PlaylistTreeView();
+        navigationMenuListView = new NavigationMenuListView(this);
+        subscribe(selectedPlaylistProperty(), newPlaylist -> newPlaylist.ifPresent(playlist -> {
+            musicLibrary.showPlaylist(playlist);
+            setNavigationMode(NavigationMode.PLAYLIST);
+        }));
+        NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS, NavigationMode.ARTISTS};
+        navigationMenuListView.setItems(FXCollections.observableArrayList(navigationModes));
 
-		newPlaylistButton.setContextMenu(newPlaylistButtonContextMenu);
-		newPlaylistButton.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
-			double newPlaylistButtonX = e.getScreenX() + 10.0;
-			double newPlaylistButtonY = e.getScreenY() + 10.0;
-			newPlaylistButtonContextMenu.show(newPlaylistButton, newPlaylistButtonX, newPlaylistButtonY);
-		});
+        ContextMenu newPlaylistButtonContextMenu = newPlaylistButtonContextMenu();
 
-		navigationVBox.getChildren().add(1, navigationMenuListView);
-		playlistsVBox.getChildren().add(1, playlistTreeView);
-		taskProgressBar.visibleProperty().bind(Bindings.createBooleanBinding(
-				taskProgressBar.progressProperty().isEqualTo(0).not()::get, taskProgressBar.progressProperty()));
-		taskProgressBar.setProgress(0);
+        newPlaylistButton.setContextMenu(newPlaylistButtonContextMenu);
+        newPlaylistButton.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
+            double newPlaylistButtonX = e.getScreenX() + 10.0;
+            double newPlaylistButtonY = e.getScreenY() + 10.0;
+            newPlaylistButtonContextMenu.show(newPlaylistButton, newPlaylistButtonX, newPlaylistButtonY);
+        });
 
-		VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
-		VBox.setVgrow(navigationVBox, Priority.ALWAYS);
-	}
+        navigationVBox.getChildren().add(1, navigationMenuListView);
+        playlistsVBox.getChildren().add(1, playlistTreeView);
+        taskProgressBar.visibleProperty().bind(map(taskProgressBar.progressProperty().isEqualTo(0).not(), Function.identity()));
+        taskProgressBar.setProgress(0);
 
-	private ContextMenu newPlaylistButtonContextMenu() {
-		ContextMenu contextMenu = new ContextMenu();
-		MenuItem newPlaylistMI;
-		MenuItem newFolderPlaylistMI;
-		newPlaylistMI = new MenuItem("New Playlist");
-		newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier()));
-		newPlaylistMI.setOnAction(e -> {
-			stageDemon.getRootController().enterNewPlaylistName(false);
-			playlistTreeView.getSelectionModel().clearAndSelect(- 1);
-			navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
-		});
-		newFolderPlaylistMI = new MenuItem("New Playlist Folder");
-		newFolderPlaylistMI.setOnAction(e -> {
-			stageDemon.getRootController().enterNewPlaylistName(true);
-			playlistTreeView.getSelectionModel().clearAndSelect(- 1);
-			navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
-		});
-		contextMenu.getItems().addAll(newPlaylistMI, newFolderPlaylistMI);
-		return contextMenu;
-	}
+        VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
+        VBox.setVgrow(navigationVBox, Priority.ALWAYS);
+    }
 
-	/**
-	 * Returns the key accelerator for the application. Command for os x and control down for windows and linux.
-	 *
-	 * @return The {}
-	 */
-	private Modifier systemModifier() {
-		String os = System.getProperty("os.name");
-		Modifier keyModifierOS;
-		if (os != null && os.startsWith("Mac"))
-			keyModifierOS = KeyCodeCombination.META_DOWN;
-		else
-			keyModifierOS = KeyCodeCombination.CONTROL_DOWN;
-		return keyModifierOS;
-	}
+    /**
+     * Changes the view depending of the choose {@link NavigationMode}
+     *
+     * @param mode The {@code NavigationMode} that the user choose
+     */
+    public void setNavigationMode(NavigationMode mode) {
+        navigationModeProperty.setValue(mode);
 
-	/**
-	 * Changes the view depending of the choose {@link NavigationMode}
-	 *
-	 * @param mode The <tt>NavigationMode</tt> that the user choose
-	 */
-	public void setNavigationMode(NavigationMode mode) {
-		showingMode = mode;
-		navigationModeProperty.setValue(mode);
-		switch (mode) {
-			case ALL_TRACKS:
-				musicLibrary.showAllTracks();
-				navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
-				playlistTreeView.getSelectionModel().clearAndSelect(- 1);
-				Platform.runLater(stageDemon.getRootController()::hideTableInfoPane);
-				break;
-			case PLAYLIST:
-				navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
-				Platform.runLater(stageDemon.getRootController()::showTableInfoPane);
-				break;
-		}
-	}
+        switch (mode) {
+            case ALL_TRACKS:
+                musicLibrary.showAllTracks();
+                navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
+                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+                Platform.runLater(rootController::showAllTracksView);
+                break;
+            case ARTISTS:
+                navigationMenuListView.getSelectionModel().select(NavigationMode.ARTISTS);
+                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+                Platform.runLater(rootController::showArtistsView);
+                break;
+            case PLAYLIST:
+                navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
+                Platform.runLater(rootController::showPlaylistView);
+                break;
+        }
+    }
 
-	public NavigationMode getNavigationMode() {
-		return showingMode;
-	}
+    private ContextMenu newPlaylistButtonContextMenu() {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem newPlaylistMI;
+        MenuItem newFolderPlaylistMI;
+        newPlaylistMI = new MenuItem("New Playlist");
+        newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier()));
+        newPlaylistMI.setOnAction(e -> {
+            stageDemon.getRootController().enterNewPlaylistName(false);
+            playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+            navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
+        });
+        newFolderPlaylistMI = new MenuItem("New Playlist Folder");
+        newFolderPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier(), KeyCombination.SHIFT_DOWN));
+        newFolderPlaylistMI.setOnAction(e -> {
+            stageDemon.getRootController().enterNewPlaylistName(true);
+            playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+            navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
+        });
+        contextMenu.getItems().addAll(newPlaylistMI, newFolderPlaylistMI);
+        return contextMenu;
+    }
 
-	public ObjectProperty<NavigationMode> navigationModeProperty() {
-		return navigationModeProperty;
-	}
+    /**
+     * Returns the key accelerator for the application. Command for os x and control down for windows and linux.
+     *
+     * @return The {@link Modifier} of the operative system
+     */
+    private Modifier systemModifier() {
+        String os = System.getProperty("os.name");
+        Modifier keyModifierOS;
+        if (os != null && os.startsWith("Mac"))
+            keyModifierOS = KeyCodeCombination.META_DOWN;
+        else
+            keyModifierOS = KeyCodeCombination.CONTROL_DOWN;
+        return keyModifierOS;
+    }
 
-	public ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
-		return playlistTreeView.selectedPlaylistProperty();
-	}
+    void setRootController(RootController rootController) {
+        this.rootController = rootController;
+        subscribe(navigationModeProperty, this::setNavigationMode);
+    }
 
-	public void addNewPlaylist(Playlist newPlaylist) {
-		TreeItem<Playlist> selectedPlaylistItem = playlistTreeView.getSelectionModel().selectedItemProperty().get();
+    public void addNewPlaylist(Playlist parent, Playlist newPlaylist, boolean selectAfter) {
+        playlistTreeView.addPlaylistsToFolder(parent, Collections.singleton(newPlaylist));
+        if (selectAfter)
+            playlistTreeView.selectPlaylist(newPlaylist);
+    }
 
-		if (selectedPlaylistItem != null && selectedPlaylistItem.getValue().isFolder()) {
-			Playlist selectedPlaylist = selectedPlaylistItem.getValue();
-			if (selectedPlaylist.isFolder()) {
-				playlistTreeView.addPlaylistChild(selectedPlaylist, newPlaylist);
-				taskDemon.saveLibrary(false, false, true);
-			}
-		}
-		else {
-			playlistTreeView.addPlaylist(newPlaylist);
-			musicLibrary.addPlaylist(newPlaylist);
-		}
-	}
+    public void updateCurrentPlayingPlaylist() {
+        currentPlayingPlaylist = selectedPlaylistProperty().get();
+    }
 
-	public void deleteSelectedPlaylist() {
-		playlistTreeView.deletePlaylist();
-	}
+    public boolean selectPlaylistOfTrack(Entry<Integer, Track> trackEntry) {
+        boolean success = currentPlayingPlaylist.isPresent();
+        if (success) {
+            Playlist playlist = currentPlayingPlaylist.get();
+            success = playlist.getTracks().contains(trackEntry.getKey());
+            if (success)
+                playlistTreeView.selectPlaylist(playlist);
+        }
+        return success;
+    }
 
-	public void setStatusProgress(double progress) {
-		taskProgressBar.setProgress(progress);
-	}
+    public void deleteSelectedPlaylist() {
+        Playlist selectedPlaylist = selectedPlaylistProperty().get().get();
+        playlistTreeView.deletePlaylist(selectedPlaylist);
+        musicLibrary.playlists.deletePlaylist(selectedPlaylist);
+        if (musicLibrary.playlists.isEmpty())
+            setNavigationMode(NavigationMode.ALL_TRACKS);
+    }
 
-	public void setStatusMessage(String message) {
-		statusLabel.setText(message);
-	}
+    public void setStatusProgress(double progress) {
+        taskProgressBar.setProgress(progress);
+    }
+
+    public void setStatusMessage(String message) {
+        if (taskProgressBar.getProgress() == 0.0)
+            statusLabel.setStyle(GREEN_STATUS_COLOUR);
+        else
+            statusLabel.setStyle(GRAY_STATUS_COLOUR);
+        statusLabel.setText(message);
+    }
+
+    public ObjectProperty<NavigationMode> navigationModeProperty() {
+        return navigationModeProperty;
+    }
+
+    ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
+        return playlistTreeView.selectedPlaylistProperty();
+    }
 }

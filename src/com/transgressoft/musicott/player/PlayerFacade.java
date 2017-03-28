@@ -37,361 +37,349 @@ import org.slf4j.*;
 import java.util.*;
 import java.util.stream.*;
 
+import static javafx.scene.media.MediaPlayer.Status.*;
+import static org.fxmisc.easybind.EasyBind.*;
+
 /**
  * Singleton class that isolates the usage of the music player.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class PlayerFacade {
 
-	private static PlayerFacade instance;
-	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private PlayQueueController playQueueController;
-	private PlayerController playerController;
-	private Optional<Track> currentTrack;
-	private TrackPlayer trackPlayer;
-	private ObservableList<TrackQueueRow> playList;
-	private ObservableList<TrackQueueRow> historyList;
-	private boolean playingRandom;
-	private boolean played;
-	private boolean scrobbled;
+    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private PlayQueueController playQueueController;
+    private PlayerController playerController;
+    private Optional<Track> currentTrack;
+    private TrackPlayer trackPlayer;
+    private ObservableList<TrackQueueRow> playList;
+    private ObservableList<TrackQueueRow> historyList;
+    private boolean playingRandom;
+    private boolean played;
+    private boolean scrobbled;
 
-	private StageDemon stageDemon = StageDemon.getInstance();
-	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-	private ServiceDemon services = ServiceDemon.getInstance();
-	private TaskDemon taskDemon = TaskDemon.getInstance();
+    private StageDemon stageDemon = StageDemon.getInstance();
+    private ServiceDemon services = ServiceDemon.getInstance();
+    private TaskDemon taskDemon = TaskDemon.getInstance();
 
-	private PlayerFacade() {
-		playList = FXCollections.observableArrayList();
-		historyList = FXCollections.observableArrayList();
-		playingRandom = false;
-		played = false;
-		scrobbled = false;
-		currentTrack = Optional.empty();
-	}
+    private static class InstanceHolder {
+        static final PlayerFacade INSTANCE = new PlayerFacade();
+        private InstanceHolder() {}
+    }
 
-	public static PlayerFacade getInstance() {
-		if (instance == null) {
-			instance = new PlayerFacade();
-		}
-		return instance;
-	}
+    private PlayerFacade() {
+        playList = FXCollections.observableArrayList();
+        historyList = FXCollections.observableArrayList();
+        playingRandom = false;
+        played = false;
+        scrobbled = false;
+        currentTrack = Optional.empty();
+        trackPlayer = new JavaFxPlayer();
+        trackPlayer.setOnEndOfMedia(this::next);
+    }
 
-	public ObservableList<TrackQueueRow> getPlayList() {
-		return playList;
-	}
+    public static PlayerFacade getInstance() {
+        return InstanceHolder.INSTANCE;
+    }
 
-	public ObservableList<TrackQueueRow> getHistoryList() {
-		return historyList;
-	}
+    public ObservableList<TrackQueueRow> getPlayList() {
+        return playList;
+    }
 
-	public Optional<Track> getCurrentTrack() {
-		return currentTrack;
-	}
+    public ObservableList<TrackQueueRow> getHistoryList() {
+        return historyList;
+    }
 
-	public String getPlayerStatus() {
-		return trackPlayer.getStatus();
-	}
+    public Optional<Track> getCurrentTrack() {
+        return currentTrack;
+    }
 
-	/**
-	 * Adds a {@link List} of tracks to the play queue. Checks if all tracks given are playable.
-	 *
-	 * @param tracksId              The <tt>List</tt> of tracks ids to add.
-	 * @param placeFirstInPlayQueue <tt>true</tt> if the tracks added should be placed in the beginning
-	 *                              of the play queue, <tt>false</tt> otherwise
-	 */
-	public void addTracksToPlayQueue(Collection<Integer> tracksId, boolean placeFirstInPlayQueue) {
-		Thread playableTracksThread = new Thread(() -> {
+    public Status getPlayerStatus() {
+        return trackPlayer.getStatus();
+    }
 
-			List<Integer> playableTracks = tracksId.stream().filter(trackID -> {
-				Optional<Track> track = musicLibrary.getTrack(trackID);
-				boolean[] isPlayable = new boolean[1];
-				track.ifPresent(t -> isPlayable[0] = t.isPlayable());
-				if (! isPlayable[0])
-					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Unplayable file"));
-				return isPlayable[0];
-			}).collect(Collectors.toList());
+    public void setPlayerController(PlayerController playerController) {
+        this.playerController = playerController;
+    }
 
-			Platform.runLater(() -> addPlayableTracksToPlayQueue(playableTracks, placeFirstInPlayQueue));
-		});
-		playableTracksThread.start();
-	}
+    public void setPlayQueueController(PlayQueueController playQueueController) {
+        this.playQueueController = playQueueController;
+    }
 
-	/**
-	 * Adds a {@link List} of tracks to the play queue.
-	 *
-	 * @param playableTracks        The <tt>List</tt> of tracks ids that are playable.
-	 * @param placeFirstInPlayQueue <tt>true</tt> if the tracks added should be placed in the head of the play queue
-	 */
-	private void addPlayableTracksToPlayQueue(List<Integer> playableTracks, boolean placeFirstInPlayQueue) {
-		if (playQueueController == null)
-			playQueueController = stageDemon.getPlayQueueController();
-		if (playingRandom) {
-			playList.clear();
-			playableTracks.forEach(trackID -> playList.add(new TrackQueueRow(trackID)));
-			playingRandom = false;
-		}
-		else if (! playableTracks.isEmpty()) {
-			List<TrackQueueRow> newTrackRows = playableTracks.stream().map(TrackQueueRow::new)
-															 .collect(Collectors.toList());
-			synchronized (playList) {
-				if (placeFirstInPlayQueue)
-					playList.addAll(0, newTrackRows);
-				else
-					playList.addAll(newTrackRows);
-			}
-			LOG.info("Added {} tracks to player", playableTracks.size());
-			if (placeFirstInPlayQueue)
-				play(false);
-		}
-	}
+    /**
+     * Adds a {@link List} of tracks to the play queue. Checks if all tracks given are playable.
+     *
+     * @param tracks                The {@code List} of tracks to add.
+     * @param placeFirstInPlayQueue {@code true} if the tracks added should be placed in the beginning
+     *                              of the play queue, {@code false} otherwise
+     */
+    public void addTracksToPlayQueue(Collection<Track> tracks, boolean placeFirstInPlayQueue) {
+        Thread playableTracksThread = new Thread(() -> {
+            List<Track> playableTracks = tracks.stream().filter(track -> {
+                boolean isPlayable = track.isPlayable();
+                if (! isPlayable)
+                    Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Unplayable file"));
+                return isPlayable;
+            }).collect(Collectors.toList());
 
-	public void play(boolean playRandom) {
-		if (trackPlayer == null || "STOPPED".equals(trackPlayer.getStatus())) {
-			if (! playList.isEmpty())
-				setCurrentTrack();
-			else if (playRandom)
-				musicLibrary.makeRandomPlaylist();
-		}
-		else if ("PLAYING".equals(trackPlayer.getStatus()))
-				if (playList.isEmpty())
-					stop();
-				else
-					setCurrentTrack();
-	}
+            Platform.runLater(() -> addPlayableTracksToPlayQueue(playableTracks, placeFirstInPlayQueue));
+        });
+        playableTracksThread.start();
+    }
 
-	private void setCurrentTrack() {
-		historyList.add(0, playList.get(0));
-		setPlayer(playList.get(0).getRepresentedTrackId());
-		playList.remove(0);
-		trackPlayer.play();
-		LOG.info("Playing {}", currentTrack);
-	}
+    /**
+     * Adds a {@link List} of tracks to the play queue.
+     *
+     * @param playableTracks        The {@code List} of tracks ids that are playable.
+     * @param placeFirstInPlayQueue {@code true} if the tracks added should be placed in the head of the play queue
+     */
+    private void addPlayableTracksToPlayQueue(List<Track> playableTracks, boolean placeFirstInPlayQueue) {
+        if (playingRandom) {
+            playList.clear();
+            playableTracks.forEach(track -> playList.add(new TrackQueueRow(track, playQueueController)));
+            playingRandom = false;
+        }
+        else if (! playableTracks.isEmpty()) {
+            List<TrackQueueRow> newTrackRows = playableTracks.stream()
+                                                             .map(id -> new TrackQueueRow(id, playQueueController))
+                                                             .collect(Collectors.toList());
+            synchronized (playList) {
+                if (placeFirstInPlayQueue)
+                    playList.addAll(0, newTrackRows);
+                else
+                    playList.addAll(newTrackRows);
+            }
+            LOG.info("Added {} tracks to player", playableTracks.size());
+            if (placeFirstInPlayQueue)
+                play(true);
+        }
+    }
 
-	public void stop() {
-		trackPlayer.stop();
-		currentTrack = Optional.empty();
-	}
+    public void play(boolean playRandom) {
+        if (trackPlayer.getStatus().equals(STOPPED) ||
+                trackPlayer.getStatus().equals(PAUSED) ||
+                trackPlayer.getStatus().equals(UNKNOWN)) {
+            if (! playList.isEmpty())
+                setCurrentTrack();
+            else if (playRandom)
+                MusicLibrary.getInstance().playRandomPlaylist();
+        }
+        else if (trackPlayer.getStatus().equals(PLAYING))
+            if (playList.isEmpty())
+                stop();
+            else
+                setCurrentTrack();
+    }
 
-	private void setPlayer(int trackId) {
-		scrobbled = false;
-		played = false;
-		if (playerController == null)
-			playerController = stageDemon.getPlayerController();
-		currentTrack = musicLibrary.getTrack(trackId);
+    private void setCurrentTrack() {
+        historyList.add(0, playList.get(0));
+        setPlayer(playList.get(0).getRepresentedTrack());
+        playList.remove(0);
+        trackPlayer.play();
+        LOG.info("Playing {}", currentTrack);
+    }
 
-		currentTrack.ifPresent(track -> {
-			if (trackPlayer != null) {
-				trackPlayer.dispose();
-				LOG.debug("Disposed recent player");
-			}
-			String fileExtension = track.getFileFormat();
-			if ("mp3".equals(fileExtension) || "wav".equals(fileExtension) || "m4a".equals(fileExtension))
-				trackPlayer = new NativePlayer();
-			else if ("flac".equals(fileExtension)) {
-				trackPlayer = new FlacPlayer();
-				//TODO
-			}
-			playerController.updatePlayer(track);
-			trackPlayer.setTrack(track);
-			bindMediaPlayer();
-			LOG.debug("Created new player");
-		});
-	}
+    public void stop() {
+        trackPlayer.stop();
+        currentTrack = Optional.empty();
+    }
 
-	/**
-	 * Binds the properties of the {@link MediaPlayer} to the components of the view.
-	 */
-	private void bindMediaPlayer() {
-		MediaPlayer mediaPlayer = ((NativePlayer) trackPlayer).getMediaPlayer();
-		mediaPlayer.volumeProperty().bindBidirectional(playerController.volumeSliderValueProperty());
+    private void setPlayer(Track track) {
+        scrobbled = false;
+        played = false;
+        if (track.isPlayable()) {
+            currentTrack = Optional.of(track);
+            trackPlayer.setTrack(track);
+            playerController.updatePlayer(track);
+            bindMediaPlayer();
+            LOG.debug("Created new player");
+        }
+    }
 
-		bindPlayerConfiguration(mediaPlayer);
+    /**
+     * Binds the properties of the {@link MediaPlayer} to the components of the view.
+     */
+    private void bindMediaPlayer() {
+        trackPlayer.volumeProperty().bindBidirectional(playerController.volumeSliderValueProperty());
 
-		mediaPlayer.statusProperty().addListener((observable, oldStatus, newStatus) -> {
-			if (Status.PLAYING == newStatus)
-				playerController.setPlaying();
-			else if (Status.PAUSED == newStatus)
-				playerController.playButtonSelectedProperty().setValue(false);
-			else if (Status.STOPPED == newStatus) {
-				playerController.setStopped();
-				playerController.volumeSliderValueProperty().unbindBidirectional(mediaPlayer.volumeProperty());
-			}
-		});
-	}
+        bindPlayerConfiguration(trackPlayer);
 
-	private void bindPlayerConfiguration(MediaPlayer mediaPlayer) {
-		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> {
-			Duration halfTime = mediaPlayer.getStopTime().divide(2.0);
-			if (newTime.greaterThanOrEqualTo(halfTime))
-				incrementCurrentTrackPlayCount();
-			if (isCurrentTrackValidToScrobble(mediaPlayer, newTime)) {
-				scrobbled = true;
-				if (services.usingLastFm()) {
-					services.updateAndScrobbleTrack(currentTrack.get());
-				}
-			}
-		});
+        subscribe(trackPlayer.statusProperty(), status -> {
+            if (Status.PLAYING == status)
+                playerController.setPlaying();
+            else if (Status.PAUSED == status)
+                playerController.playButtonSelectedProperty().setValue(false);
+            else if (STOPPED == status) {
+                playerController.setStopped();
+                playerController.volumeSliderValueProperty().unbindBidirectional(trackPlayer.volumeProperty());
+            }
+        });
+    }
 
-		DoubleProperty trackSliderMaxProperty = playerController.trackSliderMaxProperty();
-		currentTrack.ifPresent(track -> trackSliderMaxProperty.setValue(track.getTotalTime().toMillis()));
+    private void bindPlayerConfiguration(TrackPlayer trackPlayer) {
+        subscribe(trackPlayer.currentTimeProperty(), time -> {
+            Duration halfTime = trackPlayer.getStopTime().divide(2.0);
+            if (time.greaterThanOrEqualTo(halfTime))
+                incrementCurrentTrackPlayCount();
+            if (isCurrentTrackValidToScrobble(trackPlayer, time)) {
+                scrobbled = true;
+                if (services.usingLastFm()) {
+                    services.updateAndScrobbleTrack(currentTrack.get());
+                }
+            }
+        });
 
-		BooleanProperty trackSliderValueChangingProperty = playerController.trackSliderValueChangingProperty();
-		DoubleProperty trackSliderValueProperty = playerController.trackSliderValueProperty();
-		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> {
-			if (! trackSliderValueChangingProperty.get())
-				trackSliderValueProperty.setValue(newTime.toMillis());
-		});
+        DoubleProperty trackSliderMaxProperty = playerController.trackSliderMaxProperty();
+        currentTrack.ifPresent(track -> trackSliderMaxProperty.setValue(track.getTotalTime().toMillis()));
 
-		DoubleProperty trackProgressBarProgressProperty = playerController.trackProgressBarProgressProperty();
-		trackSliderValueProperty.addListener((observable, oldValue, newValue) -> {
-			Double endTime = mediaPlayer.getStopTime().toMillis();
-			if (trackSliderValueChangingProperty.get() && (! endTime.equals(Double.POSITIVE_INFINITY) || ! endTime
-					.equals(Double.NaN))) {
-				trackProgressBarProgressProperty.set(newValue.doubleValue() / endTime);
-				mediaPlayer.seek(Duration.millis(newValue.doubleValue()));
-			}
-		});
+        BooleanProperty trackSliderValueChangingProperty = playerController.trackSliderValueChangingProperty();
+        DoubleProperty trackSliderValueProperty = playerController.trackSliderValueProperty();
+        subscribe(trackPlayer.currentTimeProperty(), time -> {
+            if (! trackSliderValueChangingProperty.get())
+                trackSliderValueProperty.setValue(time.toMillis());
+        });
 
-		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) ->
-															  trackProgressBarProgressProperty
-				.set(newTime.toMillis() / trackSliderMaxProperty.get()));
+        DoubleProperty trackProgressBarProgressProperty = playerController.trackProgressBarProgressProperty();
+        subscribe(trackSliderValueProperty, value -> {
+            Double endTime = trackPlayer.getStopTime().toMillis();
+            if (trackSliderValueChangingProperty.get() && (! endTime.equals(Double.POSITIVE_INFINITY) || ! endTime
+                    .equals(Double.NaN))) {
+                trackProgressBarProgressProperty.set(value.doubleValue() / endTime);
+                trackPlayer.seek(Duration.millis(value.doubleValue()));
+            }
+        });
 
-		mediaPlayer.currentTimeProperty().addListener((observable, oldTime, newTime) -> playerController
-				.updateTrackLabels(newTime, mediaPlayer.getMedia().getDuration()));
-	}
+        subscribe(trackPlayer.currentTimeProperty(),
+                  t -> trackProgressBarProgressProperty.set(t.toMillis() / trackSliderMaxProperty.get()));
+        subscribe(trackPlayer.currentTimeProperty(),
+                  t -> playerController.updateTrackLabels(t, trackPlayer.getMedia().getDuration()));
+    }
 
-	private void incrementCurrentTrackPlayCount() {
-		if (! played) {
-			currentTrack.ifPresent(Track::incrementPlayCount);
-			taskDemon.saveLibrary(true, false, false);
-			played = true;
-		}
-	}
+    private void incrementCurrentTrackPlayCount() {
+        if (! played) {
+            currentTrack.ifPresent(Track::incrementPlayCount);
+            taskDemon.saveLibrary(true, false, false);
+            played = true;
+        }
+    }
 
-	private boolean isCurrentTrackValidToScrobble(MediaPlayer mediaPlayer, Duration newTime) {
-		boolean isDurationBeyond30Seconds = mediaPlayer.getTotalDuration().greaterThanOrEqualTo(Duration.seconds(30));
-		boolean isDurationBeyondMidTime = newTime.greaterThanOrEqualTo(mediaPlayer.getStopTime().divide(2.0));
-		boolean isDurationLongerThan4Minutes = newTime.greaterThanOrEqualTo(Duration.minutes(4));
+    private boolean isCurrentTrackValidToScrobble(TrackPlayer trackPlayer, Duration newTime) {
+        boolean isDurationBeyond30Seconds = trackPlayer.getTotalDuration().greaterThanOrEqualTo(Duration.seconds(30));
+        boolean isDurationBeyondMidTime = newTime.greaterThanOrEqualTo(trackPlayer.getStopTime().divide(2.0));
+        boolean isDurationLongerThan4Minutes = newTime.greaterThanOrEqualTo(Duration.minutes(4));
 
-		return ! scrobbled && isDurationBeyond30Seconds && (isDurationBeyondMidTime || isDurationLongerThan4Minutes);
-	}
+        return ! scrobbled && isDurationBeyond30Seconds && (isDurationBeyondMidTime || isDurationLongerThan4Minutes);
+    }
 
-	/**
-	 * Deletes the {@link TrackQueueRow} objects from the play queue and from the history queue
-	 *
-	 * @param tracksToDelete The {@link List} of track ids
-	 */
-	public void deleteFromQueues(List<Integer> tracksToDelete) {
-		currentTrack.ifPresent(track -> {
-			if (tracksToDelete.contains(track.getTrackId())) {
-				currentTrack = Optional.empty();
-				stop();
-			}
-		});
+    /**
+     * Deletes the {@link TrackQueueRow} objects from the play queue and from the history queue
+     *
+     * @param tracksToDelete The {@link List} of track ids
+     */
+    public void deleteFromQueues(List<Track> tracksToDelete) {
+        currentTrack.ifPresent(track -> {
+            if (tracksToDelete.contains(track)) {
+                currentTrack = Optional.empty();
+                stop();
+            }
+        });
 
-		tracksToDelete.stream().forEach(trackId -> {
-			Iterator<TrackQueueRow> trackQueueRowIterator = playList.iterator();
-			while (trackQueueRowIterator.hasNext())
-				if (trackQueueRowIterator.next().getRepresentedTrackId() == trackId)
-					trackQueueRowIterator.remove();
+        tracksToDelete.forEach(track -> {
+            Iterator<TrackQueueRow> trackQueueRowIterator = playList.iterator();
+            while (trackQueueRowIterator.hasNext())
+                if (trackQueueRowIterator.next().getRepresentedTrack().equals(track))
+                    trackQueueRowIterator.remove();
 
-			trackQueueRowIterator = historyList.iterator();
-			while (trackQueueRowIterator.hasNext())
-				if (trackQueueRowIterator.next().getRepresentedTrackId() == trackId)
-					trackQueueRowIterator.remove();
-		});
-	}
+            trackQueueRowIterator = historyList.iterator();
+            while (trackQueueRowIterator.hasNext())
+                if (trackQueueRowIterator.next().getRepresentedTrack().equals(track))
+                    trackQueueRowIterator.remove();
+        });
+    }
 
-	public void pause() {
-		if (trackPlayer != null && "PLAYING".equals(trackPlayer.getStatus())) {
-			trackPlayer.pause();
-			LOG.info("Player paused");
-		}
-	}
+    public void pause() {
+        if (trackPlayer.getStatus().equals(PLAYING)) {
+            trackPlayer.pause();
+            LOG.info("Player paused");
+        }
+    }
 
-	public void next() {
-		if (playList.isEmpty())
-			stop();
-		else
-			play(false);
-	}
+    public void next() {
+        if (playList.isEmpty())
+            stop();
+        else
+            play(false);
+    }
 
-	public void previous() {
-		if (! historyList.isEmpty()) {
-			setPlayer(historyList.get(0).getRepresentedTrackId());
-			historyList.remove(0);
-			trackPlayer.play();
-		}
-		else
-			stop();
-	}
+    public void previous() {
+        if (! historyList.isEmpty()) {
+            setPlayer(historyList.get(0).getRepresentedTrack());
+            historyList.remove(0);
+            trackPlayer.play();
+        }
+        else
+            stop();
+    }
 
-	public void resume() {
-		trackPlayer.play();
-		LOG.info("Player resumed");
-	}
+    public void resume() {
+        trackPlayer.play();
+        LOG.info("Player resumed");
+    }
 
-	public void seek(double seekValue) {
-		trackPlayer.seek(seekValue);
-		LOG.debug("Player seeked value {}", seekValue);
-	}
+    public void seek(Duration seekTime) {
+        trackPlayer.seek(seekTime);
+        LOG.debug("Player seeked value {}", seekTime);
+    }
 
-	/**
-	 * Plays a {@link Track} that is on the history queue selected by the user.
-	 *
-	 * @param index The position of the <tt>track</tt> in the history queue.
-	 */
-	public void playHistoryIndex(int index) {
-		setPlayer(historyList.get(index).getRepresentedTrackId());
-		historyList.remove(index);
-		trackPlayer.play();
-	}
+    /**
+     * Plays a {@link Track} that is on the history queue selected by the user.
+     *
+     * @param index The position of the {@code track} in the history queue.
+     */
+    public void playHistoryIndex(int index) {
+        setPlayer(historyList.get(index).getRepresentedTrack());
+        historyList.remove(index);
+        trackPlayer.play();
+    }
 
-	/**
-	 * Plays a {@link Track} that is on the play queue selected by the user.
-	 *
-	 * @param index The position of the <tt>track</tt> in the history queue.
-	 */
-	public void playQueueIndex(int index) {
-		setPlayer(playList.get(index).getRepresentedTrackId());
-		historyList.add(0, playList.get(index));
-		playList.remove(index);
-		trackPlayer.play();
-	}
+    /**
+     * Plays a {@link Track} that is on the play queue selected by the user.
+     *
+     * @param index The position of the {@code track} in the history queue.
+     */
+    public void playQueueIndex(int index) {
+        setPlayer(playList.get(index).getRepresentedTrack());
+        historyList.add(0, playList.get(index));
+        playList.remove(index);
+        trackPlayer.play();
+    }
 
-	public void increaseVolume(double amount) {
-		if (trackPlayer != null)
-			trackPlayer.setVolume(amount);
-	}
+    public void increaseVolume(double value) {
+        double currentVolume = trackPlayer.volumeProperty().get();
+        trackPlayer.setVolume(currentVolume + value);
+    }
 
-	public void decreaseVolume(double amount) {
-		if (trackPlayer != null)
-			trackPlayer.setVolume(- 1 * amount);
-	}
+    public void decreaseVolume(double value) {
+        double currentVolume = trackPlayer.volumeProperty().get();
+        trackPlayer.setVolume(currentVolume - value);
+    }
 
-	public void setRandomList(List<Integer> randomTrackIds) {
-		if (playQueueController == null)
-			playQueueController = stageDemon.getPlayQueueController();
-
-		if (! randomTrackIds.isEmpty()) {
-			LOG.info("Created random list of tracks");
-			playingRandom = true;
-			for (int index = 0; index < randomTrackIds.size(); index++) {
-				int i = index;
-				Platform.runLater(() -> {
-					playList.add(new TrackQueueRow(randomTrackIds.get(i)));
-					if (i == 0) {
-						setCurrentTrack();
-					}
-				});
-			}
-			Platform.runLater(
-					() -> stageDemon.getNavigationController().setStatusMessage("Playing a random " + "playlist"));
-		}
-		else {
-			Platform.runLater(stageDemon.getPlayerController()::setStopped);
-		}
-	}
+    public void setRandomListAndPlay(List<Track> randomTracks) {
+        if (! randomTracks.isEmpty()) {
+            LOG.info("Created random list of tracks");
+            playingRandom = true;
+            for (int index = 0; index < randomTracks.size(); index++) {
+                int i = index;
+                Platform.runLater(() -> {
+                    playList.add(0, new TrackQueueRow(randomTracks.get(i), playQueueController));
+                    if (i == 0)
+                        setCurrentTrack();
+                });
+            }
+            Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Playing random playlist"));
+        }
+        else
+            Platform.runLater(playerController::setStopped);
+    }
 }

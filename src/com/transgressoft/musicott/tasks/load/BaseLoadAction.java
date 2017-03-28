@@ -32,10 +32,10 @@ import java.util.concurrent.*;
  * Base class of parse tasks of import music into the application.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9.2-b
  */
-public abstract  class BaseLoadAction extends RecursiveAction implements Callable<Void> {
+public abstract class BaseLoadAction extends RecursiveAction {
 
     protected final String applicationFolder;
     protected final MusicLibrary musicLibrary;
@@ -47,18 +47,12 @@ public abstract  class BaseLoadAction extends RecursiveAction implements Callabl
         this.musicottApplication = musicottApplication;
     }
 
-    @Override
-    public Void call() throws Exception {
-        compute();
-        return null;
-    }
-
     /**
-     * Parses an <tt>Object</tt> of a previously serialized instance using Json-IO
+     * Parses an {@code Object} of a previously serialized instance using Json-IO
      *
      * @param jsonFormattedFile A JSON formatted {@link File}
      *
-     * @return The parsed <tt>Object</tt>
+     * @return The parsed {@code Object}
      *
      * @throws IOException If something went bad
      * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
@@ -81,15 +75,10 @@ public abstract  class BaseLoadAction extends RecursiveAction implements Callabl
      */
     protected void notifyPreloader(int step, int totalSteps, String detailMessage) {
         notifyPreloader(step, totalSteps, detailMessage, musicottApplication);
-     }
+    }
 
     public static void notifyPreloader(int step, int totalSteps, String detailMessage, Application app) {
-        int numPreloaderSteps;
-        if (totalSteps != 0)
-            numPreloaderSteps = totalSteps;
-        else
-            numPreloaderSteps = 3;
-        double progress = (double) step / numPreloaderSteps;
+        double progress = (step == - 1) ? step : ((double) step / totalSteps);
         LauncherImpl.notifyPreloader(app, new CustomProgressNotification(progress, detailMessage));
     }
 }

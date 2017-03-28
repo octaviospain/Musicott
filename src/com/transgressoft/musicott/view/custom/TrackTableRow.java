@@ -19,61 +19,69 @@
 
 package com.transgressoft.musicott.view.custom;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import javafx.collections.*;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
+import org.fxmisc.easybind.*;
 
 import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
+
+import static com.transgressoft.musicott.view.MusicottController.*;
 
 /**
  * Custom {@link TableRow} that represents an {@link Entry} with
  * a track id as a key and the {@link Track} as value.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9.1-b
  */
 public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
 
-	public static final DataFormat TRACK_ID_MIME_TYPE = new DataFormat("application/x-java-tracks-id");
+    public static final DataFormat TRACK_IDS_MIME_TYPE = new DataFormat("application/x-java-tracks-id");
 
-	private TableView<Entry<Integer, Track>> trackTableView;
-	private PlayerFacade player = PlayerFacade.getInstance();
+    private PlayerFacade player = PlayerFacade.getInstance();
+    private StageDemon stageDemon = StageDemon.getInstance();
 
-	public TrackTableRow(TableView<Entry<Integer, Track>> trackTableView) {
-		super();
-		this.trackTableView = trackTableView;
-		setOnMouseClicked(this::playTrackOnMouseClickedHandler);
-		setOnDragDetected(this::onDragDetectedMovingTracks);
-	}
+    public TrackTableRow() {
+        super();
+        setOnMouseClicked(this::playTrackOnMouseClickedHandler);
+        setOnDragDetected(this::onDragDetectedMovingTracks);
+        EasyBind.subscribe(hoverProperty(), newHovered -> {
+            if (newHovered && getItem() != null) {
+                Optional<byte[]> cover = getItem().getValue().getCoverImage();
+                stageDemon.getRootController().updateTrackHoveredCover(cover);
+            }
+        });
+    }
 
-	/**
-	 * Fires the play of a {@link Track}
-	 * when the user double-clicks a row.
-	 */
-	private void playTrackOnMouseClickedHandler(MouseEvent event) {
-		if (event.getClickCount() == 2 && ! isEmpty()) {
-			List<Integer> singleTrackIdList = Collections.singletonList(getItem().getKey());
-			player.addTracksToPlayQueue(singleTrackIdList, true);
-		}
-	}
+    /**
+     * Fires the play of a {@link Track}
+     * when the user double-clicks a row.
+     */
+    private void playTrackOnMouseClickedHandler(MouseEvent event) {
+        if (event.getClickCount() == 2 && ! isEmpty()) {
+            player.addTracksToPlayQueue(Collections.singletonList(getItem().getValue()), true);
+            stageDemon.getNavigationController().updateCurrentPlayingPlaylist();
+        }
+    }
 
-	private void onDragDetectedMovingTracks(MouseEvent event) {
-		if (! isEmpty()) {
-			Dragboard dragboard = startDragAndDrop(TransferMode.ANY);
-			dragboard.setDragView(snapshot(null, null));
+    private void onDragDetectedMovingTracks(MouseEvent event) {
+        if (! isEmpty()) {
+            Dragboard dragboard = startDragAndDrop(TransferMode.COPY);
+            dragboard.setDragView(DRAGBOARD_ICON);
 
-			ObservableList<Entry<Integer, Track>> selection = trackTableView.getSelectionModel().getSelectedItems();
-			List<Integer> selectionIds = selection.stream().map(Entry::getKey).collect(Collectors.toList());
-			ClipboardContent clipboardContent = new ClipboardContent();
-			clipboardContent.put(TRACK_ID_MIME_TYPE, selectionIds);
-
-			dragboard.setContent(clipboardContent);
-			event.consume();
-		}
-	}
+            ObservableList<Entry<Integer, Track>> selection = stageDemon.getRootController().getSelectedTracks();
+            List<Integer> selectionTracks = selection.stream().map(Entry::getKey).collect(Collectors.toList());
+            ClipboardContent clipboardContent = new ClipboardContent();
+            clipboardContent.put(TRACK_IDS_MIME_TYPE, selectionTracks);
+            dragboard.setContent(clipboardContent);
+            event.consume();
+        }
+    }
 }

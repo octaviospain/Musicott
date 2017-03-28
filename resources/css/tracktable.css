@@ -1,23 +1,4 @@
-/*
- * This file is part of Musicott software.
- *
- * Musicott software is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Musicott library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright (C) 2015, 2016 Octavio Calleya
- */
-
-@import url("scrollbar.css");
+@import url("scroll-bar-general.css");
 
 .root,
 .table-view,
@@ -27,10 +8,14 @@
     -fx-font-family: "Avenir", sans-serif;
 }
 
+.table-view .column-header {
+    -fx-border-color: white;
+    -fx-border-width: 0 0 1 0;
+}
+
 .table-view {
     -fx-border-color: rgb(73, 73, 73);
-    -fx-border-width: 2px;
-    -fx-border-insets: -2 -2 0 -2;
+    -fx-border-width: 0px 0px 2px 0px;
 }
 
 .table-row-cell:empty .table-cell {
@@ -38,29 +23,38 @@
     -fx-background-color: rgb(34, 34, 34);
 }
 
+.table-row-cell,
+.table-row-cell:odd {
+    -fx-background-color: rgb(34, 34, 34);
+}
+
+.table-row-cell .text,
+.table-row-cell:odd .text,
+.table-row-cell:hover .text{
+    -fx-fill: white;
+}
+
 .table-row-cell:selected,
-.table-row-cell:odd:selected {
+.table-row-cell:odd:selected,
+.table-row-cell:even:selected {
     -fx-background-color: rgb(99, 255, 109);
 }
 
 .table-row-cell:selected .text,
-.table-row-cell:odd:selected .text{
+.table-row-cell:odd:selected .text,
+.table-row-cell:even:selected .text {
     -fx-fill: black;
 }
 
-.table-row-cell, .table-row-cell:odd {
-    -fx-background-color: rgb(34, 34, 34);
-}
-
-.table-row-cell .text, .table-row-cell:odd .text {
-    -fx-fill: white;
-}
-
-.table-row-cell:hover {
+.table-row-cell:hover,
+.table-row-cell:odd:hover,
+.table-row-cell:even:hover {
     -fx-background-color: rgb(73, 73, 73);
 }
 
-.table-row-cell:hover .text {
+
+.table-row-cell:hover .text,
+.table-row-cell:odd:hover .text,
+.table-row-cell:even:hover .text {
     -fx-fill: white;
 }
-

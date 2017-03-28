@@ -5,14 +5,32 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<BorderPane fx:id="rootBorderPane" minHeight="-Infinity" minWidth="-Infinity" prefWidth="1200.0" stylesheets="@../css/base.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.RootController">
+<BorderPane fx:id="rootBorderPane" minHeight="-Infinity" minWidth="-Infinity" prefWidth="1200.0" stylesheets="@../css/base.css" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.RootController">
    <top>
-      <VBox fx:id="headerVBox" BorderPane.alignment="CENTER" />
+      <VBox fx:id="headerVBox" BorderPane.alignment="CENTER">
+         <children>
+            <fx:include fx:id="menuBar" source="RootMenuBarLayout.fxml" />
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="3.0" />
+         </BorderPane.margin>
+      </VBox>
    </top>
    <center>
-      <BorderPane fx:id="contentBorderLayout" BorderPane.alignment="CENTER">
+      <BorderPane fx:id="wrapperBorderPane" BorderPane.alignment="CENTER">
          <center>
-            <BorderPane fx:id="tableBorderPane" BorderPane.alignment="CENTER">
+            <BorderPane fx:id="contentBorderPane" BorderPane.alignment="CENTER">
+               <center>
+                  <BorderPane fx:id="tableBorderPane" BorderPane.alignment="CENTER">
+                     <center>
+                        <StackPane fx:id="tableStackPane">
+                           <children>
+                              <fx:include fx:id="artistsLayout" source="ArtistsLayout.fxml" />
+                           </children>
+                        </StackPane>
+                     </center>
+                  </BorderPane>
+               </center>
                <top>
                   <HBox fx:id="tableInfoHBox" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
                      <children>
@@ -26,7 +44,8 @@
                         </ImageView>
                         <GridPane fx:id="playlistInfoGridPane" HBox.hgrow="SOMETIMES">
                           <columnConstraints>
-                            <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                            <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="10.0" />
+                              <ColumnConstraints halignment="LEFT" hgrow="NEVER" maxWidth="426.0" minWidth="10.0" prefWidth="25.0" />
                           </columnConstraints>
                           <rowConstraints>
                             <RowConstraints maxHeight="42.0" minHeight="10.0" prefHeight="41.0" vgrow="NEVER" />
@@ -35,7 +54,7 @@
                            <children>
                               <Label fx:id="playlistTitleLabel" maxHeight="-Infinity">
                                  <font>
-                                    <Font size="20.0" />
+                                    <Font size="22.0" />
                                  </font>
                               </Label>
                               <HBox alignment="CENTER_LEFT" GridPane.rowIndex="1">
@@ -52,6 +71,11 @@
                                     </Label>
                                  </children>
                               </HBox>
+                              <Button fx:id="playRandomButton" mnemonicParsing="false" styleClass="random-button" GridPane.columnIndex="1">
+                                 <padding>
+                                    <Insets right="1.0" />
+                                 </padding>
+                              </Button>
                            </children>
                            <HBox.margin>
                               <Insets bottom="20.0" right="20.0" top="20.0" />
@@ -62,6 +86,12 @@
                </top>
             </BorderPane>
          </center>
+         <left>
+            <fx:include fx:id="navigationLayout" source="NavigationLayout.fxml" />
+         </left>
+         <bottom>
+            <fx:include fx:id="playerLayout" source="PlayerLayout.fxml" />
+         </bottom>
       </BorderPane>
    </center>
 </BorderPane>

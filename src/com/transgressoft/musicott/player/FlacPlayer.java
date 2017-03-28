@@ -19,50 +19,89 @@
 
 package com.transgressoft.musicott.player;
 
-import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.model.Track;
+import javafx.beans.property.*;
+import javafx.scene.media.*;
+import javafx.scene.media.MediaPlayer.*;
+import javafx.util.*;
 
 /**
  * @author Octavio Calleya
  */
 public class FlacPlayer implements TrackPlayer {
 
-	@Override
-	public String getStatus() {
-		return "";
-	}
+    @Override
+    public Status getStatus() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void setTrack(Track track) {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void setOnEndOfMedia(Runnable value) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void setVolume(double value) {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void setTrack(Track track) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void seek(double seekValue) {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public Track getTrack() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void play() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public Media getMedia() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void pause() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void setVolume(double value) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void stop() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void seek(Duration seekTime) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 
-	@Override
-	public void dispose() {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
+    @Override
+    public void play() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public void pause() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public void stop() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public Duration getStopTime() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public Duration getTotalDuration() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public DoubleProperty volumeProperty() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public ReadOnlyObjectProperty<Status> statusProperty() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public ReadOnlyObjectProperty<Duration> currentTimeProperty() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 }

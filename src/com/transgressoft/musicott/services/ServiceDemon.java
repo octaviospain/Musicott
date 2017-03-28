@@ -29,59 +29,62 @@ import javafx.beans.property.*;
  * from external services.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class ServiceDemon {
+    
+    private LastFmPreferences lastFmPreferences;
+    private LastFmTask lastFmTask;
+    private boolean usingLastFm;
+    private BooleanProperty usingLastFmProperty;
 
-	private static ServiceDemon instance;
+    private static class InstanceHolder {
+        static final ServiceDemon INSTANCE = new ServiceDemon();
+        private InstanceHolder() {}
+    }
 
-	private LastFmPreferences lastFmPreferences;
-	private LastFmTask lastFmTask;
-	private boolean usingLastFm;
-	private BooleanProperty usingLastFmProperty;
+    private ServiceDemon() {
+        lastFmPreferences = new LastFmPreferences();
+        usingLastFmProperty = new SimpleBooleanProperty(this, "using LastFM", false);
+    }
 
-	private ServiceDemon() {
-		lastFmPreferences = new LastFmPreferences();
-		usingLastFmProperty = new SimpleBooleanProperty(this, "using LastFM", false);
-	}
+    public static ServiceDemon getInstance() {
+        return InstanceHolder.INSTANCE;
+    }
 
-	public static ServiceDemon getInstance() {
-		if (instance == null)
-			instance = new ServiceDemon();
-		return instance;
-	}
+    public LastFmPreferences getLastFmPreferences() {
+        return lastFmPreferences;
+    }
 
-	public LastFmPreferences getLastFmPreferences() {
-		return lastFmPreferences;
-	}
+    public void lastFmLogIn(String username, String password) {
+        lastFmPreferences.setLastFmUsername(username);
+        lastFmPreferences.setLasFmPassword(password);
+        lastFmTask = new LastFmTask(this);
+        lastFmTask.start();
+    }
 
-	public void lastFmLogIn(String username, String password) {
-		lastFmPreferences.setLastFmUsername(username);
-		lastFmPreferences.setLasFmPassword(password);
-		lastFmTask = new LastFmTask();
-		lastFmTask.start();
-	}
+    public void lastFmLogOut() {
+        lastFmPreferences.deleteLastFmUserData();
+        if (lastFmTask != null && lastFmTask.isAlive()) {
+            lastFmTask.logout();
+            setUsingLastFm(false);
+        }
+    }
 
-	public void lastFmLogOut() {
-		lastFmPreferences.deleteLastFmUserData();
-		if (lastFmTask != null && lastFmTask.isAlive())
-			lastFmTask.interrupt();
-	}
+    public void updateAndScrobbleTrack(Track track) {
+        lastFmTask.updateAndScrobble(track);
+    }
 
-	public void updateAndScrobbleTrack(Track track) {
-		lastFmTask.updateAndScrobble(track);
-	}
+    protected void setUsingLastFm(boolean usingLastFm) {
+        this.usingLastFm = usingLastFm;
+        Platform.runLater(() -> usingLastFmProperty.set(usingLastFm));
+    }
 
-	protected void setUsingLastFm(boolean usingLastFm) {
-		this.usingLastFm = usingLastFm;
-		Platform.runLater(() -> usingLastFmProperty.set(usingLastFm));
-	}
+    public boolean usingLastFm() {
+        return usingLastFm;
+    }
 
-	public boolean usingLastFm() {
-		return usingLastFm;
-	}
-
-	public ReadOnlyBooleanProperty usingLastFmProperty() {
-		return usingLastFmProperty;
-	}
+    public ReadOnlyBooleanProperty usingLastFmProperty() {
+        return usingLastFmProperty;
+    }
 }

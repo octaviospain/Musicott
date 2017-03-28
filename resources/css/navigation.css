@@ -1,31 +1,20 @@
-/*
- * This file is part of Musicott software.
- *
- * Musicott software is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Musicott library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Musicott. If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright (C) 2015, 2016 Octavio Calleya
- */
-
 @import url("base.css");
-@import url("scrollbar.css");
+@import url("scroll-bar-general.css");
 
-#showMenuListView .list-cell {
+#navigationModeListView .list-cell:tracks {
 	-fx-graphic: url('../icons/menusongs-white-icon.png');
 }
 
-#showMenuListView .list-cell:selected {
+#navigationModeListView .list-cell:tracks-selected {
 	-fx-graphic: url('../icons/menusongs-black-icon.png');
+}
+
+#navigationModeListView .list-cell:artists {
+	-fx-graphic: url('../icons/menuartist-white-icon.png');
+}
+
+#navigationModeListView .list-cell:artists-selected {
+	-fx-graphic: url('../icons/menuartist-black-icon.png');
 }
 
 #navigationPaneVBox {
@@ -39,8 +28,12 @@
 	-fx-background-color: transparent;
 }
 
-#statusLabel {
-	-fx-text-fill: black;
+#newPlaylistButton:pressed {
+	-fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 15, 0.3, 0, 0);
+}
+
+#taskProgressBar .track {
+	-fx-background-color: rgb(34, 34, 34);
 }
 
 .tree-cell, .list-cell, #navigationPaneVBox {
@@ -64,13 +57,27 @@
 	-fx-graphic: url('../icons/playlist-folder-black-icon.png');
 }
 
-.tree-cell:playlist-selected, .tree-cell:folder-selected,
-.list-cell:selected, .tree-cell:selected{
+.tree-cell .tree-disclosure-node .arrow {
+	-fx-shape: null;
+	-fx-background-color: null;
+	-fx-background-image: url('../icons/disclosure-node-white-icon.png');
+}
+
+.tree-cell:selected .tree-disclosure-node .arrow {
+	-fx-shape: null;
+	-fx-background-color: null;
+	-fx-background-image: url('../icons/disclosure-node-black-icon.png');
+}
+
+.tree-cell:playlist-selected,
+.tree-cell:folder-selected,
+.list-cell:selected,
+.tree-cell:selected{
 	-fx-background-color: rgb(99,255,109);
 	-fx-text-fill: black;
 }
-
-.tree-cell:empty, #showMenuListView .list-cell:empty {
+#navigationModeListView .list-cell:empty,
+.tree-cell:empty {
 	-fx-graphic: none;
 }
 

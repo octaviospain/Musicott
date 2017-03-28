@@ -30,8 +30,7 @@ public class MetadataUpdaterTest {
     private Track testedTrack = prepareTestedTrack();
 
     private Track prepareTestedTrack() {
-        Track track = new Track();
-
+        // TODO
         return testedTrack;
     }
 

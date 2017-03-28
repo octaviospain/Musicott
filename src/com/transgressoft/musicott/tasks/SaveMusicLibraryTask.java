@@ -20,6 +20,7 @@
 package com.transgressoft.musicott.tasks;
 
 import com.cedarsoftware.util.io.*;
+import com.google.common.graph.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import javafx.application.*;
@@ -38,14 +39,14 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * each save request.</p>
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class SaveMusicLibraryTask extends Thread {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private final ObservableMap<Integer, Track> musicottTracks;
     private final Map<Integer, float[]> trackWaveforms;
-    private final List<Playlist> musicottPlaylists;
+    private final MutableGraph<Playlist> musicottPlaylists;
     private String musicottUserPath;
     private File tracksFile;
     private File waveformsFile;
@@ -57,13 +58,14 @@ public class SaveMusicLibraryTask extends Thread {
     private volatile boolean saveWaveforms;
     private volatile boolean savePlaylists;
     private ErrorDemon errorDemon = ErrorDemon.getInstance();
+    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
     public SaveMusicLibraryTask(ObservableMap<Integer, Track> tracks, Map<Integer, float[]> waveforms,
-            List<Playlist> playlists) {
+            MutableGraph<Playlist> playlistsGraph) {
         setName("Save Library Thread");
         musicottTracks = tracks;
         trackWaveforms = waveforms;
-        musicottPlaylists = playlists;
+        musicottPlaylists = playlistsGraph;
         musicottUserPath = "";
         saveSemaphore = new Semaphore(0);
         tracksArgs = new HashMap<>();
@@ -92,7 +94,7 @@ public class SaveMusicLibraryTask extends Thread {
         trackAttributes.add("discNumber");
         trackAttributes.add("year");
         trackAttributes.add("bpm");
-        trackAttributes.add("inDisk");
+        trackAttributes.add("isInDisk");
         trackAttributes.add("isPartOfCompilation");
         trackAttributes.add("lastDateModified");
         trackAttributes.add("dateAdded");
@@ -100,6 +102,7 @@ public class SaveMusicLibraryTask extends Thread {
         trackAttributes.add("isVariableBitRate");
         trackAttributes.add("encoder");
         trackAttributes.add("encoding");
+        trackAttributes.add("artistsInvolved");
 
         Map<Class<?>, List<String>> trackFields = new HashMap<>();
         trackFields.put(Track.class, trackAttributes);
@@ -165,7 +168,8 @@ public class SaveMusicLibraryTask extends Thread {
     }
 
     private void serializeTracks() throws IOException {
-        synchronized (musicottTracks) {
+        TracksLibrary tracksLibrary = musicLibrary.tracks;
+        synchronized (tracksLibrary) {
             writeObjectToJsonFile(musicottTracks, tracksFile, tracksArgs);
         }
         saveTracks = false;
@@ -173,7 +177,8 @@ public class SaveMusicLibraryTask extends Thread {
     }
 
     private void serializeWaveforms() throws IOException {
-        synchronized (trackWaveforms) {
+        WaveformsLibrary waveformsLibrary = musicLibrary.waveforms;
+        synchronized (waveformsLibrary) {
             writeObjectToJsonFile(trackWaveforms, waveformsFile, null);
         }
         saveWaveforms = false;
@@ -181,7 +186,8 @@ public class SaveMusicLibraryTask extends Thread {
     }
 
     private void serializePlaylists() throws IOException {
-        synchronized (musicottPlaylists) {
+        PlaylistsLibrary playlistsLibrary = musicLibrary.playlists;
+        synchronized (playlistsLibrary) {
             writeObjectToJsonFile(musicottPlaylists, playlistsFile, playlistArgs);
         }
         savePlaylists = false;

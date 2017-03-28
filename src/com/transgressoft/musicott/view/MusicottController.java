@@ -19,11 +19,7 @@
 
 package com.transgressoft.musicott.view;
 
-import com.transgressoft.musicott.*;
-import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.services.*;
-import com.transgressoft.musicott.tasks.*;
+import javafx.scene.image.*;
 
 /**
  * Interface that represent a controller of the Musicott application.
@@ -31,44 +27,40 @@ import com.transgressoft.musicott.tasks.*;
  * references to the singleton classes.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @since 0.9
  */
 public interface MusicottController {
 
-	String TRACKS_PERSISTENCE_FILE = "Musicott-tracks.json";
-	String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
-	String PLAYLISTS_PERSISTENCE_FILE = "Musicott-playlists.json";
+    String TRACKS_PERSISTENCE_FILE = "Musicott-tracks.json";
+    String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
+    String PLAYLISTS_PERSISTENCE_FILE = "Musicott-playlists.json";
 
-	String LAYOUTS_PATH = "/view/";
-	String IMAGES_PATH = "/images/";
-	String STYLES_PATH = "/css/";
+    String LAYOUTS_PATH = "/view/";
+    String IMAGES_PATH = "/images/";
+    String STYLES_PATH = "/css/";
+    String ICONS_PATH = "/icons/";
 
-	String ROOT_LAYOUT = LAYOUTS_PATH + "RootLayout.fxml";
-	String NAVIGATION_LAYOUT = LAYOUTS_PATH + "NavigationLayout.fxml";
-	String PRELOADER_INIT_LAYOUT = LAYOUTS_PATH + "PreloaderLayout.fxml";
-	String PRELOADER_FIRST_USE_PROMPT = LAYOUTS_PATH + "PreloaderPromptLayout.fxml";
-	String EDIT_LAYOUT = LAYOUTS_PATH + "EditLayout.fxml";
-	String PLAYQUEUE_LAYOUT = LAYOUTS_PATH + "PlayQueueLayout.fxml";
-	String PROGRESS_LAYOUT = LAYOUTS_PATH + "ProgressLayout.fxml";
-	String PREFERENCES_LAYOUT = LAYOUTS_PATH + "PreferencesLayout.fxml";
-	String PLAYER_LAYOUT = LAYOUTS_PATH + "PlayerLayout.fxml";
-	String ERROR_ALERT_LAYOUT = LAYOUTS_PATH + "ErrorDialogLayout.fxml";
+    String ROOT_LAYOUT = LAYOUTS_PATH + "RootLayout.fxml";
+    String PRELOADER_INIT_LAYOUT = LAYOUTS_PATH + "PreloaderLayout.fxml";
+    String PRELOADER_FIRST_USE_PROMPT = LAYOUTS_PATH + "PreloaderPromptLayout.fxml";
+    String EDIT_LAYOUT = LAYOUTS_PATH + "EditLayout.fxml";
+    String PROGRESS_LAYOUT = LAYOUTS_PATH + "ProgressLayout.fxml";
+    String PREFERENCES_LAYOUT = LAYOUTS_PATH + "PreferencesLayout.fxml";
+    String ERROR_ALERT_LAYOUT = LAYOUTS_PATH + "ErrorDialogLayout.fxml";
 
-	String DEFAULT_COVER_IMAGE = IMAGES_PATH + "default-cover-image.png";
-	String COMMON_ERROR_IMAGE = IMAGES_PATH + "common-error.png";
-	String LASTFM_LOGO = IMAGES_PATH + "lastfm-logo.png";
-	String MUSICOTT_APP_ICON = IMAGES_PATH + "musicott-app-icon.png";
-	String MUSICOTT_ABOUT_LOGO = IMAGES_PATH + "musicott-about-logo.png";
+    String DEFAULT_COVER_PATH = IMAGES_PATH + "default-cover-image.png";
+    String COMMON_ERROR_IMAGE = IMAGES_PATH + "common-error.png";
+    String LASTFM_LOGO = IMAGES_PATH + "lastfm-logo.png";
+    String MUSICOTT_APP_ICON = IMAGES_PATH + "musicott-app-icon.png";
+    String MUSICOTT_ABOUT_LOGO = IMAGES_PATH + "musicott-about-logo.png";
+    String DRAGBOARD_ICON_PATH = ICONS_PATH + "dragboard-icon.png";
 
-	String DIALOG_STYLE = STYLES_PATH + "dialog.css";
-	String TRACK_TABLE_STYLE = STYLES_PATH + "tracktable.css";
+    String DIALOG_STYLE = STYLES_PATH + "dialog.css";
+    String TRACK_TABLE_STYLE = STYLES_PATH + "tracktable.css";
+    String BASE_STYLE = STYLES_PATH + "base.css";
+    String TRACKAREASET_TRACK_TABLE_STYLE = STYLES_PATH + "tracktable-trackareaset.css";
 
-	MusicLibrary musicLibrary = MusicLibrary.getInstance();
-	MainPreferences preferences = MainPreferences.getInstance();
-	PlayerFacade player = PlayerFacade.getInstance();
-	ServiceDemon serviceDemon = ServiceDemon.getInstance();
-	StageDemon stageDemon = StageDemon.getInstance();
-	ErrorDemon errorDemon = ErrorDemon.getInstance();
-	TaskDemon taskDemon = TaskDemon.getInstance();
+    Image DEFAULT_COVER = new Image(MusicottController.class.getResourceAsStream(DEFAULT_COVER_PATH));
+    Image DRAGBOARD_ICON = new Image(MusicottController.class.getResourceAsStream(DRAGBOARD_ICON_PATH));
 }

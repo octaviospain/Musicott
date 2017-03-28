@@ -17,23 +17,25 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.util;
+package com.transgressoft.musicott.util.jsoniocreators;
 
 import com.cedarsoftware.util.io.JsonReader.*;
 import javafx.collections.*;
 
+import java.util.*;
+
 /**
- * Class needed by the <tt>Json-io</tt> library in order to deserialize an {@link ObservableList}.
+ * Class needed by the {@code Json-io} library in order to deserialize an {@link ObservableSet}.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.10-b
  * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
  */
-public class ObservableListWrapperCreator implements ClassFactory {
+public class ObservableSetWrapperCreator implements ClassFactory {
 
-	@SuppressWarnings ("rawtypes")
-	@Override
-	public Object newInstance(Class c) {
-		return FXCollections.observableArrayList();
-	}
+    @SuppressWarnings ("rawtypes")
+    @Override
+    public Object newInstance(Class c) {
+        return FXCollections.observableSet(new HashSet<>());
+    }
 }

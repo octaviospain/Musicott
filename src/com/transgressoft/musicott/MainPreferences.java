@@ -21,150 +21,154 @@ package com.transgressoft.musicott;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.*;
 import java.util.prefs.*;
 
-import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
+import static com.transgressoft.musicott.tasks.parse.itunes.ItunesParseTask.*;
 
 /**
  * Singleton class that isolates some user preferences, such as the application folder
  * or the the iTunes import options, using the java predefined class {@link Preferences}.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class MainPreferences {
 
-	/**
-	 * The path where the application files will be stored
-	 */
-	private static final String MUSICOTT_FOLDER = "musicott_folder";
+    /**
+     * The path where the application files will be stored
+     */
+    private static final String MUSICOTT_FOLDER = "musicott_folder";
 
-	/**
-	 * The sequence number of the keys of the {@link com.transgressoft.musicott.model.Track} map
-	 */
-	private static final String TRACK_SEQUENCE = "track_sequence";
+    /**
+     * The sequence number of the keys of the {@link com.transgressoft.musicott.model.Track} map
+     */
+    private static final String TRACK_SEQUENCE = "track_sequence";
 
-	private static final String IMPORT_MP3 = "import_mp3_flag";
-	private static final String IMPORT_M4A = "import_m4a_flag";
-	private static final String IMPORT_WAV = "import_wav_flag";
-	private static final String IMPORT_FLAC = "import_flac_flag";
+    private static final String IMPORT_MP3 = "import_mp3_flag";
+    private static final String IMPORT_M4A = "import_m4a_flag";
+    private static final String IMPORT_WAV = "import_wav_flag";
+    private static final String IMPORT_FLAC = "import_flac_flag";
 
-	/**
-	 * Flag that indicates if the play count must be kept when importing
-	 * from iTunes, instead of reset them to 0 plays.
-	 */
-	private static final String ITUNES_IMPORT_HOLD_PLAYCOUNT = "itunes_import_hold_playcount";
+    /**
+     * Flag that indicates if the play count must be kept when importing
+     * from iTunes, instead of reset them to 0 plays.
+     */
+    private static final String ITUNES_IMPORT_HOLD_PLAYCOUNT = "itunes_import_hold_playcount";
 
-	/**
-	 * Flag that indicates of the iTunes playlists must be imported
-	 * too when importing from a iTunes library.
-	 */
-	private static final String ITUNES_IMPORT_PLAYLISTS = "itunes_import_playlists";
+    /**
+     * Flag that indicates of the iTunes playlists must be imported
+     * too when importing from a iTunes library.
+     */
+    private static final String ITUNES_IMPORT_PLAYLISTS = "itunes_import_playlists";
 
-	/**
-	 * The flag to choose between parse the metadata of the imported files,
-	 * or the iTunes data saved in the library, when importing from a iTunes library.
-	 */
-	private static final String ITUNES_IMPORT_METADATA_POLICY = "itunes_import_policy";
+    /**
+     * The flag to choose between parse the metadata of the imported files,
+     * or the iTunes data saved in the library, when importing from a iTunes library.
+     */
+    private static final String ITUNES_IMPORT_METADATA_POLICY = "itunes_import_policy";
 
-	private static MainPreferences instance;
-	private Preferences preferences;
-	private Set<String> importExtensions;
+    private Preferences preferences;
+    private AtomicInteger sequence;
+    private Set<String> importExtensions;
 
-	/**
-	 * Private constructor of the class to be called from {@link #getInstance()}.
-	 * By default, if the application is used in the first time, the only valid
-	 * extension when importing files is <tt>*.mp3</tt>.
-	 */
-	private MainPreferences() {
-		preferences = Preferences.userNodeForPackage(getClass());
-		importExtensions = new HashSet<>();
-		if (preferences.getBoolean(IMPORT_MP3, true))
-			importExtensions.add("mp3");
-		if (preferences.getBoolean(IMPORT_M4A, false))
-			importExtensions.add("m4a");
-		if (preferences.getBoolean(IMPORT_WAV, false))
-			importExtensions.add("wav");
-		if (preferences.getBoolean(IMPORT_FLAC, false))
-			importExtensions.add("flac");
-	}
+    private static class InstanceHolder {
+        static final MainPreferences INSTANCE = new MainPreferences();
+        private InstanceHolder() {}
+    }
 
-	public static MainPreferences getInstance() {
-		if (instance == null) {
-			instance = new MainPreferences();
-		}
-		return instance;
-	}
+    /**
+     * Private constructor of the class to be called from {@link #getInstance()}.
+     * By default, if the application is used in the first time, the only valid
+     * extension when importing files is {@code *.mp3}.
+     */
+    private MainPreferences() {
+        preferences = Preferences.userNodeForPackage(getClass());
+        sequence = new AtomicInteger();
+        importExtensions = new HashSet<>();
+        if (preferences.getBoolean(IMPORT_MP3, true))
+            importExtensions.add("mp3");
+        if (preferences.getBoolean(IMPORT_M4A, false))
+            importExtensions.add("m4a");
+        if (preferences.getBoolean(IMPORT_WAV, false))
+            importExtensions.add("wav");
+        if (preferences.getBoolean(IMPORT_FLAC, false))
+            importExtensions.add("flac");
+    }
 
-	/**
-	 * Returns 0 if the application is used in the first time, that is,
-	 * if there is no record for the track sequence in the class {@link Preferences};
-	 * or the next integer to use for the {@link com.transgressoft.musicott.model.Track} map
-	 *
-	 * @return The next integer to use for the track map
-	 */
-	public int getTrackSequence() {
-		int sequence = preferences.getInt(TRACK_SEQUENCE, 0);
-		preferences.putInt(TRACK_SEQUENCE, ++ sequence);
-		return sequence;
-	}
+    public static MainPreferences getInstance() {
+        return InstanceHolder.INSTANCE;
+    }
 
-	/**
-	 * Sets the application folder path and resets the track and play list sequences or
-	 * deletes it from the preferences if receives null
-	 *
-	 * @param path The path to the application folder
-	 *
-	 * @return <tt>true</tt> if the creation/deletion of the directory was successful, <tt>false</tt> otherwise
-	 */
-	public boolean setMusicottUserFolder(String path) {
-		if (path == null)
-			preferences.remove(MUSICOTT_FOLDER);
-		else {
-			preferences.put(MUSICOTT_FOLDER, path);
-			preferences.putInt(TRACK_SEQUENCE, 0);
-		}
-		return path == null || new File(path).mkdirs();
-	}
+    /**
+     * Returns 0 if the application is used in the first time, that is,
+     * if there is no record for the track sequence in the class {@link Preferences};
+     * or the next integer to use for the {@link com.transgressoft.musicott.model.Track} map
+     *
+     * @return The next integer to use for the track map
+     */
+    public synchronized int getTrackSequence() {
+        sequence.set(preferences.getInt(TRACK_SEQUENCE, 0));
+        preferences.putInt(TRACK_SEQUENCE, sequence.incrementAndGet());
+        return sequence.get();
+    }
 
-	public String getMusicottUserFolder() {
-		return preferences.get(MUSICOTT_FOLDER, null);
-	}
+    /**
+     * Sets the application folder path and resets the track and play list sequences or
+     * deletes it from the preferences if receives null
+     *
+     * @param path The path to the application folder
+     *
+     * @return {@code true} if the creation/deletion of the directory was successful, {@code false} otherwise
+     */
+    public boolean setMusicottUserFolder(String path) {
+        if (path == null)
+            preferences.remove(MUSICOTT_FOLDER);
+        else {
+            preferences.put(MUSICOTT_FOLDER, path);
+            preferences.putInt(TRACK_SEQUENCE, 0);
+        }
+        return path == null || new File(path).mkdirs();
+    }
 
-	public int getItunesImportMetadataPolicy() {
-		return preferences.getInt(ITUNES_IMPORT_METADATA_POLICY, ITUNES_DATA_POLICY);
-	}
+    public String getMusicottUserFolder() {
+        return preferences.get(MUSICOTT_FOLDER, null);
+    }
 
-	public void setItunesImportMetadataPolicy(int policy) {
-		preferences.putInt(ITUNES_IMPORT_METADATA_POLICY, policy);
-	}
+    public int getItunesImportMetadataPolicy() {
+        return preferences.getInt(ITUNES_IMPORT_METADATA_POLICY, ITUNES_DATA_POLICY);
+    }
 
-	public boolean getItunesImportHoldPlaycount() {
-		return preferences.getBoolean(ITUNES_IMPORT_HOLD_PLAYCOUNT, true);
-	}
+    public void setItunesImportMetadataPolicy(int policy) {
+        preferences.putInt(ITUNES_IMPORT_METADATA_POLICY, policy);
+    }
 
-	public void setItunesImportHoldPlaycount(boolean holdPlayCount) {
-		preferences.putBoolean(ITUNES_IMPORT_HOLD_PLAYCOUNT, holdPlayCount);
-	}
+    public boolean getItunesImportHoldPlaycount() {
+        return preferences.getBoolean(ITUNES_IMPORT_HOLD_PLAYCOUNT, true);
+    }
 
-	public boolean getItunesImportPlaylists() {
-		return preferences.getBoolean(ITUNES_IMPORT_PLAYLISTS, false);
-	}
+    public void setItunesImportHoldPlaycount(boolean holdPlayCount) {
+        preferences.putBoolean(ITUNES_IMPORT_HOLD_PLAYCOUNT, holdPlayCount);
+    }
 
-	public void setItunesImportPlaylists(boolean importPlaylists) {
-		preferences.putBoolean(ITUNES_IMPORT_PLAYLISTS, importPlaylists);
-	}
+    public boolean getItunesImportPlaylists() {
+        return preferences.getBoolean(ITUNES_IMPORT_PLAYLISTS, false);
+    }
 
-	public Set<String> getImportFilterExtensions() {
-		return importExtensions;
-	}
+    public void setItunesImportPlaylists(boolean importPlaylists) {
+        preferences.putBoolean(ITUNES_IMPORT_PLAYLISTS, importPlaylists);
+    }
 
-	public void setImportFilterExtensions(String... newImportFilterExtensions) {
-		importExtensions.clear();
-		importExtensions.addAll(Arrays.asList(newImportFilterExtensions));
-		preferences.putBoolean(IMPORT_MP3, importExtensions.contains("mp3"));
-		preferences.putBoolean(IMPORT_M4A, importExtensions.contains("m4a"));
-		preferences.putBoolean(IMPORT_WAV, importExtensions.contains("wav"));
-		preferences.putBoolean(IMPORT_FLAC, importExtensions.contains("flac"));
-	}
+    public Set<String> getImportFilterExtensions() {
+        return importExtensions;
+    }
+
+    public void setImportFilterExtensions(String... newImportFilterExtensions) {
+        importExtensions.clear();
+        importExtensions.addAll(Arrays.asList(newImportFilterExtensions));
+        preferences.putBoolean(IMPORT_MP3, importExtensions.contains("mp3"));
+        preferences.putBoolean(IMPORT_M4A, importExtensions.contains("m4a"));
+        preferences.putBoolean(IMPORT_WAV, importExtensions.contains("wav"));
+        preferences.putBoolean(IMPORT_FLAC, importExtensions.contains("flac"));
+    }
 }

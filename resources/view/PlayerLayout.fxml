@@ -107,9 +107,10 @@
       <StackPane fx:id="playQueueStackPane" GridPane.columnIndex="3" GridPane.hgrow="NEVER" GridPane.vgrow="NEVER">
          <children>
             <ToggleButton fx:id="playQueueButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" StackPane.alignment="CENTER" />
+            <fx:include fx:id="playQueueLayout" source="PlayQueueLayout.fxml" visible="false" />
          </children>
       </StackPane>
-      <TextField fx:id="searchTextField" alignment="CENTER_LEFT" GridPane.columnIndex="4">
+      <TextField fx:id="searchTextField" GridPane.columnIndex="4">
          <GridPane.margin>
             <Insets left="15.0" right="15.0" />
          </GridPane.margin></TextField>

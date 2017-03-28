@@ -20,9 +20,10 @@
 package com.transgressoft.musicott.view;
 
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.view.custom.*;
-import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.embed.swing.*;
 import javafx.fxml.*;
@@ -35,297 +36,305 @@ import javafx.util.*;
 import org.slf4j.*;
 
 import javax.swing.*;
-import java.io.*;
 import java.util.*;
 
 import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Controller class of the bottom pane that includes the player and the search field.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class PlayerController implements MusicottController {
 
-	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-	private static final double VOLUME_AMOUNT = 0.05;
-	private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
+    private static final double VOLUME_AMOUNT = 0.05;
+    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-	@FXML
-	private GridPane playerGridPane;
-	@FXML
-	private ToggleButton playButton;
-	@FXML
-	private ToggleButton playQueueButton;
-	@FXML
-	private Button prevButton;
-	@FXML
-	private Button nextButton;
-	@FXML
-	private ImageView currentCover;
-	@FXML
-	private SwingNode waveformSwingNode;
-	@FXML
-	private StackPane playerStackPane;
-	@FXML
-	private StackPane playQueueStackPane;
-	@FXML
-	private Label songTitleLabel;
-	@FXML
-	private Label artistAlbumLabel;
-	@FXML
-	private Label currentTimeLabel;
-	@FXML
-	private Label remainingTimeLabel;
-	@FXML
-	private Slider trackSlider;
-	@FXML
-	private Slider volumeSlider;
-	@FXML
-	private ProgressBar trackProgressBar;
-	@FXML
-	private TextField searchTextField;
-	@FXML
-	private ProgressBar volumeProgressBar;
-	private AnchorPane playQueuePane;
-	private WaveformPanel mainWaveformPanel;
+    @FXML
+    private GridPane playerGridPane;
+    @FXML
+    private ToggleButton playButton;
+    @FXML
+    private ToggleButton playQueueButton;
+    @FXML
+    private Button prevButton;
+    @FXML
+    private Button nextButton;
+    @FXML
+    private ImageView currentCover;
+    @FXML
+    private SwingNode waveformSwingNode;
+    @FXML
+    private StackPane playerStackPane;
+    @FXML
+    private StackPane playQueueStackPane;
+    @FXML
+    private Label songTitleLabel;
+    @FXML
+    private Label artistAlbumLabel;
+    @FXML
+    private Label currentTimeLabel;
+    @FXML
+    private Label remainingTimeLabel;
+    @FXML
+    private Slider trackSlider;
+    @FXML
+    private Slider volumeSlider;
+    @FXML
+    private ProgressBar trackProgressBar;
+    @FXML
+    private TextField searchTextField;
+    @FXML
+    private ProgressBar volumeProgressBar;
+    @FXML
+    private AnchorPane playQueueLayout;
+    @FXML
+    private PlayQueueController playQueueLayoutController;
+    private WaveformPanel mainWaveformPanel;
 
-	@FXML
-	public void initialize() {
-		playButton.disableProperty().bind(musicLibrary.emptyLibraryProperty());
-		playButton.setOnAction(event -> playPause());
-		prevButton.setOnAction(e -> player.previous());
-		nextButton.setOnAction(e -> player.next());
-		volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {
-			if (! isChanging)
-				volumeProgressBar.setProgress(volumeSlider.getValue());
-		});
-		volumeSlider.valueProperty().addListener(
-				(observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
+    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private PlayerFacade player = PlayerFacade.getInstance();
 
-		SwingUtilities.invokeLater(() -> {
-			mainWaveformPanel = new WaveformPanel(520, 50);
-			waveformSwingNode.setContent(mainWaveformPanel);
-		});
-		playerStackPane.getChildren().add(0, waveformSwingNode);
+    @FXML
+    public void initialize() {
+        playButton.disableProperty().bind(musicLibrary.emptyLibraryProperty());
+        playButton.setOnAction(event -> playPause());
+        prevButton.setOnAction(e -> player.previous());
+        nextButton.setOnAction(e -> player.next());
+        subscribe(volumeSlider.valueChangingProperty(), changing -> {
+                    if (! changing)
+                        volumeProgressBar.setProgress(volumeSlider.getValue());});
+        subscribe(volumeSlider.valueProperty(), p -> volumeProgressBar.setProgress(p.doubleValue()));
 
-		playQueueButton.setOnAction(event -> {
-			if (playQueuePane.isVisible())
-				hidePlayQueue();
-			else
-				showPlayQueue();
-		});
+        SwingUtilities.invokeLater(() -> {
+            mainWaveformPanel = new WaveformPanel(520, 50);
+            waveformSwingNode.setContent(mainWaveformPanel);
+        });
+        playerStackPane.getChildren().add(0, waveformSwingNode);
 
-		playerGridPane.setOnMouseClicked(event -> hidePlayQueue());
-		playButton.setOnMouseClicked(event -> hidePlayQueue());
+        playQueueButton.setOnAction(event -> {
+            if (playQueueLayout.isVisible())
+                hidePlayQueue();
+            else
+                showPlayQueue();
+        });
 
-		playQueueStackPane.setOnDragOver(event -> {
-			event.acceptTransferModes(TransferMode.ANY);
-			event.consume();
-		});
-		playQueueStackPane.setOnDragDropped(event -> {
-			Dragboard dragBoard = event.getDragboard();
-			List<Integer> selectedTracks = (List<Integer>) dragBoard.getContent(TRACK_ID_MIME_TYPE);
-			player.addTracksToPlayQueue(selectedTracks, false);
-		});
-	}
+        playerGridPane.setOnMouseClicked(event -> hidePlayQueue());
+        playButton.setOnMouseClicked(event -> hidePlayQueue());
 
-	private void playPause() {
-		LOG.trace("Play/pause button clicked");
-		if (playButton.isSelected()) {
-			if (player.getCurrentTrack().isPresent())
-				player.resume();
-			else
-				player.play(true);
-		}
-		else
-			player.pause();
-	}
+        playQueueButton.setOnDragDropped(this::onDragDroppedOnPlayQueueButton);
+        playQueueButton.setOnDragOver(this::onDragOverOnPlayQueueButton);
+        playQueueButton.setOnDragExited(this::onDragExitedOnPlayQueueButton);
+        subscribe(playQueueLayout.visibleProperty(), playQueueButton::setSelected);
+        StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
+        player.setPlayerController(this);
+        player.setPlayQueueController(playQueueLayoutController);
+        hidePlayQueue();
+    }
 
-	public StringProperty searchTextProperty() {
-		return searchTextField.textProperty();
-	}
+    private void onDragDroppedOnPlayQueueButton(DragEvent event) {
+        Dragboard dragBoard = event.getDragboard();
+        List<Integer> selectedTracksIds = (List<Integer>) dragBoard.getContent(TRACK_IDS_MIME_TYPE);
+        List<Track> selectedTracks = MusicLibrary.getInstance().tracks.getTracks(selectedTracksIds);
+        player.addTracksToPlayQueue(selectedTracks, false);
+        event.consume();
+    }
 
-	public ReadOnlyBooleanProperty previousButtonDisabledProperty() {
-		return prevButton.disabledProperty();
-	}
+    private void onDragOverOnPlayQueueButton(DragEvent event) {
+        event.acceptTransferModes(TransferMode.COPY);
+        playQueueButton.setStyle("-fx-effect: dropshadow(one-pass-box, rgb(99, 255, 109), 3, 0.2, 0, 0);");
+        playQueueButton.setOpacity(0.9);
+        event.consume();
+    }
 
-	public ReadOnlyBooleanProperty nextButtonDisabledProperty() {
-		return nextButton.disabledProperty();
-	}
+    private void onDragExitedOnPlayQueueButton(DragEvent event) {
+        playQueueButton.setStyle("");
+        playQueueButton.setOpacity(1.0);
+        event.consume();
+    }
 
-	public BooleanProperty playButtonSelectedProperty() {
-		return playButton.selectedProperty();
-	}
+    private void playPause() {
+        LOG.trace("Play/pause button clicked");
+        if (playButton.isSelected()) {
+            if (player.getCurrentTrack().isPresent())
+                player.resume();
+            else
+                player.play(true);
+        }
+        else
+            player.pause();
+    }
 
-	public DoubleProperty trackSliderMaxProperty() {
-		return trackSlider.maxProperty();
-	}
+    public void hidePlayQueue() {
+        if (playQueueStackPane.getChildren().contains(playQueueLayout)) {
+            playQueueStackPane.getChildren().remove(playQueueLayout);
+            playQueueLayout.setVisible(false);
+        }
+    }
 
-	public BooleanProperty trackSliderValueChangingProperty() {
-		return trackSlider.valueChangingProperty();
-	}
+    public void showPlayQueue() {
+        if (! playQueueStackPane.getChildren().contains(playQueueLayout)) {
+            playQueueStackPane.getChildren().add(0, playQueueLayout);
+            playQueueLayout.setVisible(true);
+        }
+    }
 
-	public DoubleProperty trackSliderValueProperty() {
-		return trackSlider.valueProperty();
-	}
+    public void focusSearchField() {
+        searchTextField.requestFocus();
+    }
 
-	public DoubleProperty trackProgressBarProgressProperty() {
-		return trackProgressBar.progressProperty();
-	}
+    public StringProperty searchTextProperty() {
+        return searchTextField.textProperty();
+    }
 
-	public DoubleProperty volumeSliderValueProperty() {
-		return volumeSlider.valueProperty();
-	}
+    public ReadOnlyBooleanProperty searchFieldFocusedProperty() {
+        return searchTextField.focusedProperty();
+    }
 
-	public void setWaveform(Track track) {
-		mainWaveformPanel.setTrack(track);
-	}
+    public ReadOnlyBooleanProperty previousButtonDisabledProperty() {
+        return prevButton.disabledProperty();
+    }
 
-	/**
-	 * Sets the play queue pane node that contains the play queue and history queue lists.
-	 *
-	 * @param pane
-	 */
-	public void setPlayQueuePane(AnchorPane pane) {
-		playQueuePane = pane;
-		playQueuePane.setVisible(false);
-		playQueuePane.visibleProperty().addListener((observable, oldValue, newValue) -> {
-			if (newValue)
-				playQueueButton.setSelected(true);
-			else
-				playQueueButton.setSelected(false);
-		});
-		StackPane.setMargin(playQueuePane, new Insets(0, 0, 480, 0));
-	}
+    public ReadOnlyBooleanProperty nextButtonDisabledProperty() {
+        return nextButton.disabledProperty();
+    }
 
-	public void hidePlayQueue() {
-		if (playQueueStackPane.getChildren().contains(playQueuePane)) {
-			playQueueStackPane.getChildren().remove(playQueuePane);
-			playQueuePane.setVisible(false);
-		}
-	}
+    public BooleanProperty playButtonSelectedProperty() {
+        return playButton.selectedProperty();
+    }
 
-	public void showPlayQueue() {
-		if (! playQueueStackPane.getChildren().contains(playQueuePane)) {
-			playQueueStackPane.getChildren().add(0, playQueuePane);
-			playQueuePane.setVisible(true);
-		}
-	}
+    public DoubleProperty trackSliderMaxProperty() {
+        return trackSlider.maxProperty();
+    }
 
-	public void setStopped() {
-		playButton.setSelected(false);
-		trackSlider.setDisable(true);
-		nextButton.setDisable(true);
-		prevButton.setDisable(true);
-		songTitleLabel.textProperty().unbind();
-		songTitleLabel.setText("");
-		artistAlbumLabel.textProperty().unbind();
-		artistAlbumLabel.setText("");
-		currentCover.setVisible(false);
-		currentTimeLabel.setText("");
-		remainingTimeLabel.setText("");
-		SwingUtilities.invokeLater(mainWaveformPanel::clear);
-	}
+    public BooleanProperty trackSliderValueChangingProperty() {
+        return trackSlider.valueChangingProperty();
+    }
 
-	public void setPlaying() {
-		playButton.setSelected(true);
-		trackSlider.setDisable(false);
-		nextButton.setDisable(false);
-		prevButton.setDisable(false);
-		currentCover.setVisible(true);
-	}
+    public DoubleProperty trackSliderValueProperty() {
+        return trackSlider.valueProperty();
+    }
 
-	public void increaseVolume() {
-		player.increaseVolume(VOLUME_AMOUNT);
-		volumeSlider.setValue(volumeSlider.getValue() + VOLUME_AMOUNT);
-		LOG.trace("Volume increased " + volumeSlider.getValue());
-	}
+    public DoubleProperty trackProgressBarProgressProperty() {
+        return trackProgressBar.progressProperty();
+    }
 
-	public void decreaseVolume() {
-		player.decreaseVolume(VOLUME_AMOUNT);
-		volumeSlider.setValue(volumeSlider.getValue() - VOLUME_AMOUNT);
-		LOG.trace("Volume decreased " + volumeSlider.getValue());
-	}
+    public DoubleProperty volumeSliderValueProperty() {
+        return volumeSlider.valueProperty();
+    }
 
-	/**
-	 * Updates the components of the player pane such as the song title label, the artist label,
-	 * the cover image, or the waveform image; with the given current {@link Track}.
-	 *
-	 * @param currentTrack The <tt>Track</tt> that is being currently playing.
-	 */
-	public void updatePlayer(Track currentTrack) {
-		LOG.debug("Setting up player and view for track {}", currentTrack);
-		String fileFormat = currentTrack.getFileFormat();
-		if (musicLibrary.containsWaveform(currentTrack.getTrackId()))
-			setWaveform(currentTrack);
-		else if ("wav".equals(fileFormat) || "mp3".equals(fileFormat) || "m4a".equals(fileFormat))
-			TaskDemon.getInstance().analyzeTrackWaveform(currentTrack);
+    public void setStopped() {
+        playButton.setSelected(false);
+        trackSlider.setDisable(true);
+        nextButton.setDisable(true);
+        prevButton.setDisable(true);
+        songTitleLabel.textProperty().unbind();
+        songTitleLabel.setText("");
+        artistAlbumLabel.textProperty().unbind();
+        artistAlbumLabel.setText("");
+        currentCover.setVisible(false);
+        currentTimeLabel.setText("");
+        remainingTimeLabel.setText("");
+        SwingUtilities.invokeLater(mainWaveformPanel::clear);
+    }
 
-		SwingUtilities.invokeLater(() -> mainWaveformPanel.setTrack(currentTrack));
-		songTitleLabel.textProperty().bind(currentTrack.nameProperty());
-		artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
-				() -> currentTrack.artistProperty().get() + " - " + currentTrack.albumProperty().get(),
-				currentTrack.artistProperty(), currentTrack.albumProperty()));
-		if (currentTrack.getCoverImage().isPresent()) {
-			byte[] coverBytes = currentTrack.getCoverImage().get();
-			Image image = new Image(new ByteArrayInputStream(coverBytes));
-			currentCover.setImage(image);
-		}
-		else
-			currentCover.setImage(COVER_IMAGE);
+    public void setPlaying() {
+        playButton.setSelected(true);
+        trackSlider.setDisable(false);
+        nextButton.setDisable(false);
+        prevButton.setDisable(false);
+        currentCover.setVisible(true);
+    }
 
-		trackSlider.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-			Double endTime = trackSlider.getMax();
-			if (! endTime.equals(Double.POSITIVE_INFINITY) || ! endTime.equals(Double.NaN)) {
-				trackProgressBar.setProgress(trackSlider.getValue() / endTime);
-				player.seek(trackSlider.getValue());
-			}
-		});
-	}
+    public void increaseVolume() {
+        player.increaseVolume(VOLUME_AMOUNT);
+        volumeSlider.setValue(volumeSlider.getValue() + VOLUME_AMOUNT);
+        LOG.trace("Volume increased " + volumeSlider.getValue());
+    }
 
-	/**
-	 * Updates the current time label and the remaining time label of the
-	 * {@link Track} that is currently being played.
-	 *
-	 * @param elapsed The elapsed time of the track
-	 * @param total   The total time of the track
-	 */
-	public void updateTrackLabels(Duration elapsed, Duration total) {
-		int currentHours = (int) elapsed.toHours();
-		int currentMins = (int) elapsed.subtract(Duration.hours(currentHours)).toMinutes();
-		int currentSecs = (int) elapsed.subtract(Duration.minutes(currentMins)).subtract(Duration.hours(currentHours))
-									   .toSeconds();
+    public void decreaseVolume() {
+        player.decreaseVolume(VOLUME_AMOUNT);
+        volumeSlider.setValue(volumeSlider.getValue() - VOLUME_AMOUNT);
+        LOG.trace("Volume decreased " + volumeSlider.getValue());
+    }
 
-		String currentTimeText = getFormattedTimeString(currentHours, currentMins, currentSecs, (int) total.toHours());
-		currentTimeLabel.setText(currentTimeText);
+    /**
+     * Updates the components of the player pane such as the song title label, the artist label,
+     * the cover image, or the waveform image; with the given current {@link Track}.
+     *
+     * @param currentTrack The {@code Track} that is being currently playing.
+     */
+    public void updatePlayer(Track currentTrack) {
+        LOG.debug("Setting up player and view for track {}", currentTrack);
+        String fileFormat = currentTrack.getFileFormat();
+        if (musicLibrary.waveforms.containsWaveform(currentTrack.getTrackId()))
+            setWaveform(currentTrack);
+        else if ("wav".equals(fileFormat) || "mp3".equals(fileFormat) || "m4a".equals(fileFormat))
+            TaskDemon.getInstance().analyzeTrackWaveform(currentTrack);
 
-		Duration remaining = total.subtract(elapsed);
-		int remainingHours = (int) remaining.toHours();
-		int remainingMins = (int) remaining.subtract(Duration.hours(remainingHours)).toMinutes();
-		int remainingSecs = (int) remaining.subtract(Duration.minutes(remainingMins))
-										   .subtract(Duration.hours(remainingHours)).toSeconds();
+        SwingUtilities.invokeLater(() -> mainWaveformPanel.setTrack(currentTrack));
+        songTitleLabel.textProperty().bind(currentTrack.nameProperty());
+        artistAlbumLabel.textProperty().bind(
+                combine(currentTrack.artistProperty(), currentTrack.albumProperty(), (art, alb) -> art + " - " + alb));
 
-		String remainingTimeText = getFormattedTimeString(remainingHours, remainingMins, remainingSecs,
-														  (int) total.toHours());
-		remainingTimeLabel.setText(remainingTimeText);
-	}
+        Utils.updateCoverImage(currentTrack, currentCover);
+        trackSlider.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            Double endTime = trackSlider.getMax();
+            if (! endTime.equals(Double.POSITIVE_INFINITY) || ! endTime.equals(Double.NaN)) {
+                trackProgressBar.setProgress(trackSlider.getValue() / endTime);
+                player.seek(Duration.millis(trackSlider.getValue()));
+            }
+        });
+    }
 
-	private String getFormattedTimeString(int currentHours, int currentMins, int currentSecs, int totalHours) {
-		String formattedTime = "";
-		if (totalHours > 0)
-			formattedTime += Integer.toString(currentHours) + ":";
+    public void setWaveform(Track track) {
+        mainWaveformPanel.setTrack(track);
+    }
 
-		if (currentMins < 10)
-			formattedTime += "0" + currentMins;
-		else
-			formattedTime += Integer.toString(currentMins);
-		formattedTime += ":";
-		if (currentSecs < 10)
-			formattedTime += "0" + Integer.toString(currentSecs);
-		else
-			formattedTime += Integer.toString(currentSecs);
-		return formattedTime;
-	}
+    /**
+     * Updates the current time label and the remaining time label of the
+     * {@link Track} that is currently being played.
+     *
+     * @param elapsed The elapsed time of the track
+     * @param total   The total time of the track
+     */
+    public void updateTrackLabels(Duration elapsed, Duration total) {
+        int currentHours = (int) elapsed.toHours();
+        int currentMins = (int) elapsed.subtract(Duration.hours(currentHours)).toMinutes();
+        int currentSecs = (int) elapsed.subtract(Duration.minutes(currentMins))
+                                       .subtract(Duration.hours(currentHours))
+                                       .toSeconds();
+
+        String currentTimeText = getFormattedTimeString(currentHours, currentMins, currentSecs, (int) total.toHours());
+        currentTimeLabel.setText(currentTimeText);
+
+        Duration remaining = total.subtract(elapsed);
+        int remainingHours = (int) remaining.toHours();
+        int remainingMins = (int) remaining.subtract(Duration.hours(remainingHours)).toMinutes();
+        int remainingSecs = (int) remaining.subtract(Duration.minutes(remainingMins))
+                                           .subtract(Duration.hours(remainingHours)).toSeconds();
+
+        String remainingTimeText = getFormattedTimeString(remainingHours, remainingMins, remainingSecs,
+                                                          (int) total.toHours());
+        remainingTimeLabel.setText(remainingTimeText);
+    }
+
+    private String getFormattedTimeString(int currentHours, int currentMins, int currentSecs, int totalHours) {
+        String formattedTime = "";
+        if (totalHours > 0)
+            formattedTime += Integer.toString(currentHours) + ":";
+
+        if (currentMins < 10)
+            formattedTime += "0" + currentMins;
+        else
+            formattedTime += Integer.toString(currentMins);
+        formattedTime += ":";
+        if (currentSecs < 10)
+            formattedTime += "0" + Integer.toString(currentSecs);
+        else
+            formattedTime += Integer.toString(currentSecs);
+        return formattedTime;
+    }
 }

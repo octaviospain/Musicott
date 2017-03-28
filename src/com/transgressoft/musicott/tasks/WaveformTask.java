@@ -41,7 +41,7 @@ import static java.nio.file.StandardCopyOption.*;
  * Class that extends from {@link Thread} that performs the operation of processing
  * an audio file to get the waveform image. It waits for a {@link Semaphore} to process
  * a new {@link Track} in an endless loop, instead of terminating the execution for
- * each <tt>track</tt> process.
+ * each {@code track} process.
  * <p>
  * If the audio file is not WAV, is converted into WAV before get
  * the wav amplitudes from the audio file.
@@ -50,7 +50,7 @@ import static java.nio.file.StandardCopyOption.*;
  * </p>
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @see <a href="https://github.com/JorenSix/TarsosTranscoder">Tarsos Transcoder</a>
  */
 public class WaveformTask extends Thread {
@@ -85,7 +85,7 @@ public class WaveformTask extends Thread {
 					resultingWaveform = processFromNoWavFile(fileFormat);
 
 				if (resultingWaveform != null) {
-					musicLibrary.addWaveform(trackToAnalyze.getTrackId(), resultingWaveform);
+					musicLibrary.waveforms.addWaveform(trackToAnalyze.getTrackId(), resultingWaveform);
 					Optional<Track> currentTrack = PlayerFacade.getInstance().getCurrentTrack();
 					currentTrack.ifPresent(this::checkAnalyzedTrackIsCurrentPlaying);
 					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage(""));
@@ -107,11 +107,11 @@ public class WaveformTask extends Thread {
 
 	private float[] processFromNoWavFile(String fileFormat) throws IOException, UnsupportedAudioFileException,
 																   EncoderException {
-		int trackID = trackToAnalyze.getTrackId();
+		int trackId = trackToAnalyze.getTrackId();
 		Path trackPath = FileSystems.getDefault().getPath(trackToAnalyze.getFileFolder(), trackToAnalyze.getFileName
 				());
-		File temporalDecodedFile = File.createTempFile("decoded_" + trackID, ".wav");
-		File temporalCopiedFile = File.createTempFile("original_" + trackID, "." + fileFormat);
+		File temporalDecodedFile = File.createTempFile("decoded_" + trackId, ".wav");
+		File temporalCopiedFile = File.createTempFile("original_" + trackId, "." + fileFormat);
 
 		Files.copy(trackPath, temporalCopiedFile.toPath(), options);
 		transcodeToWav(temporalCopiedFile, temporalDecodedFile);

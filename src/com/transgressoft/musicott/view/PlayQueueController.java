@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view;
 
+import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.collections.*;
 import javafx.fxml.*;
@@ -29,82 +30,93 @@ import org.slf4j.*;
  * Controller class of the play queue pane.
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  */
 public class PlayQueueController implements MusicottController {
 
-	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-	@FXML
-	private Label titleQueueLabel;
-	@FXML
-	private ToggleButton historyQueueButton;
-	@FXML
-	private Button deleteAllButton;
-	@FXML
-	private ListView<TrackQueueRow> queuesListView;
+    @FXML
+    private Label titleQueueLabel;
+    @FXML
+    private ToggleButton historyQueueButton;
+    @FXML
+    private Button deleteAllButton;
+    @FXML
+    private ListView<TrackQueueRow> queuesListView;
 
-	private ObservableList<TrackQueueRow> playQueueList;
-	private ObservableList<TrackQueueRow> historyQueueList;
+    private ObservableList<TrackQueueRow> playQueueList;
+    private ObservableList<TrackQueueRow> historyQueueList;
 
-	@FXML
-	public void initialize() {
-		playQueueList = player.getPlayList();
-		historyQueueList = player.getHistoryList();
-		historyQueueButton.setId("historyQueueButton");
-		queuesListView.setItems(playQueueList);
-		queuesListView.setOnMouseClicked(event -> {
-			if (event.getClickCount() == 2)
-				if (historyQueueButton.isSelected())
-					player.playHistoryIndex(historyQueueList.indexOf(queuesListView.getSelectionModel().getSelectedItem()));
-				else
-					player.playQueueIndex(playQueueList.indexOf(queuesListView.getSelectionModel().getSelectedItem()));
-		});
-		deleteAllButton.setOnAction(event -> {
-			if (historyQueueButton.isSelected())
-				clearHistoryQueue();
-			else
-				clearPlayQueue();
-		});
-		historyQueueButton.setOnAction(event -> {
-			if (historyQueueButton.isSelected())
-				showHistoryQueue();
-			else
-				showPlayQueue();
-		});
-	}
+    private PlayerFacade player = PlayerFacade.getInstance();
 
-	/**
-	 * Removes a {@link TrackQueueRow} from the play queue pane
-	 *
-	 * @param trackQueueRow The <tt>TrackQueueRow</tt> the track queue row to remove
-	 */
-	public void removeTrackQueueRow(TrackQueueRow trackQueueRow) {
-		if (historyQueueButton.isSelected())
-			historyQueueList.remove(trackQueueRow);
-		else
-			playQueueList.remove(trackQueueRow);
-	}
+    @FXML
+    public void initialize() {
+        playQueueList = player.getPlayList();
+        historyQueueList = player.getHistoryList();
+        historyQueueButton.setId("historyQueueButton");
+        queuesListView.setCellFactory(listView -> new TrackQueueListCell(this));
+        queuesListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        queuesListView.setItems(playQueueList);
+        queuesListView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2)
+                if (historyQueueButton.isSelected())
+                    player.playHistoryIndex(
+                            historyQueueList.indexOf(queuesListView.getSelectionModel().getSelectedItem()));
+                else
+                    player.playQueueIndex(playQueueList.indexOf(queuesListView.getSelectionModel().getSelectedItem()));
+        });
+        deleteAllButton.setOnAction(event -> {
+            if (historyQueueButton.isSelected())
+                clearHistoryQueue();
+            else
+                clearPlayQueue();
+        });
+        historyQueueButton.setOnAction(event -> {
+            if (historyQueueButton.isSelected())
+                showHistoryQueue();
+            else
+                showPlayQueue();
+        });
+    }
 
-	private void clearHistoryQueue() {
-		historyQueueList.clear();
-		LOG.trace("History queue cleared");
-	}
+    private void clearHistoryQueue() {
+        historyQueueList.clear();
+        LOG.trace("History queue cleared");
+    }
 
-	private void clearPlayQueue() {
-		playQueueList.clear();
-		LOG.trace("Play queue cleared");
-	}
+    private void clearPlayQueue() {
+        playQueueList.clear();
+        LOG.trace("Play queue cleared");
+    }
 
-	private void showHistoryQueue() {
-		queuesListView.setItems(historyQueueList);
-		titleQueueLabel.setText("Recently played");
-		LOG.trace("Showing history queue on the pane");
-	}
+    private void showHistoryQueue() {
+        queuesListView.setItems(historyQueueList);
+        queuesListView.getSelectionModel().clearSelection();
+        titleQueueLabel.setText("Recently played");
+        LOG.trace("Showing history queue on the pane");
+    }
 
-	private void showPlayQueue() {
-		queuesListView.setItems(playQueueList);
-		titleQueueLabel.setText("Play Queue");
-		LOG.trace("Showing play queue on the pane");
-	}
+    private void showPlayQueue() {
+        queuesListView.setItems(playQueueList);
+        queuesListView.getSelectionModel().clearSelection();
+        titleQueueLabel.setText("Play Queue");
+        LOG.trace("Showing play queue on the pane");
+    }
+
+    public boolean isShowingHistoryQueue() {
+        return queuesListView.getItems().equals(historyQueueList);
+    }
+
+    /**
+     * Removes a {@link TrackQueueRow} from the play queue pane
+     *
+     * @param trackQueueRow The {@code TrackQueueRow} the track queue row to remove
+     */
+    public void removeTrackQueueRow(TrackQueueRow trackQueueRow) {
+        if (historyQueueButton.isSelected())
+            historyQueueList.remove(trackQueueRow);
+        else
+            playQueueList.remove(trackQueueRow);
+    }
 }

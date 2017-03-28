@@ -17,31 +17,24 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.tests;
+package com.transgressoft.musicott.util.jsoniocreators;
 
-import com.transgressoft.musicott.*;
-import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.util.*;
-import org.junit.runner.*;
-import org.junit.runners.*;
-import org.junit.runners.Suite.*;
+import com.cedarsoftware.util.io.JsonReader.*;
+import com.google.common.graph.*;
 
 /**
- * Test suite for the test classes
+ * Class needed by the {@code Json-io} library in order to deserialize an {@link ConfigurableMutableGraph}.
  *
  * @author Octavio Calleya
+ * @version 0.10-b
+ * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
+ * @see com.google.common.graph.ConfigurableMutableGraph
  */
-@RunWith (Suite.class)
-@SuiteClasses ({
-        NavigationModeTest.class,
-        TrackTest.class,
-        TrackFieldTest.class,
-        NativePlayerTest.class,
-        MetadataParserTest.class,
-        Utils_GetAllFilesInFolderTest.class,
-        MainPreferencesTest.class,
-})
-public class MusicottTestSuite {
+public class ConfigurableMutableGraphCreator implements ClassFactory {
 
+    @SuppressWarnings ("rawtypes")
+    @Override
+    public Object newInstance(Class c) {
+        return GraphBuilder.directed().build();
+    }
 }

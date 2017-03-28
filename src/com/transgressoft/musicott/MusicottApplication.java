@@ -19,7 +19,6 @@
 
 package com.transgressoft.musicott;
 
-import com.google.common.collect.*;
 import com.sun.javafx.application.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
@@ -42,7 +41,7 @@ import java.util.logging.*;
 /**
  * Creates and launches Musicott. The creation of the application follows this steps:
  * <ol>
- * <li>Initialization of the <tt>Logger</tt></li>
+ * <li>Initialization of the {@code Logger}</li>
  * <li>The {@link MainPreloader} is created and shown</li>
  * <li>It is checked whether it is the first use, and if so, the user enters the application folder</li>
  * <li>Configuration properties, tracks, playlists and waveforms are loaded</li>
@@ -50,7 +49,7 @@ import java.util.logging.*;
  * </ol>
  *
  * @author Octavio Calleya
- * @version 0.9.1-b
+ * @version 0.9.2-b
  * @see <a href="https://octaviospain.github.io/Musicott">Musicott</a>
  */
 public class MusicottApplication extends Application {
@@ -63,11 +62,13 @@ public class MusicottApplication extends Application {
     private MusicLibrary musicLibrary;
     private MainPreferences preferences;
     private StageDemon stageDemon;
+    private TaskDemon taskDemon;
 
     public MusicottApplication() {
         musicLibrary = MusicLibrary.getInstance();
         preferences = MainPreferences.getInstance();
         stageDemon = StageDemon.getInstance();
+        taskDemon = TaskDemon.getInstance();
     }
 
     public static void main(String[] args) {
@@ -108,7 +109,7 @@ public class MusicottApplication extends Application {
     /**
      * Constructs a log message given a {@link LogRecord}
      *
-     * @param record The <tt>LogRecord</tt> instance
+     * @param record The {@code LogRecord} instance
      *
      * @return The formatted string of a log entries
      */
@@ -147,18 +148,17 @@ public class MusicottApplication extends Application {
         String applicationFolder = preferences.getMusicottUserFolder();
         loadConfigProperties();
 
-        ImmutableList<Callable<Void>> loadTasksList = ImmutableList
-                .of(new WaveformsLoadAction(applicationFolder, musicLibrary, this),
-                    new PlaylistsLoadAction(applicationFolder, musicLibrary, this),
-                    new TracksLoadAction(null, applicationFolder, musicLibrary, this));
-
+        taskDemon.deactivateLibrarySaving();
         ForkJoinPool loadForkJoinPool = new ForkJoinPool(4);
-        loadForkJoinPool.invokeAll(loadTasksList);
+        loadForkJoinPool.invoke(new WaveformsLoadAction(applicationFolder, musicLibrary, this));
+        loadForkJoinPool.invoke(new PlaylistsLoadAction(applicationFolder, musicLibrary, this));
+        loadForkJoinPool.invoke(new TracksLoadAction(null, -1, applicationFolder, musicLibrary, this));
         loadForkJoinPool.shutdown();
+        taskDemon.activateLibrarySaving();
     }
 
     /**
-     * Loads required configuration parameters from a <tt>.properties</tt> file
+     * Loads required configuration parameters from a {@code .properties} file
      */
     private void loadConfigProperties() {
         Properties properties = new Properties();
