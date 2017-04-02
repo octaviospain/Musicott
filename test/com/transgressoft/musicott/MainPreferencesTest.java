@@ -52,9 +52,9 @@ public class MainPreferencesTest {
 	@DisplayName ("Itunes import metadata")
 	void itunesImportMetadataTest() {
 		MainPreferences mainPreferences = MainPreferences.getInstance();
-		mainPreferences.setItunesImportMetadataPolicy(METADATA_POLICY);
+		mainPreferences.setItunesImportMetadataPolicy(ITUNES_DATA_POLICY);
 
-		assertEquals(METADATA_POLICY, mainPreferences.getItunesImportMetadataPolicy());
+		assertEquals(ITUNES_DATA_POLICY, mainPreferences.getItunesImportMetadataPolicy());
 	}
 
 	@Test

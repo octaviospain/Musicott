@@ -32,14 +32,14 @@ import java.util.concurrent.*;
  * collections used when parsing items to the music library.
  *
  * @param <I> The type of the item that will be parsed
- * @param <X> The type of the parsed result
- * @param <T> The type of the returned {@link BaseParseResult}
+ * @param <P> The type of the parsed result
+ * @param <R> The type of the returned {@link BaseParseResult}
  *
  * @author Octavio Calleya
  * @version 0.10-b
  * @since 0.10-b
  */
-public abstract class BaseParseAction<I, X, T extends BaseParseResult<X>> extends RecursiveTask<T> {
+public abstract class BaseParseAction<I, P, R extends BaseParseResult<P>> extends RecursiveTask<R> {
 
     protected final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
@@ -60,7 +60,7 @@ public abstract class BaseParseAction<I, X, T extends BaseParseResult<X>> extend
      * Calls {@link RecursiveTask#fork} for each sub action and then joins the results
      */
     protected void forkIntoSubActions() {
-        List<BaseParseAction<I, X, ? extends BaseParseResult<X>>> subActions = createSubActions();
+        List<BaseParseAction<I, P, R>> subActions = createSubActions();
         subActions.forEach(BaseParseAction::fork);
         subActions.forEach(action -> joinPartialResults(action.join()));
         LOG.debug("Forking parse of item into {} sub actions", subActions.size());
@@ -72,14 +72,14 @@ public abstract class BaseParseAction<I, X, T extends BaseParseResult<X>> extend
      *
      * @return A {@link List} with the {@link BaseParseAction} objects
      */
-    protected List<BaseParseAction<I, X, ? extends BaseParseResult<X>>> createSubActions() {
+    protected List<BaseParseAction<I, P, R>> createSubActions() {
         int subListsSize = itemsToParse.size() / getNumberOfPartitions();
         return Lists.partition(itemsToParse, subListsSize)
                     .stream().map(this::parseActionMapper)
                     .collect(ImmutableList.toImmutableList());
     }
 
-    protected abstract <T extends BaseParseResult<X>> void joinPartialResults(T partialResult);
+    protected abstract void joinPartialResults(R partialResult);
 
     /**
      * Returns the number of partitions in which {@link #itemsToParse}
@@ -97,5 +97,5 @@ public abstract class BaseParseAction<I, X, T extends BaseParseResult<X>> extend
      *
      * @return A {@link BaseParseAction} instance with the items it has to process
      */
-    protected abstract BaseParseAction<I, X, ? extends BaseParseResult<X>> parseActionMapper(List<I> subItems);
+    protected abstract BaseParseAction<I, P, R> parseActionMapper(List<I> subItems);
 }

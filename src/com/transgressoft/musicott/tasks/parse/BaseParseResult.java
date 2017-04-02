@@ -24,27 +24,27 @@ import java.util.*;
 /**
  * Class that isolates results and errors of a {@link BaseParseTask}
  *
- * @param <T> The type of the parsed results
+ * @param <P> The type of the parsed results
  *
  * @author Octavio Calleya
  * @version 0.10-b
  * @since 0.10-b
  */
-public abstract class BaseParseResult<T> {
+public abstract class BaseParseResult<P> {
 
-    private T parsedResults;
+    private P parsedResults;
     private Collection<String> parseErrors;
 
-    public BaseParseResult(T parsedResults, Collection<String> parseErrors) {
+    public BaseParseResult(P parsedResults, Collection<String> parseErrors) {
         this(parsedResults);
         this.parseErrors = parseErrors;
     }
 
-    public BaseParseResult(T parsedResults) {
+    public BaseParseResult(P parsedResults) {
         this.parsedResults = parsedResults;
     }
 
-    public T getParsedResults() {
+    public P getParsedResults() {
         return parsedResults;
     }
 

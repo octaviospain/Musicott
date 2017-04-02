@@ -239,10 +239,10 @@ public class ArtistsViewController {
     }
 
     /**
-     * Removes a given track {@link Entry} from the {@link TrackSetAreaRow}s that
+     * Removes artistsListItemsListener given track {@link Entry} from the {@link TrackSetAreaRow}s that
      * are shown on the view
      *
-     * @param trackEntry An {@link Entry} with a {@link Track} id and itself
+     * @param trackEntry An {@link Entry} with artistsListItemsListener {@link Track} id and itself
      */
     public void removeFromTrackSets(Entry<Integer, Track> trackEntry) {
         String trackAlbum = trackEntry.getValue().getAlbum();

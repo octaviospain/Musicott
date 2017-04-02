@@ -51,7 +51,7 @@ public abstract class FilesParseAction
     }
 
     @Override
-    protected <T extends BaseParseResult<Map<Integer, Track>>> void joinPartialResults(T partialResult) {
+    protected void joinPartialResults(BaseParseResult<Map<Integer, Track>> partialResult) {
         parsedTracks.putAll(partialResult.getParsedResults());
         parseErrors.addAll(partialResult.getParseErrors());
     }

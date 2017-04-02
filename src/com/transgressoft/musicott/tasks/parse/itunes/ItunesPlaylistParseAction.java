@@ -77,6 +77,7 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
                 else {
                     NavigationController navigationController = StageDemon.getInstance().getNavigationController();
                     Platform.runLater(() -> navigationController.addNewPlaylist(ROOT_PLAYLIST, playlist, false));
+                    musicLibrary.playlists.addPlaylist(ROOT_PLAYLIST, playlist);
                 }
             });
         }

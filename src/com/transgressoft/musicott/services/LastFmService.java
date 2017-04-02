@@ -112,7 +112,7 @@ public class LastFmService {
 
             if (clientResponse != null) {
                 int clientStatus = clientResponse.getStatus();
-                LOG.debug("LastFM API " + httpMethod + " petition status: {}", clientStatus);
+                LOG.debug("LastFM API {} petition status: {}", httpMethod, clientStatus);
                 lfmResponse = clientResponse.getEntity(LastFmResponse.class);
 
                 if (lfmResponse == null) {
