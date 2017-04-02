@@ -140,6 +140,7 @@ public class TrackSetAreaRow extends HBox {
         genresLabel = new Label(getGenresString());
         genresLabel.setId("genresLabel");
         genresLabel.setWrapText(true);
+        genresLabel.setMaxWidth(480);
         albumLabelLabel = new Label();
         albumLabelLabel.setId("albumLabelLabel");
         buildTracksTableView();

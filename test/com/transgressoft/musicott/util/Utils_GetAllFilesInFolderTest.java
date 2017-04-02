@@ -85,7 +85,7 @@ public class Utils_GetAllFilesInFolderTest {
     @DisplayName ("with non existent folder")
     void nonExistentFolderArgumentTest() {
         File badFolder = new File("/nonexistenfolder");
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
                                                           () -> Utils.getAllFilesInFolder(badFolder, allFilter, 0));
         assertEquals("rootFolder argument is not a directory", exception.getMessage());
     }
@@ -94,7 +94,7 @@ public class Utils_GetAllFilesInFolderTest {
     @DisplayName ("with a file as argument")
     void givenFileAsArgumentTest() {
         File badFolder = new File("/test-resources/testfiles/testeable.mp3");
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
                                                           () -> Utils.getAllFilesInFolder(badFolder, allFilter, 0));
         assertEquals("rootFolder argument is not a directory", exception.getMessage());
     }
@@ -102,7 +102,7 @@ public class Utils_GetAllFilesInFolderTest {
     @Test
     @DisplayName ("with null folder")
     void givenNullFolderTest() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
                                                           () -> Utils.getAllFilesInFolder(null, allFilter, 0));
         assertEquals("folder or filter null", exception.getMessage());
     }
@@ -110,7 +110,7 @@ public class Utils_GetAllFilesInFolderTest {
     @Test
     @DisplayName ("with null filter")
     void givenNullFilterTest() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
                                                           () -> Utils.getAllFilesInFolder(testPath.toFile(), null, 0));
         assertEquals("folder or filter null", exception.getMessage());
     }
@@ -118,7 +118,7 @@ public class Utils_GetAllFilesInFolderTest {
     @Test
     @DisplayName ("with negative max files")
     void givenNegativeMaxFilesTest() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Utils
+        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class, () -> Utils
                 .getAllFilesInFolder(testPath.toFile(), allFilter, - 1));
         assertEquals("maxFilesRequired argument less than zero", exception.getMessage());
     }

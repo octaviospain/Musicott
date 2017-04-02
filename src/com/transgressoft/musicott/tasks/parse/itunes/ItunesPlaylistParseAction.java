@@ -50,7 +50,7 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
     private static final int MAX_PLAYLISTS_TO_PARSE_PER_ACTION = 250;
     private static final int NUMBER_OF_PARTITIONS = 2;
 
-    private Map<Integer, Track> itunesIdToMusicottTrackMap;
+    private transient Map<Integer, Track> itunesIdToMusicottTrackMap;
 
     /**
      * Constructor of {@link ItunesTracksParseAction}
@@ -77,6 +77,7 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
                 else {
                     NavigationController navigationController = StageDemon.getInstance().getNavigationController();
                     Platform.runLater(() -> navigationController.addNewPlaylist(ROOT_PLAYLIST, playlist, false));
+                    musicLibrary.playlists.addPlaylist(ROOT_PLAYLIST, playlist);
                 }
             });
         }

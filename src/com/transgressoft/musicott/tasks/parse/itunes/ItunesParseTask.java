@@ -160,7 +160,7 @@ public class ItunesParseTask extends BaseParseTask {
         itunesTracks = ImmutableList.copyOf(itunesTracks);
         totalItunesItemsToParse = itunesTracks.size();
 
-        String playlistsAlertText[] = new String[]{""};
+        String[] playlistsAlertText = new String[]{""};
         if (importPlaylists) {
             itunesPlaylists = (List<ItunesPlaylist>) itunesLibrary.getPlaylists();
             itunesPlaylists = itunesPlaylists.stream().filter(this::isValidItunesPlaylist).collect(Collectors.toList());

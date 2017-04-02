@@ -24,7 +24,7 @@ import static com.google.common.graph.Graphs.*;
   NOTE OF MUSICOTT AUTHOR
 
   This file has been copied for the only purpose of made it public, in order to
-  be able to serialize this objects of this class using json-io.
+  be able to serialize objects of this class using json-io.
 */
 
 /**
@@ -75,7 +75,7 @@ public final class ConfigurableMutableValueGraph<N, V> extends ConfigurableValue
     }
 
     private GraphConnections<N, V> newConnections() {
-        return isDirected() ? DirectedGraphConnections.<N, V> of() : UndirectedGraphConnections.<N, V> of();
+        return isDirected() ? DirectedGraphConnections.of() : UndirectedGraphConnections.of();
     }
 
     @Override

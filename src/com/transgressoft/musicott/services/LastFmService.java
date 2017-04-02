@@ -111,7 +111,8 @@ public class LastFmService {
                 clientResponse = resource.queryParams(params).post(ClientResponse.class);
 
             if (clientResponse != null) {
-                LOG.debug("LastFM API " + httpMethod + " petition status: {}", clientResponse.getStatus());
+                int clientStatus = clientResponse.getStatus();
+                LOG.debug("LastFM API {} petition status: {}", httpMethod, clientStatus);
                 lfmResponse = clientResponse.getEntity(LastFmResponse.class);
 
                 if (lfmResponse == null) {

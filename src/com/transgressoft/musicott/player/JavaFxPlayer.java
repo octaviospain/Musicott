@@ -61,7 +61,7 @@ public class JavaFxPlayer implements TrackPlayer {
         this.track = track;
         if (mediaPlayer != null)
             mediaPlayer.dispose();
-        File mp3File = new File(track.getFileFolder() + "/" + track.getFileName());
+        File mp3File = new File(track.getFileFolder(), track.getFileName());
         Media media = new Media(mp3File.toURI().toString());
         mediaPlayer = new MediaPlayer(media);
         mediaPlayer.setOnEndOfMedia(endOfMediaAction);

@@ -39,7 +39,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  */
 public class WaveformsLoadAction extends BaseLoadAction {
 
-    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     public WaveformsLoadAction(String applicationFolder, MusicLibrary musicLibrary, Application application) {
         super(applicationFolder, musicLibrary, application);

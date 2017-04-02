@@ -64,7 +64,7 @@ public class MetadataParserTest {
     @Test
     @DisplayName ("Invalid parse")
     void invalidParseTest() throws Exception {
-        TrackParseException exception = assertThrows(
+        TrackParseException exception = expectThrows(
                 TrackParseException.class, () -> MetadataParser.createTrack(new File(testFolder)));
         assertTrue(exception.getMessage().startsWith("Error parsing the file "));
     }

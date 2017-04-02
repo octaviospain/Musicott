@@ -52,7 +52,6 @@ public class ErrorDialogControllerTest extends JavaFxTestBase {
     }
 
     @Test
-    @Ignore
     public void errorDialogMessageText() throws Exception {
         Platform.runLater(() -> errorAlertController.prepareDialog("Error message", null, null));
 
@@ -64,7 +63,6 @@ public class ErrorDialogControllerTest extends JavaFxTestBase {
     }
 
     @Test
-    @Ignore
     public void errorDialogMessageWithContentTest() throws Exception {
         Platform.runLater(() -> errorAlertController.prepareDialog("Error message", "Content message", null));
 
@@ -75,7 +73,6 @@ public class ErrorDialogControllerTest extends JavaFxTestBase {
     }
 
     @Test
-    @Ignore
     public void errorDialogMessageWithContentAndExceptionTest() throws Exception {
         IllegalArgumentException exception = new IllegalArgumentException("Test exception");
         StackTraceElement[] stackTraceSample = new StackTraceElement[]{
@@ -96,7 +93,6 @@ public class ErrorDialogControllerTest extends JavaFxTestBase {
     }
 
     @Test
-    @Ignore
     public void errorDialogWithErrorCollection() throws Exception {
         List<String> errors = Arrays.asList("Error 1", "Error 2", "Error 3");
         Platform.runLater(
@@ -109,7 +105,6 @@ public class ErrorDialogControllerTest extends JavaFxTestBase {
     }
 
     @Test
-    @Ignore
     public void lastFmErrorDialog() throws Exception {
         Platform.runLater(() -> errorAlertController.prepareLastFmDialog("LastFm error message", null));
 

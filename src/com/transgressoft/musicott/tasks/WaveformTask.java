@@ -100,8 +100,7 @@ public class WaveformTask extends Thread {
 	}
 
 	private float[] processFromWavFile() throws IOException, UnsupportedAudioFileException {
-		String trackPath = trackToAnalyze.getFileFolder() + "/" + trackToAnalyze.getFileName();
-		File trackFile = new File(trackPath);
+		File trackFile = new File(trackToAnalyze.getFileFolder(), trackToAnalyze.getFileName());
 		return processAmplitudes(getWavAmplitudes(trackFile));
 	}
 

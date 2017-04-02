@@ -43,8 +43,8 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  */
 public class PlaylistsLoadAction extends BaseLoadAction {
 
-    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private MutableGraph<Playlist> playlists;
+    private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private transient MutableGraph<Playlist> playlists;
     private int step = 0;
     private int totalPlaylists;
 

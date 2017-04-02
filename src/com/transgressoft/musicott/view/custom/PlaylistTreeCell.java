@@ -169,7 +169,7 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
         Playlist treeCellPlaylist = getItem();
         boolean validDrag = treeCellPlaylist != null &&! treeCellPlaylist.isFolder();
         if (validDrag) {
-            PlaylistTreeView playlistTreeView = ((PlaylistTreeView) getTreeView());
+            PlaylistTreeView playlistTreeView = (PlaylistTreeView) getTreeView();
             Optional<Playlist> selectedPlaylist = playlistTreeView.selectedPlaylistProperty().get();
             validDrag = ! (selectedPlaylist.isPresent() && selectedPlaylist.get().equals(treeCellPlaylist));
         }

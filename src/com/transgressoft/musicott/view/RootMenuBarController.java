@@ -134,7 +134,9 @@ public class RootMenuBarController {
     private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
     @FXML
-    public void initialize() {}
+    public void initialize() {
+        setAboutMenuActions();
+    }
 
     void setControllers(Stage rootStage, RootController rootController,
             NavigationController navigationController, PlayerController playerController) {
@@ -142,6 +144,14 @@ public class RootMenuBarController {
         this.rootController = rootController;
         this.navigationController = navigationController;
         this.playerController = playerController;
+        setEditMenuActions();
+        setFileMenuActions();
+        setEditMenuActions();
+        setControlsMenuActions();
+        setViewMenuActions();
+        showHideTableInfoDisableBinding();
+        showHideNavigationPaneTextBinding();
+        showHideTableInfoPaneTextBinding();
     }
 
     /**
@@ -168,14 +178,6 @@ public class RootMenuBarController {
         menuToolkit.setGlobalMenuBar(rootMenuBar);
 
         setAccelerators(KeyCodeCombination.META_DOWN);
-        setFileMenuActions();
-        setEditMenuActions();
-        setControlsMenuActions();
-        setViewMenuActions();
-        setAboutMenuActions();
-        showHideTableInfoDisableBinding();
-        showHideNavigationPaneTextBinding();
-        showHideTableInfoPaneTextBinding();
         LOG.debug("OS X native menubar created");
     }
 
@@ -190,14 +192,6 @@ public class RootMenuBarController {
             System.exit(0);
         });
         setAccelerators(KeyCodeCombination.CONTROL_DOWN);
-        setFileMenuActions();
-        setEditMenuActions();
-        setControlsMenuActions();
-        setViewMenuActions();
-        setAboutMenuActions();
-        showHideTableInfoDisableBinding();
-        showHideNavigationPaneTextBinding();
-        showHideTableInfoPaneTextBinding();
         LOG.debug("Default menu bar configured");
     }
 

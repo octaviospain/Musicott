@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.*;
   NOTE OF MUSICOTT AUTHOR
 
   This file has been copied for the only purpose of made it public, in order to
-  be able to serialize this objects of this class using json-io.
+  be able to serialize objects of this class using json-io.
 */
 
 /**
@@ -79,19 +79,19 @@ public final class ElementOrder<T> {
 
   /** Returns an instance which specifies that no ordering is guaranteed. */
   public static <S> ElementOrder<S> unordered() {
-    return new ElementOrder<S>(Type.UNORDERED, null);
+    return new ElementOrder<>(Type.UNORDERED, null);
   }
 
   /** Returns an instance which specifies that insertion ordering is guaranteed. */
   public static <S> ElementOrder<S> insertion() {
-    return new ElementOrder<S>(Type.INSERTION, null);
+    return new ElementOrder<>(Type.INSERTION, null);
   }
 
   /**
    * Returns an instance which specifies that the natural ordering of the elements is guaranteed.
    */
   public static <S extends Comparable<? super S>> ElementOrder<S> natural() {
-    return new ElementOrder<S>(Type.SORTED, Ordering.<S>natural());
+    return new ElementOrder<>(Type.SORTED, Ordering.natural());
   }
 
   /**
@@ -99,7 +99,7 @@ public final class ElementOrder<T> {
    * determined by {@code comparator}.
    */
   public static <S> ElementOrder<S> sorted(Comparator<S> comparator) {
-    return new ElementOrder<S>(Type.SORTED, comparator);
+    return new ElementOrder<>(Type.SORTED, comparator);
   }
 
   /** Returns the type of ordering used. */

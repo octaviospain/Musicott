@@ -40,7 +40,7 @@ import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
  */
 public class TrackQueueListCell extends ListCell<TrackQueueRow> {
 
-    private final String dragOverStyle = "-fx-border-color: rgb(99, 255, 109); -fx-border-width: 0px 0px 1px 0px";
+    private static final String DRAG_OVER_STYLE = "-fx-border-color: rgb(99, 255, 109); -fx-border-width: 0px 0px 1px 0px";
     private final PlayQueueController playQueueController;
 
     public TrackQueueListCell(PlayQueueController playQueueController) {
@@ -55,7 +55,7 @@ public class TrackQueueListCell extends ListCell<TrackQueueRow> {
     private void onDragOver(DragEvent event) {
         if (! isEmpty() && getItem() != null) {
             event.acceptTransferModes(TransferMode.MOVE);
-            setStyle(dragOverStyle);
+            setStyle(DRAG_OVER_STYLE);
         }
         event.consume();
     }
