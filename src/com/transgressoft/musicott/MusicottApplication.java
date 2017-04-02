@@ -49,7 +49,7 @@ import java.util.logging.*;
  * </ol>
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @see <a href="https://octaviospain.github.io/Musicott">Musicott</a>
  */
 public class MusicottApplication extends Application {

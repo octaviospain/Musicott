@@ -52,7 +52,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * Controller class of the root layout of the whole application.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class RootController implements MusicottController {
 

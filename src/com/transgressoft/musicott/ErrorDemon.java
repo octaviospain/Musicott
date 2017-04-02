@@ -30,7 +30,7 @@ import java.util.*;
  * the stack trace, or a text area with several error messages
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class ErrorDemon {
 

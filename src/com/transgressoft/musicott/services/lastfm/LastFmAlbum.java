@@ -23,7 +23,7 @@ import javax.xml.bind.annotation.*;
 
 /**
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 @XmlRootElement (name = "album")
 public class LastFmAlbum {

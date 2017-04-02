@@ -32,7 +32,7 @@ import java.util.concurrent.*;
  * Base class of parse tasks of import music into the application.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9.2-b
  */
 public abstract class BaseLoadAction extends RecursiveAction {

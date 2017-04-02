@@ -38,7 +38,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * of the {@link Graph} of playlists of the application's music library stored on a {@code json} file.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9.2-b
  */
 public class PlaylistsLoadAction extends BaseLoadAction {

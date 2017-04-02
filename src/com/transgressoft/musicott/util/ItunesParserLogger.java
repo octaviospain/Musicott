@@ -28,7 +28,7 @@ import org.slf4j.*;
  * to perform the itunes library parse.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @see <a href="https://github.com/codercowboy/iTunesUtilities">ItunesUtilities</a>
  */
 public class ItunesParserLogger implements StatusUpdateLogger, ParserStatusUpdateLogger {
