@@ -109,8 +109,8 @@ public class TrackTableViewContextMenu extends ContextMenu {
     @Override
     public void show(Node anchor, double screenX, double screenY) {
         playlistsInMenu.clear();
+        selectedEntries = stageDemon.getRootController().getSelectedTracks();
         if (getSelectedPlaylist().isPresent() && ! getSelectedPlaylist().get().isFolder())  {
-            selectedEntries = stageDemon.getRootController().getSelectedTracks();
             musicLibrary.playlists.getPlaylistsTree().nodes()
                                   .stream().filter(p -> ! p.isFolder())
                                   .forEach(this::addPlaylistToMenuList);

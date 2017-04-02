@@ -106,7 +106,7 @@ public class UpdateMusicLibraryTask extends Thread {
 		try {
 			track.writeMetadata();
 			deleteBackup(track, backup);
-			LOG.debug("Updated (or not) metadata of {}", track.getFileFolder() + "/" + track.getFileName());
+			LOG.debug("Updated (or not) metadata of {}", track.getFileFolder() + File.separator + track.getFileName());
 		}
 		catch (TrackUpdateException exception) {
 			if (backup != null)
@@ -116,7 +116,7 @@ public class UpdateMusicLibraryTask extends Thread {
 	}
 
 	private File makeBackup(Track track) {
-		File original = new File(track.getFileFolder() + "/" + track.getFileName());
+		File original = new File(track.getFileFolder(), track.getFileName());
 		File backup = null;
 		try {
 			backup = File.createTempFile(track.getFileName(), "");
@@ -130,7 +130,7 @@ public class UpdateMusicLibraryTask extends Thread {
 	}
 
 	private void restoreBackup(Track track, File backup) {
-		File original = new File(track.getFileFolder() + "/" + track.getFileName());
+		File original = new File(track.getFileFolder(), track.getFileName());
 		try {
 			Files.move(backup.toPath(), original.toPath(), options);
 		}
@@ -141,11 +141,9 @@ public class UpdateMusicLibraryTask extends Thread {
 	}
 
 	private void deleteBackup(Track track, File backup) {
-		if (backup != null) {
-			if (! backup.delete()) {
-				LOG.error("Error deleting backup file of {}", track);
-				errorDemon.showErrorDialog("Error deleting the backup file of " + track.getFileName());
-			}
+		if (backup != null && ! backup.delete()) {
+			LOG.error("Error deleting backup file of {}", track);
+			errorDemon.showErrorDialog("Error deleting the backup file of " + track.getFileName());
 		}
 	}
 }

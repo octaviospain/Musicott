@@ -281,7 +281,7 @@ public class Track {
     }
 
     public Optional<byte[]> getCoverImage() {
-        File trackFile = new File(fileFolder + "/" + fileName);
+        File trackFile = new File(fileFolder, fileName);
         Optional<byte[]>[] coverBytes = new Optional[]{Optional.empty()};
         MetadataParser.getAudioTag(trackFile).ifPresent(tag -> coverBytes[0] = MetadataParser.getCoverBytes(tag));
         return coverBytes[0];
@@ -395,9 +395,9 @@ public class Track {
     public boolean isPlayable() {
         boolean playable = true;
         if (isInDisk()) {
-            File file = new File(fileFolder + "/" + fileName);
+            File file = new File(fileFolder, fileName);
             if (! file.exists()) {
-                errorDemon.showErrorDialog(fileFolder + "/" + fileName + " not found");
+                errorDemon.showErrorDialog(file.getAbsolutePath() + " not found");
                 setIsInDisk(false);
                 playable = false;
             }

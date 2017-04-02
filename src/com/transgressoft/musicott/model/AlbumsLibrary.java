@@ -41,14 +41,14 @@ public class AlbumsLibrary {
         albumsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
     }
 
-    boolean addTracks(String album, List<Entry<Integer, Track>> trackEntries) {
+    synchronized boolean addTracks(String album, List<Entry<Integer, Track>> trackEntries) {
         //        if (! albumsLists.contains(album)) {
         //            // TODO update the observable albumLists when implemented album view
         //        }
         return albumsTracks.putAll(album, trackEntries);
     }
 
-    boolean removeTracks(String album, List<Entry<Integer, Track>> trackEntries) {
+    synchronized boolean removeTracks(String album, List<Entry<Integer, Track>> trackEntries) {
         boolean removed;
         removed = albumsTracks.get(album).removeAll(trackEntries);
         if (! albumsTracks.containsKey(album)) {
@@ -57,11 +57,11 @@ public class AlbumsLibrary {
         return removed;
     }
 
-    void clear() {
+    synchronized void clear() {
         albumsTracks.clear();
     }
 
-    ImmutableMultimap<String, Entry<Integer, Track>> getTracksByAlbum(String artist, Set<String> albums) {
+    synchronized ImmutableMultimap<String, Entry<Integer, Track>> getTracksByAlbum(String artist, Set<String> albums) {
         return ImmutableMultimap.copyOf(
                 Multimaps.filterValues(
                         Multimaps.filterKeys(albumsTracks, albums::contains),

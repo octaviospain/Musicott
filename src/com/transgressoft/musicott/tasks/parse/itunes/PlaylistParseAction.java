@@ -44,7 +44,7 @@ public abstract class PlaylistParseAction extends BaseParseAction<ItunesPlaylist
     }
 
     @Override
-    protected <T extends BaseParseResult<List<Playlist>>> void joinPartialResults(T partialResult) {
+    protected void joinPartialResults(BaseParseResult<List<Playlist>> partialResult) {
         parsedPlaylists.addAll(partialResult.getParsedResults());
     }
 }

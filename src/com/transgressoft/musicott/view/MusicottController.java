@@ -21,6 +21,8 @@ package com.transgressoft.musicott.view;
 
 import javafx.scene.image.*;
 
+import java.io.*;
+
 /**
  * Interface that represent a controller of the Musicott application.
  * Stores constants of layout files, logos, css stylesheets and
@@ -36,10 +38,10 @@ public interface MusicottController {
     String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
     String PLAYLISTS_PERSISTENCE_FILE = "Musicott-playlists.json";
 
-    String LAYOUTS_PATH = "/view/";
-    String IMAGES_PATH = "/images/";
-    String STYLES_PATH = "/css/";
-    String ICONS_PATH = "/icons/";
+    String LAYOUTS_PATH = File.separator + "view" + File.separator;
+    String IMAGES_PATH = File.separator + "images" + File.separator;
+    String STYLES_PATH = File.separator + "css" + File.separator;
+    String ICONS_PATH = File.separator + "icons" + File.separator;
 
     String ROOT_LAYOUT = LAYOUTS_PATH + "RootLayout.fxml";
     String PRELOADER_INIT_LAYOUT = LAYOUTS_PATH + "PreloaderLayout.fxml";
