@@ -38,7 +38,7 @@ import java.util.concurrent.*;
 public abstract class BaseLoadAction extends RecursiveAction {
 
     protected final String applicationFolder;
-    protected final MusicLibrary musicLibrary;
+    protected final transient MusicLibrary musicLibrary;
     protected final Application musicottApplication;
 
     public BaseLoadAction(String applicationFolder, MusicLibrary musicLibrary, Application musicottApplication) {

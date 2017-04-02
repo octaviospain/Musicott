@@ -41,12 +41,12 @@ import java.util.concurrent.*;
  */
 public abstract class BaseParseAction<I, X, T extends BaseParseResult<X>> extends RecursiveTask<T> {
 
-    protected final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    protected final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    protected final List<I> itemsToParse;
-    protected final Collection<String> parseErrors;
-    protected final BaseParseTask parentTask;
-    protected final MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    protected final transient List<I> itemsToParse;
+    protected final transient Collection<String> parseErrors;
+    protected final transient BaseParseTask parentTask;
+    protected final transient MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
     public BaseParseAction(List<I> itemsToParse, BaseParseTask parentTask) {
         this.itemsToParse = itemsToParse;
@@ -60,7 +60,7 @@ public abstract class BaseParseAction<I, X, T extends BaseParseResult<X>> extend
      * Calls {@link RecursiveTask#fork} for each sub action and then joins the results
      */
     protected void forkIntoSubActions() {
-        List<? extends BaseParseAction<I, X, ? extends BaseParseResult<X>>> subActions = createSubActions();
+        List<BaseParseAction<I, X, ? extends BaseParseResult<X>>> subActions = createSubActions();
         subActions.forEach(BaseParseAction::fork);
         subActions.forEach(action -> joinPartialResults(action.join()));
         LOG.debug("Forking parse of item into {} sub actions", subActions.size());
@@ -72,7 +72,7 @@ public abstract class BaseParseAction<I, X, T extends BaseParseResult<X>> extend
      *
      * @return A {@link List} with the {@link BaseParseAction} objects
      */
-    protected List<? extends BaseParseAction<I, X, ? extends BaseParseResult<X>>> createSubActions() {
+    protected List<BaseParseAction<I, X, ? extends BaseParseResult<X>>> createSubActions() {
         int subListsSize = itemsToParse.size() / getNumberOfPartitions();
         return Lists.partition(itemsToParse, subListsSize)
                     .stream().map(this::parseActionMapper)

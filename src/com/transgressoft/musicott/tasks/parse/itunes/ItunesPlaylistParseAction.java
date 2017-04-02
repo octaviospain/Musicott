@@ -50,7 +50,7 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
     private static final int MAX_PLAYLISTS_TO_PARSE_PER_ACTION = 250;
     private static final int NUMBER_OF_PARTITIONS = 2;
 
-    private Map<Integer, Track> itunesIdToMusicottTrackMap;
+    private transient Map<Integer, Track> itunesIdToMusicottTrackMap;
 
     /**
      * Constructor of {@link ItunesTracksParseAction}

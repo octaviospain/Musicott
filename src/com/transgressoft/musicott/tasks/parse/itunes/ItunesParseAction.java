@@ -36,9 +36,9 @@ import java.util.*;
  */
 public abstract class ItunesParseAction extends BaseParseAction<ItunesTrack, Map<Integer, Track>, ItunesParseResult> {
 
-    protected Map<Integer, Track> parsedTracks;
-    protected Map<Integer, Track> itunesIdToMusicottTrackMap;
-    protected List<String> notFoundFiles;
+    protected transient Map<Integer, Track> parsedTracks;
+    protected transient Map<Integer, Track> itunesIdToMusicottTrackMap;
+    protected transient List<String> notFoundFiles;
 
     public ItunesParseAction(List<ItunesTrack> itemsToParse, BaseParseTask parentTask) {
         super(itemsToParse, parentTask);

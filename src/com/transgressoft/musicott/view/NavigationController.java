@@ -203,7 +203,7 @@ public class NavigationController implements MusicottController {
     }
 
     public void setStatusMessage(String message) {
-        if (taskProgressBar.getProgress() == 0.0)
+        if (Double.isNaN(taskProgressBar.getProgress()))
             statusLabel.setStyle(GREEN_STATUS_COLOUR);
         else
             statusLabel.setStyle(GRAY_STATUS_COLOUR);

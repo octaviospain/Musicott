@@ -37,7 +37,7 @@ import java.util.*;
 public abstract class FilesParseAction
         extends BaseParseAction<File, Map<Integer, Track>, BaseParseResult<Map<Integer, Track>>> {
 
-    protected Map<Integer, Track> parsedTracks;
+    protected transient Map<Integer, Track> parsedTracks;
 
     public FilesParseAction(List<File> itemsToParse, BaseParseTask parentTask) {
         super(itemsToParse, parentTask);

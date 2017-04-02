@@ -22,8 +22,8 @@ package com.transgressoft.musicott.player;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tests.*;
 import javafx.application.*;
+import javafx.scene.media.MediaPlayer.*;
 import javafx.stage.*;
-import javafx.util.*;
 import org.junit.*;
 import org.junit.runner.*;
 import org.powermock.api.mockito.*;
@@ -76,14 +76,12 @@ public class JavaFxPlayerTest extends JavaFxTestBase {
     }
 
     @Test
-    @Ignore
     public void playerStateReadyTest() {
         sleep(500);
-        assertEquals("READY", player.getStatus());
+        assertEquals(Status.READY, player.getStatus());
     }
 
     @Test
-    @Ignore
     public void playerVolumeTest() {
         Platform.runLater(() -> player.setVolume(- 1.0));
         sleep(1000);
@@ -91,38 +89,29 @@ public class JavaFxPlayerTest extends JavaFxTestBase {
     }
 
     @Test
-    @Ignore
-    public void playerSeekTest() {
-        Platform.runLater(() -> player.seek(Duration.millis(0.0)));
-    }
-
-    @Test
-    @Ignore
     public void playerPlayTest() {
         Platform.runLater(() -> player.play());
         sleep(500);
-        assertEquals("PLAYING", player.getStatus());
+        assertEquals(Status.PLAYING, player.getStatus());
     }
 
     @Test
-    @Ignore
     public void playerPauseTest() {
         Platform.runLater(() -> {
             player.play();
             player.pause();
         });
         sleep(500);
-        assertEquals("PAUSED", player.getStatus());
+        assertEquals(Status.PAUSED, player.getStatus());
     }
 
     @Test
-    @Ignore
     public void playerStopTest() {
         Platform.runLater(() -> {
             player.play();
             player.stop();
         });
         sleep(500);
-        assertEquals("READY", player.getStatus());
+        assertEquals(Status.READY, player.getStatus());
     }
 }

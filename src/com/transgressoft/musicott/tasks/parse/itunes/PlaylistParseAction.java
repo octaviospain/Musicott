@@ -36,7 +36,7 @@ import java.util.*;
  */
 public abstract class PlaylistParseAction extends BaseParseAction<ItunesPlaylist, List<Playlist>, BaseParseResult<List<Playlist>>> {
 
-    protected List<Playlist> parsedPlaylists;
+    protected transient List<Playlist> parsedPlaylists;
 
     public PlaylistParseAction(List<ItunesPlaylist> itemsToParse, BaseParseTask parentTask) {
         super(itemsToParse, parentTask);

@@ -22,7 +22,7 @@ import com.google.common.graph.GraphConstants.*;
   NOTE OF MUSICOTT AUTHOR
 
   This file has been copied for the only purpose of made it public, in order to
-  be able to serialize this objects of this class using json-io.
+  be able to serialize objects of this class using json-io.
 */
 
 /**
@@ -40,7 +40,7 @@ public final class  ConfigurableMutableGraph<N> extends ForwardingGraph<N> imple
 
   /** Constructs a {@link MutableGraph} with the properties specified in {@code builder}. */
   ConfigurableMutableGraph(AbstractGraphBuilder<? super N> builder) {
-    this.backingValueGraph = new ConfigurableMutableValueGraph<N, Presence>(builder);
+    this.backingValueGraph = new ConfigurableMutableValueGraph<>(builder);
   }
 
   @Override

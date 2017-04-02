@@ -49,8 +49,8 @@ public class TracksLoadAction extends BaseLoadAction {
     private static final int MAX_TRACKS_TO_UPDATE_PER_ACTION = 350;
     private static final int NUMBER_OF_ITEMS_PARTITIONS = 4;
     private static AtomicInteger tracksStep = new AtomicInteger(0);
-    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private List<Track> tracksToSetProperties;
+    private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private transient List<Track> tracksToSetProperties;
     private int totalTracks;
 
     public TracksLoadAction(List<Track> tracks, int totalTracks, String applicationFolder, MusicLibrary musicLibrary,

@@ -141,9 +141,11 @@ public class UpdateMusicLibraryTask extends Thread {
 	}
 
 	private void deleteBackup(Track track, File backup) {
-		if (! backup.delete()) {
-			LOG.error("Error deleting backup file of {}", track);
-			errorDemon.showErrorDialog("Error deleting the backup file of " + track.getFileName());
+		if (backup != null) {
+			if (! backup.delete()) {
+				LOG.error("Error deleting backup file of {}", track);
+				errorDemon.showErrorDialog("Error deleting the backup file of " + track.getFileName());
+			}
 		}
 	}
 }

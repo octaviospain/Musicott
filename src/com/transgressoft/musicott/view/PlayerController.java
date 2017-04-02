@@ -251,13 +251,11 @@ public class PlayerController implements MusicottController {
     public void increaseVolume() {
         player.increaseVolume(VOLUME_AMOUNT);
         volumeSlider.setValue(volumeSlider.getValue() + VOLUME_AMOUNT);
-        LOG.trace("Volume increased " + volumeSlider.getValue());
     }
 
     public void decreaseVolume() {
         player.decreaseVolume(VOLUME_AMOUNT);
         volumeSlider.setValue(volumeSlider.getValue() - VOLUME_AMOUNT);
-        LOG.trace("Volume decreased " + volumeSlider.getValue());
     }
 
     /**

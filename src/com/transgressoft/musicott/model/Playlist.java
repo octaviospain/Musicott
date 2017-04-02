@@ -189,6 +189,6 @@ public class Playlist {
     public String toString() {
         String folderString = isFolder ? "[FOLDER]" : "";
         int containedItems = isFolder ? containedPlaylists.size() : playlistTrackIds.size();
-        return name + folderString + "[" + String.valueOf(containedItems) + "]";
+        return name + folderString + "[" + containedItems + "]";
     }
 }
