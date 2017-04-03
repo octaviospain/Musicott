@@ -21,19 +21,16 @@ package com.transgressoft.musicott;
 
 import com.google.common.collect.*;
 import org.junit.jupiter.api.*;
-import org.junit.platform.runner.*;
-import org.junit.runner.*;
 
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
+import static com.transgressoft.musicott.tasks.parse.itunes.ItunesParseTask.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Octavio Calleya
  */
-@RunWith (JUnitPlatform.class)
 public class MainPreferencesTest {
 
 	@Test
@@ -55,9 +52,9 @@ public class MainPreferencesTest {
 	@DisplayName ("Itunes import metadata")
 	void itunesImportMetadataTest() {
 		MainPreferences mainPreferences = MainPreferences.getInstance();
-		mainPreferences.setItunesImportMetadataPolicy(METADATA_POLICY);
+		mainPreferences.setItunesImportMetadataPolicy(ITUNES_DATA_POLICY);
 
-		assertEquals(METADATA_POLICY, mainPreferences.getItunesImportMetadataPolicy());
+		assertEquals(ITUNES_DATA_POLICY, mainPreferences.getItunesImportMetadataPolicy());
 	}
 
 	@Test

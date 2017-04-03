@@ -28,7 +28,7 @@ import java.awt.*;
  * Swing panel paints the waveform of a track.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class WaveformPanel extends JPanel {
 
@@ -58,8 +58,8 @@ public class WaveformPanel extends JPanel {
     }
 
     public void setTrack(Track track) {
-        if (musicLibrary.containsWaveform(track.getTrackId())) {
-            waveData = musicLibrary.getWaveform(track.getTrackId());
+        if (musicLibrary.waveforms.containsWaveform(track.getTrackId())) {
+            waveData = musicLibrary.waveforms.getWaveform(track.getTrackId());
             if (getForeground().equals(backgroundColor))
                 setForeground(foregroundColor);
             repaint();

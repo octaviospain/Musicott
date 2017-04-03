@@ -50,7 +50,7 @@ import static java.nio.file.StandardCopyOption.*;
  * </p>
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @see <a href="https://github.com/JorenSix/TarsosTranscoder">Tarsos Transcoder</a>
  */
 public class WaveformTask extends Thread {
@@ -85,7 +85,7 @@ public class WaveformTask extends Thread {
 					resultingWaveform = processFromNoWavFile(fileFormat);
 
 				if (resultingWaveform != null) {
-					musicLibrary.addWaveform(trackToAnalyze.getTrackId(), resultingWaveform);
+					musicLibrary.waveforms.addWaveform(trackToAnalyze.getTrackId(), resultingWaveform);
 					Optional<Track> currentTrack = PlayerFacade.getInstance().getCurrentTrack();
 					currentTrack.ifPresent(this::checkAnalyzedTrackIsCurrentPlaying);
 					Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage(""));
@@ -100,18 +100,17 @@ public class WaveformTask extends Thread {
 	}
 
 	private float[] processFromWavFile() throws IOException, UnsupportedAudioFileException {
-		String trackPath = trackToAnalyze.getFileFolder() + "/" + trackToAnalyze.getFileName();
-		File trackFile = new File(trackPath);
+		File trackFile = new File(trackToAnalyze.getFileFolder(), trackToAnalyze.getFileName());
 		return processAmplitudes(getWavAmplitudes(trackFile));
 	}
 
 	private float[] processFromNoWavFile(String fileFormat) throws IOException, UnsupportedAudioFileException,
 																   EncoderException {
-		int trackID = trackToAnalyze.getTrackId();
+		int trackId = trackToAnalyze.getTrackId();
 		Path trackPath = FileSystems.getDefault().getPath(trackToAnalyze.getFileFolder(), trackToAnalyze.getFileName
 				());
-		File temporalDecodedFile = File.createTempFile("decoded_" + trackID, ".wav");
-		File temporalCopiedFile = File.createTempFile("original_" + trackID, "." + fileFormat);
+		File temporalDecodedFile = File.createTempFile("decoded_" + trackId, ".wav");
+		File temporalCopiedFile = File.createTempFile("original_" + trackId, "." + fileFormat);
 
 		Files.copy(trackPath, temporalCopiedFile.toPath(), options);
 		transcodeToWav(temporalCopiedFile, temporalDecodedFile);

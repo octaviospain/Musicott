@@ -30,15 +30,23 @@ import java.util.*;
  * the stack trace, or a text area with several error messages
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class ErrorDemon {
 
-    private static ErrorDemon instance;
     private ErrorDialogController errorAlertController;
     private Stage alertStage;
 
+    private static class InstanceHolder {
+        static final ErrorDemon INSTANCE = new ErrorDemon();
+        private InstanceHolder() {}
+    }
+
     private ErrorDemon() {}
+
+    public static ErrorDemon getInstance() {
+        return InstanceHolder.INSTANCE;
+    }
 
     void setErrorAlertStage(Stage stage) {
         alertStage = stage;
@@ -46,12 +54,6 @@ public class ErrorDemon {
 
     void setErrorAlertController(ErrorDialogController errorAlertController) {
         this.errorAlertController = errorAlertController;
-    }
-
-    public static ErrorDemon getInstance() {
-        if (instance == null)
-            instance = new ErrorDemon();
-        return instance;
     }
 
     /**

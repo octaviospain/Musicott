@@ -1,0 +1,76 @@
+@import url("base.css");
+@import url("scroll-bar-general.css");
+
+#artistsViewSplitPane {
+    -fx-background-color: rgb(34, 34, 34);
+    -fx-text-fill: white;
+    -fx-border-color: rgb(73, 73, 73);
+    -fx-border-width: 2px;
+    -fx-border-insets: -2 -2 0 -2;
+}
+
+#artistsViewSplitPane > .split-pane-divider {
+    -fx-background-color: rgb(73, 73, 73);
+    -fx-pref-width: 2px;
+}
+
+#artistsListView {
+    -fx-focus-color: rgb(73, 73, 73);
+    -fx-faint-focus-color: transparent;
+    -fx-background-color: transparent;
+    -fx-background-radius: 10px;
+}
+
+#artistsListView .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgb(182, 182, 182);
+    -fx-font-size: 13px;
+    -fx-font-family: "Avenir", sans-serif;
+}
+
+#artistsListView .list-cell:filled:hover {
+    -fx-background-color: black;
+}
+
+#artistsListView .list-cell:filled:selected {
+    -fx-background-color: rgb(73, 73, 73);
+    -fx-text-fill: rgb(99, 255, 109);
+}
+
+#infoHBox {
+    -fx-border-color: rgb(73, 73, 73);
+    -fx-border-width: 0 0 2 0;
+}
+
+#albumTitleLabel {
+    -fx-font-size: 20px;
+    -fx-padding: 0px 0px 10px 0px;
+}
+
+#albumLabelLabel {
+    -fx-font-size: 16px;
+    -fx-padding: 0px 0px 5px 0px;
+}
+
+#relatedArtistsLabel {
+    -fx-font-size: 15px;
+    -fx-padding: 0px 0px 5px 0px;
+}
+
+#genresLabel {
+    -fx-padding: 0px 0px 10px 0px;
+}
+
+#albumLabelLabel, #relatedArtistsLabel,
+#genresLabel, #sizeLabel, #yearLabel {
+    -fx-text-fill: rgb(182, 182, 182);
+}
+
+.random-button {
+    -fx-graphic: url('../icons/random-icon.png');
+    -fx-background-color: transparent;
+}
+
+.random-button:pressed {
+    -fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 15, 0.3, 0, 0);
+}

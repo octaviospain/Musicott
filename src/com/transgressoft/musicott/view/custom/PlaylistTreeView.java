@@ -19,13 +19,15 @@
 
 package com.transgressoft.musicott.view.custom;
 
-import com.transgressoft.musicott.*;
+import com.google.common.graph.*;
 import com.transgressoft.musicott.model.*;
 import javafx.beans.property.*;
 import javafx.scene.control.*;
+import org.fxmisc.easybind.*;
 
 import java.util.*;
-import java.util.stream.*;
+
+import static com.transgressoft.musicott.model.PlaylistsLibrary.*;
 
 /**
  * Class that extends from a {@link TreeView} representing a list of
@@ -33,20 +35,19 @@ import java.util.stream.*;
  * playlists inside of them.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class PlaylistTreeView extends TreeView<Playlist> {
 
+    private Map<Playlist, TreeItem<Playlist>> playlistsItemsMap;
     private TreeItem<Playlist> root;
-    private PlaylistTreeViewContextMenu contextMenu;
     private ObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
-    private StageDemon stageDemon = StageDemon.getInstance();
     private MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
     public PlaylistTreeView() {
         super();
-        root = new TreeItem<>();
+        createPlaylistsItems();
         setRoot(root);
         setShowRoot(false);
         setEditable(true);
@@ -54,115 +55,85 @@ public class PlaylistTreeView extends TreeView<Playlist> {
         setPrefWidth(USE_COMPUTED_SIZE);
         setId("playlistTreeView");
         setCellFactory(cell -> new PlaylistTreeCell());
+        setContextMenu(new PlaylistTreeViewContextMenu());
 
         selectedPlaylistProperty = new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
         getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        getSelectionModel().selectedItemProperty().addListener((obs, oldItem, newItem) -> {
+        EasyBind.subscribe(getSelectionModel().selectedItemProperty(), newItem -> {
             if (newItem != null)
                 selectedPlaylistProperty.set(Optional.of(newItem.getValue()));
             else
                 selectedPlaylistProperty.set(Optional.empty());
         });
-        selectedPlaylistProperty.addListener((obs, oldSelectedPlaylist, newSelectedPlaylist) -> {
-            if (newSelectedPlaylist.isPresent()) {
-                Playlist playlist = newSelectedPlaylist.get();
-                playlist.showTracksOnTable();
-                stageDemon.getNavigationController().setNavigationMode(NavigationMode.PLAYLIST);
-            }
-        });
-
-        contextMenu = new PlaylistTreeViewContextMenu();
-        setContextMenu(contextMenu);
-        createPlaylistsItems();
     }
 
     /**
      * Initializes the {@link TreeView} with all the playlists.
      */
     private void createPlaylistsItems() {
-        synchronized (musicLibrary.getPlaylists()) {
-            musicLibrary.getPlaylists().forEach(playlist -> {
-                if (playlist.isFolder()) {
-                    TreeItem<Playlist> folderItem = new TreeItem<>(playlist);
-                    playlist.getContainedPlaylists()
-                            .forEach(childPlaylist -> folderItem.getChildren().add(new TreeItem<>(childPlaylist)));
-
-                    root.getChildren().add(folderItem);
-                }
-                else
-                    root.getChildren().add(new TreeItem<>(playlist));
-            });
-        }
+        playlistsItemsMap = new HashMap<>();
+        root = new TreeItem<>(ROOT_PLAYLIST);
+        playlistsItemsMap.put(ROOT_PLAYLIST, root);
+        Graph<Playlist> playlistsGraph = musicLibrary.playlists.getPlaylistsTree();
+        addPlaylistsToFolder(ROOT_PLAYLIST, playlistsGraph.successors(ROOT_PLAYLIST));
     }
 
     /**
-     * Adds a new {@link TreeItem} given a {@link Playlist}.
+     * Adds several {@link Playlist}s to the view, given the folder
+     * playlist where they belong to.
      *
-     * @param newPlaylist The playlist value of the {@code TreeItem}
+     * @param parent       The parent folder playlist where to add the playlists
+     * @param newPlaylists The playlists to add to the {@link TreeItem}
      */
-    public void addPlaylist(Playlist newPlaylist) {
-        TreeItem<Playlist> newItem = new TreeItem<>(newPlaylist);
-        root.getChildren().add(newItem);
-        getSelectionModel().select(newItem);
+    public void addPlaylistsToFolder(Playlist parent, Set<Playlist> newPlaylists) {
+        newPlaylists.forEach(playlistChild -> {
+            addPlaylistToItemsMap(playlistsItemsMap.get(parent), playlistChild);
+            if (playlistChild.isFolder())
+                addPlaylistsToFolder(playlistChild, playlistChild.getContainedPlaylists());
+        });
     }
 
-    /**
-     * Adds a new {@link TreeItem} given a {@link Playlist} that has to be
-     * included in a folder {@code Playlist}.
-     *
-     * @param folder           The folder playlist
-     * @param newPlaylistChild The playlist to add to the folder playlist
-     */
-    public void addPlaylistChild(Playlist folder, Playlist newPlaylistChild) {
-        TreeItem<Playlist> folderTreeItem = root.getChildren().stream()
-                                                .filter(child -> child.getValue().equals(folder))
-                                                .findFirst().get();
+    private void addPlaylistToItemsMap(TreeItem<Playlist> parentPlaylistItem, Playlist playlist) {
+        TreeItem<Playlist> item = new TreeItem<>(playlist);
+        parentPlaylistItem.getChildren().add(item);
+        playlistsItemsMap.put(playlist, item);
+    }
 
-        TreeItem<Playlist> newPlaylistItem = new TreeItem<>(newPlaylistChild);
-        folderTreeItem.getChildren().add(newPlaylistItem);
+    public void selectPlaylist(Playlist playlist) {
+        getSelectionModel().select(playlistsItemsMap.get(playlist));
+    }
 
-        folder.getContainedPlaylists().add(newPlaylistChild);
-        getSelectionModel().select(newPlaylistItem);
+    public void movePlaylist(String movedPlaylistName, Playlist targetFolder) {
+        Playlist movedPlaylist = getPlaylistFromName(movedPlaylistName);
+        TreeItem<Playlist> movedPlaylistItem = playlistsItemsMap.get(movedPlaylist);
+        Playlist parentMovedPlaylist = musicLibrary.playlists.getParentPlaylist(movedPlaylist);
+        TreeItem<Playlist> parentMovedPlaylistItem = playlistsItemsMap.get(parentMovedPlaylist);
+        TreeItem<Playlist> targetPlaylistItem = playlistsItemsMap.get(targetFolder);
+
+        parentMovedPlaylistItem.getChildren().remove(movedPlaylistItem);
+        playlistsItemsMap.remove(movedPlaylist, movedPlaylistItem);
+        addPlaylistToItemsMap(targetPlaylistItem, movedPlaylist);
+        if (movedPlaylist.isFolder())
+            addPlaylistsToFolder(movedPlaylist, movedPlaylist.getContainedPlaylists());
+        musicLibrary.playlists.movePlaylist(movedPlaylist, targetFolder);
+        selectPlaylist(movedPlaylist);
+    }
+
+    private Playlist getPlaylistFromName(String playlistName) {
+        return playlistsItemsMap.entrySet().stream()
+                                .filter(entry -> entry.getKey().getName().equals(playlistName))
+                                .findFirst().get().getKey();
     }
 
     /**
      * Deletes the {@link TreeItem} that has the value of the selected {@link Playlist}
      */
-    public void deletePlaylist() {
-        Optional<Playlist> selectedItem = selectedPlaylistProperty.getValue();
-        selectedItem.ifPresent(selectedPlaylist -> {
-            musicLibrary.deletePlaylist(selectedPlaylist);
-            boolean removed = root.getChildren().removeIf(treeItem -> treeItem.getValue().equals(selectedPlaylist));
-
-            if (! removed)
-                deletePlaylistInSomeFolder(selectedPlaylist);
-
-            if (root.getChildren().isEmpty())
-                stageDemon.getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
-        });
-    }
-
-    /**
-     * Deletes the {@link TreeItem} that has the value of the given {@link Playlist}
-     * that is a child of some {@code TreeItem} of the root, a folder playlist;
-     * and the playlist from the the folder.
-     *
-     * @param playlistToDelete The playlist to delete
-     */
-    private void deletePlaylistInSomeFolder(Playlist playlistToDelete) {
-        List<TreeItem<Playlist>> notEmptyFolders = root.getChildren().stream()
-                                                       .filter(playlist -> ! playlist.getChildren().isEmpty())
-                                                       .collect(Collectors.toList());
-
-        for (TreeItem<Playlist> playlistTreeItem : notEmptyFolders) {
-            ListIterator<TreeItem<Playlist>> childrenIterator = playlistTreeItem.getChildren().listIterator();
-            while (childrenIterator.hasNext()) {
-                if (childrenIterator.next().getValue().equals(playlistToDelete)) {
-                    childrenIterator.remove();
-                    break;
-                }
-            }
-        }
+    public void deletePlaylist(Playlist playlist) {
+        TreeItem<Playlist> playlistItem = playlistsItemsMap.get(playlist);
+        Playlist parent = musicLibrary.playlists.getParentPlaylist(playlist);
+        TreeItem<Playlist> parentItem = playlistsItemsMap.get(parent);
+        parentItem.getChildren().remove(playlistItem);
+        playlistsItemsMap.remove(playlist);
     }
 
     public ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {

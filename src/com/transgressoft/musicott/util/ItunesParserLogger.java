@@ -28,7 +28,7 @@ import org.slf4j.*;
  * to perform the itunes library parse.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @see <a href="https://github.com/codercowboy/iTunesUtilities">ItunesUtilities</a>
  */
 public class ItunesParserLogger implements StatusUpdateLogger, ParserStatusUpdateLogger {
@@ -52,12 +52,14 @@ public class ItunesParserLogger implements StatusUpdateLogger, ParserStatusUpdat
 
     @Override
     public void fatal(String arg0, Exception arg1, boolean arg2) {
-        LOG.error((arg2 ? "" : "NON ") + "RECOVERABLE FATAL ERROR: " + arg0 + ": " + arg1.getMessage());
+        String errorString = (arg2 ? "" : "NON ") + "RECOVERABLE FATAL ERROR: " + arg0 + ": " + arg1.getMessage();
+        LOG.error(errorString);
     }
 
     @Override
     public void statusUpdate(int arg0, String arg1) {
-        LOG.info("#" + arg0 + ": " + arg1);
+        String errorString = "#" + arg0 + ": " + arg1;
+        LOG.info(errorString);
     }
 
     @Override
@@ -67,6 +69,7 @@ public class ItunesParserLogger implements StatusUpdateLogger, ParserStatusUpdat
 
     @Override
     public void error(String arg0, Exception arg1, boolean arg2) {
-        LOG.warn((arg2 ? "" : "NON ") + "RECOVERABLE ERROR: " + arg0 + ": " + arg1.getMessage());
+        String errorString = (arg2 ? "" : "NON ") + "RECOVERABLE ERROR: " + arg0 + ": " + arg1.getMessage();
+        LOG.warn(errorString);
     }
 }

@@ -20,8 +20,6 @@
 package com.transgressoft.musicott.util;
 
 import org.junit.jupiter.api.*;
-import org.junit.platform.runner.*;
-import org.junit.runner.*;
 
 import java.io.*;
 import java.nio.file.*;
@@ -35,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Octavio Calleya
  */
-@RunWith (JUnitPlatform.class)
 public class Utils_GetAllFilesInFolderTest {
 
     private Path testPath = Paths.get("./test-resources", "/treefoldertest/");

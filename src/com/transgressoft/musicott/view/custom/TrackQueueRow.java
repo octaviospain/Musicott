@@ -19,17 +19,16 @@
 
 package com.transgressoft.musicott.view.custom;
 
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.view.*;
-import javafx.beans.binding.*;
 import javafx.geometry.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
 
-import java.io.*;
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Class that represents a single {@link Track} in the play queue or the history queue.
@@ -37,12 +36,11 @@ import java.io.*;
  * to remove the {@code TrackQueueRow} from his list.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class TrackQueueRow extends GridPane {
 
     private static final double COVER_SIZE = 42.0;
-    private static final String DELETE_BUTTON_STYLE = "deleteButton-white";
 
     private PlayQueueController playQueueController;
     private Track track;
@@ -50,10 +48,10 @@ public class TrackQueueRow extends GridPane {
     private VBox labelBox;
     private Button deleteTrackQueueRowButton;
 
-    public TrackQueueRow(int trackID) {
+    public TrackQueueRow(Track track, PlayQueueController playQueueController) {
         super();
-        track = MusicLibrary.getInstance().getTrack(trackID).get();
-        playQueueController = StageDemon.getInstance().getPlayQueueController();
+        this.track = track;
+        this.playQueueController = playQueueController;
         placeCover();
         placeLabels();
         placeDeleteHoverButton();
@@ -68,21 +66,14 @@ public class TrackQueueRow extends GridPane {
         setAlignment(Pos.CENTER_LEFT);
     }
 
-    public int getRepresentedTrackId() {
-        return track.getTrackId();
+    public Track getRepresentedTrack() {
+        return track;
     }
 
     private void placeCover() {
         coverImage = new ImageView();
-        coverImage.setFitHeight(40.0);
-        coverImage.setFitHeight(40.0);
-        if (track.getCoverImage().isPresent()) {
-            byte[] coverBytes = track.getCoverImage().get();
-            Image image = new Image(new ByteArrayInputStream(coverBytes));
-            coverImage.setImage(image);
-        }
-        else
-            coverImage.setId("coverImage");
+        coverImage.setId("coverImage");
+        subscribe(track.hasCoverProperty(), c -> Utils.updateCoverImage(track, coverImage));
         coverImage.setCacheHint(CacheHint.QUALITY);
         coverImage.setCache(false);
         coverImage.setSmooth(true);
@@ -97,9 +88,8 @@ public class TrackQueueRow extends GridPane {
         nameLabel.textProperty().bind(track.nameProperty());
         Label artistAlbumLabel = new Label();
         artistAlbumLabel.setId("artistAlbumLabel");
-        artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
-                () -> track.artistProperty().get() + " - " + track.albumProperty().get(), track.artistProperty(),
-                track.albumProperty()));
+        artistAlbumLabel.textProperty().bind(
+                combine(track.artistProperty(), track.albumProperty(), (art, alb) -> art + " - " + alb));
         labelBox = new VBox();
         VBox.setMargin(nameLabel, new Insets(0, 0, 1, 0));
         VBox.setMargin(artistAlbumLabel, new Insets(1, 0, 0, 0));
@@ -111,8 +101,7 @@ public class TrackQueueRow extends GridPane {
 
     private void placeDeleteHoverButton() {
         deleteTrackQueueRowButton = new Button();
-        deleteTrackQueueRowButton.setId(DELETE_BUTTON_STYLE);
-        deleteTrackQueueRowButton.setPrefSize(3, 3);
+        deleteTrackQueueRowButton.setId("deleteButton-white");
         deleteTrackQueueRowButton.setVisible(false);
         deleteTrackQueueRowButton.setOnAction(event -> playQueueController.removeTrackQueueRow(this));
         add(deleteTrackQueueRowButton, 1, 0);

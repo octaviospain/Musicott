@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view;
 
+import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.collections.*;
 import javafx.fxml.*;
@@ -29,7 +30,7 @@ import org.slf4j.*;
  * Controller class of the play queue pane.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class PlayQueueController implements MusicottController {
 
@@ -47,11 +48,15 @@ public class PlayQueueController implements MusicottController {
     private ObservableList<TrackQueueRow> playQueueList;
     private ObservableList<TrackQueueRow> historyQueueList;
 
+    private PlayerFacade player = PlayerFacade.getInstance();
+
     @FXML
     public void initialize() {
         playQueueList = player.getPlayList();
         historyQueueList = player.getHistoryList();
         historyQueueButton.setId("historyQueueButton");
+        queuesListView.setCellFactory(listView -> new TrackQueueListCell(this));
+        queuesListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         queuesListView.setItems(playQueueList);
         queuesListView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2)
@@ -87,14 +92,20 @@ public class PlayQueueController implements MusicottController {
 
     private void showHistoryQueue() {
         queuesListView.setItems(historyQueueList);
+        queuesListView.getSelectionModel().clearSelection();
         titleQueueLabel.setText("Recently played");
         LOG.trace("Showing history queue on the pane");
     }
 
     private void showPlayQueue() {
         queuesListView.setItems(playQueueList);
+        queuesListView.getSelectionModel().clearSelection();
         titleQueueLabel.setText("Play Queue");
         LOG.trace("Showing play queue on the pane");
+    }
+
+    public boolean isShowingHistoryQueue() {
+        return queuesListView.getItems().equals(historyQueueList);
     }
 
     /**

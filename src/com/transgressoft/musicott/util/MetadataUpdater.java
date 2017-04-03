@@ -37,7 +37,7 @@ import java.nio.file.*;
  * to the audio metadata of the file.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
 public class MetadataUpdater {
@@ -53,7 +53,7 @@ public class MetadataUpdater {
     /**
      * Writes the {@link Track} information to an audio file metadata.
      *
-     * @return {@code True} if the operation was successful, {@code False} otherwise
+     * @throws TrackUpdateException If something went bad updating the file metadata
      */
     public void writeAudioMetadata() throws TrackUpdateException {
         Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
@@ -69,7 +69,8 @@ public class MetadataUpdater {
             setTrackFieldsToTag(audio.getTag());
             audio.commit();
         }
-        catch (IOException | CannotReadException | ReadOnlyFileException | TagException | CannotWriteException | InvalidAudioFrameException exception) {
+        catch (IOException | CannotReadException | ReadOnlyFileException | TagException | CannotWriteException |
+                InvalidAudioFrameException exception) {
             LOG.warn("Error updating metadata of {}", track, exception);
             String errorText = "Error writing metadata of " + track.getArtist() + " - " + track.getName();
             throw new TrackUpdateException(errorText, exception);
@@ -122,15 +123,14 @@ public class MetadataUpdater {
      *
      * @param coverFile The {@link File} of the new cover image to save
      *
-     * @return {@code True} if the operation was successful, {@code False} otherwise
-     *
-     * @throws Exception If something went bad updating the cover on the metadata
+     * @throws TrackUpdateException If something went bad updating the cover on the metadata
      */
     public void updateCover(File coverFile) throws TrackUpdateException {
         Path trackPath = Paths.get(track.getFileFolder(), track.getFileName());
         File trackFile = trackPath.toFile();
         updateCoverOnTag(trackFile, coverFile);
-        track.hasCoverProperty().set(true);
+        track.hasCoverProperty().setValue(false);   // Double update to force the listeners to hear the changes
+        track.hasCoverProperty().setValue(true);
     }
 
     private void updateCoverOnTag(File trackFile, File coverFile) throws TrackUpdateException {
@@ -143,7 +143,7 @@ public class MetadataUpdater {
             audioFile.commit();
         }
         catch (IOException | TagException | CannotWriteException | CannotReadException | InvalidAudioFrameException |
-				ReadOnlyFileException exception) {
+                ReadOnlyFileException exception) {
             LOG.warn("Error saving cover image of {}", track, exception);
             String errorText = "Error saving cover image of " + track.getArtist() + " - " + track.getName();
             throw new TrackUpdateException(errorText, exception);

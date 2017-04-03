@@ -23,13 +23,16 @@ import com.cedarsoftware.util.io.*;
 import com.google.common.collect.*;
 import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
 import javafx.collections.*;
 import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
+import java.util.stream.*;
 
 import static com.transgressoft.musicott.view.MusicottController.*;
 
@@ -38,21 +41,23 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * of the {@link Map} of tracks of the application's music library stored on a {@code json} file.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9.2-b
  */
 public class TracksLoadAction extends BaseLoadAction {
 
     private static final int MAX_TRACKS_TO_UPDATE_PER_ACTION = 350;
     private static final int NUMBER_OF_ITEMS_PARTITIONS = 4;
-    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private List<Track> tracksToSetProperties;
-    private int step = 0;
+    private static AtomicInteger tracksStep = new AtomicInteger(0);
+    private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private transient List<Track> tracksToSetProperties;
+    private int totalTracks;
 
-    public TracksLoadAction(List<Track> tracks, String applicationFolder, MusicLibrary musicLibrary,
+    public TracksLoadAction(List<Track> tracks, int totalTracks, String applicationFolder, MusicLibrary musicLibrary,
             Application musicottApplication) {
         super(applicationFolder, musicLibrary, musicottApplication);
         tracksToSetProperties = tracks;
+        this.totalTracks = totalTracks;
     }
 
     @Override
@@ -63,16 +68,23 @@ public class TracksLoadAction extends BaseLoadAction {
         if (tracksToSetProperties.size() > MAX_TRACKS_TO_UPDATE_PER_ACTION) {
             int subListsSize = tracksToSetProperties.size() / NUMBER_OF_ITEMS_PARTITIONS;
             ImmutableList<TracksLoadAction> subActions = Lists.partition(tracksToSetProperties, subListsSize).stream()
-                                                              .map(subList -> new TracksLoadAction(
-                                                                      tracksToSetProperties, applicationFolder,
-                                                                      musicLibrary, musicottApplication))
+                                                              .map(this::subListToTracksLoadActionMap)
                                                               .collect(ImmutableList.toImmutableList());
 
-            subActions.forEach(TracksLoadAction::fork);
             LOG.debug("Forking updating of loaded tracks into {} sub actions", subActions.size());
+            subActions.forEach(TracksLoadAction::fork);
+            subActions.forEach(TracksLoadAction::join);
         }
-        else
+        else {
             tracksToSetProperties.forEach(this::setTrackProperties);
+            Map<Integer, Track> tracksMap = tracksToSetProperties.stream()
+                                                    .collect(Collectors.toMap(Track::getTrackId, Function.identity()));
+            musicLibrary.tracks.add(tracksMap);
+        }
+    }
+
+    private TracksLoadAction subListToTracksLoadActionMap(List<Track> subList) {
+        return new TracksLoadAction(subList, totalTracks, applicationFolder, musicLibrary, musicottApplication);
     }
 
     /**
@@ -86,12 +98,12 @@ public class TracksLoadAction extends BaseLoadAction {
             tracksMap = parseTracksFromJsonFile(tracksFile);
         else
             tracksMap = FXCollections.observableHashMap();
-        tracksToSetProperties = ImmutableList.copyOf(tracksMap.values());
-        musicLibrary.addTracks(tracksMap);
+        tracksToSetProperties = new ArrayList<>(tracksMap.values());
     }
 
     /**
-     * Loads the tracks from a saved file formatted in JSON
+     * Loads the tracks from a saved file formatted in JSON. It's only executed
+     * by the first {@link TracksLoadAction}.
      *
      * @param tracksFile The JSON formatted file of the tracks
      *
@@ -101,16 +113,11 @@ public class TracksLoadAction extends BaseLoadAction {
     @SuppressWarnings ("unchecked")
     private ObservableMap<Integer, Track> parseTracksFromJsonFile(File tracksFile) {
         ObservableMap<Integer, Track> tracksMap;
-        int totalTracks;
         try {
             JsonReader.assignInstantiator(ObservableMapWrapper.class, new ObservableMapWrapperCreator());
+            JsonReader.assignInstantiator(ObservableSetWrapper.class, new ObservableSetWrapperCreator());
             tracksMap = (ObservableMap<Integer, Track>) parseJsonFile(tracksFile);
             totalTracks = tracksMap.size();
-
-            tracksMap.values().parallelStream().forEach(track -> {
-                setTrackProperties(track);
-                notifyPreloader(++ step, totalTracks, "Loading tracks...");
-            });
             LOG.info("Loaded tracks from {}", tracksFile);
         }
         catch (IOException exception) {
@@ -142,5 +149,7 @@ public class TracksLoadAction extends BaseLoadAction {
         track.playCountProperty().setValue(track.getPlayCount());
         track.getCoverImage().ifPresent(coverBytes -> track.hasCoverProperty().set(true));
         track.isPlayableProperty().setValue(track.isPlayable());
+        track.artistsInvolvedProperty().setValue(track.getArtistsInvolved());
+        notifyPreloader(tracksStep.incrementAndGet(), totalTracks, "Loading tracks...");
     }
 }

@@ -20,29 +20,33 @@
 package com.transgressoft.musicott.tasks.load;
 
 import com.cedarsoftware.util.io.*;
+import com.google.common.graph.*;
 import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
 import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
 
+import static com.transgressoft.musicott.model.PlaylistsLibrary.*;
 import static com.transgressoft.musicott.view.MusicottController.*;
 
 /**
  * This class extends from {@link BaseLoadAction} in order to perform the loading
- * of the {@link List} of playlists of the application's music library stored on a {@code json} file.
+ * of the {@link Graph} of playlists of the application's music library stored on a {@code json} file.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9.2-b
  */
 public class PlaylistsLoadAction extends BaseLoadAction {
 
-    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private transient MutableGraph<Playlist> playlists;
     private int step = 0;
+    private int totalPlaylists;
 
     public PlaylistsLoadAction(String applicationFolder, MusicLibrary musicLibrary, Application musicottApplication) {
         super(applicationFolder, musicLibrary, musicottApplication);
@@ -50,19 +54,16 @@ public class PlaylistsLoadAction extends BaseLoadAction {
 
     @Override
     protected void compute() {
-        notifyPreloader(3, 4, "Loading playlists...");
+        notifyPreloader(-1, 0, "Loading playlists...");
         String playlistsPath = applicationFolder + File.separator + PLAYLISTS_PERSISTENCE_FILE;
         File playlistsFile = new File(playlistsPath);
-        List<Playlist> playlists;
-        if (playlistsFile.exists())
-            playlists = parsePlaylistFromJsonFile(playlistsFile);
-        else {
-            playlists = new ArrayList<>();
-            playlists.add(new Playlist("My Top 10", false));
-            playlists.add(new Playlist("Favourites", false));
-            playlists.add(new Playlist("Listen later", false));
+        if (playlistsFile.exists()) {
+            parsePlaylistFromJsonFile(playlistsFile);
+            playlists.nodes().forEach(this::setPlaylistProperties);
         }
-        musicLibrary.addPlaylists(playlists);
+        else
+            createDefaultPlaylists();
+        musicLibrary.playlists.addPlaylistsRecursively(ROOT_PLAYLIST, playlists.successors(ROOT_PLAYLIST));
     }
 
     /**
@@ -73,28 +74,34 @@ public class PlaylistsLoadAction extends BaseLoadAction {
      * @return a {@link List} of {@link Playlist} objects
      */
     @SuppressWarnings ("unchecked")
-    private List<Playlist> parsePlaylistFromJsonFile(File playlistsFile) {
-        List<Playlist> playlists;
-        int totalPlaylists;
+    private void parsePlaylistFromJsonFile(File playlistsFile) {
         try {
+            JsonReader.assignInstantiator(ElementOrder.class, new ElementOrderCreator());
             JsonReader.assignInstantiator(ObservableListWrapper.class, new ObservableListWrapperCreator());
-            playlists = (List<Playlist>) parseJsonFile(playlistsFile);
-            totalPlaylists = playlists.size();
-
-            for (Playlist playlist : playlists) {
-                if (playlist.isFolder())
-                    playlist.getContainedPlaylists().forEach(this::setPlaylistProperties);
-                setPlaylistProperties(playlist);
-                notifyPreloader(++ step, totalPlaylists, "Loading playlists...");
-            }
-
+            JsonReader.assignInstantiator(ConfigurableMutableGraph.class, new ConfigurableMutableGraphCreator());
+            JsonReader.assignInstantiator(ConfigurableMutableValueGraph.class, new ConfigurableMutableValueGraphCreator());
+            playlists = (MutableGraph<Playlist>) parseJsonFile(playlistsFile);
+            totalPlaylists = playlists.nodes().size();
             LOG.info("Loaded playlists from {}", playlistsFile);
         }
         catch (IOException exception) {
-            playlists = new ArrayList<>();
+            createDefaultPlaylists();
             LOG.error("Error loading playlists: {}", exception.getMessage(), exception);
         }
-        return playlists;
+    }
+
+    private void createDefaultPlaylists() {
+        Playlist top10 = new Playlist("My Top 10", false);
+        Playlist favs = new Playlist("Favourites", false);
+        Playlist listenLater = new Playlist("Listen later", false);
+        ROOT_PLAYLIST.getContainedPlaylists().add(top10);
+        ROOT_PLAYLIST.getContainedPlaylists().add(favs);
+        ROOT_PLAYLIST.getContainedPlaylists().add(listenLater);
+
+        playlists = GraphBuilder.directed().build();
+        playlists.putEdge(ROOT_PLAYLIST, top10);
+        playlists.putEdge(ROOT_PLAYLIST, favs);
+        playlists.putEdge(ROOT_PLAYLIST, listenLater);
     }
 
     /**
@@ -106,5 +113,6 @@ public class PlaylistsLoadAction extends BaseLoadAction {
     private void setPlaylistProperties(Playlist playlist) {
         playlist.nameProperty().setValue(playlist.getName());
         playlist.isFolderProperty().setValue(playlist.isFolder());
+        notifyPreloader(++ step, totalPlaylists, "Loading playlists...");
     }
 }

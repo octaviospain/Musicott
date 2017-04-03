@@ -19,7 +19,9 @@
 
 package com.transgressoft.musicott.util;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import javafx.collections.*;
 import javafx.util.*;
 import org.jaudiotagger.audio.*;
 import org.jaudiotagger.audio.exceptions.*;
@@ -33,7 +35,7 @@ import java.util.*;
  * Performs the operation of parsing an audio file to a {@link Track} instance.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
 public class MetadataParser {
@@ -43,11 +45,12 @@ public class MetadataParser {
     private MetadataParser() {}
 
     public static Track createTrack(File fileToParse) throws TrackParseException {
-        Track track = new Track(fileToParse.getParent(), fileToParse.getName());
+        int newId = MainPreferences.getInstance().getTrackSequence();
+        Track track = new Track(newId, fileToParse.getParent(), fileToParse.getName());
         try {
             LOG.debug("Creating AudioFile instance with jAudioTagger of: {}", fileToParse);
             AudioFile audioFile = AudioFileIO.read(fileToParse);
-            track.setInDisk(true);
+            track.setIsInDisk(true);
             track.setSize((int) (fileToParse.length()));
             track.setTotalTime(Duration.seconds(audioFile.getAudioHeader().getTrackLength()));
             track.setEncoding(audioFile.getAudioHeader().getEncodingType());
@@ -56,10 +59,13 @@ public class MetadataParser {
                 track.setIsVariableBitRate(true);
                 bitRate = bitRate.substring(1);
             }
+            else
+                track.setIsVariableBitRate(false);
             track.setBitRate(Integer.parseInt(bitRate));
             Tag tag = audioFile.getTag();
             parseBaseMetadata(track, tag);
             getCoverBytes(tag).ifPresent(coverBytes -> track.hasCoverProperty().set(true));
+            track.setArtistsInvolved(FXCollections.observableSet(Utils.getArtistsInvolvedInTrack(track)));
         }
         catch (IOException | CannotReadException | ReadOnlyFileException | TagException | InvalidAudioFrameException exception) {
             LOG.debug("Error creating track from {}: ", fileToParse, exception);

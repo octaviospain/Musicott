@@ -31,7 +31,8 @@ public class NavigationModeTest {
     @Test
     @DisplayName ("toString() equals name")
     void toStringName() {
-        assertEquals("All songs", NavigationMode.ALL_TRACKS.toString());
-        assertEquals("Playlist", NavigationMode.PLAYLIST.toString());
+        assertAll(() -> assertEquals("All songs", NavigationMode.ALL_TRACKS.toString()),
+                  () -> assertEquals("Playlists", NavigationMode.PLAYLIST.toString()),
+                  () -> assertEquals("Artists", NavigationMode.ARTISTS.toString()));
     }
 }

@@ -19,7 +19,6 @@
 
 package com.transgressoft.musicott.services;
 
-import com.google.common.collect.*;
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.core.util.*;
 import com.transgressoft.musicott.*;
@@ -38,7 +37,7 @@ import static javax.ws.rs.HttpMethod.*;
  * Performs the usage of the LastFM API.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @see <a href="http://www.last.fm/es/api/scrobbling">LastFM API documentation</a>
  */
 public class LastFmService {
@@ -112,7 +111,8 @@ public class LastFmService {
                 clientResponse = resource.queryParams(params).post(ClientResponse.class);
 
             if (clientResponse != null) {
-                LOG.debug("LastFM API " + httpMethod + " petition status: {}", clientResponse.getStatus());
+                int clientStatus = clientResponse.getStatus();
+                LOG.debug("LastFM API {} petition status: {}", httpMethod, clientStatus);
                 lfmResponse = clientResponse.getEntity(LastFmResponse.class);
 
                 if (lfmResponse == null) {
@@ -135,7 +135,7 @@ public class LastFmService {
 
     private String buildSignature(MultivaluedMap<String, String> params) {
         StringBuilder stringBuilder = new StringBuilder();
-        ImmutableSet<String> sortedParams = ImmutableSet.copyOf(params.keySet());
+        Set<String> sortedParams = new TreeSet<>(params.keySet());
         for (String key : sortedParams)
             stringBuilder.append(key).append(params.getFirst(key));
         stringBuilder.append(API_SECRET);

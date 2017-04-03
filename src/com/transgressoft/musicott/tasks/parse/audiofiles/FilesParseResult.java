@@ -17,23 +17,23 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.util;
+package com.transgressoft.musicott.tasks.parse.audiofiles;
 
-import com.cedarsoftware.util.io.JsonReader.*;
-import javafx.collections.*;
+import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.tasks.parse.*;
+
+import java.util.*;
 
 /**
- * Class needed by the {@code Json-io} library in order to deserialize an {@link ObservableMap}.
+ * Extends from {@link BaseParseResult} to be used during a {@link AudioFilesParseAction}
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
- * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
+ * @version 0.10-b
+ * @since 0.10-b
  */
-public class ObservableMapWrapperCreator implements ClassFactory {
+public class FilesParseResult extends BaseParseResult<Map<Integer, Track>> {
 
-    @SuppressWarnings ("rawtypes")
-    @Override
-    public Object newInstance(Class c) {
-        return FXCollections.observableHashMap();
+    public FilesParseResult(Map<Integer, Track> parsedItems, Collection<String> parseErrors) {
+        super(parsedItems, parseErrors);
     }
 }

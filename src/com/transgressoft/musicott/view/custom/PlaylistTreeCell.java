@@ -30,22 +30,28 @@ import java.util.*;
 import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
 
 /**
- * Custom {@link TreeCell} that isolates the style of his {@link Playlist}
- * managed by pseudo classes
+ * Custom {@link TreeCell} that define the style of his {@link Playlist}
+ * managed by pseudo classes.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9
  */
 public class PlaylistTreeCell extends TreeCell<Playlist> {
 
-    private PseudoClass playlist = PseudoClass.getPseudoClass("playlist");
-    private PseudoClass playlistSelected = PseudoClass.getPseudoClass("playlist-selected");
-    private PseudoClass folder = PseudoClass.getPseudoClass("folder");
-    private PseudoClass folderSelected = PseudoClass.getPseudoClass("folder-selected");
+    private static final DataFormat PLAYLIST_NAME_MIME_TYPE = new DataFormat("application/playlist-name");
+    private static final String dragOverStyle = "-fx-effect: dropshadow(one-pass-box, rgb(99, 255, 109), 1, 1.0, 0, 0);";
+    private static final String dragOverRootPlaylistStyle = "-fx-border-color: rgb(99, 255, 109);" +
+                                                            "-fx-border-width: 1px;";
+
+    private final PseudoClass playlist = PseudoClass.getPseudoClass("playlist");
+    private final PseudoClass playlistSelected = PseudoClass.getPseudoClass("playlist-selected");
+    private final PseudoClass folder = PseudoClass.getPseudoClass("folder");
+    private final PseudoClass folderSelected = PseudoClass.getPseudoClass("folder-selected");
 
     public PlaylistTreeCell() {
         super();
+        setOnMouseClicked(this::doubleClickOnPlaylistHandler);
 
         ChangeListener<Boolean> isFolderListener = (obs, oldPlaylistIsFolder, newPlaylistIsFolder) -> {
             boolean isFolder = newPlaylistIsFolder;
@@ -60,7 +66,6 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
         };
 
         itemProperty().addListener((obs, oldPlaylist, newPlaylist) -> {
-
             if (oldPlaylist != null) {
                 textProperty().unbind();
                 setText("");
@@ -85,7 +90,16 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
                 event.consume();
             }
         });
-        setOnDragDropped(this::onDragOverPlaylist);
+        setOnDragOver(this::onDragOver);
+        setOnDragDropped(this::onDragDropped);
+        setOnDragExited(this::onDragExited);
+        setOnDragDetected(this::onDragDetected);
+    }
+
+    private void doubleClickOnPlaylistHandler(MouseEvent event) {
+        Playlist thisPlaylist = getItem();
+        if (event.getClickCount() == 2 && thisPlaylist != null && ! thisPlaylist.isEmpty() && ! thisPlaylist.isFolder())
+            MusicLibrary.getInstance().playPlaylistRandomly(getItem());
     }
 
     private void updatePseudoClassesStates(boolean isFolder, boolean isSelected) {
@@ -102,13 +116,63 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
         pseudoClassStateChanged(playlistSelected, false);
     }
 
-    private void onDragOverPlaylist(DragEvent event) {
-        Playlist treeCellPlaylist = getItem();
-        if (! treeCellPlaylist.isFolder()) {
-            Dragboard dragBoard = event.getDragboard();
-            List<Integer> selectedTracks = (List<Integer>) dragBoard.getContent(TRACK_ID_MIME_TYPE);
-            treeCellPlaylist.addTracks(selectedTracks);
-            event.consume();
+    private void onDragOver(DragEvent event) {
+        if (getItem() != null) {
+            event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+            setStyle(dragOverStyle);
+            setOpacity(0.9);
         }
+        else
+            if (event.getDragboard().hasContent(PLAYLIST_NAME_MIME_TYPE)) {
+                getTreeView().setStyle(dragOverRootPlaylistStyle);
+            }
+        event.consume();
+    }
+
+    private void onDragExited(DragEvent event) {
+        setStyle("");
+        getTreeView().setStyle("");
+        setOpacity(1.0);
+        event.consume();
+    }
+
+    private void onDragDropped(DragEvent event) {
+        Dragboard dragBoard = event.getDragboard();
+        if (dragBoard.hasContent(TRACK_IDS_MIME_TYPE) && isValidTracksDragDropped()) {
+            List<Integer> selectedTracksIds = (List<Integer>) dragBoard.getContent(TRACK_IDS_MIME_TYPE);
+            getItem().addTracks(selectedTracksIds);
+        }
+        else
+            if (dragBoard.hasContent(PLAYLIST_NAME_MIME_TYPE) && getItem().isFolder()) {
+                String playlistName = (String) dragBoard.getContent(PLAYLIST_NAME_MIME_TYPE);
+                ((PlaylistTreeView) getTreeView()).movePlaylist(playlistName, getItem());
+            }
+        event.consume();
+    }
+
+    private void onDragDetected(MouseEvent event) {
+        if (getItem() != null) {
+            Dragboard dragboard = startDragAndDrop(TransferMode.MOVE);
+            dragboard.setDragView(snapshot(null, null));
+            ClipboardContent clipboardContent = new ClipboardContent();
+            clipboardContent.put(PLAYLIST_NAME_MIME_TYPE, getItem().getName());
+            dragboard.setContent(clipboardContent);
+        }
+        event.consume();
+    }
+
+    /**
+     * @return {@code True} if this playlist is not a folder, and if it's
+     *          not the selected one. {@code False} otherwise.
+     */
+    private boolean isValidTracksDragDropped() {
+        Playlist treeCellPlaylist = getItem();
+        boolean validDrag = treeCellPlaylist != null &&! treeCellPlaylist.isFolder();
+        if (validDrag) {
+            PlaylistTreeView playlistTreeView = (PlaylistTreeView) getTreeView();
+            Optional<Playlist> selectedPlaylist = playlistTreeView.selectedPlaylistProperty().get();
+            validDrag = ! (selectedPlaylist.isPresent() && selectedPlaylist.get().equals(treeCellPlaylist));
+        }
+        return validDrag;
     }
 }

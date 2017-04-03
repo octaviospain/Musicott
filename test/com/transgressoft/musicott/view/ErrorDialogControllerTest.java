@@ -22,8 +22,7 @@ package com.transgressoft.musicott.view;
 import com.transgressoft.musicott.tests.*;
 import javafx.application.*;
 import javafx.stage.*;
-import org.junit.Test;
-import org.junit.jupiter.api.*;
+import org.junit.*;
 
 import java.io.*;
 import java.util.*;
@@ -46,7 +45,7 @@ public class ErrorDialogControllerTest extends JavaFxTestBase {
     }
 
     @Override
-    @BeforeEach
+    @Before
     public void beforeEachTest() throws Exception {
         super.beforeEachTest();
         errorAlertController = (ErrorDialogController) controller;
@@ -76,7 +75,8 @@ public class ErrorDialogControllerTest extends JavaFxTestBase {
     @Test
     public void errorDialogMessageWithContentAndExceptionTest() throws Exception {
         IllegalArgumentException exception = new IllegalArgumentException("Test exception");
-        StackTraceElement[] stackTraceSample = new StackTraceElement[]{new StackTraceElement(getClass().getName(), "method", "file", 31415)};
+        StackTraceElement[] stackTraceSample = new StackTraceElement[]{
+                new StackTraceElement(getClass().getName(), "method", "file", 31415)};
         exception.setStackTrace(stackTraceSample);
 
         Platform.runLater(() -> errorAlertController.prepareDialog("Error message", null, exception));
@@ -95,7 +95,8 @@ public class ErrorDialogControllerTest extends JavaFxTestBase {
     @Test
     public void errorDialogWithErrorCollection() throws Exception {
         List<String> errors = Arrays.asList("Error 1", "Error 2", "Error 3");
-        Platform.runLater(() -> errorAlertController.prepareDialogWithMessages("Error message", "Content message", errors));
+        Platform.runLater(
+                () -> errorAlertController.prepareDialogWithMessages("Error message", "Content message", errors));
 
         Thread.sleep(200);
         assertEquals("Error message", errorAlertController.getErrorTitle());

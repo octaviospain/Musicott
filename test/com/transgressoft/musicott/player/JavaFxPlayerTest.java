@@ -22,6 +22,7 @@ package com.transgressoft.musicott.player;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tests.*;
 import javafx.application.*;
+import javafx.scene.media.MediaPlayer.*;
 import javafx.stage.*;
 import org.junit.*;
 import org.junit.runner.*;
@@ -37,22 +38,22 @@ import static org.powermock.api.mockito.PowerMockito.*;
 /**
  * @author Octavio Calleya
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(PlayerFacade.class)
-public class NativePlayerTest extends JavaFxTestBase {
+@RunWith (PowerMockRunner.class)
+@PrepareForTest (PlayerFacade.class)
+public class JavaFxPlayerTest extends JavaFxTestBase {
 
     private Path testFilesPath = Paths.get("test-resources", "testfiles");
-    private NativePlayer player;
+    private TrackPlayer player;
+
+    @BeforeClass
+    public static void setupSpec() throws Exception {
+    }
 
     @Override
     public void start(Stage stage) throws Exception {
         testStage = stage;
         layout = null;
         super.start(stage);
-    }
-
-    @BeforeClass
-    public static void setupSpec() throws Exception {
     }
 
     @Override
@@ -62,8 +63,8 @@ public class NativePlayerTest extends JavaFxTestBase {
         PlayerFacade playerMock = mock(PlayerFacade.class);
         when(PlayerFacade.getInstance()).thenReturn(playerMock);
 
-        Track track = new Track(testFilesPath.toString(), "testeable.mp3");
-        player = new NativePlayer();
+        Track track = new Track(0, testFilesPath.toString(), "testeable.mp3");
+        player = new JavaFxPlayer();
         player.setTrack(track);
     }
 
@@ -71,34 +72,27 @@ public class NativePlayerTest extends JavaFxTestBase {
     @After
     public void afterEachTest() throws Exception {
         super.afterEachTest();
-        player.dispose();
-        player = null;
         verifyStatic();
     }
 
     @Test
     public void playerStateReadyTest() {
         sleep(500);
-        assertEquals("READY", player.getStatus());
+        assertEquals(Status.READY, player.getStatus());
     }
 
     @Test
     public void playerVolumeTest() {
-        Platform.runLater(() -> player.setVolume(-1.0));
+        Platform.runLater(() -> player.setVolume(- 1.0));
         sleep(1000);
-        assertEquals(0.0, player.getMediaPlayer().getVolume());
-    }
-
-    @Test
-    public void playerSeekTest() {
-        Platform.runLater(() -> player.seek(0.0));
+        assertEquals(0.0, player.volumeProperty().get());
     }
 
     @Test
     public void playerPlayTest() {
         Platform.runLater(() -> player.play());
         sleep(500);
-        assertEquals("PLAYING", player.getStatus());
+        assertEquals(Status.PLAYING, player.getStatus());
     }
 
     @Test
@@ -108,7 +102,7 @@ public class NativePlayerTest extends JavaFxTestBase {
             player.pause();
         });
         sleep(500);
-        assertEquals("READY", player.getStatus());
+        assertEquals(Status.PAUSED, player.getStatus());
     }
 
     @Test
@@ -118,6 +112,6 @@ public class NativePlayerTest extends JavaFxTestBase {
             player.stop();
         });
         sleep(500);
-        assertEquals("READY", player.getStatus());
+        assertEquals(Status.READY, player.getStatus());
     }
 }

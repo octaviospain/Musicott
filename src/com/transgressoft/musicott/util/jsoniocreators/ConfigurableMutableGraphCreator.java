@@ -17,36 +17,24 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.tasks.parse;
+package com.transgressoft.musicott.util.jsoniocreators;
 
-import java.util.*;
+import com.cedarsoftware.util.io.JsonReader.*;
+import com.google.common.graph.*;
 
 /**
- * Class that isolates results and errors of a {@link BaseParseTask}
+ * Class needed by the {@code Json-io} library in order to deserialize an {@link ConfigurableMutableGraph}.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
- * @since 0.9.2-b
+ * @version 0.10-b
+ * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
+ * @see com.google.common.graph.ConfigurableMutableGraph
  */
-public class ParseResult<T> {
+public class ConfigurableMutableGraphCreator implements ClassFactory {
 
-    private T parsedItems;
-    private Collection<String> parseErrors;
-
-    public ParseResult(T parsedItems, Collection<String> parseErrors) {
-        this(parsedItems);
-        this.parseErrors = parseErrors;
-    }
-
-    public ParseResult(T parsedItems) {
-        this.parsedItems = parsedItems;
-    }
-
-    public T getParsedItems() {
-        return parsedItems;
-    }
-
-    public Collection<String> getParseErrors() {
-        return parseErrors;
+    @SuppressWarnings ("rawtypes")
+    @Override
+    public Object newInstance(Class c) {
+        return GraphBuilder.directed().build();
     }
 }

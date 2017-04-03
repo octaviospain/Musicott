@@ -20,15 +20,12 @@
 package com.transgressoft.musicott.model;
 
 import org.junit.jupiter.api.*;
-import org.junit.platform.runner.*;
-import org.junit.runner.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Octavio Calleya
  */
-@RunWith (JUnitPlatform.class)
 public class TrackFieldTest {
 
     @Test

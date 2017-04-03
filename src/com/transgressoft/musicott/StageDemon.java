@@ -22,20 +22,17 @@ package com.transgressoft.musicott;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.view.*;
-import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
 import javafx.fxml.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
 import javafx.scene.image.*;
-import javafx.scene.layout.*;
 import javafx.stage.*;
 import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.*;
 
 import static com.transgressoft.musicott.view.MusicottController.*;
 
@@ -44,15 +41,13 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * the access to their controllers and the handling of showing/hiding views
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class StageDemon {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private static StageDemon instance;
-    private static ErrorDemon errorDemon = ErrorDemon.getInstance();
-    private static MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private ErrorDemon errorDemon = ErrorDemon.getInstance();
 
     private Stage mainStage;
     private Stage editStage;
@@ -66,15 +61,20 @@ public class StageDemon {
 
     private HostServices hostServices;
 
+    private static class InstanceHolder {
+        static final StageDemon INSTANCE = new StageDemon();
+        private InstanceHolder() {}
+    }
+
     private StageDemon() {
         errorDemon.setErrorAlertStage(initStage(ERROR_ALERT_LAYOUT, "Error"));
         errorDemon.setErrorAlertController((ErrorDialogController) controllers.get(ERROR_ALERT_LAYOUT));
+        editStage = initStage(EDIT_LAYOUT, "Edit");
+        ((EditController) controllers.get(EDIT_LAYOUT)).setStage(editStage);
     }
 
     public static StageDemon getInstance() {
-        if (instance == null)
-            instance = new StageDemon();
-        return instance;
+        return InstanceHolder.INSTANCE;
     }
 
     void setApplicationHostServices(HostServices hostServices) {
@@ -90,15 +90,15 @@ public class StageDemon {
     }
 
     public NavigationController getNavigationController() {
-        return (NavigationController) controllers.get(NAVIGATION_LAYOUT);
-    }
-
-    public PlayQueueController getPlayQueueController() {
-        return (PlayQueueController) controllers.get(PLAYQUEUE_LAYOUT);
+        return getRootController() == null ? null : getRootController().getNavigationController();
     }
 
     public PlayerController getPlayerController() {
-        return (PlayerController) controllers.get(PLAYER_LAYOUT);
+        return getRootController().getPlayerController();
+    }
+
+    public EditController getEditController() {
+        return (EditController) controllers.get(EDIT_LAYOUT);
     }
 
     /**
@@ -110,39 +110,10 @@ public class StageDemon {
      */
     void showMusicott(Stage primaryStage) throws IOException {
         mainStage = primaryStage;
-        VBox navigationLayout = (VBox) loadLayout(NAVIGATION_LAYOUT);
-        LOG.debug("Navigation layout loaded");
-        GridPane playerGridPane = (GridPane) loadLayout(PLAYER_LAYOUT);
-        LOG.debug("Player layout loaded");
-        AnchorPane playQueuePane = (AnchorPane) loadLayout(PLAYQUEUE_LAYOUT);
-        getPlayerController().setPlayQueuePane(playQueuePane);
-        LOG.debug("Play queue layout loaded");
-        BorderPane rootLayout = (BorderPane) loadLayout(ROOT_LAYOUT);
-        getRootController().setNavigationPane(navigationLayout);
-        LOG.debug("Root layout loaded");
-
-        BorderPane contentBorderLayout = (BorderPane) rootLayout.lookup("#contentBorderLayout");
-        contentBorderLayout.setBottom(playerGridPane);
-        contentBorderLayout.setLeft(navigationLayout);
-        getNavigationController().setNavigationMode(NavigationMode.ALL_TRACKS);
-
-        MusicottMenuBar menuBar = new MusicottMenuBar(mainStage);
-        String os = System.getProperty("os.name");
-        if (os != null && os.startsWith("Mac"))
-            menuBar.macMenuBar();
-        else {
-            menuBar.defaultMenuBar();
-            VBox headerVBox = (VBox) rootLayout.lookup("#headerVBox");
-            headerVBox.getChildren().add(0, menuBar);
-        }
-
-        // Hide play queue pane clicking outside of it
-        navigationLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
-        contentBorderLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
-        rootLayout.setOnMouseClicked(e -> getPlayerController().hidePlayQueue());
-
-        Scene mainScene = new Scene(rootLayout);
-        mainStage.setScene(mainScene);
+        Parent rootLayout = loadLayout(ROOT_LAYOUT);
+        rootLayout.setOnMouseClicked(e -> getRootController().getPlayerController().hidePlayQueue());
+        getRootController().setStage(mainStage);
+        mainStage.setScene(new Scene(rootLayout));
         mainStage.setTitle("Musicott");
         mainStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
         mainStage.setMinWidth(1200);
@@ -154,60 +125,46 @@ public class StageDemon {
      * Shows the edit window. If the size of track selection is greater than 1,
      * an {@code Alert} is opened asking for a confirmation of the user.
      */
-    public void editTracks() {
-        List<Track> trackSelection = getRootController().getSelectedTracks();
-        if (! trackSelection.isEmpty()) {
-            boolean[] edit = {true};
-            if (trackSelection.size() > 1) {
+    public void editTracks(int numberOfTracks) {
+        if (numberOfTracks != 0)
+            if (numberOfTracks > 1) {
                 String alertHeader = "Are you sure you want to edit multiple files?";
                 Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
                 Optional<ButtonType> result = alert.showAndWait();
 
-                result.ifPresent(value -> {
-                    if (value.getButtonData().isCancelButton()) {
-                        edit[0] = false;
-                    }
-                });
+                if (result.isPresent() && result.get().getButtonData().isDefaultButton())
+                    showStage(editStage);
+                else
+                    alert.close();
             }
-
-            if (edit[0]) {
-                if (editStage == null) {
-                    editStage = initStage(EDIT_LAYOUT, "Edit");
-                    ((EditController) controllers.get(EDIT_LAYOUT)).setStage(editStage);
-                }
-
+            else
                 showStage(editStage);
-                LOG.debug("Showing edit stage");
-            }
-        }
     }
 
     /**
      * Deletes the tracks selected in the table. An {@link Alert} is opened
      * asking for a confirmation of the user.
      */
-    public void deleteTracks() {
-        List<Track> trackSelection = getRootController().getSelectedTracks();
-
+    public void deleteTracks(List<Track> trackSelection) {
         if (! trackSelection.isEmpty()) {
-            int numDeletedTracks = trackSelection.size();
-            String alertHeader = "Delete " + numDeletedTracks + " files from Musicott?";
+            String alertHeader = "Delete " + trackSelection.size() + " files from Musicott?";
             Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
-            alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
             Optional<ButtonType> result = alert.showAndWait();
 
             if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
                 new Thread(() -> {
-                    List<Integer> tracksToDelete = trackSelection.stream().map(Track::getTrackId).collect(Collectors.toList());
-                    PlayerFacade.getInstance().deleteFromQueues(tracksToDelete);
-                    musicLibrary.deleteTracks(tracksToDelete);
-                    Platform.runLater(this::closeIndeterminateProgress);
+                    PlayerFacade.getInstance().deleteFromQueues(trackSelection);
+                    MusicLibrary.getInstance().deleteTracks(trackSelection);
+                    String message = "Deleted " + Integer.toString(trackSelection.size()) + " tracks";
+                    Platform.runLater(() -> {
+                        getNavigationController().setStatusMessage(message);
+                        closeIndeterminateProgress();
+                    });
                 }).start();
                 showIndeterminateProgress();
             }
-            else {
+            else
                 alert.close();
-            }
         }
     }
 

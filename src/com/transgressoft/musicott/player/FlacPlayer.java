@@ -19,7 +19,11 @@
 
 package com.transgressoft.musicott.player;
 
-import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.model.Track;
+import javafx.beans.property.*;
+import javafx.scene.media.*;
+import javafx.scene.media.MediaPlayer.*;
+import javafx.util.*;
 
 /**
  * @author Octavio Calleya
@@ -27,12 +31,27 @@ import com.transgressoft.musicott.model.*;
 public class FlacPlayer implements TrackPlayer {
 
     @Override
-    public String getStatus() {
-        return "";
+    public Status getStatus() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public void setOnEndOfMedia(Runnable value) {
+        throw new UnsupportedOperationException("Unimplemented");
     }
 
     @Override
     public void setTrack(Track track) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public Track getTrack() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public Media getMedia() {
         throw new UnsupportedOperationException("Unimplemented");
     }
 
@@ -42,7 +61,7 @@ public class FlacPlayer implements TrackPlayer {
     }
 
     @Override
-    public void seek(double seekValue) {
+    public void seek(Duration seekTime) {
         throw new UnsupportedOperationException("Unimplemented");
     }
 
@@ -62,7 +81,27 @@ public class FlacPlayer implements TrackPlayer {
     }
 
     @Override
-    public void dispose() {
+    public Duration getStopTime() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public Duration getTotalDuration() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public DoubleProperty volumeProperty() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public ReadOnlyObjectProperty<Status> statusProperty() {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    @Override
+    public ReadOnlyObjectProperty<Duration> currentTimeProperty() {
         throw new UnsupportedOperationException("Unimplemented");
     }
 }

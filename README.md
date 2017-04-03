@@ -1,6 +1,16 @@
 [![Build Status](https://travis-ci.org/octaviospain/Musicott.svg?branch=master)](https://travis-ci.org/octaviospain/Musicott)
 [![codecov](https://codecov.io/gh/octaviospain/Musicott/branch/master/graph/badge.svg)](https://codecov.io/gh/octaviospain/Musicott)
+[![maintainability-rating](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=new_maintainability_rating)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
+[![reliability-rating](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=new_reliability_rating)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
+[![security-rating](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=new_security_rating)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
 [![license](https://img.shields.io/badge/license-GPL3v2-brightgreen.svg)](https://github.com/octaviospain/Musicott/blob/master/license/gpl.txt)
+
+[![loc-metric](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=ncloc)](https://sonarqube.com/component_measures/domain/Size?id=com.transgressoft%3Amusicott)
+[![lines-metric](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=lines)](https://sonarqube.com/component_measures/domain/Size?id=com.transgressoft%3Amusicott)
+[![comments-metric](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=comment_lines_density)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
+[![new-code-smells](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=code_smells)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
+[![bugs](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=bugs)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
+[![vulnerabilities-rating](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=vulnerabilities)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
 
 
 ![Musicott title logo](http://imageshack.com/a/img921/1074/4WJ9yl.png)
@@ -12,9 +22,7 @@ Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to 
 [TestFx](https://github.com/TestFX/TestFX "TestFx") for testing, and some components from
 [ControlsFx](https://bitbucket.org/controlsfx/controlsfx/ "ControlsFx").
 
-Testing with Junit 5, TestFX and maven is quite difficult, help is welcomed !
-
-![Musicott screenshot 1](http://imageshack.com/a/img923/9629/3UzBQE.png)
+[![Musicott-video](http://imageshack.com/a/img922/6599/x91wgY.png)](https://youtu.be/HHvfC3L8A3g)
 
 ### Features
 * Play mp3, wav and m4a (with ALAC encoding) files
@@ -29,7 +37,8 @@ Testing with Junit 5, TestFX and maven is quite difficult, help is welcomed !
 * Smart playlists
 
 ## Download
-[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.9.2-b);
+[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.9-b).
+Version 0.10-b needs some more tests and it will be published, in the meantime it's possible to run the last version from the master/develop branch and help with the testing thing ;)
 
 ## How to build and run
 To build you need at least Java 8 update 40 and Maven
@@ -54,9 +63,20 @@ Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki")
 
 ## Changes history
 
+### Version 0.10
+* Added Artists navigation mode. A list of artists is shown, and clicking one artist shows their albums, with useful information of them.
+* Typing on the search field while on the artists mode filters the artists list by the query.
+* Added cover thumbnail on the bottom right corner of the table that changes when hovering the rows
+* Also when a playlist is shown, the cover of the playlist changes when hovering
+* Drag & drop tracks to playlists is now possible
+* Drag & drop playlists into folders is now possible
+* Ability to reorder the playlist queue by drag & drop
+* Improved audio files & iTunes importing
+* Several bug fixes and performance improvements
+
 ### Version 0.9
 * New dark theme
-* Added a navigation area with playlist and the showing modes
+* Added a navigation area with playlist and the showing mode
 * Added a information pane at the top of the table when a playlist is shown, with a cover image,
 the number of tracks and the size of the playlist
 * You can hide/show the navigation pane with <kbd>CMD</kbd> + <kbd>SHIFT</kbd> + <kbd>R</kbd>
@@ -76,6 +96,6 @@ the number of tracks and the size of the playlist
 * Big refactor implementing better concurrent model
 
 ## Copyright
-Copyright (c) 2015-2017 Octavio Calleya.
+Copyright (c) 2015-2016 Octavio Calleya.
 
 Musicott is free software under GNU GPL version 3 license. The license of Musicott and the licenses of the included libraries in this software are in the [LICENSE](https://github.com/octaviospain/Musicott/tree/master/license "License") folder

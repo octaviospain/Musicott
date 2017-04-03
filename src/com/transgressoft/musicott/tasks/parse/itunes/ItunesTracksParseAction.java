@@ -17,51 +17,42 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.tasks.parse;
+package com.transgressoft.musicott.tasks.parse.itunes;
 
-import com.google.common.collect.*;
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
 import com.worldsworstsoftware.itunes.*;
+import javafx.application.*;
+import javafx.collections.*;
 import javafx.util.*;
 import org.jaudiotagger.audio.*;
 import org.jaudiotagger.tag.*;
-import org.slf4j.*;
 
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.*;
-
-import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
 
 /**
- * This class extends from {@link RecursiveTask} so it can be used inside a
- * {@link ForkJoinPool} in order to perform the conversion from a collection of
- * {@link ItunesTrack} instances to the system's {@link Track}.
+ * This class extends from {@link ItunesParseAction} in order to perform the
+ * conversion from a collection of {@link ItunesTrack} instances of the system's {@link Track}.
  *
  * If it receives more than a certain amount of items to parse, the task is forked
  * with partitions of the items collection and their results joined after their completion.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9.2-b
  */
-public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {
+public class ItunesTracksParseAction extends ItunesParseAction {
 
-    private static final int MAX_ITEMS_TO_PARSE_PER_ACTION = 250;
-    private static final int NUMBER_OF_ITEMS_PARTITIONS = 6;
-    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private static final int MAX_ITEMS_TO_PARSE_PER_ACTION = 300;
+    private static final int NUMBER_OF_PARTITIONS = 6;
+
     private final int metadataPolicy;
-
-    private List<ItunesTrack> itunesTracks;
-    private Map<Integer, Track> parsedTracks;
-    private Collection<String> parseErrors;
-    private Map<Integer, Integer> itunesIdToMusicottIdMap;
-    private List<String> notFoundFiles;
-    private boolean holdPlayCount;
-    private BaseParseTask parentTask;
+    private final boolean holdPlayCount;
 
     /**
      * Constructor of {@link ItunesTracksParseAction}
@@ -73,72 +64,49 @@ public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {
      */
     public ItunesTracksParseAction(List<ItunesTrack> itunesTracks, int metadataPolicy, boolean holdPlayCount,
             BaseParseTask parentTask) {
-        this.itunesTracks = itunesTracks;
+        super(itunesTracks, parentTask);
         this.metadataPolicy = metadataPolicy;
         this.holdPlayCount = holdPlayCount;
-        this.parentTask = parentTask;
-        parsedTracks = new HashMap<>();
-        itunesIdToMusicottIdMap = new HashMap<>();
-        notFoundFiles = new ArrayList<>();
-        parseErrors = new ArrayList<>();
     }
 
     @Override
     protected ItunesParseResult compute() {
-        if (itunesTracks.size() > MAX_ITEMS_TO_PARSE_PER_ACTION) {
-            int subListsSize = itunesTracks.size() / NUMBER_OF_ITEMS_PARTITIONS;
-            ImmutableList<ItunesTracksParseAction> subActions = Lists.partition(itunesTracks, subListsSize)
-                                                         .stream()
-                                                         .map(subList -> new ItunesTracksParseAction(
-                                                                 subList, metadataPolicy, holdPlayCount, parentTask))
-                                                         .collect(ImmutableList.toImmutableList());
-
-            subActions.forEach(ItunesTracksParseAction::fork);
-            subActions.forEach(action -> joinPartialResults(action.join()));
-
-            LOG.debug("Forking parse of files into {} sub actions", subActions.size());
-        }
-        else
-            itunesTracks.forEach(this::parseItunesTrack);
-
-        return new ItunesParseResult(parsedTracks, parseErrors, itunesIdToMusicottIdMap, notFoundFiles);
-    }
-
-    private void joinPartialResults(ItunesParseResult partialResult) {
-        parsedTracks.putAll(partialResult.getParsedItems());
-        parseErrors.addAll(partialResult.getParseErrors());
-        itunesIdToMusicottIdMap.putAll(partialResult.getItunesIdToMusicottIdMap());
-        notFoundFiles.addAll(partialResult.getNotFoundFiles());
-    }
-
-    private void parseItunesTrack(ItunesTrack itunesTrack) {
-        Optional<Track> currentTrack = Optional.empty();
-        if (isValidItunesTrack(itunesTrack)) {
-            if (metadataPolicy == METADATA_POLICY)
-                currentTrack = createTrackFromFileMetadata(itunesTrack);
-            else if (metadataPolicy == ITUNES_DATA_POLICY)
-                currentTrack = createTrackFromItunesData(itunesTrack);
-
-            currentTrack.ifPresent(track -> {
-                itunesIdToMusicottIdMap.put(itunesTrack.getTrackID(), track.getTrackId());
-                parsedTracks.put(track.getTrackId(), track);
-            });
-        }
-        parentTask.updateProgressTask();
-    }
-
-    private boolean isValidItunesTrack(ItunesTrack itunesTrack) {
-        boolean valid = true;
-        if ("URL".equals(itunesTrack.getTrackType()) || "Remote".equals(itunesTrack.getTrackType()))
-            valid = false;
+        if (itemsToParse.size() > MAX_ITEMS_TO_PARSE_PER_ACTION)
+            forkIntoSubActions();
         else {
-            File itunesFile = Paths.get(URI.create(itunesTrack.getLocation())).toFile();
-            int index = itunesFile.toString().lastIndexOf('.');
-            String fileExtension = itunesFile.toString().substring(index + 1);
-            if (! ("mp3".equals(fileExtension) || "m4a".equals(fileExtension) || "wav".equals(fileExtension)))
-                valid = false;
+            itemsToParse.forEach(this::parseItem);
+            Platform.runLater(() -> musicLibrary.tracks.add(parsedTracks));
         }
-        return valid;
+
+        return new ItunesParseResult(parsedTracks, itunesIdToMusicottTrackMap, parseErrors, notFoundFiles);
+    }
+
+    @Override
+    protected BaseParseAction<ItunesTrack, Map<Integer, Track>, ItunesParseResult> parseActionMapper(
+            List<ItunesTrack> subItems) {
+        return new ItunesTracksParseAction(subItems, metadataPolicy, holdPlayCount, parentTask);
+    }
+
+    @Override
+    protected int getNumberOfPartitions() {
+        return NUMBER_OF_PARTITIONS;
+    }
+
+    @Override
+    protected void parseItem(ItunesTrack itunesTrack) {
+        Optional<Track> currentTrack = Optional.empty();
+        if (metadataPolicy == ItunesParseTask.METADATA_POLICY)
+            currentTrack = createTrackFromFileMetadata(itunesTrack);
+        else if (metadataPolicy == ItunesParseTask.ITUNES_DATA_POLICY)
+            currentTrack = createTrackFromItunesData(itunesTrack);
+
+        currentTrack.ifPresent(track -> {
+            if (! musicLibrary.tracks.contains(track)) {
+                itunesIdToMusicottTrackMap.put(itunesTrack.getTrackID(), track);
+                parsedTracks.put(track.getTrackId(), track);
+            }
+        });
+        parentTask.updateProgressTask();
     }
 
     /**
@@ -180,6 +148,7 @@ public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {
         Optional<Track> newTrack = Optional.empty();
         if (itunesFile.exists()) {
             Track track = parseItunesFieldsToTrackFields(itunesTrack, itunesPath);
+            track.setArtistsInvolved(FXCollections.observableSet(Utils.getArtistsInvolvedInTrack(track)));
             newTrack = Optional.of(track);
         }
         else
@@ -190,8 +159,9 @@ public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {
     private Track parseItunesFieldsToTrackFields(ItunesTrack itunesTrack, Path itunesPath) {
         String fileFolder = itunesPath.getParent().toString();
         String fileName = itunesPath.getName(itunesPath.getNameCount() - 1).toString();
-        Track newTrack = new Track(fileFolder, fileName);
-        newTrack.setInDisk(true);
+        int newId = MainPreferences.getInstance().getTrackSequence();
+        Track newTrack = new Track(newId, fileFolder, fileName);
+        newTrack.setIsInDisk(true);
         newTrack.setSize(itunesTrack.getSize());
         newTrack.setTotalTime(Duration.millis(itunesTrack.getTotalTime()));
         newTrack.setName(itunesTrack.getName() == null ? "" : itunesTrack.getName());
@@ -222,6 +192,8 @@ public class ItunesTracksParseAction extends RecursiveTask<ItunesParseResult> {
                 track.setIsVariableBitRate(true);
                 bitRate = bitRate.substring(1);
             }
+            else
+                track.setIsVariableBitRate(false);
             track.setBitRate(Integer.parseInt(bitRate));
         }
         catch (Exception exception) {

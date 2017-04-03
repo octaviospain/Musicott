@@ -20,9 +20,10 @@
 package com.transgressoft.musicott.view;
 
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.view.custom.*;
-import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.embed.swing.*;
 import javafx.fxml.*;
@@ -35,22 +36,21 @@ import javafx.util.*;
 import org.slf4j.*;
 
 import javax.swing.*;
-import java.io.*;
 import java.util.*;
 
 import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Controller class of the bottom pane that includes the player and the search field.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class PlayerController implements MusicottController {
 
     private static final double VOLUME_AMOUNT = 0.05;
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private final Image COVER_IMAGE = new Image(getClass().getResourceAsStream(DEFAULT_COVER_IMAGE));
 
     @FXML
     private GridPane playerGridPane;
@@ -88,8 +88,14 @@ public class PlayerController implements MusicottController {
     private TextField searchTextField;
     @FXML
     private ProgressBar volumeProgressBar;
-    private AnchorPane playQueuePane;
+    @FXML
+    private AnchorPane playQueueLayout;
+    @FXML
+    private PlayQueueController playQueueLayoutController;
     private WaveformPanel mainWaveformPanel;
+
+    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private PlayerFacade player = PlayerFacade.getInstance();
 
     @FXML
     public void initialize() {
@@ -97,12 +103,10 @@ public class PlayerController implements MusicottController {
         playButton.setOnAction(event -> playPause());
         prevButton.setOnAction(e -> player.previous());
         nextButton.setOnAction(e -> player.next());
-        volumeSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {
-            if (! isChanging)
-                volumeProgressBar.setProgress(volumeSlider.getValue());
-        });
-        volumeSlider.valueProperty().addListener(
-                (observable, oldValue, newValue) -> volumeProgressBar.setProgress(newValue.doubleValue()));
+        subscribe(volumeSlider.valueChangingProperty(), changing -> {
+                    if (! changing)
+                        volumeProgressBar.setProgress(volumeSlider.getValue());});
+        subscribe(volumeSlider.valueProperty(), p -> volumeProgressBar.setProgress(p.doubleValue()));
 
         SwingUtilities.invokeLater(() -> {
             mainWaveformPanel = new WaveformPanel(520, 50);
@@ -111,7 +115,7 @@ public class PlayerController implements MusicottController {
         playerStackPane.getChildren().add(0, waveformSwingNode);
 
         playQueueButton.setOnAction(event -> {
-            if (playQueuePane.isVisible())
+            if (playQueueLayout.isVisible())
                 hidePlayQueue();
             else
                 showPlayQueue();
@@ -120,15 +124,35 @@ public class PlayerController implements MusicottController {
         playerGridPane.setOnMouseClicked(event -> hidePlayQueue());
         playButton.setOnMouseClicked(event -> hidePlayQueue());
 
-        playQueueStackPane.setOnDragOver(event -> {
-            event.acceptTransferModes(TransferMode.ANY);
-            event.consume();
-        });
-        playQueueStackPane.setOnDragDropped(event -> {
-            Dragboard dragBoard = event.getDragboard();
-            List<Integer> selectedTracks = (List<Integer>) dragBoard.getContent(TRACK_ID_MIME_TYPE);
-            player.addTracksToPlayQueue(selectedTracks, false);
-        });
+        playQueueButton.setOnDragDropped(this::onDragDroppedOnPlayQueueButton);
+        playQueueButton.setOnDragOver(this::onDragOverOnPlayQueueButton);
+        playQueueButton.setOnDragExited(this::onDragExitedOnPlayQueueButton);
+        subscribe(playQueueLayout.visibleProperty(), playQueueButton::setSelected);
+        StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
+        player.setPlayerController(this);
+        player.setPlayQueueController(playQueueLayoutController);
+        hidePlayQueue();
+    }
+
+    private void onDragDroppedOnPlayQueueButton(DragEvent event) {
+        Dragboard dragBoard = event.getDragboard();
+        List<Integer> selectedTracksIds = (List<Integer>) dragBoard.getContent(TRACK_IDS_MIME_TYPE);
+        List<Track> selectedTracks = MusicLibrary.getInstance().tracks.getTracks(selectedTracksIds);
+        player.addTracksToPlayQueue(selectedTracks, false);
+        event.consume();
+    }
+
+    private void onDragOverOnPlayQueueButton(DragEvent event) {
+        event.acceptTransferModes(TransferMode.COPY);
+        playQueueButton.setStyle("-fx-effect: dropshadow(one-pass-box, rgb(99, 255, 109), 3, 0.2, 0, 0);");
+        playQueueButton.setOpacity(0.9);
+        event.consume();
+    }
+
+    private void onDragExitedOnPlayQueueButton(DragEvent event) {
+        playQueueButton.setStyle("");
+        playQueueButton.setOpacity(1.0);
+        event.consume();
     }
 
     private void playPause() {
@@ -144,21 +168,29 @@ public class PlayerController implements MusicottController {
     }
 
     public void hidePlayQueue() {
-        if (playQueueStackPane.getChildren().contains(playQueuePane)) {
-            playQueueStackPane.getChildren().remove(playQueuePane);
-            playQueuePane.setVisible(false);
+        if (playQueueStackPane.getChildren().contains(playQueueLayout)) {
+            playQueueStackPane.getChildren().remove(playQueueLayout);
+            playQueueLayout.setVisible(false);
         }
     }
 
     public void showPlayQueue() {
-        if (! playQueueStackPane.getChildren().contains(playQueuePane)) {
-            playQueueStackPane.getChildren().add(0, playQueuePane);
-            playQueuePane.setVisible(true);
+        if (! playQueueStackPane.getChildren().contains(playQueueLayout)) {
+            playQueueStackPane.getChildren().add(0, playQueueLayout);
+            playQueueLayout.setVisible(true);
         }
+    }
+
+    public void focusSearchField() {
+        searchTextField.requestFocus();
     }
 
     public StringProperty searchTextProperty() {
         return searchTextField.textProperty();
+    }
+
+    public ReadOnlyBooleanProperty searchFieldFocusedProperty() {
+        return searchTextField.focusedProperty();
     }
 
     public ReadOnlyBooleanProperty previousButtonDisabledProperty() {
@@ -193,23 +225,6 @@ public class PlayerController implements MusicottController {
         return volumeSlider.valueProperty();
     }
 
-    /**
-     * Sets the play queue pane node that contains the play queue and history queue lists.
-     *
-     * @param pane
-     */
-    public void setPlayQueuePane(AnchorPane pane) {
-        playQueuePane = pane;
-        playQueuePane.setVisible(false);
-        playQueuePane.visibleProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue)
-                playQueueButton.setSelected(true);
-            else
-                playQueueButton.setSelected(false);
-        });
-        StackPane.setMargin(playQueuePane, new Insets(0, 0, 480, 0));
-    }
-
     public void setStopped() {
         playButton.setSelected(false);
         trackSlider.setDisable(true);
@@ -236,13 +251,11 @@ public class PlayerController implements MusicottController {
     public void increaseVolume() {
         player.increaseVolume(VOLUME_AMOUNT);
         volumeSlider.setValue(volumeSlider.getValue() + VOLUME_AMOUNT);
-        LOG.trace("Volume increased " + volumeSlider.getValue());
     }
 
     public void decreaseVolume() {
         player.decreaseVolume(VOLUME_AMOUNT);
         volumeSlider.setValue(volumeSlider.getValue() - VOLUME_AMOUNT);
-        LOG.trace("Volume decreased " + volumeSlider.getValue());
     }
 
     /**
@@ -254,29 +267,22 @@ public class PlayerController implements MusicottController {
     public void updatePlayer(Track currentTrack) {
         LOG.debug("Setting up player and view for track {}", currentTrack);
         String fileFormat = currentTrack.getFileFormat();
-        if (musicLibrary.containsWaveform(currentTrack.getTrackId()))
+        if (musicLibrary.waveforms.containsWaveform(currentTrack.getTrackId()))
             setWaveform(currentTrack);
         else if ("wav".equals(fileFormat) || "mp3".equals(fileFormat) || "m4a".equals(fileFormat))
             TaskDemon.getInstance().analyzeTrackWaveform(currentTrack);
 
         SwingUtilities.invokeLater(() -> mainWaveformPanel.setTrack(currentTrack));
         songTitleLabel.textProperty().bind(currentTrack.nameProperty());
-        artistAlbumLabel.textProperty().bind(Bindings.createStringBinding(
-                () -> currentTrack.artistProperty().get() + " - " + currentTrack.albumProperty().get(),
-                currentTrack.artistProperty(), currentTrack.albumProperty()));
-        if (currentTrack.getCoverImage().isPresent()) {
-            byte[] coverBytes = currentTrack.getCoverImage().get();
-            Image image = new Image(new ByteArrayInputStream(coverBytes));
-            currentCover.setImage(image);
-        }
-        else
-            currentCover.setImage(COVER_IMAGE);
+        artistAlbumLabel.textProperty().bind(
+                combine(currentTrack.artistProperty(), currentTrack.albumProperty(), (art, alb) -> art + " - " + alb));
 
+        Utils.updateCoverImage(currentTrack, currentCover);
         trackSlider.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             Double endTime = trackSlider.getMax();
             if (! endTime.equals(Double.POSITIVE_INFINITY) || ! endTime.equals(Double.NaN)) {
                 trackProgressBar.setProgress(trackSlider.getValue() / endTime);
-                player.seek(trackSlider.getValue());
+                player.seek(Duration.millis(trackSlider.getValue()));
             }
         });
     }
@@ -295,7 +301,8 @@ public class PlayerController implements MusicottController {
     public void updateTrackLabels(Duration elapsed, Duration total) {
         int currentHours = (int) elapsed.toHours();
         int currentMins = (int) elapsed.subtract(Duration.hours(currentHours)).toMinutes();
-        int currentSecs = (int) elapsed.subtract(Duration.minutes(currentMins)).subtract(Duration.hours(currentHours))
+        int currentSecs = (int) elapsed.subtract(Duration.minutes(currentMins))
+                                       .subtract(Duration.hours(currentHours))
                                        .toSeconds();
 
         String currentTimeText = getFormattedTimeString(currentHours, currentMins, currentSecs, (int) total.toHours());

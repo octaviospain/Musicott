@@ -19,7 +19,6 @@
 
 package com.transgressoft.musicott;
 
-import com.google.common.collect.*;
 import com.sun.javafx.application.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
@@ -50,7 +49,7 @@ import java.util.logging.*;
  * </ol>
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @see <a href="https://octaviospain.github.io/Musicott">Musicott</a>
  */
 public class MusicottApplication extends Application {
@@ -63,11 +62,13 @@ public class MusicottApplication extends Application {
     private MusicLibrary musicLibrary;
     private MainPreferences preferences;
     private StageDemon stageDemon;
+    private TaskDemon taskDemon;
 
     public MusicottApplication() {
         musicLibrary = MusicLibrary.getInstance();
         preferences = MainPreferences.getInstance();
         stageDemon = StageDemon.getInstance();
+        taskDemon = TaskDemon.getInstance();
     }
 
     public static void main(String[] args) {
@@ -147,14 +148,13 @@ public class MusicottApplication extends Application {
         String applicationFolder = preferences.getMusicottUserFolder();
         loadConfigProperties();
 
-        ImmutableList<Callable<Void>> loadTasksList = ImmutableList
-                .of(new WaveformsLoadAction(applicationFolder, musicLibrary, this),
-                    new PlaylistsLoadAction(applicationFolder, musicLibrary, this),
-                    new TracksLoadAction(null, applicationFolder, musicLibrary, this));
-
+        taskDemon.deactivateLibrarySaving();
         ForkJoinPool loadForkJoinPool = new ForkJoinPool(4);
-        loadForkJoinPool.invokeAll(loadTasksList);
+        loadForkJoinPool.invoke(new WaveformsLoadAction(applicationFolder, musicLibrary, this));
+        loadForkJoinPool.invoke(new PlaylistsLoadAction(applicationFolder, musicLibrary, this));
+        loadForkJoinPool.invoke(new TracksLoadAction(null, -1, applicationFolder, musicLibrary, this));
         loadForkJoinPool.shutdown();
+        taskDemon.activateLibrarySaving();
     }
 
     /**

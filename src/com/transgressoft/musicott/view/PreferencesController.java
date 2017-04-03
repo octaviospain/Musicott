@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view;
 
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.services.lastfm.*;
 import com.transgressoft.musicott.tasks.*;
@@ -36,13 +37,14 @@ import org.controlsfx.tools.*;
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.tasks.parse.ItunesParseTask.*;
+import static com.transgressoft.musicott.tasks.parse.itunes.ItunesParseTask.*;
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Controller class of the preferences window.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class PreferencesController implements MusicottController {
 
@@ -81,13 +83,18 @@ public class PreferencesController implements MusicottController {
 
     private ReadOnlyBooleanProperty usingLastFmProperty = ServiceDemon.getInstance().usingLastFmProperty();
 
+    private StageDemon stageDemon = StageDemon.getInstance();
+    private ServiceDemon serviceDemon = ServiceDemon.getInstance();
+    private MainPreferences preferences = MainPreferences.getInstance();
+    private ErrorDemon errorDemon = ErrorDemon.getInstance();
+
     @FXML
     public void initialize() {
         lastFmPreferences = serviceDemon.getLastFmPreferences();
         itunesImportPolicyCheckBox.setItems(FXCollections.observableArrayList(ITUNES_INFO, METADATA_INFO));
 
         lastFmLoginButton.disableProperty().bind(lastFmLoginButtonDisableBinding());
-        lastFmLoginButton.textProperty().bind(lastFmLoginButtonTextBinding());
+        lastFmLoginButton.textProperty().bind(map(usingLastFmProperty, using -> using ? LOGOUT : LOGIN));
         lastFmUsernameTextField.disableProperty().bind(usingLastFmProperty);
         lastFmPasswordField.disableProperty().bind(usingLastFmProperty);
 
@@ -111,25 +118,9 @@ public class PreferencesController implements MusicottController {
      *
      * @return The {@link BooleanBinding}
      */
-    private BooleanBinding lastFmLoginButtonDisableBinding() {
-        return Bindings.createBooleanBinding(
-                () -> lastFmUsernameTextField.textProperty().get().isEmpty() ||
-                        lastFmPasswordField.textProperty().get().isEmpty(),
-                lastFmUsernameTextField.textProperty(), lastFmPasswordField.textProperty());
-    }
-
-    /**
-     * Binds the text of the lastFM login button whenever the application is using the service
-     *
-     * @return The {@link StringBinding}
-     */
-    private StringBinding lastFmLoginButtonTextBinding() {
-        return Bindings.createStringBinding(() -> {
-            if (usingLastFmProperty.get())
-                return LOGOUT;
-            else
-                return LOGIN;
-        }, usingLastFmProperty);
+    private Binding<Boolean> lastFmLoginButtonDisableBinding() {
+        return combine(lastFmUsernameTextField.textProperty(), lastFmPasswordField.textProperty(),
+                                (user, pass) -> user.isEmpty() || pass.isEmpty());
     }
 
     /**

@@ -33,7 +33,7 @@ import java.util.concurrent.*;
  * service in order to scrobble and updates the user profile.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class LastFmTask extends Thread {
 
@@ -44,12 +44,14 @@ public class LastFmTask extends Thread {
     private LastFmService lastFmService;
     private Semaphore updateAndScrobbleSemaphore;
     private List<Map<Integer, Track>> tracksToScrobbleLater;
+    private boolean logout = false;
 
     private ErrorDemon errorDemon = ErrorDemon.getInstance();
-    private ServiceDemon serviceDemon = ServiceDemon.getInstance();
+    private ServiceDemon serviceDemon;
 
-    public LastFmTask() {
+    public LastFmTask(ServiceDemon serviceDemon) {
         super("LastFM Thread");
+        this.serviceDemon = serviceDemon;
         lastFmService = new LastFmService();
         updateAndScrobbleSemaphore = new Semaphore(0);
         tracksToScrobbleLater = new ArrayList<>();
@@ -64,6 +66,10 @@ public class LastFmTask extends Thread {
     public void run() {
         if (loginToLastFmApi())
             updateAndScrobbleLoop();
+    }
+
+    public void logout() {
+        logout = true;
     }
 
     private boolean loginToLastFmApi() {
@@ -87,19 +93,21 @@ public class LastFmTask extends Thread {
     }
 
     private void updateAndScrobbleLoop() {
-        while (! Thread.currentThread().isInterrupted()) {
+        while (! Thread.currentThread().isInterrupted() && ! logout) {
             try {
                 scrobbleTracksSavedForLater();
                 updateAndScrobbleSemaphore.acquire();
+                if (logout)
+                    break;
                 updateNowPlaying();
                 scrobble();
+                LOG.info("{} scrobbled on LastFM", trackToScrobble);
             }
             catch (InterruptedException exception) {
                 LOG.warn("LastFM thread error: {}", exception);
                 errorDemon.showErrorDialog("Error using LastFM", "", exception);
                 serviceDemon.setUsingLastFm(false);
-                Thread.currentThread().interrupt();
-                break;
+                logout = true;
             }
         }
     }
@@ -138,8 +146,13 @@ public class LastFmTask extends Thread {
     }
 
     private void scrobbleTracksSavedForLater() {
-        tracksToScrobbleLater.stream().filter(mapBatch -> ! mapBatch.isEmpty())
-                             .forEach(lastFmService::scrobbleTrackBatch);
+        tracksToScrobbleLater.stream().filter(mapBatch -> ! mapBatch.isEmpty()).forEach(trackBatch -> {
+            LastFmResponse lastFmResponse = lastFmService.scrobbleTrackBatch(trackBatch);
+            if (lastFmResponse.getStatus().equals(FAILED))
+                handleLastFMError(lastFmResponse.getError());
+            else
+                LOG.info("Batch of {} tracks scrobbled on LastFM", trackBatch.size());
+        });
     }
 
     private void updateNowPlaying() {
