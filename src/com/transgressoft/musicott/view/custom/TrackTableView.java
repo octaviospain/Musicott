@@ -47,7 +47,7 @@ import static javafx.scene.media.MediaPlayer.Status.*;
  * instances in their rows, showing almost all of the properties of a {@code Track} in the columns.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class TrackTableView extends TableView<Entry<Integer, Track>> {
 

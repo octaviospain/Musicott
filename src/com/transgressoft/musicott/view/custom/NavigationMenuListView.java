@@ -28,7 +28,7 @@ import org.fxmisc.easybind.*;
  * ListView for the application navigation showing modes.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class NavigationMenuListView extends ListView<NavigationMode> {
 

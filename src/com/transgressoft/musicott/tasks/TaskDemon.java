@@ -37,7 +37,7 @@ import java.util.concurrent.*;
  * flow between concurrent task threads in the application.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class TaskDemon {
 

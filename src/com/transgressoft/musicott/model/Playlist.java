@@ -36,7 +36,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * is used when showing a {@link Playlist} on the application.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class Playlist {
 

@@ -47,7 +47,7 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * {@code iTunes} library to the {@link MusicLibrary} of the application.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class ItunesParseTask extends BaseParseTask {
 

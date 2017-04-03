@@ -33,7 +33,7 @@ import java.util.concurrent.*;
  * audio files and add them to the {@link MusicLibrary}.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class AudioFilesParseTask extends BaseParseTask {
 
