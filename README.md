@@ -3,7 +3,6 @@
 [![maintainability-rating](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=new_maintainability_rating)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
 [![reliability-rating](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=new_reliability_rating)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
 [![security-rating](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=new_security_rating)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
-[![license](https://img.shields.io/badge/license-GPL3v2-brightgreen.svg)](https://github.com/octaviospain/Musicott/blob/master/license/gpl.txt)
 
 [![loc-metric](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=ncloc)](https://sonarqube.com/component_measures/domain/Size?id=com.transgressoft%3Amusicott)
 [![lines-metric](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=lines)](https://sonarqube.com/component_measures/domain/Size?id=com.transgressoft%3Amusicott)
@@ -11,6 +10,7 @@
 [![new-code-smells](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=code_smells)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
 [![bugs](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=bugs)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
 [![vulnerabilities-rating](https://sonarqube.com/api/badges/measure?key=com.transgressoft%3Amusicott&metric=vulnerabilities)](https://sonarqube.com/component_measures?id=com.transgressoft%3Amusicott)
+[![license](https://img.shields.io/badge/license-GPL3v2-brightgreen.svg)](https://github.com/octaviospain/Musicott/blob/master/license/gpl.txt)
 
 
 ![Musicott title logo](http://imageshack.com/a/img921/1074/4WJ9yl.png)
