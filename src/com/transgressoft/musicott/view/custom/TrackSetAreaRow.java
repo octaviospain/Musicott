@@ -20,14 +20,15 @@
 package com.transgressoft.musicott.view.custom;
 
 import com.google.common.base.*;
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.model.*;
 import javafx.application.Platform;
-import javafx.beans.binding.*;
+import javafx.beans.binding.Binding;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.geometry.*;
 import javafx.scene.control.*;
-import javafx.scene.control.TableView;
 import javafx.scene.image.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
@@ -57,6 +58,8 @@ public class TrackSetAreaRow extends HBox {
 
     private static final double COVER_SIZE = 130.0;
 
+    private final TrackTableViewContextMenu trackTableContextMenu;
+
     private TableView<Entry<Integer, Track>> tracksTableView;
     private TableColumn<Entry<Integer, Track>, String> nameCol;
     private TableColumn<Entry<Integer, Track>, String> artistCol;
@@ -75,8 +78,15 @@ public class TrackSetAreaRow extends HBox {
     private ObservableList<Entry<Integer, Track>> containedTracks;
     private ListProperty<Entry<Integer, Track>> containedTracksProperty;
     private Comparator<Entry<Integer, Track>> trackEntryComparator;
+    @Inject
+    private Injector injector;
 
-    public TrackSetAreaRow(String artist, String album, Collection<Entry<Integer, Track>> trackEntries) {
+    @Inject
+    public TrackSetAreaRow(TrackTableViewContextMenu trackTableContextMenu,
+            @Assisted ("artist") String artist,
+            @Assisted ("album") String album, @Assisted Collection<Entry<Integer, Track>> trackEntries) {
+        super();
+        this.trackTableContextMenu = trackTableContextMenu;
         this.artist = artist;
         this.album = album;
         trackEntryComparator = trackEntryComparator();
@@ -213,7 +223,7 @@ public class TrackSetAreaRow extends HBox {
         tracksTableView.setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
         tracksTableView.getStylesheets().add(getClass().getResource(TRACKAREASET_TRACK_TABLE_STYLE).toExternalForm());
         tracksTableView.getStyleClass().add("no-header");
-        tracksTableView.setRowFactory(tableView -> new TrackTableRow());
+        tracksTableView.setRowFactory(tableView -> injector.getInstance(TrackTableRow.class));
         tracksTableView.addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
         tracksTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tracksTableView.setFixedCellSize(25);
@@ -222,7 +232,6 @@ public class TrackSetAreaRow extends HBox {
         tracksTableView.minHeightProperty().bind(tracksTableView.prefHeightProperty());
         tracksTableView.maxHeightProperty().bind(tracksTableView.prefHeightProperty());
 
-        TrackTableViewContextMenu trackTableContextMenu = new TrackTableViewContextMenu();
         tracksTableView.setContextMenu(trackTableContextMenu);
         tracksTableView.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             if (event.getButton() == MouseButton.SECONDARY)

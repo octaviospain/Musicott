@@ -4,28 +4,28 @@
     <artifactId>musicott</artifactId>
     <version>0.10-b</version>
     <name>Musicott</name>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
     <build>
         <directory>target</directory>
         <sourceDirectory>src</sourceDirectory>
         <outputDirectory>target/classes</outputDirectory>
         <testSourceDirectory>test</testSourceDirectory>
         <testOutputDirectory>target/test-classes</testOutputDirectory>
+
         <resources>
-
-            <resource>
-                <directory>src</directory>
-                <excludes>
-                    <exclude>**/*.java</exclude>
-                </excludes>
-            </resource>
-
             <resource>
                 <directory>resources</directory>
             </resource>
-            <resource>
-                <directory>test-resources</directory>
-            </resource>
         </resources>
+
+        <testResources>
+            <testResource>
+                <directory>test-resources</directory>
+            </testResource>
+        </testResources>
 
         <pluginManagement>
             <plugins>
@@ -70,7 +70,7 @@
                     <dependency>
                         <groupId>org.junit.platform</groupId>
                         <artifactId>junit-platform-surefire-provider</artifactId>
-                        <version>1.0.0-M2</version>
+                        <version>1.0.0-M3</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -100,29 +100,44 @@
     <dependencies>
 
         <dependency>
-            <groupId>org.jfxtras</groupId>
-            <artifactId>openjfx-monocle</artifactId>
-            <version>1.8.0_20</version>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>4.1.0</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.0.0-M2</version>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-assistedinject</artifactId>
+            <version>4.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jfxtras</groupId>
+            <artifactId>openjfx-monocle</artifactId>
+            <version>1.8.0_20</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-runner</artifactId>
-            <version>1.0.0-M2</version>
+            <version>1.0.0-M4</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.0.0-M2</version>
+            <version>5.0.0-M4</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.0.0-M4</version>
             <scope>test</scope>
         </dependency>
 
@@ -134,37 +149,22 @@
         </dependency>
 
         <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-            <version>1.6.5</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito2</artifactId>
-            <version>1.6.5</version>
-            <scope>test</scope>
+            <groupId>org.testfx</groupId>
+            <artifactId>testfx-junit5</artifactId>
+            <version>4.0.6-alpha</version>
         </dependency>
 
         <dependency>
             <groupId>org.testfx</groupId>
             <artifactId>testfx-core</artifactId>
-            <version>4.0.5-alpha</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.testfx</groupId>
-            <artifactId>testfx-legacy</artifactId>
-            <version>4.0.5-alpha</version>
+            <version>4.0.6-alpha</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.testfx</groupId>
             <artifactId>testfx-junit</artifactId>
-            <version>4.0.5-alpha</version>
+            <version>4.0.6-alpha</version>
             <scope>test</scope>
         </dependency>
 

@@ -41,9 +41,9 @@ import static org.fxmisc.easybind.EasyBind.*;
 public class TrackQueueRow extends GridPane {
 
     private static final double COVER_SIZE = 42.0;
+    private final PlayQueueController playQueueController;
+    private final Track track;
 
-    private PlayQueueController playQueueController;
-    private Track track;
     private ImageView coverImage;
     private VBox labelBox;
     private Button deleteTrackQueueRowButton;

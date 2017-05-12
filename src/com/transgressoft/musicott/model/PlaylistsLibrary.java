@@ -20,7 +20,9 @@
 package com.transgressoft.musicott.model;
 
 import com.google.common.graph.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.factories.*;
 
 import java.util.AbstractMap.*;
 import java.util.*;
@@ -36,22 +38,33 @@ import java.util.stream.*;
  */
 public class PlaylistsLibrary {
 
-    public static final Playlist ROOT_PLAYLIST = new Playlist("ROOT", true);
+    private final Provider<TaskDemon> taskDemonProvider;
+    private final Provider<MusicLibrary> musicLibraryProvider;
+    private final Playlist ROOT_PLAYLIST;
 
-    final MutableGraph<Playlist> playlistsTree = GraphBuilder.directed().build();
+    private MutableGraph<Playlist> playlistsTree = GraphBuilder.directed().build();
+    private Random random = new Random();
 
-    private final Random random = new Random();
-    private final TaskDemon taskDemon = TaskDemon.getInstance();
-    private final MusicLibrary musicLibrary;
-
-    public PlaylistsLibrary(MusicLibrary musicLibrary) {
-        this.musicLibrary = musicLibrary;
+    @Inject
+    public PlaylistsLibrary(Provider<MusicLibrary> musicLibraryProvider, Provider<TaskDemon> taskDemonProvider,
+            PlaylistFactory playlistFactory) {
+        this.musicLibraryProvider = musicLibraryProvider;
+        this.taskDemonProvider = taskDemonProvider;
+        ROOT_PLAYLIST = playlistFactory.create("ROOT", true);
         playlistsTree.addNode(ROOT_PLAYLIST);
+    }
+
+    public synchronized Graph<Playlist> getPlaylistsTree() {
+        return playlistsTree;
     }
 
     public synchronized void addPlaylist(Playlist parent, Playlist playlist) {
         playlistsTree.putEdge(parent, playlist);
-        taskDemon.saveLibrary(false, false, true);
+        taskDemonProvider.get().saveLibrary(false, false, true);
+    }
+
+    public synchronized void addPlaylistToRoot(Playlist playlist) {
+        addPlaylist(ROOT_PLAYLIST, playlist);
     }
 
     public synchronized void addPlaylistsRecursively(Playlist parent, Set<Playlist> playlists) {
@@ -67,7 +80,7 @@ public class PlaylistsLibrary {
         playlistsTree.removeEdge(getParentPlaylist(playlist), playlist);
         playlistsTree.removeNode(playlist);
         parent.getContainedPlaylists().remove(playlist);
-        taskDemon.saveLibrary(false, false, true);
+        taskDemonProvider.get().saveLibrary(false, false, true);
     }
 
     public synchronized void movePlaylist(Playlist movedPlaylist, Playlist targetFolder) {
@@ -76,7 +89,7 @@ public class PlaylistsLibrary {
         parentOfMovedPlaylist.getContainedPlaylists().remove(movedPlaylist);
         playlistsTree.putEdge(targetFolder, movedPlaylist);
         targetFolder.getContainedPlaylists().add(movedPlaylist);
-        taskDemon.saveLibrary(false, false, true);
+        taskDemonProvider.get().saveLibrary(false, false, true);
     }
 
     synchronized void removeFromPlaylists(Track track) {
@@ -98,16 +111,18 @@ public class PlaylistsLibrary {
     }
 
     synchronized List<Entry<Integer, Track>> getTrackEntriesUnderPlaylist(Playlist playlist) {
+        TracksLibrary tracksLibrary = musicLibraryProvider.get().getTracksLibrary();
         return playlist.getTracks().stream()
-                       .map(i -> new SimpleEntry<>(i, musicLibrary.tracks.getTrack(i).get()))
+                       .map(i -> new SimpleEntry<>(i, tracksLibrary.getTrack(i).get()))
                        .collect(Collectors.toList());
     }
 
     synchronized List<Track> getRandomSortedTrackList(Playlist playlist) {
+        TracksLibrary tracksLibrary = musicLibraryProvider.get().getTracksLibrary();
         List<Integer> randomSortedList = new ArrayList<>(playlist.getTracks());
         Collections.shuffle(randomSortedList, random);
         return randomSortedList.stream()
-                               .map(trackId -> musicLibrary.tracks.getTrack(trackId).get())
+                               .map(trackId -> tracksLibrary.getTrack(trackId).get())
                                .collect(Collectors.toList());
     }
 
@@ -124,9 +139,5 @@ public class PlaylistsLibrary {
      */
     public synchronized Playlist getParentPlaylist(Playlist playlist) {
         return playlistsTree.predecessors(playlist).stream().findFirst().get();
-    }
-
-    public synchronized Graph<Playlist> getPlaylistsTree() {
-        return ImmutableGraph.copyOf(playlistsTree);
     }
 }

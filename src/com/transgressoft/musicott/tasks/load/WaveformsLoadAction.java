@@ -19,6 +19,8 @@
 
 package com.transgressoft.musicott.tasks.load;
 
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.model.*;
 import javafx.application.*;
 import org.slf4j.*;
@@ -41,8 +43,13 @@ public class WaveformsLoadAction extends BaseLoadAction {
 
     private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    public WaveformsLoadAction(String applicationFolder, MusicLibrary musicLibrary, Application application) {
-        super(applicationFolder, musicLibrary, application);
+    private Provider<MusicLibrary> musicLibraryProvider;
+
+    @Inject
+    public WaveformsLoadAction(Provider<MusicLibrary> musicLibraryProvider, @Assisted String applicationFolder,
+            @Assisted Application application) {
+        super(applicationFolder, application);
+        this.musicLibraryProvider = musicLibraryProvider;
     }
 
     /**
@@ -57,7 +64,7 @@ public class WaveformsLoadAction extends BaseLoadAction {
             waveformsMap = parseWaveformsFromJsonFile(waveformsFile);
         else
             waveformsMap = new HashMap<>();
-        musicLibrary.waveforms.addWaveforms(waveformsMap);
+        musicLibraryProvider.get().getWaveformsLibrary().addWaveforms(waveformsMap);
     }
 
     /**

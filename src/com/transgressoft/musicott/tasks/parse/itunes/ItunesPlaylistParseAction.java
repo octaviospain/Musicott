@@ -19,10 +19,12 @@
 
 package com.transgressoft.musicott.tasks.parse.itunes;
 
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.model.PlaylistsLibrary;
 import com.transgressoft.musicott.tasks.parse.*;
+import com.transgressoft.musicott.util.factories.*;
 import com.transgressoft.musicott.view.*;
 import com.worldsworstsoftware.itunes.*;
 import javafx.application.*;
@@ -30,8 +32,6 @@ import javafx.application.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
-
-import static com.transgressoft.musicott.model.PlaylistsLibrary.*;
 
 /**
  * This class extends from {@link RecursiveTask} so it can be used inside a
@@ -50,6 +50,14 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
     private static final int MAX_PLAYLISTS_TO_PARSE_PER_ACTION = 250;
     private static final int NUMBER_OF_PARTITIONS = 2;
 
+    private final StageDemon stageDemon;
+    private final MusicLibrary musicLibrary;
+
+    @Inject
+    private PlaylistFactory playlistFactory;
+    @Inject
+    private ParseActionFactory parseActionFactory;
+    private Playlist ROOT_PLAYLIST;
     private transient Map<Integer, Track> itunesIdToMusicottTrackMap;
 
     /**
@@ -59,10 +67,16 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
      * @param itunesIdToMusicottTrackMap The {@link Map} between itunes' tracks id's and system's tracks id's
      * @param parentTask                 The reference to the parent {@link BaseParseTask} that called this action
      */
-    public ItunesPlaylistParseAction(List<ItunesPlaylist> itunesPlaylistsToParse,
-            Map<Integer, Track> itunesIdToMusicottTrackMap, BaseParseTask parentTask) {
+    @Inject
+    public ItunesPlaylistParseAction(StageDemon stageDemon, MusicLibrary musicLibrary,
+            @Assisted List<ItunesPlaylist> itunesPlaylistsToParse,
+            @Assisted Map<Integer, Track> itunesIdToMusicottTrackMap,
+            @Assisted BaseParseTask parentTask) {
         super(itunesPlaylistsToParse, parentTask);
+        this.stageDemon = stageDemon;
+        this.musicLibrary = musicLibrary;
         this.itunesIdToMusicottTrackMap = itunesIdToMusicottTrackMap;
+        ROOT_PLAYLIST = playlistFactory.create("ROOT", true);
     }
 
     @Override
@@ -72,12 +86,13 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
         else {
             itemsToParse.forEach(this::parseItem);
             parsedPlaylists.forEach(playlist -> {
-                if (musicLibrary.playlists.containsPlaylistName(playlist.getName()))
+                PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
+                if (playlistsLibrary.containsPlaylistName(playlist.getName()))
                     addTracksToExistingPlaylist(playlist);
                 else {
-                    NavigationController navigationController = StageDemon.getInstance().getNavigationController();
+                    NavigationController navigationController = stageDemon.getNavigationController();
                     Platform.runLater(() -> navigationController.addNewPlaylist(ROOT_PLAYLIST, playlist, false));
-                    musicLibrary.playlists.addPlaylist(ROOT_PLAYLIST, playlist);
+                    playlistsLibrary.addPlaylist(ROOT_PLAYLIST, playlist);
                 }
             });
         }
@@ -85,7 +100,7 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
     }
 
     private void addTracksToExistingPlaylist(Playlist parsedPlaylist) {
-        PlaylistsLibrary playlistsLibrary = musicLibrary.playlists;
+        PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
         Set<Playlist> playlists = playlistsLibrary.getPlaylistsTree().nodes();
         synchronized (playlistsLibrary) {
             boolean found = false;
@@ -102,9 +117,8 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
     }
 
     @Override
-    protected BaseParseAction<ItunesPlaylist, List<Playlist>, BaseParseResult<List<Playlist>>> parseActionMapper(
-            List<ItunesPlaylist> subItems) {
-        return new ItunesPlaylistParseAction(subItems, itunesIdToMusicottTrackMap, parentTask);
+    protected ItunesPlaylistParseAction parseActionMapper(List<ItunesPlaylist> subItems) {
+        return parseActionFactory.create(subItems, itunesIdToMusicottTrackMap, parentTask);
     }
 
     @Override
@@ -117,8 +131,8 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
      */
     @Override
     @SuppressWarnings ("unchecked")
-    protected void parseItem(ItunesPlaylist itunesPlaylist) {
-        Playlist playlist = new Playlist(itunesPlaylist.getName(), false);
+    public void parseItem(ItunesPlaylist itunesPlaylist) {
+        Playlist playlist = playlistFactory.create(itunesPlaylist.getName(), false);
         List<ItunesTrack> itunesTracksList = itunesPlaylist.getPlaylistItems();
         List<Integer> playlistTracksIds = getPlaylistTracksAlreadyParsed(itunesTracksList);
         playlist.addTracks(playlistTracksIds);

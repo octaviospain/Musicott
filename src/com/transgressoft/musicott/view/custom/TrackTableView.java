@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view.custom;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
@@ -52,6 +53,10 @@ import static javafx.scene.media.MediaPlayer.Status.*;
 public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
     private static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
+    @Inject
+    private static StageDemon stageDemon;
+    @Inject
+    private static PlayerFacade playerFacade;
     static EventHandler<KeyEvent> KEY_PRESSED_ON_TRACK_TABLE_HANDLER = getKeyPressedEventHandler();
 
     private TableColumn<Entry<Integer, Track>, String> nameCol;
@@ -75,7 +80,8 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
     private TrackTableViewContextMenu trackTableContextMenu;
 
     @SuppressWarnings ("unchecked")
-    public TrackTableView() {
+    @Inject
+    public TrackTableView(Injector injector) {
         super();
         setId("trackTable");
         initColumns();
@@ -89,11 +95,11 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         setColumnResizePolicy(UNCONSTRAINED_RESIZE_POLICY);
         getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         getSortOrder().add(dateAddedCol);
-        setRowFactory(tableView -> new TrackTableRow());
+        setRowFactory(tableView -> injector.getInstance(TrackTableRow.class));
         addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
         getStylesheets().add(getClass().getResource(TRACK_TABLE_STYLE).toExternalForm());
 
-        trackTableContextMenu = new TrackTableViewContextMenu();
+        trackTableContextMenu = injector.getInstance(TrackTableViewContextMenu.class);
         setContextMenu(trackTableContextMenu);
         addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             if (event.getButton() == MouseButton.SECONDARY)
@@ -219,27 +225,25 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
      */
     private static EventHandler<KeyEvent> getKeyPressedEventHandler() {
         return event -> {
-            PlayerFacade player = PlayerFacade.getInstance();
             if (event.getCode() == KeyCode.ENTER) {
-                RootController rootController = StageDemon.getInstance().getRootController();
+                RootController rootController = stageDemon.getRootController();
                 List<Track> selection = rootController.getSelectedTracks()
                                                       .stream()
                                                       .map(Entry::getValue).collect(Collectors.toList());
-                player.addTracksToPlayQueue(selection, true);
+                playerFacade.addTracksToPlayQueue(selection, true);
             }
             else if (event.getCode() == KeyCode.SPACE)
-                spacePressedOnTableAction(player.getPlayerStatus());
+                spacePressedOnTableAction(playerFacade.getPlayerStatus());
         };
     }
 
     public static void spacePressedOnTableAction(Status playerStatus) {
-        PlayerFacade player = PlayerFacade.getInstance();
         if (playerStatus.equals(PLAYING))
-            player.pause();
+            playerFacade.pause();
         else if (playerStatus.equals(PAUSED))
-            player.resume();
+            playerFacade.resume();
         else if (playerStatus.equals(STOPPED))
-            player.play(true);
+            playerFacade.play(true);
     }
 }
 

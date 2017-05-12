@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import javafx.application.*;
 import javafx.event.*;
@@ -39,6 +40,8 @@ import java.util.*;
  * @since 0.9.1-b
  */
 public class ErrorDialogController implements MusicottController {
+
+    private static final String GITHUB_LINK = "https://github.com/octaviospain/Musicott/issues";
 
     @FXML
     private BorderPane rootBorderPane;
@@ -69,11 +72,18 @@ public class ErrorDialogController implements MusicottController {
     private Image commonErrorImage = new Image(getClass().getResourceAsStream(COMMON_ERROR_IMAGE));
     private Image lastFmErrorImage = new Image(getClass().getResourceAsStream(LASTFM_LOGO));
 
+    private StageDemon stageDemon;
+
+    @Inject
+    public ErrorDialogController(StageDemon stageDemon) {
+        this.stageDemon = stageDemon;
+    }
+
     @FXML
     public void initialize() {
         reportInGithubHyperlink.setOnAction(event -> {
-            HostServices hostServices = StageDemon.getInstance().getApplicationHostServices();
-            hostServices.showDocument("https://github.com/octaviospain/Musicott/issues");
+            HostServices hostServices = stageDemon.getApplicationHostServices();
+            hostServices.showDocument(GITHUB_LINK);
         });
         contentVBox.getChildren().remove(reportInGithubHyperlink);
 

@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.custom.*;
@@ -44,7 +45,8 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
-public class NavigationController implements MusicottController {
+@Singleton
+public class NavigationController implements MusicottController, ConfigurableController {
 
     private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
     private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(73, 73, 73);";
@@ -66,15 +68,24 @@ public class NavigationController implements MusicottController {
     private Optional<Playlist> currentPlayingPlaylist;
 
     private RootController rootController;
-    private StageDemon stageDemon = StageDemon.getInstance();
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private StageDemon stageDemon;
+    private MusicLibrary musicLibrary;
+
+    @Inject
+    public NavigationController(RootController rootController, PlaylistTreeView playlistTreeView,
+            StageDemon stageDemon, MusicLibrary musicLibrary) {
+        this.rootController = rootController;
+        this.playlistTreeView = playlistTreeView;
+        this.stageDemon = stageDemon;
+        this.musicLibrary = musicLibrary;
+    }
 
     @FXML
     public void initialize() {
         currentPlayingPlaylist = Optional.empty();
         navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", NavigationMode.ALL_TRACKS);
-        playlistTreeView = new PlaylistTreeView();
         navigationMenuListView = new NavigationMenuListView(this);
+        subscribe(navigationModeProperty, this::setNavigationMode);
         subscribe(selectedPlaylistProperty(), newPlaylist -> newPlaylist.ifPresent(playlist -> {
             musicLibrary.showPlaylist(playlist);
             setNavigationMode(NavigationMode.PLAYLIST);
@@ -98,6 +109,11 @@ public class NavigationController implements MusicottController {
 
         VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
         VBox.setVgrow(navigationVBox, Priority.ALWAYS);
+    }
+
+    @Override
+    public void configure() {
+
     }
 
     /**
@@ -164,10 +180,10 @@ public class NavigationController implements MusicottController {
         return keyModifierOS;
     }
 
-    void setRootController(RootController rootController) {
-        this.rootController = rootController;
-        subscribe(navigationModeProperty, this::setNavigationMode);
-    }
+//    void setRootController(RootController rootController) {
+//        this.rootController = rootController;
+//        subscribe(navigationModeProperty, this::setNavigationMode);
+//    }
 
     public void addNewPlaylist(Playlist parent, Playlist newPlaylist, boolean selectAfter) {
         playlistTreeView.addPlaylistsToFolder(parent, Collections.singleton(newPlaylist));
@@ -193,8 +209,9 @@ public class NavigationController implements MusicottController {
     public void deleteSelectedPlaylist() {
         Playlist selectedPlaylist = selectedPlaylistProperty().get().get();
         playlistTreeView.deletePlaylist(selectedPlaylist);
-        musicLibrary.playlists.deletePlaylist(selectedPlaylist);
-        if (musicLibrary.playlists.isEmpty())
+        PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
+        playlistsLibrary.deletePlaylist(selectedPlaylist);
+        if (playlistsLibrary.isEmpty())
             setNavigationMode(NavigationMode.ALL_TRACKS);
     }
 

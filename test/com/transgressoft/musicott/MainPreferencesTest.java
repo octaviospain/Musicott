@@ -36,7 +36,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName ("User folder")
 	void userFolderMethodTest() {
-		MainPreferences mainPreferences = MainPreferences.getInstance();
+		MainPreferences mainPreferences = new MainPreferences();
 		String sep = File.separator;
 		String userHome = System.getProperty("user.home");
 		String newUserFolder = userHome + sep + "Musicott";
@@ -51,7 +51,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName ("Itunes import metadata")
 	void itunesImportMetadataTest() {
-		MainPreferences mainPreferences = MainPreferences.getInstance();
+		MainPreferences mainPreferences = new MainPreferences();
 		mainPreferences.setItunesImportMetadataPolicy(ITUNES_DATA_POLICY);
 
 		assertEquals(ITUNES_DATA_POLICY, mainPreferences.getItunesImportMetadataPolicy());
@@ -60,7 +60,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName ("Itunes import hold playcount")
 	void itunesImportHoldPlaycountTest() {
-		MainPreferences mainPreferences = MainPreferences.getInstance();
+		MainPreferences mainPreferences = new MainPreferences();
 		mainPreferences.setItunesImportHoldPlaycount(false);
 
 		assertFalse(mainPreferences.getItunesImportHoldPlaycount());
@@ -69,7 +69,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName("Itunes import playlists")
 	void itunesImportPlaylistsTest() {
-		MainPreferences mainPreferences = MainPreferences.getInstance();
+		MainPreferences mainPreferences = new MainPreferences();
 		mainPreferences.setItunesImportPlaylists(true);
 
 		assertTrue(mainPreferences.getItunesImportPlaylists());
@@ -78,7 +78,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName("Import filter extensions empty")
 	void emptyImportFilterExtensionsTest() {
-		MainPreferences mainPreferences = MainPreferences.getInstance();
+		MainPreferences mainPreferences = new MainPreferences();
 		mainPreferences.setImportFilterExtensions();
 
 		assertEquals(Collections.emptySet(), mainPreferences.getImportFilterExtensions());
@@ -87,7 +87,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName("One import filter extension")
 	void oneImportFilterExtensionsTest() {
-		MainPreferences mainPreferences = MainPreferences.getInstance();
+		MainPreferences mainPreferences = new MainPreferences();
 		mainPreferences.setImportFilterExtensions("mp3");
 
 		assertEquals(Sets.newHashSet("mp3"), mainPreferences.getImportFilterExtensions());

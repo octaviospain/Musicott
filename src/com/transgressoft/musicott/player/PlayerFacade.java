@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.player;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.model.Track;
@@ -46,9 +47,16 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
+@Singleton
 public class PlayerFacade {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+
+    private final Provider<MusicLibrary> musicLibrary;
+    private final StageDemon stageDemon;
+    private final ServiceDemon serviceDemon;
+    private final TaskDemon taskDemon;
+
     private PlayQueueController playQueueController;
     private PlayerController playerController;
     private Optional<Track> currentTrack;
@@ -59,16 +67,13 @@ public class PlayerFacade {
     private boolean played;
     private boolean scrobbled;
 
-    private StageDemon stageDemon = StageDemon.getInstance();
-    private ServiceDemon services = ServiceDemon.getInstance();
-    private TaskDemon taskDemon = TaskDemon.getInstance();
-
-    private static class InstanceHolder {
-        static final PlayerFacade INSTANCE = new PlayerFacade();
-        private InstanceHolder() {}
-    }
-
-    private PlayerFacade() {
+    @Inject
+    public PlayerFacade(Provider<MusicLibrary> musicLibrary, Provider<StageDemon> stageDemon,
+            Provider<ServiceDemon> serviceDemon, Provider<TaskDemon> taskDemon) {
+        this.musicLibrary = musicLibrary;
+        this.stageDemon = stageDemon.get();
+        this.serviceDemon = serviceDemon.get();
+        this.taskDemon = taskDemon.get();
         playList = FXCollections.observableArrayList();
         historyList = FXCollections.observableArrayList();
         playingRandom = false;
@@ -77,10 +82,6 @@ public class PlayerFacade {
         currentTrack = Optional.empty();
         trackPlayer = new JavaFxPlayer();
         trackPlayer.setOnEndOfMedia(this::next);
-    }
-
-    public static PlayerFacade getInstance() {
-        return InstanceHolder.INSTANCE;
     }
 
     public ObservableList<TrackQueueRow> getPlayList() {
@@ -163,7 +164,7 @@ public class PlayerFacade {
             if (! playList.isEmpty())
                 setCurrentTrack();
             else if (playRandom)
-                MusicLibrary.getInstance().playRandomPlaylist();
+                musicLibrary.get().playRandomPlaylist();
         }
         else if (trackPlayer.getStatus().equals(PLAYING))
             if (playList.isEmpty())
@@ -224,8 +225,8 @@ public class PlayerFacade {
                 incrementCurrentTrackPlayCount();
             if (isCurrentTrackValidToScrobble(trackPlayer, time)) {
                 scrobbled = true;
-                if (services.usingLastFm()) {
-                    services.updateAndScrobbleTrack(currentTrack.get());
+                if (serviceDemon.usingLastFm()) {
+                    serviceDemon.updateAndScrobbleTrack(currentTrack.get());
                 }
             }
         });

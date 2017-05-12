@@ -19,10 +19,12 @@
 
 package com.transgressoft.musicott.view;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.factories.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 import javafx.embed.swing.*;
@@ -47,9 +49,13 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
-public class PlayerController implements MusicottController {
+@Singleton
+public class PlayerController implements MusicottController, ConfigurableController {
 
     private static final double VOLUME_AMOUNT = 0.05;
+    private static final String PLAYQUEUE_BUTTON_STYLE =
+            "-fx-effect: dropshadow(one-pass-box, rgb(99, 255, 109), 3, 0.2, 0, 0);";
+
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     @FXML
@@ -88,14 +94,26 @@ public class PlayerController implements MusicottController {
     private TextField searchTextField;
     @FXML
     private ProgressBar volumeProgressBar;
-    @FXML
-    private AnchorPane playQueueLayout;
+
     @FXML
     private PlayQueueController playQueueLayoutController;
+    @FXML
+    private AnchorPane playQueueLayout;
     private WaveformPanel mainWaveformPanel;
 
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-    private PlayerFacade player = PlayerFacade.getInstance();
+    private MusicLibrary musicLibrary;
+    private PlayerFacade player;
+    private TaskDemon taskDemon;
+    private WaveformPaneFactory waveformPaneFactory;
+
+    @Inject
+    public PlayerController(MusicLibrary musicLibrary, PlayerFacade player, TaskDemon taskDemon,
+            WaveformPaneFactory waveformPaneFactory) {
+        this.musicLibrary = musicLibrary;
+        this.player = player;
+        this.taskDemon = taskDemon;
+        this.waveformPaneFactory = waveformPaneFactory;
+    }
 
     @FXML
     public void initialize() {
@@ -104,14 +122,10 @@ public class PlayerController implements MusicottController {
         prevButton.setOnAction(e -> player.previous());
         nextButton.setOnAction(e -> player.next());
         subscribe(volumeSlider.valueChangingProperty(), changing -> {
-                    if (! changing)
-                        volumeProgressBar.setProgress(volumeSlider.getValue());});
+            if (! changing)
+                volumeProgressBar.setProgress(volumeSlider.getValue());});
         subscribe(volumeSlider.valueProperty(), p -> volumeProgressBar.setProgress(p.doubleValue()));
 
-        SwingUtilities.invokeLater(() -> {
-            mainWaveformPanel = new WaveformPanel(520, 50);
-            waveformSwingNode.setContent(mainWaveformPanel);
-        });
         playerStackPane.getChildren().add(0, waveformSwingNode);
 
         playQueueButton.setOnAction(event -> {
@@ -127,6 +141,15 @@ public class PlayerController implements MusicottController {
         playQueueButton.setOnDragDropped(this::onDragDroppedOnPlayQueueButton);
         playQueueButton.setOnDragOver(this::onDragOverOnPlayQueueButton);
         playQueueButton.setOnDragExited(this::onDragExitedOnPlayQueueButton);
+
+        SwingUtilities.invokeLater(() -> {
+            mainWaveformPanel = waveformPaneFactory.create(520, 50);
+            waveformSwingNode.setContent(mainWaveformPanel);
+        });
+    }
+
+    @Override
+    public void configure() {
         subscribe(playQueueLayout.visibleProperty(), playQueueButton::setSelected);
         StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
         player.setPlayerController(this);
@@ -135,16 +158,17 @@ public class PlayerController implements MusicottController {
     }
 
     private void onDragDroppedOnPlayQueueButton(DragEvent event) {
+        TracksLibrary tracksLibrary = musicLibrary.getTracksLibrary();
         Dragboard dragBoard = event.getDragboard();
         List<Integer> selectedTracksIds = (List<Integer>) dragBoard.getContent(TRACK_IDS_MIME_TYPE);
-        List<Track> selectedTracks = MusicLibrary.getInstance().tracks.getTracks(selectedTracksIds);
+        List<Track> selectedTracks = tracksLibrary.getTracks(selectedTracksIds);
         player.addTracksToPlayQueue(selectedTracks, false);
         event.consume();
     }
 
     private void onDragOverOnPlayQueueButton(DragEvent event) {
         event.acceptTransferModes(TransferMode.COPY);
-        playQueueButton.setStyle("-fx-effect: dropshadow(one-pass-box, rgb(99, 255, 109), 3, 0.2, 0, 0);");
+        playQueueButton.setStyle(PLAYQUEUE_BUTTON_STYLE);
         playQueueButton.setOpacity(0.9);
         event.consume();
     }
@@ -267,10 +291,11 @@ public class PlayerController implements MusicottController {
     public void updatePlayer(Track currentTrack) {
         LOG.debug("Setting up player and view for track {}", currentTrack);
         String fileFormat = currentTrack.getFileFormat();
-        if (musicLibrary.waveforms.containsWaveform(currentTrack.getTrackId()))
+        WaveformsLibrary waveformsLibrary = musicLibrary.getWaveformsLibrary();
+        if (waveformsLibrary.containsWaveform(currentTrack.getTrackId()))
             setWaveform(currentTrack);
         else if ("wav".equals(fileFormat) || "mp3".equals(fileFormat) || "m4a".equals(fileFormat))
-            TaskDemon.getInstance().analyzeTrackWaveform(currentTrack);
+            taskDemon.analyzeTrackWaveform(currentTrack);
 
         SwingUtilities.invokeLater(() -> mainWaveformPanel.setTrack(currentTrack));
         songTitleLabel.textProperty().bind(currentTrack.nameProperty());

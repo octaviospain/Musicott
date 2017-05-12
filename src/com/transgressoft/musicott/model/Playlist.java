@@ -19,6 +19,8 @@
 
 package com.transgressoft.musicott.model;
 
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.tasks.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
@@ -42,26 +44,37 @@ public class Playlist {
 
     private static final String DELETION_NOT_SUPPORTED = "Deletion not supported on folder playlist";
 
-    private final boolean isFolder;
+    private final Provider<MusicLibrary> musicLibraryProvider;
+    private final Provider<TaskDemon> taskDemonProvider;
+
+    private boolean isFolder;
     private String name;
-    private ObservableList<Integer> playlistTrackIds;
-    private Set<Playlist> containedPlaylists;
+    private ObservableList<Integer> playlistTrackIds = FXCollections.observableArrayList();
+    private Set<Playlist> containedPlaylists = new HashSet<>();
     private StringProperty nameProperty;
     private ObjectProperty<Image> playlistCoverProperty;
     private BooleanProperty isFolderProperty;
 
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-    private TaskDemon taskDemon = TaskDemon.getInstance();
-
-    public Playlist(String name, boolean isFolder) {
-        this.name = name;
-        this.isFolder = isFolder;
-        playlistTrackIds = FXCollections.observableArrayList();
-        containedPlaylists = new HashSet<>();
-        nameProperty = new SimpleStringProperty(this, "name", name);
+    {
+        nameProperty = new SimpleStringProperty(this, "name", "");
         EasyBind.subscribe(nameProperty, this::setName);
         playlistCoverProperty = new SimpleObjectProperty<>(this, "cover", DEFAULT_COVER);
         isFolderProperty = new SimpleBooleanProperty(this, "folder", isFolder);
+    }
+
+    public Playlist(Provider<MusicLibrary> musicLibraryProvider, Provider<TaskDemon> taskDemonProvider) {
+        this.musicLibraryProvider = musicLibraryProvider;
+        this.taskDemonProvider = taskDemonProvider;
+        name = "";
+    }
+
+    @Inject
+    public Playlist(Provider<MusicLibrary> musicLibraryProvider, Provider<TaskDemon> taskDemonProvider,
+            @Assisted String name, @Assisted boolean isFolder) {
+        this.musicLibraryProvider = musicLibraryProvider;
+        this.taskDemonProvider = taskDemonProvider;
+        this.isFolder = isFolder;
+        setName(name);
     }
 
     public void setName(String name) {
@@ -102,7 +115,7 @@ public class Playlist {
             result = playlistTrackIds.addAll(tracksIds);
             if (result) {
                 changePlaylistCover();
-                taskDemon.saveLibrary(false, false, true);
+                taskDemonProvider.get().saveLibrary(false, false, true);
             }
         }
         return result;
@@ -115,7 +128,7 @@ public class Playlist {
         boolean result = playlistTrackIds.removeAll(tracksIds);
         if (result) {
             changePlaylistCover();
-            taskDemon.saveLibrary(false, false, true);
+            taskDemonProvider.get().saveLibrary(false, false, true);
         }
         return result;
     }
@@ -125,7 +138,7 @@ public class Playlist {
             throw new UnsupportedOperationException(DELETION_NOT_SUPPORTED);
         playlistTrackIds.clear();
         playlistCoverProperty.set(DEFAULT_COVER);
-        taskDemon.saveLibrary(false, false, true);
+        taskDemonProvider.get().saveLibrary(false, false, true);
     }
 
     public Set<Playlist> getContainedPlaylists() {
@@ -149,11 +162,12 @@ public class Playlist {
      */
     private void changePlaylistCover() {
         List<Integer> tracks = getTracks();
+        TracksLibrary tracksLibrary = musicLibraryProvider.get().getTracksLibrary();
         if (! tracks.isEmpty()) {
             Optional<Integer> trackWithCover = tracks.stream().filter(this::existsTrackWithCover).findAny();
             if (trackWithCover.isPresent()) {
                 int trackId = trackWithCover.get();
-                musicLibrary.tracks.getTrack(trackId).ifPresent(track -> {
+                tracksLibrary.getTrack(trackId).ifPresent(track -> {
                     byte[] coverBytes = track.getCoverImage().get();
                     Image image = new Image(new ByteArrayInputStream(coverBytes));
                     playlistCoverProperty.set(image);
@@ -167,7 +181,8 @@ public class Playlist {
     }
 
     private boolean existsTrackWithCover(int trackId) {
-        Optional<Track> track = musicLibrary.tracks.getTrack(trackId);
+        TracksLibrary tracksLibrary = musicLibraryProvider.get().getTracksLibrary();
+        Optional<Track> track = tracksLibrary.getTrack(trackId);
         return track.isPresent() && track.get().getCoverImage().isPresent();
     }
 

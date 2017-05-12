@@ -21,8 +21,11 @@ package com.transgressoft.musicott.tasks.load;
 
 import com.cedarsoftware.util.io.*;
 import com.google.common.graph.*;
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.factories.*;
 import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
 import org.slf4j.*;
@@ -30,7 +33,6 @@ import org.slf4j.*;
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.model.PlaylistsLibrary.*;
 import static com.transgressoft.musicott.view.MusicottController.*;
 
 /**
@@ -44,12 +46,23 @@ import static com.transgressoft.musicott.view.MusicottController.*;
 public class PlaylistsLoadAction extends BaseLoadAction {
 
     private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
+
+    private final MusicLibrary musicLibrary;
+    private final Playlist ROOT_PLAYLIST;
+
     private transient MutableGraph<Playlist> playlists;
     private int step = 0;
     private int totalPlaylists;
 
-    public PlaylistsLoadAction(String applicationFolder, MusicLibrary musicLibrary, Application musicottApplication) {
-        super(applicationFolder, musicLibrary, musicottApplication);
+    private PlaylistFactory playlistFactory;
+
+    @Inject
+    public PlaylistsLoadAction(Provider<MusicLibrary> musicLibrary, PlaylistFactory playlistFactory,
+            @Assisted String applicationFolder, @Assisted Application musicottApplication) {
+        super(applicationFolder, musicottApplication);
+        this.musicLibrary = musicLibrary.get();
+        this.playlistFactory = playlistFactory;
+        ROOT_PLAYLIST = playlistFactory.create("ROOT", true);
     }
 
     @Override
@@ -63,7 +76,8 @@ public class PlaylistsLoadAction extends BaseLoadAction {
         }
         else
             createDefaultPlaylists();
-        musicLibrary.playlists.addPlaylistsRecursively(ROOT_PLAYLIST, playlists.successors(ROOT_PLAYLIST));
+        PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
+        playlistsLibrary.addPlaylistsRecursively(ROOT_PLAYLIST, playlists.successors(ROOT_PLAYLIST));
     }
 
     /**
@@ -76,6 +90,7 @@ public class PlaylistsLoadAction extends BaseLoadAction {
     @SuppressWarnings ("unchecked")
     private void parsePlaylistFromJsonFile(File playlistsFile) {
         try {
+            JsonReader.assignInstantiator(Playlist.class, new PlaylistCreator());
             JsonReader.assignInstantiator(ElementOrder.class, new ElementOrderCreator());
             JsonReader.assignInstantiator(ObservableListWrapper.class, new ObservableListWrapperCreator());
             JsonReader.assignInstantiator(ConfigurableMutableGraph.class, new ConfigurableMutableGraphCreator());
@@ -91,9 +106,9 @@ public class PlaylistsLoadAction extends BaseLoadAction {
     }
 
     private void createDefaultPlaylists() {
-        Playlist top10 = new Playlist("My Top 10", false);
-        Playlist favs = new Playlist("Favourites", false);
-        Playlist listenLater = new Playlist("Listen later", false);
+        Playlist top10 = playlistFactory.create("My Top 10", false);
+        Playlist favs = playlistFactory.create("Favourites", false);
+        Playlist listenLater = playlistFactory.create("Listen later", false);
         ROOT_PLAYLIST.getContainedPlaylists().add(top10);
         ROOT_PLAYLIST.getContainedPlaylists().add(favs);
         ROOT_PLAYLIST.getContainedPlaylists().add(listenLater);

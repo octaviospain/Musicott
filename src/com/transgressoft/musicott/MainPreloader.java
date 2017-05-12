@@ -19,7 +19,9 @@
 
 package com.transgressoft.musicott;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.guicemodules.*;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.fxml.*;
@@ -28,6 +30,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
+import javafx.stage.Stage;
 
 import java.io.*;
 
@@ -47,13 +50,20 @@ public class MainPreloader extends Preloader {
     private static final int SCENE_WIDTH = 450;
     private static final int SCENE_HEIGHT = 120;
 
-    private MainPreferences preferences = MainPreferences.getInstance();
     private Stage preloaderStage;
     private Label infoLabel;
     private ProgressBar preloaderProgressBar;
 
+    @Inject
+    private MainPreferences preferences;
+    @Inject
+    private ErrorDemon errorDemon;
+
     @Override
     public void start(Stage primaryStage) throws Exception {
+        Injector injector = Guice.createInjector(new MusicottModule());
+        injector.injectMembers(this);
+
         AnchorPane rootAnchorPane = FXMLLoader.load(getClass().getResource(PRELOADER_INIT_LAYOUT));
         infoLabel = (Label) rootAnchorPane.lookup("#infoLabel");
         preloaderProgressBar = (ProgressBar) rootAnchorPane.lookup("#preloaderProgressBar");
@@ -133,7 +143,7 @@ public class MainPreloader extends Preloader {
             promptStage.showAndWait();
         }
         catch (IOException e) {
-            ErrorDemon.getInstance().showErrorDialog("Error opening Musicott's folder selection", "", e);
+            errorDemon.showErrorDialog("Error opening Musicott's folder selection", "", e);
         }
     }
 }

@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.collections.*;
@@ -32,7 +33,8 @@ import org.slf4j.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
-public class PlayQueueController implements MusicottController {
+@Singleton
+public class PlayQueueController implements MusicottController, ConfigurableController {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
@@ -48,7 +50,12 @@ public class PlayQueueController implements MusicottController {
     private ObservableList<TrackQueueRow> playQueueList;
     private ObservableList<TrackQueueRow> historyQueueList;
 
-    private PlayerFacade player = PlayerFacade.getInstance();
+    private PlayerFacade player;
+
+    @Inject
+    public PlayQueueController(PlayerFacade player) {
+        this.player = player;
+    }
 
     @FXML
     public void initialize() {
@@ -78,6 +85,11 @@ public class PlayQueueController implements MusicottController {
             else
                 showPlayQueue();
         });
+    }
+
+    @Override
+    public void configure() {
+
     }
 
     private void clearHistoryQueue() {

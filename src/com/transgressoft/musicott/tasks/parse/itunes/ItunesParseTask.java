@@ -20,10 +20,13 @@
 package com.transgressoft.musicott.tasks.parse.itunes;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.factories.*;
 import com.worldsworstsoftware.itunes.*;
 import com.worldsworstsoftware.itunes.parser.*;
 import javafx.application.Platform;
@@ -53,7 +56,10 @@ public class ItunesParseTask extends BaseParseTask {
 
     public static final int METADATA_POLICY = 0;
     public static final int ITUNES_DATA_POLICY = 1;
+
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+
+    private final MusicLibrary musicLibrary;
     private final String itunesLibraryXmlPath;
     private final int metadataPolicy;
     private final boolean importPlaylists;
@@ -70,10 +76,15 @@ public class ItunesParseTask extends BaseParseTask {
     private int parsedPlaylistsSize = 0;
     private int parsedTracksSize = 0;
 
-    public ItunesParseTask(String path) {
-        super();
+    @Inject
+    private ParseActionFactory parseActionFactory;
+
+    @Inject
+    public ItunesParseTask(ErrorDemon errorDemon, StageDemon stageDemon, MusicLibrary musicLibrary,
+            MainPreferences mainPreferences, @Assisted String path) {
+        super(errorDemon, stageDemon);
+        this.musicLibrary = musicLibrary;
         itunesLibraryXmlPath = path;
-        MainPreferences mainPreferences = MainPreferences.getInstance();
         metadataPolicy = mainPreferences.getItunesImportMetadataPolicy();
         importPlaylists = mainPreferences.getItunesImportPlaylists();
         holdPlayCount = mainPreferences.getItunesImportHoldPlaycount();
@@ -82,12 +93,12 @@ public class ItunesParseTask extends BaseParseTask {
     }
 
     @Override
-    protected int getNumberOfParsedItemsAndIncrement() {
+    public int getNumberOfParsedItemsAndIncrement() {
         return ++ currentItunesItemsParsed;
     }
 
     @Override
-    protected int getTotalItemsToParse() {
+    public int getTotalItemsToParse() {
         return totalItunesItemsToParse;
     }
 
@@ -104,7 +115,7 @@ public class ItunesParseTask extends BaseParseTask {
         startMillis = System.currentTimeMillis();
         ForkJoinPool forkJoinPool = new ForkJoinPool(6);
         ItunesTracksParseAction itunesTracksParseAction =
-                new ItunesTracksParseAction(itunesTracks, metadataPolicy, holdPlayCount, this);
+                parseActionFactory.create(itunesTracks, metadataPolicy, holdPlayCount, this);
         ItunesParseResult itunesParseResult = forkJoinPool.invoke(itunesTracksParseAction);
 
         parsedTracksSize = itunesParseResult.getParsedResults().size();
@@ -115,8 +126,7 @@ public class ItunesParseTask extends BaseParseTask {
             currentItunesItemsParsed = 0;
             totalItunesItemsToParse = itunesPlaylists.size();
             Map<Integer, Track> idsMap = ImmutableMap.copyOf(itunesParseResult.getItunesIdToMusicottTrackMap());
-            ItunesPlaylistParseAction itunesPlaylistParseAction =
-                    new ItunesPlaylistParseAction(itunesPlaylists, idsMap, this);
+            ItunesPlaylistParseAction itunesPlaylistParseAction = parseActionFactory.create(itunesPlaylists, idsMap, this);
             forkJoinPool.invoke(itunesPlaylistParseAction);
             parsedPlaylistsSize = itunesPlaylistParseAction.get().getParsedResults().size();
         }
@@ -202,8 +212,7 @@ public class ItunesParseTask extends BaseParseTask {
             String fileExtension = itunesFile.toString().substring(index + 1);
             if (! ("mp3".equals(fileExtension) || "m4a".equals(fileExtension) || "wav".equals(fileExtension)))
                 valid = false;
-            Track auxTrack = new Track(- 1, itunesFile.getParent(), itunesFile.getName());
-            if (musicLibrary.tracks.contains(auxTrack))
+            if (musicLibrary.getTracksLibrary().containsTrackPath(itunesFile.getParent(), itunesFile.getName()))
                 valid = false;
         }
         return valid;

@@ -20,14 +20,14 @@
 package com.transgressoft.musicott.view.custom;
 
 import com.google.common.graph.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.factories.*;
 import javafx.beans.property.*;
 import javafx.scene.control.*;
 import org.fxmisc.easybind.*;
 
 import java.util.*;
-
-import static com.transgressoft.musicott.model.PlaylistsLibrary.*;
 
 /**
  * Class that extends from a {@link TreeView} representing a list of
@@ -39,14 +39,19 @@ import static com.transgressoft.musicott.model.PlaylistsLibrary.*;
  */
 public class PlaylistTreeView extends TreeView<Playlist> {
 
-    private Map<Playlist, TreeItem<Playlist>> playlistsItemsMap;
+    private final Provider<MusicLibrary> musicLibrary;
+    private final Map<Playlist, TreeItem<Playlist>> playlistsItemsMap = new HashMap<>();
+
     private TreeItem<Playlist> root;
     private ObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private PlaylistFactory playlistFactory;
 
-    public PlaylistTreeView() {
-        super();
+    @Inject
+    public PlaylistTreeView(Provider<MusicLibrary> musicLibrary, PlaylistFactory playlistFactory,
+            Injector injector) {
+        this.playlistFactory = playlistFactory;
+        this.musicLibrary = musicLibrary;
         createPlaylistsItems();
         setRoot(root);
         setShowRoot(false);
@@ -54,8 +59,8 @@ public class PlaylistTreeView extends TreeView<Playlist> {
         setPrefHeight(USE_COMPUTED_SIZE);
         setPrefWidth(USE_COMPUTED_SIZE);
         setId("playlistTreeView");
-        setCellFactory(cell -> new PlaylistTreeCell());
-        setContextMenu(new PlaylistTreeViewContextMenu());
+        setCellFactory(cell -> injector.getInstance(PlaylistTreeCell.class));
+        setContextMenu(injector.getInstance(PlaylistTreeViewContextMenu.class));
 
         selectedPlaylistProperty = new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
         getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
@@ -71,11 +76,13 @@ public class PlaylistTreeView extends TreeView<Playlist> {
      * Initializes the {@link TreeView} with all the playlists.
      */
     private void createPlaylistsItems() {
-        playlistsItemsMap = new HashMap<>();
-        root = new TreeItem<>(ROOT_PLAYLIST);
-        playlistsItemsMap.put(ROOT_PLAYLIST, root);
-        Graph<Playlist> playlistsGraph = musicLibrary.playlists.getPlaylistsTree();
-        addPlaylistsToFolder(ROOT_PLAYLIST, playlistsGraph.successors(ROOT_PLAYLIST));
+        Playlist rootPlaylist = playlistFactory.create("ROOT", true);
+
+        root = new TreeItem<>(rootPlaylist);
+        playlistsItemsMap.put(rootPlaylist, root);
+        PlaylistsLibrary playlistsLibrary = musicLibrary.get().getPlaylistsLibrary();
+        Graph<Playlist> playlistsGraph = playlistsLibrary.getPlaylistsTree();
+        addPlaylistsToFolder(rootPlaylist, playlistsGraph.successors(rootPlaylist));
     }
 
     /**
@@ -104,9 +111,10 @@ public class PlaylistTreeView extends TreeView<Playlist> {
     }
 
     public void movePlaylist(String movedPlaylistName, Playlist targetFolder) {
+        PlaylistsLibrary playlistsLibrary = musicLibrary.get().getPlaylistsLibrary();
         Playlist movedPlaylist = getPlaylistFromName(movedPlaylistName);
         TreeItem<Playlist> movedPlaylistItem = playlistsItemsMap.get(movedPlaylist);
-        Playlist parentMovedPlaylist = musicLibrary.playlists.getParentPlaylist(movedPlaylist);
+        Playlist parentMovedPlaylist = playlistsLibrary.getParentPlaylist(movedPlaylist);
         TreeItem<Playlist> parentMovedPlaylistItem = playlistsItemsMap.get(parentMovedPlaylist);
         TreeItem<Playlist> targetPlaylistItem = playlistsItemsMap.get(targetFolder);
 
@@ -115,7 +123,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
         addPlaylistToItemsMap(targetPlaylistItem, movedPlaylist);
         if (movedPlaylist.isFolder())
             addPlaylistsToFolder(movedPlaylist, movedPlaylist.getContainedPlaylists());
-        musicLibrary.playlists.movePlaylist(movedPlaylist, targetFolder);
+        playlistsLibrary.movePlaylist(movedPlaylist, targetFolder);
         selectPlaylist(movedPlaylist);
     }
 
@@ -129,8 +137,9 @@ public class PlaylistTreeView extends TreeView<Playlist> {
      * Deletes the {@link TreeItem} that has the value of the selected {@link Playlist}
      */
     public void deletePlaylist(Playlist playlist) {
+        PlaylistsLibrary playlistsLibrary = musicLibrary.get().getPlaylistsLibrary();
         TreeItem<Playlist> playlistItem = playlistsItemsMap.get(playlist);
-        Playlist parent = musicLibrary.playlists.getParentPlaylist(playlist);
+        Playlist parent = playlistsLibrary.getParentPlaylist(playlist);
         TreeItem<Playlist> parentItem = playlistsItemsMap.get(parent);
         parentItem.getChildren().remove(playlistItem);
         playlistsItemsMap.remove(playlist);

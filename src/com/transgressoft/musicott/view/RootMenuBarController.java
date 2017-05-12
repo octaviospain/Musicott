@@ -19,12 +19,13 @@
 
 package com.transgressoft.musicott.view;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
-import com.transgressoft.musicott.util.Utils.*;
+import com.transgressoft.musicott.util.guicemodules.*;
 import com.transgressoft.musicott.view.custom.*;
 import de.codecentric.centerdevice.*;
 import javafx.application.*;
@@ -38,6 +39,7 @@ import javafx.scene.input.KeyCombination.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
 import javafx.stage.FileChooser.*;
+import javafx.stage.Stage;
 import org.slf4j.*;
 
 import java.io.*;
@@ -58,7 +60,8 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
-public class RootMenuBarController {
+@Singleton
+public class RootMenuBarController implements ConfigurableController {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
@@ -66,6 +69,10 @@ public class RootMenuBarController {
 	private static final String ABOUT_MUSICOTT_FIRST_LINE = " Version 0.10-b\n\n Copyright © 2015-2017 Octavio Calleya.";
 	private static final String ABOUT_MUSICOTT_SECOND_LINE = " Licensed under GNU GPLv3. This product includes\n" + " " +
 																"software developed by other open source projects.";
+
+    private final Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
+    private final ImageView musicottLogoImageView = new ImageView(musicottLogo);
+
     @FXML
     private MenuBar rootMenuBar;
 	@FXML
@@ -121,37 +128,50 @@ public class RootMenuBarController {
     @FXML
     private MenuItem aboutMenuItem;
 
-    private Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
-    private ImageView musicottLogoImageView = new ImageView(musicottLogo);
-
     private Stage rootStage;
+
+    @Inject
     private RootController rootController;
+    @Inject
     private NavigationController navigationController;
+    @Inject
     private PlayerController playerController;
-    private StageDemon stageDemon = StageDemon.getInstance();
-    private TaskDemon taskDemon = TaskDemon.getInstance();
-    private PlayerFacade playerFacade = PlayerFacade.getInstance();
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+
+    private StageDemon stageDemon;
+    private TaskDemon taskDemon;
+    private PlayerFacade playerFacade;
+    private MusicLibrary musicLibrary;
+    private MainPreferences mainPreferences;
+
+    @Inject
+    public RootMenuBarController(StageDemon stageDemon, TaskDemon taskDemon, PlayerFacade playerFacade,
+            MusicLibrary musicLibrary, MainPreferences mainPreferences) {
+        this.stageDemon = stageDemon;
+        this.taskDemon = taskDemon;
+        this.playerFacade = playerFacade;
+        this.musicLibrary = musicLibrary;
+        this.mainPreferences = mainPreferences;
+    }
 
     @FXML
     public void initialize() {
         setAboutMenuActions();
+        setFileMenuActions();
     }
 
-    void setControllers(Stage rootStage, RootController rootController,
-            NavigationController navigationController, PlayerController playerController) {
-        this.rootStage = rootStage;
-        this.rootController = rootController;
-        this.navigationController = navigationController;
-        this.playerController = playerController;
+    @Override
+    public void configure() {
         setEditMenuActions();
-        setFileMenuActions();
         setEditMenuActions();
         setControlsMenuActions();
         setViewMenuActions();
         showHideTableInfoDisableBinding();
         showHideNavigationPaneTextBinding();
         showHideTableInfoPaneTextBinding();
+    }
+
+    void setMainStage(Stage rootStage) {
+        this.rootStage = rootStage;
     }
 
     /**
@@ -208,7 +228,7 @@ public class RootMenuBarController {
                            new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
             List<File> filesToImport = chooser.showOpenMultipleDialog(rootStage);
             if (filesToImport != null) {
-                TaskDemon.getInstance().importFiles(filesToImport, true);
+                taskDemon.importFiles(filesToImport, true);
                 navigationController.setStatusMessage("Opening files");
             }
         });
@@ -227,7 +247,7 @@ public class RootMenuBarController {
             chooser.getExtensionFilters().add(new ExtensionFilter("xml files (*.xml)", "*.xml"));
             File xmlFile = chooser.showOpenDialog(rootStage);
             if (xmlFile != null)
-                TaskDemon.getInstance().importFromItunesLibrary(xmlFile.getAbsolutePath());
+                taskDemon.importFromItunesLibrary(xmlFile.getAbsolutePath());
         });
         preferencesMenuItem.setOnAction(e -> stageDemon.showPreferences());
         newPlaylistMenuItem.setOnAction(e -> rootController.enterNewPlaylistName(false));
@@ -359,8 +379,8 @@ public class RootMenuBarController {
     }
 
     private void countFilesToImportTask(File folder) {
-        Set<String> extensions = MainPreferences.getInstance().getImportFilterExtensions();
-        ExtensionFileFilter filter = new ExtensionFileFilter();
+        Set<String> extensions = mainPreferences.getImportFilterExtensions();
+        ExtensionFileFilter filter = Guice.createInjector(new MusicottModule()).getInstance(ExtensionFileFilter.class);
         extensions.forEach(filter::addExtension);
         Platform.runLater(() -> {
             navigationController.setStatusMessage("");
@@ -391,7 +411,7 @@ public class RootMenuBarController {
             LOG.debug("Showing confirmation alert to import {} files", filesToImport.size());
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get().equals(ButtonType.OK)) {
-                TaskDemon.getInstance().importFiles(filesToImport, false);
+                taskDemon.importFiles(filesToImport, false);
                 navigationController.setStatusMessage("Importing files");
             }
         });

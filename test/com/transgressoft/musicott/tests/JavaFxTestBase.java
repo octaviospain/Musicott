@@ -19,53 +19,31 @@
 
 package com.transgressoft.musicott.tests;
 
-import javafx.application.*;
-import javafx.fxml.*;
+import com.google.inject.*;
+import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.guicemodules.*;
 import javafx.scene.*;
-import javafx.stage.*;
-import org.junit.*;
-import org.testfx.framework.junit.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.testfx.api.*;
+import org.testfx.framework.junit5.*;
 
 /**
  * Base class for testing JavaFX classes
  *
  * @author Octavio Calleya
  */
-public class JavaFxTestBase extends ApplicationTest {
+@ExtendWith (ApplicationExtension.class)
+public abstract class JavaFxTestBase {
 
-    protected static String layout;
-    protected static Stage testStage;
-    protected Object controller;
-    protected Application testApplication;
+    protected static Injector injector;
+    protected FXMLControllerLoader loader;
 
-    @Override
-    public void start(Stage stage) throws Exception {
-        testApplication = new Application() {
+    @Start
+    public abstract void start(javafx.stage.Stage stage) throws Exception;
 
-            @Override
-            public void start(Stage stage) throws Exception {
-                if (layout != null) {
-                    try {
-                        FXMLLoader loader = new FXMLLoader();
-                        loader.setLocation(getClass().getResource(layout));
-                        Parent nodeLayout = loader.load();
-                        controller = loader.getController();
-                        testStage.setScene(new Scene(nodeLayout));
-                    }
-                    catch (Exception exception) {
-                        exception.printStackTrace();
-                    }
-                }
-                testStage.setTitle("Test");
-            }
-        };
-
-        testApplication.init();
-        testApplication.start(testStage);
-    }
-
-    @BeforeClass
-    public static void setupSpec() throws Exception {
+    @BeforeAll
+    public static void beforeAll() throws Exception {
         if (Boolean.getBoolean("headless")) {
             System.setProperty("testfx.robot", "glass");
             System.setProperty("testfx.headless", "true");
@@ -73,14 +51,10 @@ public class JavaFxTestBase extends ApplicationTest {
             System.setProperty("prism.text", "t2k");
             System.setProperty("java.awt.headless", "true");
         }
+        injector = Guice.createInjector(new MusicottModule());
     }
 
-    @Before
-    public void beforeEachTest() throws Exception {
-    }
-
-    @After
-    public void afterEachTest() throws Exception  {
-        testApplication.stop();
+    public <T extends Node> T find(FxRobot fxRobot, String query) {
+        return fxRobot.lookup(query).query();
     }
 }

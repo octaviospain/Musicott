@@ -21,13 +21,17 @@ package com.transgressoft.musicott.tasks.load;
 
 import com.cedarsoftware.util.io.*;
 import com.google.common.collect.*;
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.factories.*;
 import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
 import javafx.collections.*;
 import org.slf4j.*;
 
+import javax.annotation.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
@@ -52,12 +56,17 @@ public class TracksLoadAction extends BaseLoadAction {
     private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private transient List<Track> tracksToSetProperties;
     private int totalTracks;
+    private MusicLibrary musicLibrary;
+    @Inject
+    private LoadActionFactory loadActionFactory;
 
-    public TracksLoadAction(List<Track> tracks, int totalTracks, String applicationFolder, MusicLibrary musicLibrary,
-            Application musicottApplication) {
-        super(applicationFolder, musicLibrary, musicottApplication);
+    @Inject
+    public TracksLoadAction(MusicLibrary musicLibrary, @Assisted @Nullable List<Track> tracks, @Assisted int totalTracks,
+            @Assisted String applicationFolder, @Assisted Application musicottApplication) {
+        super(applicationFolder, musicottApplication);
         tracksToSetProperties = tracks;
         this.totalTracks = totalTracks;
+        this.musicLibrary = musicLibrary;
     }
 
     @Override
@@ -79,12 +88,12 @@ public class TracksLoadAction extends BaseLoadAction {
             tracksToSetProperties.forEach(this::setTrackProperties);
             Map<Integer, Track> tracksMap = tracksToSetProperties.stream()
                                                     .collect(Collectors.toMap(Track::getTrackId, Function.identity()));
-            musicLibrary.tracks.add(tracksMap);
+            musicLibrary.getTracksLibrary().add(tracksMap);
         }
     }
 
     private TracksLoadAction subListToTracksLoadActionMap(List<Track> subList) {
-        return new TracksLoadAction(subList, totalTracks, applicationFolder, musicLibrary, musicottApplication);
+        return loadActionFactory.createTracksAction(subList, totalTracks, applicationFolder, musicottApplication);
     }
 
     /**

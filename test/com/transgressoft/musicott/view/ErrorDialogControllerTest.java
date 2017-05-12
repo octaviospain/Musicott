@@ -19,43 +19,65 @@
 
 package com.transgressoft.musicott.view;
 
+import com.google.inject.*;
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.tests.*;
+import com.transgressoft.musicott.util.*;
 import javafx.application.*;
-import javafx.stage.*;
-import org.junit.*;
+import javafx.scene.*;
+import javafx.scene.control.*;
+import javafx.stage.Stage;
+import org.junit.jupiter.api.*;
+import org.testfx.api.*;
+import org.testfx.framework.junit5.*;
+import org.testfx.util.*;
 
 import java.io.*;
 import java.util.*;
 
+import static com.transgressoft.musicott.view.MusicottController.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Octavio Calleya
  */
 public class ErrorDialogControllerTest extends JavaFxTestBase {
 
-    private ErrorDialogController errorAlertController;
-    private String defaultErrorContent = "Improve Musicott reporting this error on github.";
+    static final String defaultErrorContent = "Improve Musicott reporting this error on github.";
 
-    @Override
+    ErrorDialogController errorAlertController;
+    Button okButton;
+    Label titleLabel;
+
+    @Start
     public void start(Stage stage) throws Exception {
-        testStage = stage;
-        layout = MusicottController.ERROR_ALERT_LAYOUT;
-        super.start(stage);
+        loader = new FXMLControllerLoader(ErrorDialogControllerTest.class.getResource(ERROR_ALERT_LAYOUT), null,
+                                          new FXGuiceInjectionBuilderFactory(injector), injector);
+
+        Parent root = loader.load();
+        errorAlertController = loader.getController();
+        stage.setScene(new Scene(root));
+        stage.show();
+        stage.toFront();
     }
 
-    @Override
-    @Before
-    public void beforeEachTest() throws Exception {
-        super.beforeEachTest();
-        errorAlertController = (ErrorDialogController) controller;
+    @BeforeAll
+    public static void beforeAll() {
+        injector = Guice.createInjector(binder -> binder.bind(StageDemon.class).toInstance(mock(StageDemon.class)));
+    }
+
+    @BeforeEach
+    void beforeEachTest(FxRobot fxRobot) throws Exception {
+        okButton = find(fxRobot, "#okButton");
+        titleLabel = find(fxRobot, "#errorTitle");
     }
 
     @Test
-    public void errorDialogMessageText() throws Exception {
+    @DisplayName ("Single error message")
+    void errorDialogMessageText() throws Exception {
         Platform.runLater(() -> errorAlertController.prepareDialog("Error message", null, null));
-
-        Thread.sleep(200);
+        WaitForAsyncUtils.waitForFxEvents();
 
         assertEquals("Error message", errorAlertController.getErrorTitle());
         assertEquals(defaultErrorContent, errorAlertController.getErrorContent());
@@ -63,25 +85,27 @@ public class ErrorDialogControllerTest extends JavaFxTestBase {
     }
 
     @Test
-    public void errorDialogMessageWithContentTest() throws Exception {
+    @DisplayName ("Error message with content message")
+    void errorDialogMessageWithContentTest() throws Exception {
         Platform.runLater(() -> errorAlertController.prepareDialog("Error message", "Content message", null));
+        WaitForAsyncUtils.waitForFxEvents();
 
-        Thread.sleep(200);
         assertEquals("Error message", errorAlertController.getErrorTitle());
         assertEquals("Content message", errorAlertController.getErrorContent());
         assertEquals("", errorAlertController.getDetailsAreaText());
     }
 
     @Test
-    public void errorDialogMessageWithContentAndExceptionTest() throws Exception {
+    @DisplayName ("Error message with exception")
+    void errorDialogMessageWithContentAndExceptionTest() throws Exception {
         IllegalArgumentException exception = new IllegalArgumentException("Test exception");
         StackTraceElement[] stackTraceSample = new StackTraceElement[]{
                 new StackTraceElement(getClass().getName(), "method", "file", 31415)};
         exception.setStackTrace(stackTraceSample);
 
-        Platform.runLater(() -> errorAlertController.prepareDialog("Error message", null, exception));
+        Platform.runLater(() ->  errorAlertController.prepareDialog("Error message", null, exception));
+        WaitForAsyncUtils.waitForFxEvents();
 
-        Thread.sleep(200);
         assertEquals("Error message", errorAlertController.getErrorTitle());
         assertEquals(defaultErrorContent, errorAlertController.getErrorContent());
 
@@ -93,22 +117,24 @@ public class ErrorDialogControllerTest extends JavaFxTestBase {
     }
 
     @Test
-    public void errorDialogWithErrorCollection() throws Exception {
+    @DisplayName ("Error message with error collection")
+    void errorDialogWithErrorCollection() throws Exception {
         List<String> errors = Arrays.asList("Error 1", "Error 2", "Error 3");
         Platform.runLater(
                 () -> errorAlertController.prepareDialogWithMessages("Error message", "Content message", errors));
+        WaitForAsyncUtils.waitForFxEvents();
 
-        Thread.sleep(200);
         assertEquals("Error message", errorAlertController.getErrorTitle());
         assertEquals("Content message", errorAlertController.getErrorContent());
         assertEquals("Error 1\nError 2\nError 3\n", errorAlertController.getDetailsAreaText());
     }
 
     @Test
-    public void lastFmErrorDialog() throws Exception {
+    @DisplayName ("Lastfm error message")
+    void lastFmErrorDialog() throws Exception {
         Platform.runLater(() -> errorAlertController.prepareLastFmDialog("LastFm error message", null));
+        WaitForAsyncUtils.waitForFxEvents();
 
-        Thread.sleep(200);
         assertEquals("LastFm error message", errorAlertController.getErrorTitle());
         assertEquals(defaultErrorContent, errorAlertController.getErrorContent());
         assertEquals("", errorAlertController.getDetailsAreaText());

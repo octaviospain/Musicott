@@ -26,7 +26,7 @@ import com.google.common.graph.GraphConstants.*;
 */
 
 /**
- * Configurable implementation of {@link MutableGraph} that supports both directed and undirected
+ * ConfigurableController implementation of {@link MutableGraph} that supports both directed and undirected
  * graphs. Instances of this class should be constructed with {@link GraphBuilder}.
  *
  * <p>Time complexities for mutation methods are all O(1) except for {@code removeNode(N node)},

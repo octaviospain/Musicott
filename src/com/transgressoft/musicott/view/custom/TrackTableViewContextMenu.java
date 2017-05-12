@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view.custom;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
@@ -39,24 +40,26 @@ import java.util.stream.*;
  */
 public class TrackTableViewContextMenu extends ContextMenu {
 
-    private StageDemon stageDemon = StageDemon.getInstance();
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private final StageDemon stageDemon;
+    private final MusicLibrary musicLibrary;
 
     private Menu addToPlaylistMenu;
     private MenuItem deleteFromPlaylistMenuItem;
-    private List<MenuItem> playlistsInMenu;
+    private List<MenuItem> playlistsInMenu = new ArrayList<>();
 
     private List<Entry<Integer, Track>> selectedEntries;
 
-    public TrackTableViewContextMenu() {
+    @Inject
+    public TrackTableViewContextMenu(StageDemon stageDemon, MusicLibrary musicLibrary, PlayerFacade playerFacade) {
         super();
-        playlistsInMenu = new ArrayList<>();
+        this.stageDemon = stageDemon;
+        this.musicLibrary = musicLibrary;
         addToPlaylistMenu = new Menu("Add to playlist");
 
         MenuItem playMenuItem = new MenuItem("Play");
         playMenuItem.setOnAction(event -> {
             if (! selectedEntries.isEmpty())
-                PlayerFacade.getInstance().addTracksToPlayQueue(trackSelection(selectedEntries), true);
+                playerFacade.addTracksToPlayQueue(trackSelection(selectedEntries), true);
         });
 
         MenuItem editMenuItem = new MenuItem("Edit");
@@ -74,7 +77,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
         MenuItem addToQueueMenuItem = new MenuItem("Add to play queue");
         addToQueueMenuItem.setOnAction(event -> {
             if (! selectedEntries.isEmpty())
-                PlayerFacade.getInstance().addTracksToPlayQueue(trackSelection(selectedEntries), false);
+                playerFacade.addTracksToPlayQueue(trackSelection(selectedEntries), false);
         });
 
         deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
@@ -110,8 +113,9 @@ public class TrackTableViewContextMenu extends ContextMenu {
     public void show(Node anchor, double screenX, double screenY) {
         playlistsInMenu.clear();
         selectedEntries = stageDemon.getRootController().getSelectedTracks();
+        PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
         if (getSelectedPlaylist().isPresent() && ! getSelectedPlaylist().get().isFolder())  {
-            musicLibrary.playlists.getPlaylistsTree().nodes()
+            playlistsLibrary.getPlaylistsTree().nodes()
                                   .stream().filter(p -> ! p.isFolder())
                                   .forEach(this::addPlaylistToMenuList);
 

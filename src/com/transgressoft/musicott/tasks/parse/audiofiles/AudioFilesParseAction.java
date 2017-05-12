@@ -19,10 +19,11 @@
 
 package com.transgressoft.musicott.tasks.parse.audiofiles;
 
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
-import javafx.application.*;
 
 import java.io.*;
 import java.util.*;
@@ -43,14 +44,19 @@ public class AudioFilesParseAction extends FilesParseAction {
     private static final int MAX_FILES_TO_PARSE_PER_ACTION = 250;
     private static final int NUMBER_OF_PARTITIONS = 4;
 
+    private final MusicLibrary musicLibrary;
+
     /**
      * Constructor of {@link AudioFilesParseAction}
      *
      * @param filesToParse The {@link List} of audio files to parse
      * @param parentTask   The reference to the parent {@link BaseParseTask} that called this action
      */
-    public AudioFilesParseAction(List<File> filesToParse, BaseParseTask parentTask) {
+    @Inject
+    public AudioFilesParseAction(MusicLibrary musicLibrary, @Assisted List<File> filesToParse,
+            @Assisted BaseParseTask parentTask) {
         super(filesToParse, parentTask);
+        this.musicLibrary = musicLibrary;
     }
 
     @Override
@@ -59,7 +65,7 @@ public class AudioFilesParseAction extends FilesParseAction {
             forkIntoSubActions();
         else {
             itemsToParse.forEach(this::parseItem);
-            Platform.runLater(() -> musicLibrary.tracks.add(parsedTracks));
+            musicLibrary.getTracksLibrary().add(parsedTracks);
         }
 
         return new FilesParseResult(parsedTracks, parseErrors);
@@ -71,12 +77,9 @@ public class AudioFilesParseAction extends FilesParseAction {
     }
 
     @Override
-    protected void parseItem(File item) {
+    public void parseItem(File item) {
         Optional<Track> currentTrack = parseFileToTrack(item);
-        currentTrack.ifPresent(track -> {
-            if (! musicLibrary.tracks.contains(track))
-                parsedTracks.put(track.getTrackId(), track);
-        });
+        currentTrack.ifPresent(track -> parsedTracks.put(track.getTrackId(), track));
         parentTask.updateProgressTask();
     }
 

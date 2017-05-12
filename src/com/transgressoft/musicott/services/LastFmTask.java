@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.services;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.lastfm.*;
@@ -38,23 +39,27 @@ import java.util.concurrent.*;
 public class LastFmTask extends Thread {
 
     private static final String FAILED = "failed";
+
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
+    private final ErrorDemon errorDemon;
+    private final ServiceDemon serviceDemon;
+    private final StageDemon stageDemon;
+    private final LastFmService lastFmService;
+
     private Track trackToScrobble;
-    private LastFmService lastFmService;
-    private Semaphore updateAndScrobbleSemaphore;
-    private List<Map<Integer, Track>> tracksToScrobbleLater;
+    private Semaphore updateAndScrobbleSemaphore = new Semaphore(0);
+    private List<Map<Integer, Track>> tracksToScrobbleLater = new ArrayList<>();
     private boolean logout = false;
 
-    private ErrorDemon errorDemon = ErrorDemon.getInstance();
-    private ServiceDemon serviceDemon;
-
-    public LastFmTask(ServiceDemon serviceDemon) {
+    @Inject
+    public LastFmTask(ErrorDemon errorDemon, ServiceDemon serviceDemon, StageDemon stageDemon,
+            LastFmService lastFmService) {
         super("LastFM Thread");
+        this.errorDemon = errorDemon;
         this.serviceDemon = serviceDemon;
-        lastFmService = new LastFmService();
-        updateAndScrobbleSemaphore = new Semaphore(0);
-        tracksToScrobbleLater = new ArrayList<>();
+        this.stageDemon = stageDemon;
+        this.lastFmService = lastFmService;
     }
 
     public void updateAndScrobble(Track track) {
@@ -75,7 +80,7 @@ public class LastFmTask extends Thread {
     private boolean loginToLastFmApi() {
         boolean loginResult = true;
         if (! lastFmService.isApiConfigurationPresent()) {
-            errorDemon.showLastFmErrorDialog("LastFM error", "LastFM API Key or Secret are invalid");
+            errorDemon.showLastFmErrorDialog("LastFM error", "LastFM API Key or Secret not available");
             loginResult = false;
         }
 
@@ -88,7 +93,7 @@ public class LastFmTask extends Thread {
             else
                 serviceDemon.setUsingLastFm(true);
         }
-        Platform.runLater(StageDemon.getInstance()::closeIndeterminateProgress);
+        Platform.runLater(stageDemon::closeIndeterminateProgress);
         return loginResult;
     }
 

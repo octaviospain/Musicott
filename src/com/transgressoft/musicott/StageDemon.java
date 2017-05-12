@@ -19,8 +19,10 @@
 
 package com.transgressoft.musicott;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
+import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import javafx.fxml.*;
@@ -29,6 +31,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
 import javafx.scene.image.*;
 import javafx.stage.*;
+import javafx.stage.Stage;
 import org.slf4j.*;
 
 import java.io.*;
@@ -43,11 +46,14 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
+@Singleton
 public class StageDemon {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private ErrorDemon errorDemon = ErrorDemon.getInstance();
+    private Provider<ErrorDemon> errorDemon;
+    private Provider<MusicLibrary> musicLibrary;
+    private Provider<PlayerFacade> playerFacade;
 
     private Stage mainStage;
     private Stage editStage;
@@ -60,21 +66,28 @@ public class StageDemon {
     private Map<String, MusicottController> controllers = new HashMap<>();
 
     private HostServices hostServices;
+    private Injector injector;
 
-    private static class InstanceHolder {
-        static final StageDemon INSTANCE = new StageDemon();
-        private InstanceHolder() {}
+    @Inject
+    public StageDemon(Provider<ErrorDemon> errorDemon, Provider<MusicLibrary> musicLibrary,
+            Provider<PlayerFacade> playerFacade) {
+        this.errorDemon = errorDemon;
+        this.musicLibrary = musicLibrary;
+        this.playerFacade = playerFacade;
     }
 
-    private StageDemon() {
-        errorDemon.setErrorAlertStage(initStage(ERROR_ALERT_LAYOUT, "Error"));
-        errorDemon.setErrorAlertController((ErrorDialogController) controllers.get(ERROR_ALERT_LAYOUT));
+    void setInjector(Injector injector) {
+        this.injector = injector;
+    }
+
+    void initErrorController() {
+        errorDemon.get().setErrorAlertStage(initStage(ERROR_ALERT_LAYOUT, "Error"));
+        errorDemon.get().setErrorAlertController((ErrorDialogController) controllers.get(ERROR_ALERT_LAYOUT));
+    }
+
+    void initEditController() {
         editStage = initStage(EDIT_LAYOUT, "Edit");
         ((EditController) controllers.get(EDIT_LAYOUT)).setStage(editStage);
-    }
-
-    public static StageDemon getInstance() {
-        return InstanceHolder.INSTANCE;
     }
 
     void setApplicationHostServices(HostServices hostServices) {
@@ -126,19 +139,18 @@ public class StageDemon {
      * an {@code Alert} is opened asking for a confirmation of the user.
      */
     public void editTracks(int numberOfTracks) {
-        if (numberOfTracks != 0)
-            if (numberOfTracks > 1) {
-                String alertHeader = "Are you sure you want to edit multiple files?";
-                Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
-                Optional<ButtonType> result = alert.showAndWait();
+        if (numberOfTracks > 1) {
+            String alertHeader = "Are you sure you want to edit multiple files?";
+            Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
+            Optional<ButtonType> result = alert.showAndWait();
 
-                if (result.isPresent() && result.get().getButtonData().isDefaultButton())
-                    showStage(editStage);
-                else
-                    alert.close();
-            }
-            else
+            if (result.isPresent() && result.get().getButtonData().isDefaultButton())
                 showStage(editStage);
+            else
+                alert.close();
+        }
+        else
+            showStage(editStage);
     }
 
     /**
@@ -153,8 +165,8 @@ public class StageDemon {
 
             if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
                 new Thread(() -> {
-                    PlayerFacade.getInstance().deleteFromQueues(trackSelection);
-                    MusicLibrary.getInstance().deleteTracks(trackSelection);
+                    playerFacade.get().deleteFromQueues(trackSelection);
+                    musicLibrary.get().deleteTracks(trackSelection);
                     String message = "Deleted " + Integer.toString(trackSelection.size()) + " tracks";
                     Platform.runLater(() -> {
                         getNavigationController().setStatusMessage(message);
@@ -228,11 +240,14 @@ public class StageDemon {
      * @param stageToShow The Stage to be shown
      */
     void showStage(Stage stageToShow) {
-        if (stageToShow.equals(mainStage) || stageToShow.equals(progressStage))
-            stageToShow.show();
-        else if (! stageToShow.isShowing())
-            stageToShow.showAndWait();
-        stageToShow.centerOnScreen();
+        Platform.runLater(() -> {
+            stageToShow.sizeToScene();
+            stageToShow.centerOnScreen();
+            if (stageToShow.equals(mainStage) || stageToShow.equals(progressStage))
+                stageToShow.show();
+            else if (! stageToShow.isShowing())
+                stageToShow.showAndWait();
+        });
     }
 
     /**
@@ -259,12 +274,12 @@ public class StageDemon {
         }
         catch (IOException exception) {
             LOG.error("Error initiating stage of layout " + layout, exception.getCause());
-            errorDemon.showErrorDialog("Error initiating stage of layout " + layout + ":", "", exception);
+            errorDemon.get().showErrorDialog("Error initiating stage of layout " + layout + ":", "", exception);
         }
     }
 
     /**
-     * Loads the given layout resource
+     * Loads the given layout resource and stores its controller.
      *
      * @param layout The {@code *.fxml} source to be loaded
      *
@@ -273,10 +288,10 @@ public class StageDemon {
      * @throws IOException thrown if the {@code *.fxml} file wasn't found
      */
     private Parent loadLayout(String layout) throws IOException {
-        FXMLLoader loader = new FXMLLoader();
-        loader.setLocation(getClass().getResource(layout));
-        Parent nodeLayout = loader.load();
-        controllers.put(layout, loader.getController());
+        FXMLLoader fxmlLoader = new FXMLControllerLoader(getClass().getResource(layout),null,
+                                                         new FXGuiceInjectionBuilderFactory(injector), injector);
+        Parent nodeLayout = fxmlLoader.load();
+        controllers.put(layout, fxmlLoader.getController());
         return nodeLayout;
     }
 }

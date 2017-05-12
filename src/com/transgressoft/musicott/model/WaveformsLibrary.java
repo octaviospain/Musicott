@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.model;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.tasks.*;
 
 import java.util.*;
@@ -32,12 +33,19 @@ import java.util.*;
  */
 public class WaveformsLibrary {
 
-    private final TaskDemon taskDemon = TaskDemon.getInstance();
-    final Map<Integer, float[]> waveforms = new HashMap<>();
+    private final Provider<TaskDemon> taskDemonProvider;
+    private final Map<Integer, float[]> waveforms = new HashMap<>();
+
+    @Inject
+    public WaveformsLibrary(Provider<TaskDemon> taskDemonProvider) {this.taskDemonProvider = taskDemonProvider;}
+
+    public Map<Integer, float[]> getWaveforms() {
+        return waveforms;
+    }
 
     public synchronized void addWaveform(int trackId, float[] waveform) {
         waveforms.put(trackId, waveform);
-        taskDemon.saveLibrary(false, true, false);
+        taskDemonProvider.get().saveLibrary(false, true, false);
     }
 
     public synchronized void addWaveforms(Map<Integer, float[]> newWaveforms) {

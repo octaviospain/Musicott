@@ -19,8 +19,10 @@
 
 package com.transgressoft.musicott.tasks.parse.audiofiles;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
+import com.transgressoft.musicott.util.factories.*;
 
 import java.io.*;
 import java.util.*;
@@ -39,6 +41,9 @@ public abstract class FilesParseAction
 
     protected transient Map<Integer, Track> parsedTracks;
 
+    @Inject
+    private ParseActionFactory parseActionFactory;
+
     public FilesParseAction(List<File> itemsToParse, BaseParseTask parentTask) {
         super(itemsToParse, parentTask);
         parsedTracks = new HashMap<>();
@@ -47,7 +52,7 @@ public abstract class FilesParseAction
     @Override
     protected BaseParseAction<File, Map<Integer, Track>, BaseParseResult<Map<Integer, Track>>> parseActionMapper(
             List<File> subItems) {
-        return new AudioFilesParseAction(subItems, parentTask);
+        return parseActionFactory.create(subItems, parentTask);
     }
 
     @Override

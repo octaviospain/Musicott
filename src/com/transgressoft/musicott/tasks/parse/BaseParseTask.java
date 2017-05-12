@@ -20,7 +20,6 @@
 package com.transgressoft.musicott.tasks.parse;
 
 import com.transgressoft.musicott.*;
-import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import javafx.concurrent.*;
@@ -36,15 +35,20 @@ import java.util.*;
  * @version 0.10-b
  * @since 0.10-b
  */
-public abstract class BaseParseTask extends Task<Void> {
+public abstract class BaseParseTask extends Task<Void> implements ParseTask {
+
+    protected ErrorDemon errorDemon;
+    protected StageDemon stageDemon;
+    protected NavigationController navigationController;
 
     protected Collection<String> parseErrors;
     protected long startMillis;
 
-    protected StageDemon stageDemon = StageDemon.getInstance();
-    protected MusicLibrary musicLibrary = MusicLibrary.getInstance();
-    protected ErrorDemon errorDemon = ErrorDemon.getInstance();
-    protected NavigationController navigationController = stageDemon.getNavigationController();
+    public BaseParseTask(ErrorDemon errorDemon, StageDemon stageDemon) {
+        this.errorDemon = errorDemon;
+        this.stageDemon = stageDemon;
+        navigationController = stageDemon.getNavigationController();
+    }
 
     public void updateProgressTask() {
         int parsedItems = getNumberOfParsedItemsAndIncrement();
@@ -53,10 +57,6 @@ public abstract class BaseParseTask extends Task<Void> {
         String statusMessage = Integer.toString(parsedItems) + " / " + Integer.toString(totalItemsToParse);
         Platform.runLater(() -> updateTaskProgressOnView(progress, statusMessage));
     }
-
-    protected abstract int getNumberOfParsedItemsAndIncrement();
-
-    protected abstract int getTotalItemsToParse();
 
     /**
      * Updates on the view the progress and a message of the task.

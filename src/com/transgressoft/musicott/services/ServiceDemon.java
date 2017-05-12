@@ -19,8 +19,8 @@
 
 package com.transgressoft.musicott.services;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.services.lastfm.*;
 import javafx.application.*;
 import javafx.beans.property.*;
 
@@ -31,35 +31,27 @@ import javafx.beans.property.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
+@Singleton
 public class ServiceDemon {
-    
-    private LastFmPreferences lastFmPreferences;
+
+
     private LastFmTask lastFmTask;
     private boolean usingLastFm;
     private BooleanProperty usingLastFmProperty;
 
-    private static class InstanceHolder {
-        static final ServiceDemon INSTANCE = new ServiceDemon();
-        private InstanceHolder() {}
-    }
+    private LastFmPreferences lastFmPreferences;
+    @Inject
+    private Injector injector;
 
-    private ServiceDemon() {
-        lastFmPreferences = new LastFmPreferences();
+    @Inject
+    public ServiceDemon() {
         usingLastFmProperty = new SimpleBooleanProperty(this, "using LastFM", false);
-    }
-
-    public static ServiceDemon getInstance() {
-        return InstanceHolder.INSTANCE;
-    }
-
-    public LastFmPreferences getLastFmPreferences() {
-        return lastFmPreferences;
     }
 
     public void lastFmLogIn(String username, String password) {
         lastFmPreferences.setLastFmUsername(username);
         lastFmPreferences.setLasFmPassword(password);
-        lastFmTask = new LastFmTask(this);
+        lastFmTask = injector.getInstance(LastFmTask.class);
         lastFmTask.start();
     }
 
@@ -82,6 +74,15 @@ public class ServiceDemon {
 
     public boolean usingLastFm() {
         return usingLastFm;
+    }
+
+    public LastFmPreferences getLastFmPreferences() {
+        return lastFmPreferences;
+    }
+
+    @Inject
+    public void setLastFmPreferences(LastFmPreferences lastFmPreferences) {
+        this.lastFmPreferences = lastFmPreferences;
     }
 
     public ReadOnlyBooleanProperty usingLastFmProperty() {

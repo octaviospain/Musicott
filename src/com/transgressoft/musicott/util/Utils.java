@@ -21,6 +21,7 @@ package com.transgressoft.musicott.util;
 
 import com.google.common.base.*;
 import com.google.common.collect.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import javafx.scene.image.*;
@@ -46,6 +47,9 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * @version 0.10-b
  */
 public class Utils {
+
+    @Inject
+    private static Injector injector;
 
     /**
      * Private constructor to hide the implicit public one.
@@ -336,13 +340,14 @@ public class Utils {
      * @return An {@link Optional} with the {@code image} or not.
      */
     public static Optional<Image> getImageFromFile(File imageFile) {
+        ErrorDemon errorDemon = injector.getInstance(ErrorDemon.class);
         Optional<Image> optionalImage = Optional.empty();
         try {
             byte[] coverBytes = Files.readAllBytes(Paths.get(imageFile.getPath()));
             optionalImage = Optional.of(new Image(new ByteArrayInputStream(coverBytes)));
         }
         catch (IOException exception) {
-            ErrorDemon.getInstance().showErrorDialog("Error getting Image from image file", "", exception);
+            errorDemon.showErrorDialog("Error getting Image from image file", "", exception);
         }
         return optionalImage;
     }
@@ -368,95 +373,5 @@ public class Utils {
         else
             imageView.setImage(DEFAULT_COVER);
         return updatedWithCustomImage;
-    }
-
-    /**
-     * This class implements {@link FileFilter} to
-     * accept a file with some of the given extensions. If no extensions are given
-     * the file is not accepted. The extensions must be given without the dot.
-     *
-     * @author Octavio Calleya
-     */
-    public static class ExtensionFileFilter implements FileFilter {
-
-        private String[] extensions;
-        private int numExtensions;
-
-        public ExtensionFileFilter(String... extensions) {
-            this.extensions = extensions;
-            numExtensions = extensions.length;
-        }
-
-        public ExtensionFileFilter() {
-            extensions = new String[]{};
-            numExtensions = 0;
-        }
-
-        public void addExtension(String ext) {
-            boolean contains = false;
-            for (String e : extensions)
-                if (e != null && ext.equals(e)) {
-                    contains = true;
-                }
-            if (! contains) {
-                ensureArrayLength();
-                extensions[numExtensions++] = ext;
-            }
-        }
-
-        private void ensureArrayLength() {
-            if (numExtensions == extensions.length)
-                extensions = Arrays.copyOf(extensions, numExtensions == 0 ? 1 : 2 * numExtensions);
-        }
-
-        public void removeExtension(String ext) {
-            for (int i = 0; i < extensions.length; i++)
-                if (extensions[i].equals(ext)) {
-                    extensions[i] = null;
-                    numExtensions--;
-                }
-            extensions = Arrays.copyOf(extensions, numExtensions);
-        }
-
-        public boolean hasExtension(String ext) {
-            for (String e : extensions)
-                if (ext.equals(e)) {
-                    return true;
-                }
-            return false;
-        }
-
-        public String[] getExtensions() {
-            return extensions;
-        }
-
-        public void setExtensions(String... extensions) {
-            if (extensions == null)
-                this.extensions = new String[]{};
-            else
-                this.extensions = extensions;
-            numExtensions = this.extensions.length;
-        }
-
-        @Override
-        public boolean accept(File pathname) {
-            boolean res = false;
-            if (! pathname.isDirectory() && ! pathname.isHidden()) {
-                int pos = pathname.getName().lastIndexOf('.');
-                if (pos != - 1) {
-                    String extension = pathname.getName().substring(pos + 1);
-                    res = matchExtension(extension);
-                }
-            }
-            return res;
-        }
-
-        private boolean matchExtension(String extension) {
-            boolean res = false;
-            for (String requiredExtension : extensions)
-                if (extension.equals(requiredExtension))
-                    res = true;
-            return res;
-        }
     }
 }

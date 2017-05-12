@@ -19,15 +19,16 @@
 
 package com.transgressoft.musicott;
 
+import com.google.inject.*;
 import com.sun.javafx.application.*;
-import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
-import com.transgressoft.musicott.services.lastfm.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tasks.load.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guicemodules.*;
 import javafx.application.*;
-import javafx.stage.*;
+import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.*;
 
@@ -58,18 +59,12 @@ public class MusicottApplication extends Application {
     private static final String CONFIG_FILE = "resources/config/config.properties";
     private static final String LOGGING_PROPERTIES = "resources/config/logging.properties";
     private static final String LOG_FILE = "Musicott-main-log.txt";
+
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private MusicLibrary musicLibrary;
-    private MainPreferences preferences;
+    private final Injector injector = Guice.createInjector(new MusicottModule());
+
     private StageDemon stageDemon;
     private TaskDemon taskDemon;
-
-    public MusicottApplication() {
-        musicLibrary = MusicLibrary.getInstance();
-        preferences = MainPreferences.getInstance();
-        stageDemon = StageDemon.getInstance();
-        taskDemon = TaskDemon.getInstance();
-    }
 
     public static void main(String[] args) {
         initializeLogger();
@@ -132,27 +127,34 @@ public class MusicottApplication extends Application {
         stringBuilder.append(secondLine);
 
         if (record.getThrown() != null) {
-            stringBuilder.append(record.getThrown() + "\n");
+            stringBuilder.append(record.getThrown()).append("\n");
             for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace())
-                stringBuilder.append(stackTraceElement + "\n");
+                stringBuilder.append(stackTraceElement).append("\n");
         }
         return stringBuilder.toString();
     }
 
     @Override
     public void init() throws Exception {
+        MainPreferences preferences = injector.getInstance(MainPreferences.class);
         if (preferences.getMusicottUserFolder() == null || ! new File(preferences.getMusicottUserFolder()).exists()) {
             LauncherImpl.notifyPreloader(this, new CustomProgressNotification(0, FIRST_USE_EVENT));
         }
-        stageDemon.setApplicationHostServices(getHostServices());
-        String applicationFolder = preferences.getMusicottUserFolder();
-        loadConfigProperties();
 
+        String applicationFolder = preferences.getMusicottUserFolder();
+        LastFmPreferences lastFmPreferences = injector.getInstance(LastFmPreferences.class);
+        loadConfigProperties(lastFmPreferences);
+
+        stageDemon = injector.getInstance(StageDemon.class);
+        stageDemon.setInjector(injector);
+
+        taskDemon = injector.getInstance(TaskDemon.class);
         taskDemon.deactivateLibrarySaving();
         ForkJoinPool loadForkJoinPool = new ForkJoinPool(4);
-        loadForkJoinPool.invoke(new WaveformsLoadAction(applicationFolder, musicLibrary, this));
-        loadForkJoinPool.invoke(new PlaylistsLoadAction(applicationFolder, musicLibrary, this));
-        loadForkJoinPool.invoke(new TracksLoadAction(null, -1, applicationFolder, musicLibrary, this));
+        LoadActionFactory loadActionFactory = injector.getInstance(LoadActionFactory.class);
+        loadForkJoinPool.invoke(loadActionFactory.createWaveformsAction(applicationFolder, this));
+        loadForkJoinPool.invoke(loadActionFactory.createPlaylistAction(applicationFolder, this));
+        loadForkJoinPool.invoke(loadActionFactory.createTracksAction(null, -1, applicationFolder, this));
         loadForkJoinPool.shutdown();
         taskDemon.activateLibrarySaving();
     }
@@ -160,14 +162,13 @@ public class MusicottApplication extends Application {
     /**
      * Loads required configuration parameters from a {@code .properties} file
      */
-    private void loadConfigProperties() {
+    private void loadConfigProperties(LastFmPreferences servicePreferences) {
         Properties properties = new Properties();
         try {
             BaseLoadAction.notifyPreloader(0, 4, "Loading configuration...", this);
             properties.load(new FileInputStream(CONFIG_FILE));
             String apiKey = properties.getProperty("lastfm_api_key");
             String apiSecret = properties.getProperty("lastfm_api_secret");
-            LastFmPreferences servicePreferences = ServiceDemon.getInstance().getLastFmPreferences();
             servicePreferences.setApiSecret(apiSecret);
             servicePreferences.setApiKey(apiKey);
         }
@@ -180,9 +181,13 @@ public class MusicottApplication extends Application {
     public void start(Stage primaryStage) throws IOException {
         primaryStage.setOnCloseRequest(event -> {
             LOG.info("Exiting Musicott");
-            TaskDemon.getInstance().shutDownTasks();
+            taskDemon.shutDownTasks();
             System.exit(0);
         });
+
+        stageDemon.initErrorController();
+        stageDemon.initEditController();
+        stageDemon.setApplicationHostServices(getHostServices());
         stageDemon.showMusicott(primaryStage);
         LOG.debug("Showing root stage");
     }

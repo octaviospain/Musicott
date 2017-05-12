@@ -19,10 +19,12 @@
 
 package com.transgressoft.musicott.view;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.factories.*;
 import javafx.beans.property.*;
 import javafx.event.*;
 import javafx.fxml.*;
@@ -32,6 +34,7 @@ import javafx.scene.image.*;
 import javafx.scene.input.*;
 import javafx.stage.*;
 import javafx.stage.FileChooser.*;
+import javafx.stage.Stage;
 import org.slf4j.*;
 
 import java.io.*;
@@ -97,8 +100,13 @@ public class EditController implements MusicottController {
     private Optional<String> newChangedAlbum = Optional.empty();
     private Set<String> changedAlbums = new HashSet<>();
 
+    @Inject
+    private StageDemon stageDemon;
+    @Inject
+    private UpdateMusicLibraryTaskFactory updateTaskFactory;
+
     @FXML
-    private void initialize() {
+    public void initialize() {
         editableFieldsMap = new EnumMap<>(TrackField.class);
         editableFieldsMap.put(TrackField.NAME, nameTextField);
         editableFieldsMap.put(TrackField.ARTIST, artistTextField);
@@ -225,7 +233,7 @@ public class EditController implements MusicottController {
      * a dash ({@code -}) is placed in the {@link TextField}.
      */
     private void setEditFieldsValues() {
-        trackSelection = StageDemon.getInstance().getRootController().getSelectedTracks().stream()
+        trackSelection = stageDemon.getRootController().getSelectedTracks().stream()
                                    .map(Entry::getValue).collect(Collectors.toList());
 
         editableFieldsMap.entrySet().forEach(this::setFieldValue);
@@ -288,7 +296,7 @@ public class EditController implements MusicottController {
      */
     private void editAndClose() {
         trackSelection.forEach(this::editTrack);
-        UpdateMusicLibraryTask updateTask = new UpdateMusicLibraryTask(trackSelection, changedAlbums, newChangedAlbum);
+        UpdateMusicLibraryTask updateTask = updateTaskFactory.create(trackSelection, changedAlbums, newChangedAlbum);
         updateTask.setDaemon(true);
         updateTask.start();
         editStage.close();

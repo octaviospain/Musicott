@@ -19,10 +19,11 @@
 
 package com.transgressoft.musicott.view;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.services.*;
-import com.transgressoft.musicott.services.lastfm.*;
 import com.transgressoft.musicott.tasks.*;
+import javafx.beans.binding.Binding;
 import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
@@ -81,12 +82,24 @@ public class PreferencesController implements MusicottController {
     private CheckComboBox<String> extensionsCheckComboBox;
     private LastFmPreferences lastFmPreferences;
 
-    private ReadOnlyBooleanProperty usingLastFmProperty = ServiceDemon.getInstance().usingLastFmProperty();
+    private ReadOnlyBooleanProperty usingLastFmProperty;
 
-    private StageDemon stageDemon = StageDemon.getInstance();
-    private ServiceDemon serviceDemon = ServiceDemon.getInstance();
-    private MainPreferences preferences = MainPreferences.getInstance();
-    private ErrorDemon errorDemon = ErrorDemon.getInstance();
+    private ErrorDemon errorDemon;
+    private StageDemon stageDemon;
+    private ServiceDemon serviceDemon;
+    private MainPreferences preferences;
+    private TaskDemon taskDemon;
+
+    @Inject
+    public PreferencesController(ErrorDemon errorDemon, StageDemon stageDemon, ServiceDemon serviceDemon,
+            MainPreferences preferences, TaskDemon taskDemon) {
+        this.errorDemon = errorDemon;
+        this.stageDemon = stageDemon;
+        this.serviceDemon = serviceDemon;
+        this.preferences = preferences;
+        this.taskDemon = taskDemon;
+        usingLastFmProperty = serviceDemon.usingLastFmProperty();
+    }
 
     @FXML
     public void initialize() {
@@ -207,7 +220,7 @@ public class PreferencesController implements MusicottController {
         if (playlistsFile.exists() && ! playlistsFile.delete())
             errorDemon.showErrorDialog("Unable to delete playlists file", playlistsFile.getAbsolutePath());
         preferences.setMusicottUserFolder(newApplicationUserFolder);
-        TaskDemon.getInstance().saveLibrary(true, true, true);
+        taskDemon.saveLibrary(true, true, true);
     }
 
     public void loadUserPreferences() {

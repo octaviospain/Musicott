@@ -20,6 +20,8 @@
 package com.transgressoft.musicott.tasks;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
@@ -44,107 +46,112 @@ import static java.nio.file.StandardCopyOption.*;
  */
 public class UpdateMusicLibraryTask extends Thread {
 
-	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    
+    private final MusicLibrary musicLibrary;
+    private final StageDemon stageDemon;
+    private final TaskDemon taskDemon;
+    private final ErrorDemon errorDemon;
+    private final List<Track> tracks;
+    private final Set<String> changedAlbums;
+    private final Optional<String> newAlbum;
 
-	private List<Track> tracks;
-	private Set<String> changedAlbums;
-	private Optional<String> newAlbum;
-	private CopyOption[] options;
-	private List<String> updateErrors;
+    private CopyOption[] options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
+    private List<String> updateErrors = new ArrayList<>();
 
-	private ErrorDemon errorDemon = ErrorDemon.getInstance();
-	private TaskDemon taskDemon = TaskDemon.getInstance();
-	private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-	private StageDemon stageDemon = StageDemon.getInstance();
+    @Inject
+    public UpdateMusicLibraryTask(MusicLibrary musicLibrary, StageDemon stageDemon, TaskDemon taskDemon,
+            ErrorDemon errorDemon, @Assisted List<Track> tracks, @Assisted Set<String> changedAlbums,
+            @Assisted Optional<String> newAlbum) {
+        this.musicLibrary = musicLibrary;
+        this.stageDemon = stageDemon;
+        this.taskDemon = taskDemon;
+        this.errorDemon = errorDemon;
+        this.tracks = tracks;
+        this.changedAlbums = changedAlbums;
+        this.newAlbum = newAlbum;
+    }
 
-	public UpdateMusicLibraryTask(List<Track> tracks, Set<String> changedAlbums, Optional<String> newAlbum) {
-		this.tracks = tracks;
-		this.changedAlbums = changedAlbums;
-		this.newAlbum = newAlbum;
-		options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
-		updateErrors = new ArrayList<>();
-	}
-
-	@Override
-	public void run() {
-		updateMusicLibraryTracks();
-		updateMusicLibraryAlbums();
-		stageDemon.getRootController().updateShowingTrackSets();
+    @Override
+    public void run() {
+        updateMusicLibraryTracks();
+        updateMusicLibraryAlbums();
+        stageDemon.getRootController().updateShowingTrackSets();
         taskDemon.saveLibrary(true, false, false);
-		if (! updateErrors.isEmpty())
-			errorDemon.showExpandableErrorsDialog("Errors writing metadata on some tracks", null, updateErrors);
-	}
+        if (! updateErrors.isEmpty())
+            errorDemon.showExpandableErrorsDialog("Errors writing metadata on some tracks", null, updateErrors);
+    }
 
-	private void updateMusicLibraryAlbums() {
-		newAlbum.ifPresent(album -> {
-			List<Entry<Integer, Track>> trackEntries = tracks.stream()
-															 .map(track -> new SimpleEntry<>(track.getTrackId(), track))
-															 .collect(Collectors.toList());
-			musicLibrary.updateTrackAlbums(trackEntries, changedAlbums, album);
-		});
-	}
+    private void updateMusicLibraryTracks() {
+        tracks.forEach(track -> {
+            updateArtistsInvolved(track);
+            if (track.isInDisk())
+                updateFileMetadata(track);
+        });
+    }
 
-	private void updateMusicLibraryTracks() {
-		tracks.forEach(track -> {
-			updateArtistsInvolved(track);
-			if (track.isInDisk())
-				updateFileMetadata(track);
-		});
-	}
+    private void updateMusicLibraryAlbums() {
+        newAlbum.ifPresent(album -> {
+            List<Entry<Integer, Track>> trackEntries = tracks.stream()
+                                                             .map(track -> new SimpleEntry<>(track.getTrackId(), track))
+                                                             .collect(Collectors.toList());
+            musicLibrary.updateTrackAlbums(trackEntries, changedAlbums, album);
+        });
+    }
 
-	private void updateArtistsInvolved(Track track) {
-		Set<String> oldArtistsInvolved = track.getArtistsInvolved();
-		Set<String> newArtistsInvolved = Utils.getArtistsInvolvedInTrack(track);
-		Set<String> removedArtists = Sets.difference(oldArtistsInvolved, newArtistsInvolved).immutableCopy();
-		Set<String> addedArtists = Sets.difference(newArtistsInvolved, oldArtistsInvolved).immutableCopy();
-		track.setArtistsInvolved(FXCollections.observableSet(newArtistsInvolved));
-		musicLibrary.updateArtistsInvolvedInTrack(track, removedArtists, addedArtists);
-	}
+    private void updateArtistsInvolved(Track track) {
+        Set<String> oldArtistsInvolved = track.getArtistsInvolved();
+        Set<String> newArtistsInvolved = Utils.getArtistsInvolvedInTrack(track);
+        Set<String> removedArtists = Sets.difference(oldArtistsInvolved, newArtistsInvolved).immutableCopy();
+        Set<String> addedArtists = Sets.difference(newArtistsInvolved, oldArtistsInvolved).immutableCopy();
+        track.setArtistsInvolved(FXCollections.observableSet(newArtistsInvolved));
+        musicLibrary.updateArtistsInvolvedInTrack(track, removedArtists, addedArtists);
+    }
 
-	private void updateFileMetadata(Track track) {
-		File backup = makeBackup(track);
-		try {
-			track.writeMetadata();
-			deleteBackup(track, backup);
-			String filePath = track.getFileFolder() + File.separator + track.getFileName();
-			LOG.debug("Updated (or not) metadata of {}", filePath);
-		}
-		catch (TrackUpdateException exception) {
-			if (backup != null)
-				restoreBackup(track, backup);
-			updateErrors.add(exception.getMessage() + ": " + exception.getCause().getMessage());
-		}
-	}
+    private void updateFileMetadata(Track track) {
+        File backup = makeBackup(track);
+        try {
+            track.writeMetadata();
+            deleteBackup(track, backup);
+            String filePath = track.getFileFolder() + File.separator + track.getFileName();
+            LOG.debug("Updated (or not) metadata of {}", filePath);
+        }
+        catch (TrackUpdateException exception) {
+            if (backup != null)
+                restoreBackup(track, backup);
+            updateErrors.add(exception.getMessage() + ": " + exception.getCause().getMessage());
+        }
+    }
 
-	private File makeBackup(Track track) {
-		File original = new File(track.getFileFolder(), track.getFileName());
-		File backup = null;
-		try {
-			backup = File.createTempFile(track.getFileName(), "");
-			Files.copy(original.toPath(), backup.toPath(), options);
-		}
-		catch (IOException exception) {
-			LOG.error("Error creating the backup file: ", exception.getCause());
-			errorDemon.showErrorDialog("Error creating the backup file", null, exception);
-		}
-		return backup;
-	}
+    private File makeBackup(Track track) {
+        File original = new File(track.getFileFolder(), track.getFileName());
+        File backup = null;
+        try {
+            backup = File.createTempFile(track.getFileName(), "");
+            Files.copy(original.toPath(), backup.toPath(), options);
+        }
+        catch (IOException exception) {
+            LOG.error("Error creating the backup file: ", exception.getCause());
+            errorDemon.showErrorDialog("Error creating the backup file", null, exception);
+        }
+        return backup;
+    }
 
-	private void restoreBackup(Track track, File backup) {
-		File original = new File(track.getFileFolder(), track.getFileName());
-		try {
-			Files.move(backup.toPath(), original.toPath(), options);
-		}
-		catch (IOException | UnsupportedOperationException exception) {
-			LOG.error("Error restoring the backup file: ", exception.getCause());
-			errorDemon.showErrorDialog("Error restoring the backup file", null, exception);
-		}
-	}
+    private void deleteBackup(Track track, File backup) {
+        if (backup != null && ! backup.delete()) {
+            LOG.error("Error deleting backup file of {}", track);
+            errorDemon.showErrorDialog("Error deleting the backup file of " + track.getFileName());
+        }
+    }
 
-	private void deleteBackup(Track track, File backup) {
-		if (backup != null && ! backup.delete()) {
-			LOG.error("Error deleting backup file of {}", track);
-			errorDemon.showErrorDialog("Error deleting the backup file of " + track.getFileName());
-		}
-	}
+    private void restoreBackup(Track track, File backup) {
+        File original = new File(track.getFileFolder(), track.getFileName());
+        try {
+            Files.move(backup.toPath(), original.toPath(), options);
+        }
+        catch (IOException | UnsupportedOperationException exception) {
+            LOG.error("Error restoring the backup file: ", exception.getCause());
+            errorDemon.showErrorDialog("Error restoring the backup file", null, exception);
+        }
+    }
 }

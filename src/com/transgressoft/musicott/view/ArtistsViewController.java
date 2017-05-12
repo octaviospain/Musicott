@@ -20,7 +20,9 @@
 package com.transgressoft.musicott.view;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.factories.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.Platform;
 import javafx.beans.binding.*;
@@ -47,7 +49,8 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @version 0.10-b
  * @since 0.10-b
  */
-public class ArtistsViewController {
+@Singleton
+public class ArtistsViewController implements MusicottController, ConfigurableController {
 
     @FXML
     private ListView<String> artistsListView;
@@ -66,7 +69,16 @@ public class ArtistsViewController {
     private ObjectProperty<Optional<String>> selectedArtistProperty;
 
     private PlayerController playerLayoutController;
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private MusicLibrary musicLibrary;
+    private TrackSetAreaRowFactory trackSetAreaRowFactory;
+
+    @Inject
+    public ArtistsViewController(PlayerController playerLayoutController, MusicLibrary musicLibrary,
+            TrackSetAreaRowFactory trackSetAreaRowFactory) {
+        this.playerLayoutController = playerLayoutController;
+        this.musicLibrary = musicLibrary;
+        this.trackSetAreaRowFactory = trackSetAreaRowFactory;
+    }
 
     @FXML
     public void initialize() {
@@ -74,20 +86,24 @@ public class ArtistsViewController {
         albumTrackSets.addListener(albumTrackSetsListener());
         artistsListView.getSelectionModel().selectedItemProperty().addListener(selectedArtistListener());
         artistsListView.setOnMouseClicked(this::doubleClickOnArtistHandler);
-
         totalAlbumsLabel.setText(String.valueOf(0) + " albums");
         totalTracksLabel.setText(String.valueOf(0) + " tracks");
         artistRandomButton.visibleProperty().bind(map(nameLabel.textProperty().isEmpty().not(), Function.identity()));
         artistRandomButton.setOnAction(e -> musicLibrary.playRandomArtistPlaylist(selectedArtistProperty.get().get()));
         selectedArtistProperty = new SimpleObjectProperty<>(this, "selected artist", Optional.empty());
         nameLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    if (selectedArtistProperty.get().isPresent())
-                        return selectedArtistProperty.get().get();
-                    else
-                        return "";
-                }, selectedArtistProperty));
+            if (selectedArtistProperty.get().isPresent())
+                return selectedArtistProperty.get().get();
+            else
+                return "";
+        }, selectedArtistProperty));
         if (! artistsListView.getItems().isEmpty())
             checkSelectedArtist();
+    }
+
+    @Override
+    public void configure() {
+        artistsListView.setItems(bindedToSearchFieldArtists());
     }
 
     private MapChangeListener<String, TrackSetAreaRow> albumTrackSetsListener() {
@@ -103,7 +119,7 @@ public class ArtistsViewController {
     }
 
     private FilteredList<String> bindedToSearchFieldArtists() {
-        ObservableList<String> tracks = musicLibrary.artistsProperty();
+        ObservableList<String> tracks = musicLibrary.artistsLibraryProperty();
         FilteredList<String> filteredArtists = new FilteredList<>(tracks, artist -> true);
 
         StringProperty searchTextProperty = playerLayoutController.searchTextProperty();
@@ -211,16 +227,16 @@ public class ArtistsViewController {
 
     private void addTrackSet(String album, Collection<Entry<Integer, Track>> tracks) {
         selectedArtistProperty.getValue().ifPresent(showingArtist -> {
-            TrackSetAreaRow trackSetAreaRow = new TrackSetAreaRow(showingArtist, album, tracks);
+            TrackSetAreaRow trackSetAreaRow = trackSetAreaRowFactory.create(showingArtist, album, tracks);
             subscribe(trackSetAreaRow.selectedTracksProperty(), selection -> checkSelectedArtist());
             albumTrackSets.put(album, trackSetAreaRow);
         });
     }
 
-    void setPlayerController(PlayerController playerLayoutController) {
-        this.playerLayoutController = playerLayoutController;
-        artistsListView.setItems(bindedToSearchFieldArtists());
-    }
+//    void setPlayerController(PlayerController playerLayoutController) {
+//        this.playerLayoutController = playerLayoutController;
+//        artistsListView.setItems(bindedToSearchFieldArtists());
+//    }
 
     /**
      * Puts several {@link TrackSetAreaRow}s in the view given the tracks, in form of

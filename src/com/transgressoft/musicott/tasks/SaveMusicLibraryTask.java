@@ -20,11 +20,10 @@
 package com.transgressoft.musicott.tasks;
 
 import com.cedarsoftware.util.io.*;
-import com.google.common.graph.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import javafx.application.*;
-import javafx.collections.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -44,9 +43,10 @@ import static com.transgressoft.musicott.view.MusicottController.*;
 public class SaveMusicLibraryTask extends Thread {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private final ObservableMap<Integer, Track> musicottTracks;
-    private final Map<Integer, float[]> trackWaveforms;
-    private final MutableGraph<Playlist> musicottPlaylists;
+
+    private final Provider<MusicLibrary> musicLibraryProvider;
+    private final Provider<ErrorDemon> errorDemon;
+
     private String musicottUserPath;
     private File tracksFile;
     private File waveformsFile;
@@ -57,15 +57,14 @@ public class SaveMusicLibraryTask extends Thread {
     private volatile boolean saveTracks;
     private volatile boolean saveWaveforms;
     private volatile boolean savePlaylists;
-    private ErrorDemon errorDemon = ErrorDemon.getInstance();
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    @Inject
+    private Injector injector;
 
-    public SaveMusicLibraryTask(ObservableMap<Integer, Track> tracks, Map<Integer, float[]> waveforms,
-            MutableGraph<Playlist> playlistsGraph) {
+    @Inject
+    public SaveMusicLibraryTask(Provider<ErrorDemon> errorDemon, Provider<MusicLibrary> musicLibraryProvider) {
         setName("Save Library Thread");
-        musicottTracks = tracks;
-        trackWaveforms = waveforms;
-        musicottPlaylists = playlistsGraph;
+        this.errorDemon = errorDemon;
+        this.musicLibraryProvider = musicLibraryProvider;
         musicottUserPath = "";
         saveSemaphore = new Semaphore(0);
         tracksArgs = new HashMap<>();
@@ -151,13 +150,14 @@ public class SaveMusicLibraryTask extends Thread {
         catch (IOException | RuntimeException | InterruptedException exception) {
             Platform.runLater(() -> {
                 LOG.error("Error saving music library", exception.getCause());
-                errorDemon.showErrorDialog("Error saving music library", null, exception);
+                errorDemon.get().showErrorDialog("Error saving music library", null, exception);
             });
         }
     }
 
     private void checkMusicottUserPathChanged() throws FileNotFoundException {
-        String applicationPath = MainPreferences.getInstance().getMusicottUserFolder();
+        MainPreferences mainPreferences = injector.getInstance(MainPreferences.class);
+        String applicationPath = mainPreferences.getMusicottUserFolder();
         if (! applicationPath.equals(musicottUserPath)) {
             String sep = File.separator;
             tracksFile = new File(applicationPath + sep + TRACKS_PERSISTENCE_FILE);
@@ -168,27 +168,27 @@ public class SaveMusicLibraryTask extends Thread {
     }
 
     private void serializeTracks() throws IOException {
-        TracksLibrary tracksLibrary = musicLibrary.tracks;
+        TracksLibrary tracksLibrary = musicLibraryProvider.get().getTracksLibrary();
         synchronized (tracksLibrary) {
-            writeObjectToJsonFile(musicottTracks, tracksFile, tracksArgs);
+            writeObjectToJsonFile(tracksLibrary.getMusicottTracks(), tracksFile, tracksArgs);
         }
         saveTracks = false;
         LOG.debug("Saved list of tracks in {}", tracksFile);
     }
 
     private void serializeWaveforms() throws IOException {
-        WaveformsLibrary waveformsLibrary = musicLibrary.waveforms;
+        WaveformsLibrary waveformsLibrary = musicLibraryProvider.get().getWaveformsLibrary();
         synchronized (waveformsLibrary) {
-            writeObjectToJsonFile(trackWaveforms, waveformsFile, null);
+            writeObjectToJsonFile(waveformsLibrary.getWaveforms(), waveformsFile, null);
         }
         saveWaveforms = false;
         LOG.debug("Saved waveform images in {}", waveformsFile);
     }
 
     private void serializePlaylists() throws IOException {
-        PlaylistsLibrary playlistsLibrary = musicLibrary.playlists;
+        PlaylistsLibrary playlistsLibrary = musicLibraryProvider.get().getPlaylistsLibrary();
         synchronized (playlistsLibrary) {
-            writeObjectToJsonFile(musicottPlaylists, playlistsFile, playlistArgs);
+            writeObjectToJsonFile(playlistsLibrary.getPlaylistsTree(), playlistsFile, playlistArgs);
         }
         savePlaylists = false;
         LOG.debug("Saved playlists in {}", playlistsFile);

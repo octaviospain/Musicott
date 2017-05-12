@@ -19,7 +19,7 @@
 
 package com.transgressoft.musicott.view.custom;
 
-import com.transgressoft.musicott.model.NavigationMode;
+import com.transgressoft.musicott.model.*;
 import javafx.beans.value.*;
 import javafx.css.*;
 import javafx.scene.control.*;
@@ -36,10 +36,10 @@ import static com.transgressoft.musicott.model.NavigationMode.*;
  */
 public class NavigationListCell extends ListCell<NavigationMode> {
 
-    private PseudoClass tracks = PseudoClass.getPseudoClass("tracks");
-    private PseudoClass tracksSelected = PseudoClass.getPseudoClass("tracks-selected");
-    private PseudoClass artists = PseudoClass.getPseudoClass("artists");
-    private PseudoClass artistsSelected = PseudoClass.getPseudoClass("artists-selected");
+    private final PseudoClass tracks = PseudoClass.getPseudoClass("tracks");
+    private final PseudoClass tracksSelected = PseudoClass.getPseudoClass("tracks-selected");
+    private final PseudoClass artists = PseudoClass.getPseudoClass("artists");
+    private final PseudoClass artistsSelected = PseudoClass.getPseudoClass("artists-selected");
 
     public NavigationListCell() {
         super();

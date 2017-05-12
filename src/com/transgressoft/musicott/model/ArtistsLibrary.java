@@ -20,6 +20,7 @@
 package com.transgressoft.musicott.model;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.*;
@@ -37,13 +38,13 @@ import static com.transgressoft.musicott.model.AlbumsLibrary.*;
  */
 public class ArtistsLibrary {
 
-    private final Multimap<String, Track> artistsTracks;
+    private final Multimap<String, Track> artistsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
     private final ObservableList<String> artistsList;
     private final ListProperty<String> artistsListProperty;
 
+    @Inject
     public ArtistsLibrary() {
-        artistsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
-        // Binds the set of artists to a ListProperty of their elements to be
+        // Binding of the set of artists to a ListProperty of their elements to be
         // shown on the artists' navigation mode list view.
         ObservableSet<String> artists = FXCollections.observableSet(artistsTracks.keySet());
         artistsList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(artists));

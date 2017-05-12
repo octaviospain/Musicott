@@ -20,6 +20,7 @@
 package com.transgressoft.musicott.model;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 
@@ -38,25 +39,28 @@ public class TracksLibrary {
 
     private static final int DEFAULT_RANDOM_QUEUE_SIZE = 8;
 
-    final ObservableMap<Integer, Track> musicottTracks;
+    private final ObservableMap<Integer, Track> musicottTracks = FXCollections.observableHashMap();
     private final ListProperty<Entry<Integer, Track>> trackEntriesListProperty;
     private final ListProperty<Entry<Integer, Track>> showingTracksProperty;
 
+    @Inject
     public TracksLibrary() {
-        musicottTracks = FXCollections.observableHashMap();
         Set<Entry<Integer, Track>> trackEntries = musicottTracks.entrySet();
-
-        // Bind the entries of the Musicott tracks to a
+        // Binding of the entries of the Musicott tracks to a
         // ListProperty of all its elements
         ObservableList<Entry<Integer, Track>> trackEntriesList = FXCollections.observableArrayList(trackEntries);
         trackEntriesListProperty = new SimpleListProperty<>(this, "all tracks");
         trackEntriesListProperty.bind(new SimpleObjectProperty<>(trackEntriesList));
 
-        // Bind the entries of the Musicott tracks to a
+        // Binding of the entries of the Musicott tracks to a
         // ListProperty of the elements that are shown in the table
         ObservableList<Entry<Integer, Track>> showingTracksList = FXCollections.observableArrayList(trackEntries);
         showingTracksProperty = new SimpleListProperty<>(this, "showing tracks");
         showingTracksProperty.bind(new SimpleObjectProperty<>(showingTracksList));
+    }
+
+    public ObservableMap<Integer, Track> getMusicottTracks() {
+        return musicottTracks;
     }
 
     void addListener(MapChangeListener<Integer, Track> listener) {
@@ -83,8 +87,10 @@ public class TracksLibrary {
         return trackIds.stream().map(musicottTracks::get).collect(Collectors.toList());
     }
 
-    public synchronized boolean contains(Track track) {
-        return musicottTracks.containsValue(track);
+    public synchronized boolean containsTrackPath(String parent, String fileName) {
+        return musicottTracks.values().stream().anyMatch(
+                                     track -> track.getFileFolder().equalsIgnoreCase(parent) &&
+                                     track.getFileName().equalsIgnoreCase(fileName));
     }
 
     synchronized int getSize() {

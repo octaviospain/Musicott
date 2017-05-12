@@ -19,6 +19,8 @@
 
 package com.transgressoft.musicott;
 
+import com.google.inject.*;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
@@ -33,6 +35,7 @@ import static com.transgressoft.musicott.tasks.parse.itunes.ItunesParseTask.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
+@Singleton
 public class MainPreferences {
 
     /**
@@ -72,17 +75,13 @@ public class MainPreferences {
     private AtomicInteger sequence;
     private Set<String> importExtensions;
 
-    private static class InstanceHolder {
-        static final MainPreferences INSTANCE = new MainPreferences();
-        private InstanceHolder() {}
-    }
-
     /**
-     * Private constructor of the class to be called from {@link #getInstance()}.
+     * Private constructor of the class.
      * By default, if the application is used in the first time, the only valid
      * extension when importing files is {@code *.mp3}.
      */
-    private MainPreferences() {
+    @Inject
+    public MainPreferences() {
         preferences = Preferences.userNodeForPackage(getClass());
         sequence = new AtomicInteger();
         importExtensions = new HashSet<>();
@@ -94,10 +93,6 @@ public class MainPreferences {
             importExtensions.add("wav");
         if (preferences.getBoolean(IMPORT_FLAC, false))
             importExtensions.add("flac");
-    }
-
-    public static MainPreferences getInstance() {
-        return InstanceHolder.INSTANCE;
     }
 
     /**

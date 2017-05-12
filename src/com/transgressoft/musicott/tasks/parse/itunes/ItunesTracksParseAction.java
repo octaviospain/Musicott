@@ -19,10 +19,12 @@
 
 package com.transgressoft.musicott.tasks.parse.itunes;
 
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.factories.*;
 import com.worldsworstsoftware.itunes.*;
 import javafx.application.*;
 import javafx.collections.*;
@@ -54,6 +56,12 @@ public class ItunesTracksParseAction extends ItunesParseAction {
     private final int metadataPolicy;
     private final boolean holdPlayCount;
 
+    @Inject
+    private TrackFactory trackFactory;
+    @Inject
+    private ParseActionFactory parseActionFactory;
+    private MusicLibrary musicLibrary;
+
     /**
      * Constructor of {@link ItunesTracksParseAction}
      *
@@ -62,9 +70,11 @@ public class ItunesTracksParseAction extends ItunesParseAction {
      * @param holdPlayCount  Flag to hold or not the play count from the iTunes Library data
      * @param parentTask     The reference to the parent {@link BaseParseTask} that called this action
      */
-    public ItunesTracksParseAction(List<ItunesTrack> itunesTracks, int metadataPolicy, boolean holdPlayCount,
-            BaseParseTask parentTask) {
+    @Inject
+    public ItunesTracksParseAction(MusicLibrary musicLibrary, @Assisted List<ItunesTrack> itunesTracks,
+            @Assisted int metadataPolicy, @Assisted boolean holdPlayCount, @Assisted BaseParseTask parentTask) {
         super(itunesTracks, parentTask);
+        this.musicLibrary = musicLibrary;
         this.metadataPolicy = metadataPolicy;
         this.holdPlayCount = holdPlayCount;
     }
@@ -75,7 +85,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
             forkIntoSubActions();
         else {
             itemsToParse.forEach(this::parseItem);
-            Platform.runLater(() -> musicLibrary.tracks.add(parsedTracks));
+            Platform.runLater(() -> musicLibrary.getTracksLibrary().add(parsedTracks));
         }
 
         return new ItunesParseResult(parsedTracks, itunesIdToMusicottTrackMap, parseErrors, notFoundFiles);
@@ -84,7 +94,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
     @Override
     protected BaseParseAction<ItunesTrack, Map<Integer, Track>, ItunesParseResult> parseActionMapper(
             List<ItunesTrack> subItems) {
-        return new ItunesTracksParseAction(subItems, metadataPolicy, holdPlayCount, parentTask);
+        return parseActionFactory.create(subItems, metadataPolicy, holdPlayCount, parentTask);
     }
 
     @Override
@@ -93,7 +103,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
     }
 
     @Override
-    protected void parseItem(ItunesTrack itunesTrack) {
+    public void parseItem(ItunesTrack itunesTrack) {
         Optional<Track> currentTrack = Optional.empty();
         if (metadataPolicy == ItunesParseTask.METADATA_POLICY)
             currentTrack = createTrackFromFileMetadata(itunesTrack);
@@ -101,10 +111,8 @@ public class ItunesTracksParseAction extends ItunesParseAction {
             currentTrack = createTrackFromItunesData(itunesTrack);
 
         currentTrack.ifPresent(track -> {
-            if (! musicLibrary.tracks.contains(track)) {
-                itunesIdToMusicottTrackMap.put(itunesTrack.getTrackID(), track);
-                parsedTracks.put(track.getTrackId(), track);
-            }
+            itunesIdToMusicottTrackMap.put(itunesTrack.getTrackID(), track);
+            parsedTracks.put(track.getTrackId(), track);
         });
         parentTask.updateProgressTask();
     }
@@ -159,8 +167,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
     private Track parseItunesFieldsToTrackFields(ItunesTrack itunesTrack, Path itunesPath) {
         String fileFolder = itunesPath.getParent().toString();
         String fileName = itunesPath.getName(itunesPath.getNameCount() - 1).toString();
-        int newId = MainPreferences.getInstance().getTrackSequence();
-        Track newTrack = new Track(newId, fileFolder, fileName);
+        Track newTrack = trackFactory.create(fileFolder, fileName);
         newTrack.setIsInDisk(true);
         newTrack.setSize(itunesTrack.getSize());
         newTrack.setTotalTime(Duration.millis(itunesTrack.getTotalTime()));

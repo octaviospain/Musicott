@@ -20,6 +20,7 @@
 package com.transgressoft.musicott.model;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
 
 import java.util.*;
 import java.util.Map.*;
@@ -35,11 +36,10 @@ public class AlbumsLibrary {
 
     public static final String UNK_ALBUM = "Unknown album";
 
-    private final Multimap<String, Entry<Integer, Track>> albumsTracks;
+    private Multimap<String, Entry<Integer, Track>> albumsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
 
-    public AlbumsLibrary() {
-        albumsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
-    }
+    @Inject
+    public AlbumsLibrary() {}
 
     synchronized boolean addTracks(String album, List<Entry<Integer, Track>> trackEntries) {
         //        if (! albumsLists.contains(album)) {

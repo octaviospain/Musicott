@@ -20,7 +20,7 @@
 package com.transgressoft.musicott.util;
 
 /**
- * This exception is thrown if an attempt to parse a file to create
+ * This exception is thrown if an attempt to parse a file to get
  * a {@link com.transgressoft.musicott.model.Track} instance was unsuccessful.
  *
  * @author Octavio Calleya

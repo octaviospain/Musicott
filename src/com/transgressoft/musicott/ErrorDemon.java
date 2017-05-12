@@ -19,9 +19,10 @@
 
 package com.transgressoft.musicott;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.*;
-import javafx.stage.*;
+import javafx.stage.Stage;
 
 import java.util.*;
 
@@ -32,20 +33,16 @@ import java.util.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
+@Singleton
 public class ErrorDemon {
 
+    private Provider<StageDemon> stageDemon;
     private ErrorDialogController errorAlertController;
     private Stage alertStage;
 
-    private static class InstanceHolder {
-        static final ErrorDemon INSTANCE = new ErrorDemon();
-        private InstanceHolder() {}
-    }
-
-    private ErrorDemon() {}
-
-    public static ErrorDemon getInstance() {
-        return InstanceHolder.INSTANCE;
+    @Inject
+    public ErrorDemon(Provider<StageDemon> stageDemon) {
+        this.stageDemon = stageDemon;
     }
 
     void setErrorAlertStage(Stage stage) {
@@ -86,8 +83,7 @@ public class ErrorDemon {
     public synchronized void showErrorDialog(String message, String content, Exception exception) {
         Platform.runLater(() -> {
             errorAlertController.prepareDialog(message, content, exception);
-            StageDemon.getInstance().showStage(alertStage);
-            alertStage.sizeToScene();
+            stageDemon.get().showStage(alertStage);
         });
     }
 
@@ -102,8 +98,7 @@ public class ErrorDemon {
     public synchronized void showExpandableErrorsDialog(String message, String content, Collection<String> errors) {
         Platform.runLater(() -> {
             errorAlertController.prepareDialogWithMessages(message, content, errors);
-            StageDemon.getInstance().showStage(alertStage);
-            alertStage.sizeToScene();
+            stageDemon.get().showStage(alertStage);
         });
     }
 
@@ -116,8 +111,7 @@ public class ErrorDemon {
     public synchronized void showLastFmErrorDialog(String message, String content) {
         Platform.runLater(() -> {
             errorAlertController.prepareLastFmDialog(message, content);
-            StageDemon.getInstance().showStage(alertStage);
-            alertStage.sizeToScene();
+            stageDemon.get().showStage(alertStage);
         });
     }
 }
