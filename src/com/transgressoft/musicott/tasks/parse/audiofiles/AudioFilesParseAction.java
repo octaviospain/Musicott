@@ -44,7 +44,7 @@ public class AudioFilesParseAction extends FilesParseAction {
     private static final int MAX_FILES_TO_PARSE_PER_ACTION = 250;
     private static final int NUMBER_OF_PARTITIONS = 4;
 
-    private final MusicLibrary musicLibrary;
+    private final TracksLibrary tracksLibrary;
 
     /**
      * Constructor of {@link AudioFilesParseAction}
@@ -53,10 +53,10 @@ public class AudioFilesParseAction extends FilesParseAction {
      * @param parentTask   The reference to the parent {@link BaseParseTask} that called this action
      */
     @Inject
-    public AudioFilesParseAction(MusicLibrary musicLibrary, @Assisted List<File> filesToParse,
+    public AudioFilesParseAction(TracksLibrary tracksLibrary, @Assisted List<File> filesToParse,
             @Assisted BaseParseTask parentTask) {
         super(filesToParse, parentTask);
-        this.musicLibrary = musicLibrary;
+        this.tracksLibrary = tracksLibrary;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class AudioFilesParseAction extends FilesParseAction {
             forkIntoSubActions();
         else {
             itemsToParse.forEach(this::parseItem);
-            musicLibrary.getTracksLibrary().add(parsedTracks);
+            tracksLibrary.add(parsedTracks);
         }
 
         return new FilesParseResult(parsedTracks, parseErrors);

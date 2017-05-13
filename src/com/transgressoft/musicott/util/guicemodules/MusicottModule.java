@@ -20,7 +20,9 @@
 package com.transgressoft.musicott.util.guicemodules;
 
 import com.google.inject.*;
+import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
+import javafx.beans.property.*;
 
 /**
  * Guice {@link Module} that includes the necessary bindings and configurations of the application.
@@ -43,5 +45,10 @@ public class MusicottModule extends AbstractModule {
         install(new UpdateMusicLibraryFactoryModule());
         requestStaticInjection(MetadataParser.class);
         requestStaticInjection(Utils.class);
+    }
+
+    @Provides
+    ReadOnlyBooleanProperty providesEmptyLibraryProperty(TracksLibrary tracksLibrary) {
+        return tracksLibrary.tracksProperty().emptyProperty();
     }
 }

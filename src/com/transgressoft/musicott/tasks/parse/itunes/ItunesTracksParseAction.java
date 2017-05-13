@@ -60,7 +60,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
     private TrackFactory trackFactory;
     @Inject
     private ParseActionFactory parseActionFactory;
-    private MusicLibrary musicLibrary;
+    private TracksLibrary tracksLibrary;
 
     /**
      * Constructor of {@link ItunesTracksParseAction}
@@ -71,10 +71,10 @@ public class ItunesTracksParseAction extends ItunesParseAction {
      * @param parentTask     The reference to the parent {@link BaseParseTask} that called this action
      */
     @Inject
-    public ItunesTracksParseAction(MusicLibrary musicLibrary, @Assisted List<ItunesTrack> itunesTracks,
+    public ItunesTracksParseAction(TracksLibrary tracksLibrary, @Assisted List<ItunesTrack> itunesTracks,
             @Assisted int metadataPolicy, @Assisted boolean holdPlayCount, @Assisted BaseParseTask parentTask) {
         super(itunesTracks, parentTask);
-        this.musicLibrary = musicLibrary;
+        this.tracksLibrary = tracksLibrary;
         this.metadataPolicy = metadataPolicy;
         this.holdPlayCount = holdPlayCount;
     }
@@ -85,7 +85,7 @@ public class ItunesTracksParseAction extends ItunesParseAction {
             forkIntoSubActions();
         else {
             itemsToParse.forEach(this::parseItem);
-            Platform.runLater(() -> musicLibrary.getTracksLibrary().add(parsedTracks));
+            Platform.runLater(() -> tracksLibrary.add(parsedTracks));
         }
 
         return new ItunesParseResult(parsedTracks, itunesIdToMusicottTrackMap, parseErrors, notFoundFiles);

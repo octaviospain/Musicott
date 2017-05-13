@@ -101,23 +101,27 @@ public class PlayerController implements MusicottController, ConfigurableControl
     private AnchorPane playQueueLayout;
     private WaveformPanel mainWaveformPanel;
 
-    private MusicLibrary musicLibrary;
+    private TracksLibrary tracksLibrary;
+    private WaveformsLibrary waveformsLibrary;
     private PlayerFacade player;
     private TaskDemon taskDemon;
     private WaveformPaneFactory waveformPaneFactory;
+    private ReadOnlyBooleanProperty emptyLibraryProperty;
 
     @Inject
-    public PlayerController(MusicLibrary musicLibrary, PlayerFacade player, TaskDemon taskDemon,
-            WaveformPaneFactory waveformPaneFactory) {
-        this.musicLibrary = musicLibrary;
+    public PlayerController(TracksLibrary tracksLibrary, WaveformsLibrary waveformsLibrary, PlayerFacade player,
+            TaskDemon taskDemon, WaveformPaneFactory waveformPaneFactory, ReadOnlyBooleanProperty emptyLibraryProperty) {
+        this.tracksLibrary = tracksLibrary;
+        this.waveformsLibrary = waveformsLibrary;
         this.player = player;
         this.taskDemon = taskDemon;
         this.waveformPaneFactory = waveformPaneFactory;
+        this.emptyLibraryProperty = emptyLibraryProperty;
     }
 
     @FXML
     public void initialize() {
-        playButton.disableProperty().bind(musicLibrary.emptyLibraryProperty());
+        playButton.disableProperty().bind(emptyLibraryProperty);
         playButton.setOnAction(event -> playPause());
         prevButton.setOnAction(e -> player.previous());
         nextButton.setOnAction(e -> player.next());
@@ -158,7 +162,6 @@ public class PlayerController implements MusicottController, ConfigurableControl
     }
 
     private void onDragDroppedOnPlayQueueButton(DragEvent event) {
-        TracksLibrary tracksLibrary = musicLibrary.getTracksLibrary();
         Dragboard dragBoard = event.getDragboard();
         List<Integer> selectedTracksIds = (List<Integer>) dragBoard.getContent(TRACK_IDS_MIME_TYPE);
         List<Track> selectedTracks = tracksLibrary.getTracks(selectedTracksIds);
@@ -291,7 +294,6 @@ public class PlayerController implements MusicottController, ConfigurableControl
     public void updatePlayer(Track currentTrack) {
         LOG.debug("Setting up player and view for track {}", currentTrack);
         String fileFormat = currentTrack.getFileFormat();
-        WaveformsLibrary waveformsLibrary = musicLibrary.getWaveformsLibrary();
         if (waveformsLibrary.containsWaveform(currentTrack.getTrackId()))
             setWaveform(currentTrack);
         else if ("wav".equals(fileFormat) || "mp3".equals(fileFormat) || "m4a".equals(fileFormat))

@@ -37,16 +37,16 @@ public class WaveformPanel extends JPanel {
     private static final long serialVersionUID = 2195160480150957593L;
     private final float[] defaultWave;
 
-    private final transient MusicLibrary musicLibrary;
+    private final transient WaveformsLibrary waveformsLibrary;
     private float[] waveData;
     private int paneWidth;
     private Color backgroundColor;
     private Color foregroundColor;
 
     @Inject
-    public WaveformPanel(MusicLibrary musicLibrary, @Assisted ("width") int width,
+    public WaveformPanel(WaveformsLibrary waveformsLibrary, @Assisted ("width") int width,
             @Assisted ("height") int height) {
-        this.musicLibrary = musicLibrary;
+        this.waveformsLibrary = waveformsLibrary;
         Dimension dim = new Dimension(width, height);
         setMinimumSize(dim);
         setMaximumSize(dim);
@@ -63,7 +63,6 @@ public class WaveformPanel extends JPanel {
     }
 
     public void setTrack(Track track) {
-        WaveformsLibrary waveformsLibrary = musicLibrary.getWaveformsLibrary();
         if (waveformsLibrary.containsWaveform(track.getTrackId())) {
             waveData = waveformsLibrary.getWaveform(track.getTrackId());
             if (getForeground().equals(backgroundColor))

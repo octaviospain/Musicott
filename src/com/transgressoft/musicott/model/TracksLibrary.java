@@ -35,6 +35,7 @@ import java.util.stream.*;
  * @version 0.10-b
  * @since 0.10-b
  */
+@Singleton
 public class TracksLibrary {
 
     private static final int DEFAULT_RANDOM_QUEUE_SIZE = 8;
@@ -130,11 +131,11 @@ public class TracksLibrary {
         return randomList;
     }
 
-    ListProperty<Entry<Integer, Track>> tracksProperty() {
+    public ListProperty<Entry<Integer, Track>> tracksProperty() {
         return trackEntriesListProperty;
     }
 
-    ListProperty<Entry<Integer, Track>> showingTracksProperty() {
+    public ListProperty<Entry<Integer, Track>> showingTracksProperty() {
         return showingTracksProperty;
     }
 

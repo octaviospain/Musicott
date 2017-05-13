@@ -56,17 +56,17 @@ public class TracksLoadAction extends BaseLoadAction {
     private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private transient List<Track> tracksToSetProperties;
     private int totalTracks;
-    private MusicLibrary musicLibrary;
+    private TracksLibrary tracksLibrary;
     @Inject
     private LoadActionFactory loadActionFactory;
 
     @Inject
-    public TracksLoadAction(MusicLibrary musicLibrary, @Assisted @Nullable List<Track> tracks, @Assisted int totalTracks,
+    public TracksLoadAction(TracksLibrary tracksLibrary, @Assisted @Nullable List<Track> tracks, @Assisted int totalTracks,
             @Assisted String applicationFolder, @Assisted Application musicottApplication) {
         super(applicationFolder, musicottApplication);
         tracksToSetProperties = tracks;
         this.totalTracks = totalTracks;
-        this.musicLibrary = musicLibrary;
+        this.tracksLibrary = tracksLibrary;
     }
 
     @Override
@@ -88,7 +88,7 @@ public class TracksLoadAction extends BaseLoadAction {
             tracksToSetProperties.forEach(this::setTrackProperties);
             Map<Integer, Track> tracksMap = tracksToSetProperties.stream()
                                                     .collect(Collectors.toMap(Track::getTrackId, Function.identity()));
-            musicLibrary.getTracksLibrary().add(tracksMap);
+            tracksLibrary.add(tracksMap);
         }
     }
 

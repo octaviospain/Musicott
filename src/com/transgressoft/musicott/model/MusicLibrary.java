@@ -63,7 +63,6 @@ public class MusicLibrary {
     public MusicLibrary(TracksLibrary tracksLibrary, ArtistsLibrary artistsLibrary, AlbumsLibrary albumsLibrary,
             WaveformsLibrary waveformsLibrary, PlaylistsLibrary playlistsLibrary, StageDemon stageDemon,
             TaskDemon taskDemon, Provider<PlayerFacade> playerFacade) {
-        this.tracksLibrary = tracksLibrary;
         this.artistsLibrary = artistsLibrary;
         this.albumsLibrary = albumsLibrary;
         this.waveformsLibrary = waveformsLibrary;
@@ -71,7 +70,6 @@ public class MusicLibrary {
         this.stageDemon = stageDemon;
         this.taskDemon = taskDemon;
         this.playerFacade = playerFacade.get();
-        this.tracksLibrary.addListener(musicottTracksListener);
     }
 
     /**
@@ -241,11 +239,11 @@ public class MusicLibrary {
         return tracksLibrary;
     }
 
-//    @Inject
-//    public void setTracksLibrary(TracksLibrary tracksLibrary) {
-//        this.tracksLibrary = tracksLibrary;
-//        this.tracksLibrary.addListener(musicottTracksListener);
-//    }
+    @Inject
+    public void setTracksLibrary(TracksLibrary tracksLibrary) {
+        this.tracksLibrary = tracksLibrary;
+        this.tracksLibrary.addListener(musicottTracksListener);
+    }
 
 //    @Inject
 //    public void setArtistsLibrary(ArtistsLibrary artistsLibrary) {
@@ -261,10 +259,10 @@ public class MusicLibrary {
         return waveformsLibrary;
     }
 
-//    @Inject
-//    public void setWaveformsLibrary(WaveformsLibrary waveformsLibrary) {
-//        this.waveformsLibrary = waveformsLibrary;
-//    }
+    @Inject
+    public void setWaveformsLibrary(WaveformsLibrary waveformsLibrary) {
+        this.waveformsLibrary = waveformsLibrary;
+    }
 
     public PlaylistsLibrary getPlaylistsLibrary() {
         return playlistsLibrary;

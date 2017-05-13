@@ -59,7 +59,7 @@ public class ItunesParseTask extends BaseParseTask {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final MusicLibrary musicLibrary;
+    private final TracksLibrary tracksLibrary;
     private final String itunesLibraryXmlPath;
     private final int metadataPolicy;
     private final boolean importPlaylists;
@@ -80,10 +80,10 @@ public class ItunesParseTask extends BaseParseTask {
     private ParseActionFactory parseActionFactory;
 
     @Inject
-    public ItunesParseTask(ErrorDemon errorDemon, StageDemon stageDemon, MusicLibrary musicLibrary,
+    public ItunesParseTask(ErrorDemon errorDemon, StageDemon stageDemon, TracksLibrary tracksLibrary,
             MainPreferences mainPreferences, @Assisted String path) {
         super(errorDemon, stageDemon);
-        this.musicLibrary = musicLibrary;
+        this.tracksLibrary = tracksLibrary;
         itunesLibraryXmlPath = path;
         metadataPolicy = mainPreferences.getItunesImportMetadataPolicy();
         importPlaylists = mainPreferences.getItunesImportPlaylists();
@@ -212,7 +212,7 @@ public class ItunesParseTask extends BaseParseTask {
             String fileExtension = itunesFile.toString().substring(index + 1);
             if (! ("mp3".equals(fileExtension) || "m4a".equals(fileExtension) || "wav".equals(fileExtension)))
                 valid = false;
-            if (musicLibrary.getTracksLibrary().containsTrackPath(itunesFile.getParent(), itunesFile.getName()))
+            if (tracksLibrary.containsTrackPath(itunesFile.getParent(), itunesFile.getName()))
                 valid = false;
         }
         return valid;

@@ -65,15 +65,15 @@ public class WaveformTask extends Thread {
     private final Provider<StageDemon> stageDemon;
     private final Provider<PlayerFacade> playerFacade;
     private final Provider<TaskDemon> taskDemon;
-    private final MusicLibrary musicLibrary;
+    private final WaveformsLibrary waveformsLibrary;
 
     private Track trackToAnalyze;
     private float[] resultingWaveform;
 
     @Inject
-    public WaveformTask(Provider<StageDemon> stageDemon, Provider<PlayerFacade> playerFacade,
-            Provider<TaskDemon> taskDemon, MusicLibrary musicLibrary) {
-        this.musicLibrary = musicLibrary;
+    public WaveformTask(WaveformsLibrary waveformsLibrary, Provider<StageDemon> stageDemon,
+            Provider<PlayerFacade> playerFacade, Provider<TaskDemon> taskDemon) {
+        this.waveformsLibrary = waveformsLibrary;
         this.stageDemon = stageDemon;
         this.taskDemon = taskDemon;
         this.playerFacade = playerFacade;
@@ -93,7 +93,6 @@ public class WaveformTask extends Thread {
                     resultingWaveform = processFromNoWavFile(fileFormat);
 
                 if (resultingWaveform != null) {
-                    WaveformsLibrary waveformsLibrary = musicLibrary.getWaveformsLibrary();
                     waveformsLibrary.addWaveform(trackToAnalyze.getTrackId(), resultingWaveform);
                     Optional<Track> currentTrack = playerFacade.get().getCurrentTrack();
                     currentTrack.ifPresent(this::checkAnalyzedTrackIsCurrentPlaying);

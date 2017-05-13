@@ -38,11 +38,11 @@ public class ExtensionFileFilter implements FileFilter {
     private String[] extensions;
     private int numExtensions;
 
-    private MusicLibrary musicLibrary;
+    private TracksLibrary tracksLibrary;
 
     @Inject
-    public ExtensionFileFilter(MusicLibrary musicLibrary) {
-        this.musicLibrary = musicLibrary;
+    public ExtensionFileFilter(TracksLibrary tracksLibrary) {
+        this.tracksLibrary = tracksLibrary;
         extensions = new String[]{};
         numExtensions = 0;
     }
@@ -96,7 +96,6 @@ public class ExtensionFileFilter implements FileFilter {
     @Override
     public boolean accept(File pathname) {
         boolean res = false;
-        TracksLibrary tracksLibrary = musicLibrary.getTracksLibrary();
         if (! pathname.isDirectory() && ! pathname.isHidden()) {
             res = matchExtension(pathname) && ! tracksLibrary.containsTrackPath(pathname.getParent(), pathname.getName());
         }

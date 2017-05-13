@@ -31,6 +31,7 @@ import java.util.*;
  * @version 0.10-b
  * @since 0.10-b
  */
+@Singleton
 public class WaveformsLibrary {
 
     private final Provider<TaskDemon> taskDemonProvider;
