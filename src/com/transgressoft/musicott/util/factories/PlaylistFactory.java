@@ -33,20 +33,20 @@ import com.transgressoft.musicott.tasks.*;
  */
 public class PlaylistFactory {
 
-    private final Provider<MusicLibrary> musicLibraryProvider;
+    private final Provider<TracksLibrary> tracksLibraryProvider;
     private final Provider<TaskDemon> taskDemonProvider;
 
     @Inject
-    public PlaylistFactory(Provider<MusicLibrary> musicLibraryProvider, Provider<TaskDemon> taskDemonProvider) {
-        this.musicLibraryProvider = musicLibraryProvider;
+    public PlaylistFactory(Provider<TracksLibrary> tracksLibraryProvider, Provider<TaskDemon> taskDemonProvider) {
+        this.tracksLibraryProvider = tracksLibraryProvider;
         this.taskDemonProvider = taskDemonProvider;
     }
 
     public Playlist create() {
-        return new Playlist(musicLibraryProvider, taskDemonProvider);
+        return new Playlist(tracksLibraryProvider.get(), taskDemonProvider);
     }
 
     public Playlist create(String name, boolean isFolder) {
-        return new Playlist(musicLibraryProvider, taskDemonProvider, name, isFolder);
+        return new Playlist(tracksLibraryProvider.get(), taskDemonProvider, name, isFolder);
     }
 }

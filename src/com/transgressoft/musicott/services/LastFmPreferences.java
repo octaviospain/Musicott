@@ -38,7 +38,7 @@ public class LastFmPreferences {
     private static final String LASTFM_USERNAME = "lastfm_username";
     private static final String LASTFM_PASSWORD = "lastfm_password";
 
-    private Preferences preferences;
+    private final Preferences preferences;
 
     @Inject
     public LastFmPreferences() {

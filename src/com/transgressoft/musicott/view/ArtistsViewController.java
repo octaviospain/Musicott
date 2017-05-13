@@ -235,11 +235,6 @@ public class ArtistsViewController implements MusicottController, ConfigurableCo
         });
     }
 
-//    void setPlayerController(PlayerController playerLayoutController) {
-//        this.playerLayoutController = playerLayoutController;
-//        artistsListView.setItems(bindedToSearchFieldArtists());
-//    }
-
     /**
      * Puts several {@link TrackSetAreaRow}s in the view given the tracks, in form of
      * {@link Entry}, mapped by album

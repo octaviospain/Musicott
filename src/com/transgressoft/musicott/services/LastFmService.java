@@ -52,8 +52,8 @@ public class LastFmService {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final ErrorDemon errorDemon;
     private final LastFmPreferences lastFmPreferences;
+    private final ErrorDemon errorDemon;
 
     /**
      * The API Key for the application submitted in LastFM.
@@ -74,7 +74,7 @@ public class LastFmService {
     private WebResource resource;
 
     @Inject
-    public LastFmService(ErrorDemon errorDemon, LastFmPreferences lastFmPreferences) {
+    public LastFmService(LastFmPreferences lastFmPreferences, ErrorDemon errorDemon) {
         this.errorDemon = errorDemon;
         this.lastFmPreferences = lastFmPreferences;
         Client client = Client.create();

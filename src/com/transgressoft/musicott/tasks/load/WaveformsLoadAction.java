@@ -43,13 +43,13 @@ public class WaveformsLoadAction extends BaseLoadAction {
 
     private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private Provider<MusicLibrary> musicLibraryProvider;
+    private WaveformsLibrary waveformsLibrary;
 
     @Inject
-    public WaveformsLoadAction(Provider<MusicLibrary> musicLibraryProvider, @Assisted String applicationFolder,
+    public WaveformsLoadAction(WaveformsLibrary waveformsLibrary, @Assisted String applicationFolder,
             @Assisted Application application) {
         super(applicationFolder, application);
-        this.musicLibraryProvider = musicLibraryProvider;
+        this.waveformsLibrary = waveformsLibrary;
     }
 
     /**
@@ -64,7 +64,7 @@ public class WaveformsLoadAction extends BaseLoadAction {
             waveformsMap = parseWaveformsFromJsonFile(waveformsFile);
         else
             waveformsMap = new HashMap<>();
-        musicLibraryProvider.get().getWaveformsLibrary().addWaveforms(waveformsMap);
+        waveformsLibrary.addWaveforms(waveformsMap);
     }
 
     /**

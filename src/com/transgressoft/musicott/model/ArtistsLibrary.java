@@ -62,7 +62,7 @@ public class ArtistsLibrary {
      *
      * @return {@code True} if the collections were modified {@code False} otherwise
      */
-    synchronized  boolean addArtistTrack(String artist, Track track) {
+    synchronized boolean addArtistTrack(String artist, Track track) {
         if (! artistsTracks.containsKey(artist))
             Platform.runLater(() -> {
                 artistsList.add(artist);
@@ -80,7 +80,7 @@ public class ArtistsLibrary {
      *
      * @return {@code True} if the collections were modified {@code False} otherwise
      */
-    synchronized  boolean removeArtistTrack(String artist, Track track) {
+    synchronized boolean removeArtistTrack(String artist, Track track) {
         boolean removed;
         removed = artistsTracks.remove(artist, track);
         if (! artistsTracks.containsKey(artist))

@@ -44,7 +44,7 @@ public abstract class BaseParseTask extends Task<Void> implements ParseTask {
     protected Collection<String> parseErrors;
     protected long startMillis;
 
-    public BaseParseTask(ErrorDemon errorDemon, StageDemon stageDemon) {
+    public BaseParseTask(StageDemon stageDemon, ErrorDemon errorDemon) {
         this.errorDemon = errorDemon;
         this.stageDemon = stageDemon;
         navigationController = stageDemon.getNavigationController();

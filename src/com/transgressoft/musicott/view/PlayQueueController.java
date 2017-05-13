@@ -38,6 +38,8 @@ public class PlayQueueController implements MusicottController, ConfigurableCont
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
+    private final PlayerFacade player;
+
     @FXML
     private Label titleQueueLabel;
     @FXML
@@ -49,8 +51,6 @@ public class PlayQueueController implements MusicottController, ConfigurableCont
 
     private ObservableList<TrackQueueRow> playQueueList;
     private ObservableList<TrackQueueRow> historyQueueList;
-
-    private PlayerFacade player;
 
     @Inject
     public PlayQueueController(PlayerFacade player) {

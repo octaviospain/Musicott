@@ -55,6 +55,13 @@ public class PreferencesController implements MusicottController {
     private static final String LOGIN = "Login";
     private static final String LOGOUT = "Logout";
 
+    private final MainPreferences preferences;
+    private final StageDemon stageDemon;
+    private final ServiceDemon serviceDemon;
+    private final TaskDemon taskDemon;
+    private final ErrorDemon errorDemon;
+    private final ReadOnlyBooleanProperty usingLastFmProperty;
+
     @FXML
     private TextField folderLocationTextField;
     @FXML
@@ -82,22 +89,14 @@ public class PreferencesController implements MusicottController {
     private CheckComboBox<String> extensionsCheckComboBox;
     private LastFmPreferences lastFmPreferences;
 
-    private ReadOnlyBooleanProperty usingLastFmProperty;
-
-    private ErrorDemon errorDemon;
-    private StageDemon stageDemon;
-    private ServiceDemon serviceDemon;
-    private MainPreferences preferences;
-    private TaskDemon taskDemon;
-
     @Inject
-    public PreferencesController(ErrorDemon errorDemon, StageDemon stageDemon, ServiceDemon serviceDemon,
-            MainPreferences preferences, TaskDemon taskDemon) {
-        this.errorDemon = errorDemon;
+    public PreferencesController(MainPreferences preferences, StageDemon stageDemon, ServiceDemon serviceDemon,
+            TaskDemon taskDemon, ErrorDemon errorDemon) {
         this.stageDemon = stageDemon;
         this.serviceDemon = serviceDemon;
         this.preferences = preferences;
         this.taskDemon = taskDemon;
+        this.errorDemon = errorDemon;
         usingLastFmProperty = serviceDemon.usingLastFmProperty();
     }
 

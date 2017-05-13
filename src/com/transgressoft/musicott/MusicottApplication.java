@@ -21,6 +21,7 @@ package com.transgressoft.musicott;
 
 import com.google.inject.*;
 import com.sun.javafx.application.*;
+import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tasks.load.*;
@@ -145,6 +146,7 @@ public class MusicottApplication extends Application {
         LastFmPreferences lastFmPreferences = injector.getInstance(LastFmPreferences.class);
         loadConfigProperties(lastFmPreferences);
 
+        injector.getInstance(MusicLibrary.class);
         stageDemon = injector.getInstance(StageDemon.class);
         stageDemon.setInjector(injector);
 

@@ -115,10 +115,11 @@ public class RootController implements MusicottController, ConfigurableControlle
     private ImageView hoverCoverImageView;
     private ObjectProperty<Image> hoverCoverProperty;
 
-    private ObjectProperty<NavigationMode> navigationModeProperty;
-    private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
     private BooleanProperty showingNavigationPaneProperty;
     private BooleanProperty showingTableInfoPaneProperty;
+    private ReadOnlyBooleanProperty emptyLibraryProperty;
+    private ObjectProperty<NavigationMode> navigationModeProperty;
+    private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
     private ListProperty<Entry<Integer, Track>> showingTracksProperty;
 
     private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler = changePlaylistNameTextFieldHandler();
@@ -183,6 +184,7 @@ public class RootController implements MusicottController, ConfigurableControlle
 
     private void initializeInfoPaneFields() {
         initializePlaylistTitleTextField();
+
         playRandomButton.visibleProperty().bind(showingTracksProperty.emptyProperty().not());
         playRandomButton.setOnAction(e -> {
             if (selectedPlaylistProperty().get().isPresent())
@@ -250,7 +252,7 @@ public class RootController implements MusicottController, ConfigurableControlle
         hoverCoverImageView.setFitWidth(HOVER_COVER_SIZE);
         hoverCoverImageView.setFitHeight(HOVER_COVER_SIZE);
         hoverCoverImageView.visibleProperty().bind(
-                combine(navigationModeProperty, musicLibrary.emptyLibraryProperty(),
+                combine(navigationModeProperty, emptyLibraryProperty,
                              (mode, empty) -> mode.equals(ALL_TRACKS) && ! empty));
         hoverCoverImageView.translateXProperty().bind(
                 map(tableStackPane.widthProperty(),
@@ -514,6 +516,11 @@ public class RootController implements MusicottController, ConfigurableControlle
     @Inject
     public void setShowingTracksProperty(ListProperty<Entry<Integer, Track>> showingTracksProperty) {
         this.showingTracksProperty = showingTracksProperty;
+    }
+
+    @Inject
+    public void setEmptyLibraryProperty(ReadOnlyBooleanProperty emptyLibraryProperty) {
+        this.emptyLibraryProperty = emptyLibraryProperty;
     }
 
     public NavigationController getNavigationController() {

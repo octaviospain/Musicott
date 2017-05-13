@@ -38,7 +38,7 @@ import static com.transgressoft.musicott.model.AlbumsLibrary.*;
 
 /**
  * Singleton class that manages the operations over the
- * collection of tracksLibrary, waveformsLibrary, playlistsLibrary, artistsLibrary and albumsLibrar.
+ * collection of tracksLibrary, waveformsLibrary, playlistsLibrary, artistsLibrary and albumsLibrary.
  *
  * @author Octavio Calleya
  * @version 0.10-b
@@ -219,10 +219,6 @@ public class MusicLibrary {
         randomPlaylistPlayThread.start();
     }
 
-    public TracksLibrary getTracksLibrary() {
-        return tracksLibrary;
-    }
-
     @Inject
     public void setTracksLibrary(TracksLibrary tracksLibrary) {
         this.tracksLibrary = tracksLibrary;
@@ -230,17 +226,9 @@ public class MusicLibrary {
         this.showingTracksProperty = tracksLibrary.showingTracksProperty();
     }
 
-    public ArtistsLibrary getArtistsLibrary() {
-        return this.artistsLibrary;
-    }
-
     @Inject
     public void setArtistsLibrary(ArtistsLibrary artistsLibrary) {
         this.artistsLibrary = artistsLibrary;
-    }
-
-    public AlbumsLibrary getAlbumsLibrary() {
-        return this.albumsLibrary;
     }
 
     @Inject
@@ -248,25 +236,13 @@ public class MusicLibrary {
         this.albumsLibrary = albumsLibrary;
     }
 
-    public WaveformsLibrary getWaveformsLibrary() {
-        return waveformsLibrary;
-    }
-
     @Inject
     public void setWaveformsLibrary(WaveformsLibrary waveformsLibrary) {
         this.waveformsLibrary = waveformsLibrary;
     }
 
-    public PlaylistsLibrary getPlaylistsLibrary() {
-        return playlistsLibrary;
-    }
-
     @Inject
     public void setPlaylistsLibrary(PlaylistsLibrary playlistsLibrary) {
         this.playlistsLibrary = playlistsLibrary;
-    }
-
-    public ReadOnlyBooleanProperty emptyLibraryProperty() {
-        return tracksLibrary.tracksProperty().emptyProperty();
     }
 }

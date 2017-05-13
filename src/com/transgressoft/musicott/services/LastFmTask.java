@@ -42,10 +42,10 @@ public class LastFmTask extends Thread {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final ErrorDemon errorDemon;
-    private final ServiceDemon serviceDemon;
-    private final StageDemon stageDemon;
     private final LastFmService lastFmService;
+    private final ServiceDemon serviceDemon;
+    private final ErrorDemon errorDemon;
+    private final StageDemon stageDemon;
 
     private Track trackToScrobble;
     private Semaphore updateAndScrobbleSemaphore = new Semaphore(0);
@@ -53,8 +53,8 @@ public class LastFmTask extends Thread {
     private boolean logout = false;
 
     @Inject
-    public LastFmTask(ErrorDemon errorDemon, ServiceDemon serviceDemon, StageDemon stageDemon,
-            LastFmService lastFmService) {
+    public LastFmTask(LastFmService lastFmService, ServiceDemon serviceDemon, StageDemon stageDemon,
+            ErrorDemon errorDemon) {
         super("LastFM Thread");
         this.errorDemon = errorDemon;
         this.serviceDemon = serviceDemon;

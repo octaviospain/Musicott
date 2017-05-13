@@ -73,6 +73,12 @@ public class RootMenuBarController implements ConfigurableController {
     private final Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
     private final ImageView musicottLogoImageView = new ImageView(musicottLogo);
 
+    private StageDemon stageDemon;
+    private TaskDemon taskDemon;
+    private PlayerFacade playerFacade;
+    private MainPreferences mainPreferences;
+    private ReadOnlyBooleanProperty emptyLibraryProperty;
+
     @FXML
     private MenuBar rootMenuBar;
 	@FXML
@@ -128,8 +134,6 @@ public class RootMenuBarController implements ConfigurableController {
     @FXML
     private MenuItem aboutMenuItem;
 
-    private Stage rootStage;
-
     @Inject
     private RootController rootController;
     @Inject
@@ -137,20 +141,15 @@ public class RootMenuBarController implements ConfigurableController {
     @Inject
     private PlayerController playerController;
 
-    private StageDemon stageDemon;
-    private TaskDemon taskDemon;
-    private PlayerFacade playerFacade;
-    private MusicLibrary musicLibrary;
-    private MainPreferences mainPreferences;
+    private Stage rootStage;
 
     @Inject
-    public RootMenuBarController(StageDemon stageDemon, TaskDemon taskDemon, PlayerFacade playerFacade,
-            MusicLibrary musicLibrary, MainPreferences mainPreferences) {
+    public RootMenuBarController(MainPreferences mainPreferences, StageDemon stageDemon, TaskDemon taskDemon,
+            PlayerFacade playerFacade) {
+        this.mainPreferences = mainPreferences;
         this.stageDemon = stageDemon;
         this.taskDemon = taskDemon;
         this.playerFacade = playerFacade;
-        this.musicLibrary = musicLibrary;
-        this.mainPreferences = mainPreferences;
     }
 
     @FXML
@@ -168,6 +167,11 @@ public class RootMenuBarController implements ConfigurableController {
         showHideTableInfoDisableBinding();
         showHideNavigationPaneTextBinding();
         showHideTableInfoPaneTextBinding();
+    }
+
+    @Inject
+    public void setEmptyLibraryProperty(ReadOnlyBooleanProperty emptyLibraryProperty) {
+        this.emptyLibraryProperty = emptyLibraryProperty;
     }
 
     void setMainStage(Stage rootStage) {
@@ -272,7 +276,7 @@ public class RootMenuBarController implements ConfigurableController {
 
     private void setControlsMenuActions() {
         playPauseTextBinding();
-        playPauseMenuItem.disableProperty().bind(musicLibrary.emptyLibraryProperty());
+        playPauseMenuItem.disableProperty().bind(emptyLibraryProperty);
         playPauseMenuItem.setOnAction(e -> TrackTableView.spacePressedOnTableAction(playerFacade.getPlayerStatus()));
         previousMenuItem.disableProperty().bind(playerController.previousButtonDisabledProperty());
         previousMenuItem.setOnAction(e -> playerFacade.previous());

@@ -80,9 +80,9 @@ public class ItunesParseTask extends BaseParseTask {
     private ParseActionFactory parseActionFactory;
 
     @Inject
-    public ItunesParseTask(ErrorDemon errorDemon, StageDemon stageDemon, TracksLibrary tracksLibrary,
-            MainPreferences mainPreferences, @Assisted String path) {
-        super(errorDemon, stageDemon);
+    public ItunesParseTask(TracksLibrary tracksLibrary, MainPreferences mainPreferences, StageDemon stageDemon,
+            ErrorDemon errorDemon, @Assisted String path) {
+        super(stageDemon, errorDemon);
         this.tracksLibrary = tracksLibrary;
         itunesLibraryXmlPath = path;
         metadataPolicy = mainPreferences.getItunesImportMetadataPolicy();

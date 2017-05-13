@@ -46,6 +46,7 @@ public class TaskDemon {
 
 	private final Provider<WaveformTask> waveformTaskProvider;
 	private final SaveMusicLibraryTask saveMusicLibraryTask;
+	private final Provider<ErrorDemon> errorDemon;
 
 	private ExecutorService parseExecutorService;
 	private Future parseFuture;
@@ -54,14 +55,13 @@ public class TaskDemon {
 	private BlockingQueue<Track> tracksToProcessQueue;
 
 	private boolean savingsActivated = true;
-	private Provider<ErrorDemon> errorDemon;
 
 	@Inject
 	private ParseTaskFactory parseTaskFactory;
 
 	@Inject
-	public TaskDemon(Provider<ErrorDemon> errorDemon, Provider<WaveformTask> waveformTaskProvider,
-			Provider<SaveMusicLibraryTask> saveMusicLibraryTask) {
+	public TaskDemon(Provider<SaveMusicLibraryTask> saveMusicLibraryTask, Provider<WaveformTask> waveformTaskProvider,
+			Provider<ErrorDemon> errorDemon) {
 		this.errorDemon = errorDemon;
 		this.waveformTaskProvider = waveformTaskProvider;
 		this.saveMusicLibraryTask = saveMusicLibraryTask.get();

@@ -110,13 +110,12 @@ public class PlayerController implements MusicottController, ConfigurableControl
 
     @Inject
     public PlayerController(TracksLibrary tracksLibrary, WaveformsLibrary waveformsLibrary, PlayerFacade player,
-            TaskDemon taskDemon, WaveformPaneFactory waveformPaneFactory, ReadOnlyBooleanProperty emptyLibraryProperty) {
+            TaskDemon taskDemon, WaveformPaneFactory waveformPaneFactory) {
         this.tracksLibrary = tracksLibrary;
         this.waveformsLibrary = waveformsLibrary;
         this.player = player;
         this.taskDemon = taskDemon;
         this.waveformPaneFactory = waveformPaneFactory;
-        this.emptyLibraryProperty = emptyLibraryProperty;
     }
 
     @FXML
@@ -210,6 +209,11 @@ public class PlayerController implements MusicottController, ConfigurableControl
 
     public void focusSearchField() {
         searchTextField.requestFocus();
+    }
+
+    @Inject
+    public void setEmptyLibraryProperty(ReadOnlyBooleanProperty emptyLibraryProperty) {
+        this.emptyLibraryProperty = emptyLibraryProperty;
     }
 
     public StringProperty searchTextProperty() {

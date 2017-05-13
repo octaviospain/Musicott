@@ -44,7 +44,7 @@ public class Playlist {
 
     private static final String DELETION_NOT_SUPPORTED = "Deletion not supported on folder playlist";
 
-    private final Provider<MusicLibrary> musicLibraryProvider;
+    private final TracksLibrary tracksLibrary;
     private final Provider<TaskDemon> taskDemonProvider;
 
     private boolean isFolder;
@@ -62,16 +62,16 @@ public class Playlist {
         isFolderProperty = new SimpleBooleanProperty(this, "folder", isFolder);
     }
 
-    public Playlist(Provider<MusicLibrary> musicLibraryProvider, Provider<TaskDemon> taskDemonProvider) {
-        this.musicLibraryProvider = musicLibraryProvider;
+    public Playlist(TracksLibrary tracksLibrary, Provider<TaskDemon> taskDemonProvider) {
+        this.tracksLibrary = tracksLibrary;
         this.taskDemonProvider = taskDemonProvider;
         name = "";
     }
 
     @Inject
-    public Playlist(Provider<MusicLibrary> musicLibraryProvider, Provider<TaskDemon> taskDemonProvider,
+    public Playlist(TracksLibrary tracksLibrary, Provider<TaskDemon> taskDemonProvider,
             @Assisted String name, @Assisted boolean isFolder) {
-        this.musicLibraryProvider = musicLibraryProvider;
+        this.tracksLibrary = tracksLibrary;
         this.taskDemonProvider = taskDemonProvider;
         this.isFolder = isFolder;
         setName(name);
@@ -162,7 +162,6 @@ public class Playlist {
      */
     private void changePlaylistCover() {
         List<Integer> tracks = getTracks();
-        TracksLibrary tracksLibrary = musicLibraryProvider.get().getTracksLibrary();
         if (! tracks.isEmpty()) {
             Optional<Integer> trackWithCover = tracks.stream().filter(this::existsTrackWithCover).findAny();
             if (trackWithCover.isPresent()) {
@@ -181,7 +180,6 @@ public class Playlist {
     }
 
     private boolean existsTrackWithCover(int trackId) {
-        TracksLibrary tracksLibrary = musicLibraryProvider.get().getTracksLibrary();
         Optional<Track> track = tracksLibrary.getTrack(trackId);
         return track.isPresent() && track.get().getCoverImage().isPresent();
     }

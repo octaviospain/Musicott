@@ -44,7 +44,9 @@ public class SaveMusicLibraryTask extends Thread {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final Provider<MusicLibrary> musicLibraryProvider;
+    private final TracksLibrary tracksLibrary;
+    private final PlaylistsLibrary playlistsLibrary;
+    private final WaveformsLibrary waveformsLibrary;
     private final Provider<ErrorDemon> errorDemon;
 
     private String musicottUserPath;
@@ -61,10 +63,13 @@ public class SaveMusicLibraryTask extends Thread {
     private Injector injector;
 
     @Inject
-    public SaveMusicLibraryTask(Provider<ErrorDemon> errorDemon, Provider<MusicLibrary> musicLibraryProvider) {
+    public SaveMusicLibraryTask(TracksLibrary tracksLibrary, PlaylistsLibrary playlistsLibrary,
+            WaveformsLibrary waveformsLibrary, Provider<ErrorDemon> errorDemon) {
         setName("Save Library Thread");
+        this.tracksLibrary = tracksLibrary;
+        this.playlistsLibrary = playlistsLibrary;
+        this.waveformsLibrary = waveformsLibrary;
         this.errorDemon = errorDemon;
-        this.musicLibraryProvider = musicLibraryProvider;
         musicottUserPath = "";
         saveSemaphore = new Semaphore(0);
         tracksArgs = new HashMap<>();
@@ -168,7 +173,6 @@ public class SaveMusicLibraryTask extends Thread {
     }
 
     private void serializeTracks() throws IOException {
-        TracksLibrary tracksLibrary = musicLibraryProvider.get().getTracksLibrary();
         synchronized (tracksLibrary) {
             writeObjectToJsonFile(tracksLibrary.getMusicottTracks(), tracksFile, tracksArgs);
         }
@@ -177,7 +181,6 @@ public class SaveMusicLibraryTask extends Thread {
     }
 
     private void serializeWaveforms() throws IOException {
-        WaveformsLibrary waveformsLibrary = musicLibraryProvider.get().getWaveformsLibrary();
         synchronized (waveformsLibrary) {
             writeObjectToJsonFile(waveformsLibrary.getWaveforms(), waveformsFile, null);
         }
@@ -186,7 +189,6 @@ public class SaveMusicLibraryTask extends Thread {
     }
 
     private void serializePlaylists() throws IOException {
-        PlaylistsLibrary playlistsLibrary = musicLibraryProvider.get().getPlaylistsLibrary();
         synchronized (playlistsLibrary) {
             writeObjectToJsonFile(playlistsLibrary.getPlaylistsTree(), playlistsFile, playlistArgs);
         }

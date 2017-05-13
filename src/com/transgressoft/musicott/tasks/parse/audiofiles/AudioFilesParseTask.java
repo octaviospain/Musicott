@@ -55,9 +55,9 @@ public class AudioFilesParseTask extends BaseParseTask {
     private ParseActionFactory parseActionFactory;
 
     @Inject
-    public AudioFilesParseTask(ErrorDemon errorDemon, StageDemon stageDemon, PlayerFacade playerFacade,
+    public AudioFilesParseTask(StageDemon stageDemon, PlayerFacade playerFacade, ErrorDemon errorDemon,
             @Assisted List<File> files, @Assisted boolean playAtTheEnd) {
-        super(errorDemon, stageDemon);
+        super(stageDemon, errorDemon);
         player = playerFacade;
         filesToParse = files;
         this.playAtTheEnd = playAtTheEnd;
