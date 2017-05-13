@@ -68,15 +68,17 @@ public class ArtistsViewController implements MusicottController, ConfigurableCo
     private ObservableMap<String, TrackSetAreaRow> albumTrackSets;
     private ObjectProperty<Optional<String>> selectedArtistProperty;
 
-    private PlayerController playerLayoutController;
-    private MusicLibrary musicLibrary;
-    private TrackSetAreaRowFactory trackSetAreaRowFactory;
+    private final MusicLibrary musicLibrary;
+    private final ArtistsLibrary artistsLibrary;
+    private final PlayerController playerLayoutController;
+    private final TrackSetAreaRowFactory trackSetAreaRowFactory;
 
     @Inject
-    public ArtistsViewController(PlayerController playerLayoutController, MusicLibrary musicLibrary,
-            TrackSetAreaRowFactory trackSetAreaRowFactory) {
-        this.playerLayoutController = playerLayoutController;
+    public ArtistsViewController(MusicLibrary musicLibrary, ArtistsLibrary artistsLibrary,
+            PlayerController playerLayoutController, TrackSetAreaRowFactory trackSetAreaRowFactory) {
         this.musicLibrary = musicLibrary;
+        this.artistsLibrary = artistsLibrary;
+        this.playerLayoutController = playerLayoutController;
         this.trackSetAreaRowFactory = trackSetAreaRowFactory;
     }
 
@@ -119,7 +121,7 @@ public class ArtistsViewController implements MusicottController, ConfigurableCo
     }
 
     private FilteredList<String> bindedToSearchFieldArtists() {
-        ObservableList<String> tracks = musicLibrary.artistsLibraryProperty();
+        ObservableList<String> tracks = artistsLibrary.artistsListProperty();
         FilteredList<String> filteredArtists = new FilteredList<>(tracks, artist -> true);
 
         StringProperty searchTextProperty = playerLayoutController.searchTextProperty();
@@ -138,7 +140,7 @@ public class ArtistsViewController implements MusicottController, ConfigurableCo
 
     private boolean artistMatchesQuery(String artist, String query) {
         boolean matchesName = artist.toLowerCase().contains(query.toLowerCase());
-        boolean containsMatchedTrack = musicLibrary.artistContainsMatchedTrack(artist, query);
+        boolean containsMatchedTrack = artistsLibrary.artistContainsMatchedTrack(artist, query);
         return matchesName || containsMatchedTrack;
     }
 

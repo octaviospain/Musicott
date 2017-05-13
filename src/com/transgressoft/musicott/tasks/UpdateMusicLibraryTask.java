@@ -48,7 +48,8 @@ public class UpdateMusicLibraryTask extends Thread {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
     
-    private final MusicLibrary musicLibrary;
+    private final AlbumsLibrary albumsLibrary;
+    private final ArtistsLibrary artistsLibrary;
     private final StageDemon stageDemon;
     private final TaskDemon taskDemon;
     private final ErrorDemon errorDemon;
@@ -60,10 +61,11 @@ public class UpdateMusicLibraryTask extends Thread {
     private List<String> updateErrors = new ArrayList<>();
 
     @Inject
-    public UpdateMusicLibraryTask(MusicLibrary musicLibrary, StageDemon stageDemon, TaskDemon taskDemon,
-            ErrorDemon errorDemon, @Assisted List<Track> tracks, @Assisted Set<String> changedAlbums,
+    public UpdateMusicLibraryTask(AlbumsLibrary albumsLibrary, ArtistsLibrary artistsLibrary, StageDemon stageDemon,
+            TaskDemon taskDemon, ErrorDemon errorDemon, @Assisted List<Track> tracks, @Assisted Set<String> changedAlbums,
             @Assisted Optional<String> newAlbum) {
-        this.musicLibrary = musicLibrary;
+        this.albumsLibrary = albumsLibrary;
+        this.artistsLibrary = artistsLibrary;
         this.stageDemon = stageDemon;
         this.taskDemon = taskDemon;
         this.errorDemon = errorDemon;
@@ -95,7 +97,7 @@ public class UpdateMusicLibraryTask extends Thread {
             List<Entry<Integer, Track>> trackEntries = tracks.stream()
                                                              .map(track -> new SimpleEntry<>(track.getTrackId(), track))
                                                              .collect(Collectors.toList());
-            musicLibrary.updateTrackAlbums(trackEntries, changedAlbums, album);
+            albumsLibrary.updateTrackAlbums(trackEntries, changedAlbums, album);
         });
     }
 
@@ -105,7 +107,7 @@ public class UpdateMusicLibraryTask extends Thread {
         Set<String> removedArtists = Sets.difference(oldArtistsInvolved, newArtistsInvolved).immutableCopy();
         Set<String> addedArtists = Sets.difference(newArtistsInvolved, oldArtistsInvolved).immutableCopy();
         track.setArtistsInvolved(FXCollections.observableSet(newArtistsInvolved));
-        musicLibrary.updateArtistsInvolvedInTrack(track, removedArtists, addedArtists);
+        artistsLibrary.updateArtistsInvolvedInTrack(track, removedArtists, addedArtists);
     }
 
     private void updateFileMetadata(Track track) {

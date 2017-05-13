@@ -60,10 +60,8 @@ public class MusicLibrary {
     private PlaylistsLibrary playlistsLibrary;
 
     @Inject
-    public MusicLibrary(TracksLibrary tracksLibrary, ArtistsLibrary artistsLibrary, AlbumsLibrary albumsLibrary,
-            WaveformsLibrary waveformsLibrary, PlaylistsLibrary playlistsLibrary, StageDemon stageDemon,
+    public MusicLibrary(WaveformsLibrary waveformsLibrary, PlaylistsLibrary playlistsLibrary, StageDemon stageDemon,
             TaskDemon taskDemon, Provider<PlayerFacade> playerFacade) {
-        this.artistsLibrary = artistsLibrary;
         this.albumsLibrary = albumsLibrary;
         this.waveformsLibrary = waveformsLibrary;
         this.playlistsLibrary = playlistsLibrary;
@@ -122,9 +120,7 @@ public class MusicLibrary {
         return removed[0];
     }
 
-    public boolean artistContainsMatchedTrack(String artist, String query) {
-        return artistsLibrary.artistContainsMatchedTrack(artist, query);
-    }
+
 
     public void showAllTracks() {
         tracksLibrary.resetShowingTracks();
@@ -149,16 +145,6 @@ public class MusicLibrary {
                     stageDemon.getRootController().selectTrack(trackToSelect);
             });
         }).start();
-    }
-
-    public void updateArtistsInvolvedInTrack(Track track, Set<String> removedArtists, Set<String> addedArtists) {
-        removedArtists.forEach(artist -> artistsLibrary.removeArtistTrack(artist, track));
-        addedArtists.forEach(artist -> artistsLibrary.addArtistTrack(artist, track));
-    }
-
-    public void updateTrackAlbums(List<Entry<Integer, Track>> modifiedTracks, Set<String> oldAlbums, String newAlbum) {
-        oldAlbums.forEach(album -> albumsLibrary.removeTracks(album, modifiedTracks));
-        albumsLibrary.addTracks(newAlbum, modifiedTracks);
     }
 
     /**
@@ -187,10 +173,10 @@ public class MusicLibrary {
     }
 
     /**
-     * Searches and returns all the tracksLibrary, mapped by album, in which an artist is involved.
+     * Searches and returns all the tracks, mapped by album, in which an artist is involved.
      *
      * @param artist The given artist to find their related tracksLibrary
-     * @return A {@link ImmutableMultimap} with the albumsLibrary as keys, and {@code Entries} as values
+     * @return A {@link ImmutableMultimap} with the albums as keys, and {@code Entries} as values
      */
     public ImmutableMultimap<String, Entry<Integer, Track>> getAlbumTracksOfArtist(String artist) {
         ImmutableMultimap<String, Entry<Integer, Track>> artistAlbumTracks;
@@ -245,15 +231,23 @@ public class MusicLibrary {
         this.tracksLibrary.addListener(musicottTracksListener);
     }
 
-//    @Inject
-//    public void setArtistsLibrary(ArtistsLibrary artistsLibrary) {
-//        this.artistsLibrary = artistsLibrary;
-//    }
+    public ArtistsLibrary getArtistsLibrary() {
+        return this.artistsLibrary;
+    }
 
-//    @Inject
-//    public void setAlbumsLibrary(AlbumsLibrary albumsLibrary) {
-//        this.albumsLibrary = albumsLibrary;
-//    }
+    @Inject
+    public void setArtistsLibrary(ArtistsLibrary artistsLibrary) {
+        this.artistsLibrary = artistsLibrary;
+    }
+
+    public AlbumsLibrary getAlbumsLibrary() {
+        return this.albumsLibrary;
+    }
+
+    @Inject
+    public void setAlbumsLibrary(AlbumsLibrary albumsLibrary) {
+        this.albumsLibrary = albumsLibrary;
+    }
 
     public WaveformsLibrary getWaveformsLibrary() {
         return waveformsLibrary;
@@ -272,10 +266,6 @@ public class MusicLibrary {
 //    public void setPlaylistsLibrary(PlaylistsLibrary playlistsLibrary) {
 //        this.playlistsLibrary = playlistsLibrary;
 //    }
-
-    public ListProperty<String> artistsLibraryProperty() {
-        return artistsLibrary.artistsListProperty();
-    }
 
     public ReadOnlyBooleanProperty emptyLibraryProperty() {
         return tracksLibrary.tracksProperty().emptyProperty();

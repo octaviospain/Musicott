@@ -32,6 +32,7 @@ import java.util.Map.*;
  * @version 0.10-b
  * @since 0.10-b
  */
+@Singleton
 public class AlbumsLibrary {
 
     public static final String UNK_ALBUM = "Unknown album";
@@ -59,6 +60,11 @@ public class AlbumsLibrary {
 
     synchronized void clear() {
         albumsTracks.clear();
+    }
+
+    public synchronized void updateTrackAlbums(List<Entry<Integer, Track>> modifiedTracks, Set<String> oldAlbums, String newAlbum) {
+        oldAlbums.forEach(album -> removeTracks(album, modifiedTracks));
+        addTracks(newAlbum, modifiedTracks);
     }
 
     synchronized ImmutableMultimap<String, Entry<Integer, Track>> getTracksByAlbum(String artist, Set<String> albums) {

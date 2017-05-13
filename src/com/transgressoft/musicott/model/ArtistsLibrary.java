@@ -36,6 +36,7 @@ import static com.transgressoft.musicott.model.AlbumsLibrary.*;
  * @version 0.10-b
  * @since 0.10-b
  */
+@Singleton
 public class ArtistsLibrary {
 
     private final Multimap<String, Track> artistsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
@@ -61,7 +62,7 @@ public class ArtistsLibrary {
      *
      * @return {@code True} if the collections were modified {@code False} otherwise
      */
-    boolean addArtistTrack(String artist, Track track) {
+    synchronized  boolean addArtistTrack(String artist, Track track) {
         if (! artistsTracks.containsKey(artist))
             Platform.runLater(() -> {
                 artistsList.add(artist);
@@ -79,7 +80,7 @@ public class ArtistsLibrary {
      *
      * @return {@code True} if the collections were modified {@code False} otherwise
      */
-    boolean removeArtistTrack(String artist, Track track) {
+    synchronized  boolean removeArtistTrack(String artist, Track track) {
         boolean removed;
         removed = artistsTracks.remove(artist, track);
         if (! artistsTracks.containsKey(artist))
@@ -87,15 +88,20 @@ public class ArtistsLibrary {
         return removed;
     }
 
-    boolean contains(String artist) {
+    synchronized boolean contains(String artist) {
         return artistsTracks.containsKey(artist);
     }
 
-    boolean artistContainsMatchedTrack(String artist, String query) {
+    public synchronized boolean artistContainsMatchedTrack(String artist, String query) {
         return artistsTracks.get(artist).stream().anyMatch(track -> TracksLibrary.trackMatchesString(track, query));
     }
 
-    void clear() {
+    public synchronized void updateArtistsInvolvedInTrack(Track track, Set<String> removedArtists,Set<String> addedArtists) {
+        removedArtists.forEach(artist -> removeArtistTrack(artist, track));
+        addedArtists.forEach(artist -> addArtistTrack(artist, track));
+    }
+
+    synchronized void clear() {
         artistsTracks.clear();
         artistsList.clear();
     }
@@ -116,7 +122,7 @@ public class ArtistsLibrary {
         return randomArtistTracks;
     }
 
-    ListProperty<String> artistsListProperty() {
+    public ListProperty<String> artistsListProperty() {
         return artistsListProperty;
     }
 }
