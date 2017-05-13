@@ -24,6 +24,8 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
 import javafx.beans.property.*;
 
+import java.util.Map.*;
+
 /**
  * Guice {@link Module} that includes the necessary bindings and configurations of the application.
  *
@@ -50,5 +52,10 @@ public class MusicottModule extends AbstractModule {
     @Provides
     ReadOnlyBooleanProperty providesEmptyLibraryProperty(TracksLibrary tracksLibrary) {
         return tracksLibrary.tracksProperty().emptyProperty();
+    }
+
+    @Provides
+    ListProperty<Entry<Integer, Track>> providesShowingTracksProperty(TracksLibrary tracksLibrary) {
+        return tracksLibrary.showingTracksProperty();
     }
 }

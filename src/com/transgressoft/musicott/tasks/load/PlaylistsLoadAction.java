@@ -47,7 +47,7 @@ public class PlaylistsLoadAction extends BaseLoadAction {
 
     private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final MusicLibrary musicLibrary;
+    private final PlaylistsLibrary playlistsLibrary;
     private final Playlist ROOT_PLAYLIST;
 
     private transient MutableGraph<Playlist> playlists;
@@ -57,10 +57,10 @@ public class PlaylistsLoadAction extends BaseLoadAction {
     private PlaylistFactory playlistFactory;
 
     @Inject
-    public PlaylistsLoadAction(Provider<MusicLibrary> musicLibrary, PlaylistFactory playlistFactory,
+    public PlaylistsLoadAction(PlaylistsLibrary playlistsLibrary, PlaylistFactory playlistFactory,
             @Assisted String applicationFolder, @Assisted Application musicottApplication) {
         super(applicationFolder, musicottApplication);
-        this.musicLibrary = musicLibrary.get();
+        this.playlistsLibrary = playlistsLibrary;
         this.playlistFactory = playlistFactory;
         ROOT_PLAYLIST = playlistFactory.create("ROOT", true);
     }
@@ -76,7 +76,6 @@ public class PlaylistsLoadAction extends BaseLoadAction {
         }
         else
             createDefaultPlaylists();
-        PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
         playlistsLibrary.addPlaylistsRecursively(ROOT_PLAYLIST, playlists.successors(ROOT_PLAYLIST));
     }
 

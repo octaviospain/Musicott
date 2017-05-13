@@ -60,6 +60,14 @@ public class RootController implements MusicottController, ConfigurableControlle
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private static final int HOVER_COVER_SIZE = 100;
 
+    private final MusicLibrary musicLibrary;
+    private final PlaylistsLibrary playlistsLibrary;
+    private final TaskDemon taskDemon;
+    private final PlaylistFactory playlistFactory;
+    private final TrackTableView trackTable;
+
+    private final Playlist ROOT_PLAYLIST;
+
     @FXML
     private VBox headerVBox;
     @FXML
@@ -111,20 +119,15 @@ public class RootController implements MusicottController, ConfigurableControlle
     private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
     private BooleanProperty showingNavigationPaneProperty;
     private BooleanProperty showingTableInfoPaneProperty;
+    private ListProperty<Entry<Integer, Track>> showingTracksProperty;
 
     private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler = changePlaylistNameTextFieldHandler();
 
-    private MusicLibrary musicLibrary;
-    private TaskDemon taskDemon;
-    private PlaylistFactory playlistFactory;
-    private TrackTableView trackTable;
-
-    private Playlist ROOT_PLAYLIST;
-
     @Inject
-    public RootController(MusicLibrary musicLibrary, TaskDemon taskDemon, PlaylistFactory playlistFactory,
-            TrackTableView trackTable) {
+    public RootController(MusicLibrary musicLibrary, PlaylistsLibrary playlistsLibrary, TaskDemon taskDemon,
+            PlaylistFactory playlistFactory, TrackTableView trackTable) {
         this.musicLibrary = musicLibrary;
+        this.playlistsLibrary = playlistsLibrary;
         this.taskDemon = taskDemon;
         this.playlistFactory = playlistFactory;
         this.trackTable = trackTable;
@@ -180,8 +183,6 @@ public class RootController implements MusicottController, ConfigurableControlle
 
     private void initializeInfoPaneFields() {
         initializePlaylistTitleTextField();
-        ListProperty<Entry<Integer, Track>> showingTracksProperty = musicLibrary.showingTracksProperty();
-
         playRandomButton.visibleProperty().bind(showingTracksProperty.emptyProperty().not());
         playRandomButton.setOnAction(e -> {
             if (selectedPlaylistProperty().get().isPresent())
@@ -218,7 +219,7 @@ public class RootController implements MusicottController, ConfigurableControlle
      * Binds the text typed on the search text field to a filtered subset of items shown on the table
      */
     private SortedList<Entry<Integer, Track>> bindedToSearchTextFieldTracks() {
-        ObservableList<Entry<Integer, Track>> tracks = musicLibrary.showingTracksProperty().get();
+        ObservableList<Entry<Integer, Track>> tracks = showingTracksProperty.get();
         FilteredList<Entry<Integer, Track>> filteredTracks = new FilteredList<>(tracks, entry -> true);
 
         StringProperty searchTextProperty = playerLayoutController.searchTextProperty();
@@ -306,7 +307,7 @@ public class RootController implements MusicottController, ConfigurableControlle
      */
     public void enterNewPlaylistName(boolean isFolder) {
         LOG.debug("Editing playlist name");
-        musicLibrary.showingTracksProperty().clear();
+        showingTracksProperty.clear();
         removeArtistsViewPane();
         placePlaylistTextField();
 
@@ -338,13 +339,11 @@ public class RootController implements MusicottController, ConfigurableControlle
      * @return {@code true} if its a valid name, {@code false} otherwise
      */
     private boolean isValidPlaylistName(String newName) {
-        PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
         return ! newName.isEmpty() && ! playlistsLibrary.containsPlaylistName(newName);
     }
 
     private void addPlaylistToRoot(Playlist playlist) {
         navigationLayoutController.addNewPlaylist(ROOT_PLAYLIST, playlist, true);
-        PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
         playlistsLibrary.addPlaylistToRoot(playlist);
     }
 
@@ -510,6 +509,11 @@ public class RootController implements MusicottController, ConfigurableControlle
                 artistsLayoutController.deselectAllTracks();
                 break;
         }
+    }
+
+    @Inject
+    public void setShowingTracksProperty(ListProperty<Entry<Integer, Track>> showingTracksProperty) {
+        this.showingTracksProperty = showingTracksProperty;
     }
 
     public NavigationController getNavigationController() {

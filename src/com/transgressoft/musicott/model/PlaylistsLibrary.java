@@ -36,19 +36,20 @@ import java.util.stream.*;
  * @version 0.10-b
  * @since 0.10-b
  */
+@Singleton
 public class PlaylistsLibrary {
 
     private final Provider<TaskDemon> taskDemonProvider;
-    private final Provider<MusicLibrary> musicLibraryProvider;
+    private final TracksLibrary tracksLibrary;
     private final Playlist ROOT_PLAYLIST;
 
     private MutableGraph<Playlist> playlistsTree = GraphBuilder.directed().build();
     private Random random = new Random();
 
     @Inject
-    public PlaylistsLibrary(Provider<MusicLibrary> musicLibraryProvider, Provider<TaskDemon> taskDemonProvider,
+    public PlaylistsLibrary(TracksLibrary tracksLibrary, Provider<TaskDemon> taskDemonProvider,
             PlaylistFactory playlistFactory) {
-        this.musicLibraryProvider = musicLibraryProvider;
+        this.tracksLibrary = tracksLibrary;
         this.taskDemonProvider = taskDemonProvider;
         ROOT_PLAYLIST = playlistFactory.create("ROOT", true);
         playlistsTree.addNode(ROOT_PLAYLIST);
@@ -111,14 +112,12 @@ public class PlaylistsLibrary {
     }
 
     synchronized List<Entry<Integer, Track>> getTrackEntriesUnderPlaylist(Playlist playlist) {
-        TracksLibrary tracksLibrary = musicLibraryProvider.get().getTracksLibrary();
         return playlist.getTracks().stream()
                        .map(i -> new SimpleEntry<>(i, tracksLibrary.getTrack(i).get()))
                        .collect(Collectors.toList());
     }
 
     synchronized List<Track> getRandomSortedTrackList(Playlist playlist) {
-        TracksLibrary tracksLibrary = musicLibraryProvider.get().getTracksLibrary();
         List<Integer> randomSortedList = new ArrayList<>(playlist.getTracks());
         Collections.shuffle(randomSortedList, random);
         return randomSortedList.stream()

@@ -41,19 +41,20 @@ import java.util.stream.*;
 public class TrackTableViewContextMenu extends ContextMenu {
 
     private final StageDemon stageDemon;
-    private final MusicLibrary musicLibrary;
+    private final PlaylistsLibrary playlistsLibrary;
 
     private Menu addToPlaylistMenu;
     private MenuItem deleteFromPlaylistMenuItem;
     private List<MenuItem> playlistsInMenu = new ArrayList<>();
 
     private List<Entry<Integer, Track>> selectedEntries;
+    private ListProperty<Entry<Integer, Track>> showingTracksProperty;
 
     @Inject
-    public TrackTableViewContextMenu(StageDemon stageDemon, MusicLibrary musicLibrary, PlayerFacade playerFacade) {
+    public TrackTableViewContextMenu(PlaylistsLibrary playlistsLibrary, StageDemon stageDemon, PlayerFacade playerFacade) {
         super();
+        this.playlistsLibrary = playlistsLibrary;
         this.stageDemon = stageDemon;
-        this.musicLibrary = musicLibrary;
         addToPlaylistMenu = new Menu("Add to playlist");
 
         MenuItem playMenuItem = new MenuItem("Play");
@@ -86,7 +87,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
         deleteFromPlaylistMenuItem.setOnAction(event -> {
             if (! selectedEntries.isEmpty()) {
                 getSelectedPlaylist().get().removeTracks(trackSelectionIds(selectedEntries));
-                musicLibrary.showingTracksProperty().removeAll(selectedEntries);
+                showingTracksProperty.removeAll(selectedEntries);
             }
         });
 
@@ -113,7 +114,6 @@ public class TrackTableViewContextMenu extends ContextMenu {
     public void show(Node anchor, double screenX, double screenY) {
         playlistsInMenu.clear();
         selectedEntries = stageDemon.getRootController().getSelectedTracks();
-        PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
         if (getSelectedPlaylist().isPresent() && ! getSelectedPlaylist().get().isFolder())  {
             playlistsLibrary.getPlaylistsTree().nodes()
                                   .stream().filter(p -> ! p.isFolder())
@@ -138,5 +138,10 @@ public class TrackTableViewContextMenu extends ContextMenu {
             });
             playlistsInMenu.add(playlistMenuItem);
         }
+    }
+
+    @Inject
+    public void setShowingTracksProperty(ListProperty<Entry<Integer, Track>> showingTracksProperty) {
+        this.showingTracksProperty = showingTracksProperty;
     }
 }

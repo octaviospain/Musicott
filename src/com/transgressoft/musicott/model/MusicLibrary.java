@@ -59,12 +59,10 @@ public class MusicLibrary {
     private WaveformsLibrary waveformsLibrary;
     private PlaylistsLibrary playlistsLibrary;
 
+    private ListProperty<Entry<Integer, Track>> showingTracksProperty;
+
     @Inject
-    public MusicLibrary(WaveformsLibrary waveformsLibrary, PlaylistsLibrary playlistsLibrary, StageDemon stageDemon,
-            TaskDemon taskDemon, Provider<PlayerFacade> playerFacade) {
-        this.albumsLibrary = albumsLibrary;
-        this.waveformsLibrary = waveformsLibrary;
-        this.playlistsLibrary = playlistsLibrary;
+    public MusicLibrary(StageDemon stageDemon, TaskDemon taskDemon, Provider<PlayerFacade> playerFacade) {
         this.stageDemon = stageDemon;
         this.taskDemon = taskDemon;
         this.playerFacade = playerFacade.get();
@@ -100,7 +98,7 @@ public class MusicLibrary {
         NavigationMode mode = navigationController == null ? null :
                 navigationController.navigationModeProperty().getValue();
         if (mode != null && mode == NavigationMode.ALL_TRACKS)
-            showingTracksProperty().add(trackEntry);
+            showingTracksProperty.add(trackEntry);
         return added[0];
     }
 
@@ -111,7 +109,7 @@ public class MusicLibrary {
         stageDemon.getRootController().removeFromTrackSets(trackEntry);
 
         Platform.runLater(() -> removed [0] = tracksLibrary.tracksProperty().remove(trackEntry));
-        Platform.runLater(() -> removed[0] |= showingTracksProperty().remove(trackEntry));
+        Platform.runLater(() -> removed[0] |= showingTracksProperty.remove(trackEntry));
         removed[0] |= albumsLibrary.removeTracks(trackAlbum, Collections.singletonList(trackEntry));
         track.getArtistsInvolved().forEach(artist -> removed[0] |= artistsLibrary.removeArtistTrack(artist, track));
         waveformsLibrary.removeWaveform(track.getTrackId());
@@ -127,9 +125,9 @@ public class MusicLibrary {
     }
 
     public void showPlaylist(Playlist playlist) {
-        showingTracksProperty().clear();
+        showingTracksProperty.clear();
         List<Entry<Integer, Track>> tracksUnderPlaylist = playlistsLibrary.getTrackEntriesUnderPlaylist(playlist);
-        showingTracksProperty().addAll(tracksUnderPlaylist);
+        showingTracksProperty.addAll(tracksUnderPlaylist);
     }
 
     public void showArtist(String artist) {
@@ -229,6 +227,7 @@ public class MusicLibrary {
     public void setTracksLibrary(TracksLibrary tracksLibrary) {
         this.tracksLibrary = tracksLibrary;
         this.tracksLibrary.addListener(musicottTracksListener);
+        this.showingTracksProperty = tracksLibrary.showingTracksProperty();
     }
 
     public ArtistsLibrary getArtistsLibrary() {
@@ -262,16 +261,12 @@ public class MusicLibrary {
         return playlistsLibrary;
     }
 
-//    @Inject
-//    public void setPlaylistsLibrary(PlaylistsLibrary playlistsLibrary) {
-//        this.playlistsLibrary = playlistsLibrary;
-//    }
+    @Inject
+    public void setPlaylistsLibrary(PlaylistsLibrary playlistsLibrary) {
+        this.playlistsLibrary = playlistsLibrary;
+    }
 
     public ReadOnlyBooleanProperty emptyLibraryProperty() {
         return tracksLibrary.tracksProperty().emptyProperty();
-    }
-
-    public ListProperty<Entry<Integer, Track>> showingTracksProperty() {
-        return tracksLibrary.showingTracksProperty();
     }
 }

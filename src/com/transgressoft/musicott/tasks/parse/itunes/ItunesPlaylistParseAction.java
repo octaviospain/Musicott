@@ -51,7 +51,7 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
     private static final int NUMBER_OF_PARTITIONS = 2;
 
     private final StageDemon stageDemon;
-    private final MusicLibrary musicLibrary;
+    private final PlaylistsLibrary playlistsLibrary;
 
     @Inject
     private PlaylistFactory playlistFactory;
@@ -63,18 +63,19 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
     /**
      * Constructor of {@link ItunesTracksParseAction}
      *
+     * @param playlistsLibrary           The {@link PlaylistsLibrary} singleton instance
      * @param itunesPlaylistsToParse     The {@link List} of {@link ItunesPlaylist} obects to parse
      * @param itunesIdToMusicottTrackMap The {@link Map} between itunes' tracks id's and system's tracks id's
      * @param parentTask                 The reference to the parent {@link BaseParseTask} that called this action
      */
     @Inject
-    public ItunesPlaylistParseAction(StageDemon stageDemon, MusicLibrary musicLibrary,
+    public ItunesPlaylistParseAction(PlaylistsLibrary playlistsLibrary, StageDemon stageDemon,
             @Assisted List<ItunesPlaylist> itunesPlaylistsToParse,
             @Assisted Map<Integer, Track> itunesIdToMusicottTrackMap,
             @Assisted BaseParseTask parentTask) {
         super(itunesPlaylistsToParse, parentTask);
         this.stageDemon = stageDemon;
-        this.musicLibrary = musicLibrary;
+        this.playlistsLibrary = playlistsLibrary;
         this.itunesIdToMusicottTrackMap = itunesIdToMusicottTrackMap;
         ROOT_PLAYLIST = playlistFactory.create("ROOT", true);
     }
@@ -86,7 +87,6 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
         else {
             itemsToParse.forEach(this::parseItem);
             parsedPlaylists.forEach(playlist -> {
-                PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
                 if (playlistsLibrary.containsPlaylistName(playlist.getName()))
                     addTracksToExistingPlaylist(playlist);
                 else {
@@ -100,7 +100,6 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
     }
 
     private void addTracksToExistingPlaylist(Playlist parsedPlaylist) {
-        PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
         Set<Playlist> playlists = playlistsLibrary.getPlaylistsTree().nodes();
         synchronized (playlistsLibrary) {
             boolean found = false;

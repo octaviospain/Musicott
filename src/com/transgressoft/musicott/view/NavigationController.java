@@ -51,6 +51,11 @@ public class NavigationController implements MusicottController, ConfigurableCon
     private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
     private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(73, 73, 73);";
 
+    private final MusicLibrary musicLibrary;
+    private final PlaylistsLibrary playlistsLibrary;
+    private final RootController rootController;
+    private final StageDemon stageDemon;
+
     @FXML
     private VBox navigationVBox;
     @FXML
@@ -67,17 +72,14 @@ public class NavigationController implements MusicottController, ConfigurableCon
     private ObjectProperty<NavigationMode> navigationModeProperty;
     private Optional<Playlist> currentPlayingPlaylist;
 
-    private RootController rootController;
-    private StageDemon stageDemon;
-    private MusicLibrary musicLibrary;
-
     @Inject
-    public NavigationController(RootController rootController, PlaylistTreeView playlistTreeView,
-            StageDemon stageDemon, MusicLibrary musicLibrary) {
+    public NavigationController(MusicLibrary musicLibrary, PlaylistsLibrary playlistsLibrary,
+            RootController rootController, PlaylistTreeView playlistTreeView, StageDemon stageDemon) {
+        this.musicLibrary = musicLibrary;
+        this.playlistsLibrary = playlistsLibrary;
         this.rootController = rootController;
         this.playlistTreeView = playlistTreeView;
         this.stageDemon = stageDemon;
-        this.musicLibrary = musicLibrary;
     }
 
     @FXML
@@ -180,11 +182,6 @@ public class NavigationController implements MusicottController, ConfigurableCon
         return keyModifierOS;
     }
 
-//    void setRootController(RootController rootController) {
-//        this.rootController = rootController;
-//        subscribe(navigationModeProperty, this::setNavigationMode);
-//    }
-
     public void addNewPlaylist(Playlist parent, Playlist newPlaylist, boolean selectAfter) {
         playlistTreeView.addPlaylistsToFolder(parent, Collections.singleton(newPlaylist));
         if (selectAfter)
@@ -209,7 +206,6 @@ public class NavigationController implements MusicottController, ConfigurableCon
     public void deleteSelectedPlaylist() {
         Playlist selectedPlaylist = selectedPlaylistProperty().get().get();
         playlistTreeView.deletePlaylist(selectedPlaylist);
-        PlaylistsLibrary playlistsLibrary = musicLibrary.getPlaylistsLibrary();
         playlistsLibrary.deletePlaylist(selectedPlaylist);
         if (playlistsLibrary.isEmpty())
             setNavigationMode(NavigationMode.ALL_TRACKS);
