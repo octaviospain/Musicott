@@ -22,7 +22,7 @@ package com.transgressoft.musicott.model;
 import com.google.common.graph.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.tasks.*;
-import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 
 import java.util.AbstractMap.*;
 import java.util.*;
@@ -47,11 +47,11 @@ public class PlaylistsLibrary {
     private Random random = new Random();
 
     @Inject
-    public PlaylistsLibrary(TracksLibrary tracksLibrary, Provider<TaskDemon> taskDemonProvider,
-            PlaylistFactory playlistFactory) {
+    public PlaylistsLibrary(@RootPlaylist Playlist rootPlaylist, TracksLibrary tracksLibrary,
+            Provider<TaskDemon> taskDemonProvider) {
         this.tracksLibrary = tracksLibrary;
         this.taskDemonProvider = taskDemonProvider;
-        ROOT_PLAYLIST = playlistFactory.create("ROOT", true);
+        ROOT_PLAYLIST = rootPlaylist;
         playlistsTree.addNode(ROOT_PLAYLIST);
     }
 

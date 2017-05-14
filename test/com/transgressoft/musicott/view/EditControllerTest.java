@@ -19,11 +19,14 @@
 
 package com.transgressoft.musicott.view;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tests.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.util.guice.modules.*;
 import javafx.scene.*;
-import javafx.stage.*;
+import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.testfx.framework.junit5.*;
 
@@ -38,7 +41,7 @@ public class EditControllerTest extends JavaFxTestBase<EditController> {
     @Start
     public void start(Stage stage) throws Exception {
         testStage = stage;
-        injector = injectorWithSimpleMocks(UpdateMusicLibraryTaskFactory.class);
+        injector = injectorWithSimpleMocks(new TestModule(), UpdateMusicLibraryTaskFactory.class);
 
         loadControllerModule(Layout.EDITION);
         stage.setScene(new Scene(module.providesController().getRoot()));
@@ -49,10 +52,25 @@ public class EditControllerTest extends JavaFxTestBase<EditController> {
     }
 
     @Test
-    @DisplayName("Singleton controller and stage")
+    @DisplayName("Singleton controller")
     void singletonController() throws Exception {
         EditController anotherController = injector.getInstance(EditController.class);
 
         assertSame(controller, anotherController);
+    }
+
+    private class TestModule extends AbstractModule {
+
+        @Override
+        protected void configure() {
+            install(new ParseModule());
+            install(new TrackFactoryModule());
+        }
+
+        @Provides
+        @RootPlaylist
+        Playlist providesRootPlaylist(PlaylistFactory factory) {
+            return factory.create("ROOT", true);
+        }
     }
 }

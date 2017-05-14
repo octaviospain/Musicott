@@ -22,6 +22,7 @@ package com.transgressoft.musicott.view;
 import com.google.common.collect.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.Platform;
@@ -69,18 +70,17 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
 
     private ObservableMap<String, TrackSetAreaRow> albumTrackSets;
     private ObjectProperty<Optional<String>> selectedArtistProperty;
+    private StringProperty searchTextProperty;
 
     private final MusicLibrary musicLibrary;
     private final ArtistsLibrary artistsLibrary;
-    private final PlayerController playerLayoutController;
     private final TrackSetAreaRowFactory trackSetAreaRowFactory;
 
     @Inject
     public ArtistsViewController(MusicLibrary musicLibrary, ArtistsLibrary artistsLibrary,
-            PlayerController playerLayoutController, TrackSetAreaRowFactory trackSetAreaRowFactory) {
+            TrackSetAreaRowFactory trackSetAreaRowFactory) {
         this.musicLibrary = musicLibrary;
         this.artistsLibrary = artistsLibrary;
-        this.playerLayoutController = playerLayoutController;
         this.trackSetAreaRowFactory = trackSetAreaRowFactory;
     }
 
@@ -115,6 +115,11 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
         return artistsViewSplitPane;
     }
 
+    @Inject
+    public void setSearchTextProperty(@SearchingTextProperty StringProperty p) {
+        this.searchTextProperty = p;
+    }
+
     private MapChangeListener<String, TrackSetAreaRow> albumTrackSetsListener() {
         return change -> {
             if (change.wasAdded())
@@ -131,7 +136,6 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
         ObservableList<String> tracks = artistsLibrary.artistsListProperty();
         FilteredList<String> filteredArtists = new FilteredList<>(tracks, artist -> true);
 
-        StringProperty searchTextProperty = playerLayoutController.searchTextProperty();
         subscribe(searchTextProperty, query -> filteredArtists.setPredicate(filterArtistsByQuery(query)));
         return filteredArtists;
     }

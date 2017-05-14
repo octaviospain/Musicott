@@ -21,6 +21,7 @@ package com.transgressoft.musicott.view;
 
 import com.google.common.collect.*;
 import com.google.inject.*;
+import com.google.inject.util.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
@@ -30,6 +31,7 @@ import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
 import javafx.beans.property.*;
+import javafx.collections.*;
 import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
@@ -40,74 +42,90 @@ import org.testfx.framework.junit5.*;
 import java.util.*;
 import java.util.Map.*;
 
-import static com.transgressoft.musicott.model.Layout.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Octavio Calleya
  */
 @ExtendWith(MockitoExtension.class)
-public class RootMenuBarControllerTest extends JavaFxTestBase<RootMenuBarController> {
+public class RootControllerTest extends JavaFxTestBase<RootController> {
 
-    static final BooleanProperty falseProperty = new SimpleBooleanProperty(false);
+    static BooleanProperty falseProperty = new SimpleBooleanProperty(false);
 
     @Mock
     EditController editControllerMock;
-    @Mock
-    RootController rootControllerMock;
     @Mock
     NavigationController navControllerMock;
     @Mock
     PlayerController playerControllerMock;
     @Mock
-    ErrorDialogController errorDialogMock;
-    @Mock
-    PlayerFacade playerMock;
-    @Mock
-    TaskDemon taskDemonMock;
+    MainPreferences preferencesMock;
     @Mock
     StageDemon stageDemonMock;
     @Mock
-    MainPreferences preferencesMock;
+    TaskDemon taskDemonMock;
+    @Mock
+    PlayerFacade playerMock;
+    @Mock
+    RootMenuBarController menuBarMock;
+    @Mock
+    ArtistsViewController artistsControllerMock;
 
     @Override
     @Start
     public void start(Stage stage) throws Exception {
-        when(editControllerMock.showingProperty()).thenReturn(falseProperty);
-
         Map<Class, Object> mocks = ImmutableMap.<Class, Object>builder()
                 .put(editControllerMock.getClass(), editControllerMock)
-                .put(errorDialogMock.getClass(), errorDialogMock)
-                .put(playerMock.getClass(), playerMock)
-                .put(taskDemonMock.getClass(), taskDemonMock)
-                .put(stageDemonMock.getClass(), stageDemonMock)
-                .put(preferencesMock.getClass(), preferencesMock)
                 .put(playerControllerMock.getClass(), playerControllerMock)
-                .put(rootControllerMock.getClass(), rootControllerMock)
+                .put(navControllerMock.getClass(), navControllerMock)
+                .put(preferencesMock.getClass(), preferencesMock)
+                .put(stageDemonMock.getClass(), stageDemonMock)
+                .put(taskDemonMock.getClass(), taskDemonMock)
+                .put(playerMock.getClass(), playerMock)
+                .put(artistsControllerMock.getClass(), artistsControllerMock)
+                .put(menuBarMock.getClass(), menuBarMock)
                 .build();
 
-        ControllerModule rootModule = new RootModule(rootControllerMock);
         ControllerModule editModule = new EditModule(editControllerMock);
-        ControllerModule navModule = new NavigationModule(navControllerMock);
         ControllerModule playerModule = new PlayerModule(playerControllerMock);
+        ControllerModule navModule = new NavigationModule(navControllerMock);
+        ControllerModule artistsModule = new ArtistsModule(artistsControllerMock);
+        ControllerModule menuBarModule = new RootMenuBarModule(menuBarMock);
+        RootTestModule rootTestModule = new RootTestModule();
 
-        injector = injectorWithCustomMocks(mocks, rootModule, editModule, navModule, playerModule, new TestModule());
+        injector = injectorWithCustomMocks(mocks, editModule, navModule, playerModule, menuBarModule, artistsModule,
+                                           new TestModule(), rootTestModule);
 
-        loadControllerModule(MENU_BAR);
+        loadControllerModule(Layout.ROOT);
         stage.setScene(new Scene(module.providesController().getRoot()));
 
-        injector = injector.createChildInjector(module);
+        injector = injectorWithCustomMocks(mocks, editModule, navModule, playerModule, menuBarModule, artistsModule,
+                                           new TestModule(), Modules.override(rootTestModule).with(module));
 
         stage.show();
     }
 
     @Test
-    @DisplayName("Singleton controller")
-    void singletonController() throws Exception {
-        RootMenuBarController anotherController = injector.getInstance(RootMenuBarController.class);
+    @DisplayName ("Singleton controller")
+    void singletonController() {
+        RootController controller1 = injector.getInstance(RootController.class);
+        RootController controller2 = injector.getInstance(RootController.class);
 
-        assertSame(controller, anotherController);
+        assertSame(controller1, controller2);
+    }
+
+    private class RootTestModule extends AbstractModule {
+
+        @Override
+        protected void configure() {
+
+        }
+
+        @Provides
+        @RootCtrl
+        RootController providesRootController() {
+            return controller;
+        }
     }
 
     private class TestModule extends AbstractModule {
@@ -115,11 +133,11 @@ public class RootMenuBarControllerTest extends JavaFxTestBase<RootMenuBarControl
         @Override
         protected void configure() {
             install(new ParseModule());
-            install(new WaveformPaneFactoryModule());
             install(new TrackFactoryModule());
             install(new UpdateMusicLibraryFactoryModule());
+            install(new TrackSetAreaRowFactoryModule());
+            install(new WaveformPaneFactoryModule());
         }
-
 
         @Provides
         @RootPlaylist
@@ -160,13 +178,19 @@ public class RootMenuBarControllerTest extends JavaFxTestBase<RootMenuBarControl
         @Provides
         @ShowingTracksProperty
         ListProperty<Entry<Integer, Track>> providesShowingTracksProperty() {
-            return new SimpleListProperty<>();
+            return new SimpleListProperty<>(FXCollections.observableArrayList());
         }
 
         @Provides
         @SearchingProperty
         ReadOnlyBooleanProperty providesSearchingProperty() {
             return falseProperty;
+        }
+
+        @Provides
+        @SearchingTextProperty
+        StringProperty providesSearchingTextProperty() {
+            return new SimpleStringProperty("test");
         }
 
         @Provides

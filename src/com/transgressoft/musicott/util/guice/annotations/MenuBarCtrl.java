@@ -17,31 +17,21 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.util.guice.modules;
+package com.transgressoft.musicott.util.guice.annotations;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.view.*;
+
+import java.lang.annotation.*;
+
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.*;
 
 /**
  * @author Octavio Calleya
  */
-public class RootMenuBarModule extends AbstractModule implements ControllerModule<RootMenuBarController> {
+@Target ({FIELD, PARAMETER, METHOD})
+@Retention (RUNTIME)
+@BindingAnnotation
+public @interface MenuBarCtrl {
 
-    private RootMenuBarController controller;
-
-    public RootMenuBarModule(RootMenuBarController controller) {
-        this.controller = controller;
-    }
-
-    @Override
-    protected void configure() {
-        bind(InjectableController.class).annotatedWith(MenuBarCtrl.class).toInstance(controller);
-    }
-
-    @Provides
-    @MenuBarCtrl
-    public RootMenuBarController providesController() {
-        return controller;
-    }
 }

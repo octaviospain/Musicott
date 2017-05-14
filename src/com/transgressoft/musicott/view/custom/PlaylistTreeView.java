@@ -22,6 +22,7 @@ package com.transgressoft.musicott.view.custom;
 import com.google.common.graph.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import javafx.beans.property.*;
 import javafx.scene.control.*;
@@ -45,9 +46,10 @@ public class PlaylistTreeView extends TreeView<Playlist> {
     private ObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
     @Inject
-    public PlaylistTreeView(PlaylistsLibrary playlistsLibrary, PlaylistFactory playlistFactory, Injector injector) {
+    public PlaylistTreeView(PlaylistsLibrary playlistsLibrary, PlaylistFactory playlistFactory,
+            @RootPlaylist Playlist rootPlaylist, Injector injector) {
         this.playlistsLibrary = playlistsLibrary;
-        createPlaylistsItems(playlistFactory);
+        createPlaylistsItems(rootPlaylist, playlistFactory);
         setShowRoot(false);
         setEditable(true);
         setPrefHeight(USE_COMPUTED_SIZE);
@@ -71,8 +73,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
      *
      * @param playlistFactory The {@link PlaylistFactory} injected object
      */
-    private void createPlaylistsItems(PlaylistFactory playlistFactory) {
-        Playlist rootPlaylist = playlistFactory.create("ROOT", true);
+    private void createPlaylistsItems(Playlist rootPlaylist, PlaylistFactory playlistFactory) {
         TreeItem<Playlist> rootItem = new TreeItem<>(rootPlaylist);
         setRoot(rootItem);
         playlistsItemsMap.put(rootPlaylist, rootItem);
@@ -103,6 +104,10 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 
     public void selectPlaylist(Playlist playlist) {
         getSelectionModel().select(playlistsItemsMap.get(playlist));
+    }
+
+    public void clearAndSelect(int index) {
+        getSelectionModel().clearAndSelect(index);
     }
 
     public void movePlaylist(String movedPlaylistName, Playlist targetFolder) {

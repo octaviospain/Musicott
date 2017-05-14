@@ -26,22 +26,22 @@ import com.transgressoft.musicott.view.*;
 /**
  * @author Octavio Calleya
  */
-public class RootMenuBarModule extends AbstractModule implements ControllerModule<RootMenuBarController> {
+public class ArtistsModule extends AbstractModule implements ControllerModule<ArtistsViewController> {
 
-    private RootMenuBarController controller;
+    private ArtistsViewController controller;
 
-    public RootMenuBarModule(RootMenuBarController controller) {
+    public ArtistsModule(ArtistsViewController controller) {
         this.controller = controller;
     }
 
     @Override
     protected void configure() {
-        bind(InjectableController.class).annotatedWith(MenuBarCtrl.class).toInstance(controller);
+        bind(InjectableController.class).annotatedWith(ArtistsCtrl.class).toInstance(controller);
     }
 
-    @Provides
-    @MenuBarCtrl
-    public RootMenuBarController providesController() {
+    @Override
+    @ArtistsCtrl
+    public ArtistsViewController providesController() {
         return controller;
     }
 }

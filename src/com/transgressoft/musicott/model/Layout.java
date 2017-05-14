@@ -19,45 +19,37 @@
 
 package com.transgressoft.musicott.model;
 
-import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.modules.*;
 import com.transgressoft.musicott.view.*;
-
-import java.lang.annotation.*;
 
 /**
  * @author Octavio Calleya
  */
 public enum Layout implements MusicottLayout {
 
-    ROOT(LAYOUTS_PATH + "RootLayout.fxml", RootCtrl.class, RootModule.class),
-    PRELOADER(LAYOUTS_PATH + "PreloaderLayout.fxml", null, null),
-    PRELOADER_PROMPT(LAYOUTS_PATH + "PreloaderPromptLayout.fxml", null, null),
-    EDITION(LAYOUTS_PATH + "EditLayout.fxml", EditCtrl.class, EditModule.class),
-    PROGRESS_BAR(LAYOUTS_PATH + "ProgressLayout.fxml", null, null),
-    PREFERENCES(LAYOUTS_PATH + "PreferencesLayout.fxml", PrefCtrl.class, PreferencesModule.class),
-    NAVIGATION(LAYOUTS_PATH + "NavigationLayout.fxml", NavigationCtrl.class, NavigationModule.class),
-    PLAY_QUEUE(LAYOUTS_PATH + "PlayQueueLayout.fxml", PlayQueueCtrl.class, PlayQueueModule.class),
-    MENU_BAR(LAYOUTS_PATH + "RootMenuBarLayout.fxml", RootMenuBar.class, RootMenuBarModule.class),
-    ERROR_DIALOG(LAYOUTS_PATH + "ErrorDialogLayout.fxml", ErrorCtrl.class, ErrorDialogModule.class);
+    ROOT (LAYOUTS_PATH + "RootLayout.fxml", RootModule.class),
+    PRELOADER (LAYOUTS_PATH + "PreloaderLayout.fxml", null),
+    PRELOADER_PROMPT (LAYOUTS_PATH + "PreloaderPromptLayout.fxml", null),
+    EDITION (LAYOUTS_PATH + "EditLayout.fxml", EditModule.class),
+    ARTISTS (LAYOUTS_PATH + "ArtistsLayout.fxml", ArtistsModule.class),
+    PROGRESS_BAR (LAYOUTS_PATH + "ProgressLayout.fxml", null),
+    PREFERENCES (LAYOUTS_PATH + "PreferencesLayout.fxml", PreferencesModule.class),
+    NAVIGATION (LAYOUTS_PATH + "NavigationLayout.fxml", NavigationModule.class),
+    PLAYER (LAYOUTS_PATH + "PlayerLayout.fxml", PlayerModule.class),
+    PLAY_QUEUE (LAYOUTS_PATH + "PlayQueueLayout.fxml", PlayQueueModule.class),
+    MENU_BAR (LAYOUTS_PATH + "RootMenuBarLayout.fxml", RootMenuBarModule.class),
+    ERROR_DIALOG (LAYOUTS_PATH + "ErrorDialogLayout.fxml", ErrorDialogModule.class);
 
     private String path;
-    private Class<? extends Annotation> controllerAnnotation;
     private Class<? extends ControllerModule> controllerModule;
 
-    Layout(String path, Class<? extends Annotation> controllerAnnotation,
-            Class<? extends ControllerModule> controllerModule) {
+    Layout(String path, Class<? extends ControllerModule> controllerModule) {
         this.path = path;
-        this.controllerAnnotation = controllerAnnotation;
         this.controllerModule = controllerModule;
     }
 
     public String getPath() {
         return path;
-    }
-
-    public Class<? extends Annotation> getControllerAnnotation() {
-        return controllerAnnotation;
     }
 
     public Class<? extends ControllerModule> getControllerModule() {

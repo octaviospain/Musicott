@@ -24,6 +24,7 @@ import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.*;
 import com.worldsworstsoftware.itunes.*;
@@ -64,20 +65,20 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
      * Constructor of {@link ItunesTracksParseAction}
      *
      * @param playlistsLibrary           The {@link PlaylistsLibrary} singleton instance
+     * @param rootPlaylist               The root {@link Playlist} reference
      * @param itunesPlaylistsToParse     The {@link List} of {@link ItunesPlaylist} obects to parse
      * @param itunesIdToMusicottTrackMap The {@link Map} between itunes' tracks id's and system's tracks id's
      * @param parentTask                 The reference to the parent {@link BaseParseTask} that called this action
      */
     @Inject
     public ItunesPlaylistParseAction(PlaylistsLibrary playlistsLibrary, StageDemon stageDemon,
-            @Assisted List<ItunesPlaylist> itunesPlaylistsToParse,
-            @Assisted Map<Integer, Track> itunesIdToMusicottTrackMap,
-            @Assisted BaseParseTask parentTask) {
+            @RootPlaylist Playlist rootPlaylist, @Assisted List<ItunesPlaylist> itunesPlaylistsToParse,
+            @Assisted Map<Integer, Track> itunesIdToMusicottTrackMap, @Assisted BaseParseTask parentTask) {
         super(itunesPlaylistsToParse, parentTask);
         this.stageDemon = stageDemon;
         this.playlistsLibrary = playlistsLibrary;
         this.itunesIdToMusicottTrackMap = itunesIdToMusicottTrackMap;
-        ROOT_PLAYLIST = playlistFactory.create("ROOT", true);
+        ROOT_PLAYLIST = rootPlaylist;
     }
 
     @Override

@@ -66,7 +66,7 @@ public class ErrorDialogControllerTest extends JavaFxTestBase<ErrorDialogControl
     }
 
     @Test
-    @DisplayName("Singleton controller and stage")
+    @DisplayName("Singleton controller")
     void singletonController() throws Exception {
         ErrorDialogController anotherController = injector.getInstance(ErrorDialogController.class);
 

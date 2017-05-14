@@ -23,12 +23,13 @@ import com.google.common.collect.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.services.*;
+import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 import javafx.scene.*;
 import javafx.stage.Stage;
@@ -38,6 +39,7 @@ import org.mockito.*;
 import org.testfx.framework.junit5.*;
 
 import java.util.*;
+import java.util.Map.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -46,36 +48,40 @@ import static org.mockito.Mockito.*;
  * @author Octavio Calleya
  */
 @ExtendWith(MockitoExtension.class)
-public class PreferencesControllerTest extends JavaFxTestBase<PreferencesController> {
+public class NavigationControllerTest extends JavaFxTestBase<NavigationController> {
 
-    @Mock
-    MainPreferences prefsMock;
+    static BooleanProperty falseProperty = new SimpleBooleanProperty(false);
+
     @Mock
     StageDemon stageDemonMock;
     @Mock
-    ServiceDemon serviceDemonMock;
-    @Mock
     TaskDemon taskDemonMock;
     @Mock
-    ErrorDemon errorDemonMock;
+    PlayerFacade playerFacadeMock;
+    @Mock
+    PlayerController playerControllerMock;
+    @Mock
+    RootController rootControllerMock;
 
     @Override
     @Start
     public void start(Stage stage) throws Exception {
-        testStage = stage;
-        when(serviceDemonMock.usingLastFmProperty()).thenReturn(new SimpleBooleanProperty(false));
+        injector = Guice.createInjector(new TestModule());
+
+        PlaylistTreeView playlistTreeViewMock = mock(PlaylistTreeView.class);
+        doNothing().when(playlistTreeViewMock).clearAndSelect(anyInt());
 
         Map<Class, Object> mocks = ImmutableMap.<Class, Object>builder()
-                .put(prefsMock.getClass(), prefsMock)
-                .put(stageDemonMock.getClass(), stageDemonMock)
-                .put(serviceDemonMock.getClass(), serviceDemonMock)
-                .put(taskDemonMock.getClass(), taskDemonMock)
-                .put(errorDemonMock.getClass(), errorDemonMock)
-                .build();
-
+                                               .put(stageDemonMock.getClass(), stageDemonMock)
+                                               .put(taskDemonMock.getClass(), taskDemonMock)
+                                               .put(playerFacadeMock.getClass(), playerFacadeMock)
+                                               .put(playerControllerMock.getClass(), playerControllerMock)
+                                               .put(rootControllerMock.getClass(), rootControllerMock)
+                                               .put(playlistTreeViewMock.getClass(), playlistTreeViewMock)
+                                               .build();
         injector = injectorWithCustomMocks(mocks, new TestModule());
 
-        loadControllerModule(Layout.PREFERENCES);
+        loadControllerModule(Layout.NAVIGATION);
         stage.setScene(new Scene(module.providesController().getRoot()));
 
         injector = injector.createChildInjector(module);
@@ -85,8 +91,8 @@ public class PreferencesControllerTest extends JavaFxTestBase<PreferencesControl
 
     @Test
     @DisplayName("Singleton controller")
-    void singletonController () {
-        PreferencesController anotherController = injector.getInstance(PreferencesController.class);
+    void singletonController() {
+        NavigationController anotherController = injector.getInstance(NavigationController.class);
 
         assertSame(controller, anotherController);
     }
@@ -103,6 +109,18 @@ public class PreferencesControllerTest extends JavaFxTestBase<PreferencesControl
         @RootPlaylist
         Playlist providesRootPlaylist(PlaylistFactory factory) {
             return factory.create("ROOT", true);
+        }
+
+        @Provides
+        @EmptyLibraryProperty
+        ReadOnlyBooleanProperty providesEmptyLibraryProperty() {
+            return falseProperty;
+        }
+
+        @Provides
+        @ShowingTracksProperty
+        ListProperty<Entry<Integer, Track>> providesShowingTracksProperty() {
+            return new SimpleListProperty<>();
         }
     }
 }

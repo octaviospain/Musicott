@@ -49,7 +49,7 @@ public class PlayQueueControllerTest extends JavaFxTestBase<PlayQueueController>
     }
 
     @Test
-    @DisplayName("Singleton controller and stage")
+    @DisplayName("Singleton controller")
     void singletonController() {
         PlayQueueController anotherController = injector.getInstance(PlayQueueController.class);
 

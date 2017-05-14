@@ -23,6 +23,7 @@ import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
 
@@ -48,6 +49,18 @@ public class MusicottModule extends AbstractModule {
     }
 
     @Provides
+    @RootPlaylist
+    Playlist providesRootPlaylist(PlaylistFactory factory) {
+        return factory.create("ROOT", true);
+    }
+
+    @Provides
+    @ShowingEditing
+    ReadOnlyBooleanProperty providesShowingEditing(EditController editController) {
+        return editController.showingProperty();
+    }
+
+    @Provides
     @ShowingNavigationPaneProperty
     ReadOnlyBooleanProperty providesShowingNavigationPaneProperty(RootController rootController) {
         return rootController.showNavigationPaneProperty();
@@ -69,6 +82,12 @@ public class MusicottModule extends AbstractModule {
     @EmptyLibraryProperty
     ReadOnlyBooleanProperty providesEmptyLibraryProperty(TracksLibrary tracksLibrary) {
         return tracksLibrary.tracksProperty().emptyProperty();
+    }
+
+    @Provides
+    @SearchingTextProperty
+    StringProperty providesSearchingTextProperty(PlayerController playerController) {
+        return playerController.searchTextProperty();
     }
 
     @Provides

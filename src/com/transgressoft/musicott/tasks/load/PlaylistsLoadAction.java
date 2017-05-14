@@ -25,6 +25,7 @@ import com.google.inject.*;
 import com.google.inject.assistedinject.*;
 import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
@@ -58,11 +59,11 @@ public class PlaylistsLoadAction extends BaseLoadAction {
 
     @Inject
     public PlaylistsLoadAction(PlaylistsLibrary playlistsLibrary, PlaylistFactory playlistFactory,
-            @Assisted String applicationFolder, @Assisted Application musicottApplication) {
+            @RootPlaylist Playlist rootPlaylist, @Assisted String applicationFolder, @Assisted Application musicottApplication) {
         super(applicationFolder, musicottApplication);
         this.playlistsLibrary = playlistsLibrary;
         this.playlistFactory = playlistFactory;
-        ROOT_PLAYLIST = playlistFactory.create("ROOT", true);
+        ROOT_PLAYLIST = rootPlaylist;
     }
 
     @Override

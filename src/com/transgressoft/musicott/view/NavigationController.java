@@ -132,12 +132,12 @@ public class NavigationController extends InjectableController<VBox> {
             case ALL_TRACKS:
                 musicLibrary.showAllTracks();
                 navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
-                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+                playlistTreeView.clearAndSelect(- 1);
                 Platform.runLater(rootController::showAllTracksView);
                 break;
             case ARTISTS:
                 navigationMenuListView.getSelectionModel().select(NavigationMode.ARTISTS);
-                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+                playlistTreeView.clearAndSelect(- 1);
                 Platform.runLater(rootController::showArtistsView);
                 break;
             case PLAYLIST:
@@ -155,14 +155,14 @@ public class NavigationController extends InjectableController<VBox> {
         newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier()));
         newPlaylistMI.setOnAction(e -> {
             stageDemon.getRootController().enterNewPlaylistName(false);
-            playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+            playlistTreeView.clearAndSelect(- 1);
             navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
         });
         newFolderPlaylistMI = new MenuItem("New Playlist Folder");
         newFolderPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier(), KeyCombination.SHIFT_DOWN));
         newFolderPlaylistMI.setOnAction(e -> {
             stageDemon.getRootController().enterNewPlaylistName(true);
-            playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+            playlistTreeView.clearAndSelect(- 1);
             navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
         });
         contextMenu.getItems().addAll(newPlaylistMI, newFolderPlaylistMI);

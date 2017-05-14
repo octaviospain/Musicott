@@ -75,34 +75,25 @@ public abstract class JavaFxTestBase<T extends InjectableController> implements 
 
     @SuppressWarnings ("unchecked")
     protected Injector injectorWithSimpleMocks(Class... classesToMock) {
-        return injectorWithSimpleMocks(Collections.emptyList(), classesToMock);
+        return Guice.createInjector(
+                binder -> Stream.of(classesToMock).forEach(c -> binder.bind(c).toInstance(mock(c))));
     }
 
     @SuppressWarnings ("unchecked")
-    protected Injector injectorWithSimpleMocks(Collection<Module> modules, Class... classesToMock) {
+    protected Injector injectorWithSimpleMocks(Module module, Class... classesToMock) {
         return Guice.createInjector(
                 binder -> {
                     Stream.of(classesToMock).forEach(c -> binder.bind(c).toInstance(mock(c)));
-                    modules.forEach(binder::install);
+                    binder.install(module);
                 });
     }
 
     @SuppressWarnings ("unchecked")
-    protected Injector injectorWithCustomMocks(Map<Class, Object> mockedObjects, Module... modules) {
-        return injectorWithCustomMocks(mockedObjects, Stream.of(modules));
-    }
-
-    @SuppressWarnings ("unchecked")
-    protected Injector injectorWithCustomMocks(Map<Class, Object> mockedObjects, Collection<Module> modules) {
-        return injectorWithCustomMocks(mockedObjects, modules.stream());
-    }
-
-    @SuppressWarnings ("unchecked")
-    protected Injector injectorWithCustomMocks(Map<Class, Object> mockedObjects, Stream<Module> modules) {
+    protected Injector injectorWithCustomMocks(Map<Class, Object> mockedObjects, Module... newModules) {
         return Guice.createInjector(
                 binder -> {
                     mockedObjects.forEach((key, value) -> binder.bind(key).toInstance(value));
-                    modules.forEach(binder::install);
+                    Stream.of(newModules).forEach(binder::install);
                 });
     }
 }

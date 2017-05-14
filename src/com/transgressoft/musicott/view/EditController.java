@@ -99,7 +99,7 @@ public class EditController extends InjectableController<AnchorPane> implements 
 
     private File newCoverImage;
     private Map<TrackField, TextInputControl> editableFieldsMap;
-    private List<Track> trackSelection;
+    private List<Track> trackSelection = Collections.emptyList();
     private Optional<byte[]> commonCover = Optional.empty();
     private Optional<String> newChangedAlbum = Optional.empty();
     private Set<String> changedAlbums = new HashSet<>();

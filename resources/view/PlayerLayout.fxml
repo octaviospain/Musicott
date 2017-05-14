@@ -6,7 +6,7 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<GridPane fx:id="playerGridPane" minHeight="50.0" stylesheets="@../css/player.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.PlayQueueControllerTest">
+<GridPane fx:id="playerGridPane" minHeight="50.0" stylesheets="@../css/player.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.PlayerController">
   <columnConstraints>
       <ColumnConstraints halignment="CENTER" hgrow="NEVER" maxWidth="395.0" minWidth="10.0" prefWidth="164.0" />
         <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="891.0" minWidth="10.0" prefWidth="141.0" />

@@ -42,6 +42,7 @@ import javafx.stage.*;
 import javafx.stage.FileChooser.*;
 import org.slf4j.*;
 
+import javax.annotation.*;
 import java.io.*;
 import java.util.AbstractMap.*;
 import java.util.*;
@@ -90,6 +91,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     private ReadOnlyBooleanProperty nextButtonDisabledProperty;
     private ReadOnlyBooleanProperty showingNavigationPaneProperty;
     private ReadOnlyBooleanProperty showingTableInfoPaneProperty;
+    private ReadOnlyBooleanProperty editingProperty;
     private ReadOnlyObjectProperty<NavigationMode> selectedMenuProperty;
 
     @FXML
@@ -186,7 +188,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     }
 
     @Inject
-    public void setRootController(@RootCtrl RootController rootController) {
+    public void setRootController(@RootCtrl @Nullable RootController rootController) {
         this.rootController = rootController;
     }
 
@@ -243,6 +245,11 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     @Inject
     public void setShowingTableInfoPaneProperty(@ShowingTableInfoPaneProperty ReadOnlyBooleanProperty p) {
         showingTableInfoPaneProperty = p;
+    }
+
+    @Inject
+    public void setShowingEditingProperty(@ShowingEditing ReadOnlyBooleanProperty p) {
+        editingProperty = p;
     }
 
     /**
@@ -331,7 +338,6 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
         selectAllMenuItem.setOnAction(e -> rootController.selectAllTracks());
         dontSelectAllMenuItem.setOnAction(e -> rootController.deselectAllTracks());
 
-        ReadOnlyBooleanProperty editingProperty = editController.showingProperty();
         selectAllMenuItem.disableProperty().bind(combine(editingProperty, searchingProperty, (e, s) -> e || s));
         dontSelectAllMenuItem.disableProperty().bind(editingProperty);
         findMenuItem.setOnAction(e -> playerController.focusSearchField());

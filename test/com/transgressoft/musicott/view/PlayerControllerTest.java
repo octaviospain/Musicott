@@ -19,10 +19,10 @@
 
 package com.transgressoft.musicott.view;
 
-import com.google.common.collect.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tests.*;
@@ -33,49 +33,22 @@ import javafx.beans.property.*;
 import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
-import org.mockito.*;
 import org.testfx.framework.junit5.*;
 
-import java.util.*;
-
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Octavio Calleya
  */
-@ExtendWith(MockitoExtension.class)
-public class PreferencesControllerTest extends JavaFxTestBase<PreferencesController> {
-
-    @Mock
-    MainPreferences prefsMock;
-    @Mock
-    StageDemon stageDemonMock;
-    @Mock
-    ServiceDemon serviceDemonMock;
-    @Mock
-    TaskDemon taskDemonMock;
-    @Mock
-    ErrorDemon errorDemonMock;
+public class PlayerControllerTest extends JavaFxTestBase<PlayerController> {
 
     @Override
     @Start
     public void start(Stage stage) throws Exception {
-        testStage = stage;
-        when(serviceDemonMock.usingLastFmProperty()).thenReturn(new SimpleBooleanProperty(false));
+        injector = injectorWithSimpleMocks(new TestModule(), StageDemon.class, TaskDemon.class,
+                                           ServiceDemon.class, PlayerFacade.class);
 
-        Map<Class, Object> mocks = ImmutableMap.<Class, Object>builder()
-                .put(prefsMock.getClass(), prefsMock)
-                .put(stageDemonMock.getClass(), stageDemonMock)
-                .put(serviceDemonMock.getClass(), serviceDemonMock)
-                .put(taskDemonMock.getClass(), taskDemonMock)
-                .put(errorDemonMock.getClass(), errorDemonMock)
-                .build();
-
-        injector = injectorWithCustomMocks(mocks, new TestModule());
-
-        loadControllerModule(Layout.PREFERENCES);
+        loadControllerModule(Layout.PLAYER);
         stage.setScene(new Scene(module.providesController().getRoot()));
 
         injector = injector.createChildInjector(module);
@@ -84,9 +57,9 @@ public class PreferencesControllerTest extends JavaFxTestBase<PreferencesControl
     }
 
     @Test
-    @DisplayName("Singleton controller")
-    void singletonController () {
-        PreferencesController anotherController = injector.getInstance(PreferencesController.class);
+    @DisplayName ("Singleton controller")
+    void singletonController() {
+        PlayerController anotherController = injector.getInstance(PlayerController.class);
 
         assertSame(controller, anotherController);
     }
@@ -97,12 +70,19 @@ public class PreferencesControllerTest extends JavaFxTestBase<PreferencesControl
         protected void configure() {
             install(new ParseModule());
             install(new TrackFactoryModule());
+            install(new WaveformPaneFactoryModule());
         }
 
         @Provides
         @RootPlaylist
         Playlist providesRootPlaylist(PlaylistFactory factory) {
             return factory.create("ROOT", true);
+        }
+
+        @Provides
+        @EmptyLibraryProperty
+        ReadOnlyBooleanProperty providesEmptyLibraryProperty() {
+            return new SimpleBooleanProperty(false);
         }
     }
 }

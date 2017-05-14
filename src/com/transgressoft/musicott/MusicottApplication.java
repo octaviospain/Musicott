@@ -133,6 +133,7 @@ public class MusicottApplication extends Application implements InjectedApplicat
         ControllerModule<ErrorDialogController> errorModule = createController(ERROR_DIALOG, injector);
         Stage errorStage = new Stage();
         errorStage.setScene(new Scene(errorModule.providesController().getRoot()));
+        errorStage.show();
 
         ControllerModule<EditController> editModule = createController(EDITION, injector);
         Stage editStage = new Stage();
@@ -142,6 +143,7 @@ public class MusicottApplication extends Application implements InjectedApplicat
         ControllerModule<PreferencesController> prefsModule = createController(PREFERENCES, injector);
         Stage prefsStage = new Stage();
         prefsStage.setScene(new Scene(prefsModule.providesController().getRoot()));
+        prefsStage.show();
 
         injector = injector.createChildInjector(errorModule, editModule, prefsModule);
         injector = injector.createChildInjector(new TrackSetAreaRowFactoryModule());

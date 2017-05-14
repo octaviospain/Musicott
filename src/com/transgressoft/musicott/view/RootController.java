@@ -64,7 +64,6 @@ public class RootController extends InjectableController<BorderPane> implements 
     private final MusicLibrary musicLibrary;
     private final PlaylistsLibrary playlistsLibrary;
     private final TaskDemon taskDemon;
-    private final PlaylistFactory playlistFactory;
     private final TrackTableView trackTable;
 
     private final Playlist ROOT_PLAYLIST;
@@ -125,17 +124,19 @@ public class RootController extends InjectableController<BorderPane> implements 
     private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
     private ListProperty<Entry<Integer, Track>> showingTracksProperty;
 
+    @Inject
+    private PlaylistFactory playlistFactory;
+
     private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler = changePlaylistNameTextFieldHandler();
 
     @Inject
     public RootController(MusicLibrary musicLibrary, PlaylistsLibrary playlistsLibrary, TaskDemon taskDemon,
-            PlaylistFactory playlistFactory, TrackTableView trackTable) {
+            @RootPlaylist Playlist rootPlaylist, TrackTableView trackTable) {
         this.musicLibrary = musicLibrary;
         this.playlistsLibrary = playlistsLibrary;
         this.taskDemon = taskDemon;
-        this.playlistFactory = playlistFactory;
         this.trackTable = trackTable;
-        ROOT_PLAYLIST = playlistFactory.create("ROOT", true);
+        ROOT_PLAYLIST = rootPlaylist;
     }
 
     @FXML
@@ -160,7 +161,7 @@ public class RootController extends InjectableController<BorderPane> implements 
         hoverCoverImageView.visibleProperty().bind(
                 combine(navigationModeProperty, emptyLibraryProperty,
                         (mode, empty) -> mode.equals(ALL_TRACKS) && ! empty));
-//        navigationLayoutController.setNavigationMode(ARTISTS);
+        navigationLayoutController.setNavigationMode(ARTISTS); // TODO check this
 
         String os = System.getProperty("os.name");
         if (os != null && os.startsWith("Mac")) {
