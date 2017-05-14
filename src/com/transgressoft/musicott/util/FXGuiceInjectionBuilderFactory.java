@@ -27,7 +27,7 @@ import javafx.util.*;
 /**
  * This class pretends to control the instantiation of FXML controllers
  * creating the objects using Guice's Dependency Injection if the class
- * implements {@link ConfigurableController} interface, using or the default
+ * implements {@link InjectableController} interface, using or the default
  * {@link JavaFXBuilderFactory} otherwise.
  * <p>
  * Based on Arnaud Blouin's
@@ -38,7 +38,7 @@ import javafx.util.*;
  * @since 0.10.1-b
  *
  * @see FXMLControllerLoader
- * @see ConfigurableController
+ * @see InjectableController
  */
 public class FXGuiceInjectionBuilderFactory implements BuilderFactory {
 
@@ -54,9 +54,7 @@ public class FXGuiceInjectionBuilderFactory implements BuilderFactory {
 
     @Override
     public Builder<?> getBuilder(final Class<?> type) {
-        if (type == RootController.class || type == RootMenuBarController.class || type == PlayQueueController.class
-                || type == PlayerController.class || type == NavigationController.class || type ==
-                ArtistsViewController.class)
+        if (type.isInstance(InjectableController.class))
             return () -> injector.getInstance(type);
         return defaultFactory.getBuilder(type);
     }

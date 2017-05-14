@@ -46,7 +46,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @version 0.10-b
  */
 @Singleton
-public class NavigationController implements MusicottController, ConfigurableController {
+public class NavigationController extends InjectableController<VBox> {
 
     private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
     private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(73, 73, 73);";
@@ -56,6 +56,8 @@ public class NavigationController implements MusicottController, ConfigurableCon
     private final RootController rootController;
     private final StageDemon stageDemon;
 
+    @FXML
+    private VBox navigationPaneVBox;
     @FXML
     private VBox navigationVBox;
     @FXML
@@ -114,8 +116,8 @@ public class NavigationController implements MusicottController, ConfigurableCon
     }
 
     @Override
-    public void configure() {
-
+    public VBox getRoot() {
+        return navigationPaneVBox;
     }
 
     /**

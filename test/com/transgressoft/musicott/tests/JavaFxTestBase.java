@@ -20,13 +20,22 @@
 package com.transgressoft.musicott.tests;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.util.*;
-import com.transgressoft.musicott.util.guicemodules.*;
-import javafx.scene.*;
+import com.transgressoft.musicott.*;
+import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.*;
+import javafx.scene.Node;
+import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.testfx.api.*;
 import org.testfx.framework.junit5.*;
+
+import java.io.*;
+import java.util.*;
+import java.util.stream.*;
+
+import static org.mockito.Mockito.*;
 
 /**
  * Base class for testing JavaFX classes
@@ -34,13 +43,15 @@ import org.testfx.framework.junit5.*;
  * @author Octavio Calleya
  */
 @ExtendWith (ApplicationExtension.class)
-public abstract class JavaFxTestBase {
+public abstract class JavaFxTestBase<T extends InjectableController> implements InjectedApplication {
 
+    protected Stage testStage;
     protected static Injector injector;
-    protected FXMLControllerLoader loader;
+    protected T controller;
+    protected ControllerModule<T> module;
 
     @Start
-    public abstract void start(javafx.stage.Stage stage) throws Exception;
+    public abstract void start(Stage stage) throws Exception;
 
     @BeforeAll
     public static void beforeAll() throws Exception {
@@ -51,10 +62,47 @@ public abstract class JavaFxTestBase {
             System.setProperty("prism.text", "t2k");
             System.setProperty("java.awt.headless", "true");
         }
-        injector = Guice.createInjector(new MusicottModule());
     }
 
-    public <T extends Node> T find(FxRobot fxRobot, String query) {
+    protected <N extends Node> N find(FxRobot fxRobot, String query) {
         return fxRobot.lookup(query).query();
+    }
+
+    protected void loadControllerModule(Layout layout) throws IOException, ReflectiveOperationException {
+        module = createController(layout, injector);
+        controller = module.providesController();
+    }
+
+    @SuppressWarnings ("unchecked")
+    protected Injector injectorWithSimpleMocks(Class... classesToMock) {
+        return injectorWithSimpleMocks(Collections.emptyList(), classesToMock);
+    }
+
+    @SuppressWarnings ("unchecked")
+    protected Injector injectorWithSimpleMocks(Collection<Module> modules, Class... classesToMock) {
+        return Guice.createInjector(
+                binder -> {
+                    Stream.of(classesToMock).forEach(c -> binder.bind(c).toInstance(mock(c)));
+                    modules.forEach(binder::install);
+                });
+    }
+
+    @SuppressWarnings ("unchecked")
+    protected Injector injectorWithCustomMocks(Map<Class, Object> mockedObjects, Module... modules) {
+        return injectorWithCustomMocks(mockedObjects, Stream.of(modules));
+    }
+
+    @SuppressWarnings ("unchecked")
+    protected Injector injectorWithCustomMocks(Map<Class, Object> mockedObjects, Collection<Module> modules) {
+        return injectorWithCustomMocks(mockedObjects, modules.stream());
+    }
+
+    @SuppressWarnings ("unchecked")
+    protected Injector injectorWithCustomMocks(Map<Class, Object> mockedObjects, Stream<Module> modules) {
+        return Guice.createInjector(
+                binder -> {
+                    mockedObjects.forEach((key, value) -> binder.bind(key).toInstance(value));
+                    modules.forEach(binder::install);
+                });
     }
 }

@@ -26,7 +26,7 @@ import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
-import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import com.worldsworstsoftware.itunes.*;
 import com.worldsworstsoftware.itunes.parser.*;
 import javafx.application.Platform;
@@ -43,7 +43,7 @@ import java.util.concurrent.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * Extends from {@link BaseParseTask} to perform the operation of import a

@@ -21,7 +21,7 @@ package com.transgressoft.musicott.util;
 
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import javafx.collections.*;
 import javafx.util.*;
 import org.jaudiotagger.audio.*;

@@ -40,7 +40,7 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 import static javafx.scene.media.MediaPlayer.Status.*;
 
 /**
@@ -77,11 +77,9 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
     private TableColumn<Entry<Integer, Track>, LocalDateTime> dateAddedCol;
     private TableColumn<Entry<Integer, Track>, Duration> totalTimeCol;
 
-    private TrackTableViewContextMenu trackTableContextMenu;
-
     @SuppressWarnings ("unchecked")
     @Inject
-    public TrackTableView(Injector injector) {
+    public TrackTableView(TrackTableViewContextMenu trackTableContextMenu, Injector injector) {
         super();
         setId("trackTable");
         initColumns();
@@ -99,7 +97,6 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
         getStylesheets().add(getClass().getResource(TRACK_TABLE_STYLE).toExternalForm());
 
-        trackTableContextMenu = injector.getInstance(TrackTableViewContextMenu.class);
         setContextMenu(trackTableContextMenu);
         addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             if (event.getButton() == MouseButton.SECONDARY)

@@ -29,7 +29,6 @@ import javafx.fxml.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
-import javafx.scene.image.*;
 import javafx.stage.*;
 import javafx.stage.Stage;
 import org.slf4j.*;
@@ -37,7 +36,8 @@ import org.slf4j.*;
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.model.Layout.*;
+import static com.transgressoft.musicott.util.Utils.*;
 
 /**
  * Singleton class that isolates the creation of the view's components,
@@ -56,14 +56,13 @@ public class StageDemon {
     private Provider<PlayerFacade> playerFacade;
 
     private Stage mainStage;
-    private Stage editStage;
     private Stage progressStage;
     private Stage preferencesStage;
 
     /**
      * Stores the controllers of each layout view
      */
-    private Map<String, MusicottController> controllers = new HashMap<>();
+    private Map<String, MusicottLayout> controllers = new HashMap<>();
 
     private HostServices hostServices;
     private Injector injector;
@@ -80,16 +79,6 @@ public class StageDemon {
         this.injector = injector;
     }
 
-    void initErrorController() {
-        errorDemon.get().setErrorAlertStage(initStage(ERROR_ALERT_LAYOUT, "Error"));
-        errorDemon.get().setErrorAlertController((ErrorDialogController) controllers.get(ERROR_ALERT_LAYOUT));
-    }
-
-    void initEditController() {
-        editStage = initStage(EDIT_LAYOUT, "Edit");
-        ((EditController) controllers.get(EDIT_LAYOUT)).setStage(editStage);
-    }
-
     void setApplicationHostServices(HostServices hostServices) {
         this.hostServices = hostServices;
     }
@@ -99,7 +88,7 @@ public class StageDemon {
     }
 
     public RootController getRootController() {
-        return (RootController) controllers.get(ROOT_LAYOUT);
+        return (RootController) controllers.get(ROOT);
     }
 
     public NavigationController getNavigationController() {
@@ -110,10 +99,6 @@ public class StageDemon {
         return getRootController().getPlayerController();
     }
 
-    public EditController getEditController() {
-        return (EditController) controllers.get(EDIT_LAYOUT);
-    }
-
     /**
      * Constructs the main view of the application and shows it
      *
@@ -121,37 +106,18 @@ public class StageDemon {
      *
      * @throws IOException If any resource was not found
      */
-    void showMusicott(Stage primaryStage) throws IOException {
-        mainStage = primaryStage;
-        Parent rootLayout = loadLayout(ROOT_LAYOUT);
-        rootLayout.setOnMouseClicked(e -> getRootController().getPlayerController().hidePlayQueue());
-        getRootController().setStage(mainStage);
-        mainStage.setScene(new Scene(rootLayout));
-        mainStage.setTitle("Musicott");
-        mainStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
-        mainStage.setMinWidth(1200);
-        mainStage.setMinHeight(805);
-        mainStage.show();
-    }
-
-    /**
-     * Shows the edit window. If the size of track selection is greater than 1,
-     * an {@code Alert} is opened asking for a confirmation of the user.
-     */
-    public void editTracks(int numberOfTracks) {
-        if (numberOfTracks > 1) {
-            String alertHeader = "Are you sure you want to edit multiple files?";
-            Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
-            Optional<ButtonType> result = alert.showAndWait();
-
-            if (result.isPresent() && result.get().getButtonData().isDefaultButton())
-                showStage(editStage);
-            else
-                alert.close();
-        }
-        else
-            showStage(editStage);
-    }
+//    void showMusicott(Stage primaryStage) throws IOException {
+//        mainStage = primaryStage;
+//        Parent rootLayout = loadLayout(ROOT_LAYOUT);
+//        rootLayout.setOnMouseClicked(e -> getRootController().getPlayerController().hidePlayQueue());
+//        getRootController().setStage(mainStage);
+//        mainStage.setScene(new Scene(rootLayout));
+//        mainStage.setTitle("Musicott");
+//        mainStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
+//        mainStage.setMinWidth(1200);
+//        mainStage.setMinHeight(805);
+//        mainStage.show();
+//    }
 
     /**
      * Deletes the tracks selected in the table. An {@link Alert} is opened
@@ -160,7 +126,7 @@ public class StageDemon {
     public void deleteTracks(List<Track> trackSelection) {
         if (! trackSelection.isEmpty()) {
             String alertHeader = "Delete " + trackSelection.size() + " files from Musicott?";
-            Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION);
+            Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION, mainStage);
             Optional<ButtonType> result = alert.showAndWait();
 
             if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
@@ -185,8 +151,8 @@ public class StageDemon {
      */
     public void showPreferences() {
         if (preferencesStage == null) {
-            preferencesStage = initStage(PREFERENCES_LAYOUT, "Preferences");
-            PreferencesController preferencesController = (PreferencesController) controllers.get(PREFERENCES_LAYOUT);
+            preferencesStage = initStage(PREFERENCES.getPath(), "Preferences");
+            PreferencesController preferencesController = (PreferencesController) controllers.get(PREFERENCES.getPath());
             preferencesStage.setOnShowing(event -> preferencesController.loadUserPreferences());
         }
         showStage(preferencesStage);
@@ -198,7 +164,7 @@ public class StageDemon {
      */
     public void showIndeterminateProgress() {
         if (progressStage == null) {
-            progressStage = initStage(PROGRESS_LAYOUT, "");
+            progressStage = initStage(PROGRESS_BAR.getPath(), "");
             progressStage.initStyle(StageStyle.UNDECORATED);
         }
         showStage(progressStage);
@@ -210,28 +176,6 @@ public class StageDemon {
     public void closeIndeterminateProgress() {
         if (progressStage != null)
             progressStage.close();
-    }
-
-    /**
-     * Creates an {@link Alert} given a title, a header text, the content to be shown
-     * in the description, and the {@link AlertType} of the requested {@code Alert}
-     *
-     * @param title   The title of the {@code Alert} stage
-     * @param header  The header text of the {@code Alert}
-     * @param content The content text of the {@code Alert}
-     * @param type    The type of the {@code Alert}
-     *
-     * @return The {@code Alert} object
-     */
-    public Alert createAlert(String title, String header, String content, AlertType type) {
-        Alert alert = new Alert(type);
-        alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
-        alert.setTitle(title);
-        alert.setHeaderText(header);
-        alert.setContentText(content);
-        alert.initModality(Modality.APPLICATION_MODAL);
-        alert.initOwner(mainStage);
-        return alert;
     }
 
     /**
@@ -288,8 +232,8 @@ public class StageDemon {
      * @throws IOException thrown if the {@code *.fxml} file wasn't found
      */
     private Parent loadLayout(String layout) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLControllerLoader(getClass().getResource(layout),null,
-                                                         new FXGuiceInjectionBuilderFactory(injector), injector);
+        FXGuiceInjectionBuilderFactory factory = new FXGuiceInjectionBuilderFactory(injector);
+        FXMLLoader fxmlLoader = new FXMLControllerLoader(getClass().getResource(layout),null, factory, injector);
         Parent nodeLayout = fxmlLoader.load();
         controllers.put(layout, fxmlLoader.getController());
         return nodeLayout;

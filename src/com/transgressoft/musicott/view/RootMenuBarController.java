@@ -25,7 +25,8 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
-import com.transgressoft.musicott.util.guicemodules.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.util.guice.modules.*;
 import com.transgressoft.musicott.view.custom.*;
 import de.codecentric.centerdevice.*;
 import javafx.application.*;
@@ -39,7 +40,6 @@ import javafx.scene.input.KeyCombination.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
 import javafx.stage.FileChooser.*;
-import javafx.stage.Stage;
 import org.slf4j.*;
 
 import java.io.*;
@@ -49,7 +49,8 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 import static com.transgressoft.musicott.model.NavigationMode.*;
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.util.Utils.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 import static javafx.scene.input.KeyCombination.*;
 import static org.fxmisc.easybind.EasyBind.*;
 
@@ -61,7 +62,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @version 0.10-b
  */
 @Singleton
-public class RootMenuBarController implements ConfigurableController {
+public class RootMenuBarController extends InjectableController<MenuBar> {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
@@ -73,11 +74,23 @@ public class RootMenuBarController implements ConfigurableController {
     private final Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
     private final ImageView musicottLogoImageView = new ImageView(musicottLogo);
 
+    private EditController editController;
+    private RootController rootController;
+    private NavigationController navigationController;
+    private PlayerController playerController;
+
     private StageDemon stageDemon;
     private TaskDemon taskDemon;
     private PlayerFacade playerFacade;
     private MainPreferences mainPreferences;
+    private BooleanProperty playPauseProperty;
     private ReadOnlyBooleanProperty emptyLibraryProperty;
+    private ReadOnlyBooleanProperty searchingProperty;
+    private ReadOnlyBooleanProperty previousButtonDisabledProperty;
+    private ReadOnlyBooleanProperty nextButtonDisabledProperty;
+    private ReadOnlyBooleanProperty showingNavigationPaneProperty;
+    private ReadOnlyBooleanProperty showingTableInfoPaneProperty;
+    private ReadOnlyObjectProperty<NavigationMode> selectedMenuProperty;
 
     @FXML
     private MenuBar rootMenuBar;
@@ -135,15 +148,6 @@ public class RootMenuBarController implements ConfigurableController {
     private MenuItem aboutMenuItem;
 
     @Inject
-    private RootController rootController;
-    @Inject
-    private NavigationController navigationController;
-    @Inject
-    private PlayerController playerController;
-
-    private Stage rootStage;
-
-    @Inject
     public RootMenuBarController(MainPreferences mainPreferences, StageDemon stageDemon, TaskDemon taskDemon,
             PlayerFacade playerFacade) {
         this.mainPreferences = mainPreferences;
@@ -164,18 +168,81 @@ public class RootMenuBarController implements ConfigurableController {
         setEditMenuActions();
         setControlsMenuActions();
         setViewMenuActions();
-        showHideTableInfoDisableBinding();
+
+        /*
+          Binds the show/hide table info pane menu item
+          to be disabled if a playlist is shown
+         */
+        showHideTableInfoPaneMenuItem.disableProperty()
+                                     .bind(map(selectedMenuProperty, menu -> ! menu.equals(PLAYLIST)));
+
         showHideNavigationPaneTextBinding();
         showHideTableInfoPaneTextBinding();
     }
 
+    @Override
+    public MenuBar getRoot() {
+        return rootMenuBar;
+    }
+
     @Inject
-    public void setEmptyLibraryProperty(ReadOnlyBooleanProperty emptyLibraryProperty) {
+    public void setRootController(@RootCtrl RootController rootController) {
+        this.rootController = rootController;
+    }
+
+    @Inject
+    public void setEditController(@EditCtrl EditController editController) {
+        this.editController = editController;
+    }
+
+    @Inject
+    public void setNavigationController(@NavigationCtrl NavigationController navigationController) {
+        this.navigationController = navigationController;
+    }
+
+    @Inject
+    public void setPlayerController(@PlayerCtrl PlayerController playerController) {
+        this.playerController = playerController;
+    }
+
+    @Inject
+    public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty emptyLibraryProperty) {
         this.emptyLibraryProperty = emptyLibraryProperty;
     }
 
-    void setMainStage(Stage rootStage) {
-        this.rootStage = rootStage;
+    @Inject
+    public void setSearchFieldFocusedProperty(@SearchingProperty ReadOnlyBooleanProperty p) {
+        searchingProperty = p;
+    }
+
+    @Inject
+    public void setPlayPauseProperty(@PlayPauseProperty BooleanProperty p) {
+        playPauseProperty = p;
+    }
+
+    @Inject
+    public void setPrevButtonDisabledProperty(@PreviousButtonDisabledProperty ReadOnlyBooleanProperty p) {
+        previousButtonDisabledProperty = p;
+    }
+
+    @Inject
+    public void setNextButtonDisabledProperty(@NextButtonDisabledProperty ReadOnlyBooleanProperty p) {
+        nextButtonDisabledProperty = p;
+    }
+
+    @Inject
+    public void setSelectedMenuProperty(@SelectedMenuProperty ReadOnlyObjectProperty<NavigationMode> p) {
+        selectedMenuProperty = p;
+    }
+
+    @Inject
+    public void setShowingNavigationPaneProperty(@ShowingNavigationPaneProperty ReadOnlyBooleanProperty p) {
+        showingNavigationPaneProperty = p;
+    }
+
+    @Inject
+    public void setShowingTableInfoPaneProperty(@ShowingTableInfoPaneProperty ReadOnlyBooleanProperty p) {
+        showingTableInfoPaneProperty = p;
     }
 
     /**
@@ -230,7 +297,7 @@ public class RootMenuBarController implements ConfigurableController {
                            new ExtensionFilter("flac files (*.flac)", "*.flac"),
                            new ExtensionFilter("wav files (*.wav)", "*.wav"),
                            new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
-            List<File> filesToImport = chooser.showOpenMultipleDialog(rootStage);
+            List<File> filesToImport = chooser.showOpenMultipleDialog(stage);
             if (filesToImport != null) {
                 taskDemon.importFiles(filesToImport, true);
                 navigationController.setStatusMessage("Opening files");
@@ -240,7 +307,7 @@ public class RootMenuBarController implements ConfigurableController {
             LOG.debug("Choosing folder to being imported");
             DirectoryChooser chooser = new DirectoryChooser();
             chooser.setTitle("Choose folder");
-            File folder = chooser.showDialog(rootStage);
+            File folder = chooser.showDialog(stage);
             if (folder != null)
                 countFilesToImport(folder);
         });
@@ -249,7 +316,7 @@ public class RootMenuBarController implements ConfigurableController {
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Select 'iTunes Music Library.xml' file");
             chooser.getExtensionFilters().add(new ExtensionFilter("xml files (*.xml)", "*.xml"));
-            File xmlFile = chooser.showOpenDialog(rootStage);
+            File xmlFile = chooser.showOpenDialog(stage);
             if (xmlFile != null)
                 taskDemon.importFromItunesLibrary(xmlFile.getAbsolutePath());
         });
@@ -259,29 +326,25 @@ public class RootMenuBarController implements ConfigurableController {
     }
 
     private void setEditMenuActions() {
-        editMenuItem.setOnAction(e -> {
-            List<Entry<Integer, Track>> selection = rootController.getSelectedTracks();
-            stageDemon.editTracks(selection.size());
-        });
-        deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks(trackSelectionIds()));
+        editMenuItem.setOnAction(e -> editController.editTracks(trackSelectionList()));
+        deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks(trackSelectionList()));
         selectAllMenuItem.setOnAction(e -> rootController.selectAllTracks());
         dontSelectAllMenuItem.setOnAction(e -> rootController.deselectAllTracks());
 
-        ReadOnlyBooleanProperty editingProperty = stageDemon.getEditController().showingProperty();
-        ReadOnlyBooleanProperty searchingProperty = playerController.searchFieldFocusedProperty();
+        ReadOnlyBooleanProperty editingProperty = editController.showingProperty();
         selectAllMenuItem.disableProperty().bind(combine(editingProperty, searchingProperty, (e, s) -> e || s));
         dontSelectAllMenuItem.disableProperty().bind(editingProperty);
         findMenuItem.setOnAction(e -> playerController.focusSearchField());
     }
 
     private void setControlsMenuActions() {
-        playPauseTextBinding();
+        playPauseMenuItem.textProperty().bind(map(playPauseProperty, play -> play ? "Pause" : "Play"));
         playPauseMenuItem.disableProperty().bind(emptyLibraryProperty);
         playPauseMenuItem.setOnAction(e -> TrackTableView.spacePressedOnTableAction(playerFacade.getPlayerStatus()));
-        previousMenuItem.disableProperty().bind(playerController.previousButtonDisabledProperty());
+        previousMenuItem.disableProperty().bind(previousButtonDisabledProperty);
         previousMenuItem.setOnAction(e -> playerFacade.previous());
 
-        nextMenuItem.disableProperty().bind(playerController.nextButtonDisabledProperty());
+        nextMenuItem.disableProperty().bind(nextButtonDisabledProperty);
         nextMenuItem.setOnAction(e -> playerFacade.next());
 
         increaseVolumeMenuItem.setOnAction(e -> playerController.increaseVolume());
@@ -315,7 +378,7 @@ public class RootMenuBarController implements ConfigurableController {
 
     private void setAboutMenuActions() {
         aboutMenuItem.setOnAction(e -> {
-            Alert alert = stageDemon.createAlert("About Musicott", " ", "", AlertType.INFORMATION);
+            Alert alert = createAlert("About Musicott", " ", "", AlertType.INFORMATION, stage);
             alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
             Label aboutLabel1 = new Label(ABOUT_MUSICOTT_FIRST_LINE);
             Label aboutLabel2 = new Label(ABOUT_MUSICOTT_SECOND_LINE);
@@ -330,23 +393,9 @@ public class RootMenuBarController implements ConfigurableController {
         });
     }
 
-    private List<Track> trackSelectionIds() {
+    private List<Track> trackSelectionList() {
         List<Entry<Integer, Track>> trackSelection = rootController.getSelectedTracks();
         return trackSelection.stream().map(Entry::getValue).collect(Collectors.toList());
-    }
-
-    private void playPauseTextBinding() {
-        BooleanProperty playPauseProperty = playerController.playButtonSelectedProperty();
-        playPauseMenuItem.textProperty().bind(map(playPauseProperty, play -> play ? "Pause" : "Play"));
-    }
-
-    /**
-     * Binds the show/hide table info pane menu item
-     * to be disabled if a playlist is shown
-     */
-    private void showHideTableInfoDisableBinding() {
-        ReadOnlyObjectProperty<NavigationMode> selectedMenu = navigationController.navigationModeProperty();
-        showHideTableInfoPaneMenuItem.disableProperty().bind(map(selectedMenu, menu -> ! menu.equals(PLAYLIST)));
     }
 
     /**
@@ -354,7 +403,6 @@ public class RootMenuBarController implements ConfigurableController {
      * his text if the pane is showing or not
      */
     private void showHideNavigationPaneTextBinding() {
-        ReadOnlyBooleanProperty showingNavigationPaneProperty = rootController.showNavigationPaneProperty();
         showHideNavigationPaneMenuItem.textProperty().bind(
                 map(showingNavigationPaneProperty,
                     s -> s ? "Hide navigation pane" : "Show navigation pane"));
@@ -365,7 +413,6 @@ public class RootMenuBarController implements ConfigurableController {
      * his text if the pane is showing or not
      */
     private void showHideTableInfoPaneTextBinding() {
-        ReadOnlyBooleanProperty showingTableInfoPaneProperty = rootController.showTableInfoPaneProperty();
         showHideTableInfoPaneMenuItem.textProperty().bind(
                 map(showingTableInfoPaneProperty,
                     s -> s ? "Hide table information pane" : "Show table information pane"));
@@ -402,7 +449,7 @@ public class RootMenuBarController implements ConfigurableController {
         String alertContentText = "There are no valid files to import in the selected folder. " + "Change the folder " +
 				"" + "or the import options in preferences";
         Platform.runLater(() -> {
-            Alert alert = stageDemon.createAlert("Import", "No files", alertContentText, AlertType.WARNING);
+            Alert alert = createAlert("Import", "No files", alertContentText, AlertType.WARNING, stage);
             alert.showAndWait();
         });
     }
@@ -410,7 +457,7 @@ public class RootMenuBarController implements ConfigurableController {
     private void showImportConfirmationAlert(List<File> filesToImport) {
         String alertContentText = "Import " + filesToImport.size() + " files?";
         Platform.runLater(() -> {
-            Alert alert = stageDemon.createAlert("Import", alertContentText, "", AlertType.CONFIRMATION);
+            Alert alert = createAlert("Import", alertContentText, "", AlertType.CONFIRMATION, stage);
             alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
             LOG.debug("Showing confirmation alert to import {} files", filesToImport.size());
             Optional<ButtonType> result = alert.showAndWait();

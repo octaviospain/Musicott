@@ -32,7 +32,7 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * Custom {@link TableRow} that represents an {@link Entry} with

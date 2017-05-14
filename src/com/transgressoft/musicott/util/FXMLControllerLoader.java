@@ -41,14 +41,13 @@ import java.util.*;
  * @since 0.10.1-b
  *
  * @see FXGuiceInjectionBuilderFactory
- * @see ConfigurableController
+ * @see InjectableController
  */
 public class FXMLControllerLoader extends FXMLLoader {
 
     private final Set<Object> controllers;
 
-    public FXMLControllerLoader(final URL location, final ResourceBundle resources, final BuilderFactory builderFactory,
-            final Injector injector) {
+    public FXMLControllerLoader(URL location, ResourceBundle resources, BuilderFactory builderFactory, Injector injector) {
         super(location, resources, builderFactory);
 
         controllers = new HashSet<>();
@@ -64,8 +63,8 @@ public class FXMLControllerLoader extends FXMLLoader {
     @Override
     public <T> T load() throws IOException {
         final T loaded = super.load();
-        controllers.stream().filter(c -> c instanceof ConfigurableController)
-                   .forEach(c -> ((ConfigurableController) c).configure());
+        controllers.stream().filter(c -> c instanceof InjectableController)
+                   .forEach(c -> ((InjectableController) c).configure());
         return loaded;
     }
 }

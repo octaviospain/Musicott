@@ -23,6 +23,7 @@ import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
 import javafx.scene.Node;
@@ -43,6 +44,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
     private final StageDemon stageDemon;
     private final PlaylistsLibrary playlistsLibrary;
 
+    private EditController editController;
     private Menu addToPlaylistMenu;
     private MenuItem deleteFromPlaylistMenuItem;
     private List<MenuItem> playlistsInMenu = new ArrayList<>();
@@ -51,7 +53,8 @@ public class TrackTableViewContextMenu extends ContextMenu {
     private ListProperty<Entry<Integer, Track>> showingTracksProperty;
 
     @Inject
-    public TrackTableViewContextMenu(PlaylistsLibrary playlistsLibrary, StageDemon stageDemon, PlayerFacade playerFacade) {
+    public TrackTableViewContextMenu(PlaylistsLibrary playlistsLibrary, StageDemon stageDemon,
+            PlayerFacade playerFacade) {
         super();
         this.playlistsLibrary = playlistsLibrary;
         this.stageDemon = stageDemon;
@@ -66,7 +69,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
         MenuItem editMenuItem = new MenuItem("Edit");
         editMenuItem.setOnAction(event -> {
             if (! selectedEntries.isEmpty())
-                stageDemon.editTracks(selectedEntries.size());
+                editController.editTracks(trackSelection(selectedEntries));
         });
 
         MenuItem deleteMenuItem = new MenuItem("Delete");
@@ -140,8 +143,13 @@ public class TrackTableViewContextMenu extends ContextMenu {
         }
     }
 
+    @Inject (optional = true)
+    public void setEditController(@EditCtrl EditController editController) {
+        this.editController = editController;
+    }
+
     @Inject
-    public void setShowingTracksProperty(ListProperty<Entry<Integer, Track>> showingTracksProperty) {
-        this.showingTracksProperty = showingTracksProperty;
+    public void setShowingTracksProperty(@ShowingTracksProperty ListProperty<Entry<Integer, Track>> p) {
+        showingTracksProperty = p;
     }
 }

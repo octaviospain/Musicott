@@ -23,7 +23,7 @@ import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
-import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import org.slf4j.*;
 
 import java.io.*;

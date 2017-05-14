@@ -25,7 +25,7 @@ import com.google.inject.*;
 import com.google.inject.assistedinject.*;
 import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
 import javafx.collections.*;
@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * This class extends from {@link BaseLoadAction} in order to perform the loading

@@ -22,7 +22,7 @@ package com.transgressoft.musicott.model;
 import com.google.common.graph.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.tasks.*;
-import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 
 import java.util.AbstractMap.*;
 import java.util.*;

@@ -94,6 +94,7 @@ public class MusicLibrary {
         track.getArtistsInvolved().forEach(artist -> added[0] |= artistsLibrary.addArtistTrack(artist, track));
         LOG.debug("Added {}", track);
 
+        // TODO Try to inject navigationModeProperty
         NavigationController navigationController = stageDemon.getNavigationController();
         NavigationMode mode = navigationController == null ? null :
                 navigationController.navigationModeProperty().getValue();
@@ -117,8 +118,6 @@ public class MusicLibrary {
         LOG.debug("Removed {}", track);
         return removed[0];
     }
-
-
 
     public void showAllTracks() {
         tracksLibrary.resetShowingTracks();

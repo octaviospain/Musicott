@@ -30,7 +30,7 @@ import org.fxmisc.easybind.*;
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * Represents a Playlist of tracks. A {@code Playlist} can contain another playlists,

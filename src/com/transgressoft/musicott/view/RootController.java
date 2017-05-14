@@ -24,7 +24,8 @@ import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
-import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
@@ -55,7 +56,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @version 0.10-b
  */
 @Singleton
-public class RootController implements MusicottController, ConfigurableController {
+public class RootController extends InjectableController<BorderPane> implements MusicottLayout {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private static final int HOVER_COVER_SIZE = 100;
@@ -68,6 +69,8 @@ public class RootController implements MusicottController, ConfigurableControlle
 
     private final Playlist ROOT_PLAYLIST;
 
+    @FXML
+    private BorderPane rootBorderPane;
     @FXML
     private VBox headerVBox;
     @FXML
@@ -135,14 +138,15 @@ public class RootController implements MusicottController, ConfigurableControlle
         ROOT_PLAYLIST = playlistFactory.create("ROOT", true);
     }
 
-
     @FXML
     public void initialize() {
+        rootBorderPane.setOnMouseClicked(e -> playerLayoutController.hidePlayQueue());
         showingNavigationPaneProperty = new SimpleBooleanProperty(this, "showing navigation pane", true);
         showingTableInfoPaneProperty = new SimpleBooleanProperty(this, "showing table info pane", true);
         hoverCoverProperty = new SimpleObjectProperty<>(this, "hover cover", DEFAULT_COVER);
         playlistCover.imageProperty().bind(hoverCoverProperty);
         initializeInfoPaneFields();
+        initializeHoverCoverImageView();
         hideTableInfoPane();
     }
 
@@ -153,22 +157,32 @@ public class RootController implements MusicottController, ConfigurableControlle
         subscribe(selectedPlaylistProperty, selected -> selected.ifPresent(this::updateShowingInfoWithPlaylist));
 
         navigationModeProperty = navigationLayoutController.navigationModeProperty();
+        hoverCoverImageView.visibleProperty().bind(
+                combine(navigationModeProperty, emptyLibraryProperty,
+                        (mode, empty) -> mode.equals(ALL_TRACKS) && ! empty));
+//        navigationLayoutController.setNavigationMode(ARTISTS);
 
-        initializeHoverCoverImageView();
-//        artistsLayoutController.setPlayerController(playerLayoutController);
-//        navigationLayoutController.setRootController(this);
-        navigationLayoutController.setNavigationMode(ARTISTS);
-    }
-
-    public void setStage(Stage mainStage) {
         String os = System.getProperty("os.name");
-        menuBarController.setMainStage(mainStage);
         if (os != null && os.startsWith("Mac")) {
             menuBarController.macMenuBar();
             headerVBox.getChildren().remove(menuBar);
         }
         else
             menuBarController.defaultMenuBar();
+    }
+
+    @Override
+    public BorderPane getRoot() {
+        return rootBorderPane;
+    }
+
+    @Override
+    public void setStage(Stage stage) {
+        super.setStage(stage);
+        stage.setTitle("Musicott");
+        stage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
+        stage.setMinWidth(1200);
+        stage.setMinHeight(805);
     }
 
     /**
@@ -251,9 +265,6 @@ public class RootController implements MusicottController, ConfigurableControlle
         hoverCoverImageView = new ImageView();
         hoverCoverImageView.setFitWidth(HOVER_COVER_SIZE);
         hoverCoverImageView.setFitHeight(HOVER_COVER_SIZE);
-        hoverCoverImageView.visibleProperty().bind(
-                combine(navigationModeProperty, emptyLibraryProperty,
-                             (mode, empty) -> mode.equals(ALL_TRACKS) && ! empty));
         hoverCoverImageView.translateXProperty().bind(
                 map(tableStackPane.widthProperty(),
                              width -> (width.doubleValue() / 2) - (HOVER_COVER_SIZE / 2) - 10));
@@ -514,12 +525,12 @@ public class RootController implements MusicottController, ConfigurableControlle
     }
 
     @Inject
-    public void setShowingTracksProperty(ListProperty<Entry<Integer, Track>> showingTracksProperty) {
-        this.showingTracksProperty = showingTracksProperty;
+    public void setShowingTracksProperty(@ShowingTracksProperty ListProperty<Entry<Integer, Track>> p) {
+        this.showingTracksProperty = p;
     }
 
     @Inject
-    public void setEmptyLibraryProperty(ReadOnlyBooleanProperty emptyLibraryProperty) {
+    public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty emptyLibraryProperty) {
         this.emptyLibraryProperty = emptyLibraryProperty;
     }
 

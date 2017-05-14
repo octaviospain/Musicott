@@ -22,8 +22,8 @@ package com.transgressoft.musicott.util.jsoniocreators;
 import com.cedarsoftware.util.io.JsonReader.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.util.factories.*;
-import com.transgressoft.musicott.util.guicemodules.*;
+import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.util.guice.modules.*;
 
 /**
  * Class needed by the {@code Json-io} library in order to deserialize a {@link Playlist}.
@@ -36,7 +36,10 @@ public class PlaylistCreator implements ClassFactory {
 
     @Override
     public Object newInstance(Class aClass) {
-        Injector injector = Guice.createInjector(new MusicottModule());
+        Injector injector = Guice.createInjector(binder -> {
+            binder.install(new TrackFactoryModule());
+            binder.install(new ParseModule());
+        });
         PlaylistFactory playlistFactory = injector.getInstance(PlaylistFactory.class);
         return playlistFactory.create();
     }

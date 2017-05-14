@@ -30,7 +30,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * Extends from {@link Thread} to perform the operation of save data of the {@link MusicLibrary} in the filesystem.

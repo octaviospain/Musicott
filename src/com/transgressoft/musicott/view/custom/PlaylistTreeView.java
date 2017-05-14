@@ -22,7 +22,7 @@ package com.transgressoft.musicott.view.custom;
 import com.google.common.graph.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import javafx.beans.property.*;
 import javafx.scene.control.*;
 import org.fxmisc.easybind.*;

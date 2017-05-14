@@ -24,7 +24,7 @@ import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
-import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import com.worldsworstsoftware.itunes.*;
 import javafx.application.*;
 import javafx.collections.*;

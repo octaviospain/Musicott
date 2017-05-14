@@ -20,8 +20,9 @@
 package com.transgressoft.musicott.util;
 
 import com.google.inject.*;
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.util.guicemodules.*;
+import com.transgressoft.musicott.util.guice.modules.*;
 import org.jaudiotagger.audio.*;
 import org.jaudiotagger.audio.wav.*;
 import org.jaudiotagger.tag.*;
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.*;
 import java.io.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Octavio Calleya
@@ -67,7 +69,12 @@ public class MetadataParserTest {
 
     @BeforeAll
     public static void beforeAllTests() {
-        injector = Guice.createInjector(new MusicottModule());
+        injector = Guice.createInjector(binder -> {
+            binder.install(new TrackFactoryModule());
+            binder.bind(ErrorDemon.class).toInstance(mock(ErrorDemon.class));
+            binder.bind(MainPreferences.class).toInstance(mock(MainPreferences.class));
+            binder.requestStaticInjection(MetadataParser.class);
+        });
     }
 
     @Test

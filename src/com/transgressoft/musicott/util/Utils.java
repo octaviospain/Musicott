@@ -24,20 +24,28 @@ import com.google.common.collect.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import javafx.scene.control.*;
+import javafx.scene.control.Alert.*;
 import javafx.scene.image.*;
+import javafx.stage.*;
+import javafx.stage.Stage;
 import org.apache.commons.lang3.text.*;
+import org.slf4j.Logger;
 
 import java.io.*;
 import java.math.*;
 import java.nio.file.*;
 import java.text.*;
+import java.time.*;
+import java.time.format.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.Optional;
+import java.util.logging.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * Class that does some useful operations with files, directories, strings
@@ -47,6 +55,9 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * @version 0.10-b
  */
 public class Utils {
+
+    private static final String LOGGING_PROPERTIES = "resources/config/logging.properties";
+    private static final String LOG_FILE = "Musicott-main-log.txt";
 
     @Inject
     private static Injector injector;
@@ -373,5 +384,92 @@ public class Utils {
         else
             imageView.setImage(DEFAULT_COVER);
         return updatedWithCustomImage;
+    }
+
+    /**
+     * Creates an {@link Alert} given a title, a header text, the content to be shown
+     * in the description, the {@link AlertType} of the requested {@code Alert},
+     * and the {@link Stage} that owns the alert.
+     *
+     * @param title   The title of the {@code Alert} stage
+     * @param header  The header text of the {@code Alert}
+     * @param content The content text of the {@code Alert}
+     * @param type    The type of the {@code Alert}
+     * @param stage   The stage that owns the {@code Alert}
+     *
+     * @return The {@code Alert} object
+     */
+    public static Alert createAlert(String title, String header, String content, AlertType type, Stage stage) {
+        Alert alert = new Alert(type);
+        alert.getDialogPane().getStylesheets().add(Utils.class.getResource(DIALOG_STYLE).toExternalForm());
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.initModality(Modality.APPLICATION_MODAL);
+        alert.initOwner(stage);
+        return alert;
+    }
+
+    /**
+     * Initializes a {@link Logger} that stores the log entries on a file
+     *
+     * @see <a href=http://www.slf4j.org/>slf4j</href>
+     */
+    public static void initializeLogger() {
+        Handler baseFileHandler;
+        LogManager logManager = LogManager.getLogManager();
+        java.util.logging.Logger logger = logManager.getLogger("");
+        Handler rootHandler = logger.getHandlers()[0];
+
+        try {
+            logManager.readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
+            baseFileHandler = new FileHandler(LOG_FILE);
+            baseFileHandler.setFormatter(new SimpleFormatter() {
+
+                @Override
+                public String format(LogRecord record) {
+                    return logTextString(record);
+                }
+            });
+            logManager.getLogger("").removeHandler(rootHandler);
+            logManager.getLogger("").addHandler(baseFileHandler);
+        }
+        catch (SecurityException | IOException exception) {
+            System.err.println("Error initiating logger: " + exception.getMessage());
+            exception.printStackTrace();
+        }
+    }
+
+    /**
+     * Constructs a log message given a {@link LogRecord}
+     *
+     * @param record The {@code LogRecord} instance
+     *
+     * @return The formatted string of a log entries
+     */
+    private static String logTextString(LogRecord record) {
+        StringBuilder stringBuilder = new StringBuilder();
+        String dateTimePattern = "dd/MM/yy HH:mm:ss :nnnnnnnnn";
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateTimePattern);
+
+        String logDate = LocalDateTime.now().format(dateFormatter);
+        String loggerName = record.getLoggerName();
+        String sourceMethod = record.getSourceMethodName();
+        String firstLine = loggerName + " " + sourceMethod + " " + logDate + "\n";
+
+        String sequenceNumber = String.valueOf(record.getSequenceNumber());
+        String loggerLevel = record.getLevel().toString();
+        String message = record.getMessage();
+        String secondLine = sequenceNumber + "\t" + loggerLevel + ":" + message + "\n\n";
+
+        stringBuilder.append(firstLine);
+        stringBuilder.append(secondLine);
+
+        if (record.getThrown() != null) {
+            stringBuilder.append(record.getThrown()).append("\n");
+            for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace())
+                stringBuilder.append(stackTraceElement).append("\n");
+        }
+        return stringBuilder.toString();
     }
 }

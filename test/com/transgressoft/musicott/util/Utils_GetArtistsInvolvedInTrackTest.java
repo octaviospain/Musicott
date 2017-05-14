@@ -24,7 +24,7 @@ import com.google.inject.*;
 import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import org.junit.jupiter.api.*;
 
 import static com.transgressoft.musicott.util.Utils.*;

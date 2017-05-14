@@ -22,7 +22,7 @@ package com.transgressoft.musicott.view;
 import com.google.common.collect.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.Platform;
 import javafx.beans.binding.*;
@@ -50,8 +50,10 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @since 0.10-b
  */
 @Singleton
-public class ArtistsViewController implements MusicottController, ConfigurableController {
+public class ArtistsViewController extends InjectableController<SplitPane> {
 
+    @FXML
+    private SplitPane artistsViewSplitPane;
     @FXML
     private ListView<String> artistsListView;
     @FXML
@@ -106,6 +108,11 @@ public class ArtistsViewController implements MusicottController, ConfigurableCo
     @Override
     public void configure() {
         artistsListView.setItems(bindedToSearchFieldArtists());
+    }
+
+    @Override
+    public SplitPane getRoot() {
+        return artistsViewSplitPane;
     }
 
     private MapChangeListener<String, TrackSetAreaRow> albumTrackSetsListener() {

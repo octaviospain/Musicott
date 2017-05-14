@@ -22,8 +22,8 @@ package com.transgressoft.musicott.player;
 import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.util.factories.*;
-import com.transgressoft.musicott.util.guicemodules.*;
+import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.util.guice.modules.*;
 import javafx.application.*;
 import javafx.scene.media.MediaPlayer.*;
 import javafx.stage.Stage;
@@ -108,7 +108,7 @@ public class JavaFxPlayerTest {
         assertEquals(Status.PLAYING, player.getStatus());
 
         Platform.runLater(() -> player.pause());
-        WaitForAsyncUtils.waitForFxEvents();
+        WaitForAsyncUtils.waitForFxEvents(10);
         assertEquals(Status.PAUSED, player.getStatus());
     }
 

@@ -24,7 +24,8 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
-import com.transgressoft.musicott.util.factories.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 import javafx.embed.swing.*;
@@ -50,7 +51,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @version 0.10-b
  */
 @Singleton
-public class PlayerController implements MusicottController, ConfigurableController {
+public class PlayerController extends InjectableController<GridPane> {
 
     private static final double VOLUME_AMOUNT = 0.05;
     private static final String PLAYQUEUE_BUTTON_STYLE =
@@ -160,6 +161,11 @@ public class PlayerController implements MusicottController, ConfigurableControl
         hidePlayQueue();
     }
 
+    @Override
+    public GridPane getRoot() {
+        return playerGridPane;
+    }
+
     private void onDragDroppedOnPlayQueueButton(DragEvent event) {
         Dragboard dragBoard = event.getDragboard();
         List<Integer> selectedTracksIds = (List<Integer>) dragBoard.getContent(TRACK_IDS_MIME_TYPE);
@@ -212,7 +218,7 @@ public class PlayerController implements MusicottController, ConfigurableControl
     }
 
     @Inject
-    public void setEmptyLibraryProperty(ReadOnlyBooleanProperty emptyLibraryProperty) {
+    public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty emptyLibraryProperty) {
         this.emptyLibraryProperty = emptyLibraryProperty;
     }
 

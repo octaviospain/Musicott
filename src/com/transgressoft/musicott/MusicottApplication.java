@@ -26,19 +26,20 @@ import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tasks.load.*;
 import com.transgressoft.musicott.util.*;
-import com.transgressoft.musicott.util.factories.*;
-import com.transgressoft.musicott.util.guicemodules.*;
+import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.*;
 import javafx.application.*;
+import javafx.scene.*;
 import javafx.stage.Stage;
-import org.slf4j.Logger;
 import org.slf4j.*;
 
 import java.io.*;
-import java.time.*;
-import java.time.format.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.*;
+
+import static com.transgressoft.musicott.MainPreloader.*;
+import static com.transgressoft.musicott.model.Layout.*;
 
 /**
  * Creates and launches Musicott. The creation of the application follows this steps:
@@ -54,93 +55,27 @@ import java.util.logging.*;
  * @version 0.10-b
  * @see <a href="https://octaviospain.github.io/Musicott">Musicott</a>
  */
-public class MusicottApplication extends Application {
+public class MusicottApplication extends Application implements InjectedApplication {
 
-    static final String FIRST_USE_EVENT = "first_use";
     private static final String CONFIG_FILE = "resources/config/config.properties";
-    private static final String LOGGING_PROPERTIES = "resources/config/logging.properties";
-    private static final String LOG_FILE = "Musicott-main-log.txt";
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private final Injector injector = Guice.createInjector(new MusicottModule());
+
+    static Injector injector = Guice.createInjector(new PreloaderModule());
 
     private StageDemon stageDemon;
     private TaskDemon taskDemon;
 
     public static void main(String[] args) {
-        initializeLogger();
+        Utils.initializeLogger();
         LauncherImpl.launchApplication(MusicottApplication.class, MainPreloader.class, args);
-    }
-
-    /**
-     * Initializes a {@link Logger} that stores the log entries on a file
-     *
-     * @see <a href=http://www.slf4j.org/>slf4j</href>
-     */
-    private static void initializeLogger() {
-        Handler baseFileHandler;
-        LogManager logManager = LogManager.getLogManager();
-        java.util.logging.Logger logger = logManager.getLogger("");
-        Handler rootHandler = logger.getHandlers()[0];
-
-        try {
-            logManager.readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
-            baseFileHandler = new FileHandler(LOG_FILE);
-            baseFileHandler.setFormatter(new SimpleFormatter() {
-
-                @Override
-                public String format(LogRecord record) {
-                    return logTextString(record);
-                }
-            });
-            logManager.getLogger("").removeHandler(rootHandler);
-            logManager.getLogger("").addHandler(baseFileHandler);
-        }
-        catch (SecurityException | IOException exception) {
-            System.err.println("Error initiating logger: " + exception.getMessage());
-            exception.printStackTrace();
-        }
-    }
-
-    /**
-     * Constructs a log message given a {@link LogRecord}
-     *
-     * @param record The {@code LogRecord} instance
-     *
-     * @return The formatted string of a log entries
-     */
-    private static String logTextString(LogRecord record) {
-        StringBuilder stringBuilder = new StringBuilder();
-        String dateTimePattern = "dd/MM/yy HH:mm:ss :nnnnnnnnn";
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateTimePattern);
-
-        String logDate = LocalDateTime.now().format(dateFormatter);
-        String loggerName = record.getLoggerName();
-        String sourceMethod = record.getSourceMethodName();
-        String firstLine = loggerName + " " + sourceMethod + " " + logDate + "\n";
-
-        String sequenceNumber = String.valueOf(record.getSequenceNumber());
-        String loggerLevel = record.getLevel().toString();
-        String message = record.getMessage();
-        String secondLine = sequenceNumber + "\t" + loggerLevel + ":" + message + "\n\n";
-
-        stringBuilder.append(firstLine);
-        stringBuilder.append(secondLine);
-
-        if (record.getThrown() != null) {
-            stringBuilder.append(record.getThrown()).append("\n");
-            for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace())
-                stringBuilder.append(stackTraceElement).append("\n");
-        }
-        return stringBuilder.toString();
     }
 
     @Override
     public void init() throws Exception {
         MainPreferences preferences = injector.getInstance(MainPreferences.class);
-        if (preferences.getMusicottUserFolder() == null || ! new File(preferences.getMusicottUserFolder()).exists()) {
+        if (isFirstUse(preferences))
             LauncherImpl.notifyPreloader(this, new CustomProgressNotification(0, FIRST_USE_EVENT));
-        }
 
         String applicationFolder = preferences.getMusicottUserFolder();
         LastFmPreferences lastFmPreferences = injector.getInstance(LastFmPreferences.class);
@@ -159,6 +94,13 @@ public class MusicottApplication extends Application {
         loadForkJoinPool.invoke(loadActionFactory.createTracksAction(null, -1, applicationFolder, this));
         loadForkJoinPool.shutdown();
         taskDemon.activateLibrarySaving();
+    }
+
+    private boolean isFirstUse(MainPreferences preferences) {
+        boolean res = false;
+        if (preferences.getMusicottUserFolder() == null || ! new File(preferences.getMusicottUserFolder()).exists())
+            res = true;
+        return res;
     }
 
     /**
@@ -180,17 +122,37 @@ public class MusicottApplication extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws IOException {
+    public void start(Stage primaryStage) throws IOException, ReflectiveOperationException {
         primaryStage.setOnCloseRequest(event -> {
             LOG.info("Exiting Musicott");
             taskDemon.shutDownTasks();
             System.exit(0);
         });
+        injector = injector.createChildInjector(new MusicottModule());
 
-        stageDemon.initErrorController();
-        stageDemon.initEditController();
-        stageDemon.setApplicationHostServices(getHostServices());
-        stageDemon.showMusicott(primaryStage);
-        LOG.debug("Showing root stage");
+        ControllerModule<ErrorDialogController> errorModule = createController(ERROR_DIALOG, injector);
+        Stage errorStage = new Stage();
+        errorStage.setScene(new Scene(errorModule.providesController().getRoot()));
+
+        ControllerModule<EditController> editModule = createController(EDITION, injector);
+        Stage editStage = new Stage();
+        editStage.setScene(new Scene(editModule.providesController().getRoot()));
+        editModule.providesController().setStage(editStage);
+
+        ControllerModule<PreferencesController> prefsModule = createController(PREFERENCES, injector);
+        Stage prefsStage = new Stage();
+        prefsStage.setScene(new Scene(prefsModule.providesController().getRoot()));
+
+        injector = injector.createChildInjector(errorModule, editModule, prefsModule);
+        injector = injector.createChildInjector(new TrackSetAreaRowFactoryModule());
+
+        ControllerModule<RootController> rootModule = createController(ROOT, injector);
+        primaryStage.setScene(new Scene(rootModule.providesController().getRoot()));
+
+        primaryStage.show();
+
+        //        stageDemon.initErrorController();
+//        stageDemon.setApplicationHostServices(getHostServices());
+//        stageDemon.showMusicott(primaryStage);
     }
 }

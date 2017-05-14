@@ -25,6 +25,7 @@ import com.transgressoft.musicott.view.custom.*;
 import javafx.collections.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import org.slf4j.*;
 
 /**
@@ -34,12 +35,14 @@ import org.slf4j.*;
  * @version 0.10-b
  */
 @Singleton
-public class PlayQueueController implements MusicottController, ConfigurableController {
+public class PlayQueueController extends InjectableController<AnchorPane> {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     private final PlayerFacade player;
 
+    @FXML
+    private AnchorPane playQueuePane;
     @FXML
     private Label titleQueueLabel;
     @FXML
@@ -88,8 +91,8 @@ public class PlayQueueController implements MusicottController, ConfigurableCont
     }
 
     @Override
-    public void configure() {
-
+    public AnchorPane getRoot() {
+        return playQueuePane;
     }
 
     private void clearHistoryQueue() {

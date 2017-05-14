@@ -39,7 +39,7 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 import static com.transgressoft.musicott.util.Utils.*;
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 import static com.transgressoft.musicott.view.custom.TrackTableView.*;
 import static javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY;
 import static org.fxmisc.easybind.EasyBind.*;
@@ -82,8 +82,7 @@ public class TrackSetAreaRow extends HBox {
     private Injector injector;
 
     @Inject
-    public TrackSetAreaRow(TrackTableViewContextMenu trackTableContextMenu,
-            @Assisted ("artist") String artist,
+    public TrackSetAreaRow(TrackTableViewContextMenu trackTableContextMenu, @Assisted ("artist") String artist,
             @Assisted ("album") String album, @Assisted Collection<Entry<Integer, Track>> trackEntries) {
         super();
         this.trackTableContextMenu = trackTableContextMenu;

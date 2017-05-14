@@ -27,6 +27,7 @@ import javafx.fxml.*;
 import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
+import javafx.stage.Stage;
 
 import java.io.*;
 import java.util.*;
@@ -39,10 +40,13 @@ import java.util.*;
  * @version 0.10-b
  * @since 0.9.1-b
  */
-public class ErrorDialogController implements MusicottController {
+@Singleton
+public class ErrorDialogController extends InjectableController<AnchorPane> implements MusicottLayout {
 
     private static final String GITHUB_LINK = "https://github.com/octaviospain/Musicott/issues";
 
+    @FXML
+    private AnchorPane root;
     @FXML
     private BorderPane rootBorderPane;
     @FXML
@@ -103,6 +107,18 @@ public class ErrorDialogController implements MusicottController {
         seeDetailsToggleButton.setOnAction(expandablePaneHandler);
         seeDetailsHyperlink.setOnAction(expandablePaneHandler);
         okButton.setOnAction(event -> okButton.getScene().getWindow().hide());
+    }
+
+    @Override
+    public AnchorPane getRoot() {
+        return root;
+    }
+
+    @Override
+    public void setStage(Stage stage) {
+        super.setStage(stage);
+        stage.setTitle("Error");
+        stage.setResizable(false);
     }
 
     public void prepareDialog(String message, String content, Exception exception) {

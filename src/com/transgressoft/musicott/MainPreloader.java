@@ -20,8 +20,8 @@
 package com.transgressoft.musicott;
 
 import com.google.inject.*;
+import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
-import com.transgressoft.musicott.util.guicemodules.*;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.fxml.*;
@@ -35,7 +35,7 @@ import javafx.stage.Stage;
 import java.io.*;
 
 import static com.transgressoft.musicott.MusicottApplication.*;
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * Preloader of the application. Shows the progress of the tasks of loading the tracks, the playlists, and the
@@ -46,6 +46,8 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * @version 0.10-b
  */
 public class MainPreloader extends Preloader {
+
+    static final String FIRST_USE_EVENT = "first_use";
 
     private static final int SCENE_WIDTH = 450;
     private static final int SCENE_HEIGHT = 120;
@@ -61,10 +63,9 @@ public class MainPreloader extends Preloader {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Injector injector = Guice.createInjector(new MusicottModule());
         injector.injectMembers(this);
 
-        AnchorPane rootAnchorPane = FXMLLoader.load(getClass().getResource(PRELOADER_INIT_LAYOUT));
+        AnchorPane rootAnchorPane = FXMLLoader.load(getClass().getResource(Layout.PRELOADER.getPath()));
         infoLabel = (Label) rootAnchorPane.lookup("#infoLabel");
         preloaderProgressBar = (ProgressBar) rootAnchorPane.lookup("#preloaderProgressBar");
         preloaderStage = primaryStage;
@@ -109,7 +110,7 @@ public class MainPreloader extends Preloader {
     private void openFirstUseDialog() {
         try {
             Stage promptStage = new Stage();
-            AnchorPane preloaderPane = FXMLLoader.load(getClass().getResource(PRELOADER_FIRST_USE_PROMPT));
+            AnchorPane preloaderPane = FXMLLoader.load(getClass().getResource(Layout.PRELOADER_PROMPT.getPath()));
             Button openButton = (Button) preloaderPane.lookup("#openButton");
             Button okButton = (Button) preloaderPane.lookup("#okButton");
             TextField musicottFolderTextField = (TextField) preloaderPane.lookup("#musicottFolderTextField");

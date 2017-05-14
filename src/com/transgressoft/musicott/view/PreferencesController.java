@@ -32,6 +32,7 @@ import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
+import javafx.stage.Stage;
 import org.controlsfx.control.*;
 import org.controlsfx.tools.*;
 
@@ -47,7 +48,8 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
-public class PreferencesController implements MusicottController {
+@Singleton
+public class PreferencesController extends InjectableController<AnchorPane> implements MusicottLayout {
 
     private static final String[] EXTENSIONS = {"mp3", "m4a", "wav", "flac"};
     private static final String ITUNES_INFO = "Itunes library";
@@ -62,6 +64,8 @@ public class PreferencesController implements MusicottController {
     private final ErrorDemon errorDemon;
     private final ReadOnlyBooleanProperty usingLastFmProperty;
 
+    @FXML
+    private AnchorPane root;
     @FXML
     private TextField folderLocationTextField;
     @FXML
@@ -123,6 +127,18 @@ public class PreferencesController implements MusicottController {
         lastFmLoginButton.setOnAction(event -> lastfmLoginOrLogout());
 
         checkLastFmLoginAtStart();
+    }
+
+    @Override
+    public AnchorPane getRoot() {
+        return root;
+    }
+
+    @Override
+    public void setStage(Stage stage) {
+        super.setStage(stage);
+        stage.setTitle("Preferences");
+        stage.setResizable(false);
     }
 
     /**
