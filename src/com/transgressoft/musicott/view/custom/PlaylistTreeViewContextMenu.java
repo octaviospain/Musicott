@@ -20,7 +20,8 @@
 package com.transgressoft.musicott.view.custom;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.view.*;
 import javafx.scene.control.*;
 
 /**
@@ -32,13 +33,13 @@ import javafx.scene.control.*;
 public class PlaylistTreeViewContextMenu extends ContextMenu {
 
     @Inject
-    public PlaylistTreeViewContextMenu(StageDemon stageDemon) {
+    public PlaylistTreeViewContextMenu(@RootCtrl RootController rootCtrl, @NavigationCtrl NavigationController navCtrl) {
         super();
         MenuItem addPlaylist = new MenuItem("Add new playlist");
-        addPlaylist.setOnAction(e -> stageDemon.getRootController().enterNewPlaylistName(false));
+        addPlaylist.setOnAction(e -> rootCtrl.enterNewPlaylistName(false));
 
         MenuItem deletePlaylist = new MenuItem("Delete playlist");
-        deletePlaylist.setOnAction(e -> stageDemon.getNavigationController().deleteSelectedPlaylist());
+        deletePlaylist.setOnAction(e -> navCtrl.deleteSelectedPlaylist());
         getItems().addAll(addPlaylist, deletePlaylist);
     }
 }

@@ -20,28 +20,24 @@
 package com.transgressoft.musicott.util.guice.modules;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.view.*;
+import javafx.application.*;
 
 /**
  * @author Octavio Calleya
  */
-public class ArtistsModule extends AbstractModule implements ControllerModule<ArtistsViewController> {
+public class HostServicesModule extends AbstractModule {
 
-    private ArtistsViewController controller;
+    private HostServices hostServices;
 
-    public ArtistsModule(ArtistsViewController controller) {
-        this.controller = controller;
+    public HostServicesModule(HostServices hostServices) {
+        this.hostServices = hostServices;
     }
 
     @Override
-    protected void configure() {
-        bind(InjectableController.class).annotatedWith(ArtistsCtrl.class).toInstance(controller);
-    }
+    protected void configure() {}
 
     @Provides
-    @ArtistsCtrl
-    public ArtistsViewController providesController() {
-        return controller;
+    HostServices providesHostServices() {
+        return hostServices;
     }
 }

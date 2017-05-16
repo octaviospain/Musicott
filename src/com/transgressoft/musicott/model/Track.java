@@ -23,6 +23,7 @@ import com.google.inject.*;
 import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.util.Duration;
@@ -98,7 +99,7 @@ public class Track {
     private Optional<File> coverFileToUpdate = Optional.empty();
     private MetadataUpdater updater = new MetadataUpdater(this);
     @Inject
-    private ErrorDemon errorDemon;
+    private ErrorDialogController errorDialog;
 
     public Track() {
         nameProperty = new SimpleStringProperty(this, "name", name);
@@ -404,7 +405,7 @@ public class Track {
         if (isInDisk()) {
             File file = new File(fileFolder, fileName);
             if (! file.exists()) {
-                errorDemon.showErrorDialog(file.getAbsolutePath() + " not found");
+                errorDialog.show(file.getAbsolutePath() + " not found");
                 setIsInDisk(false);
                 playable = false;
             }

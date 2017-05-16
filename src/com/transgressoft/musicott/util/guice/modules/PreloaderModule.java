@@ -20,9 +20,12 @@
 package com.transgressoft.musicott.util.guice.modules;
 
 import com.google.inject.*;
+import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 
 /**
- * Guice {@link Module} that configures the instantiation of the neccesary classes
+ * Guice {@link Module} that configures the instantiation of the necessary classes
  * in the preloader stage of the application
  *
  * @author Octavio Calleya
@@ -34,8 +37,13 @@ public class PreloaderModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new ParseModule());
         install(new LoadActionFactoryModule());
         install(new TrackFactoryModule());
+    }
+
+    @Provides
+    @RootPlaylist
+    Playlist providesRootPlaylist(PlaylistFactory factory) {
+        return factory.create("ROOT", true);
     }
 }

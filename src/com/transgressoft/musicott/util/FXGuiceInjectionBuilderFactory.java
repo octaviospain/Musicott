@@ -54,7 +54,9 @@ public class FXGuiceInjectionBuilderFactory implements BuilderFactory {
 
     @Override
     public Builder<?> getBuilder(final Class<?> type) {
-        if (type.isInstance(InjectableController.class))
+        if (type == RootController.class || type == RootMenuBarController.class || type == PlayQueueController.class
+                || type == PlayerController.class || type == NavigationController.class || type ==
+                ArtistsViewController.class || type == EditController.class || type == InjectableController.class)
             return () -> injector.getInstance(type);
         return defaultFactory.getBuilder(type);
     }

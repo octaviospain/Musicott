@@ -286,6 +286,11 @@
             <version>1.2</version>
             <systemPath>${project.basedir}/lib/iTunesUtilities.jar</systemPath>
         </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>1.6.11</version>
+        </dependency>
     </dependencies>
 
     <repositories>

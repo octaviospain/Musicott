@@ -19,36 +19,37 @@
 
 package com.transgressoft.musicott.view;
 
-import com.transgressoft.musicott.tests.*;
-import javafx.scene.*;
+import com.google.inject.*;
+import javafx.fxml.*;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
 import javafx.stage.*;
-import org.junit.jupiter.api.*;
-import org.testfx.framework.junit5.*;
-
-import static com.transgressoft.musicott.model.Layout.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
+ * Controller class of a simple progress bar
+ *
  * @author Octavio Calleya
+ * @version 0.10.1-b
+ * @since 0.10.1-b
  */
-public class PlayQueueControllerTest extends JavaFxTestBase<PlayQueueController> {
+@Singleton
+public class SimpleProgressBarController extends InjectableController<AnchorPane> {
+
+    @FXML
+    private AnchorPane root;
+    @FXML
+    private ProgressBar progressBar;
 
     @Override
-    @Start
-    public void start(Stage stage) throws Exception {
-        loadControllerModule(PLAY_QUEUE);
-        stage.setScene(new Scene(controller.getRoot()));
-
-        injector = injector.createChildInjector(module);
-
-        stage.show();
+    public AnchorPane getRoot() {
+        return root;
     }
 
-    @Test
-    @DisplayName("Singleton controller")
-    void singletonController() {
-        PlayQueueController anotherController = injector.getInstance(PlayQueueController.class);
-
-        assertSame(controller, anotherController);
+    @Override
+    public void setStage(Stage stage) {
+        this.stage = stage;
+        stage.setTitle("");
+        stage.initStyle(StageStyle.UNDECORATED);
     }
 }

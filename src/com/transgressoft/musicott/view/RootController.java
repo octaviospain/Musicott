@@ -97,19 +97,23 @@ public class RootController extends InjectableController<BorderPane> implements 
     @FXML
     private SplitPane artistsLayout;
 
-    @FXML
+    @Inject
+    @ArtistsCtrl
     private ArtistsViewController artistsLayoutController;
     @FXML
     private VBox navigationLayout;
-    @FXML
+    @Inject
+    @NavigationCtrl
     private NavigationController navigationLayoutController;
     @FXML
     private GridPane playerLayout;
-    @FXML
+    @Inject
+    @PlayerCtrl
     private PlayerController playerLayoutController;
     @FXML
     private MenuBar menuBar;
-    @FXML
+    @Inject
+    @MenuBarCtrl
     private RootMenuBarController menuBarController;
 
     private TextField playlistTitleTextField;
@@ -117,10 +121,11 @@ public class RootController extends InjectableController<BorderPane> implements 
     private ImageView hoverCoverImageView;
     private ObjectProperty<Image> hoverCoverProperty;
 
+    private StringProperty searchTextProperty;
     private BooleanProperty showingNavigationPaneProperty;
     private BooleanProperty showingTableInfoPaneProperty;
     private ReadOnlyBooleanProperty emptyLibraryProperty;
-    private ObjectProperty<NavigationMode> navigationModeProperty;
+    private ReadOnlyObjectProperty<NavigationMode> navigationModeProperty;
     private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
     private ListProperty<Entry<Integer, Track>> showingTracksProperty;
 
@@ -154,10 +159,8 @@ public class RootController extends InjectableController<BorderPane> implements 
     @Override
     public void configure() {
         trackTable.setItems(bindedToSearchTextFieldTracks());
-        selectedPlaylistProperty = navigationLayoutController.selectedPlaylistProperty();
         subscribe(selectedPlaylistProperty, selected -> selected.ifPresent(this::updateShowingInfoWithPlaylist));
 
-        navigationModeProperty = navigationLayoutController.navigationModeProperty();
         hoverCoverImageView.visibleProperty().bind(
                 combine(navigationModeProperty, emptyLibraryProperty,
                         (mode, empty) -> mode.equals(ALL_TRACKS) && ! empty));
@@ -202,8 +205,8 @@ public class RootController extends InjectableController<BorderPane> implements 
 
         playRandomButton.visibleProperty().bind(showingTracksProperty.emptyProperty().not());
         playRandomButton.setOnAction(e -> {
-            if (selectedPlaylistProperty().get().isPresent())
-                musicLibrary.playPlaylistRandomly(selectedPlaylistProperty().get().get());
+            if (selectedPlaylistProperty.get().isPresent())
+                musicLibrary.playPlaylistRandomly(selectedPlaylistProperty.get().get());
         });
         playlistTracksNumberLabel.textProperty().bind(map(showingTracksProperty.sizeProperty(), s -> s + " songs"));
         playlistSizeLabel.textProperty().bind(map(showingTracksProperty, this::tracksSizeString));
@@ -239,7 +242,6 @@ public class RootController extends InjectableController<BorderPane> implements 
         ObservableList<Entry<Integer, Track>> tracks = showingTracksProperty.get();
         FilteredList<Entry<Integer, Track>> filteredTracks = new FilteredList<>(tracks, entry -> true);
 
-        StringProperty searchTextProperty = playerLayoutController.searchTextProperty();
         subscribe(searchTextProperty, query -> filteredTracks.setPredicate(filterTracksByQuery(query)));
 
         SortedList<Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
@@ -526,6 +528,21 @@ public class RootController extends InjectableController<BorderPane> implements 
     }
 
     @Inject
+    public void setNavigationModeProperty(@SelectedMenuProperty ReadOnlyObjectProperty<NavigationMode> p) {
+        navigationModeProperty = p;
+    }
+
+    @Inject
+    public void setSelectedPlaylistProperty(@SelectedPlaylistProperty ReadOnlyObjectProperty<Optional<Playlist>> p) {
+        selectedPlaylistProperty = p;
+    }
+
+    @Inject
+    public void setSearchTextProperty(@SearchingTextProperty StringProperty p) {
+        searchTextProperty = p;
+    }
+
+    @Inject
     public void setShowingTracksProperty(@ShowingTracksProperty ListProperty<Entry<Integer, Track>> p) {
         this.showingTracksProperty = p;
     }
@@ -533,14 +550,6 @@ public class RootController extends InjectableController<BorderPane> implements 
     @Inject
     public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty emptyLibraryProperty) {
         this.emptyLibraryProperty = emptyLibraryProperty;
-    }
-
-    public NavigationController getNavigationController() {
-        return navigationLayoutController;
-    }
-
-    public PlayerController getPlayerController() {
-        return playerLayoutController;
     }
 
     public ObservableList<Entry<Integer, Track>> getSelectedTracks() {
@@ -556,10 +565,6 @@ public class RootController extends InjectableController<BorderPane> implements 
                 break;
         }
         return selectedTracks;
-    }
-
-    public ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
-        return navigationLayoutController.selectedPlaylistProperty();
     }
 
     public ReadOnlyBooleanProperty showNavigationPaneProperty() {

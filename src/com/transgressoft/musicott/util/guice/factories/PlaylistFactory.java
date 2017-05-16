@@ -21,7 +21,6 @@ package com.transgressoft.musicott.util.guice.factories;
 
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.tasks.*;
 
 /**
  * Factory class for creating {@link Playlist} objects
@@ -34,19 +33,17 @@ import com.transgressoft.musicott.tasks.*;
 public class PlaylistFactory {
 
     private final Provider<TracksLibrary> tracksLibraryProvider;
-    private final Provider<TaskDemon> taskDemonProvider;
 
     @Inject
-    public PlaylistFactory(Provider<TracksLibrary> tracksLibraryProvider, Provider<TaskDemon> taskDemonProvider) {
+    public PlaylistFactory(Provider<TracksLibrary> tracksLibraryProvider) {
         this.tracksLibraryProvider = tracksLibraryProvider;
-        this.taskDemonProvider = taskDemonProvider;
     }
 
     public Playlist create() {
-        return new Playlist(tracksLibraryProvider.get(), taskDemonProvider);
+        return new Playlist(tracksLibraryProvider.get());
     }
 
     public Playlist create(String name, boolean isFolder) {
-        return new Playlist(tracksLibraryProvider.get(), taskDemonProvider, name, isFolder);
+        return new Playlist(tracksLibraryProvider.get(), name, isFolder);
     }
 }

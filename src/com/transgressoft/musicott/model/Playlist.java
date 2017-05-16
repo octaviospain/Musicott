@@ -21,7 +21,6 @@ package com.transgressoft.musicott.model;
 
 import com.google.inject.*;
 import com.google.inject.assistedinject.*;
-import com.transgressoft.musicott.tasks.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.scene.image.*;
@@ -45,7 +44,6 @@ public class Playlist {
     private static final String DELETION_NOT_SUPPORTED = "Deletion not supported on folder playlist";
 
     private final TracksLibrary tracksLibrary;
-    private final Provider<TaskDemon> taskDemonProvider;
 
     private boolean isFolder;
     private String name;
@@ -62,17 +60,14 @@ public class Playlist {
         isFolderProperty = new SimpleBooleanProperty(this, "folder", isFolder);
     }
 
-    public Playlist(TracksLibrary tracksLibrary, Provider<TaskDemon> taskDemonProvider) {
+    public Playlist(TracksLibrary tracksLibrary) {
         this.tracksLibrary = tracksLibrary;
-        this.taskDemonProvider = taskDemonProvider;
         name = "";
     }
 
     @Inject
-    public Playlist(TracksLibrary tracksLibrary, Provider<TaskDemon> taskDemonProvider,
-            @Assisted String name, @Assisted boolean isFolder) {
+    public Playlist(TracksLibrary tracksLibrary, @Assisted String name, @Assisted boolean isFolder) {
         this.tracksLibrary = tracksLibrary;
-        this.taskDemonProvider = taskDemonProvider;
         this.isFolder = isFolder;
         setName(name);
     }
@@ -113,10 +108,8 @@ public class Playlist {
         if (! isFolder) {
 
             result = playlistTrackIds.addAll(tracksIds);
-            if (result) {
+            if (result)
                 changePlaylistCover();
-                taskDemonProvider.get().saveLibrary(false, false, true);
-            }
         }
         return result;
     }
@@ -126,10 +119,8 @@ public class Playlist {
             throw new UnsupportedOperationException(DELETION_NOT_SUPPORTED);
 
         boolean result = playlistTrackIds.removeAll(tracksIds);
-        if (result) {
+        if (result)
             changePlaylistCover();
-            taskDemonProvider.get().saveLibrary(false, false, true);
-        }
         return result;
     }
 
@@ -138,7 +129,6 @@ public class Playlist {
             throw new UnsupportedOperationException(DELETION_NOT_SUPPORTED);
         playlistTrackIds.clear();
         playlistCoverProperty.set(DEFAULT_COVER);
-        taskDemonProvider.get().saveLibrary(false, false, true);
     }
 
     public Set<Playlist> getContainedPlaylists() {

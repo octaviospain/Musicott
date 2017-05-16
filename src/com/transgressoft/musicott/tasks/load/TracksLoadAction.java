@@ -62,8 +62,8 @@ public class TracksLoadAction extends BaseLoadAction {
 
     @Inject
     public TracksLoadAction(TracksLibrary tracksLibrary, @Assisted @Nullable List<Track> tracks, @Assisted int totalTracks,
-            @Assisted String applicationFolder, @Assisted Application musicottApplication) {
-        super(applicationFolder, musicottApplication);
+            @Assisted String applicationFolder, @Assisted Application application) {
+        super(applicationFolder, application);
         tracksToSetProperties = tracks;
         this.totalTracks = totalTracks;
         this.tracksLibrary = tracksLibrary;

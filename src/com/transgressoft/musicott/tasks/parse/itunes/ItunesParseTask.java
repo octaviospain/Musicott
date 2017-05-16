@@ -26,7 +26,9 @@ import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.view.*;
 import com.worldsworstsoftware.itunes.*;
 import com.worldsworstsoftware.itunes.parser.*;
 import javafx.application.Platform;
@@ -80,9 +82,9 @@ public class ItunesParseTask extends BaseParseTask {
     private ParseActionFactory parseActionFactory;
 
     @Inject
-    public ItunesParseTask(TracksLibrary tracksLibrary, MainPreferences mainPreferences, StageDemon stageDemon,
-            ErrorDemon errorDemon, @Assisted String path) {
-        super(stageDemon, errorDemon);
+    public ItunesParseTask(TracksLibrary tracksLibrary, MainPreferences mainPreferences,
+            @NavigationCtrl NavigationController navCtrl, ErrorDialogController errorDialog, @Assisted String path) {
+        super(navCtrl, errorDialog);
         this.tracksLibrary = tracksLibrary;
         itunesLibraryXmlPath = path;
         metadataPolicy = mainPreferences.getItunesImportMetadataPolicy();
@@ -107,7 +109,7 @@ public class ItunesParseTask extends BaseParseTask {
         if (isValidItunesXML())
             parseItunesFile();
         else {
-            errorDemon.showErrorDialog("The selected xml file is not valid");
+            errorDialog.show("The selected xml file is not valid");
             cancel();
         }
         waitConfirmationSemaphore.acquire();
@@ -149,7 +151,7 @@ public class ItunesParseTask extends BaseParseTask {
         }
         catch (FileNotFoundException exception) {
             LOG.info("Error accessing to the itunes xml: ", exception);
-            errorDemon.showErrorDialog("Error opening the iTunes Library file", "", exception);
+            errorDialog.show("Error opening the iTunes Library file", "", exception);
             valid = false;
         }
         return valid;
@@ -233,9 +235,9 @@ public class ItunesParseTask extends BaseParseTask {
         computeAndShowElapsedTime(parsedTracksSize +  parsedPlaylistsSize);
 
         if (! notFoundFiles.isEmpty())
-            errorDemon.showExpandableErrorsDialog("Some files were not found", "", notFoundFiles);
+            errorDialog.showExpandable("Some files were not found", "", notFoundFiles);
         if (! parseErrors.isEmpty())
-            errorDemon.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
+            errorDialog.showExpandable("Errors importing files", "", parseErrors);
     }
 
     @Override

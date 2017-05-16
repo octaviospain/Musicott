@@ -22,12 +22,19 @@ package com.transgressoft.musicott.tests;
 import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.player.*;
+import com.transgressoft.musicott.services.*;
+import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
 import com.transgressoft.musicott.view.*;
+import javafx.application.*;
 import javafx.scene.Node;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
+import org.mockito.*;
 import org.testfx.api.*;
 import org.testfx.framework.junit5.*;
 
@@ -42,13 +49,34 @@ import static org.mockito.Mockito.*;
  *
  * @author Octavio Calleya
  */
-@ExtendWith (ApplicationExtension.class)
+@ExtendWith ({ApplicationExtension.class, MockitoExtension.class})
 public abstract class JavaFxTestBase<T extends InjectableController> implements InjectedApplication {
 
-    protected Stage testStage;
-    protected static Injector injector;
+    @Mock
+    protected TaskDemon taskDemonMock;
+    @Mock
+    protected ServiceDemon serviceDemonMock;
+    @Mock
+    protected PlayerFacade playerFacadeMock;
+    @Mock
+    protected MusicLibrary musicLibraryMock;
+    @Mock
+    protected PlaylistsLibrary playlistsLibraryMock;
+    @Mock
+    protected TracksLibrary tracksLibraryMock;
+    @Mock
+    protected AlbumsLibrary albumsLibraryMock;
+    @Mock
+    protected ArtistsLibrary artistsLibraryMock;
+    @Mock
+    protected WaveformsLibrary waveformsLibraryMock;
+    @Mock
+    protected MainPreferences preferencesMock;
+
     protected T controller;
     protected ControllerModule<T> module;
+    protected Module mockedSingletonsTestModule = new MockedSingletonsTestModule();
+    protected Injector injector = Guice.createInjector(mockedSingletonsTestModule);
 
     @Start
     public abstract void start(Stage stage) throws Exception;
@@ -74,17 +102,12 @@ public abstract class JavaFxTestBase<T extends InjectableController> implements 
     }
 
     @SuppressWarnings ("unchecked")
-    protected Injector injectorWithSimpleMocks(Class... classesToMock) {
-        return Guice.createInjector(
-                binder -> Stream.of(classesToMock).forEach(c -> binder.bind(c).toInstance(mock(c))));
-    }
-
-    @SuppressWarnings ("unchecked")
     protected Injector injectorWithSimpleMocks(Module module, Class... classesToMock) {
         return Guice.createInjector(
                 binder -> {
                     Stream.of(classesToMock).forEach(c -> binder.bind(c).toInstance(mock(c)));
                     binder.install(module);
+                    binder.install(new MockedSingletonsTestModule());
                 });
     }
 
@@ -94,6 +117,76 @@ public abstract class JavaFxTestBase<T extends InjectableController> implements 
                 binder -> {
                     mockedObjects.forEach((key, value) -> binder.bind(key).toInstance(value));
                     Stream.of(newModules).forEach(binder::install);
+                    binder.install(new MockedSingletonsTestModule());
                 });
+    }
+
+    private class MockedSingletonsTestModule extends AbstractModule {
+
+        @Override
+        protected void configure() {}
+
+        @Provides
+        HostServices providesHostServices() {
+            return new Application() {
+                @Override
+                public void start(Stage primaryStage) throws Exception {}}.getHostServices();
+        }
+
+        @Provides
+        @RootPlaylist
+        Playlist providesRootPlaylist(PlaylistFactory factory) {
+            return factory.create("ROOT", true);
+        }
+
+        @Provides
+        TaskDemon providesTaskDemonMock() {
+            return taskDemonMock;
+        }
+
+        @Provides
+        PlayerFacade providesPlayerFacadeMock() {
+            return playerFacadeMock;
+        }
+
+        @Provides
+        ServiceDemon providesServiceDemonMock() {
+            return serviceDemonMock;
+        }
+
+        @Provides
+        MusicLibrary providesMusicLibraryMock() {
+            return musicLibraryMock;
+        }
+
+        @Provides
+        PlaylistsLibrary providesPlaylistsLibraryMock() {
+            return playlistsLibraryMock;
+        }
+
+        @Provides
+        TracksLibrary providesTracksLibraryMock() {
+            return tracksLibraryMock;
+        }
+
+        @Provides
+        ArtistsLibrary providesArtistsLibraryMock() {
+            return artistsLibraryMock;
+        }
+
+        @Provides
+        AlbumsLibrary providesAlbumsLibrary() {
+            return albumsLibraryMock;
+        }
+
+        @Provides
+        WaveformsLibrary waveformsLibraryMock() {
+            return waveformsLibraryMock;
+        }
+
+        @Provides
+        MainPreferences providesPreferencesMock() {
+            return preferencesMock;
+        }
     }
 }

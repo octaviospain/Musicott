@@ -95,12 +95,11 @@ public class PlayerController extends InjectableController<GridPane> {
     private TextField searchTextField;
     @FXML
     private ProgressBar volumeProgressBar;
-
-    @FXML
-    private PlayQueueController playQueueLayoutController;
     @FXML
     private AnchorPane playQueueLayout;
     private WaveformPanel mainWaveformPanel;
+
+    private PlayQueueController playQueueLayoutController;
 
     private TracksLibrary tracksLibrary;
     private WaveformsLibrary waveformsLibrary;
@@ -215,6 +214,11 @@ public class PlayerController extends InjectableController<GridPane> {
 
     public void focusSearchField() {
         searchTextField.requestFocus();
+    }
+
+    @Inject
+    public void setPlayQueueLayoutController(@PlayQueueCtrl PlayQueueController c) {
+        playQueueLayoutController = c;
     }
 
     @Inject

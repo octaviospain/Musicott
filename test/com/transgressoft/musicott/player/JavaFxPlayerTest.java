@@ -24,6 +24,7 @@ import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import javafx.scene.media.MediaPlayer.*;
 import javafx.stage.Stage;
@@ -53,7 +54,7 @@ public class JavaFxPlayerTest {
     public static void beforeAll() throws Exception {
         injector = Guice.createInjector(binder -> {
             binder.install(new TrackFactoryModule());
-            binder.bind(ErrorDemon.class).toInstance(mock(ErrorDemon.class));
+            binder.bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
 
             MainPreferences preferences = mock(MainPreferences.class);
             when(preferences.getTrackSequence()).thenReturn(0);

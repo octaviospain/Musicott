@@ -19,25 +19,18 @@
 
 package com.transgressoft.musicott.view;
 
-import com.google.common.collect.*;
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
+import com.google.inject.util.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.util.guice.factories.*;
-import com.transgressoft.musicott.util.guice.modules.*;
 import javafx.beans.property.*;
 import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
 import org.mockito.*;
 import org.testfx.framework.junit5.*;
-
-import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -45,38 +38,25 @@ import static org.mockito.Mockito.*;
 /**
  * @author Octavio Calleya
  */
-@ExtendWith(MockitoExtension.class)
 public class PreferencesControllerTest extends JavaFxTestBase<PreferencesController> {
 
+    BooleanProperty usingLastFmPropertyMock = new SimpleBooleanProperty(false);
+
     @Mock
-    MainPreferences prefsMock;
+    LastFmPreferences lastFmPreferencesMock;
     @Mock
-    StageDemon stageDemonMock;
-    @Mock
-    ServiceDemon serviceDemonMock;
-    @Mock
-    TaskDemon taskDemonMock;
-    @Mock
-    ErrorDemon errorDemonMock;
+    ErrorDialogController errorDialogMock;
 
     @Override
     @Start
     public void start(Stage stage) throws Exception {
-        testStage = stage;
-        when(serviceDemonMock.usingLastFmProperty()).thenReturn(new SimpleBooleanProperty(false));
+        when(lastFmPreferencesMock.getLastFmUsername()).thenReturn("user");
+        when(lastFmPreferencesMock.getLastFmPassword()).thenReturn("pass");
 
-        Map<Class, Object> mocks = ImmutableMap.<Class, Object>builder()
-                .put(prefsMock.getClass(), prefsMock)
-                .put(stageDemonMock.getClass(), stageDemonMock)
-                .put(serviceDemonMock.getClass(), serviceDemonMock)
-                .put(taskDemonMock.getClass(), taskDemonMock)
-                .put(errorDemonMock.getClass(), errorDemonMock)
-                .build();
-
-        injector = injectorWithCustomMocks(mocks, new TestModule());
+        injector = Guice.createInjector(Modules.override(mockedSingletonsTestModule).with(new TestModule()));
 
         loadControllerModule(Layout.PREFERENCES);
-        stage.setScene(new Scene(module.providesController().getRoot()));
+        stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);
 
@@ -94,15 +74,22 @@ public class PreferencesControllerTest extends JavaFxTestBase<PreferencesControl
     private class TestModule extends AbstractModule {
 
         @Override
-        protected void configure() {
-            install(new ParseModule());
-            install(new TrackFactoryModule());
+        protected void configure() {}
+
+        @Provides
+        @UsingLastFmProperty
+        ReadOnlyBooleanProperty providesUsingLastFmPropertyMock() {
+            return usingLastFmPropertyMock;
         }
 
         @Provides
-        @RootPlaylist
-        Playlist providesRootPlaylist(PlaylistFactory factory) {
-            return factory.create("ROOT", true);
+        ErrorDialogController providesErrorDialogMock() {
+            return errorDialogMock;
+        }
+
+        @Provides
+        LastFmPreferences providesLastFmPreferences() {
+            return lastFmPreferencesMock;
         }
     }
 }

@@ -20,19 +20,15 @@
 package com.transgressoft.musicott.view;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.services.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
 import javafx.beans.property.*;
 import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
+import org.mockito.*;
 import org.testfx.framework.junit5.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,14 +38,16 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PlayerControllerTest extends JavaFxTestBase<PlayerController> {
 
+    @Mock
+    PlayQueueController playQueueControllerMock;
+
     @Override
     @Start
     public void start(Stage stage) throws Exception {
-        injector = injectorWithSimpleMocks(new TestModule(), StageDemon.class, TaskDemon.class,
-                                           ServiceDemon.class, PlayerFacade.class);
+        injector = injector.createChildInjector(new TestModule());
 
         loadControllerModule(Layout.PLAYER);
-        stage.setScene(new Scene(module.providesController().getRoot()));
+        stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);
 
@@ -68,15 +66,13 @@ public class PlayerControllerTest extends JavaFxTestBase<PlayerController> {
 
         @Override
         protected void configure() {
-            install(new ParseModule());
-            install(new TrackFactoryModule());
             install(new WaveformPaneFactoryModule());
         }
 
         @Provides
-        @RootPlaylist
-        Playlist providesRootPlaylist(PlaylistFactory factory) {
-            return factory.create("ROOT", true);
+        @PlayQueueCtrl
+        PlayQueueController providesPlayQueueControllerMock() {
+            return playQueueControllerMock;
         }
 
         @Provides

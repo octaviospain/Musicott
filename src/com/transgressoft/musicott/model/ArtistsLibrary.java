@@ -96,9 +96,9 @@ public class ArtistsLibrary {
         return artistsTracks.get(artist).stream().anyMatch(track -> TracksLibrary.trackMatchesString(track, query));
     }
 
-    public synchronized void updateArtistsInvolvedInTrack(Track track, Set<String> removedArtists,Set<String> addedArtists) {
-        removedArtists.forEach(artist -> removeArtistTrack(artist, track));
-        addedArtists.forEach(artist -> addArtistTrack(artist, track));
+    public synchronized void updateArtistsInvolvedInTrack(Track track, Set<String> removed, Set<String> added) {
+        removed.forEach(artist -> removeArtistTrack(artist, track));
+        added.forEach(artist -> addArtistTrack(artist, track));
     }
 
     synchronized void clear() {

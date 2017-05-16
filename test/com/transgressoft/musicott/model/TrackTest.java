@@ -25,6 +25,7 @@ import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.util.Duration;
@@ -73,7 +74,7 @@ public class TrackTest {
     public static void beforeAll() throws Exception {
         Injector injector = Guice.createInjector(binder -> {
             binder.install(new TrackFactoryModule());
-            binder.bind(ErrorDemon.class).toInstance(mock(ErrorDemon.class));
+            binder.bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
 
             MainPreferences preferences = mock(MainPreferences.class);
             when(preferences.getTrackSequence()).thenReturn(0);

@@ -41,6 +41,7 @@ import java.util.stream.*;
 import static com.transgressoft.musicott.util.Utils.*;
 import static com.transgressoft.musicott.view.MusicottLayout.*;
 import static com.transgressoft.musicott.view.custom.TrackTableView.*;
+import static com.transgressoft.musicott.view.custom.TrackTableViewContextMenu.*;
 import static javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY;
 import static org.fxmisc.easybind.EasyBind.*;
 
@@ -57,8 +58,6 @@ import static org.fxmisc.easybind.EasyBind.*;
 public class TrackSetAreaRow extends HBox {
 
     private static final double COVER_SIZE = 130.0;
-
-    private final TrackTableViewContextMenu trackTableContextMenu;
 
     private TableView<Entry<Integer, Track>> tracksTableView;
     private TableColumn<Entry<Integer, Track>, String> nameCol;
@@ -82,10 +81,9 @@ public class TrackSetAreaRow extends HBox {
     private Injector injector;
 
     @Inject
-    public TrackSetAreaRow(TrackTableViewContextMenu trackTableContextMenu, @Assisted ("artist") String artist,
-            @Assisted ("album") String album, @Assisted Collection<Entry<Integer, Track>> trackEntries) {
+    public TrackSetAreaRow(@Assisted ("artist") String artist, @Assisted ("album") String album,
+            @Assisted Collection<Entry<Integer, Track>> trackEntries) {
         super();
-        this.trackTableContextMenu = trackTableContextMenu;
         this.artist = artist;
         this.album = album;
         trackEntryComparator = trackEntryComparator();
@@ -180,7 +178,6 @@ public class TrackSetAreaRow extends HBox {
         return String.valueOf(numberOfTracks) + appendix;
     }
 
-
     private void updateTrackSetImage() {
         for (Entry<Integer, Track> trackEntry : containedTracks)
             if (updateCoverImage(trackEntry.getValue(), coverImageView))
@@ -230,14 +227,6 @@ public class TrackSetAreaRow extends HBox {
         tracksTableView.prefHeightProperty().bind(tracksTableView.fixedCellSizeProperty().multiply(rows.getValue()));
         tracksTableView.minHeightProperty().bind(tracksTableView.prefHeightProperty());
         tracksTableView.maxHeightProperty().bind(tracksTableView.prefHeightProperty());
-
-        tracksTableView.setContextMenu(trackTableContextMenu);
-        tracksTableView.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            if (event.getButton() == MouseButton.SECONDARY)
-                trackTableContextMenu.show(this, event.getScreenX(), event.getScreenY());
-            else if (event.getButton() == MouseButton.PRIMARY && trackTableContextMenu.isShowing())
-                trackTableContextMenu.hide();
-        });
     }
 
     private void initColumns() {
@@ -334,6 +323,13 @@ public class TrackSetAreaRow extends HBox {
 
     public String getAlbum() {
         return album;
+    }
+
+    @Inject
+    public void setContextMenu(TrackTableViewContextMenu trackTableContextMenu) {
+        tracksTableView.setContextMenu(trackTableContextMenu);
+        tracksTableView.addEventHandler(
+                MouseEvent.MOUSE_CLICKED, event -> showContextMenuEventHandler(this, trackTableContextMenu));
     }
 
     public ListProperty<Entry<Integer, Track>> selectedTracksProperty() {

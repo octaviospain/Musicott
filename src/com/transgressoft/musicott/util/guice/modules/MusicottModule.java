@@ -21,13 +21,14 @@ package com.transgressoft.musicott.util.guice.modules;
 
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
 
 import java.util.Map.*;
+import java.util.*;
 
 /**
  * Guice {@link Module} that includes the necessary bindings and configurations for
@@ -48,17 +49,45 @@ public class MusicottModule extends AbstractModule {
         requestStaticInjection(Utils.class);
     }
 
+    /*
+        Properties provided by the ServiceDemon
+     */
+
     @Provides
-    @RootPlaylist
-    Playlist providesRootPlaylist(PlaylistFactory factory) {
-        return factory.create("ROOT", true);
+    @UsingLastFmProperty
+    ReadOnlyBooleanProperty providesUsingLastFmProperty(ServiceDemon serviceDemon) {
+        return serviceDemon.usingLastFmProperty();
     }
+
+    /*
+        Properties provided by the TracksLibrary
+     */
+
+    @Provides
+    @EmptyLibraryProperty
+    ReadOnlyBooleanProperty providesEmptyLibraryProperty(TracksLibrary tracksLibrary) {
+        return tracksLibrary.emptyTracksLibraryProperty();
+    }
+
+    @Provides
+    @ShowingTracksProperty
+    ListProperty<Entry<Integer, Track>> providesShowingTracksProperty(TracksLibrary tracksLibrary) {
+        return tracksLibrary.showingTrackEntriesProperty();
+    }
+
+    /*
+        Properties provided by the EditController
+     */
 
     @Provides
     @ShowingEditing
     ReadOnlyBooleanProperty providesShowingEditing(EditController editController) {
         return editController.showingProperty();
     }
+
+    /*
+        Properties provided by the RootController
+     */
 
     @Provides
     @ShowingNavigationPaneProperty
@@ -72,6 +101,10 @@ public class MusicottModule extends AbstractModule {
         return rootController.showTableInfoPaneProperty();
     }
 
+    /*
+        Properties provided by the NavigationController
+     */
+
     @Provides
     @SelectedMenuProperty
     ReadOnlyObjectProperty<NavigationMode> providesSelectedMenuProperty(NavigationController navigationController) {
@@ -79,10 +112,14 @@ public class MusicottModule extends AbstractModule {
     }
 
     @Provides
-    @EmptyLibraryProperty
-    ReadOnlyBooleanProperty providesEmptyLibraryProperty(TracksLibrary tracksLibrary) {
-        return tracksLibrary.tracksProperty().emptyProperty();
+    @SelectedPlaylistProperty
+    ReadOnlyObjectProperty<Optional<Playlist>> providesSelectedPlaylistProperty(NavigationController navigationController) {
+        return navigationController.selectedPlaylistProperty();
     }
+
+    /*
+        Properties provided by the PlayerController
+     */
 
     @Provides
     @SearchingTextProperty
@@ -112,11 +149,5 @@ public class MusicottModule extends AbstractModule {
     @NextButtonDisabledProperty
     ReadOnlyBooleanProperty providesNexButtonDisabledProperty(PlayerController playerController) {
         return playerController.nextButtonDisabledProperty();
-    }
-
-    @Provides
-    @ShowingTracksProperty
-    ListProperty<Entry<Integer, Track>> providesShowingTracksProperty(TracksLibrary tracksLibrary) {
-        return tracksLibrary.showingTracksProperty();
     }
 }

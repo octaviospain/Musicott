@@ -23,6 +23,7 @@ import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.*;
 import org.jaudiotagger.audio.*;
 import org.jaudiotagger.audio.wav.*;
 import org.jaudiotagger.tag.*;
@@ -71,7 +72,7 @@ public class MetadataParserTest {
     public static void beforeAllTests() {
         injector = Guice.createInjector(binder -> {
             binder.install(new TrackFactoryModule());
-            binder.bind(ErrorDemon.class).toInstance(mock(ErrorDemon.class));
+            binder.bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
             binder.bind(MainPreferences.class).toInstance(mock(MainPreferences.class));
             binder.requestStaticInjection(MetadataParser.class);
         });

@@ -22,6 +22,7 @@ package com.transgressoft.musicott.util.jsoniocreators;
 import com.cedarsoftware.util.io.JsonReader.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
 
@@ -36,11 +37,23 @@ public class PlaylistCreator implements ClassFactory {
 
     @Override
     public Object newInstance(Class aClass) {
-        Injector injector = Guice.createInjector(binder -> {
-            binder.install(new TrackFactoryModule());
-            binder.install(new ParseModule());
-        });
+        Injector injector = Guice.createInjector(new LoaderClassFactory());
         PlaylistFactory playlistFactory = injector.getInstance(PlaylistFactory.class);
         return playlistFactory.create();
+    }
+
+    private class LoaderClassFactory extends AbstractModule {
+
+        @Override
+        protected void configure() {
+            install(new TrackFactoryModule());
+            install(new ParseModule());
+        }
+
+        @Provides
+        @RootPlaylist
+        Playlist providesRootPlaylist(PlaylistFactory factory) {
+            return factory.create("ROOT", true);
+        }
     }
 }

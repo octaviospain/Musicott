@@ -19,26 +19,19 @@
 
 package com.transgressoft.musicott.view;
 
-import com.google.common.collect.*;
+import com.google.common.graph.*;
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.util.guice.factories.*;
-import com.transgressoft.musicott.util.guice.modules.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
 import org.mockito.*;
 import org.testfx.framework.junit5.*;
 
-import java.util.*;
 import java.util.Map.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,42 +40,36 @@ import static org.mockito.Mockito.*;
 /**
  * @author Octavio Calleya
  */
-@ExtendWith(MockitoExtension.class)
 public class NavigationControllerTest extends JavaFxTestBase<NavigationController> {
 
-    static BooleanProperty falseProperty = new SimpleBooleanProperty(false);
+    BooleanProperty emptyLibraryProperty = new SimpleBooleanProperty(true);
+    ListProperty<Entry<Integer, Track>> showingTracksProperty = new SimpleListProperty<>();
 
-    @Mock
-    StageDemon stageDemonMock;
-    @Mock
-    TaskDemon taskDemonMock;
-    @Mock
-    PlayerFacade playerFacadeMock;
     @Mock
     PlayerController playerControllerMock;
     @Mock
     RootController rootControllerMock;
 
+    /*
+    Tried to mock this object but an Stack Overflow error is thrown when trying to add
+    this object to the scene graph. It seems like mockito is not able to mock JavaFx
+    at full purposes.
+     */
+    PlaylistTreeView playlistTreeView;
+
     @Override
     @Start
     public void start(Stage stage) throws Exception {
-        injector = Guice.createInjector(new TestModule());
+        Playlist rootPlaylist = new Playlist(tracksLibraryMock, "ROOT", true);
+        MutableGraph<Playlist> graph = GraphBuilder.directed().build();
+        graph.addNode(rootPlaylist);
+        when(playlistsLibraryMock.getPlaylistsTree()).thenReturn(graph);
+        playlistTreeView = new PlaylistTreeView(playlistsLibraryMock, rootPlaylist, injector);
 
-        PlaylistTreeView playlistTreeViewMock = mock(PlaylistTreeView.class);
-        doNothing().when(playlistTreeViewMock).clearAndSelect(anyInt());
-
-        Map<Class, Object> mocks = ImmutableMap.<Class, Object>builder()
-                                               .put(stageDemonMock.getClass(), stageDemonMock)
-                                               .put(taskDemonMock.getClass(), taskDemonMock)
-                                               .put(playerFacadeMock.getClass(), playerFacadeMock)
-                                               .put(playerControllerMock.getClass(), playerControllerMock)
-                                               .put(rootControllerMock.getClass(), rootControllerMock)
-                                               .put(playlistTreeViewMock.getClass(), playlistTreeViewMock)
-                                               .build();
-        injector = injectorWithCustomMocks(mocks, new TestModule());
+        injector = injector.createChildInjector(new TestModule());
 
         loadControllerModule(Layout.NAVIGATION);
-        stage.setScene(new Scene(module.providesController().getRoot()));
+        stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);
 
@@ -100,27 +87,35 @@ public class NavigationControllerTest extends JavaFxTestBase<NavigationControlle
     private class TestModule extends AbstractModule {
 
         @Override
-        protected void configure() {
-            install(new ParseModule());
-            install(new TrackFactoryModule());
+        protected void configure() {}
+
+        @Provides
+        PlaylistTreeView providesPlaylistTreeViewMock() {
+            return playlistTreeView;
         }
 
         @Provides
-        @RootPlaylist
-        Playlist providesRootPlaylist(PlaylistFactory factory) {
-            return factory.create("ROOT", true);
+        @RootCtrl
+        RootController providesRootControllerMock() {
+            return rootControllerMock;
+        }
+
+        @Provides
+        @PlayerCtrl
+        PlayerController providesPlayerControllerMock() {
+            return playerControllerMock;
         }
 
         @Provides
         @EmptyLibraryProperty
         ReadOnlyBooleanProperty providesEmptyLibraryProperty() {
-            return falseProperty;
+            return emptyLibraryProperty;
         }
 
         @Provides
         @ShowingTracksProperty
         ListProperty<Entry<Integer, Track>> providesShowingTracksProperty() {
-            return new SimpleListProperty<>();
+            return showingTracksProperty;
         }
     }
 }

@@ -20,7 +20,6 @@
 package com.transgressoft.musicott.view;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.fxml.*;
@@ -76,19 +75,16 @@ public class ErrorDialogController extends InjectableController<AnchorPane> impl
     private Image commonErrorImage = new Image(getClass().getResourceAsStream(COMMON_ERROR_IMAGE));
     private Image lastFmErrorImage = new Image(getClass().getResourceAsStream(LASTFM_LOGO));
 
-    private StageDemon stageDemon;
+    private HostServices hostServices;
 
     @Inject
-    public ErrorDialogController(StageDemon stageDemon) {
-        this.stageDemon = stageDemon;
+    public ErrorDialogController(HostServices hostServices) {
+        this.hostServices = hostServices;
     }
 
     @FXML
     public void initialize() {
-        reportInGithubHyperlink.setOnAction(event -> {
-            HostServices hostServices = stageDemon.getApplicationHostServices();
-            hostServices.showDocument(GITHUB_LINK);
-        });
+        reportInGithubHyperlink.setOnAction(event -> hostServices.showDocument(GITHUB_LINK));
         contentVBox.getChildren().remove(reportInGithubHyperlink);
 
         rootBorderPane.getChildren().remove(detailsTextArea);
@@ -121,11 +117,31 @@ public class ErrorDialogController extends InjectableController<AnchorPane> impl
         stage.setResizable(false);
     }
 
-    public void prepareDialog(String message, String content, Exception exception) {
+    public void show(String message) {
+        show(message, null);
+    }
+
+    public void show(String message, String content) {
+        show(message, content, null);
+    }
+
+    public void show(String message, String content, Exception exception) {
+        if (exception == null)
+            showExpandable(message, content, Collections.emptyList());
+        else {
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+            exception.printStackTrace(printWriter);
+            showExpandable(message, content, Collections.singleton(stringWriter.toString()));
+        }
+    }
+
+    public void showExpandable(String message, String content, Collection<String> errors) {
         titleLabel.setText(message);
         setErrorContent(content);
-        checkDetailsArea(exception);
+        checkDetailsArea(errors);
         putCommonGraphic();
+        Platform.runLater(() -> stage.show());
     }
 
     private void setErrorContent(String content) {
@@ -143,20 +159,6 @@ public class ErrorDialogController extends InjectableController<AnchorPane> impl
         }
     }
 
-    private void checkDetailsArea(Exception exception) {
-        if (exception != null) {
-            StringWriter stringWriter = new StringWriter();
-            PrintWriter printWriter = new PrintWriter(stringWriter);
-            exception.printStackTrace(printWriter);
-            setDetailsAreaContent(Collections.singletonList(stringWriter.toString()));
-            addExpandableButtons();
-        }
-        else {
-            removeDetailsArea();
-            removeExpandableButtons();
-        }
-    }
-
     private void putCommonGraphic() {
         if (! errorImageView.getImage().equals(commonErrorImage)) {
             errorImageView.setImage(commonErrorImage);
@@ -169,15 +171,8 @@ public class ErrorDialogController extends InjectableController<AnchorPane> impl
             detailsTextArea.appendText(msg + "\n");
     }
 
-    public void prepareDialogWithMessages(String message, String content, Collection<String> errors) {
-        titleLabel.setText(message);
-        setErrorContent(content);
-        checkDetailsArea(errors);
-        putCommonGraphic();
-    }
-
     private void checkDetailsArea(Collection<String> errors) {
-        if (errors != null && !errors.isEmpty()) {
+        if (! errors.isEmpty()) {
             setDetailsAreaContent(errors);
             addExpandableButtons();
         }
@@ -202,10 +197,11 @@ public class ErrorDialogController extends InjectableController<AnchorPane> impl
             bottomBorderPane.setLeft(seeDetailsHBox);
     }
 
-    public void prepareLastFmDialog(String message, String content) {
+    public void showLastFmMode(String message, String content) {
         titleLabel.setText(message);
         setErrorContent(content);
         putLastFmGraphic();
+        Platform.runLater(() -> stage.show());
     }
 
     private void putLastFmGraphic() {

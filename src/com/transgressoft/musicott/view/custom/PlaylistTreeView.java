@@ -23,12 +23,12 @@ import com.google.common.graph.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.util.guice.factories.*;
 import javafx.beans.property.*;
 import javafx.scene.control.*;
-import org.fxmisc.easybind.*;
 
 import java.util.*;
+
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Class that extends from a {@link TreeView} representing a list of
@@ -46,21 +46,22 @@ public class PlaylistTreeView extends TreeView<Playlist> {
     private ObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
     @Inject
-    public PlaylistTreeView(PlaylistsLibrary playlistsLibrary, PlaylistFactory playlistFactory,
-            @RootPlaylist Playlist rootPlaylist, Injector injector) {
+    public PlaylistTreeView(PlaylistsLibrary playlistsLibrary, @RootPlaylist Playlist rootPlaylist, Injector injector) {
         this.playlistsLibrary = playlistsLibrary;
-        createPlaylistsItems(rootPlaylist, playlistFactory);
+        createPlaylistsItems(rootPlaylist);
         setShowRoot(false);
         setEditable(true);
         setPrefHeight(USE_COMPUTED_SIZE);
         setPrefWidth(USE_COMPUTED_SIZE);
-        setId("playlistTreeView");
+        setId("playlistTreeViewContextMenu");
         setCellFactory(cell -> injector.getInstance(PlaylistTreeCell.class));
-        setContextMenu(injector.getInstance(PlaylistTreeViewContextMenu.class));
 
         selectedPlaylistProperty = new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
+        subscribe(selectedPlaylistProperty,
+                  playlist -> playlist.ifPresent(playlistsLibrary::showPlaylist));
+
         getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        EasyBind.subscribe(getSelectionModel().selectedItemProperty(), newItem -> {
+        subscribe(getSelectionModel().selectedItemProperty(), newItem -> {
             if (newItem != null)
                 selectedPlaylistProperty.set(Optional.of(newItem.getValue()));
             else
@@ -71,9 +72,9 @@ public class PlaylistTreeView extends TreeView<Playlist> {
     /**
      * Initializes the {@link TreeView} with all the playlists.
      *
-     * @param playlistFactory The {@link PlaylistFactory} injected object
+     * @param rootPlaylist The root {@link Playlist} injected object
      */
-    private void createPlaylistsItems(Playlist rootPlaylist, PlaylistFactory playlistFactory) {
+    private void createPlaylistsItems(Playlist rootPlaylist) {
         TreeItem<Playlist> rootItem = new TreeItem<>(rootPlaylist);
         setRoot(rootItem);
         playlistsItemsMap.put(rootPlaylist, rootItem);
@@ -141,6 +142,11 @@ public class PlaylistTreeView extends TreeView<Playlist> {
         TreeItem<Playlist> parentItem = playlistsItemsMap.get(parent);
         parentItem.getChildren().remove(playlistItem);
         playlistsItemsMap.remove(playlist);
+    }
+
+    @Inject
+    public void setPlaylistTreeViewContextMenu(PlaylistTreeViewContextMenu contextMenu) {
+        setContextMenu(contextMenu);
     }
 
     public ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {

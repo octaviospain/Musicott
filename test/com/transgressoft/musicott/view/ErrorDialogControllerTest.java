@@ -19,7 +19,6 @@
 
 package com.transgressoft.musicott.view;
 
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tests.*;
 import javafx.application.*;
@@ -43,18 +42,18 @@ public class ErrorDialogControllerTest extends JavaFxTestBase<ErrorDialogControl
 
     static final String defaultErrorContent = "Improve Musicott reporting this error on github.";
 
+    Stage stage;
     Button okButton;
     Label titleLabel;
 
     @Start
     public void start(Stage stage) throws Exception {
-        testStage = stage;
-        injector = injectorWithSimpleMocks(StageDemon.class);
-
+        this.stage = stage;
         loadControllerModule(Layout.ERROR_DIALOG);
-        stage.setScene(new Scene(module.providesController().getRoot()));
+        stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);
+        controller.setStage(stage);
 
         stage.show();
     }
@@ -76,7 +75,7 @@ public class ErrorDialogControllerTest extends JavaFxTestBase<ErrorDialogControl
     @Test
     @DisplayName ("Single error message")
     void errorDialogMessageText() throws Exception {
-        Platform.runLater(() -> controller.prepareDialog("Error message", null, null));
+        Platform.runLater(() -> controller.show("Error message", null, null));
         WaitForAsyncUtils.waitForFxEvents();
 
         assertEquals("Error message", controller.getErrorTitle());
@@ -87,7 +86,7 @@ public class ErrorDialogControllerTest extends JavaFxTestBase<ErrorDialogControl
     @Test
     @DisplayName ("Error message with content message")
     void errorDialogMessageWithContentTest() throws Exception {
-        Platform.runLater(() -> controller.prepareDialog("Error message", "Content message", null));
+        Platform.runLater(() -> controller.show("Error message", "Content message", null));
         WaitForAsyncUtils.waitForFxEvents();
 
         assertEquals("Error message", controller.getErrorTitle());
@@ -103,7 +102,7 @@ public class ErrorDialogControllerTest extends JavaFxTestBase<ErrorDialogControl
                 new StackTraceElement(getClass().getName(), "method", "file", 31415)};
         exception.setStackTrace(stackTraceSample);
 
-        Platform.runLater(() ->  controller.prepareDialog("Error message", null, exception));
+        Platform.runLater(() ->  controller.show("Error message", null, exception));
         WaitForAsyncUtils.waitForFxEvents();
 
         assertEquals("Error message", controller.getErrorTitle());
@@ -121,7 +120,7 @@ public class ErrorDialogControllerTest extends JavaFxTestBase<ErrorDialogControl
     void errorDialogWithErrorCollection() throws Exception {
         List<String> errors = Arrays.asList("Error 1", "Error 2", "Error 3");
         Platform.runLater(
-                () -> controller.prepareDialogWithMessages("Error message", "Content message", errors));
+                () -> controller.showExpandable("Error message", "Content message", errors));
         WaitForAsyncUtils.waitForFxEvents();
 
         assertEquals("Error message", controller.getErrorTitle());
@@ -132,7 +131,7 @@ public class ErrorDialogControllerTest extends JavaFxTestBase<ErrorDialogControl
     @Test
     @DisplayName ("Lastfm error message")
     void lastFmErrorDialog() throws Exception {
-        Platform.runLater(() -> controller.prepareLastFmDialog("LastFm error message", null));
+        Platform.runLater(() -> controller.show("LastFm error message", null));
         WaitForAsyncUtils.waitForFxEvents();
 
         assertEquals("LastFm error message", controller.getErrorTitle());

@@ -21,13 +21,15 @@ package com.transgressoft.musicott.model;
 
 import com.google.common.collect.*;
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.*;
+import javafx.scene.control.*;
+import javafx.scene.control.Alert.*;
 import org.slf4j.*;
 
 import java.util.AbstractMap.*;
@@ -35,6 +37,7 @@ import java.util.*;
 import java.util.Map.*;
 
 import static com.transgressoft.musicott.model.AlbumsLibrary.*;
+import static com.transgressoft.musicott.util.Utils.*;
 
 /**
  * Singleton class that manages the operations over the
@@ -48,7 +51,6 @@ public class MusicLibrary {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final StageDemon stageDemon;
     private final TaskDemon taskDemon;
     private final PlayerFacade playerFacade;
     private final MapChangeListener<Integer, Track> musicottTracksListener = musicottTracksChangeListener();
@@ -59,11 +61,14 @@ public class MusicLibrary {
     private WaveformsLibrary waveformsLibrary;
     private PlaylistsLibrary playlistsLibrary;
 
+    private RootController rootController;
+    private NavigationController navigationController;
+    private SimpleProgressBarController progressBarController;
+
     private ListProperty<Entry<Integer, Track>> showingTracksProperty;
 
     @Inject
-    public MusicLibrary(StageDemon stageDemon, TaskDemon taskDemon, Provider<PlayerFacade> playerFacade) {
-        this.stageDemon = stageDemon;
+    public MusicLibrary(TaskDemon taskDemon, Provider<PlayerFacade> playerFacade) {
         this.taskDemon = taskDemon;
         this.playerFacade = playerFacade.get();
     }
@@ -94,8 +99,7 @@ public class MusicLibrary {
         track.getArtistsInvolved().forEach(artist -> added[0] |= artistsLibrary.addArtistTrack(artist, track));
         LOG.debug("Added {}", track);
 
-        // TODO Try to inject navigationModeProperty
-        NavigationController navigationController = stageDemon.getNavigationController();
+        // TODO debug this at the launching
         NavigationMode mode = navigationController == null ? null :
                 navigationController.navigationModeProperty().getValue();
         if (mode != null && mode == NavigationMode.ALL_TRACKS)
@@ -107,7 +111,7 @@ public class MusicLibrary {
         String trackAlbum = track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum();
         boolean[] removed = new boolean[]{false};
         Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);
-        stageDemon.getRootController().removeFromTrackSets(trackEntry);
+        rootController.removeFromTrackSets(trackEntry);
 
         Platform.runLater(() -> removed [0] = tracksLibrary.tracksProperty().remove(trackEntry));
         Platform.runLater(() -> removed[0] |= showingTracksProperty.remove(trackEntry));
@@ -119,16 +123,6 @@ public class MusicLibrary {
         return removed[0];
     }
 
-    public void showAllTracks() {
-        tracksLibrary.resetShowingTracks();
-    }
-
-    public void showPlaylist(Playlist playlist) {
-        showingTracksProperty.clear();
-        List<Entry<Integer, Track>> tracksUnderPlaylist = playlistsLibrary.getTrackEntriesUnderPlaylist(playlist);
-        showingTracksProperty.addAll(tracksUnderPlaylist);
-    }
-
     public void showArtist(String artist) {
         showArtistAndSelectTrack(artist, null);
     }
@@ -137,25 +131,42 @@ public class MusicLibrary {
         new Thread(() -> {
             Multimap<String, Entry<Integer, Track>> newTrackSetsByAlbum = getAlbumTracksOfArtist(artist);
             Platform.runLater(() -> {
-                stageDemon.getRootController().setArtistTrackSets(newTrackSetsByAlbum);
+                rootController.setArtistTrackSets(newTrackSetsByAlbum);
                 if (trackToSelect != null)
-                    stageDemon.getRootController().selectTrack(trackToSelect);
+                    rootController.selectTrack(trackToSelect);
             });
         }).start();
     }
 
-    /**
-     * Delete tracksLibrary from the music library looking also for occurrences in
-     * the playlistsLibrary and the waveformsLibrary collections.
-     * This method is called on an independent Thread in {@link StageDemon#deleteTracks}
-     *
-     * @param tracksToDelete A {@code List} of track ids
-     */
-    public void deleteTracks(Collection<Track> tracksToDelete) {
-        if (tracksToDelete.size() == tracksLibrary.getSize())
-            Platform.runLater(this::clearCollections);
-        else
-            tracksLibrary.remove(tracksToDelete);
+    public void deleteTracks(Collection<Track> trackSelection) {
+        if (! trackSelection.isEmpty()) {
+            javafx.stage.Stage mainStage = rootController.getStage();
+            String alertHeader = "Delete " + trackSelection.size() + " files from Musicott?";
+            Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION, mainStage);
+            Optional<ButtonType> result = alert.showAndWait();
+
+            if (result.isPresent() && result.get().getButtonData().isDefaultButton())
+                deleteTracksFromLibraries(trackSelection);
+            else
+                alert.close();
+        }
+    }
+
+    private void deleteTracksFromLibraries(Collection<Track> trackSelection) {
+        new Thread(() -> {
+            playerFacade.deleteFromQueues(trackSelection);
+            if (trackSelection.size() == tracksLibrary.getSize())
+                Platform.runLater(this::clearCollections);
+            else
+                tracksLibrary.remove(trackSelection);
+
+            String message = "Deleted " + Integer.toString(trackSelection.size()) + " tracks";
+            Platform.runLater(() -> {
+                navigationController.setStatusMessage(message);
+                progressBarController.getStage().hide();
+            });
+        }).start();
+        progressBarController.getStage().show();
     }
 
     private void clearCollections() {
@@ -199,17 +210,6 @@ public class MusicLibrary {
         randomArtistPlaylistThread.start();
     }
 
-    /**
-     * Makes a random playlist of tracksLibrary and adds it to the {@link PlayerFacade}
-     */
-    public void playRandomPlaylist() {
-        Thread randomPlaylistThread = new Thread(() -> {
-            List<Track> randomPlaylist = tracksLibrary.getRandomList();
-            playerFacade.setRandomListAndPlay(randomPlaylist);
-        }, "Random Playlist Thread");
-        randomPlaylistThread.start();
-    }
-
     public void playPlaylistRandomly(Playlist playlist) {
         Thread randomPlaylistPlayThread = new Thread(() -> {
             List<Track> randomList = playlistsLibrary.getRandomSortedTrackList(playlist);
@@ -219,10 +219,25 @@ public class MusicLibrary {
     }
 
     @Inject
+    public void setNavigationController(@NavigationCtrl NavigationController c) {
+        navigationController = c;
+    }
+
+    @Inject
+    public void setRootController(@RootCtrl RootController c) {
+        rootController = c;
+    }
+
+    @Inject
+    public void setProgressBarController(SimpleProgressBarController progressBarController) {
+        this.progressBarController = progressBarController;
+    }
+
+    @Inject
     public void setTracksLibrary(TracksLibrary tracksLibrary) {
         this.tracksLibrary = tracksLibrary;
         this.tracksLibrary.addListener(musicottTracksListener);
-        this.showingTracksProperty = tracksLibrary.showingTracksProperty();
+        this.showingTracksProperty = tracksLibrary.showingTrackEntriesProperty();
     }
 
     @Inject

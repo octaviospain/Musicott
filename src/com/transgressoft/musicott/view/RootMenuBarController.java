@@ -42,7 +42,6 @@ import javafx.stage.*;
 import javafx.stage.FileChooser.*;
 import org.slf4j.*;
 
-import javax.annotation.*;
 import java.io.*;
 import java.util.AbstractMap.*;
 import java.util.*;
@@ -79,8 +78,10 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     private RootController rootController;
     private NavigationController navigationController;
     private PlayerController playerController;
+    private PreferencesController preferencesController;
 
-    private StageDemon stageDemon;
+    private HostServices hostServices;
+    private MusicLibrary musicLibrary;
     private TaskDemon taskDemon;
     private PlayerFacade playerFacade;
     private MainPreferences mainPreferences;
@@ -150,10 +151,11 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     private MenuItem aboutMenuItem;
 
     @Inject
-    public RootMenuBarController(MainPreferences mainPreferences, StageDemon stageDemon, TaskDemon taskDemon,
-            PlayerFacade playerFacade) {
+    public RootMenuBarController(MainPreferences mainPreferences, MusicLibrary musicLibrary,
+            HostServices hostServices, TaskDemon taskDemon, PlayerFacade playerFacade) {
         this.mainPreferences = mainPreferences;
-        this.stageDemon = stageDemon;
+        this.musicLibrary = musicLibrary;
+        this.hostServices = hostServices;
         this.taskDemon = taskDemon;
         this.playerFacade = playerFacade;
     }
@@ -187,29 +189,34 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
         return rootMenuBar;
     }
 
-    @Inject
-    public void setRootController(@RootCtrl @Nullable RootController rootController) {
-        this.rootController = rootController;
+    @Inject (optional = true)
+    public void setRootController(@RootCtrl RootController c) {
+        rootController = c;
+    }
+
+    @Inject (optional = true)
+    public void setEditController(@EditCtrl EditController c) {
+        editController = c;
     }
 
     @Inject
-    public void setEditController(@EditCtrl EditController editController) {
-        this.editController = editController;
+    public void setNavigationController(@NavigationCtrl NavigationController c) {
+        navigationController = c;
     }
 
     @Inject
-    public void setNavigationController(@NavigationCtrl NavigationController navigationController) {
-        this.navigationController = navigationController;
+    public void setPlayerController(@PlayerCtrl PlayerController c) {
+        playerController = c;
+    }
+
+    @Inject (optional = true)
+    public void setPreferencesController(@PrefCtrl PreferencesController c) {
+        preferencesController = c;
     }
 
     @Inject
-    public void setPlayerController(@PlayerCtrl PlayerController playerController) {
-        this.playerController = playerController;
-    }
-
-    @Inject
-    public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty emptyLibraryProperty) {
-        this.emptyLibraryProperty = emptyLibraryProperty;
+    public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty p) {
+        this.emptyLibraryProperty = p;
     }
 
     @Inject
@@ -327,18 +334,19 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
             if (xmlFile != null)
                 taskDemon.importFromItunesLibrary(xmlFile.getAbsolutePath());
         });
-        preferencesMenuItem.setOnAction(e -> stageDemon.showPreferences());
+        preferencesMenuItem.setOnAction(e -> preferencesController.getStage().show());
         newPlaylistMenuItem.setOnAction(e -> rootController.enterNewPlaylistName(false));
         newPlaylistFolderMenuItem.setOnAction(e -> rootController.enterNewPlaylistName(true));
     }
 
     private void setEditMenuActions() {
         editMenuItem.setOnAction(e -> editController.editTracks(trackSelectionList()));
-        deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks(trackSelectionList()));
+        deleteMenuItem.setOnAction(e -> musicLibrary.deleteTracks(trackSelectionList()));
         selectAllMenuItem.setOnAction(e -> rootController.selectAllTracks());
         dontSelectAllMenuItem.setOnAction(e -> rootController.deselectAllTracks());
 
-        selectAllMenuItem.disableProperty().bind(combine(editingProperty, searchingProperty, (e, s) -> e || s));
+        selectAllMenuItem.disableProperty().bind(
+                combine(editingProperty, searchingProperty, (e, s) -> e || s));
         dontSelectAllMenuItem.disableProperty().bind(editingProperty);
         findMenuItem.setOnAction(e -> playerController.focusSearchField());
     }
@@ -389,7 +397,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
             Label aboutLabel1 = new Label(ABOUT_MUSICOTT_FIRST_LINE);
             Label aboutLabel2 = new Label(ABOUT_MUSICOTT_SECOND_LINE);
             Hyperlink githubLink = new Hyperlink(MUSICOTT_GITHUB_LINK);
-            githubLink.setOnAction(event -> stageDemon.getApplicationHostServices().showDocument(githubLink.getText()));
+            githubLink.setOnAction(event -> hostServices.showDocument(githubLink.getText()));
             FlowPane flowPane = new FlowPane();
             flowPane.getChildren().addAll(aboutLabel1, githubLink, aboutLabel2);
             alert.getDialogPane().contentProperty().set(flowPane);

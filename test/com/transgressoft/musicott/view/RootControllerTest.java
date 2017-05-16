@@ -19,88 +19,73 @@
 
 package com.transgressoft.musicott.view;
 
-import com.google.common.collect.*;
+import com.google.common.graph.*;
 import com.google.inject.*;
-import com.google.inject.util.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
 import org.mockito.*;
 import org.testfx.framework.junit5.*;
 
-import java.util.*;
 import java.util.Map.*;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Octavio Calleya
  */
-@ExtendWith(MockitoExtension.class)
 public class RootControllerTest extends JavaFxTestBase<RootController> {
 
-    static BooleanProperty falseProperty = new SimpleBooleanProperty(false);
+    BooleanProperty emptyLibraryProperty = new SimpleBooleanProperty(false);
+    ListProperty<Entry<Integer, Track>> showingTracksProperty =
+            new SimpleListProperty<>(FXCollections.emptyObservableList());
+    BooleanProperty falseProperty = new SimpleBooleanProperty(false);
 
     @Mock
-    EditController editControllerMock;
+    RootController rootControllerMock;
     @Mock
-    NavigationController navControllerMock;
+    ArtistsViewController artistsControllerMock;
+    @Mock
+    NavigationController navigationControllerMock;
     @Mock
     PlayerController playerControllerMock;
     @Mock
-    MainPreferences preferencesMock;
-    @Mock
-    StageDemon stageDemonMock;
-    @Mock
-    TaskDemon taskDemonMock;
-    @Mock
-    PlayerFacade playerMock;
-    @Mock
     RootMenuBarController menuBarMock;
     @Mock
-    ArtistsViewController artistsControllerMock;
+    PlayQueueController playQueueControllerMock;
+    @Mock
+    TrackSetAreaRowFactory trackSetAreaRowFactoryMock;
+
+    PlaylistTreeView playlistTreeView;
+    TrackTableView trackTableView;
 
     @Override
     @Start
     public void start(Stage stage) throws Exception {
-        Map<Class, Object> mocks = ImmutableMap.<Class, Object>builder()
-                .put(editControllerMock.getClass(), editControllerMock)
-                .put(playerControllerMock.getClass(), playerControllerMock)
-                .put(navControllerMock.getClass(), navControllerMock)
-                .put(preferencesMock.getClass(), preferencesMock)
-                .put(stageDemonMock.getClass(), stageDemonMock)
-                .put(taskDemonMock.getClass(), taskDemonMock)
-                .put(playerMock.getClass(), playerMock)
-                .put(artistsControllerMock.getClass(), artistsControllerMock)
-                .put(menuBarMock.getClass(), menuBarMock)
-                .build();
+        trackTableView = new TrackTableView(injector);
 
-        ControllerModule editModule = new EditModule(editControllerMock);
-        ControllerModule playerModule = new PlayerModule(playerControllerMock);
-        ControllerModule navModule = new NavigationModule(navControllerMock);
-        ControllerModule artistsModule = new ArtistsModule(artistsControllerMock);
-        ControllerModule menuBarModule = new RootMenuBarModule(menuBarMock);
-        RootTestModule rootTestModule = new RootTestModule();
+        ListProperty<String> artistsListProperty = new SimpleListProperty<>();
+        when(artistsLibraryMock.artistsListProperty()).thenReturn(artistsListProperty);
 
-        injector = injectorWithCustomMocks(mocks, editModule, navModule, playerModule, menuBarModule, artistsModule,
-                                           new TestModule(), rootTestModule);
+        Playlist rootPlaylist = new Playlist(tracksLibraryMock, "ROOT", true);
+        MutableGraph<Playlist> graph = GraphBuilder.directed().build();
+        graph.addNode(rootPlaylist);
+        when(playlistsLibraryMock.getPlaylistsTree()).thenReturn(graph);
+        playlistTreeView = new PlaylistTreeView(playlistsLibraryMock, rootPlaylist, injector);
 
+        injector = injector.createChildInjector(new TestModule());
         loadControllerModule(Layout.ROOT);
-        stage.setScene(new Scene(module.providesController().getRoot()));
-
-        injector = injectorWithCustomMocks(mocks, editModule, navModule, playerModule, menuBarModule, artistsModule,
-                                           new TestModule(), Modules.override(rootTestModule).with(module));
+        stage.setScene(new Scene(controller.getRoot()));
 
         stage.show();
     }
@@ -108,46 +93,90 @@ public class RootControllerTest extends JavaFxTestBase<RootController> {
     @Test
     @DisplayName ("Singleton controller")
     void singletonController() {
-        RootController controller1 = injector.getInstance(RootController.class);
-        RootController controller2 = injector.getInstance(RootController.class);
+        RootController anotherController = injector.getInstance(RootController.class);
 
-        assertSame(controller1, controller2);
-    }
-
-    private class RootTestModule extends AbstractModule {
-
-        @Override
-        protected void configure() {
-
-        }
-
-        @Provides
-        @RootCtrl
-        RootController providesRootController() {
-            return controller;
-        }
+        assertSame(controller, anotherController);
     }
 
     private class TestModule extends AbstractModule {
 
         @Override
         protected void configure() {
-            install(new ParseModule());
-            install(new TrackFactoryModule());
-            install(new UpdateMusicLibraryFactoryModule());
-            install(new TrackSetAreaRowFactoryModule());
             install(new WaveformPaneFactoryModule());
         }
 
         @Provides
-        @RootPlaylist
-        Playlist providesRootPlaylist(PlaylistFactory factory) {
-            return factory.create("ROOT", true);
+        TrackSetAreaRowFactory a() {
+            return trackSetAreaRowFactoryMock;
         }
 
         @Provides
-        @ShowingEditing
-        ReadOnlyBooleanProperty providesShowingEditing() {
+        TrackTableView providesTrackTableViewMock() {
+            return trackTableView;
+        }
+
+        @Provides
+        PlaylistTreeView providesPlaylistTreeViewMock() {
+            return playlistTreeView;
+        }
+
+        @Provides
+        @RootCtrl
+        RootController providesRootControllerMock() {
+            return rootControllerMock;
+        }
+
+        @Provides
+        @ArtistsCtrl
+        ArtistsViewController providesArtistsControllerMock() {
+            return artistsControllerMock;
+        }
+
+        @Provides
+        @NavigationCtrl
+        NavigationController providesNavigationControllerMock() {
+            return navigationControllerMock;
+        }
+
+        @Provides
+        @PlayerCtrl
+        PlayerController providesPlayerControllerMock() {
+            return playerControllerMock;
+        }
+
+        @Provides
+        @MenuBarCtrl
+        RootMenuBarController providesMenuBarControllerMock() {
+            return menuBarMock;
+        }
+
+        @Provides
+        @PlayQueueCtrl
+        PlayQueueController providesPlayQueueControllerMock() {
+            return playQueueControllerMock;
+        }
+
+        @Provides
+        @SearchingTextProperty
+        StringProperty providesSearchingTextProperty() {
+            return new SimpleStringProperty("");
+        }
+
+        @Provides
+        @SelectedMenuProperty
+        ReadOnlyObjectProperty<NavigationMode> providesSelectedMenuProperty() {
+            return new SimpleObjectProperty<>(NavigationMode.ALL_TRACKS);
+        }
+
+        @Provides
+        @SelectedPlaylistProperty
+        ReadOnlyObjectProperty<Optional<Playlist>> providesSelectedPlaylistProperty() {
+            return new SimpleObjectProperty<>(Optional.empty());
+        }
+
+        @Provides
+        @ShowingTableInfoPaneProperty
+        ReadOnlyBooleanProperty providesShowingTableInfoPaneProperty() {
             return falseProperty;
         }
 
@@ -158,44 +187,14 @@ public class RootControllerTest extends JavaFxTestBase<RootController> {
         }
 
         @Provides
-        @ShowingTableInfoPaneProperty
-        ReadOnlyBooleanProperty providesShowingTableInfoPaneProperty() {
+        @ShowingEditing
+        ReadOnlyBooleanProperty providesShowingEditing() {
             return falseProperty;
-        }
-
-        @Provides
-        @SelectedMenuProperty
-        ReadOnlyObjectProperty<NavigationMode> providesSelectedMenuProperty() {
-            return new SimpleObjectProperty<>(NavigationMode.ALL_TRACKS);
-        }
-
-        @Provides
-        @EmptyLibraryProperty
-        ReadOnlyBooleanProperty providesEmptyLibraryProperty() {
-            return falseProperty;
-        }
-
-        @Provides
-        @ShowingTracksProperty
-        ListProperty<Entry<Integer, Track>> providesShowingTracksProperty() {
-            return new SimpleListProperty<>(FXCollections.observableArrayList());
         }
 
         @Provides
         @SearchingProperty
         ReadOnlyBooleanProperty providesSearchingProperty() {
-            return falseProperty;
-        }
-
-        @Provides
-        @SearchingTextProperty
-        StringProperty providesSearchingTextProperty() {
-            return new SimpleStringProperty("test");
-        }
-
-        @Provides
-        @PlayPauseProperty
-        BooleanProperty providesPlayPauseProperty() {
             return falseProperty;
         }
 
@@ -209,6 +208,24 @@ public class RootControllerTest extends JavaFxTestBase<RootController> {
         @NextButtonDisabledProperty
         ReadOnlyBooleanProperty providesNextButtonDisabledProperty() {
             return falseProperty;
+        }
+
+        @Provides
+        @PlayPauseProperty
+        BooleanProperty providesPlayPauseProperty() {
+            return falseProperty;
+        }
+
+        @Provides
+        @EmptyLibraryProperty
+        ReadOnlyBooleanProperty providesEmptyLibraryProperty() {
+            return emptyLibraryProperty;
+        }
+
+        @Provides
+        @ShowingTracksProperty
+        ListProperty<Entry<Integer, Track>> providesShowingTracksProperty() {
+            return showingTracksProperty;
         }
     }
 }

@@ -20,10 +20,10 @@
 package com.transgressoft.musicott.tasks;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.view.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -46,7 +46,7 @@ public class TaskDemon {
 
 	private final Provider<WaveformTask> waveformTaskProvider;
 	private final SaveMusicLibraryTask saveMusicLibraryTask;
-	private final Provider<ErrorDemon> errorDemon;
+	private final ErrorDialogController errorDialog;
 
 	private ExecutorService parseExecutorService;
 	private Future parseFuture;
@@ -61,8 +61,8 @@ public class TaskDemon {
 
 	@Inject
 	public TaskDemon(Provider<SaveMusicLibraryTask> saveMusicLibraryTask, Provider<WaveformTask> waveformTaskProvider,
-			Provider<ErrorDemon> errorDemon) {
-		this.errorDemon = errorDemon;
+			ErrorDialogController errorDialog) {
+		this.errorDialog = errorDialog;
 		this.waveformTaskProvider = waveformTaskProvider;
 		this.saveMusicLibraryTask = saveMusicLibraryTask.get();
 		this.saveMusicLibraryTask.setDaemon(true);
@@ -90,7 +90,7 @@ public class TaskDemon {
 	 */
 	public void importFromItunesLibrary(String itunesLibraryPath) {
 		if (parseFuture != null && ! parseFuture.isDone())
-			errorDemon.get().showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE, "");
+			errorDialog.show(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
 			parseTask = parseTaskFactory.create(itunesLibraryPath);
 			parseFuture = parseExecutorService.submit(parseTask);
@@ -106,7 +106,7 @@ public class TaskDemon {
 	 */
 	public void importFiles(List<File> filesToImport, boolean playAtTheEnd) {
 		if (parseFuture != null && ! parseFuture.isDone())
-			errorDemon.get().showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE, "");
+			errorDialog.show(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
 			parseTask = parseTaskFactory.create(filesToImport, playAtTheEnd);
 			parseFuture = parseExecutorService.submit(parseTask);

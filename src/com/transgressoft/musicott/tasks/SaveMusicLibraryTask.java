@@ -23,6 +23,7 @@ import com.cedarsoftware.util.io.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import org.slf4j.*;
 
@@ -47,7 +48,7 @@ public class SaveMusicLibraryTask extends Thread {
     private final TracksLibrary tracksLibrary;
     private final PlaylistsLibrary playlistsLibrary;
     private final WaveformsLibrary waveformsLibrary;
-    private final Provider<ErrorDemon> errorDemon;
+    private final ErrorDialogController errorDialog;
 
     private String musicottUserPath;
     private File tracksFile;
@@ -64,12 +65,12 @@ public class SaveMusicLibraryTask extends Thread {
 
     @Inject
     public SaveMusicLibraryTask(TracksLibrary tracksLibrary, PlaylistsLibrary playlistsLibrary,
-            WaveformsLibrary waveformsLibrary, Provider<ErrorDemon> errorDemon) {
+            WaveformsLibrary waveformsLibrary, ErrorDialogController errorDialog) {
         setName("Save Library Thread");
         this.tracksLibrary = tracksLibrary;
         this.playlistsLibrary = playlistsLibrary;
         this.waveformsLibrary = waveformsLibrary;
-        this.errorDemon = errorDemon;
+        this.errorDialog = errorDialog;
         musicottUserPath = "";
         saveSemaphore = new Semaphore(0);
         tracksArgs = new HashMap<>();
@@ -155,7 +156,7 @@ public class SaveMusicLibraryTask extends Thread {
         catch (IOException | RuntimeException | InterruptedException exception) {
             Platform.runLater(() -> {
                 LOG.error("Error saving music library", exception.getCause());
-                errorDemon.get().showErrorDialog("Error saving music library", null, exception);
+                errorDialog.show("Error saving music library", null, exception);
             });
         }
     }

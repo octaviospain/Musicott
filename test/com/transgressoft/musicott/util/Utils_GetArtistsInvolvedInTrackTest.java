@@ -25,6 +25,7 @@ import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.view.*;
 import org.junit.jupiter.api.*;
 
 import static com.transgressoft.musicott.util.Utils.*;
@@ -45,7 +46,7 @@ public class Utils_GetArtistsInvolvedInTrackTest {
     @BeforeAll
     public static void beforeAll() {
         injector = Guice.createInjector(binder -> {
-            binder.bind(ErrorDemon.class).toInstance(mock(ErrorDemon.class));
+            binder.bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
 
             MainPreferences preferences = mock(MainPreferences.class);
             when(preferences.getTrackSequence()).thenReturn(0);

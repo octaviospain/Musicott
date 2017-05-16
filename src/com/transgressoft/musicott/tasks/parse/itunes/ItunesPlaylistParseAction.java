@@ -21,7 +21,6 @@ package com.transgressoft.musicott.tasks.parse.itunes;
 
 import com.google.inject.*;
 import com.google.inject.assistedinject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
@@ -51,13 +50,13 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
     private static final int MAX_PLAYLISTS_TO_PARSE_PER_ACTION = 250;
     private static final int NUMBER_OF_PARTITIONS = 2;
 
-    private final StageDemon stageDemon;
     private final PlaylistsLibrary playlistsLibrary;
 
     @Inject
     private PlaylistFactory playlistFactory;
     @Inject
     private ParseActionFactory parseActionFactory;
+    private NavigationController navigationController;
     private Playlist ROOT_PLAYLIST;
     private transient Map<Integer, Track> itunesIdToMusicottTrackMap;
 
@@ -71,11 +70,11 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
      * @param parentTask                 The reference to the parent {@link BaseParseTask} that called this action
      */
     @Inject
-    public ItunesPlaylistParseAction(PlaylistsLibrary playlistsLibrary, StageDemon stageDemon,
+    public ItunesPlaylistParseAction(PlaylistsLibrary playlistsLibrary, @NavigationCtrl NavigationController navCtrl,
             @RootPlaylist Playlist rootPlaylist, @Assisted List<ItunesPlaylist> itunesPlaylistsToParse,
             @Assisted Map<Integer, Track> itunesIdToMusicottTrackMap, @Assisted BaseParseTask parentTask) {
         super(itunesPlaylistsToParse, parentTask);
-        this.stageDemon = stageDemon;
+        this.navigationController = navCtrl;
         this.playlistsLibrary = playlistsLibrary;
         this.itunesIdToMusicottTrackMap = itunesIdToMusicottTrackMap;
         ROOT_PLAYLIST = rootPlaylist;
@@ -91,7 +90,6 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
                 if (playlistsLibrary.containsPlaylistName(playlist.getName()))
                     addTracksToExistingPlaylist(playlist);
                 else {
-                    NavigationController navigationController = stageDemon.getNavigationController();
                     Platform.runLater(() -> navigationController.addNewPlaylist(ROOT_PLAYLIST, playlist, false));
                     playlistsLibrary.addPlaylist(ROOT_PLAYLIST, playlist);
                 }

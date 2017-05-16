@@ -19,26 +19,16 @@
 
 package com.transgressoft.musicott.view;
 
-import com.google.common.collect.*;
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.util.guice.factories.*;
-import com.transgressoft.musicott.util.guice.modules.*;
 import javafx.beans.property.*;
 import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
 import org.mockito.*;
 import org.testfx.framework.junit5.*;
-
-import java.util.*;
-import java.util.Map.*;
 
 import static com.transgressoft.musicott.model.Layout.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,7 +37,6 @@ import static org.mockito.Mockito.*;
 /**
  * @author Octavio Calleya
  */
-@ExtendWith(MockitoExtension.class)
 public class RootMenuBarControllerTest extends JavaFxTestBase<RootMenuBarController> {
 
     static final BooleanProperty falseProperty = new SimpleBooleanProperty(false);
@@ -61,41 +50,17 @@ public class RootMenuBarControllerTest extends JavaFxTestBase<RootMenuBarControl
     @Mock
     PlayerController playerControllerMock;
     @Mock
-    ErrorDialogController errorDialogMock;
-    @Mock
-    PlayerFacade playerMock;
-    @Mock
-    TaskDemon taskDemonMock;
-    @Mock
-    StageDemon stageDemonMock;
-    @Mock
-    MainPreferences preferencesMock;
+    PreferencesController preferencesControllerMock;
 
     @Override
     @Start
     public void start(Stage stage) throws Exception {
         when(editControllerMock.showingProperty()).thenReturn(falseProperty);
 
-        Map<Class, Object> mocks = ImmutableMap.<Class, Object>builder()
-                .put(editControllerMock.getClass(), editControllerMock)
-                .put(errorDialogMock.getClass(), errorDialogMock)
-                .put(playerMock.getClass(), playerMock)
-                .put(taskDemonMock.getClass(), taskDemonMock)
-                .put(stageDemonMock.getClass(), stageDemonMock)
-                .put(preferencesMock.getClass(), preferencesMock)
-                .put(playerControllerMock.getClass(), playerControllerMock)
-                .put(rootControllerMock.getClass(), rootControllerMock)
-                .build();
-
-        ControllerModule rootModule = new RootModule(rootControllerMock);
-        ControllerModule editModule = new EditModule(editControllerMock);
-        ControllerModule navModule = new NavigationModule(navControllerMock);
-        ControllerModule playerModule = new PlayerModule(playerControllerMock);
-
-        injector = injectorWithCustomMocks(mocks, rootModule, editModule, navModule, playerModule, new TestModule());
+        injector = injector.createChildInjector(new TestModule());
 
         loadControllerModule(MENU_BAR);
-        stage.setScene(new Scene(module.providesController().getRoot()));
+        stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);
 
@@ -113,18 +78,36 @@ public class RootMenuBarControllerTest extends JavaFxTestBase<RootMenuBarControl
     private class TestModule extends AbstractModule {
 
         @Override
-        protected void configure() {
-            install(new ParseModule());
-            install(new WaveformPaneFactoryModule());
-            install(new TrackFactoryModule());
-            install(new UpdateMusicLibraryFactoryModule());
-        }
-
+        protected void configure() {}
 
         @Provides
-        @RootPlaylist
-        Playlist providesRootPlaylist(PlaylistFactory factory) {
-            return factory.create("ROOT", true);
+        @RootCtrl
+        RootController providesRootControllerMock() {
+            return rootControllerMock;
+        }
+
+        @Provides
+        @EditCtrl
+        EditController providesEditControllerMock() {
+            return editControllerMock;
+        }
+
+        @Provides
+        @NavigationCtrl
+        NavigationController providesNavigationControllerMock() {
+            return navControllerMock;
+        }
+
+        @Provides
+        @PlayerCtrl
+        PlayerController providesPlayerControllerMock() {
+            return playerControllerMock;
+        }
+
+        @Provides
+        @PrefCtrl
+        PreferencesController providesPreferencesControllerMock() {
+            return preferencesControllerMock;
         }
 
         @Provides
@@ -155,12 +138,6 @@ public class RootMenuBarControllerTest extends JavaFxTestBase<RootMenuBarControl
         @EmptyLibraryProperty
         ReadOnlyBooleanProperty providesEmptyLibraryProperty() {
             return falseProperty;
-        }
-
-        @Provides
-        @ShowingTracksProperty
-        ListProperty<Entry<Integer, Track>> providesShowingTracksProperty() {
-            return new SimpleListProperty<>();
         }
 
         @Provides

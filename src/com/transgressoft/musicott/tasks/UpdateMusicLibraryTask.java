@@ -22,9 +22,10 @@ package com.transgressoft.musicott.tasks;
 import com.google.common.collect.*;
 import com.google.inject.*;
 import com.google.inject.assistedinject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.view.*;
 import javafx.collections.*;
 import org.slf4j.*;
 
@@ -50,9 +51,9 @@ public class UpdateMusicLibraryTask extends Thread {
     
     private final AlbumsLibrary albumsLibrary;
     private final ArtistsLibrary artistsLibrary;
-    private final StageDemon stageDemon;
+    private final RootController rootController;
     private final TaskDemon taskDemon;
-    private final ErrorDemon errorDemon;
+    private final ErrorDialogController errorDialog;
     private final List<Track> tracks;
     private final Set<String> changedAlbums;
     private final Optional<String> newAlbum;
@@ -61,27 +62,27 @@ public class UpdateMusicLibraryTask extends Thread {
     private List<String> updateErrors = new ArrayList<>();
 
     @Inject
-    public UpdateMusicLibraryTask(AlbumsLibrary albumsLibrary, ArtistsLibrary artistsLibrary, StageDemon stageDemon,
-            TaskDemon taskDemon, ErrorDemon errorDemon, @Assisted List<Track> tracks, @Assisted Set<String> changedAlbums,
-            @Assisted Optional<String> newAlbum) {
+    public UpdateMusicLibraryTask(AlbumsLibrary albumsLibrary, ArtistsLibrary artistsLibrary, TaskDemon taskDemon,
+            ErrorDialogController errorDialog, @RootCtrl RootController rootCtrl, @Assisted List<Track> tracks,
+            @Assisted Set<String> changedAlbums, @Assisted Optional<String> newAlbum) {
         this.albumsLibrary = albumsLibrary;
         this.artistsLibrary = artistsLibrary;
-        this.stageDemon = stageDemon;
         this.taskDemon = taskDemon;
-        this.errorDemon = errorDemon;
+        this.errorDialog = errorDialog;
         this.tracks = tracks;
         this.changedAlbums = changedAlbums;
         this.newAlbum = newAlbum;
+        rootController = rootCtrl;
     }
 
     @Override
     public void run() {
         updateMusicLibraryTracks();
         updateMusicLibraryAlbums();
-        stageDemon.getRootController().updateShowingTrackSets();
+        rootController.updateShowingTrackSets();
         taskDemon.saveLibrary(true, false, false);
         if (! updateErrors.isEmpty())
-            errorDemon.showExpandableErrorsDialog("Errors writing metadata on some tracks", null, updateErrors);
+            errorDialog.showExpandable("Errors writing metadata on some tracks", null, updateErrors);
     }
 
     private void updateMusicLibraryTracks() {
@@ -134,7 +135,7 @@ public class UpdateMusicLibraryTask extends Thread {
         }
         catch (IOException exception) {
             LOG.error("Error creating the backup file: ", exception.getCause());
-            errorDemon.showErrorDialog("Error creating the backup file", null, exception);
+            errorDialog.show("Error creating the backup file", null, exception);
         }
         return backup;
     }
@@ -142,7 +143,7 @@ public class UpdateMusicLibraryTask extends Thread {
     private void deleteBackup(Track track, File backup) {
         if (backup != null && ! backup.delete()) {
             LOG.error("Error deleting backup file of {}", track);
-            errorDemon.showErrorDialog("Error deleting the backup file of " + track.getFileName());
+            errorDialog.show("Error deleting the backup file of " + track.getFileName());
         }
     }
 
@@ -153,7 +154,7 @@ public class UpdateMusicLibraryTask extends Thread {
         }
         catch (IOException | UnsupportedOperationException exception) {
             LOG.error("Error restoring the backup file: ", exception.getCause());
-            errorDemon.showErrorDialog("Error restoring the backup file", null, exception);
+            errorDialog.show("Error restoring the backup file", null, exception);
         }
     }
 }

@@ -23,6 +23,7 @@ import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import javafx.beans.binding.Binding;
 import javafx.beans.binding.*;
 import javafx.beans.property.*;
@@ -57,12 +58,9 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
     private static final String LOGIN = "Login";
     private static final String LOGOUT = "Logout";
 
-    private final MainPreferences preferences;
-    private final StageDemon stageDemon;
     private final ServiceDemon serviceDemon;
     private final TaskDemon taskDemon;
-    private final ErrorDemon errorDemon;
-    private final ReadOnlyBooleanProperty usingLastFmProperty;
+    private final ErrorDialogController errorDialog;
 
     @FXML
     private AnchorPane root;
@@ -91,22 +89,19 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
     @FXML
     private ComboBox<String> itunesImportPolicyCheckBox;
     private CheckComboBox<String> extensionsCheckComboBox;
+    private MainPreferences preferences;
     private LastFmPreferences lastFmPreferences;
+    private ReadOnlyBooleanProperty usingLastFmProperty;
 
     @Inject
-    public PreferencesController(MainPreferences preferences, StageDemon stageDemon, ServiceDemon serviceDemon,
-            TaskDemon taskDemon, ErrorDemon errorDemon) {
-        this.stageDemon = stageDemon;
+    public PreferencesController(ServiceDemon serviceDemon, TaskDemon taskDemon, ErrorDialogController errorDialog) {
         this.serviceDemon = serviceDemon;
-        this.preferences = preferences;
         this.taskDemon = taskDemon;
-        this.errorDemon = errorDemon;
-        usingLastFmProperty = serviceDemon.usingLastFmProperty();
+        this.errorDialog = errorDialog;
     }
 
     @FXML
     public void initialize() {
-        lastFmPreferences = serviceDemon.getLastFmPreferences();
         itunesImportPolicyCheckBox.setItems(FXCollections.observableArrayList(ITUNES_INFO, METADATA_INFO));
 
         lastFmLoginButton.disableProperty().bind(lastFmLoginButtonDisableBinding());
@@ -139,6 +134,7 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
         super.setStage(stage);
         stage.setTitle("Preferences");
         stage.setResizable(false);
+        stage.setOnShowing(event -> loadUserPreferences());
     }
 
     /**
@@ -202,7 +198,6 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
         if (lastFmLoginButton.getText().equals(LOGIN)) {
             String lastfmUsername = lastFmUsernameTextField.getText();
             String lastfmPassword = lastFmPasswordField.getText();
-            stageDemon.showIndeterminateProgress();
             serviceDemon.lastFmLogIn(lastfmUsername, lastfmPassword);
         }
         else {
@@ -227,18 +222,18 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
         String newApplicationUserFolderPath = newApplicationUserFolder + File.pathSeparator;
         File tracksFile = new File(newApplicationUserFolderPath + TRACKS_PERSISTENCE_FILE);
         if (tracksFile.exists() && ! tracksFile.delete())
-            errorDemon.showErrorDialog("Unable to delete tracks file", tracksFile.getAbsolutePath());
+            errorDialog.show("Unable to delete tracks file", tracksFile.getAbsolutePath());
         File waveformsFile = new File(newApplicationUserFolderPath + WAVEFORMS_PERSISTENCE_FILE);
         if (waveformsFile.exists() && ! waveformsFile.delete())
-            errorDemon.showErrorDialog("Unable to delete waveforms file", waveformsFile.getAbsolutePath());
+            errorDialog.show("Unable to delete waveforms file", waveformsFile.getAbsolutePath());
         File playlistsFile = new File(newApplicationUserFolderPath + PLAYLISTS_PERSISTENCE_FILE);
         if (playlistsFile.exists() && ! playlistsFile.delete())
-            errorDemon.showErrorDialog("Unable to delete playlists file", playlistsFile.getAbsolutePath());
+            errorDialog.show("Unable to delete playlists file", playlistsFile.getAbsolutePath());
         preferences.setMusicottUserFolder(newApplicationUserFolder);
         taskDemon.saveLibrary(true, true, true);
     }
 
-    public void loadUserPreferences() {
+    private void loadUserPreferences() {
         folderLocationTextField.setText(preferences.getMusicottUserFolder());
         loadImportPreferences();
         loadLastFmSettings();
@@ -264,5 +259,20 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
         String lastfmPassword = lastFmPreferences.getLastFmPassword();
         lastFmUsernameTextField.setText(lastfmUsername == null ? "" : lastfmUsername);
         lastFmPasswordField.setText(lastfmPassword == null ? "" : lastfmPassword);
+    }
+
+    @Inject
+    public void setUsingLastFmProperty(@UsingLastFmProperty ReadOnlyBooleanProperty p) {
+        usingLastFmProperty = p;
+    }
+
+    @Inject
+    public void setPreferences(MainPreferences preferences) {
+        this.preferences = preferences;
+    }
+
+    @Inject
+    public void setLastFmPreferences(LastFmPreferences lastFmPreferences) {
+        this.lastFmPreferences = lastFmPreferences;
     }
 }

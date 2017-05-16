@@ -20,11 +20,11 @@
 package com.transgressoft.musicott.player;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
-import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.model.Track;
+import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
@@ -52,11 +52,11 @@ public class PlayerFacade {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final Provider<MusicLibrary> musicLibrary;
-    private final StageDemon stageDemon;
+    private final TracksLibrary tracksLibrary;
     private final ServiceDemon serviceDemon;
     private final TaskDemon taskDemon;
 
+    private NavigationController navigationController;
     private PlayQueueController playQueueController;
     private PlayerController playerController;
     private Optional<Track> currentTrack;
@@ -68,10 +68,10 @@ public class PlayerFacade {
     private boolean scrobbled;
 
     @Inject
-    public PlayerFacade(Provider<MusicLibrary> musicLibrary, Provider<StageDemon> stageDemon,
+    public PlayerFacade(TracksLibrary tracksLibrary, @NavigationCtrl NavigationController navCtrl,
             Provider<ServiceDemon> serviceDemon, Provider<TaskDemon> taskDemon) {
-        this.musicLibrary = musicLibrary;
-        this.stageDemon = stageDemon.get();
+        this.tracksLibrary = tracksLibrary;
+        this.navigationController = navCtrl;
         this.serviceDemon = serviceDemon.get();
         this.taskDemon = taskDemon.get();
         playList = FXCollections.observableArrayList();
@@ -120,7 +120,7 @@ public class PlayerFacade {
             List<Track> playableTracks = tracks.stream().filter(track -> {
                 boolean isPlayable = track.isPlayable();
                 if (! isPlayable)
-                    Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Unplayable file"));
+                    Platform.runLater(() -> navigationController.setStatusMessage("Unplayable file"));
                 return isPlayable;
             }).collect(Collectors.toList());
 
@@ -164,13 +164,24 @@ public class PlayerFacade {
             if (! playList.isEmpty())
                 setCurrentTrack();
             else if (playRandom)
-                musicLibrary.get().playRandomPlaylist();
+                playRandomPlaylist();
         }
         else if (trackPlayer.getStatus().equals(PLAYING))
             if (playList.isEmpty())
                 stop();
             else
                 setCurrentTrack();
+    }
+
+    /**
+     * Creates a random playlist asynchronously
+     */
+    private void playRandomPlaylist() {
+        Thread randomPlaylistThread = new Thread(() -> {
+            List<Track> randomPlaylist = tracksLibrary.getRandomTracks();
+            setRandomListAndPlay(randomPlaylist);
+        }, "Random Playlist Thread");
+        randomPlaylistThread.start();
     }
 
     private void setCurrentTrack() {
@@ -278,7 +289,7 @@ public class PlayerFacade {
      *
      * @param tracksToDelete The {@link List} of track ids
      */
-    public void deleteFromQueues(List<Track> tracksToDelete) {
+    public void deleteFromQueues(Collection<Track> tracksToDelete) {
         currentTrack.ifPresent(track -> {
             if (tracksToDelete.contains(track)) {
                 currentTrack = Optional.empty();
@@ -378,7 +389,7 @@ public class PlayerFacade {
                         setCurrentTrack();
                 });
             }
-            Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Playing random playlist"));
+            Platform.runLater(() -> navigationController.setStatusMessage("Playing random playlist"));
         }
         else
             Platform.runLater(playerController::setStopped);

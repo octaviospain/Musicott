@@ -59,8 +59,9 @@ public class PlaylistsLoadAction extends BaseLoadAction {
 
     @Inject
     public PlaylistsLoadAction(PlaylistsLibrary playlistsLibrary, PlaylistFactory playlistFactory,
-            @RootPlaylist Playlist rootPlaylist, @Assisted String applicationFolder, @Assisted Application musicottApplication) {
-        super(applicationFolder, musicottApplication);
+            @RootPlaylist Playlist rootPlaylist, @Assisted String applicationFolder,
+            @Assisted Application application) {
+        super(applicationFolder, application);
         this.playlistsLibrary = playlistsLibrary;
         this.playlistFactory = playlistFactory;
         ROOT_PLAYLIST = rootPlaylist;
@@ -68,7 +69,7 @@ public class PlaylistsLoadAction extends BaseLoadAction {
 
     @Override
     protected void compute() {
-        notifyPreloader(-1, 0, "Loading playlists...");
+        notifyPreloader(- 1, 0, "Loading playlists...");
         String playlistsPath = applicationFolder + File.separator + PLAYLISTS_PERSISTENCE_FILE;
         File playlistsFile = new File(playlistsPath);
         if (playlistsFile.exists()) {

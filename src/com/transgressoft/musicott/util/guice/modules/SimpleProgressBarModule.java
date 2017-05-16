@@ -17,21 +17,31 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.util.guice.annotations;
+package com.transgressoft.musicott.util.guice.modules;
 
 import com.google.inject.*;
-
-import java.lang.annotation.*;
-
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.view.*;
 
 /**
  * @author Octavio Calleya
  */
-@Target ({FIELD, PARAMETER, METHOD})
-@Retention (RUNTIME)
-@BindingAnnotation
-public @interface RootMenuBar {
+public class SimpleProgressBarModule extends AbstractModule implements ControllerModule<SimpleProgressBarController> {
 
+    private SimpleProgressBarController controller;
+
+    public SimpleProgressBarModule(SimpleProgressBarController controller) {
+        this.controller = controller;
+    }
+
+    @Override
+    protected void configure() {
+        bind(InjectableController.class).annotatedWith(ProgressBarCtrl.class).toInstance(controller);
+    }
+
+    @Provides
+    @NavigationCtrl
+    public SimpleProgressBarController providesController() {
+        return controller;
+    }
 }

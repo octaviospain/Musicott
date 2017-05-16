@@ -76,10 +76,6 @@ public class ServiceDemon {
         return usingLastFm;
     }
 
-    public LastFmPreferences getLastFmPreferences() {
-        return lastFmPreferences;
-    }
-
     @Inject
     public void setLastFmPreferences(LastFmPreferences lastFmPreferences) {
         this.lastFmPreferences = lastFmPreferences;

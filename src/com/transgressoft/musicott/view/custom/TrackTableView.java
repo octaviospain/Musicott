@@ -20,10 +20,10 @@
 package com.transgressoft.musicott.view.custom;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
 import javafx.event.*;
@@ -41,6 +41,7 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.view.custom.TrackTableViewContextMenu.*;
 import static javafx.scene.media.MediaPlayer.Status.*;
 
 /**
@@ -54,7 +55,8 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
     private static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
     @Inject
-    private static StageDemon stageDemon;
+    @RootCtrl
+    private static RootController rootController;
     @Inject
     private static PlayerFacade playerFacade;
     static EventHandler<KeyEvent> KEY_PRESSED_ON_TRACK_TABLE_HANDLER = getKeyPressedEventHandler();
@@ -79,7 +81,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
     @SuppressWarnings ("unchecked")
     @Inject
-    public TrackTableView(TrackTableViewContextMenu trackTableContextMenu, Injector injector) {
+    public TrackTableView(Injector injector) {
         super();
         setId("trackTable");
         initColumns();
@@ -96,14 +98,6 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         setRowFactory(tableView -> injector.getInstance(TrackTableRow.class));
         addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
         getStylesheets().add(getClass().getResource(TRACK_TABLE_STYLE).toExternalForm());
-
-        setContextMenu(trackTableContextMenu);
-        addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            if (event.getButton() == MouseButton.SECONDARY)
-                trackTableContextMenu.show(this, event.getScreenX(), event.getScreenY());
-            else if (event.getButton() == MouseButton.PRIMARY && trackTableContextMenu.isShowing())
-                trackTableContextMenu.hide();
-        });
     }
 
     private void initColumns() {
@@ -213,6 +207,12 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         getSelectionModel().focus(entryPos);
     }
 
+    @Inject
+    public void setContextMenu(TrackTableViewContextMenu trackTableContextMenu) {
+        super.setContextMenu(trackTableContextMenu);
+        addEventHandler(MouseEvent.MOUSE_CLICKED, showContextMenuEventHandler(this, trackTableContextMenu));
+    }
+
     /**
      * Returns a {@link EventHandler} that fires the play of a {@link Track} when
      * the user presses the {@code Enter} key, and pauses/resumes the player when the user
@@ -223,7 +223,6 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
     private static EventHandler<KeyEvent> getKeyPressedEventHandler() {
         return event -> {
             if (event.getCode() == KeyCode.ENTER) {
-                RootController rootController = stageDemon.getRootController();
                 List<Track> selection = rootController.getSelectedTracks()
                                                       .stream()
                                                       .map(Entry::getValue).collect(Collectors.toList());

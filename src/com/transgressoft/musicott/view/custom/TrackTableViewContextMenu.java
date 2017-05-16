@@ -20,14 +20,15 @@
 package com.transgressoft.musicott.view.custom;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
+import javafx.event.*;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.input.*;
 
 import java.util.*;
 import java.util.Map.*;
@@ -41,9 +42,9 @@ import java.util.stream.*;
  */
 public class TrackTableViewContextMenu extends ContextMenu {
 
-    private final StageDemon stageDemon;
     private final PlaylistsLibrary playlistsLibrary;
 
+    private RootController rootController;
     private EditController editController;
     private Menu addToPlaylistMenu;
     private MenuItem deleteFromPlaylistMenuItem;
@@ -51,13 +52,13 @@ public class TrackTableViewContextMenu extends ContextMenu {
 
     private List<Entry<Integer, Track>> selectedEntries;
     private ListProperty<Entry<Integer, Track>> showingTracksProperty;
+    private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
     @Inject
-    public TrackTableViewContextMenu(PlaylistsLibrary playlistsLibrary, StageDemon stageDemon,
+    public TrackTableViewContextMenu(PlaylistsLibrary playlistsLibrary, MusicLibrary musicLibrary,
             PlayerFacade playerFacade) {
         super();
         this.playlistsLibrary = playlistsLibrary;
-        this.stageDemon = stageDemon;
         addToPlaylistMenu = new Menu("Add to playlist");
 
         MenuItem playMenuItem = new MenuItem("Play");
@@ -75,7 +76,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
         MenuItem deleteMenuItem = new MenuItem("Delete");
         deleteMenuItem.setOnAction(event -> {
             if (! selectedEntries.isEmpty())
-                stageDemon.deleteTracks(trackSelection(selectedEntries));
+                musicLibrary.deleteTracks(trackSelection(selectedEntries));
         });
 
         MenuItem addToQueueMenuItem = new MenuItem("Add to play queue");
@@ -89,7 +90,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
 
         deleteFromPlaylistMenuItem.setOnAction(event -> {
             if (! selectedEntries.isEmpty()) {
-                getSelectedPlaylist().get().removeTracks(trackSelectionIds(selectedEntries));
+                selectedPlaylistProperty.get().get().removeTracks(trackSelectionIds(selectedEntries));
                 showingTracksProperty.removeAll(selectedEntries);
             }
         });
@@ -106,18 +107,12 @@ public class TrackTableViewContextMenu extends ContextMenu {
         return entriesSelection.stream().map(Entry::getValue).collect(Collectors.toList());
     }
 
-    private Optional<Playlist> getSelectedPlaylist() {
-        RootController navigationController = stageDemon.getRootController();
-        ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty =
-                navigationController.selectedPlaylistProperty();
-        return selectedPlaylistProperty.getValue();
-    }
-
     @Override
     public void show(Node anchor, double screenX, double screenY) {
         playlistsInMenu.clear();
-        selectedEntries = stageDemon.getRootController().getSelectedTracks();
-        if (getSelectedPlaylist().isPresent() && ! getSelectedPlaylist().get().isFolder())  {
+        selectedEntries = rootController.getSelectedTracks();
+        Optional<Playlist> selectedPlaylist = selectedPlaylistProperty.get();
+        if (selectedPlaylist.isPresent() && ! selectedPlaylist.get().isFolder())  {
             playlistsLibrary.getPlaylistsTree().nodes()
                                   .stream().filter(p -> ! p.isFolder())
                                   .forEach(this::addPlaylistToMenuList);
@@ -132,7 +127,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
     }
 
     private void addPlaylistToMenuList(Playlist playlist) {
-        Optional<Playlist> selectedPlaylist = getSelectedPlaylist();
+        Optional<Playlist> selectedPlaylist = selectedPlaylistProperty.get();
         if (! (selectedPlaylist.isPresent() && selectedPlaylist.get().equals(playlist))) {
             MenuItem playlistMenuItem = new MenuItem(playlist.getName());
             playlistMenuItem.setOnAction(event -> {
@@ -143,13 +138,32 @@ public class TrackTableViewContextMenu extends ContextMenu {
         }
     }
 
-    @Inject (optional = true)
-    public void setEditController(@EditCtrl EditController editController) {
-        this.editController = editController;
+    @Inject
+    public void setRootController(@RootCtrl RootController c) {
+        rootController = c;
+    }
+
+    @Inject
+    public void setEditController(@EditCtrl EditController c) {
+        this.editController = c;
+    }
+
+    @Inject
+    public void setSelectedPlaylistProperty(@SelectedPlaylistProperty ReadOnlyObjectProperty<Optional<Playlist>> p) {
+        selectedPlaylistProperty = p;
     }
 
     @Inject
     public void setShowingTracksProperty(@ShowingTracksProperty ListProperty<Entry<Integer, Track>> p) {
         showingTracksProperty = p;
+    }
+
+    public static EventHandler<MouseEvent> showContextMenuEventHandler(Node nodeInWhichShow, ContextMenu contextMenu) {
+        return event -> {
+            if (event.getButton() == MouseButton.SECONDARY)
+                contextMenu.show(nodeInWhichShow, event.getScreenX(), event.getScreenY());
+            else if (event.getButton() == MouseButton.PRIMARY && contextMenu.isShowing())
+                contextMenu.hide();
+        };
     }
 }

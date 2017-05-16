@@ -20,8 +20,8 @@
 package com.transgressoft.musicott.view;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
 import javafx.beans.property.*;
@@ -51,10 +51,8 @@ public class NavigationController extends InjectableController<VBox> {
     private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
     private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(73, 73, 73);";
 
-    private final MusicLibrary musicLibrary;
+    private final TracksLibrary tracksLibrary;
     private final PlaylistsLibrary playlistsLibrary;
-    private final RootController rootController;
-    private final StageDemon stageDemon;
 
     @FXML
     private VBox navigationPaneVBox;
@@ -69,19 +67,16 @@ public class NavigationController extends InjectableController<VBox> {
     @FXML
     private Label statusLabel;
 
+    private RootController rootController;
     private NavigationMenuListView navigationMenuListView;
     private PlaylistTreeView playlistTreeView;
     private ObjectProperty<NavigationMode> navigationModeProperty;
     private Optional<Playlist> currentPlayingPlaylist;
 
     @Inject
-    public NavigationController(MusicLibrary musicLibrary, PlaylistsLibrary playlistsLibrary,
-            RootController rootController, PlaylistTreeView playlistTreeView, StageDemon stageDemon) {
-        this.musicLibrary = musicLibrary;
+    public NavigationController(TracksLibrary tracksLibrary, PlaylistsLibrary playlistsLibrary) {
+        this.tracksLibrary = tracksLibrary;
         this.playlistsLibrary = playlistsLibrary;
-        this.rootController = rootController;
-        this.playlistTreeView = playlistTreeView;
-        this.stageDemon = stageDemon;
     }
 
     @FXML
@@ -90,10 +85,7 @@ public class NavigationController extends InjectableController<VBox> {
         navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", NavigationMode.ALL_TRACKS);
         navigationMenuListView = new NavigationMenuListView(this);
         subscribe(navigationModeProperty, this::setNavigationMode);
-        subscribe(selectedPlaylistProperty(), newPlaylist -> newPlaylist.ifPresent(playlist -> {
-            musicLibrary.showPlaylist(playlist);
-            setNavigationMode(NavigationMode.PLAYLIST);
-        }));
+
         NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS, NavigationMode.ARTISTS};
         navigationMenuListView.setItems(FXCollections.observableArrayList(navigationModes));
 
@@ -107,12 +99,20 @@ public class NavigationController extends InjectableController<VBox> {
         });
 
         navigationVBox.getChildren().add(1, navigationMenuListView);
-        playlistsVBox.getChildren().add(1, playlistTreeView);
         taskProgressBar.visibleProperty().bind(map(taskProgressBar.progressProperty().isEqualTo(0).not(), Function.identity()));
         taskProgressBar.setProgress(0);
 
-        VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
         VBox.setVgrow(navigationVBox, Priority.ALWAYS);
+    }
+
+    @Override
+    public void configure() {
+        subscribe(selectedPlaylistProperty(),
+                  playlist -> playlist.ifPresent(
+                          p -> setNavigationMode(NavigationMode.PLAYLIST)));
+
+        playlistsVBox.getChildren().add(1, playlistTreeView);
+        VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
     }
 
     @Override
@@ -130,7 +130,7 @@ public class NavigationController extends InjectableController<VBox> {
 
         switch (mode) {
             case ALL_TRACKS:
-                musicLibrary.showAllTracks();
+                tracksLibrary.showAllTracks();
                 navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
                 playlistTreeView.clearAndSelect(- 1);
                 Platform.runLater(rootController::showAllTracksView);
@@ -154,14 +154,14 @@ public class NavigationController extends InjectableController<VBox> {
         newPlaylistMI = new MenuItem("New Playlist");
         newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier()));
         newPlaylistMI.setOnAction(e -> {
-            stageDemon.getRootController().enterNewPlaylistName(false);
+            rootController.enterNewPlaylistName(false);
             playlistTreeView.clearAndSelect(- 1);
             navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
         });
         newFolderPlaylistMI = new MenuItem("New Playlist Folder");
         newFolderPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier(), KeyCombination.SHIFT_DOWN));
         newFolderPlaylistMI.setOnAction(e -> {
-            stageDemon.getRootController().enterNewPlaylistName(true);
+            rootController.enterNewPlaylistName(true);
             playlistTreeView.clearAndSelect(- 1);
             navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
         });
@@ -225,11 +225,21 @@ public class NavigationController extends InjectableController<VBox> {
         statusLabel.setText(message);
     }
 
+    @Inject
+    public void setPlaylistTreeView(PlaylistTreeView playlistTreeView) {
+        this.playlistTreeView = playlistTreeView;
+    }
+
+    @Inject (optional = true)
+    public void setRootController(@RootCtrl RootController c) {
+        rootController = c;
+    }
+
     public ObjectProperty<NavigationMode> navigationModeProperty() {
         return navigationModeProperty;
     }
 
-    ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
+    public ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
         return playlistTreeView.selectedPlaylistProperty();
     }
 }

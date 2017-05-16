@@ -20,84 +20,122 @@
 package com.transgressoft.musicott.view;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.custom.*;
+import javafx.application.*;
 import javafx.beans.property.*;
+import javafx.collections.*;
 import javafx.scene.*;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
+import org.testfx.api.*;
 import org.testfx.framework.junit5.*;
+import org.testfx.util.*;
 
-import java.util.Map.*;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Octavio Calleya
  */
 public class ArtistsViewControllerTest extends JavaFxTestBase<ArtistsViewController> {
 
-    static BooleanProperty falseProperty = new SimpleBooleanProperty(false);
+    TrackTableViewContextMenu trackTableViewContextMenuMock;
+
+    Button artistRandomButton;
+    ListView<String> artistsListView;
+    ListView<TrackSetAreaRow> trackSetsListView;
+    Label nameLabel;
+    Label totalAlbumsLabel;
+    Label totalTracksLabel;
+
+    ListProperty<String> artistsListProperty = new SimpleListProperty<>();
+    StringProperty searchingTextProperty = new SimpleStringProperty("");
+    ObservableList<String> artists = FXCollections.observableArrayList("John Lennon", "Queen");
 
     @Override
     @Start
     public void start(Stage stage) throws Exception {
-        injector = injectorWithSimpleMocks(new TestModule(), StageDemon.class, TaskDemon.class,
-                                           PlayerFacade.class, PlayerController.class, TrackSetAreaRowFactory.class,
-                                           RootController.class, NavigationController.class);
+        trackTableViewContextMenuMock = mock(TrackTableViewContextMenu.class);
+        when(artistsLibraryMock.artistsListProperty()).thenReturn(artistsListProperty);
+
+        injector = injectorWithSimpleMocks(new TestModule());
 
         loadControllerModule(Layout.ARTISTS);
-        stage.setScene(new Scene(module.providesController().getRoot()));
+        stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);
 
         stage.show();
     }
 
+    @BeforeEach
+    void beforeEach(FxRobot fxRobot) {
+        artistRandomButton = find(fxRobot, "#artistRandomButton");
+        artistsListView = find(fxRobot, "#artistsListView");
+        trackSetsListView = find(fxRobot, "#trackSetsListView");
+        nameLabel = find(fxRobot, "#nameLabel");
+        totalAlbumsLabel = find(fxRobot, "#totalAlbumsLabel");
+        totalTracksLabel = find(fxRobot, "#totalTracksLabel");
+    }
+
     @Test
-    @DisplayName("Singleton controller")
+    @DisplayName ("Singleton controller")
     void singletonController() {
         ArtistsViewController anotherController = injector.getInstance(ArtistsViewController.class);
 
         assertSame(controller, anotherController);
     }
 
+    @Test
+    @DisplayName ("Artists name change on click")
+    void artistNameChange(FxRobot fxRobot) {
+        ReadOnlyObjectProperty<Optional<String>> selectedArtistProperty = controller.selectedArtistProperty();
+
+        assertEquals(Optional.empty(), selectedArtistProperty.get());
+        assertEquals("", nameLabel.getText());
+        assertFalse(artistRandomButton.isVisible());
+
+        Platform.runLater(() -> artistsListProperty.setValue(artists));
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertEquals(artistsListView.getItems().size(), 2);
+        assertEquals(artistsListView.getItems().get(0), artists.get(0));
+        assertEquals(artistsListView.getItems().get(1), artists.get(1));
+
+        // When clicking on the first artist
+        ListCell<String> firstItem = fxRobot.lookup("#artistsListView").lookup(".list-cell").nth(0).query();
+        fxRobot.clickOn(firstItem);
+
+        // Label and property are updated
+        assertEquals(artists.get(0), firstItem.getText());
+        assertEquals(Optional.of(artists.get(0)), selectedArtistProperty.get());
+        assertEquals(artists.get(0), nameLabel.getText());
+        assertTrue(artistRandomButton.isVisible());
+    }
+
     private class TestModule extends AbstractModule {
 
         @Override
         protected void configure() {
-            install(new ParseModule());
-            install(new TrackFactoryModule());
+            install(new TrackSetAreaRowFactoryModule());
         }
 
         @Provides
-        @RootPlaylist
-        Playlist providesRootPlaylist(PlaylistFactory factory) {
-            return factory.create("ROOT", true);
-        }
-
-        @Provides
-        @EmptyLibraryProperty
-        ReadOnlyBooleanProperty providesEmptyLibraryProperty() {
-            return falseProperty;
+        TrackTableViewContextMenu providesContextMenuMock() {
+            return trackTableViewContextMenuMock;
         }
 
         @Provides
         @SearchingTextProperty
         StringProperty providesSearchingTextProperty() {
-            return new SimpleStringProperty("test");
-        }
-
-        @Provides
-        @ShowingTracksProperty
-        ListProperty<Entry<Integer, Track>> providesShowingTracksProperty() {
-            return new SimpleListProperty<>();
+            return searchingTextProperty;
         }
     }
 }

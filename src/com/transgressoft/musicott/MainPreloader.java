@@ -22,6 +22,7 @@ package com.transgressoft.musicott;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.fxml.*;
@@ -59,7 +60,7 @@ public class MainPreloader extends Preloader {
     @Inject
     private MainPreferences preferences;
     @Inject
-    private ErrorDemon errorDemon;
+    private ErrorDialogController errorDialog;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -144,7 +145,7 @@ public class MainPreloader extends Preloader {
             promptStage.showAndWait();
         }
         catch (IOException e) {
-            errorDemon.showErrorDialog("Error opening Musicott's folder selection", "", e);
+            errorDialog.show("Error opening Musicott's folder selection", "", e);
         }
     }
 }

@@ -22,8 +22,8 @@ package com.transgressoft.musicott.util;
 import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.view.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
 import javafx.scene.image.*;
@@ -351,14 +351,14 @@ public class Utils {
      * @return An {@link Optional} with the {@code image} or not.
      */
     public static Optional<Image> getImageFromFile(File imageFile) {
-        ErrorDemon errorDemon = injector.getInstance(ErrorDemon.class);
+        ErrorDialogController errorDialog = injector.getInstance(ErrorDialogController.class);
         Optional<Image> optionalImage = Optional.empty();
         try {
             byte[] coverBytes = Files.readAllBytes(Paths.get(imageFile.getPath()));
             optionalImage = Optional.of(new Image(new ByteArrayInputStream(coverBytes)));
         }
         catch (IOException exception) {
-            errorDemon.showErrorDialog("Error getting Image from image file", "", exception);
+            errorDialog.show("Error getting Image from image file", "", exception);
         }
         return optionalImage;
     }

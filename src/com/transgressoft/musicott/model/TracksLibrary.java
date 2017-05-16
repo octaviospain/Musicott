@@ -104,14 +104,12 @@ public class TracksLibrary {
         showingTracksProperty.clear();
     }
 
-    void resetShowingTracks() {
+    public synchronized void showAllTracks() {
         showingTracksProperty.clear();
-        synchronized (this) {
-            showingTracksProperty.addAll(musicottTracks.entrySet());
-        }
+        showingTracksProperty.addAll(musicottTracks.entrySet());
     }
 
-    List<Track> getRandomList() {
+    public List<Track> getRandomTracks() {
         List<Track> randomList = new ArrayList<>();
         ImmutableList<Integer> trackIds;
         synchronized (this) {
@@ -131,11 +129,15 @@ public class TracksLibrary {
         return randomList;
     }
 
+    public ReadOnlyBooleanProperty emptyTracksLibraryProperty() {
+        return trackEntriesListProperty.emptyProperty();
+    }
+
     public ListProperty<Entry<Integer, Track>> tracksProperty() {
         return trackEntriesListProperty;
     }
 
-    public ListProperty<Entry<Integer, Track>> showingTracksProperty() {
+    public ListProperty<Entry<Integer, Track>> showingTrackEntriesProperty() {
         return showingTracksProperty;
     }
 

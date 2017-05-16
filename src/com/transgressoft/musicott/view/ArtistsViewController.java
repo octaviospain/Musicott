@@ -101,13 +101,13 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
             else
                 return "";
         }, selectedArtistProperty));
-        if (! artistsListView.getItems().isEmpty())
-            checkSelectedArtist();
     }
 
     @Override
     public void configure() {
         artistsListView.setItems(bindedToSearchFieldArtists());
+        if (! artistsListView.getItems().isEmpty())
+            checkSelectedArtist();
     }
 
     @Override
@@ -317,5 +317,9 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
 
     public void deselectAllTracks() {
         albumTrackSets.values().forEach(TrackSetAreaRow::deselectAllTracks);
+    }
+
+    public ReadOnlyObjectProperty<Optional<String>> selectedArtistProperty() {
+        return selectedArtistProperty;
     }
 }

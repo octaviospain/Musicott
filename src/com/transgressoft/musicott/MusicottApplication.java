@@ -63,7 +63,6 @@ public class MusicottApplication extends Application implements InjectedApplicat
 
     static Injector injector = Guice.createInjector(new PreloaderModule());
 
-    private StageDemon stageDemon;
     private TaskDemon taskDemon;
 
     public static void main(String[] args) {
@@ -82,8 +81,6 @@ public class MusicottApplication extends Application implements InjectedApplicat
         loadConfigProperties(lastFmPreferences);
 
         injector.getInstance(MusicLibrary.class);
-        stageDemon = injector.getInstance(StageDemon.class);
-        stageDemon.setInjector(injector);
 
         taskDemon = injector.getInstance(TaskDemon.class);
         taskDemon.deactivateLibrarySaving();
@@ -128,7 +125,7 @@ public class MusicottApplication extends Application implements InjectedApplicat
             taskDemon.shutDownTasks();
             System.exit(0);
         });
-        injector = injector.createChildInjector(new MusicottModule());
+        injector = injector.createChildInjector(new MusicottModule(), new HostServicesModule(getHostServices()));
 
         ControllerModule<ErrorDialogController> errorModule = createController(ERROR_DIALOG, injector);
         Stage errorStage = new Stage();
@@ -152,9 +149,5 @@ public class MusicottApplication extends Application implements InjectedApplicat
         primaryStage.setScene(new Scene(rootModule.providesController().getRoot()));
 
         primaryStage.show();
-
-        //        stageDemon.initErrorController();
-//        stageDemon.setApplicationHostServices(getHostServices());
-//        stageDemon.showMusicott(primaryStage);
     }
 }

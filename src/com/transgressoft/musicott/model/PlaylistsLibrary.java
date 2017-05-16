@@ -111,7 +111,13 @@ public class PlaylistsLibrary {
         playlistsTree.nodes().stream().filter(playlist -> ! playlist.isFolder()).forEach(Playlist::clearTracks);
     }
 
-    synchronized List<Entry<Integer, Track>> getTrackEntriesUnderPlaylist(Playlist playlist) {
+    public synchronized void showPlaylist(Playlist playlist) {
+        tracksLibrary.showingTrackEntriesProperty().clear();
+        List<Entry<Integer, Track>> tracksUnderPlaylist = getTrackEntriesUnderPlaylist(playlist);
+        tracksLibrary.showingTrackEntriesProperty().addAll(tracksUnderPlaylist);
+    }
+
+    private List<Entry<Integer, Track>> getTrackEntriesUnderPlaylist(Playlist playlist) {
         return playlist.getTracks().stream()
                        .map(i -> new SimpleEntry<>(i, tracksLibrary.getTrack(i).get()))
                        .collect(Collectors.toList());

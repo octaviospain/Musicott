@@ -22,9 +22,10 @@ package com.transgressoft.musicott.tasks;
 import be.tarsos.transcoder.*;
 import be.tarsos.transcoder.ffmpeg.*;
 import com.google.inject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import org.slf4j.*;
 
@@ -62,21 +63,24 @@ public class WaveformTask extends Thread {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final Provider<StageDemon> stageDemon;
     private final Provider<PlayerFacade> playerFacade;
     private final Provider<TaskDemon> taskDemon;
     private final WaveformsLibrary waveformsLibrary;
 
     private Track trackToAnalyze;
     private float[] resultingWaveform;
+    private PlayerController playerController;
+    private NavigationController navigationController;
 
     @Inject
-    public WaveformTask(WaveformsLibrary waveformsLibrary, Provider<StageDemon> stageDemon,
-            Provider<PlayerFacade> playerFacade, Provider<TaskDemon> taskDemon) {
+    public WaveformTask(WaveformsLibrary waveformsLibrary, Provider<PlayerFacade> playerFacade,
+            Provider<TaskDemon> taskDemon, @PlayerCtrl PlayerController playerCtrl,
+            @NavigationCtrl NavigationController navCtrl) {
         this.waveformsLibrary = waveformsLibrary;
-        this.stageDemon = stageDemon;
         this.taskDemon = taskDemon;
         this.playerFacade = playerFacade;
+        playerController = playerCtrl;
+        navigationController = navCtrl;
     }
 
     @Override
@@ -96,13 +100,13 @@ public class WaveformTask extends Thread {
                     waveformsLibrary.addWaveform(trackToAnalyze.getTrackId(), resultingWaveform);
                     Optional<Track> currentTrack = playerFacade.get().getCurrentTrack();
                     currentTrack.ifPresent(this::checkAnalyzedTrackIsCurrentPlaying);
-                    Platform.runLater(() -> stageDemon.get().getNavigationController().setStatusMessage(""));
+                    Platform.runLater(() -> navigationController.setStatusMessage(""));
                 }
             }
             catch (IOException | UnsupportedAudioFileException | EncoderException | InterruptedException exception) {
                 LOG.warn("Error processing waveform of {}", trackToAnalyze, exception);
                 String message = "Waveform not processed successfully";
-                Platform.runLater(() -> stageDemon.get().getNavigationController().setStatusMessage(message));
+                Platform.runLater(() -> navigationController.setStatusMessage(message));
             }
         }
     }
@@ -184,6 +188,6 @@ public class WaveformTask extends Thread {
 
     private void checkAnalyzedTrackIsCurrentPlaying(Track currentPlayingTrack) {
         if (currentPlayingTrack.equals(trackToAnalyze))
-            SwingUtilities.invokeLater(() -> stageDemon.get().getPlayerController().setWaveform(trackToAnalyze));
+            SwingUtilities.invokeLater(() -> playerController.setWaveform(trackToAnalyze));
     }
 }

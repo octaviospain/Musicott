@@ -19,7 +19,6 @@
 
 package com.transgressoft.musicott.tasks.parse;
 
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import javafx.concurrent.*;
@@ -37,17 +36,15 @@ import java.util.*;
  */
 public abstract class BaseParseTask extends Task<Void> implements ParseTask {
 
-    protected ErrorDemon errorDemon;
-    protected StageDemon stageDemon;
+    protected ErrorDialogController errorDialog;
     protected NavigationController navigationController;
 
     protected Collection<String> parseErrors;
     protected long startMillis;
 
-    public BaseParseTask(StageDemon stageDemon, ErrorDemon errorDemon) {
-        this.errorDemon = errorDemon;
-        this.stageDemon = stageDemon;
-        navigationController = stageDemon.getNavigationController();
+    public BaseParseTask(NavigationController navigationController, ErrorDialogController errorDialog) {
+        this.errorDialog = errorDialog;
+        this.navigationController = navigationController;
     }
 
     public void updateProgressTask() {
@@ -63,8 +60,8 @@ public abstract class BaseParseTask extends Task<Void> implements ParseTask {
      * Should be called on the JavaFX Application Thread.
      */
     protected void updateTaskProgressOnView(double progress, String message) {
-        stageDemon.getNavigationController().setStatusProgress(progress);
-        stageDemon.getNavigationController().setStatusMessage(message);
+        navigationController.setStatusProgress(progress);
+        navigationController.setStatusMessage(message);
     }
 
     protected void computeAndShowElapsedTime(int totalItemsParsed) {

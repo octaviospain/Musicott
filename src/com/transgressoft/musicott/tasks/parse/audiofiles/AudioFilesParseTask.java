@@ -21,11 +21,12 @@ package com.transgressoft.musicott.tasks.parse.audiofiles;
 
 import com.google.inject.*;
 import com.google.inject.assistedinject.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.parse.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.view.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -55,9 +56,9 @@ public class AudioFilesParseTask extends BaseParseTask {
     private ParseActionFactory parseActionFactory;
 
     @Inject
-    public AudioFilesParseTask(StageDemon stageDemon, PlayerFacade playerFacade, ErrorDemon errorDemon,
-            @Assisted List<File> files, @Assisted boolean playAtTheEnd) {
-        super(stageDemon, errorDemon);
+    public AudioFilesParseTask(@NavigationCtrl NavigationController navCtrl, PlayerFacade playerFacade,
+            ErrorDialogController errorDialog, @Assisted List<File> files, @Assisted boolean playAtTheEnd) {
+        super(navCtrl, errorDialog);
         player = playerFacade;
         filesToParse = files;
         this.playAtTheEnd = playAtTheEnd;
@@ -95,7 +96,7 @@ public class AudioFilesParseTask extends BaseParseTask {
         computeAndShowElapsedTime(parsedTracks.size());
 
         if (! parseErrors.isEmpty())
-            errorDemon.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
+            errorDialog.showExpandable("Errors importing files", "", parseErrors);
         if (playAtTheEnd)
             player.addTracksToPlayQueue(parsedTracks.values(), true);
     }
