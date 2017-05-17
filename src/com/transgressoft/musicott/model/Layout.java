@@ -23,7 +23,11 @@ import com.transgressoft.musicott.util.guice.modules.*;
 import com.transgressoft.musicott.view.*;
 
 /**
+ * Defines the different views with the respective paths and {@link ControllerModule} classes.
+ *
  * @author Octavio Calleya
+ * @version 0.10.1-b
+ * @since 0.10.1-b
  */
 public enum Layout implements MusicottLayout {
 
@@ -32,7 +36,7 @@ public enum Layout implements MusicottLayout {
     PRELOADER_PROMPT (LAYOUTS_PATH + "PreloaderPromptLayout.fxml", null),
     EDITION (LAYOUTS_PATH + "EditLayout.fxml", EditModule.class),
     ARTISTS (LAYOUTS_PATH + "ArtistsLayout.fxml", ArtistsModule.class),
-    PROGRESS_BAR (LAYOUTS_PATH + "ProgressLayout.fxml", null),
+    PROGRESS_BAR (LAYOUTS_PATH + "ProgressLayout.fxml", SimpleProgressBarModule.class),
     PREFERENCES (LAYOUTS_PATH + "PreferencesLayout.fxml", PreferencesModule.class),
     NAVIGATION (LAYOUTS_PATH + "NavigationLayout.fxml", NavigationModule.class),
     PLAYER (LAYOUTS_PATH + "PlayerLayout.fxml", PlayerModule.class),

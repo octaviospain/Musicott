@@ -26,7 +26,6 @@ import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.util.guice.modules.*;
 import com.transgressoft.musicott.view.custom.*;
 import de.codecentric.centerdevice.*;
 import javafx.application.*;
@@ -90,10 +89,6 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     private ReadOnlyBooleanProperty searchingProperty;
     private ReadOnlyBooleanProperty previousButtonDisabledProperty;
     private ReadOnlyBooleanProperty nextButtonDisabledProperty;
-    private ReadOnlyBooleanProperty showingNavigationPaneProperty;
-    private ReadOnlyBooleanProperty showingTableInfoPaneProperty;
-    private ReadOnlyBooleanProperty editingProperty;
-    private ReadOnlyObjectProperty<NavigationMode> selectedMenuProperty;
 
     @FXML
     private MenuBar rootMenuBar;
@@ -149,6 +144,12 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     private Menu aboutMenu;
     @FXML
     private MenuItem aboutMenuItem;
+    @Inject
+    private Injector injector;
+    private ReadOnlyObjectProperty<NavigationMode> selectedMenuProperty;
+    private ReadOnlyBooleanProperty editingProperty;
+    private ReadOnlyBooleanProperty showingNavigationPanePropery;
+    private ReadOnlyBooleanProperty showingTableInfoPaneProperty;
 
     @Inject
     public RootMenuBarController(MainPreferences mainPreferences, MusicLibrary musicLibrary,
@@ -172,91 +173,38 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
         setEditMenuActions();
         setControlsMenuActions();
         setViewMenuActions();
-
-        /*
-          Binds the show/hide table info pane menu item
-          to be disabled if a playlist is shown
-         */
-        showHideTableInfoPaneMenuItem.disableProperty()
-                                     .bind(map(selectedMenuProperty, menu -> ! menu.equals(PLAYLIST)));
-
-        showHideNavigationPaneTextBinding();
-        showHideTableInfoPaneTextBinding();
+        bindShowHideTableInfo();
+        bindEditingProperty();
+        bindShowingNavigationPane();
+            bindShowingTableInfoPane();
     }
 
-    @Override
-    public MenuBar getRoot() {
-        return rootMenuBar;
+    private void bindShowHideTableInfo() {
+        if (selectedMenuProperty != null && showHideTableInfoPaneMenuItem != null)
+            showHideTableInfoPaneMenuItem.disableProperty().bind(
+                    map(selectedMenuProperty, menu -> ! menu.equals(PLAYLIST)));
     }
 
-    @Inject (optional = true)
-    public void setRootController(@RootCtrl RootController c) {
-        rootController = c;
+    private void bindEditingProperty() {
+        if (editingProperty != null && searchingProperty != null && selectAllMenuItem != null)
+            selectAllMenuItem.disableProperty().bind(
+                    combine(editingProperty, searchingProperty, (e, s) -> e || s));
+        if (editingProperty != null && dontSelectAllMenuItem != null)
+            dontSelectAllMenuItem.disableProperty().bind(editingProperty);
     }
 
-    @Inject (optional = true)
-    public void setEditController(@EditCtrl EditController c) {
-        editController = c;
+    private void bindShowingNavigationPane() {
+        if (showingNavigationPanePropery != null && showHideNavigationPaneMenuItem != null)
+            showHideNavigationPaneMenuItem.textProperty().bind(
+                    map(showingNavigationPanePropery,
+                        showing -> showing ? "Hide navigation pane" : "Show navigation pane"));
     }
 
-    @Inject
-    public void setNavigationController(@NavigationCtrl NavigationController c) {
-        navigationController = c;
-    }
-
-    @Inject
-    public void setPlayerController(@PlayerCtrl PlayerController c) {
-        playerController = c;
-    }
-
-    @Inject (optional = true)
-    public void setPreferencesController(@PrefCtrl PreferencesController c) {
-        preferencesController = c;
-    }
-
-    @Inject
-    public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty p) {
-        this.emptyLibraryProperty = p;
-    }
-
-    @Inject
-    public void setSearchFieldFocusedProperty(@SearchingProperty ReadOnlyBooleanProperty p) {
-        searchingProperty = p;
-    }
-
-    @Inject
-    public void setPlayPauseProperty(@PlayPauseProperty BooleanProperty p) {
-        playPauseProperty = p;
-    }
-
-    @Inject
-    public void setPrevButtonDisabledProperty(@PreviousButtonDisabledProperty ReadOnlyBooleanProperty p) {
-        previousButtonDisabledProperty = p;
-    }
-
-    @Inject
-    public void setNextButtonDisabledProperty(@NextButtonDisabledProperty ReadOnlyBooleanProperty p) {
-        nextButtonDisabledProperty = p;
-    }
-
-    @Inject
-    public void setSelectedMenuProperty(@SelectedMenuProperty ReadOnlyObjectProperty<NavigationMode> p) {
-        selectedMenuProperty = p;
-    }
-
-    @Inject
-    public void setShowingNavigationPaneProperty(@ShowingNavigationPaneProperty ReadOnlyBooleanProperty p) {
-        showingNavigationPaneProperty = p;
-    }
-
-    @Inject
-    public void setShowingTableInfoPaneProperty(@ShowingTableInfoPaneProperty ReadOnlyBooleanProperty p) {
-        showingTableInfoPaneProperty = p;
-    }
-
-    @Inject
-    public void setShowingEditingProperty(@ShowingEditing ReadOnlyBooleanProperty p) {
-        editingProperty = p;
+    private void bindShowingTableInfoPane() {
+        if (showingTableInfoPaneProperty != null && showHideTableInfoPaneMenuItem != null)
+            showHideTableInfoPaneMenuItem.textProperty().bind(
+                    map(showingTableInfoPaneProperty,
+                        showing -> showing ? "Hide table information pane" : "Show table information pane"));
     }
 
     /**
@@ -344,10 +292,6 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
         deleteMenuItem.setOnAction(e -> musicLibrary.deleteTracks(trackSelectionList()));
         selectAllMenuItem.setOnAction(e -> rootController.selectAllTracks());
         dontSelectAllMenuItem.setOnAction(e -> rootController.deselectAllTracks());
-
-        selectAllMenuItem.disableProperty().bind(
-                combine(editingProperty, searchingProperty, (e, s) -> e || s));
-        dontSelectAllMenuItem.disableProperty().bind(editingProperty);
         findMenuItem.setOnAction(e -> playerController.focusSearchField());
     }
 
@@ -412,26 +356,6 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
         return trackSelection.stream().map(Entry::getValue).collect(Collectors.toList());
     }
 
-    /**
-     * Binds the show/hide navigation pane menu item to change
-     * his text if the pane is showing or not
-     */
-    private void showHideNavigationPaneTextBinding() {
-        showHideNavigationPaneMenuItem.textProperty().bind(
-                map(showingNavigationPaneProperty,
-                    s -> s ? "Hide navigation pane" : "Show navigation pane"));
-    }
-
-    /**
-     * Binds the show/hide table info pane menu item to change
-     * his text if the pane is showing or not
-     */
-    private void showHideTableInfoPaneTextBinding() {
-        showHideTableInfoPaneMenuItem.textProperty().bind(
-                map(showingTableInfoPaneProperty,
-                    s -> s ? "Hide table information pane" : "Show table information pane"));
-    }
-
     private void countFilesToImport(File folder) {
         LOG.debug("Starting scanning of {}", folder);
         Platform.runLater(() -> {
@@ -445,7 +369,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
 
     private void countFilesToImportTask(File folder) {
         Set<String> extensions = mainPreferences.getImportFilterExtensions();
-        ExtensionFileFilter filter = Guice.createInjector(new MusicottModule()).getInstance(ExtensionFileFilter.class);
+        ExtensionFileFilter filter = injector.getInstance(ExtensionFileFilter.class);
         extensions.forEach(filter::addExtension);
         Platform.runLater(() -> {
             navigationController.setStatusMessage("");
@@ -505,5 +429,79 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
         selectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemModifier));
         dontSelectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemModifier, shiftDown));
         findMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.F, operativeSystemModifier));
+    }
+
+    @Inject (optional = true)
+    public void setRootController(@RootCtrl RootController c) {
+        rootController = c;
+    }
+
+    @Inject (optional = true)
+    public void setEditController(@EditCtrl EditController c) {
+        editController = c;
+    }
+
+    @Inject
+    public void setNavigationController(@NavigationCtrl NavigationController c) {
+        navigationController = c;
+    }
+
+    @Inject
+    public void setPlayerController(@PlayerCtrl PlayerController c) {
+        playerController = c;
+    }
+
+    @Inject
+    public void setPreferencesController(@PrefCtrl PreferencesController c) {
+        preferencesController = c;
+    }
+
+    @Inject
+    public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty p) {
+        this.emptyLibraryProperty = p;
+    }
+
+    @Inject
+    public void setSearchFieldFocusedProperty(@SearchingProperty ReadOnlyBooleanProperty p) {
+        searchingProperty = p;
+    }
+
+    @Inject
+    public void setPlayPauseProperty(@PlayPauseProperty BooleanProperty p) {
+        playPauseProperty = p;
+    }
+
+    @Inject
+    public void setPrevButtonDisabledProperty(@PreviousButtonDisabledProperty ReadOnlyBooleanProperty p) {
+        previousButtonDisabledProperty = p;
+    }
+
+    @Inject
+    public void setNextButtonDisabledProperty(@NextButtonDisabledProperty ReadOnlyBooleanProperty p) {
+        nextButtonDisabledProperty = p;
+    }
+
+    @Inject (optional = true)
+    public void setSelectedMenuProperty(@SelectedMenuProperty ReadOnlyObjectProperty<NavigationMode> p) {
+        selectedMenuProperty = p;
+        bindShowHideTableInfo();
+    }
+
+    @Inject (optional = true)
+    public void setShowingNavigationPaneProperty(@ShowingNavigationPaneProperty ReadOnlyBooleanProperty property) {
+        showingNavigationPanePropery = property;
+        bindShowingNavigationPane();
+    }
+
+    @Inject (optional = true)
+    public void setShowingTableInfoPaneProperty(@ShowingTableInfoPaneProperty ReadOnlyBooleanProperty property) {
+        showingTableInfoPaneProperty = property;
+        bindShowingTableInfoPane();
+    }
+
+    @Inject (optional = true)
+    public void setShowingEditingProperty(@ShowingEditing ReadOnlyBooleanProperty property) {
+        editingProperty = property;
+        bindEditingProperty();
     }
 }

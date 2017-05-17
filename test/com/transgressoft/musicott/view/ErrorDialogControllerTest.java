@@ -49,7 +49,7 @@ public class ErrorDialogControllerTest extends JavaFxTestBase<ErrorDialogControl
     @Start
     public void start(Stage stage) throws Exception {
         this.stage = stage;
-        loadControllerModule(Layout.ERROR_DIALOG);
+        loadTestController(Layout.ERROR_DIALOG);
         stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);

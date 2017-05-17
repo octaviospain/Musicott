@@ -59,7 +59,7 @@ public class RootMenuBarControllerTest extends JavaFxTestBase<RootMenuBarControl
 
         injector = injector.createChildInjector(new TestModule());
 
-        loadControllerModule(MENU_BAR);
+        loadTestController(MENU_BAR);
         stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);

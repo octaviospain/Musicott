@@ -21,6 +21,8 @@ package com.transgressoft.musicott.model;
 
 import com.google.common.collect.*;
 import com.google.inject.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.*;
 
@@ -80,18 +82,18 @@ public class TracksLibrary {
 
     private void addTrackToCollections(Track track) {
         Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);
-        trackEntriesListProperty.add(trackEntry);
+        Platform.runLater(() -> trackEntriesListProperty.add(trackEntry));
         track.getArtistsInvolved().forEach(artist -> artistsLibrary.addArtistTrack(artist, track));
         String trackAlbum = track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum();
         albumsLibrary.addTracks(trackAlbum, Collections.singletonList(trackEntry));
         if (navigationModeProperty != null && navigationModeProperty.get() == NavigationMode.ALL_TRACKS)
-            showingTracksProperty.add(trackEntry);
+            Platform.runLater(() -> showingTracksProperty.add(trackEntry));
     }
 
     private void removeTrackFromCollections(Track track) {
         Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);
-        trackEntriesListProperty.remove(trackEntry);
-        showingTracksProperty.remove(trackEntry);
+        Platform.runLater(() -> trackEntriesListProperty.remove(trackEntry));
+        Platform.runLater(() -> showingTracksProperty.remove(trackEntry));
         track.getArtistsInvolved().forEach(artist -> artistsLibrary.removeArtistTrack(artist, track));
         String trackAlbum = track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum();
         albumsLibrary.removeTracks(trackAlbum, Collections.singletonList(trackEntry));
@@ -170,7 +172,8 @@ public class TracksLibrary {
         this.albumsLibrary = albumsLibrary;
     }
 
-    public void setNavigationModeProperty(ObjectProperty<NavigationMode> navigationModeProperty) {
+    @Inject (optional = true)
+    public void setNavigationModeProperty(@SelectedMenuProperty ObjectProperty<NavigationMode> navigationModeProperty) {
         this.navigationModeProperty = navigationModeProperty;
     }
 

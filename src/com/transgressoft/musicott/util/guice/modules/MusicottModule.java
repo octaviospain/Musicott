@@ -21,17 +21,16 @@ package com.transgressoft.musicott.util.guice.modules;
 
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
+import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 
-import java.util.Map.*;
 import java.util.*;
 
 /**
- * Guice {@link Module} that includes the necessary bindings and configurations for
+ * Guice {@link Module} that includes some necessary bindings and configurations for
  * constructing the application.
  *
  * @author Octavio Calleya
@@ -43,36 +42,31 @@ public class MusicottModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new WaveformPaneFactoryModule());
         install(new UpdateMusicLibraryFactoryModule());
+        install(new ParseModule());
         requestStaticInjection(MetadataParser.class);
         requestStaticInjection(Utils.class);
+        requestStaticInjection(TrackTableView.class);
     }
 
     /*
-        Properties provided by the ServiceDemon
+        Properties provided by the PlaylistTreeView
      */
 
     @Provides
-    @UsingLastFmProperty
-    ReadOnlyBooleanProperty providesUsingLastFmProperty(ServiceDemon serviceDemon) {
-        return serviceDemon.usingLastFmProperty();
+    @SelectedPlaylistProperty
+    ReadOnlyObjectProperty<Optional<Playlist>> providesSelectedPlaylistProperty(PlaylistTreeView playlistTreeView) {
+        return playlistTreeView.selectedPlaylistProperty();
     }
 
     /*
-        Properties provided by the TracksLibrary
+        Properties provided by the NavigationController
      */
 
     @Provides
-    @EmptyLibraryProperty
-    ReadOnlyBooleanProperty providesEmptyLibraryProperty(TracksLibrary tracksLibrary) {
-        return tracksLibrary.emptyTracksLibraryProperty();
-    }
-
-    @Provides
-    @ShowingTracksProperty
-    ListProperty<Entry<Integer, Track>> providesShowingTracksProperty(TracksLibrary tracksLibrary) {
-        return tracksLibrary.showingTrackEntriesProperty();
+    @SelectedMenuProperty
+    ReadOnlyObjectProperty<NavigationMode> providesSelectedMenuProperty(NavigationController navigationController) {
+        return navigationController.navigationModeProperty();
     }
 
     /*
@@ -99,55 +93,5 @@ public class MusicottModule extends AbstractModule {
     @ShowingTableInfoPaneProperty
     ReadOnlyBooleanProperty providesShowingTableInfoPaneProperty(RootController rootController) {
         return rootController.showTableInfoPaneProperty();
-    }
-
-    /*
-        Properties provided by the NavigationController
-     */
-
-    @Provides
-    @SelectedMenuProperty
-    ReadOnlyObjectProperty<NavigationMode> providesSelectedMenuProperty(NavigationController navigationController) {
-        return navigationController.navigationModeProperty();
-    }
-
-    @Provides
-    @SelectedPlaylistProperty
-    ReadOnlyObjectProperty<Optional<Playlist>> providesSelectedPlaylistProperty(NavigationController navigationController) {
-        return navigationController.selectedPlaylistProperty();
-    }
-
-    /*
-        Properties provided by the PlayerController
-     */
-
-    @Provides
-    @SearchingTextProperty
-    StringProperty providesSearchingTextProperty(PlayerController playerController) {
-        return playerController.searchTextProperty();
-    }
-
-    @Provides
-    @SearchingProperty
-    ReadOnlyBooleanProperty providesSearchingProperty(PlayerController playerController) {
-        return playerController.searchFieldFocusedProperty();
-    }
-
-    @Provides
-    @PlayPauseProperty
-    BooleanProperty providesPlayPauseProperty(PlayerController playerController) {
-        return playerController.playButtonSelectedProperty();
-    }
-
-    @Provides
-    @PreviousButtonDisabledProperty
-    ReadOnlyBooleanProperty providesPrevButtonDisabledProperty(PlayerController playerController) {
-        return playerController.previousButtonDisabledProperty();
-    }
-
-    @Provides
-    @NextButtonDisabledProperty
-    ReadOnlyBooleanProperty providesNexButtonDisabledProperty(PlayerController playerController) {
-        return playerController.nextButtonDisabledProperty();
     }
 }

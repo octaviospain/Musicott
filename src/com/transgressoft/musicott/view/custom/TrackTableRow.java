@@ -47,13 +47,13 @@ public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
 
     public static final DataFormat TRACK_IDS_MIME_TYPE = new DataFormat("application/x-java-tracks-id");
 
-    private final Provider<PlayerFacade> playerFacade;
+    private final PlayerFacade playerFacade;
     private RootController rootController;
     private NavigationController navigationController;
 
     @Inject
     public TrackTableRow(@RootCtrl RootController rootCtrl, @NavigationCtrl NavigationController navCtrl,
-            Provider<PlayerFacade> playerFacade) {
+            PlayerFacade playerFacade) {
         this.playerFacade = playerFacade;
         rootController = rootCtrl;
         navigationController = navCtrl;
@@ -73,7 +73,7 @@ public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
      */
     private void playTrackOnMouseClickedHandler(MouseEvent event) {
         if (event.getClickCount() == 2 && ! isEmpty()) {
-            playerFacade.get().addTracksToPlayQueue(Collections.singletonList(getItem().getValue()), true);
+            playerFacade.addTracksToPlayQueue(Collections.singletonList(getItem().getValue()), true);
             navigationController.updateCurrentPlayingPlaylist();
         }
     }

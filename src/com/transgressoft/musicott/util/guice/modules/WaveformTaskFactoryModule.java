@@ -17,32 +17,28 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.view;
+package com.transgressoft.musicott.util.guice.modules;
 
 import com.google.inject.*;
-import javafx.fxml.*;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
+import com.google.inject.assistedinject.*;
+import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 
 /**
- * Controller class of a simple progress bar
+ * Guice {@link Module} that configures the instantiation of {@link WaveformTask}
+ * classes using a {@link WaveformTaskFactory}.
  *
  * @author Octavio Calleya
+ *
  * @version 0.10.1-b
  * @since 0.10.1-b
  */
-@Singleton
-public class SimpleProgressBarController extends InjectableController<AnchorPane> {
-
-    @FXML
-    private AnchorPane root;
-    @FXML
-    private ProgressBar progressBar;
+public class WaveformTaskFactoryModule extends AbstractModule {
 
     @Override
-    public void setStage(Stage stage) {
-        this.stage = stage;
-        stage.setTitle("");
+    protected void configure() {
+        Module waveformTaskFactoryModule = new FactoryModuleBuilder()
+                .implement(WaveformTask.class, WaveformTask.class).build(WaveformTaskFactory.class);
+        install(waveformTaskFactoryModule);
     }
 }

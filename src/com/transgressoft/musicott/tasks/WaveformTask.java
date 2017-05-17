@@ -22,16 +22,14 @@ package com.transgressoft.musicott.tasks;
 import be.tarsos.transcoder.*;
 import be.tarsos.transcoder.ffmpeg.*;
 import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
-import javafx.application.*;
 import org.slf4j.*;
 
 import javax.sound.sampled.*;
 import javax.sound.sampled.AudioFormat.*;
-import javax.swing.*;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -63,20 +61,19 @@ public class WaveformTask extends Thread {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final Provider<PlayerFacade> playerFacade;
-    private final Provider<TaskDemon> taskDemon;
+    private final PlayerFacade playerFacade;
     private final WaveformsLibrary waveformsLibrary;
+    private final BlockingQueue<Track> tracksToProcessQueue;
 
     private Track trackToAnalyze;
     private float[] resultingWaveform;
-    private PlayerController playerController;
-    private NavigationController navigationController;
+    private ErrorDialogController errorDialog;
 
     @Inject
-    public WaveformTask(WaveformsLibrary waveformsLibrary, Provider<PlayerFacade> playerFacade,
-            Provider<TaskDemon> taskDemon) {
+    public WaveformTask(@Assisted BlockingQueue<Track> tracksToProcessQueue, WaveformsLibrary waveformsLibrary,
+            PlayerFacade playerFacade) {
+        this.tracksToProcessQueue = tracksToProcessQueue;
         this.waveformsLibrary = waveformsLibrary;
-        this.taskDemon = taskDemon;
         this.playerFacade = playerFacade;
     }
 
@@ -84,7 +81,7 @@ public class WaveformTask extends Thread {
     public void run() {
         while (true) {
             try {
-                trackToAnalyze = taskDemon.get().getNextTrackToAnalyzeWaveform();
+                trackToAnalyze = tracksToProcessQueue.take();
                 LOG.debug("Processing resultingWaveform of trackToAnalyze {}", trackToAnalyze);
 
                 String fileFormat = trackToAnalyze.getFileFormat();
@@ -95,15 +92,13 @@ public class WaveformTask extends Thread {
 
                 if (resultingWaveform != null) {
                     waveformsLibrary.addWaveform(trackToAnalyze.getTrackId(), resultingWaveform);
-                    Optional<Track> currentTrack = playerFacade.get().getCurrentTrack();
+                    Optional<Track> currentTrack = playerFacade.getCurrentTrack();
                     currentTrack.ifPresent(this::checkAnalyzedTrackIsCurrentPlaying);
-                    Platform.runLater(() -> navigationController.setStatusMessage(""));
                 }
             }
             catch (IOException | UnsupportedAudioFileException | EncoderException | InterruptedException exception) {
                 LOG.warn("Error processing waveform of {}", trackToAnalyze, exception);
-                String message = "Waveform not processed successfully";
-                Platform.runLater(() -> navigationController.setStatusMessage(message));
+                errorDialog.show("Error processing waveform of " + trackToAnalyze.getFileName(), null, exception);
             }
         }
     }
@@ -185,16 +180,10 @@ public class WaveformTask extends Thread {
 
     private void checkAnalyzedTrackIsCurrentPlaying(Track currentPlayingTrack) {
         if (currentPlayingTrack.equals(trackToAnalyze))
-            SwingUtilities.invokeLater(() -> playerController.setWaveform(trackToAnalyze));
+            playerFacade.setWaveform(trackToAnalyze);
     }
 
-    @Inject
-    public void setPlayerController(@PlayerCtrl PlayerController playerController) {
-        this.playerController = playerController;
-    }
-
-    @Inject
-    public void setNavigationController(@NavigationCtrl NavigationController navigationController) {
-        this.navigationController = navigationController;
+    public void setErrorDialog(ErrorDialogController errorDialog) {
+        this.errorDialog = errorDialog;
     }
 }

@@ -99,8 +99,6 @@ public class PlayerController extends InjectableController<GridPane> {
     private AnchorPane playQueueLayout;
     private WaveformPanel mainWaveformPanel;
 
-    private PlayQueueController playQueueLayoutController;
-
     private TracksLibrary tracksLibrary;
     private WaveformsLibrary waveformsLibrary;
     private PlayerFacade player;
@@ -155,14 +153,7 @@ public class PlayerController extends InjectableController<GridPane> {
     public void configure() {
         subscribe(playQueueLayout.visibleProperty(), playQueueButton::setSelected);
         StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
-        player.setPlayerController(this);
-        player.setPlayQueueController(playQueueLayoutController);
         hidePlayQueue();
-    }
-
-    @Override
-    public GridPane getRoot() {
-        return playerGridPane;
     }
 
     private void onDragDroppedOnPlayQueueButton(DragEvent event) {
@@ -205,7 +196,7 @@ public class PlayerController extends InjectableController<GridPane> {
         }
     }
 
-    public void showPlayQueue() {
+    private void showPlayQueue() {
         if (! playQueueStackPane.getChildren().contains(playQueueLayout)) {
             playQueueStackPane.getChildren().add(0, playQueueLayout);
             playQueueLayout.setVisible(true);
@@ -214,56 +205,6 @@ public class PlayerController extends InjectableController<GridPane> {
 
     public void focusSearchField() {
         searchTextField.requestFocus();
-    }
-
-    @Inject
-    public void setPlayQueueLayoutController(@PlayQueueCtrl PlayQueueController c) {
-        playQueueLayoutController = c;
-    }
-
-    @Inject
-    public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty emptyLibraryProperty) {
-        this.emptyLibraryProperty = emptyLibraryProperty;
-    }
-
-    public StringProperty searchTextProperty() {
-        return searchTextField.textProperty();
-    }
-
-    public ReadOnlyBooleanProperty searchFieldFocusedProperty() {
-        return searchTextField.focusedProperty();
-    }
-
-    public ReadOnlyBooleanProperty previousButtonDisabledProperty() {
-        return prevButton.disabledProperty();
-    }
-
-    public ReadOnlyBooleanProperty nextButtonDisabledProperty() {
-        return nextButton.disabledProperty();
-    }
-
-    public BooleanProperty playButtonSelectedProperty() {
-        return playButton.selectedProperty();
-    }
-
-    public DoubleProperty trackSliderMaxProperty() {
-        return trackSlider.maxProperty();
-    }
-
-    public BooleanProperty trackSliderValueChangingProperty() {
-        return trackSlider.valueChangingProperty();
-    }
-
-    public DoubleProperty trackSliderValueProperty() {
-        return trackSlider.valueProperty();
-    }
-
-    public DoubleProperty trackProgressBarProgressProperty() {
-        return trackProgressBar.progressProperty();
-    }
-
-    public DoubleProperty volumeSliderValueProperty() {
-        return volumeSlider.valueProperty();
     }
 
     public void setStopped() {
@@ -375,5 +316,50 @@ public class PlayerController extends InjectableController<GridPane> {
         else
             formattedTime += Integer.toString(currentSecs);
         return formattedTime;
+    }
+
+    @Inject
+    public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty emptyLibraryProperty) {
+        this.emptyLibraryProperty = emptyLibraryProperty;
+    }
+
+    public StringProperty searchTextProperty() {
+        return searchTextField.textProperty();
+    }
+
+    public ReadOnlyBooleanProperty searchFieldFocusedProperty() {
+        return searchTextField.focusedProperty();
+    }
+
+    public ReadOnlyBooleanProperty previousButtonDisabledProperty() {
+        return prevButton.disabledProperty();
+    }
+
+    public ReadOnlyBooleanProperty nextButtonDisabledProperty() {
+        return nextButton.disabledProperty();
+    }
+
+    public BooleanProperty playButtonSelectedProperty() {
+        return playButton.selectedProperty();
+    }
+
+    public DoubleProperty trackSliderMaxProperty() {
+        return trackSlider.maxProperty();
+    }
+
+    public BooleanProperty trackSliderValueChangingProperty() {
+        return trackSlider.valueChangingProperty();
+    }
+
+    public DoubleProperty trackSliderValueProperty() {
+        return trackSlider.valueProperty();
+    }
+
+    public DoubleProperty trackProgressBarProgressProperty() {
+        return trackProgressBar.progressProperty();
+    }
+
+    public DoubleProperty volumeSliderValueProperty() {
+        return volumeSlider.valueProperty();
     }
 }

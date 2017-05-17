@@ -19,9 +19,12 @@
 
 package com.transgressoft.musicott.tasks.load;
 
+import com.cedarsoftware.util.io.*;
 import com.google.inject.*;
 import com.google.inject.assistedinject.*;
+import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
 import org.slf4j.*;
 
@@ -80,6 +83,7 @@ public class WaveformsLoadAction extends BaseLoadAction {
     private Map<Integer, float[]> parseWaveformsFromJsonFile(File waveformsFile) {
         Map<Integer, float[]> waveformsMap;
         try {
+            JsonReader.assignInstantiator(ObservableListWrapper.class, new ObservableListWrapperCreator());
             waveformsMap = (Map<Integer, float[]>) parseJsonFile(waveformsFile);
             LOG.info("Loaded waveform images from {}", waveformsFile);
         }

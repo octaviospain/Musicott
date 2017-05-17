@@ -36,7 +36,7 @@ public class PlayQueueControllerTest extends JavaFxTestBase<PlayQueueController>
     @Override
     @Start
     public void start(Stage stage) throws Exception {
-        loadControllerModule(PLAY_QUEUE);
+        loadTestController(PLAY_QUEUE);
         stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);
@@ -45,7 +45,7 @@ public class PlayQueueControllerTest extends JavaFxTestBase<PlayQueueController>
     }
 
     @Test
-    @DisplayName("Singleton controller")
+    @DisplayName ("Singleton controller")
     void singletonController() {
         PlayQueueController anotherController = injector.getInstance(PlayQueueController.class);
 

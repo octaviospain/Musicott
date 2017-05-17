@@ -106,13 +106,8 @@ public class ErrorDialogController extends InjectableController<AnchorPane> impl
     }
 
     @Override
-    public AnchorPane getRoot() {
-        return root;
-    }
-
-    @Override
     public void setStage(Stage stage) {
-        super.setStage(stage);
+        this.stage = stage;
         stage.setTitle("Error");
         stage.setResizable(false);
     }

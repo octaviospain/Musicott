@@ -29,7 +29,6 @@ import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
-import javafx.collections.transformation.*;
 import javafx.event.*;
 import javafx.fxml.*;
 import javafx.geometry.*;
@@ -45,7 +44,6 @@ import java.io.*;
 import java.util.AbstractMap.*;
 import java.util.*;
 import java.util.Map.*;
-import java.util.function.*;
 
 import static com.transgressoft.musicott.model.NavigationMode.*;
 import static org.fxmisc.easybind.EasyBind.*;
@@ -65,7 +63,6 @@ public class RootController extends InjectableController<BorderPane> implements 
     private final MusicLibrary musicLibrary;
     private final PlaylistsLibrary playlistsLibrary;
     private final TaskDemon taskDemon;
-    private final TrackTableView trackTable;
 
     private final Playlist ROOT_PLAYLIST;
 
@@ -97,32 +94,18 @@ public class RootController extends InjectableController<BorderPane> implements 
     private StackPane tableStackPane;
     @FXML
     private SplitPane artistsLayout;
-
-    @Inject
-    @ArtistsCtrl
-    private ArtistsViewController artistsLayoutController;
     @FXML
     private VBox navigationLayout;
-    @Inject
-    @NavigationCtrl
-    private NavigationController navigationLayoutController;
     @FXML
     private GridPane playerLayout;
-    @Inject
-    @PlayerCtrl
-    private PlayerController playerLayoutController;
     @FXML
     private MenuBar menuBar;
-    @Inject
-    @MenuBarCtrl
-    private RootMenuBarController menuBarController;
 
+    private TrackTableView trackTable;
     private TextField playlistTitleTextField;
-
     private ImageView hoverCoverImageView;
     private ObjectProperty<Image> hoverCoverProperty;
 
-    private StringProperty searchTextProperty;
     private BooleanProperty showingNavigationPaneProperty;
     private BooleanProperty showingTableInfoPaneProperty;
     private ReadOnlyBooleanProperty emptyLibraryProperty;
@@ -132,16 +115,19 @@ public class RootController extends InjectableController<BorderPane> implements 
 
     @Inject
     private PlaylistFactory playlistFactory;
+    private NavigationController navigationLayoutController;
+    private ArtistsViewController artistsLayoutController;
+    private PlayerController playerLayoutController;
+    private RootMenuBarController menuBarController;
 
     private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler = changePlaylistNameTextFieldHandler();
 
     @Inject
     public RootController(MusicLibrary musicLibrary, PlaylistsLibrary playlistsLibrary, TaskDemon taskDemon,
-            @RootPlaylist Playlist rootPlaylist, TrackTableView trackTable) {
+            @RootPlaylist Playlist rootPlaylist) {
         this.musicLibrary = musicLibrary;
         this.playlistsLibrary = playlistsLibrary;
         this.taskDemon = taskDemon;
-        this.trackTable = trackTable;
         ROOT_PLAYLIST = rootPlaylist;
     }
 
@@ -159,14 +145,11 @@ public class RootController extends InjectableController<BorderPane> implements 
 
     @Override
     public void configure() {
-        trackTable.setItems(bindedToSearchTextFieldTracks());
-        subscribe(selectedPlaylistProperty, selected -> selected.ifPresent(this::updateShowingInfoWithPlaylist));
+        initMenuBar();
+        bindHoverCoverImageView();
+    }
 
-        hoverCoverImageView.visibleProperty().bind(
-                combine(navigationModeProperty, emptyLibraryProperty,
-                        (mode, empty) -> mode.equals(ALL_TRACKS) && ! empty));
-        navigationLayoutController.setNavigationMode(ARTISTS); // TODO check this
-
+    private void initMenuBar() {
         String os = System.getProperty("os.name");
         if (os != null && os.startsWith("Mac")) {
             menuBarController.macMenuBar();
@@ -176,14 +159,16 @@ public class RootController extends InjectableController<BorderPane> implements 
             menuBarController.defaultMenuBar();
     }
 
-    @Override
-    public BorderPane getRoot() {
-        return rootBorderPane;
+    private void bindHoverCoverImageView() {
+        if (navigationModeProperty != null && emptyLibraryProperty != null && hoverCoverImageView != null)
+            hoverCoverImageView.visibleProperty().bind(
+                    combine(navigationModeProperty, emptyLibraryProperty,
+                            (mode, empty) -> mode.equals(ALL_TRACKS) && ! empty));
     }
 
     @Override
     public void setStage(Stage stage) {
-        super.setStage(stage);
+        this.stage = stage;
         stage.setTitle("Musicott");
         stage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
         stage.setMinWidth(1200);
@@ -234,20 +219,6 @@ public class RootController extends InjectableController<BorderPane> implements 
         playlistTitleTextField.setFont(new Font("Avenir", 19));
         VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
         playlistTitleTextField.setOnKeyPressed(changePlaylistNameTextFieldHandler);
-    }
-
-    /**
-     * Binds the text typed on the search text field to a filtered subset of items shown on the table
-     */
-    private SortedList<Entry<Integer, Track>> bindedToSearchTextFieldTracks() {
-        ObservableList<Entry<Integer, Track>> tracks = showingTracksProperty.get();
-        FilteredList<Entry<Integer, Track>> filteredTracks = new FilteredList<>(tracks, entry -> true);
-
-        subscribe(searchTextProperty, query -> filteredTracks.setPredicate(filterTracksByQuery(query)));
-
-        SortedList<Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
-        sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
-        return sortedTracks;
     }
 
     private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler() {
@@ -301,22 +272,6 @@ public class RootController extends InjectableController<BorderPane> implements 
     }
 
     /**
-     * Returns a {@link Predicate} that evaluates the match of a given {@code String} to a given track {@link Entry}
-     *
-     * @param query The {@code String} to match against the track
-     *
-     * @return The {@code Predicate}
-     */
-    private Predicate<Entry<Integer, Track>> filterTracksByQuery(String query) {
-        return trackEntry -> {
-            boolean result = query == null || query.isEmpty();
-            if (! result)
-                result = TracksLibrary.trackMatchesString(trackEntry.getValue(), query);
-            return result;
-        };
-    }
-
-    /**
      * Handles the naming of a new playlist placing a {@link TextField} on top
      * of the playlist label asking the user for the name.
      *
@@ -334,7 +289,7 @@ public class RootController extends InjectableController<BorderPane> implements 
         playlistTitleTextField.setOnKeyPressed(getNameTextFieldHandler(newPlaylist));
     }
 
-    public EventHandler<KeyEvent> getNameTextFieldHandler(Playlist playlist) {
+    private EventHandler<KeyEvent> getNameTextFieldHandler(Playlist playlist) {
         return event -> {
             String newPlaylistName = playlistTitleTextField.getText();
             if (event.getCode() == KeyCode.ENTER && isValidPlaylistName(newPlaylistName)) {
@@ -524,6 +479,11 @@ public class RootController extends InjectableController<BorderPane> implements 
         }
     }
 
+    @Inject (optional = true)
+    public void setTrackTableView(TrackTableView trackTableView) {
+        trackTable = trackTableView;
+    }
+
     @Inject
     public void setTracksLibrary(TracksLibrary tracksLibrary) {
         tracksLibrary.addListener(change -> {
@@ -536,18 +496,36 @@ public class RootController extends InjectableController<BorderPane> implements 
     }
 
     @Inject
+    public void setArtistsLayoutController(@ArtistsCtrl ArtistsViewController artistsLayoutController) {
+        this.artistsLayoutController = artistsLayoutController;
+    }
+
+    @Inject (optional = true)
+    public void setNavigationLayoutController(@NavigationCtrl NavigationController navigationLayoutController) {
+        this.navigationLayoutController = navigationLayoutController;
+    }
+
+    @Inject
+    public void setPlayerLayoutController(@PlayerCtrl PlayerController playerLayoutController) {
+        this.playerLayoutController = playerLayoutController;
+    }
+
+    @Inject
+    public void setMenuBarController(@MenuBarCtrl RootMenuBarController menuBarController) {
+        this.menuBarController = menuBarController;
+    }
+
+    @Inject (optional = true)
     public void setNavigationModeProperty(@SelectedMenuProperty ReadOnlyObjectProperty<NavigationMode> p) {
         navigationModeProperty = p;
+        bindHoverCoverImageView();
     }
 
-    @Inject
+    @Inject (optional = true)
     public void setSelectedPlaylistProperty(@SelectedPlaylistProperty ReadOnlyObjectProperty<Optional<Playlist>> p) {
         selectedPlaylistProperty = p;
-    }
-
-    @Inject
-    public void setSearchTextProperty(@SearchingTextProperty StringProperty p) {
-        searchTextProperty = p;
+        subscribe(selectedPlaylistProperty,
+                  selected -> selected.ifPresent(this::updateShowingInfoWithPlaylist));
     }
 
     @Inject
@@ -558,6 +536,7 @@ public class RootController extends InjectableController<BorderPane> implements 
     @Inject
     public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty emptyLibraryProperty) {
         this.emptyLibraryProperty = emptyLibraryProperty;
+        bindHoverCoverImageView();
     }
 
     public ObservableList<Entry<Integer, Track>> getSelectedTracks() {

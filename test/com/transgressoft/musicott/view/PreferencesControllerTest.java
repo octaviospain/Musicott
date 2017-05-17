@@ -55,7 +55,7 @@ public class PreferencesControllerTest extends JavaFxTestBase<PreferencesControl
 
         injector = Guice.createInjector(Modules.override(mockedSingletonsTestModule).with(new TestModule()));
 
-        loadControllerModule(Layout.PREFERENCES);
+        loadTestController(Layout.PREFERENCES);
         stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);

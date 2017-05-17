@@ -39,8 +39,6 @@ public class PlayQueueController extends InjectableController<AnchorPane> {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final PlayerFacade player;
-
     @FXML
     private AnchorPane playQueuePane;
     @FXML
@@ -52,13 +50,9 @@ public class PlayQueueController extends InjectableController<AnchorPane> {
     @FXML
     private ListView<TrackQueueRow> queuesListView;
 
+    private PlayerFacade player;
     private ObservableList<TrackQueueRow> playQueueList;
     private ObservableList<TrackQueueRow> historyQueueList;
-
-    @Inject
-    public PlayQueueController(PlayerFacade player) {
-        this.player = player;
-    }
 
     @FXML
     public void initialize() {
@@ -90,11 +84,6 @@ public class PlayQueueController extends InjectableController<AnchorPane> {
         });
     }
 
-    @Override
-    public AnchorPane getRoot() {
-        return playQueuePane;
-    }
-
     private void clearHistoryQueue() {
         historyQueueList.clear();
         LOG.trace("History queue cleared");
@@ -121,6 +110,11 @@ public class PlayQueueController extends InjectableController<AnchorPane> {
 
     public boolean isShowingHistoryQueue() {
         return queuesListView.getItems().equals(historyQueueList);
+    }
+
+    @Inject
+    public void setPlayer(PlayerFacade player) {
+        this.player = player;
     }
 
     /**

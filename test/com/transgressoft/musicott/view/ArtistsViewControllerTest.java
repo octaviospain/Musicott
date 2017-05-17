@@ -63,11 +63,10 @@ public class ArtistsViewControllerTest extends JavaFxTestBase<ArtistsViewControl
     @Start
     public void start(Stage stage) throws Exception {
         trackTableViewContextMenuMock = mock(TrackTableViewContextMenu.class);
-        when(artistsLibraryMock.artistsListProperty()).thenReturn(artistsListProperty);
 
         injector = injector.createChildInjector(new TestModule());
 
-        loadControllerModule(Layout.ARTISTS);
+        loadTestController(Layout.ARTISTS);
         stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);
@@ -94,7 +93,7 @@ public class ArtistsViewControllerTest extends JavaFxTestBase<ArtistsViewControl
     }
 
     @Test
-    @DisplayName ("Artists name change on click")
+    @DisplayName ("Artist name change on click")
     void artistNameChange(FxRobot fxRobot) {
         ReadOnlyObjectProperty<Optional<String>> selectedArtistProperty = controller.selectedArtistProperty();
 
@@ -133,7 +132,13 @@ public class ArtistsViewControllerTest extends JavaFxTestBase<ArtistsViewControl
         }
 
         @Provides
-        @SearchingTextProperty
+        @ArtistsProperty
+        ListProperty<String> providesArtistsPropertyMock() {
+            return artistsListProperty;
+        }
+
+        @Provides
+        @SearchTextProperty
         StringProperty providesSearchingTextProperty() {
             return searchingTextProperty;
         }

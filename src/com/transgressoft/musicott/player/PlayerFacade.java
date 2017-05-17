@@ -35,6 +35,7 @@ import javafx.scene.media.MediaPlayer.*;
 import javafx.util.*;
 import org.slf4j.*;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.util.stream.*;
@@ -56,8 +57,8 @@ public class PlayerFacade {
     private final TracksLibrary tracksLibrary;
     private final ServiceDemon serviceDemon;
     private final TaskDemon taskDemon;
-    private final ErrorDialogController errorDialog;
 
+    private ErrorDialogController errorDialog;
     private NavigationController navigationController;
     private PlayQueueController playQueueController;
     private PlayerController playerController;
@@ -70,13 +71,10 @@ public class PlayerFacade {
     private boolean scrobbled;
 
     @Inject
-    public PlayerFacade(TracksLibrary tracksLibrary, ServiceDemon serviceDemon, TaskDemon taskDemon,
-            @NavigationCtrl NavigationController navCtrl, @RootCtrl ErrorDialogController errorDialog) {
+    public PlayerFacade(TracksLibrary tracksLibrary, ServiceDemon serviceDemon, TaskDemon taskDemon) {
         this.tracksLibrary = tracksLibrary;
-        this.navigationController = navCtrl;
         this.serviceDemon = serviceDemon;
         this.taskDemon = taskDemon;
-        this.errorDialog = errorDialog;
         playList = FXCollections.observableArrayList();
         historyList = FXCollections.observableArrayList();
         playingRandom = false;
@@ -101,14 +99,6 @@ public class PlayerFacade {
 
     public Status getPlayerStatus() {
         return trackPlayer.getStatus();
-    }
-
-    public void setPlayerController(PlayerController playerController) {
-        this.playerController = playerController;
-    }
-
-    public void setPlayQueueController(PlayQueueController playQueueController) {
-        this.playQueueController = playQueueController;
     }
 
     /**
@@ -405,5 +395,29 @@ public class PlayerFacade {
         }
         else
             Platform.runLater(playerController::setStopped);
+    }
+
+    public void setWaveform(Track track) {
+        SwingUtilities.invokeLater(() -> playerController.setWaveform(track));
+    }
+
+    @Inject (optional = true)
+    public void setErrorDialogController(@ErrorCtrl ErrorDialogController errorDialogController) {
+        errorDialog = errorDialogController;
+    }
+
+    @Inject (optional = true)
+    public void setNavigationController(@NavigationCtrl NavigationController navigationController) {
+        this.navigationController = navigationController;
+    }
+
+    @Inject (optional = true)
+    public void setPlayerController(@PlayerCtrl PlayerController playerController) {
+        this.playerController = playerController;
+    }
+
+    @Inject (optional = true)
+    public void setPlayQueueController(@PlayQueueCtrl PlayQueueController playQueueController) {
+        this.playQueueController = playQueueController;
     }
 }

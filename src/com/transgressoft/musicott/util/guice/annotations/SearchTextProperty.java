@@ -17,32 +17,21 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.view;
+package com.transgressoft.musicott.util.guice.annotations;
 
 import com.google.inject.*;
-import javafx.fxml.*;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
+
+import java.lang.annotation.*;
+
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.*;
 
 /**
- * Controller class of a simple progress bar
- *
  * @author Octavio Calleya
- * @version 0.10.1-b
- * @since 0.10.1-b
  */
-@Singleton
-public class SimpleProgressBarController extends InjectableController<AnchorPane> {
+@Target ({FIELD, PARAMETER, METHOD})
+@Retention (RUNTIME)
+@BindingAnnotation
+public @interface SearchTextProperty {
 
-    @FXML
-    private AnchorPane root;
-    @FXML
-    private ProgressBar progressBar;
-
-    @Override
-    public void setStage(Stage stage) {
-        this.stage = stage;
-        stage.setTitle("");
-    }
 }

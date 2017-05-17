@@ -141,6 +141,7 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
         event.consume();
     }
 
+    @SuppressWarnings ("unchecked")
     private void onDragDropped(DragEvent event) {
         Dragboard dragBoard = event.getDragboard();
         if (dragBoard.hasContent(TRACK_IDS_MIME_TYPE) && isValidTracksDragDropped()) {

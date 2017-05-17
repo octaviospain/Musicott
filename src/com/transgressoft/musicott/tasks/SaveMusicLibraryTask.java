@@ -48,7 +48,6 @@ public class SaveMusicLibraryTask extends Thread {
     private final TracksLibrary tracksLibrary;
     private final PlaylistsLibrary playlistsLibrary;
     private final WaveformsLibrary waveformsLibrary;
-    private final ErrorDialogController errorDialog;
 
     private String musicottUserPath;
     private File tracksFile;
@@ -62,15 +61,15 @@ public class SaveMusicLibraryTask extends Thread {
     private volatile boolean savePlaylists;
     @Inject
     private Injector injector;
+    private ErrorDialogController errorDialog;
 
     @Inject
     public SaveMusicLibraryTask(TracksLibrary tracksLibrary, PlaylistsLibrary playlistsLibrary,
-            WaveformsLibrary waveformsLibrary, ErrorDialogController errorDialog) {
+            WaveformsLibrary waveformsLibrary) {
         setName("Save Library Thread");
         this.tracksLibrary = tracksLibrary;
         this.playlistsLibrary = playlistsLibrary;
         this.waveformsLibrary = waveformsLibrary;
-        this.errorDialog = errorDialog;
         musicottUserPath = "";
         saveSemaphore = new Semaphore(0);
         tracksArgs = new HashMap<>();
@@ -213,5 +212,9 @@ public class SaveMusicLibraryTask extends Thread {
         jsonWriter.write(object);
         outputStream.close();
         jsonWriter.close();
+    }
+
+    public void setErrorDialog(ErrorDialogController errorDialog) {
+        this.errorDialog = errorDialog;
     }
 }

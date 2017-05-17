@@ -21,12 +21,16 @@ package com.transgressoft.musicott.util.guice.modules;
 
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
+import javafx.beans.property.*;
+
+import java.util.Map.*;
 
 /**
  * Guice {@link Module} that configures the instantiation of the necessary classes
- * in the preloader stage of the application
+ * at the start of the launch of the application
  *
  * @author Octavio Calleya
  *
@@ -38,6 +42,7 @@ public class LoaderModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new LoadActionFactoryModule());
+        install(new WaveformTaskFactoryModule());
         install(new TrackFactoryModule());
     }
 
@@ -45,5 +50,40 @@ public class LoaderModule extends AbstractModule {
     @RootPlaylist
     Playlist providesRootPlaylist(PlaylistFactory factory) {
         return factory.create("ROOT", true);
+    }
+
+    /*
+        Property provided by the ServiceDemon
+     */
+
+    @Provides
+    @UsingLastFmProperty
+    ReadOnlyBooleanProperty providesUsingLastFmProperty(ServiceDemon serviceDemon) {
+        return serviceDemon.usingLastFmProperty();
+    }
+
+    /*
+        Properties provided by the ArtistsLibrary
+     */
+    @Provides
+    @ArtistsProperty
+    ListProperty<String> providesArtistsProperty(ArtistsLibrary artistsLibrary) {
+        return artistsLibrary.artistsListProperty();
+    }
+
+    /*
+        Properties provided by the TracksLibrary
+     */
+
+    @Provides
+    @EmptyLibraryProperty
+    ReadOnlyBooleanProperty providesEmptyLibraryProperty(TracksLibrary tracksLibrary) {
+        return tracksLibrary.emptyTracksLibraryProperty();
+    }
+
+    @Provides
+    @ShowingTracksProperty
+    ListProperty<Entry<Integer, Track>> providesShowingTracksProperty(TracksLibrary tracksLibrary) {
+        return tracksLibrary.showingTrackEntriesProperty();
     }
 }

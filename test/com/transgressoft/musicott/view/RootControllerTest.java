@@ -46,10 +46,13 @@ import static org.mockito.Mockito.*;
  */
 public class RootControllerTest extends JavaFxTestBase<RootController> {
 
-    BooleanProperty emptyLibraryProperty = new SimpleBooleanProperty(false);
     ListProperty<Entry<Integer, Track>> showingTracksProperty =
             new SimpleListProperty<>(FXCollections.emptyObservableList());
     BooleanProperty falseProperty = new SimpleBooleanProperty(false);
+    BooleanProperty emptyLibraryProperty = new SimpleBooleanProperty(false);
+    ObjectProperty<NavigationMode> navigationModeProperty = new SimpleObjectProperty<>(NavigationMode.ARTISTS);
+    ObjectProperty<Optional<Playlist>> selectedPlaylistProperty = new SimpleObjectProperty<>(Optional.empty());
+    ListProperty<String> artistsPropertyMock = new SimpleListProperty<>();
 
     @Mock
     RootController rootControllerMock;
@@ -61,6 +64,8 @@ public class RootControllerTest extends JavaFxTestBase<RootController> {
     PlayerController playerControllerMock;
     @Mock
     RootMenuBarController menuBarMock;
+    @Mock
+    PreferencesController preferencesControllerMock;
     @Mock
     PlayQueueController playQueueControllerMock;
     @Mock
@@ -84,7 +89,7 @@ public class RootControllerTest extends JavaFxTestBase<RootController> {
         playlistTreeView = new PlaylistTreeView(playlistsLibraryMock, rootPlaylist, injector);
 
         injector = injector.createChildInjector(new TestModule());
-        loadControllerModule(Layout.ROOT);
+        loadTestController(Layout.ROOT);
         stage.setScene(new Scene(controller.getRoot()));
 
         stage.show();
@@ -106,7 +111,7 @@ public class RootControllerTest extends JavaFxTestBase<RootController> {
         }
 
         @Provides
-        TrackSetAreaRowFactory a() {
+        TrackSetAreaRowFactory providesTrackSetAreaRowFactoryMock() {
             return trackSetAreaRowFactoryMock;
         }
 
@@ -145,6 +150,12 @@ public class RootControllerTest extends JavaFxTestBase<RootController> {
         }
 
         @Provides
+        @PrefCtrl
+        PreferencesController providesPreferencesControllerMock() {
+            return preferencesControllerMock;
+        }
+
+        @Provides
         @MenuBarCtrl
         RootMenuBarController providesMenuBarControllerMock() {
             return menuBarMock;
@@ -157,7 +168,13 @@ public class RootControllerTest extends JavaFxTestBase<RootController> {
         }
 
         @Provides
-        @SearchingTextProperty
+        @ArtistsProperty
+        ListProperty<String> providesArtistsProperty() {
+            return artistsPropertyMock;
+        }
+
+        @Provides
+        @SearchTextProperty
         StringProperty providesSearchingTextProperty() {
             return new SimpleStringProperty("");
         }
@@ -165,13 +182,13 @@ public class RootControllerTest extends JavaFxTestBase<RootController> {
         @Provides
         @SelectedMenuProperty
         ReadOnlyObjectProperty<NavigationMode> providesSelectedMenuProperty() {
-            return new SimpleObjectProperty<>(NavigationMode.ALL_TRACKS);
+            return navigationModeProperty;
         }
 
         @Provides
         @SelectedPlaylistProperty
         ReadOnlyObjectProperty<Optional<Playlist>> providesSelectedPlaylistProperty() {
-            return new SimpleObjectProperty<>(Optional.empty());
+            return selectedPlaylistProperty;
         }
 
         @Provides

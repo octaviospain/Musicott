@@ -480,7 +480,7 @@ public class Utils_GetArtistsInvolvedInTrackTest {
         }
 
         @Test
-        @DisplayName ("Has 'ft' and")
+        @DisplayName ("Has 'ft' and ending by 'Remix'")
         @Disabled("User should put the extra artist in the artist field, separated by a comma")
         void twoArtistsDividedByFtWithRemix() {
             initTrackWithNameAndResult("Pretendingtowalkslow ft Zeroh (M. Constant Remix)", "Zeroh", "M. Constant");

@@ -23,8 +23,8 @@ import com.google.inject.*;
 import com.transgressoft.musicott.view.*;
 
 /**
- * Guice {@link Module} interface  used to configure instances of {@link InjectableController}
- * classes using as a singleton the classes provided.
+ * Guice {@link Module} interface used to configure instances of {@link InjectableController}
+ * classes, injecting the class provided as a singleton with a custom annotation.
  *
  * @param <T> The class of the controller to instantiate as singleton Guice object
  *

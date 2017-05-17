@@ -26,6 +26,8 @@ import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
+import javafx.collections.*;
+import javafx.collections.transformation.*;
 import javafx.event.*;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
@@ -38,11 +40,13 @@ import java.time.*;
 import java.time.format.*;
 import java.util.*;
 import java.util.Map.*;
+import java.util.function.*;
 import java.util.stream.*;
 
 import static com.transgressoft.musicott.view.MusicottLayout.*;
 import static com.transgressoft.musicott.view.custom.TrackTableViewContextMenu.*;
 import static javafx.scene.media.MediaPlayer.Status.*;
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Class that extends from {@link TableView} and models a table that represents {@link Track}
@@ -51,6 +55,7 @@ import static javafx.scene.media.MediaPlayer.Status.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
+@Singleton
 public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
     private static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
@@ -78,6 +83,9 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
     private TableColumn<Entry<Integer, Track>, LocalDateTime> dateModifiedCol;
     private TableColumn<Entry<Integer, Track>, LocalDateTime> dateAddedCol;
     private TableColumn<Entry<Integer, Track>, Duration> totalTimeCol;
+
+    private StringProperty searchTextProperty;
+    private ListProperty<Entry<Integer, Track>> showingTracksProperty;
 
     @SuppressWarnings ("unchecked")
     @Inject
@@ -211,6 +219,50 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
     public void setContextMenu(TrackTableViewContextMenu trackTableContextMenu) {
         super.setContextMenu(trackTableContextMenu);
         addEventHandler(MouseEvent.MOUSE_CLICKED, showContextMenuEventHandler(this, trackTableContextMenu));
+    }
+
+    @Inject
+    public void setSearchTextProperty(@SearchTextProperty StringProperty p) {
+        searchTextProperty = p;
+        if (showingTracksProperty != null)
+            setItems(bindedToSearchTextFieldTracks());
+    }
+
+    @Inject
+    public void setShowingTracksProperty(@ShowingTracksProperty ListProperty<Entry<Integer, Track>> p) {
+        this.showingTracksProperty = p;
+        if (searchTextProperty != null)
+            setItems(bindedToSearchTextFieldTracks());
+    }
+
+    /**
+     * Binds the text typed on the search text field to a filtered subset of items shown on the table
+     */
+    private SortedList<Entry<Integer, Track>> bindedToSearchTextFieldTracks() {
+        ObservableList<Entry<Integer, Track>> tracks = showingTracksProperty.get();
+        FilteredList<Entry<Integer, Track>> filteredTracks = new FilteredList<>(tracks, t -> true);
+
+        subscribe(searchTextProperty, query -> filteredTracks.setPredicate(filterTracksByQuery(query)));
+
+        SortedList<Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
+        sortedTracks.comparatorProperty().bind(comparatorProperty());
+        return sortedTracks;
+    }
+
+    /**
+     * Returns a {@link Predicate} that evaluates the match of a given {@code String} to a given track {@link Entry}
+     *
+     * @param query The {@code String} to match against the track
+     *
+     * @return The {@code Predicate}
+     */
+    private Predicate<Entry<Integer, Track>> filterTracksByQuery(String query) {
+        return trackEntry -> {
+            boolean result = query == null || query.isEmpty();
+            if (! result)
+                result = TracksLibrary.trackMatchesString(trackEntry.getValue(), query);
+            return result;
+        };
     }
 
     /**

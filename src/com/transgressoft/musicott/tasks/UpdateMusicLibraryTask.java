@@ -51,7 +51,7 @@ public class UpdateMusicLibraryTask extends Thread {
     
     private final AlbumsLibrary albumsLibrary;
     private final ArtistsLibrary artistsLibrary;
-    private final RootController rootController;
+    private RootController rootController;
     private final TaskDemon taskDemon;
     private final ErrorDialogController errorDialog;
     private final List<Track> tracks;
@@ -63,7 +63,7 @@ public class UpdateMusicLibraryTask extends Thread {
 
     @Inject
     public UpdateMusicLibraryTask(AlbumsLibrary albumsLibrary, ArtistsLibrary artistsLibrary, TaskDemon taskDemon,
-            ErrorDialogController errorDialog, @RootCtrl RootController rootCtrl, @Assisted List<Track> tracks,
+            ErrorDialogController errorDialog, @Assisted List<Track> tracks,
             @Assisted Set<String> changedAlbums, @Assisted Optional<String> newAlbum) {
         this.albumsLibrary = albumsLibrary;
         this.artistsLibrary = artistsLibrary;
@@ -72,7 +72,6 @@ public class UpdateMusicLibraryTask extends Thread {
         this.tracks = tracks;
         this.changedAlbums = changedAlbums;
         this.newAlbum = newAlbum;
-        rootController = rootCtrl;
     }
 
     @Override
@@ -156,5 +155,10 @@ public class UpdateMusicLibraryTask extends Thread {
             LOG.error("Error restoring the backup file: ", exception.getCause());
             errorDialog.show("Error restoring the backup file", null, exception);
         }
+    }
+
+    @Inject
+    public void setRootController(@RootCtrl RootController rootController) {
+        this.rootController = rootController;
     }
 }

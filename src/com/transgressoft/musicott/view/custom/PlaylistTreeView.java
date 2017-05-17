@@ -38,6 +38,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
+@Singleton
 public class PlaylistTreeView extends TreeView<Playlist> {
 
     private final PlaylistsLibrary playlistsLibrary;

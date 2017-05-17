@@ -143,11 +143,6 @@ public class EditController extends InjectableController<AnchorPane> implements 
     }
 
     @Override
-    public AnchorPane getRoot() {
-        return rootPane;
-    }
-
-    @Override
     public void setStage(Stage stage) {
         super.setStage(stage);
         stage.setTitle("Edit");

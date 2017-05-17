@@ -162,12 +162,12 @@ public class MusicLibrary {
         randomPlaylistPlayThread.start();
     }
 
-    @Inject
+    @Inject (optional = true)
     public void setNavigationController(@NavigationCtrl NavigationController c) {
         navigationController = c;
     }
 
-    @Inject
+    @Inject (optional = true)
     public void setRootController(@RootCtrl RootController c) {
         rootController = c;
     }

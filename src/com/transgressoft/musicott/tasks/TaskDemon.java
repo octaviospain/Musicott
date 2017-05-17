@@ -48,6 +48,7 @@ public class TaskDemon {
 
 	private ExecutorService parseExecutorService;
 	private Future parseFuture;
+	private ParseTaskFactory parseTaskFactory;
 	private ParseTask parseTask;
 	private WaveformTask waveformTask;
 	private BlockingQueue<Track> tracksToProcessQueue;
@@ -55,22 +56,17 @@ public class TaskDemon {
 
 	private boolean savingsActivated = true;
 
-	@Inject (optional = true)
-	private ParseTaskFactory parseTaskFactory;
-	@Inject
-	private Injector injector;
-
 	@Inject
 	public TaskDemon() {
 		tracksToProcessQueue = new LinkedBlockingQueue<>();
 		parseExecutorService = Executors.newSingleThreadExecutor();
 	}
 
-	public void deactivateLibrarySaving() {
+	public void deactivateSaveLibrary() {
 		savingsActivated = false;
 	}
 
-	public void activateLibrarySaving() {
+	public void activateSaveLibrary() {
 		savingsActivated = true;
 	}
 
@@ -112,22 +108,33 @@ public class TaskDemon {
 
     public void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
 		if (savingsActivated) {
-			if (saveMusicLibraryTask == null) {
-				saveMusicLibraryTask = injector.getInstance(SaveMusicLibraryTask.class);
-				saveMusicLibraryTask.setDaemon(true);
+			if (! saveMusicLibraryTask.isAlive())
 				saveMusicLibraryTask.start();
-			}
 			saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
 		}
     }
 
 	public void analyzeTrackWaveform(Track trackToAnalyze) {
-		if (waveformTask == null) {
-			waveformTask = injector.getInstance(WaveformTask.class);
+		if (! waveformTask.isAlive())
 			waveformTask.start();
-		}
 		tracksToProcessQueue.add(trackToAnalyze);
 		LOG.debug("Added track {} to waveform analyze queue", trackToAnalyze);
+	}
+
+	@Inject (optional = true)
+	public void setParseTaskFactory(ParseTaskFactory parseTaskFactory) {
+		this.parseTaskFactory = parseTaskFactory;
+	}
+
+	@Inject
+	public void setSaveMusicLibraryTask(SaveMusicLibraryTask saveMusicLibraryTask) {
+		this.saveMusicLibraryTask = saveMusicLibraryTask;
+		saveMusicLibraryTask.setDaemon(true);
+	}
+
+	@Inject
+	public void setWaveformTaskFactory(WaveformTaskFactory waveformTaskFactory) {
+		waveformTask = waveformTaskFactory.create(tracksToProcessQueue);
 	}
 
 	@Inject
@@ -142,9 +149,7 @@ public class TaskDemon {
 
 	public void setErrorDialog(ErrorDialogController errorDialog) {
 		this.errorDialog = errorDialog;
-	}
-
-	Track getNextTrackToAnalyzeWaveform() throws InterruptedException {
-		return tracksToProcessQueue.take();
+		saveMusicLibraryTask.setErrorDialog(errorDialog);
+		waveformTask.setErrorDialog(errorDialog);
 	}
 }

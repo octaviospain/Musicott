@@ -40,7 +40,7 @@ public class SimpleProgressBarModule extends AbstractModule implements Controlle
     }
 
     @Provides
-    @NavigationCtrl
+    @ProgressBarCtrl
     public SimpleProgressBarController providesController() {
         return controller;
     }

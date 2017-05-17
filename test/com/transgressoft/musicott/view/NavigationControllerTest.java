@@ -68,7 +68,7 @@ public class NavigationControllerTest extends JavaFxTestBase<NavigationControlle
 
         injector = injector.createChildInjector(new TestModule());
 
-        loadControllerModule(Layout.NAVIGATION);
+        loadTestController(Layout.NAVIGATION);
         stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);

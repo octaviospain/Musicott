@@ -53,6 +53,9 @@ import static org.fxmisc.easybind.EasyBind.*;
 @Singleton
 public class ArtistsViewController extends InjectableController<SplitPane> {
 
+    private final MusicLibrary musicLibrary;
+    private final ArtistsLibrary artistsLibrary;
+
     @FXML
     private SplitPane artistsViewSplitPane;
     @FXML
@@ -71,17 +74,14 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
     private ObservableMap<String, TrackSetAreaRow> albumTrackSets;
     private ObjectProperty<Optional<String>> selectedArtistProperty;
     private StringProperty searchTextProperty;
+    private ListProperty<String> artistsListProperty;
 
-    private final MusicLibrary musicLibrary;
-    private final ArtistsLibrary artistsLibrary;
-    private final TrackSetAreaRowFactory trackSetAreaRowFactory;
+    private TrackSetAreaRowFactory trackSetAreaRowFactory;
 
     @Inject
-    public ArtistsViewController(MusicLibrary musicLibrary, ArtistsLibrary artistsLibrary,
-            TrackSetAreaRowFactory trackSetAreaRowFactory) {
+    public ArtistsViewController(MusicLibrary musicLibrary, ArtistsLibrary artistsLibrary) {
         this.musicLibrary = musicLibrary;
         this.artistsLibrary = artistsLibrary;
-        this.trackSetAreaRowFactory = trackSetAreaRowFactory;
     }
 
     @FXML
@@ -110,16 +110,6 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
             checkSelectedArtist();
     }
 
-    @Override
-    public SplitPane getRoot() {
-        return artistsViewSplitPane;
-    }
-
-    @Inject
-    public void setSearchTextProperty(@SearchingTextProperty StringProperty p) {
-        this.searchTextProperty = p;
-    }
-
     private MapChangeListener<String, TrackSetAreaRow> albumTrackSetsListener() {
         return change -> {
             if (change.wasAdded())
@@ -133,8 +123,7 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
     }
 
     private FilteredList<String> bindedToSearchFieldArtists() {
-        ObservableList<String> tracks = artistsLibrary.artistsListProperty();
-        FilteredList<String> filteredArtists = new FilteredList<>(tracks, artist -> true);
+        FilteredList<String> filteredArtists = new FilteredList<>(artistsListProperty, artist -> true);
 
         subscribe(searchTextProperty, query -> filteredArtists.setPredicate(filterArtistsByQuery(query)));
         return filteredArtists;
@@ -255,11 +244,7 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
     public void setArtistTrackSets(Multimap<String, Entry<Integer, Track>> tracksByAlbum) {
         albumTrackSets.clear();
         trackSetsListView.getItems().clear();
-        tracksByAlbum.asMap().entrySet().forEach(multimapEntry -> {
-            String album = multimapEntry.getKey();
-            Collection<Entry<Integer, Track>> tracks = multimapEntry.getValue();
-            addTrackSet(album, tracks);
-        });
+        tracksByAlbum.asMap().forEach(this::addTrackSet);
     }
 
     /**
@@ -321,5 +306,20 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
 
     public ReadOnlyObjectProperty<Optional<String>> selectedArtistProperty() {
         return selectedArtistProperty;
+    }
+
+    @Inject (optional = true)
+    public void setTrackSetAreaRowFactory(TrackSetAreaRowFactory trackSetAreaRowFactory) {
+        this.trackSetAreaRowFactory = trackSetAreaRowFactory;
+    }
+
+    @Inject
+    public void setSearchTextProperty(@SearchTextProperty StringProperty p) {
+        this.searchTextProperty = p;
+    }
+
+    @Inject
+    public void setArtistsLibrary(@ArtistsProperty ListProperty<String> p) {
+        this.artistsListProperty = p;
     }
 }

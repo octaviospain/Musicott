@@ -22,6 +22,7 @@ package com.transgressoft.musicott.util.guice.modules;
 import com.google.inject.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
+import javafx.beans.property.*;
 
 /**
  * @author Octavio Calleya
@@ -43,5 +44,35 @@ public class PlayerModule extends AbstractModule implements ControllerModule<Pla
     @PlayerCtrl
     public PlayerController providesController() {
         return controller;
+    }
+
+    @Provides
+    @SearchTextProperty
+    StringProperty providesSearchingTextProperty(PlayerController playerController) {
+        return playerController.searchTextProperty();
+    }
+
+    @Provides
+    @SearchingProperty
+    ReadOnlyBooleanProperty providesSearchingProperty(PlayerController playerController) {
+        return playerController.searchFieldFocusedProperty();
+    }
+
+    @Provides
+    @PlayPauseProperty
+    BooleanProperty providesPlayPauseProperty(PlayerController playerController) {
+        return playerController.playButtonSelectedProperty();
+    }
+
+    @Provides
+    @PreviousButtonDisabledProperty
+    ReadOnlyBooleanProperty providesPrevButtonDisabledProperty(PlayerController playerController) {
+        return playerController.previousButtonDisabledProperty();
+    }
+
+    @Provides
+    @NextButtonDisabledProperty
+    ReadOnlyBooleanProperty providesNexButtonDisabledProperty(PlayerController playerController) {
+        return playerController.nextButtonDisabledProperty();
     }
 }

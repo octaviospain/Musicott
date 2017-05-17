@@ -44,7 +44,7 @@ public class EditControllerTest extends JavaFxTestBase<EditController> {
     public void start(Stage stage) throws Exception {
         injector = injector.createChildInjector(new TestModule());
 
-        loadControllerModule(Layout.EDITION);
+        loadTestController(Layout.EDITION);
         stage.setScene(new Scene(controller.getRoot()));
 
         injector = injector.createChildInjector(module);

@@ -34,7 +34,7 @@ import javafx.stage.*;
  * Based on Arnaud Blouin's
  * <a href="http://torgen-engineering.blogspot.cz/2015/11/dependencies-between-controllers.html">solution</a>
  *
- * @param <R> The root of the of the controller layout
+ * @param <R> The class type of the root node of the controller layout
  *
  * @author Octavio Calleya
  * @version 0.10.1-b
@@ -46,6 +46,7 @@ import javafx.stage.*;
  */
 public abstract class InjectableController<R extends Parent> {
 
+    private R rootNode;
     protected Stage stage;
 
     /**
@@ -61,7 +62,13 @@ public abstract class InjectableController<R extends Parent> {
      */
     public void configure() {}
 
-    public abstract R getRoot();
+    public void setRoot(R rootNode) {
+        this.rootNode = rootNode;
+    }
+
+    public R getRoot() {
+        return rootNode;
+    }
 
     public void setStage(Stage stage) {
         this.stage = stage;

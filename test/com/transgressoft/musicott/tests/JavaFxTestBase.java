@@ -74,6 +74,11 @@ public abstract class JavaFxTestBase<T extends InjectableController> implements 
     protected Module mockedSingletonsTestModule = new MockedSingletonsTestModule();
     protected Injector injector = Guice.createInjector(mockedSingletonsTestModule);
 
+    @Override
+    public Injector getInjector() {
+        return injector;
+    }
+
     @Start
     public abstract void start(Stage stage) throws Exception;
 
@@ -92,7 +97,7 @@ public abstract class JavaFxTestBase<T extends InjectableController> implements 
         return fxRobot.lookup(query).query();
     }
 
-    protected void loadControllerModule(Layout layout) throws IOException, ReflectiveOperationException {
+    protected void loadTestController(Layout layout) throws IOException, ReflectiveOperationException {
         module = createController(layout, injector);
         controller = module.providesController();
     }

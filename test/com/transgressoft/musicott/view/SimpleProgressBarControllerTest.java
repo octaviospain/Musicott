@@ -19,16 +19,13 @@
 
 package com.transgressoft.musicott.view;
 
-import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tests.*;
-import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.util.guice.modules.*;
-import javafx.beans.property.*;
 import javafx.scene.*;
-import javafx.stage.Stage;
+import javafx.scene.control.*;
+import javafx.stage.*;
 import org.junit.jupiter.api.*;
-import org.mockito.*;
+import org.testfx.api.*;
 import org.testfx.framework.junit5.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,49 +33,38 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Octavio Calleya
  */
-public class PlayerControllerTest extends JavaFxTestBase<PlayerController> {
+public class SimpleProgressBarControllerTest extends JavaFxTestBase<SimpleProgressBarController> {
 
-    @Mock
-    PlayQueueController playQueueControllerMock;
+    Stage stage;
+    ProgressBar progressBar;
 
     @Override
     @Start
     public void start(Stage stage) throws Exception {
-        injector = injector.createChildInjector(new TestModule());
-
-        loadTestController(Layout.PLAYER);
+        this.stage = stage;
+        loadTestController(Layout.PROGRESS_BAR);
+        controller.setStage(stage);
         stage.setScene(new Scene(controller.getRoot()));
-
         injector = injector.createChildInjector(module);
-
         stage.show();
+    }
+
+    @BeforeEach
+    void beforeEach(FxRobot fxRobot) {
+        progressBar = find(fxRobot, "#progressBar");
     }
 
     @Test
     @DisplayName ("Singleton controller")
     void singletonController() {
-        PlayerController anotherController = injector.getInstance(PlayerController.class);
+        SimpleProgressBarController anotherController = injector.getInstance(SimpleProgressBarController.class);
 
-        assertSame(controller, anotherController);
+        assertEquals(controller, anotherController);
     }
 
-    private class TestModule extends AbstractModule {
-
-        @Override
-        protected void configure() {
-            install(new WaveformPaneFactoryModule());
-        }
-
-        @Provides
-        @PlayQueueCtrl
-        PlayQueueController providesPlayQueueControllerMock() {
-            return playQueueControllerMock;
-        }
-
-        @Provides
-        @EmptyLibraryProperty
-        ReadOnlyBooleanProperty providesEmptyLibraryProperty() {
-            return new SimpleBooleanProperty(false);
-        }
+    @Test
+    @DisplayName ("Is indeterminate progress")
+    void indeterminateProgress() {
+        assertTrue(progressBar.isIndeterminate());
     }
 }

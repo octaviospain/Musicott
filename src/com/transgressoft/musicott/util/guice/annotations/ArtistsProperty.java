@@ -32,6 +32,6 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Target ({FIELD, PARAMETER, METHOD})
 @Retention (RUNTIME)
 @BindingAnnotation
-public @interface SearchingTextProperty {
+public @interface ArtistsProperty {
 
 }
