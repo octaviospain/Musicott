@@ -19,8 +19,6 @@
 
 package com.transgressoft.musicott.tasks.parse;
 
-import com.transgressoft.musicott.*;
-import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import javafx.concurrent.*;
@@ -36,15 +34,18 @@ import java.util.*;
  * @version 0.10-b
  * @since 0.10-b
  */
-public abstract class BaseParseTask extends Task<Void> {
+public abstract class BaseParseTask extends Task<Void> implements ParseTask {
+
+    protected ErrorDialogController errorDialog;
+    protected NavigationController navigationController;
 
     protected Collection<String> parseErrors;
     protected long startMillis;
 
-    protected StageDemon stageDemon = StageDemon.getInstance();
-    protected MusicLibrary musicLibrary = MusicLibrary.getInstance();
-    protected ErrorDemon errorDemon = ErrorDemon.getInstance();
-    protected NavigationController navigationController = stageDemon.getNavigationController();
+    public BaseParseTask(NavigationController navigationController, ErrorDialogController errorDialog) {
+        this.errorDialog = errorDialog;
+        this.navigationController = navigationController;
+    }
 
     public void updateProgressTask() {
         int parsedItems = getNumberOfParsedItemsAndIncrement();
@@ -54,17 +55,13 @@ public abstract class BaseParseTask extends Task<Void> {
         Platform.runLater(() -> updateTaskProgressOnView(progress, statusMessage));
     }
 
-    protected abstract int getNumberOfParsedItemsAndIncrement();
-
-    protected abstract int getTotalItemsToParse();
-
     /**
      * Updates on the view the progress and a message of the task.
      * Should be called on the JavaFX Application Thread.
      */
     protected void updateTaskProgressOnView(double progress, String message) {
-        stageDemon.getNavigationController().setStatusProgress(progress);
-        stageDemon.getNavigationController().setStatusMessage(message);
+        navigationController.setStatusProgress(progress);
+        navigationController.setStatusMessage(message);
     }
 
     protected void computeAndShowElapsedTime(int totalItemsParsed) {

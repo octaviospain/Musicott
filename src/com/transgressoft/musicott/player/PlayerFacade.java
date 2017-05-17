@@ -19,11 +19,12 @@
 
 package com.transgressoft.musicott.player;
 
-import com.transgressoft.musicott.*;
-import com.transgressoft.musicott.model.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.Track;
+import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
@@ -34,6 +35,8 @@ import javafx.scene.media.MediaPlayer.*;
 import javafx.util.*;
 import org.slf4j.*;
 
+import javax.swing.*;
+import java.io.*;
 import java.util.*;
 import java.util.stream.*;
 
@@ -44,11 +47,19 @@ import static org.fxmisc.easybind.EasyBind.*;
  * Singleton class that isolates the usage of the music player.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
+@Singleton
 public class PlayerFacade {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+
+    private final TracksLibrary tracksLibrary;
+    private final ServiceDemon serviceDemon;
+    private final TaskDemon taskDemon;
+
+    private ErrorDialogController errorDialog;
+    private NavigationController navigationController;
     private PlayQueueController playQueueController;
     private PlayerController playerController;
     private Optional<Track> currentTrack;
@@ -59,16 +70,11 @@ public class PlayerFacade {
     private boolean played;
     private boolean scrobbled;
 
-    private StageDemon stageDemon = StageDemon.getInstance();
-    private ServiceDemon services = ServiceDemon.getInstance();
-    private TaskDemon taskDemon = TaskDemon.getInstance();
-
-    private static class InstanceHolder {
-        static final PlayerFacade INSTANCE = new PlayerFacade();
-        private InstanceHolder() {}
-    }
-
-    private PlayerFacade() {
+    @Inject
+    public PlayerFacade(TracksLibrary tracksLibrary, ServiceDemon serviceDemon, TaskDemon taskDemon) {
+        this.tracksLibrary = tracksLibrary;
+        this.serviceDemon = serviceDemon;
+        this.taskDemon = taskDemon;
         playList = FXCollections.observableArrayList();
         historyList = FXCollections.observableArrayList();
         playingRandom = false;
@@ -77,10 +83,6 @@ public class PlayerFacade {
         currentTrack = Optional.empty();
         trackPlayer = new JavaFxPlayer();
         trackPlayer.setOnEndOfMedia(this::next);
-    }
-
-    public static PlayerFacade getInstance() {
-        return InstanceHolder.INSTANCE;
     }
 
     public ObservableList<TrackQueueRow> getPlayList() {
@@ -99,14 +101,6 @@ public class PlayerFacade {
         return trackPlayer.getStatus();
     }
 
-    public void setPlayerController(PlayerController playerController) {
-        this.playerController = playerController;
-    }
-
-    public void setPlayQueueController(PlayQueueController playQueueController) {
-        this.playQueueController = playQueueController;
-    }
-
     /**
      * Adds a {@link List} of tracks to the play queue. Checks if all tracks given are playable.
      *
@@ -116,16 +110,25 @@ public class PlayerFacade {
      */
     public void addTracksToPlayQueue(Collection<Track> tracks, boolean placeFirstInPlayQueue) {
         Thread playableTracksThread = new Thread(() -> {
-            List<Track> playableTracks = tracks.stream().filter(track -> {
-                boolean isPlayable = track.isPlayable();
-                if (! isPlayable)
-                    Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Unplayable file"));
-                return isPlayable;
-            }).collect(Collectors.toList());
-
+            List<Track> playableTracks = tracks.stream()
+                                               .filter(this::isPlayable).collect(Collectors.toList());
             Platform.runLater(() -> addPlayableTracksToPlayQueue(playableTracks, placeFirstInPlayQueue));
         });
         playableTracksThread.start();
+    }
+
+    private boolean isPlayable(Track track) {
+        boolean isPlayable = false;
+        try {
+            isPlayable = track.isPlayable();
+        }
+        catch (IOException exception) {
+            String fullPath = track.getFileFolder() + track.getFileName();
+            errorDialog.show("Track not found", fullPath);
+        }
+        if (! isPlayable)
+            Platform.runLater(() -> navigationController.setStatusMessage("Unplayable file"));
+        return isPlayable;
     }
 
     /**
@@ -163,13 +166,24 @@ public class PlayerFacade {
             if (! playList.isEmpty())
                 setCurrentTrack();
             else if (playRandom)
-                MusicLibrary.getInstance().playRandomPlaylist();
+                playRandomPlaylist();
         }
         else if (trackPlayer.getStatus().equals(PLAYING))
             if (playList.isEmpty())
                 stop();
             else
                 setCurrentTrack();
+    }
+
+    /**
+     * Creates a random playlist asynchronously
+     */
+    private void playRandomPlaylist() {
+        Thread randomPlaylistThread = new Thread(() -> {
+            List<Track> randomPlaylist = tracksLibrary.getRandomTracks();
+            setRandomListAndPlay(randomPlaylist);
+        }, "Random Playlist Thread");
+        randomPlaylistThread.start();
     }
 
     private void setCurrentTrack() {
@@ -188,7 +202,7 @@ public class PlayerFacade {
     private void setPlayer(Track track) {
         scrobbled = false;
         played = false;
-        if (track.isPlayable()) {
+        if (isPlayable(track)) {
             currentTrack = Optional.of(track);
             trackPlayer.setTrack(track);
             playerController.updatePlayer(track);
@@ -224,8 +238,8 @@ public class PlayerFacade {
                 incrementCurrentTrackPlayCount();
             if (isCurrentTrackValidToScrobble(trackPlayer, time)) {
                 scrobbled = true;
-                if (services.usingLastFm()) {
-                    services.updateAndScrobbleTrack(currentTrack.get());
+                if (serviceDemon.usingLastFm()) {
+                    serviceDemon.updateAndScrobbleTrack(currentTrack.get());
                 }
             }
         });
@@ -277,7 +291,7 @@ public class PlayerFacade {
      *
      * @param tracksToDelete The {@link List} of track ids
      */
-    public void deleteFromQueues(List<Track> tracksToDelete) {
+    public void deleteFromQueues(Collection<Track> tracksToDelete) {
         currentTrack.ifPresent(track -> {
             if (tracksToDelete.contains(track)) {
                 currentTrack = Optional.empty();
@@ -377,9 +391,33 @@ public class PlayerFacade {
                         setCurrentTrack();
                 });
             }
-            Platform.runLater(() -> stageDemon.getNavigationController().setStatusMessage("Playing random playlist"));
+            Platform.runLater(() -> navigationController.setStatusMessage("Playing random playlist"));
         }
         else
             Platform.runLater(playerController::setStopped);
+    }
+
+    public void setWaveform(Track track) {
+        SwingUtilities.invokeLater(() -> playerController.setWaveform(track));
+    }
+
+    @Inject (optional = true)
+    public void setErrorDialogController(@ErrorCtrl ErrorDialogController errorDialogController) {
+        errorDialog = errorDialogController;
+    }
+
+    @Inject (optional = true)
+    public void setNavigationController(@NavigationCtrl NavigationController navigationController) {
+        this.navigationController = navigationController;
+    }
+
+    @Inject (optional = true)
+    public void setPlayerController(@PlayerCtrl PlayerController playerController) {
+        this.playerController = playerController;
+    }
+
+    @Inject (optional = true)
+    public void setPlayQueueController(@PlayQueueCtrl PlayQueueController playQueueController) {
+        this.playQueueController = playQueueController;
     }
 }

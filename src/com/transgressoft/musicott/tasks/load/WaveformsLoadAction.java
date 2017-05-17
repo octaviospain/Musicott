@@ -19,14 +19,19 @@
 
 package com.transgressoft.musicott.tasks.load;
 
+import com.cedarsoftware.util.io.*;
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
+import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
 import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * This class extends from {@link BaseLoadAction} in order to perform the loading
@@ -34,15 +39,20 @@ import static com.transgressoft.musicott.view.MusicottController.*;
  * of the application, stored on a {@code json} file.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9.2-b
  */
 public class WaveformsLoadAction extends BaseLoadAction {
 
     private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    public WaveformsLoadAction(String applicationFolder, MusicLibrary musicLibrary, Application application) {
-        super(applicationFolder, musicLibrary, application);
+    private WaveformsLibrary waveformsLibrary;
+
+    @Inject
+    public WaveformsLoadAction(WaveformsLibrary waveformsLibrary, @Assisted String applicationFolder,
+            @Assisted Application application) {
+        super(applicationFolder, application);
+        this.waveformsLibrary = waveformsLibrary;
     }
 
     /**
@@ -57,7 +67,7 @@ public class WaveformsLoadAction extends BaseLoadAction {
             waveformsMap = parseWaveformsFromJsonFile(waveformsFile);
         else
             waveformsMap = new HashMap<>();
-        musicLibrary.waveforms.addWaveforms(waveformsMap);
+        waveformsLibrary.addWaveforms(waveformsMap);
     }
 
     /**
@@ -73,12 +83,14 @@ public class WaveformsLoadAction extends BaseLoadAction {
     private Map<Integer, float[]> parseWaveformsFromJsonFile(File waveformsFile) {
         Map<Integer, float[]> waveformsMap;
         try {
+            JsonReader.assignInstantiator(ObservableListWrapper.class, new ObservableListWrapperCreator());
             waveformsMap = (Map<Integer, float[]>) parseJsonFile(waveformsFile);
             LOG.info("Loaded waveform images from {}", waveformsFile);
         }
         catch (IOException exception) {
             waveformsMap = new HashMap<>();
             LOG.error("Error loading waveform thumbnails: {}", exception.getMessage(), exception);
+            // TODO improve the error handling to propagate this and show when the stage is created
         }
         return waveformsMap;
     }

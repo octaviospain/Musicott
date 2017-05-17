@@ -20,7 +20,10 @@
 package com.transgressoft.musicott.view;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.Platform;
 import javafx.beans.binding.*;
@@ -47,8 +50,14 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @version 0.10-b
  * @since 0.10-b
  */
-public class ArtistsViewController {
+@Singleton
+public class ArtistsViewController extends InjectableController<SplitPane> {
 
+    private final MusicLibrary musicLibrary;
+    private final ArtistsLibrary artistsLibrary;
+
+    @FXML
+    private SplitPane artistsViewSplitPane;
     @FXML
     private ListView<String> artistsListView;
     @FXML
@@ -64,9 +73,16 @@ public class ArtistsViewController {
 
     private ObservableMap<String, TrackSetAreaRow> albumTrackSets;
     private ObjectProperty<Optional<String>> selectedArtistProperty;
+    private StringProperty searchTextProperty;
+    private ListProperty<String> artistsListProperty;
 
-    private PlayerController playerLayoutController;
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private TrackSetAreaRowFactory trackSetAreaRowFactory;
+
+    @Inject
+    public ArtistsViewController(MusicLibrary musicLibrary, ArtistsLibrary artistsLibrary) {
+        this.musicLibrary = musicLibrary;
+        this.artistsLibrary = artistsLibrary;
+    }
 
     @FXML
     public void initialize() {
@@ -74,18 +90,22 @@ public class ArtistsViewController {
         albumTrackSets.addListener(albumTrackSetsListener());
         artistsListView.getSelectionModel().selectedItemProperty().addListener(selectedArtistListener());
         artistsListView.setOnMouseClicked(this::doubleClickOnArtistHandler);
-
         totalAlbumsLabel.setText(String.valueOf(0) + " albums");
         totalTracksLabel.setText(String.valueOf(0) + " tracks");
         artistRandomButton.visibleProperty().bind(map(nameLabel.textProperty().isEmpty().not(), Function.identity()));
         artistRandomButton.setOnAction(e -> musicLibrary.playRandomArtistPlaylist(selectedArtistProperty.get().get()));
         selectedArtistProperty = new SimpleObjectProperty<>(this, "selected artist", Optional.empty());
         nameLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    if (selectedArtistProperty.get().isPresent())
-                        return selectedArtistProperty.get().get();
-                    else
-                        return "";
-                }, selectedArtistProperty));
+            if (selectedArtistProperty.get().isPresent())
+                return selectedArtistProperty.get().get();
+            else
+                return "";
+        }, selectedArtistProperty));
+    }
+
+    @Override
+    public void configure() {
+        artistsListView.setItems(bindedToSearchFieldArtists());
         if (! artistsListView.getItems().isEmpty())
             checkSelectedArtist();
     }
@@ -103,10 +123,8 @@ public class ArtistsViewController {
     }
 
     private FilteredList<String> bindedToSearchFieldArtists() {
-        ObservableList<String> tracks = musicLibrary.artistsProperty();
-        FilteredList<String> filteredArtists = new FilteredList<>(tracks, artist -> true);
+        FilteredList<String> filteredArtists = new FilteredList<>(artistsListProperty, artist -> true);
 
-        StringProperty searchTextProperty = playerLayoutController.searchTextProperty();
         subscribe(searchTextProperty, query -> filteredArtists.setPredicate(filterArtistsByQuery(query)));
         return filteredArtists;
     }
@@ -122,7 +140,7 @@ public class ArtistsViewController {
 
     private boolean artistMatchesQuery(String artist, String query) {
         boolean matchesName = artist.toLowerCase().contains(query.toLowerCase());
-        boolean containsMatchedTrack = musicLibrary.artistContainsMatchedTrack(artist, query);
+        boolean containsMatchedTrack = artistsLibrary.artistContainsMatchedTrack(artist, query);
         return matchesName || containsMatchedTrack;
     }
 
@@ -211,15 +229,10 @@ public class ArtistsViewController {
 
     private void addTrackSet(String album, Collection<Entry<Integer, Track>> tracks) {
         selectedArtistProperty.getValue().ifPresent(showingArtist -> {
-            TrackSetAreaRow trackSetAreaRow = new TrackSetAreaRow(showingArtist, album, tracks);
+            TrackSetAreaRow trackSetAreaRow = trackSetAreaRowFactory.create(showingArtist, album, tracks);
             subscribe(trackSetAreaRow.selectedTracksProperty(), selection -> checkSelectedArtist());
             albumTrackSets.put(album, trackSetAreaRow);
         });
-    }
-
-    void setPlayerController(PlayerController playerLayoutController) {
-        this.playerLayoutController = playerLayoutController;
-        artistsListView.setItems(bindedToSearchFieldArtists());
     }
 
     /**
@@ -231,11 +244,7 @@ public class ArtistsViewController {
     public void setArtistTrackSets(Multimap<String, Entry<Integer, Track>> tracksByAlbum) {
         albumTrackSets.clear();
         trackSetsListView.getItems().clear();
-        tracksByAlbum.asMap().entrySet().forEach(multimapEntry -> {
-            String album = multimapEntry.getKey();
-            Collection<Entry<Integer, Track>> tracks = multimapEntry.getValue();
-            addTrackSet(album, tracks);
-        });
+        tracksByAlbum.asMap().forEach(this::addTrackSet);
     }
 
     /**
@@ -293,5 +302,24 @@ public class ArtistsViewController {
 
     public void deselectAllTracks() {
         albumTrackSets.values().forEach(TrackSetAreaRow::deselectAllTracks);
+    }
+
+    public ReadOnlyObjectProperty<Optional<String>> selectedArtistProperty() {
+        return selectedArtistProperty;
+    }
+
+    @Inject (optional = true)
+    public void setTrackSetAreaRowFactory(TrackSetAreaRowFactory trackSetAreaRowFactory) {
+        this.trackSetAreaRowFactory = trackSetAreaRowFactory;
+    }
+
+    @Inject
+    public void setSearchTextProperty(@SearchTextProperty StringProperty p) {
+        this.searchTextProperty = p;
+    }
+
+    @Inject
+    public void setArtistsLibrary(@ArtistsProperty ListProperty<String> p) {
+        this.artistsListProperty = p;
     }
 }

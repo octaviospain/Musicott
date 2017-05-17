@@ -21,31 +21,46 @@ package com.transgressoft.musicott.util;
 
 import com.google.common.base.*;
 import com.google.common.collect.*;
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.view.*;
+import javafx.scene.control.*;
+import javafx.scene.control.Alert.*;
 import javafx.scene.image.*;
+import javafx.stage.*;
+import javafx.stage.Stage;
 import org.apache.commons.lang3.text.*;
+import org.slf4j.Logger;
 
 import java.io.*;
 import java.math.*;
 import java.nio.file.*;
 import java.text.*;
+import java.time.*;
+import java.time.format.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.Optional;
+import java.util.logging.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * Class that does some useful operations with files, directories, strings
  * or other operations utilities to be used for the application
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class Utils {
+
+    private static final String LOGGING_PROPERTIES = "resources/config/logging.properties";
+    private static final String LOG_FILE = "Musicott-main-log.txt";
+
+    @Inject
+    private static Injector injector;
 
     /**
      * Private constructor to hide the implicit public one.
@@ -336,13 +351,14 @@ public class Utils {
      * @return An {@link Optional} with the {@code image} or not.
      */
     public static Optional<Image> getImageFromFile(File imageFile) {
+        ErrorDialogController errorDialog = injector.getInstance(ErrorDialogController.class);
         Optional<Image> optionalImage = Optional.empty();
         try {
             byte[] coverBytes = Files.readAllBytes(Paths.get(imageFile.getPath()));
             optionalImage = Optional.of(new Image(new ByteArrayInputStream(coverBytes)));
         }
         catch (IOException exception) {
-            ErrorDemon.getInstance().showErrorDialog("Error getting Image from image file", "", exception);
+            errorDialog.show("Error getting Image from image file", "", exception);
         }
         return optionalImage;
     }
@@ -371,92 +387,89 @@ public class Utils {
     }
 
     /**
-     * This class implements {@link FileFilter} to
-     * accept a file with some of the given extensions. If no extensions are given
-     * the file is not accepted. The extensions must be given without the dot.
+     * Creates an {@link Alert} given a title, a header text, the content to be shown
+     * in the description, the {@link AlertType} of the requested {@code Alert},
+     * and the {@link Stage} that owns the alert.
      *
-     * @author Octavio Calleya
+     * @param title   The title of the {@code Alert} stage
+     * @param header  The header text of the {@code Alert}
+     * @param content The content text of the {@code Alert}
+     * @param type    The type of the {@code Alert}
+     * @param stage   The stage that owns the {@code Alert}
+     *
+     * @return The {@code Alert} object
      */
-    public static class ExtensionFileFilter implements FileFilter {
+    public static Alert createAlert(String title, String header, String content, AlertType type, Stage stage) {
+        Alert alert = new Alert(type);
+        alert.getDialogPane().getStylesheets().add(Utils.class.getResource(DIALOG_STYLE).toExternalForm());
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.initModality(Modality.APPLICATION_MODAL);
+        alert.initOwner(stage);
+        return alert;
+    }
 
-        private String[] extensions;
-        private int numExtensions;
+    /**
+     * Initializes a {@link Logger} that stores the log entries on a file
+     *
+     * @see <a href=http://www.slf4j.org/>slf4j</href>
+     */
+    public static void initializeLogger() {
+        Handler baseFileHandler;
+        LogManager logManager = LogManager.getLogManager();
+        java.util.logging.Logger logger = logManager.getLogger("");
+        Handler rootHandler = logger.getHandlers()[0];
 
-        public ExtensionFileFilter(String... extensions) {
-            this.extensions = extensions;
-            numExtensions = extensions.length;
-        }
+        try {
+            logManager.readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
+            baseFileHandler = new FileHandler(LOG_FILE);
+            baseFileHandler.setFormatter(new SimpleFormatter() {
 
-        public ExtensionFileFilter() {
-            extensions = new String[]{};
-            numExtensions = 0;
-        }
-
-        public void addExtension(String ext) {
-            boolean contains = false;
-            for (String e : extensions)
-                if (e != null && ext.equals(e)) {
-                    contains = true;
+                @Override
+                public String format(LogRecord record) {
+                    return logTextString(record);
                 }
-            if (! contains) {
-                ensureArrayLength();
-                extensions[numExtensions++] = ext;
-            }
+            });
+            logManager.getLogger("").removeHandler(rootHandler);
+            logManager.getLogger("").addHandler(baseFileHandler);
         }
+        catch (SecurityException | IOException exception) {
+            System.err.println("Error initiating logger: " + exception.getMessage());
+            exception.printStackTrace();
+        }
+    }
 
-        private void ensureArrayLength() {
-            if (numExtensions == extensions.length)
-                extensions = Arrays.copyOf(extensions, numExtensions == 0 ? 1 : 2 * numExtensions);
-        }
+    /**
+     * Constructs a log message given a {@link LogRecord}
+     *
+     * @param record The {@code LogRecord} instance
+     *
+     * @return The formatted string of a log entries
+     */
+    private static String logTextString(LogRecord record) {
+        StringBuilder stringBuilder = new StringBuilder();
+        String dateTimePattern = "dd/MM/yy HH:mm:ss :nnnnnnnnn";
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateTimePattern);
 
-        public void removeExtension(String ext) {
-            for (int i = 0; i < extensions.length; i++)
-                if (extensions[i].equals(ext)) {
-                    extensions[i] = null;
-                    numExtensions--;
-                }
-            extensions = Arrays.copyOf(extensions, numExtensions);
-        }
+        String logDate = LocalDateTime.now().format(dateFormatter);
+        String loggerName = record.getLoggerName();
+        String sourceMethod = record.getSourceMethodName();
+        String firstLine = loggerName + " " + sourceMethod + " " + logDate + "\n";
 
-        public boolean hasExtension(String ext) {
-            for (String e : extensions)
-                if (ext.equals(e)) {
-                    return true;
-                }
-            return false;
-        }
+        String sequenceNumber = String.valueOf(record.getSequenceNumber());
+        String loggerLevel = record.getLevel().toString();
+        String message = record.getMessage();
+        String secondLine = sequenceNumber + "\t" + loggerLevel + ":" + message + "\n\n";
 
-        public String[] getExtensions() {
-            return extensions;
-        }
+        stringBuilder.append(firstLine);
+        stringBuilder.append(secondLine);
 
-        public void setExtensions(String... extensions) {
-            if (extensions == null)
-                this.extensions = new String[]{};
-            else
-                this.extensions = extensions;
-            numExtensions = this.extensions.length;
+        if (record.getThrown() != null) {
+            stringBuilder.append(record.getThrown()).append("\n");
+            for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace())
+                stringBuilder.append(stackTraceElement).append("\n");
         }
-
-        @Override
-        public boolean accept(File pathname) {
-            boolean res = false;
-            if (! pathname.isDirectory() && ! pathname.isHidden()) {
-                int pos = pathname.getName().lastIndexOf('.');
-                if (pos != - 1) {
-                    String extension = pathname.getName().substring(pos + 1);
-                    res = matchExtension(extension);
-                }
-            }
-            return res;
-        }
-
-        private boolean matchExtension(String extension) {
-            boolean res = false;
-            for (String requiredExtension : extensions)
-                if (extension.equals(requiredExtension))
-                    res = true;
-            return res;
-        }
+        return stringBuilder.toString();
     }
 }

@@ -19,8 +19,9 @@
 
 package com.transgressoft.musicott.util;
 
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import javafx.collections.*;
 import javafx.util.*;
 import org.jaudiotagger.audio.*;
@@ -35,18 +36,20 @@ import java.util.*;
  * Performs the operation of parsing an audio file to a {@link Track} instance.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
 public class MetadataParser {
 
     private static final Logger LOG = LoggerFactory.getLogger(MetadataParser.class.getName());
 
+    @Inject
+    private static TrackFactory trackFactory;
+
     private MetadataParser() {}
 
     public static Track createTrack(File fileToParse) throws TrackParseException {
-        int newId = MainPreferences.getInstance().getTrackSequence();
-        Track track = new Track(newId, fileToParse.getParent(), fileToParse.getName());
+        Track track = trackFactory.create(fileToParse.getParent(), fileToParse.getName());
         try {
             LOG.debug("Creating AudioFile instance with jAudioTagger of: {}", fileToParse);
             AudioFile audioFile = AudioFileIO.read(fileToParse);

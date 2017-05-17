@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.view.custom;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import javafx.beans.value.*;
 import javafx.css.*;
@@ -34,7 +35,7 @@ import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
  * managed by pseudo classes.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9
  */
 public class PlaylistTreeCell extends TreeCell<Playlist> {
@@ -49,8 +50,12 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
     private final PseudoClass folder = PseudoClass.getPseudoClass("folder");
     private final PseudoClass folderSelected = PseudoClass.getPseudoClass("folder-selected");
 
-    public PlaylistTreeCell() {
+    private MusicLibrary musicLibrary;
+
+    @Inject
+    public PlaylistTreeCell(MusicLibrary musicLibrary) {
         super();
+        this.musicLibrary = musicLibrary;
         setOnMouseClicked(this::doubleClickOnPlaylistHandler);
 
         ChangeListener<Boolean> isFolderListener = (obs, oldPlaylistIsFolder, newPlaylistIsFolder) -> {
@@ -99,7 +104,7 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
     private void doubleClickOnPlaylistHandler(MouseEvent event) {
         Playlist thisPlaylist = getItem();
         if (event.getClickCount() == 2 && thisPlaylist != null && ! thisPlaylist.isEmpty() && ! thisPlaylist.isFolder())
-            MusicLibrary.getInstance().playPlaylistRandomly(getItem());
+            musicLibrary.playPlaylistRandomly(getItem());
     }
 
     private void updatePseudoClassesStates(boolean isFolder, boolean isSelected) {
@@ -136,6 +141,7 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
         event.consume();
     }
 
+    @SuppressWarnings ("unchecked")
     private void onDragDropped(DragEvent event) {
         Dragboard dragBoard = event.getDragboard();
         if (dragBoard.hasContent(TRACK_IDS_MIME_TYPE) && isValidTracksDragDropped()) {

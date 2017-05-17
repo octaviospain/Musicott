@@ -20,6 +20,10 @@
 package com.transgressoft.musicott.model;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
+import javafx.application.Platform;
+import javafx.beans.property.*;
+import javafx.collections.*;
 
 import java.util.*;
 import java.util.Map.*;
@@ -31,20 +35,30 @@ import java.util.Map.*;
  * @version 0.10-b
  * @since 0.10-b
  */
+@Singleton
 public class AlbumsLibrary {
 
     public static final String UNK_ALBUM = "Unknown album";
 
-    private final Multimap<String, Entry<Integer, Track>> albumsTracks;
+    private final Multimap<String, Entry<Integer, Track>> albumsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
+    private final ObservableList<String> albumsList;
+    private final ListProperty<String> albumsListProperty;
 
+    @Inject
     public AlbumsLibrary() {
-        albumsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
+        ObservableSet<String> albums = FXCollections.observableSet(albumsTracks.keySet());
+        albumsList = FXCollections.observableArrayList(albums);
+        albumsListProperty = new SimpleListProperty<>(this, "albums set");
+        albumsListProperty.bind(new SimpleObjectProperty<>(albumsList));
     }
 
     synchronized boolean addTracks(String album, List<Entry<Integer, Track>> trackEntries) {
-        //        if (! albumsLists.contains(album)) {
-        //            // TODO update the observable albumLists when implemented album view
-        //        }
+        if (! albumsList.contains(album)) {
+            Platform.runLater(() -> {
+                albumsList.add(album);
+                FXCollections.sort(albumsList);
+            });
+        }
         return albumsTracks.putAll(album, trackEntries);
     }
 
@@ -52,7 +66,7 @@ public class AlbumsLibrary {
         boolean removed;
         removed = albumsTracks.get(album).removeAll(trackEntries);
         if (! albumsTracks.containsKey(album)) {
-            // TODO update observable albumList when implemented album view
+            Platform.runLater(() -> albumsList.remove(album));
         }
         return removed;
     }
@@ -61,10 +75,19 @@ public class AlbumsLibrary {
         albumsTracks.clear();
     }
 
+    public synchronized void updateTrackAlbums(List<Entry<Integer, Track>> modifiedTracks, Set<String> oldAlbums, String newAlbum) {
+        oldAlbums.forEach(album -> removeTracks(album, modifiedTracks));
+        addTracks(newAlbum, modifiedTracks);
+    }
+
     synchronized ImmutableMultimap<String, Entry<Integer, Track>> getTracksByAlbum(String artist, Set<String> albums) {
         return ImmutableMultimap.copyOf(
                 Multimaps.filterValues(
                         Multimaps.filterKeys(albumsTracks, albums::contains),
                         entry -> entry.getValue().getArtistsInvolved().contains(artist)));
+    }
+
+    public ListProperty<String> albumsListProperty() {
+        return albumsListProperty;
     }
 }

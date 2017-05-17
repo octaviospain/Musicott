@@ -36,14 +36,14 @@ import static org.fxmisc.easybind.EasyBind.*;
  * to remove the {@code TrackQueueRow} from his list.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class TrackQueueRow extends GridPane {
 
     private static final double COVER_SIZE = 42.0;
+    private final PlayQueueController playQueueController;
+    private final Track track;
 
-    private PlayQueueController playQueueController;
-    private Track track;
     private ImageView coverImage;
     private VBox labelBox;
     private Button deleteTrackQueueRowButton;

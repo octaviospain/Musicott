@@ -29,10 +29,10 @@ import java.io.*;
  * references to the singleton classes.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9
  */
-public interface MusicottController {
+public interface MusicottLayout {
 
     String TRACKS_PERSISTENCE_FILE = "Musicott-tracks.json";
     String WAVEFORMS_PERSISTENCE_FILE = "Musicott-waveforms.json";
@@ -42,14 +42,6 @@ public interface MusicottController {
     String IMAGES_PATH = File.separator + "images" + File.separator;
     String STYLES_PATH = File.separator + "css" + File.separator;
     String ICONS_PATH = File.separator + "icons" + File.separator;
-
-    String ROOT_LAYOUT = LAYOUTS_PATH + "RootLayout.fxml";
-    String PRELOADER_INIT_LAYOUT = LAYOUTS_PATH + "PreloaderLayout.fxml";
-    String PRELOADER_FIRST_USE_PROMPT = LAYOUTS_PATH + "PreloaderPromptLayout.fxml";
-    String EDIT_LAYOUT = LAYOUTS_PATH + "EditLayout.fxml";
-    String PROGRESS_LAYOUT = LAYOUTS_PATH + "ProgressLayout.fxml";
-    String PREFERENCES_LAYOUT = LAYOUTS_PATH + "PreferencesLayout.fxml";
-    String ERROR_ALERT_LAYOUT = LAYOUTS_PATH + "ErrorDialogLayout.fxml";
 
     String DEFAULT_COVER_PATH = IMAGES_PATH + "default-cover-image.png";
     String COMMON_ERROR_IMAGE = IMAGES_PATH + "common-error.png";
@@ -63,6 +55,6 @@ public interface MusicottController {
     String BASE_STYLE = STYLES_PATH + "base.css";
     String TRACKAREASET_TRACK_TABLE_STYLE = STYLES_PATH + "tracktable-trackareaset.css";
 
-    Image DEFAULT_COVER = new Image(MusicottController.class.getResourceAsStream(DEFAULT_COVER_PATH));
-    Image DRAGBOARD_ICON = new Image(MusicottController.class.getResourceAsStream(DRAGBOARD_ICON_PATH));
+    Image DEFAULT_COVER = new Image(MusicottLayout.class.getResourceAsStream(DEFAULT_COVER_PATH));
+    Image DRAGBOARD_ICON = new Image(MusicottLayout.class.getResourceAsStream(DRAGBOARD_ICON_PATH));
 }

@@ -19,9 +19,10 @@
 
 package com.transgressoft.musicott.services;
 
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.lastfm.*;
+import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import org.slf4j.*;
 
@@ -33,28 +34,30 @@ import java.util.concurrent.*;
  * service in order to scrobble and updates the user profile.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class LastFmTask extends Thread {
 
     private static final String FAILED = "failed";
+
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
+    private final LastFmService lastFmService;
+    private final ServiceDemon serviceDemon;
+    private final ErrorDialogController errorDialog;
+
     private Track trackToScrobble;
-    private LastFmService lastFmService;
-    private Semaphore updateAndScrobbleSemaphore;
-    private List<Map<Integer, Track>> tracksToScrobbleLater;
+    private SimpleProgressBarController progressBarController;
+    private Semaphore updateAndScrobbleSemaphore = new Semaphore(0);
+    private List<Map<Integer, Track>> tracksToScrobbleLater = new ArrayList<>();
     private boolean logout = false;
 
-    private ErrorDemon errorDemon = ErrorDemon.getInstance();
-    private ServiceDemon serviceDemon;
-
-    public LastFmTask(ServiceDemon serviceDemon) {
+    @Inject
+    public LastFmTask(LastFmService lastFmService, ServiceDemon serviceDemon, ErrorDialogController errorDialog) {
         super("LastFM Thread");
+        this.errorDialog = errorDialog;
         this.serviceDemon = serviceDemon;
-        lastFmService = new LastFmService();
-        updateAndScrobbleSemaphore = new Semaphore(0);
-        tracksToScrobbleLater = new ArrayList<>();
+        this.lastFmService = lastFmService;
     }
 
     public void updateAndScrobble(Track track) {
@@ -73,9 +76,12 @@ public class LastFmTask extends Thread {
     }
 
     private boolean loginToLastFmApi() {
+        if (progressBarController != null)
+            Platform.runLater(() -> progressBarController.getStage().show());
+
         boolean loginResult = true;
         if (! lastFmService.isApiConfigurationPresent()) {
-            errorDemon.showLastFmErrorDialog("LastFM error", "LastFM API Key or Secret are invalid");
+            errorDialog.showLastFmMode("LastFM error", "LastFM API Key or Secret not available");
             loginResult = false;
         }
 
@@ -88,7 +94,9 @@ public class LastFmTask extends Thread {
             else
                 serviceDemon.setUsingLastFm(true);
         }
-        Platform.runLater(StageDemon.getInstance()::closeIndeterminateProgress);
+
+        if (progressBarController != null)
+            Platform.runLater(() -> progressBarController.getStage().hide());
         return loginResult;
     }
 
@@ -105,7 +113,7 @@ public class LastFmTask extends Thread {
             }
             catch (InterruptedException exception) {
                 LOG.warn("LastFM thread error: {}", exception);
-                errorDemon.showErrorDialog("Error using LastFM", "", exception);
+                errorDialog.show("Error using LastFM", "", exception);
                 serviceDemon.setUsingLastFm(false);
                 logout = true;
             }
@@ -142,7 +150,7 @@ public class LastFmTask extends Thread {
                 errorMessage = error.getMessage();
         }
         LOG.info("LastFM error: {}", error.getMessage());
-        errorDemon.showLastFmErrorDialog(errorTitle, errorMessage);
+        errorDialog.showLastFmMode(errorTitle, errorMessage);
     }
 
     private void scrobbleTracksSavedForLater() {
@@ -194,5 +202,10 @@ public class LastFmTask extends Thread {
                 done = true;
             }
         }
+    }
+
+    @Inject
+    public void setProgressBarController(SimpleProgressBarController progressBarController) {
+        this.progressBarController = progressBarController;
     }
 }

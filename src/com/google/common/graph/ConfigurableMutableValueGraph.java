@@ -28,7 +28,7 @@ import static com.google.common.graph.Graphs.*;
 */
 
 /**
- * Configurable implementation of {@link MutableValueGraph} that supports both directed and
+ * InjectableController implementation of {@link MutableValueGraph} that supports both directed and
  * undirected graphs. Instances of this class should be constructed with {@link ValueGraphBuilder}.
  *
  * <p>Time complexities for mutation methods are all O(1) except for {@code removeNode(N node)},

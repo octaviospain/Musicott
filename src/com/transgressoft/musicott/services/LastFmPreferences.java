@@ -17,7 +17,9 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.services.lastfm;
+package com.transgressoft.musicott.services;
+
+import com.google.inject.*;
 
 import java.util.prefs.*;
 
@@ -25,7 +27,7 @@ import java.util.prefs.*;
  * Class that isolates and stores data associated with the LastFM external service.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9
  */
 public class LastFmPreferences {
@@ -36,8 +38,9 @@ public class LastFmPreferences {
     private static final String LASTFM_USERNAME = "lastfm_username";
     private static final String LASTFM_PASSWORD = "lastfm_password";
 
-    private Preferences preferences;
+    private final Preferences preferences;
 
+    @Inject
     public LastFmPreferences() {
         preferences = Preferences.userNodeForPackage(getClass());
     }

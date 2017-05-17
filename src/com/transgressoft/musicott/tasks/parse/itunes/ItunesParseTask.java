@@ -20,10 +20,15 @@
 package com.transgressoft.musicott.tasks.parse.itunes;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.view.*;
 import com.worldsworstsoftware.itunes.*;
 import com.worldsworstsoftware.itunes.parser.*;
 import javafx.application.Platform;
@@ -40,20 +45,23 @@ import java.util.concurrent.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * Extends from {@link BaseParseTask} to perform the operation of import a
  * {@code iTunes} library to the {@link MusicLibrary} of the application.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class ItunesParseTask extends BaseParseTask {
 
     public static final int METADATA_POLICY = 0;
     public static final int ITUNES_DATA_POLICY = 1;
+
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+
+    private final TracksLibrary tracksLibrary;
     private final String itunesLibraryXmlPath;
     private final int metadataPolicy;
     private final boolean importPlaylists;
@@ -70,10 +78,15 @@ public class ItunesParseTask extends BaseParseTask {
     private int parsedPlaylistsSize = 0;
     private int parsedTracksSize = 0;
 
-    public ItunesParseTask(String path) {
-        super();
+    @Inject
+    private ParseActionFactory parseActionFactory;
+
+    @Inject
+    public ItunesParseTask(TracksLibrary tracksLibrary, MainPreferences mainPreferences,
+            @NavigationCtrl NavigationController navCtrl, ErrorDialogController errorDialog, @Assisted String path) {
+        super(navCtrl, errorDialog);
+        this.tracksLibrary = tracksLibrary;
         itunesLibraryXmlPath = path;
-        MainPreferences mainPreferences = MainPreferences.getInstance();
         metadataPolicy = mainPreferences.getItunesImportMetadataPolicy();
         importPlaylists = mainPreferences.getItunesImportPlaylists();
         holdPlayCount = mainPreferences.getItunesImportHoldPlaycount();
@@ -82,12 +95,12 @@ public class ItunesParseTask extends BaseParseTask {
     }
 
     @Override
-    protected int getNumberOfParsedItemsAndIncrement() {
+    public int getNumberOfParsedItemsAndIncrement() {
         return ++ currentItunesItemsParsed;
     }
 
     @Override
-    protected int getTotalItemsToParse() {
+    public int getTotalItemsToParse() {
         return totalItunesItemsToParse;
     }
 
@@ -96,7 +109,7 @@ public class ItunesParseTask extends BaseParseTask {
         if (isValidItunesXML())
             parseItunesFile();
         else {
-            errorDemon.showErrorDialog("The selected xml file is not valid");
+            errorDialog.show("The selected xml file is not valid");
             cancel();
         }
         waitConfirmationSemaphore.acquire();
@@ -104,7 +117,7 @@ public class ItunesParseTask extends BaseParseTask {
         startMillis = System.currentTimeMillis();
         ForkJoinPool forkJoinPool = new ForkJoinPool(6);
         ItunesTracksParseAction itunesTracksParseAction =
-                new ItunesTracksParseAction(itunesTracks, metadataPolicy, holdPlayCount, this);
+                parseActionFactory.create(itunesTracks, metadataPolicy, holdPlayCount, this);
         ItunesParseResult itunesParseResult = forkJoinPool.invoke(itunesTracksParseAction);
 
         parsedTracksSize = itunesParseResult.getParsedResults().size();
@@ -115,8 +128,7 @@ public class ItunesParseTask extends BaseParseTask {
             currentItunesItemsParsed = 0;
             totalItunesItemsToParse = itunesPlaylists.size();
             Map<Integer, Track> idsMap = ImmutableMap.copyOf(itunesParseResult.getItunesIdToMusicottTrackMap());
-            ItunesPlaylistParseAction itunesPlaylistParseAction =
-                    new ItunesPlaylistParseAction(itunesPlaylists, idsMap, this);
+            ItunesPlaylistParseAction itunesPlaylistParseAction = parseActionFactory.create(itunesPlaylists, idsMap, this);
             forkJoinPool.invoke(itunesPlaylistParseAction);
             parsedPlaylistsSize = itunesPlaylistParseAction.get().getParsedResults().size();
         }
@@ -139,7 +151,7 @@ public class ItunesParseTask extends BaseParseTask {
         }
         catch (FileNotFoundException exception) {
             LOG.info("Error accessing to the itunes xml: ", exception);
-            errorDemon.showErrorDialog("Error opening the iTunes Library file", "", exception);
+            errorDialog.show("Error opening the iTunes Library file", "", exception);
             valid = false;
         }
         return valid;
@@ -202,8 +214,7 @@ public class ItunesParseTask extends BaseParseTask {
             String fileExtension = itunesFile.toString().substring(index + 1);
             if (! ("mp3".equals(fileExtension) || "m4a".equals(fileExtension) || "wav".equals(fileExtension)))
                 valid = false;
-            Track auxTrack = new Track(- 1, itunesFile.getParent(), itunesFile.getName());
-            if (musicLibrary.tracks.contains(auxTrack))
+            if (tracksLibrary.containsTrackPath(itunesFile.getParent(), itunesFile.getName()))
                 valid = false;
         }
         return valid;
@@ -224,9 +235,9 @@ public class ItunesParseTask extends BaseParseTask {
         computeAndShowElapsedTime(parsedTracksSize +  parsedPlaylistsSize);
 
         if (! notFoundFiles.isEmpty())
-            errorDemon.showExpandableErrorsDialog("Some files were not found", "", notFoundFiles);
+            errorDialog.showExpandable("Some files were not found", "", notFoundFiles);
         if (! parseErrors.isEmpty())
-            errorDemon.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
+            errorDialog.showExpandable("Errors importing files", "", parseErrors);
     }
 
     @Override

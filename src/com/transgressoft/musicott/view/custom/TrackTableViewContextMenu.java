@@ -19,13 +19,16 @@
 
 package com.transgressoft.musicott.view.custom;
 
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
+import javafx.event.*;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.input.*;
 
 import java.util.*;
 import java.util.Map.*;
@@ -35,46 +38,51 @@ import java.util.stream.*;
  * Context menu to be shown on a {@link TrackTableView}.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class TrackTableViewContextMenu extends ContextMenu {
 
-    private StageDemon stageDemon = StageDemon.getInstance();
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private final PlaylistsLibrary playlistsLibrary;
 
+    private RootController rootController;
+    private EditController editController;
     private Menu addToPlaylistMenu;
     private MenuItem deleteFromPlaylistMenuItem;
-    private List<MenuItem> playlistsInMenu;
+    private List<MenuItem> playlistsInMenu = new ArrayList<>();
 
     private List<Entry<Integer, Track>> selectedEntries;
+    private ListProperty<Entry<Integer, Track>> showingTracksProperty;
+    private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
-    public TrackTableViewContextMenu() {
+    @Inject
+    public TrackTableViewContextMenu(PlaylistsLibrary playlistsLibrary, MusicLibrary musicLibrary,
+            PlayerFacade playerFacade) {
         super();
-        playlistsInMenu = new ArrayList<>();
+        this.playlistsLibrary = playlistsLibrary;
         addToPlaylistMenu = new Menu("Add to playlist");
 
         MenuItem playMenuItem = new MenuItem("Play");
         playMenuItem.setOnAction(event -> {
             if (! selectedEntries.isEmpty())
-                PlayerFacade.getInstance().addTracksToPlayQueue(trackSelection(selectedEntries), true);
+                playerFacade.addTracksToPlayQueue(trackSelection(selectedEntries), true);
         });
 
         MenuItem editMenuItem = new MenuItem("Edit");
         editMenuItem.setOnAction(event -> {
             if (! selectedEntries.isEmpty())
-                stageDemon.editTracks(selectedEntries.size());
+                editController.editTracks(trackSelection(selectedEntries));
         });
 
         MenuItem deleteMenuItem = new MenuItem("Delete");
         deleteMenuItem.setOnAction(event -> {
             if (! selectedEntries.isEmpty())
-                stageDemon.deleteTracks(trackSelection(selectedEntries));
+                musicLibrary.deleteTracks(trackSelection(selectedEntries));
         });
 
         MenuItem addToQueueMenuItem = new MenuItem("Add to play queue");
         addToQueueMenuItem.setOnAction(event -> {
             if (! selectedEntries.isEmpty())
-                PlayerFacade.getInstance().addTracksToPlayQueue(trackSelection(selectedEntries), false);
+                playerFacade.addTracksToPlayQueue(trackSelection(selectedEntries), false);
         });
 
         deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
@@ -82,8 +90,8 @@ public class TrackTableViewContextMenu extends ContextMenu {
 
         deleteFromPlaylistMenuItem.setOnAction(event -> {
             if (! selectedEntries.isEmpty()) {
-                getSelectedPlaylist().get().removeTracks(trackSelectionIds(selectedEntries));
-                musicLibrary.showingTracksProperty().removeAll(selectedEntries);
+                selectedPlaylistProperty.get().get().removeTracks(trackSelectionIds(selectedEntries));
+                showingTracksProperty.removeAll(selectedEntries);
             }
         });
 
@@ -99,19 +107,13 @@ public class TrackTableViewContextMenu extends ContextMenu {
         return entriesSelection.stream().map(Entry::getValue).collect(Collectors.toList());
     }
 
-    private Optional<Playlist> getSelectedPlaylist() {
-        RootController navigationController = stageDemon.getRootController();
-        ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty =
-                navigationController.selectedPlaylistProperty();
-        return selectedPlaylistProperty.getValue();
-    }
-
     @Override
     public void show(Node anchor, double screenX, double screenY) {
         playlistsInMenu.clear();
-        selectedEntries = stageDemon.getRootController().getSelectedTracks();
-        if (getSelectedPlaylist().isPresent() && ! getSelectedPlaylist().get().isFolder())  {
-            musicLibrary.playlists.getPlaylistsTree().nodes()
+        selectedEntries = rootController.getSelectedTracks();
+        Optional<Playlist> selectedPlaylist = selectedPlaylistProperty.get();
+        if (selectedPlaylist.isPresent() && ! selectedPlaylist.get().isFolder())  {
+            playlistsLibrary.getPlaylistsTree().nodes()
                                   .stream().filter(p -> ! p.isFolder())
                                   .forEach(this::addPlaylistToMenuList);
 
@@ -125,7 +127,7 @@ public class TrackTableViewContextMenu extends ContextMenu {
     }
 
     private void addPlaylistToMenuList(Playlist playlist) {
-        Optional<Playlist> selectedPlaylist = getSelectedPlaylist();
+        Optional<Playlist> selectedPlaylist = selectedPlaylistProperty.get();
         if (! (selectedPlaylist.isPresent() && selectedPlaylist.get().equals(playlist))) {
             MenuItem playlistMenuItem = new MenuItem(playlist.getName());
             playlistMenuItem.setOnAction(event -> {
@@ -134,5 +136,34 @@ public class TrackTableViewContextMenu extends ContextMenu {
             });
             playlistsInMenu.add(playlistMenuItem);
         }
+    }
+
+    @Inject
+    public void setRootController(@RootCtrl RootController c) {
+        rootController = c;
+    }
+
+    @Inject
+    public void setEditController(@EditCtrl EditController c) {
+        this.editController = c;
+    }
+
+    @Inject
+    public void setSelectedPlaylistProperty(@SelectedPlaylistProperty ReadOnlyObjectProperty<Optional<Playlist>> p) {
+        selectedPlaylistProperty = p;
+    }
+
+    @Inject
+    public void setShowingTracksProperty(@ShowingTracksProperty ListProperty<Entry<Integer, Track>> p) {
+        showingTracksProperty = p;
+    }
+
+    public static EventHandler<MouseEvent> showContextMenuEventHandler(Node nodeInWhichShow, ContextMenu contextMenu) {
+        return event -> {
+            if (event.getButton() == MouseButton.SECONDARY)
+                contextMenu.show(nodeInWhichShow, event.getScreenX(), event.getScreenY());
+            else if (event.getButton() == MouseButton.PRIMARY && contextMenu.isShowing())
+                contextMenu.hide();
+        };
     }
 }

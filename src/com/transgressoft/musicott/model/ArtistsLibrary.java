@@ -20,6 +20,7 @@
 package com.transgressoft.musicott.model;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.*;
@@ -35,15 +36,16 @@ import static com.transgressoft.musicott.model.AlbumsLibrary.*;
  * @version 0.10-b
  * @since 0.10-b
  */
+@Singleton
 public class ArtistsLibrary {
 
-    private final Multimap<String, Track> artistsTracks;
+    private final Multimap<String, Track> artistsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
     private final ObservableList<String> artistsList;
     private final ListProperty<String> artistsListProperty;
 
+    @Inject
     public ArtistsLibrary() {
-        artistsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
-        // Binds the set of artists to a ListProperty of their elements to be
+        // Binding of the set of artists to a ListProperty of their elements to be
         // shown on the artists' navigation mode list view.
         ObservableSet<String> artists = FXCollections.observableSet(artistsTracks.keySet());
         artistsList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(artists));
@@ -60,7 +62,7 @@ public class ArtistsLibrary {
      *
      * @return {@code True} if the collections were modified {@code False} otherwise
      */
-    boolean addArtistTrack(String artist, Track track) {
+    synchronized boolean addArtistTrack(String artist, Track track) {
         if (! artistsTracks.containsKey(artist))
             Platform.runLater(() -> {
                 artistsList.add(artist);
@@ -78,7 +80,7 @@ public class ArtistsLibrary {
      *
      * @return {@code True} if the collections were modified {@code False} otherwise
      */
-    boolean removeArtistTrack(String artist, Track track) {
+    synchronized boolean removeArtistTrack(String artist, Track track) {
         boolean removed;
         removed = artistsTracks.remove(artist, track);
         if (! artistsTracks.containsKey(artist))
@@ -86,15 +88,20 @@ public class ArtistsLibrary {
         return removed;
     }
 
-    boolean contains(String artist) {
+    synchronized boolean contains(String artist) {
         return artistsTracks.containsKey(artist);
     }
 
-    boolean artistContainsMatchedTrack(String artist, String query) {
+    public synchronized boolean artistContainsMatchedTrack(String artist, String query) {
         return artistsTracks.get(artist).stream().anyMatch(track -> TracksLibrary.trackMatchesString(track, query));
     }
 
-    void clear() {
+    public synchronized void updateArtistsInvolvedInTrack(Track track, Set<String> removed, Set<String> added) {
+        removed.forEach(artist -> removeArtistTrack(artist, track));
+        added.forEach(artist -> addArtistTrack(artist, track));
+    }
+
+    synchronized void clear() {
         artistsTracks.clear();
         artistsList.clear();
     }
@@ -115,7 +122,7 @@ public class ArtistsLibrary {
         return randomArtistTracks;
     }
 
-    ListProperty<String> artistsListProperty() {
+    public ListProperty<String> artistsListProperty() {
         return artistsListProperty;
     }
 }

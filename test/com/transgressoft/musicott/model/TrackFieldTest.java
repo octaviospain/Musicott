@@ -30,31 +30,31 @@ public class TrackFieldTest {
 
     @Test
     @DisplayName ("Is track number integer field")
-    public void isTrackNumberIntegerField() {
+    void isTrackNumberIntegerField() {
         assertTrue(TrackField.isIntegerField(TrackField.TRACK_NUMBER));
     }
 
     @Test
     @DisplayName ("Is disc number integer field")
-    public void isDiscNumberIntegerField() {
+    void isDiscNumberIntegerField() {
         assertTrue(TrackField.isIntegerField(TrackField.DISC_NUMBER));
     }
 
     @Test
     @DisplayName ("Is year number integer field")
-    public void isYearNumberIntegerField() {
+    void isYearNumberIntegerField() {
         assertTrue(TrackField.isIntegerField(TrackField.YEAR));
     }
 
     @Test
     @DisplayName ("Is bpm number integer field")
-    public void isBpmNumberIntegerField() {
+    void isBpmNumberIntegerField() {
         assertTrue(TrackField.isIntegerField(TrackField.BPM));
     }
 
     @Test
     @DisplayName ("Is genre number integer field")
-    public void isGenreIntegerField() {
+    void isGenreIntegerField() {
         assertFalse(TrackField.isIntegerField(TrackField.GENRE));
     }
 }

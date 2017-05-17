@@ -21,7 +21,6 @@ package com.transgressoft.musicott.tasks.load;
 
 import com.cedarsoftware.util.io.*;
 import com.sun.javafx.application.*;
-import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
 import javafx.application.*;
 
@@ -29,35 +28,23 @@ import java.io.*;
 import java.util.concurrent.*;
 
 /**
- * Base class of parse tasks of import music into the application.
+ * Base class of a {@link LoadAction} implementation
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9.2-b
  */
-public abstract class BaseLoadAction extends RecursiveAction {
+public abstract class BaseLoadAction extends RecursiveAction implements LoadAction {
 
     protected final String applicationFolder;
-    protected final transient MusicLibrary musicLibrary;
     protected final Application musicottApplication;
 
-    public BaseLoadAction(String applicationFolder, MusicLibrary musicLibrary, Application musicottApplication) {
+    public BaseLoadAction(String applicationFolder, Application musicottApplication) {
         this.applicationFolder = applicationFolder;
-        this.musicLibrary = musicLibrary;
         this.musicottApplication = musicottApplication;
     }
 
-    /**
-     * Parses an {@code Object} of a previously serialized instance using Json-IO
-     *
-     * @param jsonFormattedFile A JSON formatted {@link File}
-     *
-     * @return The parsed {@code Object}
-     *
-     * @throws IOException If something went bad
-     * @see <a href="https://github.com/jdereg/json-io">Json-IO</a>
-     */
-    protected Object parseJsonFile(File jsonFormattedFile) throws IOException {
+    public Object parseJsonFile(File jsonFormattedFile) throws IOException {
         FileInputStream fileInputStream = new FileInputStream(jsonFormattedFile);
         JsonReader jsonReader = new JsonReader(fileInputStream);
         Object parsedObject = jsonReader.readObject();

@@ -48,6 +48,9 @@ public abstract class ItunesParseAction extends BaseParseAction<ItunesTrack, Map
     }
 
     @Override
+    protected abstract ItunesParseResult compute();
+
+    @Override
     protected void joinPartialResults(ItunesParseResult partialResult) {
         parsedTracks.putAll(partialResult.getParsedResults());
         parseErrors.addAll(partialResult.getParseErrors());

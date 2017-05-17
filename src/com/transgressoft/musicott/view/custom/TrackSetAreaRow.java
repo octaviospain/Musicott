@@ -20,14 +20,15 @@
 package com.transgressoft.musicott.view.custom;
 
 import com.google.common.base.*;
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.model.*;
 import javafx.application.Platform;
-import javafx.beans.binding.*;
+import javafx.beans.binding.Binding;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.geometry.*;
 import javafx.scene.control.*;
-import javafx.scene.control.TableView;
 import javafx.scene.image.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
@@ -38,8 +39,9 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 import static com.transgressoft.musicott.util.Utils.*;
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 import static com.transgressoft.musicott.view.custom.TrackTableView.*;
+import static com.transgressoft.musicott.view.custom.TrackTableViewContextMenu.*;
 import static javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY;
 import static org.fxmisc.easybind.EasyBind.*;
 
@@ -75,8 +77,13 @@ public class TrackSetAreaRow extends HBox {
     private ObservableList<Entry<Integer, Track>> containedTracks;
     private ListProperty<Entry<Integer, Track>> containedTracksProperty;
     private Comparator<Entry<Integer, Track>> trackEntryComparator;
+    @Inject
+    private Injector injector;
 
-    public TrackSetAreaRow(String artist, String album, Collection<Entry<Integer, Track>> trackEntries) {
+    @Inject
+    public TrackSetAreaRow(@Assisted ("artist") String artist, @Assisted ("album") String album,
+            @Assisted Collection<Entry<Integer, Track>> trackEntries) {
+        super();
         this.artist = artist;
         this.album = album;
         trackEntryComparator = trackEntryComparator();
@@ -171,7 +178,6 @@ public class TrackSetAreaRow extends HBox {
         return String.valueOf(numberOfTracks) + appendix;
     }
 
-
     private void updateTrackSetImage() {
         for (Entry<Integer, Track> trackEntry : containedTracks)
             if (updateCoverImage(trackEntry.getValue(), coverImageView))
@@ -213,7 +219,7 @@ public class TrackSetAreaRow extends HBox {
         tracksTableView.setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
         tracksTableView.getStylesheets().add(getClass().getResource(TRACKAREASET_TRACK_TABLE_STYLE).toExternalForm());
         tracksTableView.getStyleClass().add("no-header");
-        tracksTableView.setRowFactory(tableView -> new TrackTableRow());
+        tracksTableView.setRowFactory(tableView -> injector.getInstance(TrackTableRow.class));
         tracksTableView.addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
         tracksTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tracksTableView.setFixedCellSize(25);
@@ -221,15 +227,6 @@ public class TrackSetAreaRow extends HBox {
         tracksTableView.prefHeightProperty().bind(tracksTableView.fixedCellSizeProperty().multiply(rows.getValue()));
         tracksTableView.minHeightProperty().bind(tracksTableView.prefHeightProperty());
         tracksTableView.maxHeightProperty().bind(tracksTableView.prefHeightProperty());
-
-        TrackTableViewContextMenu trackTableContextMenu = new TrackTableViewContextMenu();
-        tracksTableView.setContextMenu(trackTableContextMenu);
-        tracksTableView.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            if (event.getButton() == MouseButton.SECONDARY)
-                trackTableContextMenu.show(this, event.getScreenX(), event.getScreenY());
-            else if (event.getButton() == MouseButton.PRIMARY && trackTableContextMenu.isShowing())
-                trackTableContextMenu.hide();
-        });
     }
 
     private void initColumns() {
@@ -326,6 +323,13 @@ public class TrackSetAreaRow extends HBox {
 
     public String getAlbum() {
         return album;
+    }
+
+    @Inject
+    public void setContextMenu(TrackTableViewContextMenu trackTableContextMenu) {
+        tracksTableView.setContextMenu(trackTableContextMenu);
+        tracksTableView.addEventHandler(
+                MouseEvent.MOUSE_CLICKED, event -> showContextMenuEventHandler(this, trackTableContextMenu));
     }
 
     public ListProperty<Entry<Integer, Track>> selectedTracksProperty() {

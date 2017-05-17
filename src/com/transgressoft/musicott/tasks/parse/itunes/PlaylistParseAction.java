@@ -34,7 +34,8 @@ import java.util.*;
  * @version 0.10-b
  * @since 0.10-b
  */
-public abstract class PlaylistParseAction extends BaseParseAction<ItunesPlaylist, List<Playlist>, BaseParseResult<List<Playlist>>> {
+public abstract class PlaylistParseAction
+        extends BaseParseAction<ItunesPlaylist, List<Playlist>, BaseParseResult<List<Playlist>>> {
 
     protected transient List<Playlist> parsedPlaylists;
 
@@ -42,6 +43,9 @@ public abstract class PlaylistParseAction extends BaseParseAction<ItunesPlaylist
         super(itemsToParse, parentTask);
         parsedPlaylists = new ArrayList<>();
     }
+
+    @Override
+    protected abstract PlaylistsParseResult compute();
 
     @Override
     protected void joinPartialResults(BaseParseResult<List<Playlist>> partialResult) {

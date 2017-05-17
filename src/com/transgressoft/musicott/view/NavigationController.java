@@ -19,12 +19,12 @@
 
 package com.transgressoft.musicott.view;
 
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
 import javafx.beans.property.*;
-import javafx.collections.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
@@ -42,13 +42,19 @@ import static org.fxmisc.easybind.EasyBind.*;
  * music library menus, and the status progress and status messages.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
-public class NavigationController implements MusicottController {
+@Singleton
+public class NavigationController extends InjectableController<VBox> {
 
     private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
     private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(73, 73, 73);";
 
+    private final TracksLibrary tracksLibrary;
+    private final PlaylistsLibrary playlistsLibrary;
+
+    @FXML
+    private VBox navigationPaneVBox;
     @FXML
     private VBox navigationVBox;
     @FXML
@@ -60,28 +66,24 @@ public class NavigationController implements MusicottController {
     @FXML
     private Label statusLabel;
 
+    private RootController rootController;
     private NavigationMenuListView navigationMenuListView;
     private PlaylistTreeView playlistTreeView;
-    private ObjectProperty<NavigationMode> navigationModeProperty;
     private Optional<Playlist> currentPlayingPlaylist;
+    private ObjectProperty<NavigationMode> navigationModeProperty;
+    private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
-    private RootController rootController;
-    private StageDemon stageDemon = StageDemon.getInstance();
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    @Inject
+    public NavigationController(TracksLibrary tracksLibrary, PlaylistsLibrary playlistsLibrary) {
+        this.tracksLibrary = tracksLibrary;
+        this.playlistsLibrary = playlistsLibrary;
+    }
 
     @FXML
     public void initialize() {
         currentPlayingPlaylist = Optional.empty();
-        navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", NavigationMode.ALL_TRACKS);
-        playlistTreeView = new PlaylistTreeView();
+        navigationModeProperty = new SimpleObjectProperty<>(this, "showing mode", NavigationMode.ARTISTS);
         navigationMenuListView = new NavigationMenuListView(this);
-        subscribe(selectedPlaylistProperty(), newPlaylist -> newPlaylist.ifPresent(playlist -> {
-            musicLibrary.showPlaylist(playlist);
-            setNavigationMode(NavigationMode.PLAYLIST);
-        }));
-        NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS, NavigationMode.ARTISTS};
-        navigationMenuListView.setItems(FXCollections.observableArrayList(navigationModes));
-
         ContextMenu newPlaylistButtonContextMenu = newPlaylistButtonContextMenu();
 
         newPlaylistButton.setContextMenu(newPlaylistButtonContextMenu);
@@ -92,11 +94,9 @@ public class NavigationController implements MusicottController {
         });
 
         navigationVBox.getChildren().add(1, navigationMenuListView);
-        playlistsVBox.getChildren().add(1, playlistTreeView);
         taskProgressBar.visibleProperty().bind(map(taskProgressBar.progressProperty().isEqualTo(0).not(), Function.identity()));
         taskProgressBar.setProgress(0);
 
-        VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
         VBox.setVgrow(navigationVBox, Priority.ALWAYS);
     }
 
@@ -110,14 +110,14 @@ public class NavigationController implements MusicottController {
 
         switch (mode) {
             case ALL_TRACKS:
-                musicLibrary.showAllTracks();
+                tracksLibrary.showAllTracks();
                 navigationMenuListView.getSelectionModel().select(NavigationMode.ALL_TRACKS);
-                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+                playlistTreeView.clearAndSelect(- 1);
                 Platform.runLater(rootController::showAllTracksView);
                 break;
             case ARTISTS:
                 navigationMenuListView.getSelectionModel().select(NavigationMode.ARTISTS);
-                playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+                playlistTreeView.clearAndSelect(- 1);
                 Platform.runLater(rootController::showArtistsView);
                 break;
             case PLAYLIST:
@@ -134,15 +134,15 @@ public class NavigationController implements MusicottController {
         newPlaylistMI = new MenuItem("New Playlist");
         newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier()));
         newPlaylistMI.setOnAction(e -> {
-            stageDemon.getRootController().enterNewPlaylistName(false);
-            playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+            rootController.enterNewPlaylistName(false);
+            playlistTreeView.clearAndSelect(- 1);
             navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
         });
         newFolderPlaylistMI = new MenuItem("New Playlist Folder");
         newFolderPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, systemModifier(), KeyCombination.SHIFT_DOWN));
         newFolderPlaylistMI.setOnAction(e -> {
-            stageDemon.getRootController().enterNewPlaylistName(true);
-            playlistTreeView.getSelectionModel().clearAndSelect(- 1);
+            rootController.enterNewPlaylistName(true);
+            playlistTreeView.clearAndSelect(- 1);
             navigationMenuListView.getSelectionModel().clearAndSelect(- 1);
         });
         contextMenu.getItems().addAll(newPlaylistMI, newFolderPlaylistMI);
@@ -164,11 +164,6 @@ public class NavigationController implements MusicottController {
         return keyModifierOS;
     }
 
-    void setRootController(RootController rootController) {
-        this.rootController = rootController;
-        subscribe(navigationModeProperty, this::setNavigationMode);
-    }
-
     public void addNewPlaylist(Playlist parent, Playlist newPlaylist, boolean selectAfter) {
         playlistTreeView.addPlaylistsToFolder(parent, Collections.singleton(newPlaylist));
         if (selectAfter)
@@ -176,7 +171,7 @@ public class NavigationController implements MusicottController {
     }
 
     public void updateCurrentPlayingPlaylist() {
-        currentPlayingPlaylist = selectedPlaylistProperty().get();
+        currentPlayingPlaylist = selectedPlaylistProperty.get();
     }
 
     public boolean selectPlaylistOfTrack(Entry<Integer, Track> trackEntry) {
@@ -191,10 +186,10 @@ public class NavigationController implements MusicottController {
     }
 
     public void deleteSelectedPlaylist() {
-        Playlist selectedPlaylist = selectedPlaylistProperty().get().get();
+        Playlist selectedPlaylist = selectedPlaylistProperty.get().get();
         playlistTreeView.deletePlaylist(selectedPlaylist);
-        musicLibrary.playlists.deletePlaylist(selectedPlaylist);
-        if (musicLibrary.playlists.isEmpty())
+        playlistsLibrary.deletePlaylist(selectedPlaylist);
+        if (playlistsLibrary.isEmpty())
             setNavigationMode(NavigationMode.ALL_TRACKS);
     }
 
@@ -210,11 +205,24 @@ public class NavigationController implements MusicottController {
         statusLabel.setText(message);
     }
 
-    public ObjectProperty<NavigationMode> navigationModeProperty() {
-        return navigationModeProperty;
+    @Inject (optional = true)
+    public void setPlaylistTreeView(PlaylistTreeView playlistTreeView) {
+        this.playlistTreeView = playlistTreeView;
+        playlistsVBox.getChildren().add(1, playlistTreeView);
+        VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
+
+        selectedPlaylistProperty = playlistTreeView.selectedPlaylistProperty();
+        subscribe(selectedPlaylistProperty,
+                  playlist -> playlist.ifPresent(
+                          p -> setNavigationMode(NavigationMode.PLAYLIST)));
     }
 
-    ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
-        return playlistTreeView.selectedPlaylistProperty();
+    @Inject (optional = true)
+    public void setRootController(@RootCtrl RootController c) {
+        rootController = c;
+    }
+
+    public ReadOnlyObjectProperty<NavigationMode> navigationModeProperty() {
+        return navigationModeProperty;
     }
 }

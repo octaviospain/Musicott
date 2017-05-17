@@ -19,10 +19,11 @@
 
 package com.transgressoft.musicott.tasks.parse.audiofiles;
 
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.*;
-import javafx.application.*;
 
 import java.io.*;
 import java.util.*;
@@ -35,7 +36,7 @@ import java.util.*;
  * with partitions of the items collection and their results joined after their completion.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  * @since 0.9.2-b
  */
 public class AudioFilesParseAction extends FilesParseAction {
@@ -43,14 +44,19 @@ public class AudioFilesParseAction extends FilesParseAction {
     private static final int MAX_FILES_TO_PARSE_PER_ACTION = 250;
     private static final int NUMBER_OF_PARTITIONS = 4;
 
+    private final TracksLibrary tracksLibrary;
+
     /**
      * Constructor of {@link AudioFilesParseAction}
      *
      * @param filesToParse The {@link List} of audio files to parse
      * @param parentTask   The reference to the parent {@link BaseParseTask} that called this action
      */
-    public AudioFilesParseAction(List<File> filesToParse, BaseParseTask parentTask) {
+    @Inject
+    public AudioFilesParseAction(TracksLibrary tracksLibrary, @Assisted List<File> filesToParse,
+            @Assisted BaseParseTask parentTask) {
         super(filesToParse, parentTask);
+        this.tracksLibrary = tracksLibrary;
     }
 
     @Override
@@ -59,7 +65,7 @@ public class AudioFilesParseAction extends FilesParseAction {
             forkIntoSubActions();
         else {
             itemsToParse.forEach(this::parseItem);
-            Platform.runLater(() -> musicLibrary.tracks.add(parsedTracks));
+            tracksLibrary.add(parsedTracks);
         }
 
         return new FilesParseResult(parsedTracks, parseErrors);
@@ -71,12 +77,9 @@ public class AudioFilesParseAction extends FilesParseAction {
     }
 
     @Override
-    protected void parseItem(File item) {
+    public void parseItem(File item) {
         Optional<Track> currentTrack = parseFileToTrack(item);
-        currentTrack.ifPresent(track -> {
-            if (! musicLibrary.tracks.contains(track))
-                parsedTracks.put(track.getTrackId(), track);
-        });
+        currentTrack.ifPresent(track -> parsedTracks.put(track.getTrackId(), track));
         parentTask.updateProgressTask();
     }
 

@@ -19,10 +19,12 @@
 
 package com.transgressoft.musicott.view;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.services.*;
-import com.transgressoft.musicott.services.lastfm.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import javafx.beans.binding.Binding;
 import javafx.beans.binding.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
@@ -31,6 +33,7 @@ import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
+import javafx.stage.Stage;
 import org.controlsfx.control.*;
 import org.controlsfx.tools.*;
 
@@ -44,9 +47,10 @@ import static org.fxmisc.easybind.EasyBind.*;
  * Controller class of the preferences window.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
-public class PreferencesController implements MusicottController {
+@Singleton
+public class PreferencesController extends InjectableController<AnchorPane> implements MusicottLayout {
 
     private static final String[] EXTENSIONS = {"mp3", "m4a", "wav", "flac"};
     private static final String ITUNES_INFO = "Itunes library";
@@ -54,6 +58,12 @@ public class PreferencesController implements MusicottController {
     private static final String LOGIN = "Login";
     private static final String LOGOUT = "Logout";
 
+    private final ServiceDemon serviceDemon;
+    private final TaskDemon taskDemon;
+    private final ErrorDialogController errorDialog;
+
+    @FXML
+    private AnchorPane root;
     @FXML
     private TextField folderLocationTextField;
     @FXML
@@ -79,18 +89,19 @@ public class PreferencesController implements MusicottController {
     @FXML
     private ComboBox<String> itunesImportPolicyCheckBox;
     private CheckComboBox<String> extensionsCheckComboBox;
+    private MainPreferences preferences;
     private LastFmPreferences lastFmPreferences;
+    private ReadOnlyBooleanProperty usingLastFmProperty;
 
-    private ReadOnlyBooleanProperty usingLastFmProperty = ServiceDemon.getInstance().usingLastFmProperty();
-
-    private StageDemon stageDemon = StageDemon.getInstance();
-    private ServiceDemon serviceDemon = ServiceDemon.getInstance();
-    private MainPreferences preferences = MainPreferences.getInstance();
-    private ErrorDemon errorDemon = ErrorDemon.getInstance();
+    @Inject
+    public PreferencesController(ServiceDemon serviceDemon, TaskDemon taskDemon, ErrorDialogController errorDialog) {
+        this.serviceDemon = serviceDemon;
+        this.taskDemon = taskDemon;
+        this.errorDialog = errorDialog;
+    }
 
     @FXML
     public void initialize() {
-        lastFmPreferences = serviceDemon.getLastFmPreferences();
         itunesImportPolicyCheckBox.setItems(FXCollections.observableArrayList(ITUNES_INFO, METADATA_INFO));
 
         lastFmLoginButton.disableProperty().bind(lastFmLoginButtonDisableBinding());
@@ -111,6 +122,14 @@ public class PreferencesController implements MusicottController {
         lastFmLoginButton.setOnAction(event -> lastfmLoginOrLogout());
 
         checkLastFmLoginAtStart();
+    }
+
+    @Override
+    public void setStage(Stage stage) {
+        super.setStage(stage);
+        stage.setTitle("Preferences");
+        stage.setResizable(false);
+        stage.setOnShowing(event -> loadUserPreferences());
     }
 
     /**
@@ -174,7 +193,6 @@ public class PreferencesController implements MusicottController {
         if (lastFmLoginButton.getText().equals(LOGIN)) {
             String lastfmUsername = lastFmUsernameTextField.getText();
             String lastfmPassword = lastFmPasswordField.getText();
-            stageDemon.showIndeterminateProgress();
             serviceDemon.lastFmLogIn(lastfmUsername, lastfmPassword);
         }
         else {
@@ -199,18 +217,18 @@ public class PreferencesController implements MusicottController {
         String newApplicationUserFolderPath = newApplicationUserFolder + File.pathSeparator;
         File tracksFile = new File(newApplicationUserFolderPath + TRACKS_PERSISTENCE_FILE);
         if (tracksFile.exists() && ! tracksFile.delete())
-            errorDemon.showErrorDialog("Unable to delete tracks file", tracksFile.getAbsolutePath());
+            errorDialog.show("Unable to delete tracks file", tracksFile.getAbsolutePath());
         File waveformsFile = new File(newApplicationUserFolderPath + WAVEFORMS_PERSISTENCE_FILE);
         if (waveformsFile.exists() && ! waveformsFile.delete())
-            errorDemon.showErrorDialog("Unable to delete waveforms file", waveformsFile.getAbsolutePath());
+            errorDialog.show("Unable to delete waveforms file", waveformsFile.getAbsolutePath());
         File playlistsFile = new File(newApplicationUserFolderPath + PLAYLISTS_PERSISTENCE_FILE);
         if (playlistsFile.exists() && ! playlistsFile.delete())
-            errorDemon.showErrorDialog("Unable to delete playlists file", playlistsFile.getAbsolutePath());
+            errorDialog.show("Unable to delete playlists file", playlistsFile.getAbsolutePath());
         preferences.setMusicottUserFolder(newApplicationUserFolder);
-        TaskDemon.getInstance().saveLibrary(true, true, true);
+        taskDemon.saveLibrary(true, true, true);
     }
 
-    public void loadUserPreferences() {
+    private void loadUserPreferences() {
         folderLocationTextField.setText(preferences.getMusicottUserFolder());
         loadImportPreferences();
         loadLastFmSettings();
@@ -236,5 +254,20 @@ public class PreferencesController implements MusicottController {
         String lastfmPassword = lastFmPreferences.getLastFmPassword();
         lastFmUsernameTextField.setText(lastfmUsername == null ? "" : lastfmUsername);
         lastFmPasswordField.setText(lastfmPassword == null ? "" : lastfmPassword);
+    }
+
+    @Inject
+    public void setUsingLastFmProperty(@UsingLastFmProperty ReadOnlyBooleanProperty p) {
+        usingLastFmProperty = p;
+    }
+
+    @Inject
+    public void setPreferences(MainPreferences preferences) {
+        this.preferences = preferences;
+    }
+
+    @Inject
+    public void setLastFmPreferences(LastFmPreferences lastFmPreferences) {
+        this.lastFmPreferences = lastFmPreferences;
     }
 }

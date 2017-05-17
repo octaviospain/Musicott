@@ -20,14 +20,15 @@
 package com.transgressoft.musicott.view;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.model.NavigationMode;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
-import javafx.collections.transformation.*;
 import javafx.event.*;
 import javafx.fxml.*;
 import javafx.geometry.*;
@@ -36,29 +37,37 @@ import javafx.scene.image.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
-import javafx.stage.*;
+import javafx.stage.Stage;
 import org.slf4j.*;
 
 import java.io.*;
+import java.util.AbstractMap.*;
 import java.util.*;
 import java.util.Map.*;
-import java.util.function.*;
 
 import static com.transgressoft.musicott.model.NavigationMode.*;
-import static com.transgressoft.musicott.model.PlaylistsLibrary.*;
 import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Controller class of the root layout of the whole application.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
-public class RootController implements MusicottController {
+@Singleton
+public class RootController extends InjectableController<BorderPane> implements MusicottLayout {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private static final int HOVER_COVER_SIZE = 100;
 
+    private final MusicLibrary musicLibrary;
+    private final PlaylistsLibrary playlistsLibrary;
+    private final TaskDemon taskDemon;
+
+    private final Playlist ROOT_PLAYLIST;
+
+    @FXML
+    private BorderPane rootBorderPane;
     @FXML
     private VBox headerVBox;
     @FXML
@@ -86,67 +95,84 @@ public class RootController implements MusicottController {
     @FXML
     private SplitPane artistsLayout;
     @FXML
-    private ArtistsViewController artistsLayoutController;
-    @FXML
     private VBox navigationLayout;
-    @FXML
-    private NavigationController navigationLayoutController;
     @FXML
     private GridPane playerLayout;
     @FXML
-    private PlayerController playerLayoutController;
-    @FXML
     private MenuBar menuBar;
-    @FXML
-    private RootMenuBarController menuBarController;
 
+    private TrackTableView trackTable;
     private TextField playlistTitleTextField;
-
     private ImageView hoverCoverImageView;
     private ObjectProperty<Image> hoverCoverProperty;
-    private TrackTableView trackTable;
 
-    private ObjectProperty<NavigationMode> navigationModeProperty;
-    private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
     private BooleanProperty showingNavigationPaneProperty;
     private BooleanProperty showingTableInfoPaneProperty;
+    private ReadOnlyBooleanProperty emptyLibraryProperty;
+    private ReadOnlyObjectProperty<NavigationMode> navigationModeProperty;
+    private ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
+    private ListProperty<Entry<Integer, Track>> showingTracksProperty;
+
+    @Inject
+    private PlaylistFactory playlistFactory;
+    private NavigationController navigationLayoutController;
+    private ArtistsViewController artistsLayoutController;
+    private PlayerController playerLayoutController;
+    private RootMenuBarController menuBarController;
 
     private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler = changePlaylistNameTextFieldHandler();
 
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
-    private TaskDemon taskDemon = TaskDemon.getInstance();
+    @Inject
+    public RootController(MusicLibrary musicLibrary, PlaylistsLibrary playlistsLibrary, TaskDemon taskDemon,
+            @RootPlaylist Playlist rootPlaylist) {
+        this.musicLibrary = musicLibrary;
+        this.playlistsLibrary = playlistsLibrary;
+        this.taskDemon = taskDemon;
+        ROOT_PLAYLIST = rootPlaylist;
+    }
 
     @FXML
     public void initialize() {
-        trackTable = new TrackTableView();
-        trackTable.setItems(bindedToSearchTextFieldTracks());
-        selectedPlaylistProperty = navigationLayoutController.selectedPlaylistProperty();
-        subscribe(selectedPlaylistProperty, selected -> selected.ifPresent(this::updateShowingInfoWithPlaylist));
-
-        navigationModeProperty = navigationLayoutController.navigationModeProperty();
+        rootBorderPane.setOnMouseClicked(e -> playerLayoutController.hidePlayQueue());
         showingNavigationPaneProperty = new SimpleBooleanProperty(this, "showing navigation pane", true);
         showingTableInfoPaneProperty = new SimpleBooleanProperty(this, "showing table info pane", true);
-
         hoverCoverProperty = new SimpleObjectProperty<>(this, "hover cover", DEFAULT_COVER);
         playlistCover.imageProperty().bind(hoverCoverProperty);
-
         initializeInfoPaneFields();
         initializeHoverCoverImageView();
         hideTableInfoPane();
-        artistsLayoutController.setPlayerController(playerLayoutController);
-        navigationLayoutController.setRootController(this);
-        navigationLayoutController.setNavigationMode(ARTISTS);
     }
 
-    public void setStage(Stage mainStage) {
+    @Override
+    public void configure() {
+        initMenuBar();
+        bindHoverCoverImageView();
+    }
+
+    private void initMenuBar() {
         String os = System.getProperty("os.name");
-        menuBarController.setControllers(mainStage, this, navigationLayoutController, playerLayoutController);
         if (os != null && os.startsWith("Mac")) {
             menuBarController.macMenuBar();
             headerVBox.getChildren().remove(menuBar);
         }
         else
             menuBarController.defaultMenuBar();
+    }
+
+    private void bindHoverCoverImageView() {
+        if (navigationModeProperty != null && emptyLibraryProperty != null && hoverCoverImageView != null)
+            hoverCoverImageView.visibleProperty().bind(
+                    combine(navigationModeProperty, emptyLibraryProperty,
+                            (mode, empty) -> mode.equals(ALL_TRACKS) && ! empty));
+    }
+
+    @Override
+    public void setStage(Stage stage) {
+        this.stage = stage;
+        stage.setTitle("Musicott");
+        stage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
+        stage.setMinWidth(1200);
+        stage.setMinHeight(805);
     }
 
     /**
@@ -162,12 +188,11 @@ public class RootController implements MusicottController {
 
     private void initializeInfoPaneFields() {
         initializePlaylistTitleTextField();
-        ListProperty<Entry<Integer, Track>> showingTracksProperty = musicLibrary.showingTracksProperty();
 
         playRandomButton.visibleProperty().bind(showingTracksProperty.emptyProperty().not());
         playRandomButton.setOnAction(e -> {
-            if (selectedPlaylistProperty().get().isPresent())
-                musicLibrary.playPlaylistRandomly(selectedPlaylistProperty().get().get());
+            if (selectedPlaylistProperty.get().isPresent())
+                musicLibrary.playPlaylistRandomly(selectedPlaylistProperty.get().get());
         });
         playlistTracksNumberLabel.textProperty().bind(map(showingTracksProperty.sizeProperty(), s -> s + " songs"));
         playlistSizeLabel.textProperty().bind(map(showingTracksProperty, this::tracksSizeString));
@@ -196,21 +221,6 @@ public class RootController implements MusicottController {
         playlistTitleTextField.setOnKeyPressed(changePlaylistNameTextFieldHandler);
     }
 
-    /**
-     * Binds the text typed on the search text field to a filtered subset of items shown on the table
-     */
-    private SortedList<Entry<Integer, Track>> bindedToSearchTextFieldTracks() {
-        ObservableList<Entry<Integer, Track>> tracks = musicLibrary.showingTracksProperty().get();
-        FilteredList<Entry<Integer, Track>> filteredTracks = new FilteredList<>(tracks, entry -> true);
-
-        StringProperty searchTextProperty = playerLayoutController.searchTextProperty();
-        subscribe(searchTextProperty, query -> filteredTracks.setPredicate(filterTracksByQuery(query)));
-
-        SortedList<Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
-        sortedTracks.comparatorProperty().bind(trackTable.comparatorProperty());
-        return sortedTracks;
-    }
-
     private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler() {
         return event -> {
             if (event.getCode() == KeyCode.ENTER) {
@@ -230,9 +240,6 @@ public class RootController implements MusicottController {
         hoverCoverImageView = new ImageView();
         hoverCoverImageView.setFitWidth(HOVER_COVER_SIZE);
         hoverCoverImageView.setFitHeight(HOVER_COVER_SIZE);
-        hoverCoverImageView.visibleProperty().bind(
-                combine(navigationModeProperty, musicLibrary.emptyLibraryProperty(),
-                             (mode, empty) -> mode.equals(ALL_TRACKS) && ! empty));
         hoverCoverImageView.translateXProperty().bind(
                 map(tableStackPane.widthProperty(),
                              width -> (width.doubleValue() / 2) - (HOVER_COVER_SIZE / 2) - 10));
@@ -265,22 +272,6 @@ public class RootController implements MusicottController {
     }
 
     /**
-     * Returns a {@link Predicate} that evaluates the match of a given {@code String} to a given track {@link Entry}
-     *
-     * @param query The {@code String} to match against the track
-     *
-     * @return The {@code Predicate}
-     */
-    private Predicate<Entry<Integer, Track>> filterTracksByQuery(String query) {
-        return trackEntry -> {
-            boolean result = query == null || query.isEmpty();
-            if (! result)
-                result = TracksLibrary.trackMatchesString(trackEntry.getValue(), query);
-            return result;
-        };
-    }
-
-    /**
      * Handles the naming of a new playlist placing a {@link TextField} on top
      * of the playlist label asking the user for the name.
      *
@@ -288,17 +279,17 @@ public class RootController implements MusicottController {
      */
     public void enterNewPlaylistName(boolean isFolder) {
         LOG.debug("Editing playlist name");
-        musicLibrary.showingTracksProperty().clear();
+        showingTracksProperty.clear();
         removeArtistsViewPane();
         placePlaylistTextField();
 
-        Playlist newPlaylist = new Playlist("", isFolder);
+        Playlist newPlaylist = playlistFactory.create("", isFolder);
         playlistCover.imageProperty().bind(newPlaylist.playlistCoverProperty());
         playlistTitleTextField.clear();
         playlistTitleTextField.setOnKeyPressed(getNameTextFieldHandler(newPlaylist));
     }
 
-    public EventHandler<KeyEvent> getNameTextFieldHandler(Playlist playlist) {
+    private EventHandler<KeyEvent> getNameTextFieldHandler(Playlist playlist) {
         return event -> {
             String newPlaylistName = playlistTitleTextField.getText();
             if (event.getCode() == KeyCode.ENTER && isValidPlaylistName(newPlaylistName)) {
@@ -320,20 +311,16 @@ public class RootController implements MusicottController {
      * @return {@code true} if its a valid name, {@code false} otherwise
      */
     private boolean isValidPlaylistName(String newName) {
-        return ! newName.isEmpty() && ! musicLibrary.playlists.containsPlaylistName(newName);
+        return ! newName.isEmpty() && ! playlistsLibrary.containsPlaylistName(newName);
     }
 
     private void addPlaylistToRoot(Playlist playlist) {
         navigationLayoutController.addNewPlaylist(ROOT_PLAYLIST, playlist, true);
-        musicLibrary.playlists.addPlaylist(ROOT_PLAYLIST, playlist);
+        playlistsLibrary.addPlaylistToRoot(playlist);
     }
 
     public void setArtistTrackSets(Multimap<String, Entry<Integer, Track>> tracksByAlbum) {
         artistsLayoutController.setArtistTrackSets(tracksByAlbum);
-    }
-
-    public void removeFromTrackSets(Entry<Integer, Track> trackEntry) {
-        artistsLayoutController.removeFromTrackSets(trackEntry);
     }
 
     public void updateShowingTrackSets() {
@@ -369,14 +356,14 @@ public class RootController implements MusicottController {
         showTablePane();
     }
 
-    public void showTablePane() {
+    private void showTablePane() {
         if (! tableStackPane.getChildren().contains(trackTable))
             tableStackPane.getChildren().add(trackTable);
         if (! tableStackPane.getChildren().contains(hoverCoverImageView))
             tableStackPane.getChildren().add(hoverCoverImageView);
     }
 
-    public void removeTablePane() {
+    private void removeTablePane() {
         if (tableStackPane.getChildren().contains(trackTable))
             tableStackPane.getChildren().remove(trackTable);
         if (tableStackPane.getChildren().contains(hoverCoverImageView))
@@ -492,12 +479,64 @@ public class RootController implements MusicottController {
         }
     }
 
-    public NavigationController getNavigationController() {
-        return navigationLayoutController;
+    @Inject (optional = true)
+    public void setTrackTableView(TrackTableView trackTableView) {
+        trackTable = trackTableView;
     }
 
-    public PlayerController getPlayerController() {
-        return playerLayoutController;
+    @Inject
+    public void setTracksLibrary(TracksLibrary tracksLibrary) {
+        tracksLibrary.addListener(change -> {
+            if (change.wasRemoved()) {
+                Track track = change.getValueRemoved();
+                Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);
+                artistsLayoutController.removeFromTrackSets(trackEntry);
+            }
+        });
+    }
+
+    @Inject
+    public void setArtistsLayoutController(@ArtistsCtrl ArtistsViewController artistsLayoutController) {
+        this.artistsLayoutController = artistsLayoutController;
+    }
+
+    @Inject (optional = true)
+    public void setNavigationLayoutController(@NavigationCtrl NavigationController navigationLayoutController) {
+        this.navigationLayoutController = navigationLayoutController;
+    }
+
+    @Inject
+    public void setPlayerLayoutController(@PlayerCtrl PlayerController playerLayoutController) {
+        this.playerLayoutController = playerLayoutController;
+    }
+
+    @Inject
+    public void setMenuBarController(@MenuBarCtrl RootMenuBarController menuBarController) {
+        this.menuBarController = menuBarController;
+    }
+
+    @Inject (optional = true)
+    public void setNavigationModeProperty(@SelectedMenuProperty ReadOnlyObjectProperty<NavigationMode> p) {
+        navigationModeProperty = p;
+        bindHoverCoverImageView();
+    }
+
+    @Inject (optional = true)
+    public void setSelectedPlaylistProperty(@SelectedPlaylistProperty ReadOnlyObjectProperty<Optional<Playlist>> p) {
+        selectedPlaylistProperty = p;
+        subscribe(selectedPlaylistProperty,
+                  selected -> selected.ifPresent(this::updateShowingInfoWithPlaylist));
+    }
+
+    @Inject
+    public void setShowingTracksProperty(@ShowingTracksProperty ListProperty<Entry<Integer, Track>> p) {
+        this.showingTracksProperty = p;
+    }
+
+    @Inject
+    public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty emptyLibraryProperty) {
+        this.emptyLibraryProperty = emptyLibraryProperty;
+        bindHoverCoverImageView();
     }
 
     public ObservableList<Entry<Integer, Track>> getSelectedTracks() {
@@ -513,10 +552,6 @@ public class RootController implements MusicottController {
                 break;
         }
         return selectedTracks;
-    }
-
-    public ReadOnlyObjectProperty<Optional<Playlist>> selectedPlaylistProperty() {
-        return navigationLayoutController.selectedPlaylistProperty();
     }
 
     public ReadOnlyBooleanProperty showNavigationPaneProperty() {

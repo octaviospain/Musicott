@@ -21,6 +21,7 @@ package com.transgressoft.musicott.view.custom;
 
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.*;
+import javafx.collections.*;
 import javafx.scene.control.*;
 import org.fxmisc.easybind.*;
 
@@ -28,7 +29,7 @@ import org.fxmisc.easybind.*;
  * ListView for the application navigation showing modes.
  *
  * @author Octavio Calleya
- * @version 0.9.2-b
+ * @version 0.10-b
  */
 public class NavigationMenuListView extends ListView<NavigationMode> {
 
@@ -37,6 +38,10 @@ public class NavigationMenuListView extends ListView<NavigationMode> {
         setId("navigationModeListView");
         setPrefHeight(USE_COMPUTED_SIZE);
         setPrefWidth(USE_COMPUTED_SIZE);
+
+        NavigationMode[] navigationModes = {NavigationMode.ALL_TRACKS, NavigationMode.ARTISTS};
+        setItems(FXCollections.observableArrayList(navigationModes));
+
         EasyBind.subscribe(getSelectionModel().selectedItemProperty(), mode -> {
             if (mode != null)
                 navigationController.setNavigationMode(mode);
