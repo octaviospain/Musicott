@@ -27,7 +27,7 @@ import javafx.scene.input.*;
 import java.util.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
 
 /**

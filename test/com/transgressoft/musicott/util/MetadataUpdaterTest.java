@@ -27,7 +27,7 @@ import org.junit.jupiter.api.*;
  */
 public class MetadataUpdaterTest {
 
-    private Track testedTrack = prepareTestedTrack();
+    Track testedTrack = prepareTestedTrack();
 
     private Track prepareTestedTrack() {
         // TODO

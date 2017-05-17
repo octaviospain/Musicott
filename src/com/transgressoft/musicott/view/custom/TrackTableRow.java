@@ -19,9 +19,11 @@
 
 package com.transgressoft.musicott.view.custom;
 
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.view.*;
 import javafx.collections.*;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
@@ -31,7 +33,7 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * Custom {@link TableRow} that represents an {@link Entry} with
@@ -45,17 +47,22 @@ public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
 
     public static final DataFormat TRACK_IDS_MIME_TYPE = new DataFormat("application/x-java-tracks-id");
 
-    private PlayerFacade player = PlayerFacade.getInstance();
-    private StageDemon stageDemon = StageDemon.getInstance();
+    private final PlayerFacade playerFacade;
+    private RootController rootController;
+    private NavigationController navigationController;
 
-    public TrackTableRow() {
-        super();
+    @Inject
+    public TrackTableRow(@RootCtrl RootController rootCtrl, @NavigationCtrl NavigationController navCtrl,
+            PlayerFacade playerFacade) {
+        this.playerFacade = playerFacade;
+        rootController = rootCtrl;
+        navigationController = navCtrl;
         setOnMouseClicked(this::playTrackOnMouseClickedHandler);
         setOnDragDetected(this::onDragDetectedMovingTracks);
         EasyBind.subscribe(hoverProperty(), newHovered -> {
             if (newHovered && getItem() != null) {
                 Optional<byte[]> cover = getItem().getValue().getCoverImage();
-                stageDemon.getRootController().updateTrackHoveredCover(cover);
+                rootController.updateTrackHoveredCover(cover);
             }
         });
     }
@@ -66,8 +73,8 @@ public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
      */
     private void playTrackOnMouseClickedHandler(MouseEvent event) {
         if (event.getClickCount() == 2 && ! isEmpty()) {
-            player.addTracksToPlayQueue(Collections.singletonList(getItem().getValue()), true);
-            stageDemon.getNavigationController().updateCurrentPlayingPlaylist();
+            playerFacade.addTracksToPlayQueue(Collections.singletonList(getItem().getValue()), true);
+            navigationController.updateCurrentPlayingPlaylist();
         }
     }
 
@@ -76,7 +83,7 @@ public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
             Dragboard dragboard = startDragAndDrop(TransferMode.COPY);
             dragboard.setDragView(DRAGBOARD_ICON);
 
-            ObservableList<Entry<Integer, Track>> selection = stageDemon.getRootController().getSelectedTracks();
+            ObservableList<Entry<Integer, Track>> selection = rootController.getSelectedTracks();
             List<Integer> selectionTracks = selection.stream().map(Entry::getKey).collect(Collectors.toList());
             ClipboardContent clipboardContent = new ClipboardContent();
             clipboardContent.put(TRACK_IDS_MIME_TYPE, selectionTracks);

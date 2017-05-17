@@ -19,11 +19,12 @@
 
 package com.transgressoft.musicott.services;
 
+import com.google.inject.*;
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.core.util.*;
-import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.lastfm.*;
+import com.transgressoft.musicott.view.*;
 import org.slf4j.*;
 
 import javax.ws.rs.core.*;
@@ -48,7 +49,12 @@ public class LastFmService {
     private static final String UPDATE_PLAYING = "track.updateNowPlaying";
     private static final String TRACK_SCROBBLE = "track.scrobble";
     private static final String MOBILE_SESSION = "auth.getMobileSession";
+
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+
+    private final LastFmPreferences lastFmPreferences;
+    private final ErrorDialogController errorDialog;
+
     /**
      * The API Key for the application submitted in LastFM.
      * Retrieved from config file for security reasons
@@ -63,21 +69,21 @@ public class LastFmService {
 
     private final String USERNAME;
     private final String PASSWORD;
-    private String sessionKey;
 
-    private LastFmPreferences servicesPreferences;
-    private Client client;
+    private String sessionKey;
     private WebResource resource;
 
-    public LastFmService() {
-        client = Client.create();
+    @Inject
+    public LastFmService(LastFmPreferences lastFmPreferences, ErrorDialogController errorDialog) {
+        this.errorDialog = errorDialog;
+        this.lastFmPreferences = lastFmPreferences;
+        Client client = Client.create();
         resource = client.resource(API_ROOT_URL);
-        servicesPreferences = ServiceDemon.getInstance().getLastFmPreferences();
-        USERNAME = servicesPreferences.getLastFmUsername();
-        PASSWORD = servicesPreferences.getLastFmPassword();
-        sessionKey = servicesPreferences.getLastFmSessionKey();
-        API_KEY = servicesPreferences.getApiKey();
-        API_SECRET = servicesPreferences.getApiSecret();
+        USERNAME = this.lastFmPreferences.getLastFmUsername();
+        PASSWORD = this.lastFmPreferences.getLastFmPassword();
+        sessionKey = this.lastFmPreferences.getLastFmSessionKey();
+        API_KEY = this.lastFmPreferences.getApiKey();
+        API_SECRET = this.lastFmPreferences.getApiSecret();
     }
 
     public boolean isApiConfigurationPresent() {
@@ -165,7 +171,7 @@ public class LastFmService {
         }
         catch (NoSuchAlgorithmException exception) {
             LOG.warn("Error creating MD5 hash", exception);
-            ErrorDemon.getInstance().showLastFmErrorDialog("Error creating MD5 hash", exception.getMessage());
+            errorDialog.showLastFmMode("Error creating MD5 hash", exception.getMessage());
         }
         return md5;
     }
@@ -206,7 +212,7 @@ public class LastFmService {
             lfm = makeRequest(queryParams, POST);
             if (lfm != null && OK.equals(lfm.getStatus())) {
                 sessionKey = lfm.getSession().getSessionKey();
-                servicesPreferences.setLastFmSessionKey(sessionKey);
+                lastFmPreferences.setLastFmSessionKey(sessionKey);
             }
         }
         else {

@@ -20,7 +20,6 @@
 package com.transgressoft.musicott.tasks.parse;
 
 import com.google.common.collect.*;
-import com.transgressoft.musicott.model.*;
 import org.slf4j.*;
 
 import java.util.*;
@@ -39,14 +38,14 @@ import java.util.concurrent.*;
  * @version 0.10-b
  * @since 0.10-b
  */
-public abstract class BaseParseAction<I, P, R extends BaseParseResult<P>> extends RecursiveTask<R> {
+public abstract class BaseParseAction<I, P, R extends BaseParseResult<P>> extends RecursiveTask<R>
+        implements ParseAction<I, R> {
 
     protected final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     protected final transient List<I> itemsToParse;
     protected final transient Collection<String> parseErrors;
     protected final transient BaseParseTask parentTask;
-    protected final transient MusicLibrary musicLibrary = MusicLibrary.getInstance();
 
     public BaseParseAction(List<I> itemsToParse, BaseParseTask parentTask) {
         this.itemsToParse = itemsToParse;
@@ -54,14 +53,15 @@ public abstract class BaseParseAction<I, P, R extends BaseParseResult<P>> extend
         parseErrors = new ArrayList<>();
     }
 
-    protected abstract void parseItem(I item);
+    @Override
+    protected abstract R compute();
 
     /**
      * Calls {@link RecursiveTask#fork} for each sub action and then joins the results
      */
     protected void forkIntoSubActions() {
-        List<BaseParseAction<I, P, R>> subActions = createSubActions();
-        subActions.forEach(BaseParseAction::fork);
+        List<ParseAction<I, R>> subActions = createSubActions();
+        subActions.forEach(ParseAction::fork);
         subActions.forEach(action -> joinPartialResults(action.join()));
         LOG.debug("Forking parse of item into {} sub actions", subActions.size());
     }
@@ -72,7 +72,7 @@ public abstract class BaseParseAction<I, P, R extends BaseParseResult<P>> extend
      *
      * @return A {@link List} with the {@link BaseParseAction} objects
      */
-    protected List<BaseParseAction<I, P, R>> createSubActions() {
+    private List<ParseAction<I, R>> createSubActions() {
         int subListsSize = itemsToParse.size() / getNumberOfPartitions();
         return Lists.partition(itemsToParse, subListsSize)
                     .stream().map(this::parseActionMapper)
@@ -97,5 +97,5 @@ public abstract class BaseParseAction<I, P, R extends BaseParseResult<P>> extend
      *
      * @return A {@link BaseParseAction} instance with the items it has to process
      */
-    protected abstract BaseParseAction<I, P, R> parseActionMapper(List<I> subItems);
+    protected abstract ParseAction<I, R> parseActionMapper(List<I> subItems);
 }

@@ -19,99 +19,109 @@
 
 package com.transgressoft.musicott.player;
 
+import com.google.inject.*;
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.tests.*;
+import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import javafx.scene.media.MediaPlayer.*;
-import javafx.stage.*;
-import org.junit.*;
-import org.junit.runner.*;
-import org.powermock.api.mockito.*;
-import org.powermock.core.classloader.annotations.*;
-import org.powermock.modules.junit4.*;
+import javafx.stage.Stage;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.testfx.framework.junit5.*;
+import org.testfx.util.*;
 
 import java.nio.file.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Octavio Calleya
  */
-@RunWith (PowerMockRunner.class)
-@PrepareForTest (PlayerFacade.class)
-public class JavaFxPlayerTest extends JavaFxTestBase {
+@ExtendWith (ApplicationExtension.class)
+public class JavaFxPlayerTest {
 
-    private Path testFilesPath = Paths.get("test-resources", "testfiles");
-    private TrackPlayer player;
+    static Injector injector;
+    static TrackFactory trackFactory;
 
-    @BeforeClass
-    public static void setupSpec() throws Exception {
+    Path testFilesPath = Paths.get("test-resources", "testfiles");
+    TrackPlayer player;
+
+    @BeforeAll
+    public static void beforeAll() throws Exception {
+        injector = Guice.createInjector(binder -> {
+            binder.install(new TrackFactoryModule());
+            binder.bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
+
+            MainPreferences preferences = mock(MainPreferences.class);
+            when(preferences.getTrackSequence()).thenReturn(0);
+            binder.bind(MainPreferences.class).toInstance(preferences);
+        });
+        trackFactory = injector.getInstance(TrackFactory.class);
     }
 
-    @Override
+    @Start
     public void start(Stage stage) throws Exception {
-        testStage = stage;
-        layout = null;
-        super.start(stage);
+
     }
 
-    @Override
-    @Before
-    public void beforeEachTest() throws Exception {
-        PowerMockito.mockStatic(PlayerFacade.class);
-        PlayerFacade playerMock = mock(PlayerFacade.class);
-        when(PlayerFacade.getInstance()).thenReturn(playerMock);
-
-        Track track = new Track(0, testFilesPath.toString(), "testeable.mp3");
+    @BeforeEach
+    void beforeEachTest() throws Exception {
+        Track track = trackFactory.create(testFilesPath.toString(), "testeable.mp3");
         player = new JavaFxPlayer();
         player.setTrack(track);
     }
 
-    @Override
-    @After
-    public void afterEachTest() throws Exception {
-        super.afterEachTest();
-        verifyStatic();
-    }
-
     @Test
-    public void playerStateReadyTest() {
-        sleep(500);
-        assertEquals(Status.READY, player.getStatus());
-    }
-
-    @Test
-    public void playerVolumeTest() {
+    @DisplayName("Negative volume sets to zero value")
+    void playerVolumeTest() {
         Platform.runLater(() -> player.setVolume(- 1.0));
-        sleep(1000);
+        WaitForAsyncUtils.waitForFxEvents();
+
         assertEquals(0.0, player.volumeProperty().get());
     }
 
     @Test
-    public void playerPlayTest() {
+    @DisplayName("Ready Status")
+    void playerStateReadyTest() {
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertEquals(Status.READY, player.getStatus());
+    }
+
+    @Test
+    @DisplayName("Playing status")
+    void playerPlayTest() {
         Platform.runLater(() -> player.play());
-        sleep(500);
+        WaitForAsyncUtils.waitForFxEvents();
+
         assertEquals(Status.PLAYING, player.getStatus());
     }
 
     @Test
-    public void playerPauseTest() {
-        Platform.runLater(() -> {
-            player.play();
-            player.pause();
-        });
-        sleep(500);
+    @DisplayName("Pause status")
+    void playerPauseTest() {
+        Platform.runLater(() -> player.play());
+        WaitForAsyncUtils.waitForFxEvents();
+        assertEquals(Status.PLAYING, player.getStatus());
+
+        Platform.runLater(() -> player.pause());
+        WaitForAsyncUtils.waitForFxEvents(10);
         assertEquals(Status.PAUSED, player.getStatus());
     }
 
     @Test
-    public void playerStopTest() {
+    @DisplayName("Stop status")
+    void playerStopTest() {
         Platform.runLater(() -> {
             player.play();
             player.stop();
         });
-        sleep(500);
+        WaitForAsyncUtils.waitForFxEvents();
+
         assertEquals(Status.READY, player.getStatus());
     }
 }

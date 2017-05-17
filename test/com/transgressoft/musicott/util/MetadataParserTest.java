@@ -19,7 +19,11 @@
 
 package com.transgressoft.musicott.util;
 
+import com.google.inject.*;
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.*;
 import org.jaudiotagger.audio.*;
 import org.jaudiotagger.audio.wav.*;
 import org.jaudiotagger.tag.*;
@@ -34,37 +38,50 @@ import org.junit.jupiter.api.*;
 import java.io.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Octavio Calleya
  */
 public class MetadataParserTest {
 
-    private String testFolder = "./test-resources/testfiles/";
-    private File testCover = new File(testFolder + "testcover.jpg");
-    private File mp3File = new File(testFolder + "testeable.mp3");
-    private File m4aFile = new File(testFolder + "testeable.m4a");
-    private File waveFile = new File(testFolder + "testeable.wav");
-    private File flacFile = new File(testFolder + "testeable.flac");
-    private File variableBitRateFile = new File(testFolder + "testeablevariableBitRate.mp3");
+    static Injector injector;
 
-    private String name = "Name";
-    private String artist = "Artist";
-    private String album = "Album";
-    private String comments = "Comments";
-    private String genre = "Genre";
-    private int trackNumber = 5;
-    private int discNumber = 4;
-    private int year = 2016;
-    private String albumArtist = "Album Artist";
-    private int bpm = 128;
-    private String label = "Label";
-    private boolean isPartOfCompilation = true;
+    String testFolder = "./test-resources/testfiles/";
+    File testCover = new File(testFolder + "testcover.jpg");
+    File mp3File = new File(testFolder + "testeable.mp3");
+    File m4aFile = new File(testFolder + "testeable.m4a");
+    File waveFile = new File(testFolder + "testeable.wav");
+    File flacFile = new File(testFolder + "testeable.flac");
+    File variableBitRateFile = new File(testFolder + "testeablevariableBitRate.mp3");
+
+    String name = "Name";
+    String artist = "Artist";
+    String album = "Album";
+    String comments = "Comments";
+    String genre = "Genre";
+    int trackNumber = 5;
+    int discNumber = 4;
+    int year = 2016;
+    String albumArtist = "Album Artist";
+    int bpm = 128;
+    String label = "Label";
+    boolean isPartOfCompilation = true;
+
+    @BeforeAll
+    public static void beforeAllTests() {
+        injector = Guice.createInjector(binder -> {
+            binder.install(new TrackFactoryModule());
+            binder.bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
+            binder.bind(MainPreferences.class).toInstance(mock(MainPreferences.class));
+            binder.requestStaticInjection(MetadataParser.class);
+        });
+    }
 
     @Test
     @DisplayName ("Invalid parse")
     void invalidParseTest() throws Exception {
-        TrackParseException exception = expectThrows(
+        TrackParseException exception = assertThrows(
                 TrackParseException.class, () -> MetadataParser.createTrack(new File(testFolder)));
         assertTrue(exception.getMessage().startsWith("Error parsing the file "));
     }
@@ -135,7 +152,7 @@ public class MetadataParserTest {
         assertTrack(parsedTrack);
     }
 
-    private void assertTrack(Track parsedTrack) {
+    void assertTrack(Track parsedTrack) {
         assertEquals(name, parsedTrack.getName());
         assertEquals(album, parsedTrack.getAlbum());
         assertEquals(albumArtist, parsedTrack.getAlbumArtist());
@@ -150,7 +167,7 @@ public class MetadataParserTest {
         assertEquals(isPartOfCompilation, parsedTrack.isPartOfCompilation());
     }
 
-    private void resetMp3File() throws Exception {
+    void resetMp3File() throws Exception {
         AudioFile audio = AudioFileIO.read(mp3File);
         Tag tag = new ID3v24Tag();
         resetCommonTagFields(tag);
@@ -158,7 +175,7 @@ public class MetadataParserTest {
         audio.commit();
     }
 
-    private void resetM4aFile() throws Exception {
+    void resetM4aFile() throws Exception {
         AudioFile audio = AudioFileIO.read(m4aFile);
         Tag tag = new Mp4Tag();
         resetCommonTagFields(tag);
@@ -166,7 +183,7 @@ public class MetadataParserTest {
         audio.commit();
     }
 
-    private void resetWavFile() throws Exception {
+    void resetWavFile() throws Exception {
         AudioFile audio = AudioFileIO.read(waveFile);
         WavTag wavTag = new WavTag(WavOptions.READ_ID3_ONLY);
         wavTag.setID3Tag(new ID3v24Tag());
@@ -176,7 +193,7 @@ public class MetadataParserTest {
         audio.commit();
     }
 
-    private void resetFlacFile() throws Exception {
+    void resetFlacFile() throws Exception {
         AudioFile audio = AudioFileIO.read(flacFile);
         Tag tag = new FlacTag();
         resetCommonTagFields(tag);
@@ -184,7 +201,7 @@ public class MetadataParserTest {
         audio.commit();
     }
 
-    private void resetCommonTagFields(Tag tag) throws FieldDataInvalidException {
+    void resetCommonTagFields(Tag tag) throws FieldDataInvalidException {
         setTagField(FieldKey.TITLE, "", tag);
         setTagField(FieldKey.ALBUM, "", tag);
         setTagField(FieldKey.ALBUM_ARTIST, "", tag);
@@ -199,14 +216,14 @@ public class MetadataParserTest {
         setTagField(FieldKey.IS_COMPILATION, Boolean.toString(false), tag);
     }
 
-    private void prepareFile(File file) throws Exception {
+    void prepareFile(File file) throws Exception {
         AudioFile audio = AudioFileIO.read(file);
         Tag tag = audio.getTag();
         setCommonTagFields(tag);
         audio.commit();
     }
 
-    private void setCommonTagFields(Tag tag) throws FieldDataInvalidException {
+    void setCommonTagFields(Tag tag) throws FieldDataInvalidException {
         setTagField(FieldKey.TITLE, name, tag);
         setTagField(FieldKey.ALBUM, album, tag);
         setTagField(FieldKey.ALBUM_ARTIST, albumArtist, tag);
@@ -221,7 +238,7 @@ public class MetadataParserTest {
         setTagField(FieldKey.IS_COMPILATION, Boolean.toString(isPartOfCompilation), tag);
     }
 
-    private void setTagField(FieldKey fieldKey, String value, Tag tag) throws FieldDataInvalidException {
+    void setTagField(FieldKey fieldKey, String value, Tag tag) throws FieldDataInvalidException {
         tag.setField(fieldKey, value);
     }
 }

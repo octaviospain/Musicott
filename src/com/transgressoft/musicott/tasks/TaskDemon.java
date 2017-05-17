@@ -19,13 +19,11 @@
 
 package com.transgressoft.musicott.tasks;
 
-import com.google.common.graph.*;
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
-import com.transgressoft.musicott.tasks.parse.audiofiles.*;
-import com.transgressoft.musicott.tasks.parse.itunes.*;
-import javafx.collections.*;
+import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.view.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -39,57 +37,41 @@ import java.util.concurrent.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
+@Singleton
 public class TaskDemon {
 
 	private static final String ALREADY_IMPORTING_ERROR_MESSAGE = "There is already an import task running. " +
 			 													  "Wait for it to perform another import task.";
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
+	private SaveMusicLibraryTask saveMusicLibraryTask;
+
 	private ExecutorService parseExecutorService;
 	private Future parseFuture;
-	private BaseParseTask parseTask;
-	private BlockingQueue<Track> tracksToProcessQueue;
+	private ParseTaskFactory parseTaskFactory;
+	private ParseTask parseTask;
 	private WaveformTask waveformTask;
-    private SaveMusicLibraryTask saveMusicLibraryTask;
+	private BlockingQueue<Track> tracksToProcessQueue;
+	private ErrorDialogController errorDialog;
 
-	private ObservableMap<Integer, Track> tracks;
-	private Map<Integer, float[]> waveforms;
-	private MutableGraph<Playlist> playlistsGraph;
 	private boolean savingsActivated = true;
 
-	private ErrorDemon errorDemon = ErrorDemon.getInstance();
-
-	private static class InstanceHolder {
-		static final TaskDemon INSTANCE = new TaskDemon();
-		private InstanceHolder() {}
-	}
-
-	private TaskDemon() {
+	@Inject
+	public TaskDemon() {
 		tracksToProcessQueue = new LinkedBlockingQueue<>();
 		parseExecutorService = Executors.newSingleThreadExecutor();
 	}
 
-	public static TaskDemon getInstance() {
-		return InstanceHolder.INSTANCE;
-	}
-
-	public void deactivateLibrarySaving() {
+	public void deactivateSaveLibrary() {
 		savingsActivated = false;
 	}
 
-	public void activateLibrarySaving() {
+	public void activateSaveLibrary() {
 		savingsActivated = true;
 	}
 
 	public void shutDownTasks() {
 		parseExecutorService.shutdown();
-	}
-
-	public void setMusicCollections(ObservableMap<Integer, Track> musicottTracks, Map<Integer, float[]> waveforms,
-			MutableGraph<Playlist> playlistsGraph) {
-		tracks = musicottTracks;
-		this.waveforms = waveforms;
-		this.playlistsGraph = playlistsGraph;
 	}
 
 	/**
@@ -100,9 +82,9 @@ public class TaskDemon {
 	 */
 	public void importFromItunesLibrary(String itunesLibraryPath) {
 		if (parseFuture != null && ! parseFuture.isDone())
-			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE, "");
+			errorDialog.show(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
-			parseTask = new ItunesParseTask(itunesLibraryPath);
+			parseTask = parseTaskFactory.create(itunesLibraryPath);
 			parseFuture = parseExecutorService.submit(parseTask);
 			LOG.debug("Importing Itunes Library: {}", itunesLibraryPath);
 		}
@@ -116,9 +98,9 @@ public class TaskDemon {
 	 */
 	public void importFiles(List<File> filesToImport, boolean playAtTheEnd) {
 		if (parseFuture != null && ! parseFuture.isDone())
-			errorDemon.showErrorDialog(ALREADY_IMPORTING_ERROR_MESSAGE, "");
+			errorDialog.show(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
-			parseTask = new AudioFilesParseTask(filesToImport, playAtTheEnd);
+			parseTask = parseTaskFactory.create(filesToImport, playAtTheEnd);
 			parseFuture = parseExecutorService.submit(parseTask);
 			LOG.debug("Importing {} files from folder", filesToImport.size());
 		}
@@ -126,26 +108,48 @@ public class TaskDemon {
 
     public void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
 		if (savingsActivated) {
-			if (saveMusicLibraryTask == null) {
-				saveMusicLibraryTask = new SaveMusicLibraryTask(tracks, waveforms, playlistsGraph);
-				saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
-				saveMusicLibraryTask.setDaemon(true);
+			if (! saveMusicLibraryTask.isAlive())
 				saveMusicLibraryTask.start();
-			}
 			saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
 		}
     }
 
 	public void analyzeTrackWaveform(Track trackToAnalyze) {
-		if (waveformTask == null) {
-			waveformTask = new WaveformTask(this);
+		if (! waveformTask.isAlive())
 			waveformTask.start();
-		}
 		tracksToProcessQueue.add(trackToAnalyze);
 		LOG.debug("Added track {} to waveform analyze queue", trackToAnalyze);
 	}
 
-	Track getNextTrackToAnalyzeWaveform() throws InterruptedException {
-		return tracksToProcessQueue.take();
+	@Inject (optional = true)
+	public void setParseTaskFactory(ParseTaskFactory parseTaskFactory) {
+		this.parseTaskFactory = parseTaskFactory;
+	}
+
+	@Inject
+	public void setSaveMusicLibraryTask(SaveMusicLibraryTask saveMusicLibraryTask) {
+		this.saveMusicLibraryTask = saveMusicLibraryTask;
+		saveMusicLibraryTask.setDaemon(true);
+	}
+
+	@Inject
+	public void setWaveformTaskFactory(WaveformTaskFactory waveformTaskFactory) {
+		waveformTask = waveformTaskFactory.create(tracksToProcessQueue);
+	}
+
+	@Inject
+	public void setTracksLibrary(TracksLibrary tracksLibrary) {
+		tracksLibrary.addListener(change -> saveLibrary(true, false, false));
+	}
+
+	@Inject
+	public void setWaveformsLibrary(WaveformsLibrary waveformsLibrary) {
+		waveformsLibrary.addListener(change -> saveLibrary(false, false, true));
+	}
+
+	public void setErrorDialog(ErrorDialogController errorDialog) {
+		this.errorDialog = errorDialog;
+		saveMusicLibraryTask.setErrorDialog(errorDialog);
+		waveformTask.setErrorDialog(errorDialog);
 	}
 }

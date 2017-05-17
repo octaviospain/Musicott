@@ -19,24 +19,29 @@
 
 package com.transgressoft.musicott;
 
+import com.google.inject.*;
 import com.sun.javafx.application.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.services.*;
-import com.transgressoft.musicott.services.lastfm.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tasks.load.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.*;
 import javafx.application.*;
-import javafx.stage.*;
-import org.slf4j.Logger;
+import javafx.scene.*;
+import javafx.stage.Stage;
 import org.slf4j.*;
 
 import java.io.*;
-import java.time.*;
-import java.time.format.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.*;
+import java.util.stream.*;
+
+import static com.transgressoft.musicott.MainPreloader.*;
+import static com.transgressoft.musicott.model.Layout.*;
 
 /**
  * Creates and launches Musicott. The creation of the application follows this steps:
@@ -52,122 +57,55 @@ import java.util.logging.*;
  * @version 0.10-b
  * @see <a href="https://octaviospain.github.io/Musicott">Musicott</a>
  */
-public class MusicottApplication extends Application {
+public class MusicottApplication extends Application implements InjectedApplication {
 
-    static final String FIRST_USE_EVENT = "first_use";
     private static final String CONFIG_FILE = "resources/config/config.properties";
-    private static final String LOGGING_PROPERTIES = "resources/config/logging.properties";
-    private static final String LOG_FILE = "Musicott-main-log.txt";
+
+    static Injector injector = Guice.createInjector(new LoaderModule());
+
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-    private MusicLibrary musicLibrary;
-    private MainPreferences preferences;
-    private StageDemon stageDemon;
+
     private TaskDemon taskDemon;
 
-    public MusicottApplication() {
-        musicLibrary = MusicLibrary.getInstance();
-        preferences = MainPreferences.getInstance();
-        stageDemon = StageDemon.getInstance();
-        taskDemon = TaskDemon.getInstance();
-    }
-
     public static void main(String[] args) {
-        initializeLogger();
+        Utils.initializeLogger();
         LauncherImpl.launchApplication(MusicottApplication.class, MainPreloader.class, args);
-    }
-
-    /**
-     * Initializes a {@link Logger} that stores the log entries on a file
-     *
-     * @see <a href=http://www.slf4j.org/>slf4j</href>
-     */
-    private static void initializeLogger() {
-        Handler baseFileHandler;
-        LogManager logManager = LogManager.getLogManager();
-        java.util.logging.Logger logger = logManager.getLogger("");
-        Handler rootHandler = logger.getHandlers()[0];
-
-        try {
-            logManager.readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
-            baseFileHandler = new FileHandler(LOG_FILE);
-            baseFileHandler.setFormatter(new SimpleFormatter() {
-
-                @Override
-                public String format(LogRecord record) {
-                    return logTextString(record);
-                }
-            });
-            logManager.getLogger("").removeHandler(rootHandler);
-            logManager.getLogger("").addHandler(baseFileHandler);
-        }
-        catch (SecurityException | IOException exception) {
-            System.err.println("Error initiating logger: " + exception.getMessage());
-            exception.printStackTrace();
-        }
-    }
-
-    /**
-     * Constructs a log message given a {@link LogRecord}
-     *
-     * @param record The {@code LogRecord} instance
-     *
-     * @return The formatted string of a log entries
-     */
-    private static String logTextString(LogRecord record) {
-        StringBuilder stringBuilder = new StringBuilder();
-        String dateTimePattern = "dd/MM/yy HH:mm:ss :nnnnnnnnn";
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateTimePattern);
-
-        String logDate = LocalDateTime.now().format(dateFormatter);
-        String loggerName = record.getLoggerName();
-        String sourceMethod = record.getSourceMethodName();
-        String firstLine = loggerName + " " + sourceMethod + " " + logDate + "\n";
-
-        String sequenceNumber = String.valueOf(record.getSequenceNumber());
-        String loggerLevel = record.getLevel().toString();
-        String message = record.getMessage();
-        String secondLine = sequenceNumber + "\t" + loggerLevel + ":" + message + "\n\n";
-
-        stringBuilder.append(firstLine);
-        stringBuilder.append(secondLine);
-
-        if (record.getThrown() != null) {
-            stringBuilder.append(record.getThrown() + "\n");
-            for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace())
-                stringBuilder.append(stackTraceElement + "\n");
-        }
-        return stringBuilder.toString();
     }
 
     @Override
     public void init() throws Exception {
-        if (preferences.getMusicottUserFolder() == null || ! new File(preferences.getMusicottUserFolder()).exists()) {
-            LauncherImpl.notifyPreloader(this, new CustomProgressNotification(0, FIRST_USE_EVENT));
-        }
-        stageDemon.setApplicationHostServices(getHostServices());
+        injector = injector.createChildInjector(new HostServicesModule(getHostServices()));
+        MainPreferences preferences = injector.getInstance(MainPreferences.class);
         String applicationFolder = preferences.getMusicottUserFolder();
-        loadConfigProperties();
+        if (isFirstUse(applicationFolder))
+            LauncherImpl.notifyPreloader(this, new CustomProgressNotification(0, FIRST_USE_EVENT));
 
-        taskDemon.deactivateLibrarySaving();
-        ForkJoinPool loadForkJoinPool = new ForkJoinPool(4);
-        loadForkJoinPool.invoke(new WaveformsLoadAction(applicationFolder, musicLibrary, this));
-        loadForkJoinPool.invoke(new PlaylistsLoadAction(applicationFolder, musicLibrary, this));
-        loadForkJoinPool.invoke(new TracksLoadAction(null, -1, applicationFolder, musicLibrary, this));
-        loadForkJoinPool.shutdown();
-        taskDemon.activateLibrarySaving();
+        LastFmPreferences lastFmPreferences = injector.getInstance(LastFmPreferences.class);
+        loadConfigProperties(lastFmPreferences);
+
+        taskDemon = injector.getInstance(TaskDemon.class);
+        taskDemon.deactivateSaveLibrary();
+        loadPersistedData(applicationFolder);
+        taskDemon.activateSaveLibrary();
+    }
+
+    private boolean isFirstUse(String userFolder) {
+        boolean res = false;
+        if (userFolder == null || ! new File(userFolder).exists())
+            res = true;
+        return res;
     }
 
     /**
      * Loads required configuration parameters from a {@code .properties} file
      */
-    private void loadConfigProperties() {
+    private void loadConfigProperties(LastFmPreferences servicePreferences) {
         Properties properties = new Properties();
         try {
             BaseLoadAction.notifyPreloader(0, 4, "Loading configuration...", this);
             properties.load(new FileInputStream(CONFIG_FILE));
             String apiKey = properties.getProperty("lastfm_api_key");
             String apiSecret = properties.getProperty("lastfm_api_secret");
-            LastFmPreferences servicePreferences = ServiceDemon.getInstance().getLastFmPreferences();
             servicePreferences.setApiSecret(apiSecret);
             servicePreferences.setApiKey(apiKey);
         }
@@ -176,14 +114,67 @@ public class MusicottApplication extends Application {
         }
     }
 
+    private void loadPersistedData(String applicationFolder) {
+        LoadActionFactory loadActionFactory = injector.getInstance(LoadActionFactory.class);
+        ForkJoinPool loadForkJoinPool = new ForkJoinPool(4);
+        loadForkJoinPool.invoke(loadActionFactory.createWaveformsAction(applicationFolder, this));
+        loadForkJoinPool.invoke(loadActionFactory.createPlaylistAction(applicationFolder, this));
+        loadForkJoinPool.invoke(loadActionFactory.createTracksAction(null, - 1, applicationFolder, this));
+        loadForkJoinPool.shutdown();
+    }
+
     @Override
-    public void start(Stage primaryStage) throws IOException {
+    public Injector getInjector() {
+        return injector;
+    }
+
+    @Override
+    public void start(Stage primaryStage) throws IOException, ReflectiveOperationException {
+        ControllerModule<ErrorDialogController> errorModule = loadControllerModule(ERROR_DIALOG);
+        taskDemon.setErrorDialog(errorModule.providesController());
+
+        ControllerModule<PreferencesController> prefsModule = loadControllerModule(PREFERENCES);
+        ControllerModule<SimpleProgressBarController> progressModule = loadControllerModule(PROGRESS_BAR);
+        ControllerModule<PlayQueueController> playQueueModule = loadControllerModule(PLAY_QUEUE, primaryStage);
+        injector = injector.createChildInjector(new WaveformPaneFactoryModule());
+
+        ControllerModule<PlayerController> playerModule = loadControllerModule(PLAYER, primaryStage);
+        injector = injector.createChildInjector(playerModule);
+
+        ControllerModule<ArtistsViewController> artistsModule = loadControllerModule(ARTISTS, primaryStage);
+        ControllerModule<NavigationController> navigationModule = loadControllerModule(NAVIGATION, primaryStage);
+        injector = injector.createChildInjector(errorModule, prefsModule, progressModule, playQueueModule,
+                                                artistsModule, navigationModule);
+
+        ControllerModule<RootMenuBarController> menuBarModule = loadControllerModule(MENU_BAR, primaryStage);
+        injector = injector.createChildInjector(menuBarModule);
+
+        ControllerModule<RootController> rootModule = loadControllerModule(ROOT, primaryStage);
+        RootController rootController = rootModule.providesController();
+        injector = injector.createChildInjector(rootModule, new MusicottModule());
+
+        ControllerModule<EditController> editModule = loadControllerModule(EDITION);
+        injector = injector.createChildInjector(editModule, new TrackSetAreaRowFactoryModule());
+
+        wireViewsAndSingletons(artistsModule, menuBarModule, navigationModule, rootModule);
+
+        primaryStage.setScene(new Scene(rootController.getRoot()));
         primaryStage.setOnCloseRequest(event -> {
             LOG.info("Exiting Musicott");
-            TaskDemon.getInstance().shutDownTasks();
+            taskDemon.shutDownTasks();
             System.exit(0);
         });
-        stageDemon.showMusicott(primaryStage);
-        LOG.debug("Showing root stage");
+        primaryStage.show();
+    }
+
+    private void wireViewsAndSingletons(ControllerModule... modules) {
+        PlayerFacade player = injector.getInstance(PlayerFacade.class);
+        MusicLibrary musicLibrary = injector.getInstance(MusicLibrary.class);
+        TracksLibrary tracksLibrary = injector.getInstance(TracksLibrary.class);
+        injector.injectMembers(player);
+        injector.injectMembers(musicLibrary);
+        injector.injectMembers(tracksLibrary);
+        injector.injectMembers(taskDemon);
+        Stream.of(modules).forEach(m -> injector.injectMembers(m.providesController()));
     }
 }

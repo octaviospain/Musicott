@@ -20,119 +20,50 @@
 package com.transgressoft.musicott.model;
 
 import com.google.common.collect.*;
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.Platform;
-import javafx.beans.property.*;
-import javafx.collections.*;
+import javafx.scene.control.*;
+import javafx.scene.control.Alert.*;
 import org.slf4j.*;
 
-import java.util.AbstractMap.*;
 import java.util.*;
 import java.util.Map.*;
 
-import static com.transgressoft.musicott.model.AlbumsLibrary.*;
+import static com.transgressoft.musicott.util.Utils.*;
 
 /**
- * Singleton class that manages the operations over the
- * collection of tracks, waveforms, playlists, artists and albums.
+ * Singleton class that manages some operations over the
+ * collection of tracksLibrary, waveformsLibrary, playlistsLibrary, artistsLibrary and albumsLibrary.
  *
  * @author Octavio Calleya
  * @version 0.10-b
  */
+@Singleton
 public class MusicLibrary {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    public final TracksLibrary tracks = new TracksLibrary();
-    public final WaveformsLibrary waveforms = new WaveformsLibrary();
-    public final PlaylistsLibrary playlists = new PlaylistsLibrary(this);
-    private final ArtistsLibrary artists = new ArtistsLibrary();
-    private final AlbumsLibrary albums = new AlbumsLibrary();
+    private final TaskDemon taskDemon;
+    private final PlayerFacade playerFacade;
 
-    private final MapChangeListener<Integer, Track> musicottTracksListener = musicottTracksChangeListener();
+    private TracksLibrary tracksLibrary;
+    private ArtistsLibrary artistsLibrary;
+    private AlbumsLibrary albumsLibrary;
+    private WaveformsLibrary waveformsLibrary;
+    private PlaylistsLibrary playlistsLibrary;
 
-    private TaskDemon taskDemon = TaskDemon.getInstance();
-    private StageDemon stageDemon = StageDemon.getInstance();
+    private RootController rootController;
+    private NavigationController navigationController;
+    private SimpleProgressBarController progressBarController;
 
-    private static class InstanceHolder {
-        static final MusicLibrary INSTANCE = new MusicLibrary();
-        private InstanceHolder() {}
-    }
-
-    public static MusicLibrary getInstance() {
-        return InstanceHolder.INSTANCE;
-    }
-
-    private MusicLibrary() {
-        tracks.addListener(musicottTracksListener);
-        taskDemon.setMusicCollections(tracks.musicottTracks, waveforms.waveforms, playlists.playlistsTree);
-    }
-
-    /**
-     * Listener that adds or removes the tracks and the related information in the
-     * collections if necessary when the Musicott tracks map changes.
-     *
-     * @return The {@link MapChangeListener} reference
-     */
-    private MapChangeListener<Integer, Track> musicottTracksChangeListener() {
-        return change -> {
-            if (change.wasAdded())
-                addTrackToCollections(change.getValueAdded());
-            else if (change.wasRemoved())
-                removeTrackFromCollections(change.getValueRemoved());
-            taskDemon.saveLibrary(true, true, false);
-        };
-    }
-
-    private boolean addTrackToCollections(Track track) {
-        String trackAlbum = track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum();
-        boolean[] added = new boolean[]{false};
-        Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);
-
-        Platform.runLater(() -> added[0] = tracks.tracksProperty().add(trackEntry));
-        Platform.runLater(() -> added[0] |= albums.addTracks(trackAlbum, Collections.singletonList(trackEntry)));
-        track.getArtistsInvolved().forEach(artist -> added[0] |= artists.addArtistTrack(artist, track));
-        LOG.debug("Added {}", track);
-
-        NavigationController navigationController = stageDemon.getNavigationController();
-        NavigationMode mode = navigationController == null ? null :
-                navigationController.navigationModeProperty().getValue();
-        if (mode != null && mode == NavigationMode.ALL_TRACKS)
-            showingTracksProperty().add(trackEntry);
-        return added[0];
-    }
-
-    private boolean removeTrackFromCollections(Track track) {
-        String trackAlbum = track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum();
-        boolean[] removed = new boolean[]{false};
-        Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);
-        stageDemon.getRootController().removeFromTrackSets(trackEntry);
-
-        Platform.runLater(() -> removed [0] = tracks.tracksProperty().remove(trackEntry));
-        Platform.runLater(() -> removed[0] |= showingTracksProperty().remove(trackEntry));
-        removed[0] |= albums.removeTracks(trackAlbum, Collections.singletonList(trackEntry));
-        track.getArtistsInvolved().forEach(artist -> removed[0] |= artists.removeArtistTrack(artist, track));
-        waveforms.removeWaveform(track.getTrackId());
-        playlists.removeFromPlaylists(track);
-        LOG.debug("Removed {}", track);
-        return removed[0];
-    }
-
-    public boolean artistContainsMatchedTrack(String artist, String query) {
-        return artists.artistContainsMatchedTrack(artist, query);
-    }
-
-    public void showAllTracks() {
-        tracks.resetShowingTracks();
-    }
-
-    public void showPlaylist(Playlist playlist) {
-        showingTracksProperty().clear();
-        List<Entry<Integer, Track>> tracksUnderPlaylist = playlists.getTrackEntriesUnderPlaylist(playlist);
-        showingTracksProperty().addAll(tracksUnderPlaylist);
+    @Inject
+    public MusicLibrary(TaskDemon taskDemon, PlayerFacade playerFacade) {
+        this.taskDemon = taskDemon;
+        this.playerFacade = playerFacade;
     }
 
     public void showArtist(String artist) {
@@ -143,59 +74,67 @@ public class MusicLibrary {
         new Thread(() -> {
             Multimap<String, Entry<Integer, Track>> newTrackSetsByAlbum = getAlbumTracksOfArtist(artist);
             Platform.runLater(() -> {
-                stageDemon.getRootController().setArtistTrackSets(newTrackSetsByAlbum);
+                rootController.setArtistTrackSets(newTrackSetsByAlbum);
                 if (trackToSelect != null)
-                    stageDemon.getRootController().selectTrack(trackToSelect);
+                    rootController.selectTrack(trackToSelect);
             });
         }).start();
     }
 
-    public void updateArtistsInvolvedInTrack(Track track, Set<String> removedArtists, Set<String> addedArtists) {
-        removedArtists.forEach(artist -> artists.removeArtistTrack(artist, track));
-        addedArtists.forEach(artist -> artists.addArtistTrack(artist, track));
+    public void deleteTracks(Collection<Track> trackSelection) {
+        if (! trackSelection.isEmpty()) {
+            javafx.stage.Stage mainStage = rootController.getStage();
+            String alertHeader = "Delete " + trackSelection.size() + " files from Musicott?";
+            Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION, mainStage);
+            Optional<ButtonType> result = alert.showAndWait();
+
+            if (result.isPresent() && result.get().getButtonData().isDefaultButton())
+                deleteTracksFromLibraries(trackSelection);
+            else
+                alert.close();
+        }
     }
 
-    public void updateTrackAlbums(List<Entry<Integer, Track>> modifiedTracks, Set<String> oldAlbums, String newAlbum) {
-        oldAlbums.forEach(album -> albums.removeTracks(album, modifiedTracks));
-        albums.addTracks(newAlbum, modifiedTracks);
-    }
+    private void deleteTracksFromLibraries(Collection<Track> trackSelection) {
+        new Thread(() -> {
+            playerFacade.deleteFromQueues(trackSelection);
+            if (trackSelection.size() == tracksLibrary.getSize())
+                Platform.runLater(this::clearCollections);
+            else {
+                tracksLibrary.remove(trackSelection);
+                playlistsLibrary.removeFromPlaylists(trackSelection);
+                waveformsLibrary.removeWaveforms(trackSelection);
+            }
 
-    /**
-     * Delete tracks from the music library looking also for occurrences in
-     * the playlists and the waveforms collections.
-     * This method is called on an independent Thread in {@link StageDemon#deleteTracks}
-     *
-     * @param tracksToDelete A {@code List} of track ids
-     */
-    public void deleteTracks(Collection<Track> tracksToDelete) {
-        if (tracksToDelete.size() == tracks.getSize())
-            Platform.runLater(this::clearCollections);
-        else
-            tracks.remove(tracksToDelete);
+            String message = "Deleted " + Integer.toString(trackSelection.size()) + " tracks";
+            Platform.runLater(() -> {
+                navigationController.setStatusMessage(message);
+                progressBarController.getStage().hide();
+            });
+        }).start();
+        progressBarController.getStage().show();
     }
 
     private void clearCollections() {
-        tracks.removeListener(musicottTracksListener);
-        tracks.clear();
-        artists.clear();
-        albums.clear();
-        tracks.addListener(musicottTracksListener);
-        waveforms.clearWaveforms();
-        playlists.clearPlaylists();
-        taskDemon.saveLibrary(true, true, true);
+        tracksLibrary.clear();
+        artistsLibrary.clear();
+        albumsLibrary.clear();
+        waveformsLibrary.clearWaveforms();
+        playlistsLibrary.clearPlaylists();
+        taskDemon.saveLibrary(true, true, true); // TODO check if this call is necessary
     }
 
     /**
      * Searches and returns all the tracks, mapped by album, in which an artist is involved.
      *
-     * @param artist The given artist to find their related tracks
+     * @param artist The given artist to find their related tracksLibrary
      * @return A {@link ImmutableMultimap} with the albums as keys, and {@code Entries} as values
      */
     public ImmutableMultimap<String, Entry<Integer, Track>> getAlbumTracksOfArtist(String artist) {
         ImmutableMultimap<String, Entry<Integer, Track>> artistAlbumTracks;
-        if (artists.contains(artist)) {
-            Set<String> artistAlbums = artists.getArtistAlbums(artist);
-            artistAlbumTracks = albums.getTracksByAlbum(artist, artistAlbums);
+        if (artistsLibrary.contains(artist)) {
+            Set<String> artistAlbums = artistsLibrary.getArtistAlbums(artist);
+            artistAlbumTracks = albumsLibrary.getTracksByAlbum(artist, artistAlbums);
         }
         else
             artistAlbumTracks = ImmutableMultimap.of();
@@ -203,46 +142,63 @@ public class MusicLibrary {
     }
 
     /**
-     * Makes a random playlist of tracks of the given artist and adds it to the {@link PlayerFacade}
+     * Makes a random playlist of tracksLibrary of the given artist and adds it to the {@link PlayerFacade}
      *
      * @param artist The given artist
      */
     public void playRandomArtistPlaylist(String artist) {
         Thread randomArtistPlaylistThread = new Thread(() -> {
-            List<Track> randomList = artists.getRandomListOfArtistTracks(artist);
-            PlayerFacade.getInstance().setRandomListAndPlay(randomList);
+            List<Track> randomList = artistsLibrary.getRandomListOfArtistTracks(artist);
+            playerFacade.setRandomListAndPlay(randomList);
         }, "Random Artist Playlist Thread");
         randomArtistPlaylistThread.start();
     }
 
-    /**
-     * Makes a random playlist of tracks and adds it to the {@link PlayerFacade}
-     */
-    public void playRandomPlaylist() {
-        Thread randomPlaylistThread = new Thread(() -> {
-            List<Track> randomPlaylist = tracks.getRandomList();
-            PlayerFacade.getInstance().setRandomListAndPlay(randomPlaylist);
-        }, "Random Playlist Thread");
-        randomPlaylistThread.start();
-    }
-
     public void playPlaylistRandomly(Playlist playlist) {
         Thread randomPlaylistPlayThread = new Thread(() -> {
-            List<Track> randomList = playlists.getRandomSortedTrackList(playlist);
-            PlayerFacade.getInstance().setRandomListAndPlay(randomList);
+            List<Track> randomList = playlistsLibrary.getRandomSortedTrackList(playlist);
+            playerFacade.setRandomListAndPlay(randomList);
         }, "Shuffle Playlist Thread");
         randomPlaylistPlayThread.start();
     }
 
-    public ListProperty<String> artistsProperty() {
-        return artists.artistsListProperty();
+    @Inject (optional = true)
+    public void setNavigationController(@NavigationCtrl NavigationController c) {
+        navigationController = c;
     }
 
-    public ReadOnlyBooleanProperty emptyLibraryProperty() {
-        return tracks.tracksProperty().emptyProperty();
+    @Inject (optional = true)
+    public void setRootController(@RootCtrl RootController c) {
+        rootController = c;
     }
 
-    public ListProperty<Entry<Integer, Track>> showingTracksProperty() {
-        return tracks.showingTracksProperty();
+    @Inject
+    public void setProgressBarController(SimpleProgressBarController progressBarController) {
+        this.progressBarController = progressBarController;
+    }
+
+    @Inject
+    public void setTracksLibrary(TracksLibrary tracksLibrary) {
+        this.tracksLibrary = tracksLibrary;
+    }
+
+    @Inject
+    public void setArtistsLibrary(ArtistsLibrary artistsLibrary) {
+        this.artistsLibrary = artistsLibrary;
+    }
+
+    @Inject
+    public void setAlbumsLibrary(AlbumsLibrary albumsLibrary) {
+        this.albumsLibrary = albumsLibrary;
+    }
+
+    @Inject
+    public void setWaveformsLibrary(WaveformsLibrary waveformsLibrary) {
+        this.waveformsLibrary = waveformsLibrary;
+    }
+
+    @Inject
+    public void setPlaylistsLibrary(PlaylistsLibrary playlistsLibrary) {
+        this.playlistsLibrary = playlistsLibrary;
     }
 }

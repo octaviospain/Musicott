@@ -19,13 +19,14 @@
 
 package com.transgressoft.musicott.view;
 
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
+import javafx.stage.Stage;
 
 import java.io.*;
 import java.util.*;
@@ -38,8 +39,13 @@ import java.util.*;
  * @version 0.10-b
  * @since 0.9.1-b
  */
-public class ErrorDialogController implements MusicottController {
+@Singleton
+public class ErrorDialogController extends InjectableController<AnchorPane> implements MusicottLayout {
 
+    private static final String GITHUB_LINK = "https://github.com/octaviospain/Musicott/issues";
+
+    @FXML
+    private AnchorPane root;
     @FXML
     private BorderPane rootBorderPane;
     @FXML
@@ -69,12 +75,16 @@ public class ErrorDialogController implements MusicottController {
     private Image commonErrorImage = new Image(getClass().getResourceAsStream(COMMON_ERROR_IMAGE));
     private Image lastFmErrorImage = new Image(getClass().getResourceAsStream(LASTFM_LOGO));
 
+    private HostServices hostServices;
+
+    @Inject
+    public ErrorDialogController(HostServices hostServices) {
+        this.hostServices = hostServices;
+    }
+
     @FXML
     public void initialize() {
-        reportInGithubHyperlink.setOnAction(event -> {
-            HostServices hostServices = StageDemon.getInstance().getApplicationHostServices();
-            hostServices.showDocument("https://github.com/octaviospain/Musicott/issues");
-        });
+        reportInGithubHyperlink.setOnAction(event -> hostServices.showDocument(GITHUB_LINK));
         contentVBox.getChildren().remove(reportInGithubHyperlink);
 
         rootBorderPane.getChildren().remove(detailsTextArea);
@@ -95,11 +105,38 @@ public class ErrorDialogController implements MusicottController {
         okButton.setOnAction(event -> okButton.getScene().getWindow().hide());
     }
 
-    public void prepareDialog(String message, String content, Exception exception) {
+    @Override
+    public void setStage(Stage stage) {
+        this.stage = stage;
+        stage.setTitle("Error");
+        stage.setResizable(false);
+    }
+
+    public void show(String message) {
+        show(message, null);
+    }
+
+    public void show(String message, String content) {
+        show(message, content, null);
+    }
+
+    public void show(String message, String content, Exception exception) {
+        if (exception == null)
+            showExpandable(message, content, Collections.emptyList());
+        else {
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+            exception.printStackTrace(printWriter);
+            showExpandable(message, content, Collections.singleton(stringWriter.toString()));
+        }
+    }
+
+    public void showExpandable(String message, String content, Collection<String> errors) {
         titleLabel.setText(message);
         setErrorContent(content);
-        checkDetailsArea(exception);
+        checkDetailsArea(errors);
         putCommonGraphic();
+        Platform.runLater(() -> stage.show());
     }
 
     private void setErrorContent(String content) {
@@ -117,20 +154,6 @@ public class ErrorDialogController implements MusicottController {
         }
     }
 
-    private void checkDetailsArea(Exception exception) {
-        if (exception != null) {
-            StringWriter stringWriter = new StringWriter();
-            PrintWriter printWriter = new PrintWriter(stringWriter);
-            exception.printStackTrace(printWriter);
-            setDetailsAreaContent(Collections.singletonList(stringWriter.toString()));
-            addExpandableButtons();
-        }
-        else {
-            removeDetailsArea();
-            removeExpandableButtons();
-        }
-    }
-
     private void putCommonGraphic() {
         if (! errorImageView.getImage().equals(commonErrorImage)) {
             errorImageView.setImage(commonErrorImage);
@@ -143,15 +166,8 @@ public class ErrorDialogController implements MusicottController {
             detailsTextArea.appendText(msg + "\n");
     }
 
-    public void prepareDialogWithMessages(String message, String content, Collection<String> errors) {
-        titleLabel.setText(message);
-        setErrorContent(content);
-        checkDetailsArea(errors);
-        putCommonGraphic();
-    }
-
     private void checkDetailsArea(Collection<String> errors) {
-        if (errors != null && !errors.isEmpty()) {
+        if (! errors.isEmpty()) {
             setDetailsAreaContent(errors);
             addExpandableButtons();
         }
@@ -176,10 +192,11 @@ public class ErrorDialogController implements MusicottController {
             bottomBorderPane.setLeft(seeDetailsHBox);
     }
 
-    public void prepareLastFmDialog(String message, String content) {
+    public void showLastFmMode(String message, String content) {
         titleLabel.setText(message);
         setErrorContent(content);
         putLastFmGraphic();
+        Platform.runLater(() -> stage.show());
     }
 
     private void putLastFmGraphic() {

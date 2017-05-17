@@ -19,9 +19,14 @@
 
 package com.transgressoft.musicott.tasks.parse.audiofiles;
 
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.parse.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.view.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -39,15 +44,22 @@ public class AudioFilesParseTask extends BaseParseTask {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private List<File> filesToParse;
+    private final PlayerFacade player;
+    private final List<File> filesToParse;
+    private final boolean playAtTheEnd;
+
     private Map<Integer, Track> parsedTracks;
     private int currentParsedFiles;
     private int totalFilesToParse;
-    private boolean playAtTheEnd;
 
-    private PlayerFacade player = PlayerFacade.getInstance();
+    @Inject
+    private ParseActionFactory parseActionFactory;
 
-    public AudioFilesParseTask(List<File> files, boolean playAtTheEnd) {
+    @Inject
+    public AudioFilesParseTask(@NavigationCtrl NavigationController navCtrl, PlayerFacade playerFacade,
+            ErrorDialogController errorDialog, @Assisted List<File> files, @Assisted boolean playAtTheEnd) {
+        super(navCtrl, errorDialog);
+        player = playerFacade;
         filesToParse = files;
         this.playAtTheEnd = playAtTheEnd;
         currentParsedFiles = 0;
@@ -55,12 +67,12 @@ public class AudioFilesParseTask extends BaseParseTask {
     }
 
     @Override
-    protected int getNumberOfParsedItemsAndIncrement() {
+    public int getNumberOfParsedItemsAndIncrement() {
         return ++ currentParsedFiles;
     }
 
     @Override
-    protected int getTotalItemsToParse() {
+    public int getTotalItemsToParse() {
         return totalFilesToParse;
     }
 
@@ -69,7 +81,8 @@ public class AudioFilesParseTask extends BaseParseTask {
         startMillis = System.currentTimeMillis();
         LOG.debug("Starting file importing");
         ForkJoinPool forkJoinPool = new ForkJoinPool(4);
-        BaseParseResult<Map<Integer, Track>> result = forkJoinPool.invoke(new AudioFilesParseAction(filesToParse, this));
+        AudioFilesParseAction action = parseActionFactory.create(filesToParse, this);
+        BaseParseResult<Map<Integer, Track>> result = forkJoinPool.invoke(action);
         parsedTracks = result.getParsedResults();
         parseErrors = result.getParseErrors();
         return null;
@@ -83,7 +96,7 @@ public class AudioFilesParseTask extends BaseParseTask {
         computeAndShowElapsedTime(parsedTracks.size());
 
         if (! parseErrors.isEmpty())
-            errorDemon.showExpandableErrorsDialog("Errors importing files", "", parseErrors);
+            errorDialog.showExpandable("Errors importing files", "", parseErrors);
         if (playAtTheEnd)
             player.addTracksToPlayQueue(parsedTracks.values(), true);
     }

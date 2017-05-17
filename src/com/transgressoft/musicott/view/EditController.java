@@ -19,19 +19,23 @@
 
 package com.transgressoft.musicott.view;
 
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import javafx.beans.property.*;
 import javafx.event.*;
 import javafx.fxml.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.*;
 import javafx.scene.image.*;
 import javafx.scene.input.*;
+import javafx.scene.layout.*;
 import javafx.stage.*;
 import javafx.stage.FileChooser.*;
+import javafx.stage.Stage;
 import org.slf4j.*;
 
 import java.io.*;
@@ -41,6 +45,7 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 import static com.transgressoft.musicott.model.AlbumsLibrary.*;
+import static com.transgressoft.musicott.util.Utils.*;
 
 /**
  * Controller class of the window that edits the information of tracks
@@ -48,10 +53,13 @@ import static com.transgressoft.musicott.model.AlbumsLibrary.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
-public class EditController implements MusicottController {
+@Singleton
+public class EditController extends InjectableController<AnchorPane> implements MusicottLayout {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
+    @FXML
+    private AnchorPane rootPane;
     @FXML
     private TextField nameTextField;
     @FXML
@@ -90,15 +98,17 @@ public class EditController implements MusicottController {
     private Button okButton;
 
     private File newCoverImage;
-    private Stage editStage;
     private Map<TrackField, TextInputControl> editableFieldsMap;
-    private List<Track> trackSelection;
+    private List<Track> trackSelection = Collections.emptyList();
     private Optional<byte[]> commonCover = Optional.empty();
     private Optional<String> newChangedAlbum = Optional.empty();
     private Set<String> changedAlbums = new HashSet<>();
 
+    @Inject
+    private UpdateMusicLibraryTaskFactory updateTaskFactory;
+
     @FXML
-    private void initialize() {
+    public void initialize() {
         editableFieldsMap = new EnumMap<>(TrackField.class);
         editableFieldsMap.put(TrackField.NAME, nameTextField);
         editableFieldsMap.put(TrackField.ARTIST, artistTextField);
@@ -130,6 +140,37 @@ public class EditController implements MusicottController {
 
         okButton.setOnAction(event -> editAndClose());
         cancelButton.setOnAction(event -> close());
+    }
+
+    @Override
+    public void setStage(Stage stage) {
+        super.setStage(stage);
+        stage.setTitle("Edit");
+        stage.setResizable(false);
+        stage.setOnCloseRequest(e -> close());
+        stage.setOnShowing(e -> setEditFieldsValues());
+    }
+
+    /**
+     * Shows the edit window. If the number of track to edit is greater than 1,
+     * an {@code Alert} is opened asking for a confirmation of the user.
+     *
+     * @param trackSelection The tracks to edit
+     */
+    public void editTracks(List<Track> trackSelection) {
+        this.trackSelection = trackSelection;
+        if (trackSelection.size() > 1) {
+            String alertHeader = "Are you sure you want to edit multiple files?";
+            Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION, stage);
+            Optional<ButtonType> result = alert.showAndWait();
+
+            if (result.isPresent() && result.get().getButtonData().isDefaultButton())
+                stage.showAndWait();
+            else
+                alert.close();
+        }
+        else
+            stage.showAndWait();
     }
 
     private void setNumericValidationFilters() {
@@ -209,14 +250,8 @@ public class EditController implements MusicottController {
         event.consume();
     }
 
-    public void setStage(Stage stage) {
-        editStage = stage;
-        editStage.setOnCloseRequest(e -> close());
-        editStage.setOnShowing(e -> setEditFieldsValues());
-    }
-
     public ReadOnlyBooleanProperty showingProperty() {
-        return editStage.showingProperty();
+        return stage.showingProperty();
     }
 
     /**
@@ -225,9 +260,6 @@ public class EditController implements MusicottController {
      * a dash ({@code -}) is placed in the {@link TextField}.
      */
     private void setEditFieldsValues() {
-        trackSelection = StageDemon.getInstance().getRootController().getSelectedTracks().stream()
-                                   .map(Entry::getValue).collect(Collectors.toList());
-
         editableFieldsMap.entrySet().forEach(this::setFieldValue);
         newCoverImage = null;
         newChangedAlbum = Optional.empty();
@@ -288,10 +320,10 @@ public class EditController implements MusicottController {
      */
     private void editAndClose() {
         trackSelection.forEach(this::editTrack);
-        UpdateMusicLibraryTask updateTask = new UpdateMusicLibraryTask(trackSelection, changedAlbums, newChangedAlbum);
+        UpdateMusicLibraryTask updateTask = updateTaskFactory.create(trackSelection, changedAlbums, newChangedAlbum);
         updateTask.setDaemon(true);
         updateTask.start();
-        editStage.close();
+        stage.close();
     }
 
     /**
@@ -302,7 +334,7 @@ public class EditController implements MusicottController {
         newCoverImage = null;
         newChangedAlbum = Optional.empty();
         commonCover = Optional.empty();
-        editStage.close();
+        stage.close();
     }
 
     /**
@@ -380,7 +412,7 @@ public class EditController implements MusicottController {
         chooser.setTitle("Open file(s)...");
         ExtensionFilter filter = new ExtensionFilter("Image files (*.png, *.jpg, *.jpeg)", "*.png", "*.jpg", "*.jpeg");
         chooser.getExtensionFilters().addAll(filter);
-        newCoverImage = chooser.showOpenDialog(editStage);
+        newCoverImage = chooser.showOpenDialog(stage);
         if (newCoverImage != null) {
             Optional<Image> newImage = Utils.getImageFromFile(newCoverImage);
             newImage.ifPresent(coverImage::setImage);

@@ -17,7 +17,9 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.services.lastfm;
+package com.transgressoft.musicott.services;
+
+import com.google.inject.*;
 
 import java.util.prefs.*;
 
@@ -36,8 +38,9 @@ public class LastFmPreferences {
     private static final String LASTFM_USERNAME = "lastfm_username";
     private static final String LASTFM_PASSWORD = "lastfm_password";
 
-    private Preferences preferences;
+    private final Preferences preferences;
 
+    @Inject
     public LastFmPreferences() {
         preferences = Preferences.userNodeForPackage(getClass());
     }

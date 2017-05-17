@@ -19,12 +19,15 @@
 
 package com.transgressoft.musicott.view.custom;
 
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
+import javafx.collections.*;
+import javafx.collections.transformation.*;
 import javafx.event.*;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
@@ -37,10 +40,13 @@ import java.time.*;
 import java.time.format.*;
 import java.util.*;
 import java.util.Map.*;
+import java.util.function.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.view.custom.TrackTableViewContextMenu.*;
 import static javafx.scene.media.MediaPlayer.Status.*;
+import static org.fxmisc.easybind.EasyBind.*;
 
 /**
  * Class that extends from {@link TableView} and models a table that represents {@link Track}
@@ -49,9 +55,15 @@ import static javafx.scene.media.MediaPlayer.Status.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
+@Singleton
 public class TrackTableView extends TableView<Entry<Integer, Track>> {
 
     private static final String CENTER_RIGHT_STYLE = "-fx-alignment: CENTER-RIGHT";
+    @Inject
+    @RootCtrl
+    private static RootController rootController;
+    @Inject
+    private static PlayerFacade playerFacade;
     static EventHandler<KeyEvent> KEY_PRESSED_ON_TRACK_TABLE_HANDLER = getKeyPressedEventHandler();
 
     private TableColumn<Entry<Integer, Track>, String> nameCol;
@@ -72,10 +84,12 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
     private TableColumn<Entry<Integer, Track>, LocalDateTime> dateAddedCol;
     private TableColumn<Entry<Integer, Track>, Duration> totalTimeCol;
 
-    private TrackTableViewContextMenu trackTableContextMenu;
+    private StringProperty searchTextProperty;
+    private ListProperty<Entry<Integer, Track>> showingTracksProperty;
 
     @SuppressWarnings ("unchecked")
-    public TrackTableView() {
+    @Inject
+    public TrackTableView(Injector injector) {
         super();
         setId("trackTable");
         initColumns();
@@ -89,18 +103,9 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         setColumnResizePolicy(UNCONSTRAINED_RESIZE_POLICY);
         getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         getSortOrder().add(dateAddedCol);
-        setRowFactory(tableView -> new TrackTableRow());
+        setRowFactory(tableView -> injector.getInstance(TrackTableRow.class));
         addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
         getStylesheets().add(getClass().getResource(TRACK_TABLE_STYLE).toExternalForm());
-
-        trackTableContextMenu = new TrackTableViewContextMenu();
-        setContextMenu(trackTableContextMenu);
-        addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            if (event.getButton() == MouseButton.SECONDARY)
-                trackTableContextMenu.show(this, event.getScreenX(), event.getScreenY());
-            else if (event.getButton() == MouseButton.PRIMARY && trackTableContextMenu.isShowing())
-                trackTableContextMenu.hide();
-        });
     }
 
     private void initColumns() {
@@ -210,6 +215,56 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         getSelectionModel().focus(entryPos);
     }
 
+    @Inject
+    public void setContextMenu(TrackTableViewContextMenu trackTableContextMenu) {
+        super.setContextMenu(trackTableContextMenu);
+        addEventHandler(MouseEvent.MOUSE_CLICKED, showContextMenuEventHandler(this, trackTableContextMenu));
+    }
+
+    @Inject
+    public void setSearchTextProperty(@SearchTextProperty StringProperty p) {
+        searchTextProperty = p;
+        if (showingTracksProperty != null)
+            setItems(bindedToSearchTextFieldTracks());
+    }
+
+    @Inject
+    public void setShowingTracksProperty(@ShowingTracksProperty ListProperty<Entry<Integer, Track>> p) {
+        this.showingTracksProperty = p;
+        if (searchTextProperty != null)
+            setItems(bindedToSearchTextFieldTracks());
+    }
+
+    /**
+     * Binds the text typed on the search text field to a filtered subset of items shown on the table
+     */
+    private SortedList<Entry<Integer, Track>> bindedToSearchTextFieldTracks() {
+        ObservableList<Entry<Integer, Track>> tracks = showingTracksProperty.get();
+        FilteredList<Entry<Integer, Track>> filteredTracks = new FilteredList<>(tracks, t -> true);
+
+        subscribe(searchTextProperty, query -> filteredTracks.setPredicate(filterTracksByQuery(query)));
+
+        SortedList<Entry<Integer, Track>> sortedTracks = new SortedList<>(filteredTracks);
+        sortedTracks.comparatorProperty().bind(comparatorProperty());
+        return sortedTracks;
+    }
+
+    /**
+     * Returns a {@link Predicate} that evaluates the match of a given {@code String} to a given track {@link Entry}
+     *
+     * @param query The {@code String} to match against the track
+     *
+     * @return The {@code Predicate}
+     */
+    private Predicate<Entry<Integer, Track>> filterTracksByQuery(String query) {
+        return trackEntry -> {
+            boolean result = query == null || query.isEmpty();
+            if (! result)
+                result = TracksLibrary.trackMatchesString(trackEntry.getValue(), query);
+            return result;
+        };
+    }
+
     /**
      * Returns a {@link EventHandler} that fires the play of a {@link Track} when
      * the user presses the {@code Enter} key, and pauses/resumes the player when the user
@@ -219,27 +274,24 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
      */
     private static EventHandler<KeyEvent> getKeyPressedEventHandler() {
         return event -> {
-            PlayerFacade player = PlayerFacade.getInstance();
             if (event.getCode() == KeyCode.ENTER) {
-                RootController rootController = StageDemon.getInstance().getRootController();
                 List<Track> selection = rootController.getSelectedTracks()
                                                       .stream()
                                                       .map(Entry::getValue).collect(Collectors.toList());
-                player.addTracksToPlayQueue(selection, true);
+                playerFacade.addTracksToPlayQueue(selection, true);
             }
             else if (event.getCode() == KeyCode.SPACE)
-                spacePressedOnTableAction(player.getPlayerStatus());
+                spacePressedOnTableAction(playerFacade.getPlayerStatus());
         };
     }
 
     public static void spacePressedOnTableAction(Status playerStatus) {
-        PlayerFacade player = PlayerFacade.getInstance();
         if (playerStatus.equals(PLAYING))
-            player.pause();
+            playerFacade.pause();
         else if (playerStatus.equals(PAUSED))
-            player.resume();
+            playerFacade.resume();
         else if (playerStatus.equals(STOPPED))
-            player.play(true);
+            playerFacade.play(true);
     }
 }
 

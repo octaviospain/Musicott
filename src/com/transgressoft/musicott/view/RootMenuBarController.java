@@ -19,12 +19,13 @@
 
 package com.transgressoft.musicott.view;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
-import com.transgressoft.musicott.util.Utils.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.custom.*;
 import de.codecentric.centerdevice.*;
 import javafx.application.*;
@@ -47,7 +48,8 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 import static com.transgressoft.musicott.model.NavigationMode.*;
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.util.Utils.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 import static javafx.scene.input.KeyCombination.*;
 import static org.fxmisc.easybind.EasyBind.*;
 
@@ -58,7 +60,8 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
-public class RootMenuBarController {
+@Singleton
+public class RootMenuBarController extends InjectableController<MenuBar> {
 
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
@@ -66,6 +69,27 @@ public class RootMenuBarController {
 	private static final String ABOUT_MUSICOTT_FIRST_LINE = " Version 0.10-b\n\n Copyright © 2015-2017 Octavio Calleya.";
 	private static final String ABOUT_MUSICOTT_SECOND_LINE = " Licensed under GNU GPLv3. This product includes\n" + " " +
 																"software developed by other open source projects.";
+
+    private final Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
+    private final ImageView musicottLogoImageView = new ImageView(musicottLogo);
+
+    private EditController editController;
+    private RootController rootController;
+    private NavigationController navigationController;
+    private PlayerController playerController;
+    private PreferencesController preferencesController;
+
+    private HostServices hostServices;
+    private MusicLibrary musicLibrary;
+    private TaskDemon taskDemon;
+    private PlayerFacade playerFacade;
+    private MainPreferences mainPreferences;
+    private BooleanProperty playPauseProperty;
+    private ReadOnlyBooleanProperty emptyLibraryProperty;
+    private ReadOnlyBooleanProperty searchingProperty;
+    private ReadOnlyBooleanProperty previousButtonDisabledProperty;
+    private ReadOnlyBooleanProperty nextButtonDisabledProperty;
+
     @FXML
     private MenuBar rootMenuBar;
 	@FXML
@@ -120,38 +144,67 @@ public class RootMenuBarController {
     private Menu aboutMenu;
     @FXML
     private MenuItem aboutMenuItem;
+    @Inject
+    private Injector injector;
+    private ReadOnlyObjectProperty<NavigationMode> selectedMenuProperty;
+    private ReadOnlyBooleanProperty editingProperty;
+    private ReadOnlyBooleanProperty showingNavigationPanePropery;
+    private ReadOnlyBooleanProperty showingTableInfoPaneProperty;
 
-    private Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
-    private ImageView musicottLogoImageView = new ImageView(musicottLogo);
-
-    private Stage rootStage;
-    private RootController rootController;
-    private NavigationController navigationController;
-    private PlayerController playerController;
-    private StageDemon stageDemon = StageDemon.getInstance();
-    private TaskDemon taskDemon = TaskDemon.getInstance();
-    private PlayerFacade playerFacade = PlayerFacade.getInstance();
-    private MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    @Inject
+    public RootMenuBarController(MainPreferences mainPreferences, MusicLibrary musicLibrary,
+            HostServices hostServices, TaskDemon taskDemon, PlayerFacade playerFacade) {
+        this.mainPreferences = mainPreferences;
+        this.musicLibrary = musicLibrary;
+        this.hostServices = hostServices;
+        this.taskDemon = taskDemon;
+        this.playerFacade = playerFacade;
+    }
 
     @FXML
     public void initialize() {
         setAboutMenuActions();
+        setFileMenuActions();
     }
 
-    void setControllers(Stage rootStage, RootController rootController,
-            NavigationController navigationController, PlayerController playerController) {
-        this.rootStage = rootStage;
-        this.rootController = rootController;
-        this.navigationController = navigationController;
-        this.playerController = playerController;
+    @Override
+    public void configure() {
         setEditMenuActions();
-        setFileMenuActions();
         setEditMenuActions();
         setControlsMenuActions();
         setViewMenuActions();
-        showHideTableInfoDisableBinding();
-        showHideNavigationPaneTextBinding();
-        showHideTableInfoPaneTextBinding();
+        bindShowHideTableInfo();
+        bindEditingProperty();
+        bindShowingNavigationPane();
+            bindShowingTableInfoPane();
+    }
+
+    private void bindShowHideTableInfo() {
+        if (selectedMenuProperty != null && showHideTableInfoPaneMenuItem != null)
+            showHideTableInfoPaneMenuItem.disableProperty().bind(
+                    map(selectedMenuProperty, menu -> ! menu.equals(PLAYLIST)));
+    }
+
+    private void bindEditingProperty() {
+        if (editingProperty != null && searchingProperty != null && selectAllMenuItem != null)
+            selectAllMenuItem.disableProperty().bind(
+                    combine(editingProperty, searchingProperty, (e, s) -> e || s));
+        if (editingProperty != null && dontSelectAllMenuItem != null)
+            dontSelectAllMenuItem.disableProperty().bind(editingProperty);
+    }
+
+    private void bindShowingNavigationPane() {
+        if (showingNavigationPanePropery != null && showHideNavigationPaneMenuItem != null)
+            showHideNavigationPaneMenuItem.textProperty().bind(
+                    map(showingNavigationPanePropery,
+                        showing -> showing ? "Hide navigation pane" : "Show navigation pane"));
+    }
+
+    private void bindShowingTableInfoPane() {
+        if (showingTableInfoPaneProperty != null && showHideTableInfoPaneMenuItem != null)
+            showHideTableInfoPaneMenuItem.textProperty().bind(
+                    map(showingTableInfoPaneProperty,
+                        showing -> showing ? "Hide table information pane" : "Show table information pane"));
     }
 
     /**
@@ -206,9 +259,9 @@ public class RootMenuBarController {
                            new ExtensionFilter("flac files (*.flac)", "*.flac"),
                            new ExtensionFilter("wav files (*.wav)", "*.wav"),
                            new ExtensionFilter("m4a files (*.wav)", "*.m4a"));
-            List<File> filesToImport = chooser.showOpenMultipleDialog(rootStage);
+            List<File> filesToImport = chooser.showOpenMultipleDialog(stage);
             if (filesToImport != null) {
-                TaskDemon.getInstance().importFiles(filesToImport, true);
+                taskDemon.importFiles(filesToImport, true);
                 navigationController.setStatusMessage("Opening files");
             }
         });
@@ -216,7 +269,7 @@ public class RootMenuBarController {
             LOG.debug("Choosing folder to being imported");
             DirectoryChooser chooser = new DirectoryChooser();
             chooser.setTitle("Choose folder");
-            File folder = chooser.showDialog(rootStage);
+            File folder = chooser.showDialog(stage);
             if (folder != null)
                 countFilesToImport(folder);
         });
@@ -225,39 +278,31 @@ public class RootMenuBarController {
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Select 'iTunes Music Library.xml' file");
             chooser.getExtensionFilters().add(new ExtensionFilter("xml files (*.xml)", "*.xml"));
-            File xmlFile = chooser.showOpenDialog(rootStage);
+            File xmlFile = chooser.showOpenDialog(stage);
             if (xmlFile != null)
-                TaskDemon.getInstance().importFromItunesLibrary(xmlFile.getAbsolutePath());
+                taskDemon.importFromItunesLibrary(xmlFile.getAbsolutePath());
         });
-        preferencesMenuItem.setOnAction(e -> stageDemon.showPreferences());
+        preferencesMenuItem.setOnAction(e -> preferencesController.getStage().show());
         newPlaylistMenuItem.setOnAction(e -> rootController.enterNewPlaylistName(false));
         newPlaylistFolderMenuItem.setOnAction(e -> rootController.enterNewPlaylistName(true));
     }
 
     private void setEditMenuActions() {
-        editMenuItem.setOnAction(e -> {
-            List<Entry<Integer, Track>> selection = rootController.getSelectedTracks();
-            stageDemon.editTracks(selection.size());
-        });
-        deleteMenuItem.setOnAction(e -> stageDemon.deleteTracks(trackSelectionIds()));
+        editMenuItem.setOnAction(e -> editController.editTracks(trackSelectionList()));
+        deleteMenuItem.setOnAction(e -> musicLibrary.deleteTracks(trackSelectionList()));
         selectAllMenuItem.setOnAction(e -> rootController.selectAllTracks());
         dontSelectAllMenuItem.setOnAction(e -> rootController.deselectAllTracks());
-
-        ReadOnlyBooleanProperty editingProperty = stageDemon.getEditController().showingProperty();
-        ReadOnlyBooleanProperty searchingProperty = playerController.searchFieldFocusedProperty();
-        selectAllMenuItem.disableProperty().bind(combine(editingProperty, searchingProperty, (e, s) -> e || s));
-        dontSelectAllMenuItem.disableProperty().bind(editingProperty);
         findMenuItem.setOnAction(e -> playerController.focusSearchField());
     }
 
     private void setControlsMenuActions() {
-        playPauseTextBinding();
-        playPauseMenuItem.disableProperty().bind(musicLibrary.emptyLibraryProperty());
+        playPauseMenuItem.textProperty().bind(map(playPauseProperty, play -> play ? "Pause" : "Play"));
+        playPauseMenuItem.disableProperty().bind(emptyLibraryProperty);
         playPauseMenuItem.setOnAction(e -> TrackTableView.spacePressedOnTableAction(playerFacade.getPlayerStatus()));
-        previousMenuItem.disableProperty().bind(playerController.previousButtonDisabledProperty());
+        previousMenuItem.disableProperty().bind(previousButtonDisabledProperty);
         previousMenuItem.setOnAction(e -> playerFacade.previous());
 
-        nextMenuItem.disableProperty().bind(playerController.nextButtonDisabledProperty());
+        nextMenuItem.disableProperty().bind(nextButtonDisabledProperty);
         nextMenuItem.setOnAction(e -> playerFacade.next());
 
         increaseVolumeMenuItem.setOnAction(e -> playerController.increaseVolume());
@@ -291,12 +336,12 @@ public class RootMenuBarController {
 
     private void setAboutMenuActions() {
         aboutMenuItem.setOnAction(e -> {
-            Alert alert = stageDemon.createAlert("About Musicott", " ", "", AlertType.INFORMATION);
+            Alert alert = createAlert("About Musicott", " ", "", AlertType.INFORMATION, stage);
             alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
             Label aboutLabel1 = new Label(ABOUT_MUSICOTT_FIRST_LINE);
             Label aboutLabel2 = new Label(ABOUT_MUSICOTT_SECOND_LINE);
             Hyperlink githubLink = new Hyperlink(MUSICOTT_GITHUB_LINK);
-            githubLink.setOnAction(event -> stageDemon.getApplicationHostServices().showDocument(githubLink.getText()));
+            githubLink.setOnAction(event -> hostServices.showDocument(githubLink.getText()));
             FlowPane flowPane = new FlowPane();
             flowPane.getChildren().addAll(aboutLabel1, githubLink, aboutLabel2);
             alert.getDialogPane().contentProperty().set(flowPane);
@@ -306,45 +351,9 @@ public class RootMenuBarController {
         });
     }
 
-    private List<Track> trackSelectionIds() {
+    private List<Track> trackSelectionList() {
         List<Entry<Integer, Track>> trackSelection = rootController.getSelectedTracks();
         return trackSelection.stream().map(Entry::getValue).collect(Collectors.toList());
-    }
-
-    private void playPauseTextBinding() {
-        BooleanProperty playPauseProperty = playerController.playButtonSelectedProperty();
-        playPauseMenuItem.textProperty().bind(map(playPauseProperty, play -> play ? "Pause" : "Play"));
-    }
-
-    /**
-     * Binds the show/hide table info pane menu item
-     * to be disabled if a playlist is shown
-     */
-    private void showHideTableInfoDisableBinding() {
-        ReadOnlyObjectProperty<NavigationMode> selectedMenu = navigationController.navigationModeProperty();
-        showHideTableInfoPaneMenuItem.disableProperty().bind(map(selectedMenu, menu -> ! menu.equals(PLAYLIST)));
-    }
-
-    /**
-     * Binds the show/hide navigation pane menu item to change
-     * his text if the pane is showing or not
-     */
-    private void showHideNavigationPaneTextBinding() {
-        ReadOnlyBooleanProperty showingNavigationPaneProperty = rootController.showNavigationPaneProperty();
-        showHideNavigationPaneMenuItem.textProperty().bind(
-                map(showingNavigationPaneProperty,
-                    s -> s ? "Hide navigation pane" : "Show navigation pane"));
-    }
-
-    /**
-     * Binds the show/hide table info pane menu item to change
-     * his text if the pane is showing or not
-     */
-    private void showHideTableInfoPaneTextBinding() {
-        ReadOnlyBooleanProperty showingTableInfoPaneProperty = rootController.showTableInfoPaneProperty();
-        showHideTableInfoPaneMenuItem.textProperty().bind(
-                map(showingTableInfoPaneProperty,
-                    s -> s ? "Hide table information pane" : "Show table information pane"));
     }
 
     private void countFilesToImport(File folder) {
@@ -359,8 +368,8 @@ public class RootMenuBarController {
     }
 
     private void countFilesToImportTask(File folder) {
-        Set<String> extensions = MainPreferences.getInstance().getImportFilterExtensions();
-        ExtensionFileFilter filter = new ExtensionFileFilter();
+        Set<String> extensions = mainPreferences.getImportFilterExtensions();
+        ExtensionFileFilter filter = injector.getInstance(ExtensionFileFilter.class);
         extensions.forEach(filter::addExtension);
         Platform.runLater(() -> {
             navigationController.setStatusMessage("");
@@ -378,7 +387,7 @@ public class RootMenuBarController {
         String alertContentText = "There are no valid files to import in the selected folder. " + "Change the folder " +
 				"" + "or the import options in preferences";
         Platform.runLater(() -> {
-            Alert alert = stageDemon.createAlert("Import", "No files", alertContentText, AlertType.WARNING);
+            Alert alert = createAlert("Import", "No files", alertContentText, AlertType.WARNING, stage);
             alert.showAndWait();
         });
     }
@@ -386,12 +395,12 @@ public class RootMenuBarController {
     private void showImportConfirmationAlert(List<File> filesToImport) {
         String alertContentText = "Import " + filesToImport.size() + " files?";
         Platform.runLater(() -> {
-            Alert alert = stageDemon.createAlert("Import", alertContentText, "", AlertType.CONFIRMATION);
+            Alert alert = createAlert("Import", alertContentText, "", AlertType.CONFIRMATION, stage);
             alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
             LOG.debug("Showing confirmation alert to import {} files", filesToImport.size());
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get().equals(ButtonType.OK)) {
-                TaskDemon.getInstance().importFiles(filesToImport, false);
+                taskDemon.importFiles(filesToImport, false);
                 navigationController.setStatusMessage("Importing files");
             }
         });
@@ -420,5 +429,79 @@ public class RootMenuBarController {
         selectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemModifier));
         dontSelectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemModifier, shiftDown));
         findMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.F, operativeSystemModifier));
+    }
+
+    @Inject (optional = true)
+    public void setRootController(@RootCtrl RootController c) {
+        rootController = c;
+    }
+
+    @Inject (optional = true)
+    public void setEditController(@EditCtrl EditController c) {
+        editController = c;
+    }
+
+    @Inject
+    public void setNavigationController(@NavigationCtrl NavigationController c) {
+        navigationController = c;
+    }
+
+    @Inject
+    public void setPlayerController(@PlayerCtrl PlayerController c) {
+        playerController = c;
+    }
+
+    @Inject
+    public void setPreferencesController(@PrefCtrl PreferencesController c) {
+        preferencesController = c;
+    }
+
+    @Inject
+    public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty p) {
+        this.emptyLibraryProperty = p;
+    }
+
+    @Inject
+    public void setSearchFieldFocusedProperty(@SearchingProperty ReadOnlyBooleanProperty p) {
+        searchingProperty = p;
+    }
+
+    @Inject
+    public void setPlayPauseProperty(@PlayPauseProperty BooleanProperty p) {
+        playPauseProperty = p;
+    }
+
+    @Inject
+    public void setPrevButtonDisabledProperty(@PreviousButtonDisabledProperty ReadOnlyBooleanProperty p) {
+        previousButtonDisabledProperty = p;
+    }
+
+    @Inject
+    public void setNextButtonDisabledProperty(@NextButtonDisabledProperty ReadOnlyBooleanProperty p) {
+        nextButtonDisabledProperty = p;
+    }
+
+    @Inject (optional = true)
+    public void setSelectedMenuProperty(@SelectedMenuProperty ReadOnlyObjectProperty<NavigationMode> p) {
+        selectedMenuProperty = p;
+        bindShowHideTableInfo();
+    }
+
+    @Inject (optional = true)
+    public void setShowingNavigationPaneProperty(@ShowingNavigationPaneProperty ReadOnlyBooleanProperty property) {
+        showingNavigationPanePropery = property;
+        bindShowingNavigationPane();
+    }
+
+    @Inject (optional = true)
+    public void setShowingTableInfoPaneProperty(@ShowingTableInfoPaneProperty ReadOnlyBooleanProperty property) {
+        showingTableInfoPaneProperty = property;
+        bindShowingTableInfoPane();
+    }
+
+    @Inject (optional = true)
+    public void setShowingEditingProperty(@ShowingEditing ReadOnlyBooleanProperty property) {
+        editingProperty = property;
+        bindEditingProperty();
     }
 }

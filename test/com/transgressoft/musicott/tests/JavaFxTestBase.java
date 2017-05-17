@@ -19,53 +19,71 @@
 
 package com.transgressoft.musicott.tests;
 
+import com.google.inject.*;
+import com.transgressoft.musicott.*;
+import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.player.*;
+import com.transgressoft.musicott.services.*;
+import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.util.guice.modules.*;
+import com.transgressoft.musicott.view.*;
 import javafx.application.*;
-import javafx.fxml.*;
 import javafx.scene.*;
-import javafx.stage.*;
-import org.junit.*;
-import org.testfx.framework.junit.*;
+import javafx.stage.Stage;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.*;
+import org.testfx.api.*;
+import org.testfx.framework.junit5.*;
+
+import java.io.*;
 
 /**
  * Base class for testing JavaFX classes
  *
  * @author Octavio Calleya
  */
-public class JavaFxTestBase extends ApplicationTest {
+@ExtendWith ({ApplicationExtension.class, MockitoExtension.class})
+public abstract class JavaFxTestBase<T extends InjectableController> implements InjectedApplication {
 
-    protected static String layout;
-    protected static Stage testStage;
-    protected Object controller;
-    protected Application testApplication;
+    @Mock
+    protected TaskDemon taskDemonMock;
+    @Mock
+    protected ServiceDemon serviceDemonMock;
+    @Mock
+    protected PlayerFacade playerFacadeMock;
+    @Mock
+    protected MusicLibrary musicLibraryMock;
+    @Mock
+    protected PlaylistsLibrary playlistsLibraryMock;
+    @Mock
+    protected TracksLibrary tracksLibraryMock;
+    @Mock
+    protected AlbumsLibrary albumsLibraryMock;
+    @Mock
+    protected ArtistsLibrary artistsLibraryMock;
+    @Mock
+    protected WaveformsLibrary waveformsLibraryMock;
+    @Mock
+    protected MainPreferences preferencesMock;
+
+    protected T controller;
+    protected ControllerModule<T> module;
+    protected Module mockedSingletonsTestModule = new MockedSingletonsTestModule();
+    protected Injector injector = Guice.createInjector(mockedSingletonsTestModule);
 
     @Override
-    public void start(Stage stage) throws Exception {
-        testApplication = new Application() {
-
-            @Override
-            public void start(Stage stage) throws Exception {
-                if (layout != null) {
-                    try {
-                        FXMLLoader loader = new FXMLLoader();
-                        loader.setLocation(getClass().getResource(layout));
-                        Parent nodeLayout = loader.load();
-                        controller = loader.getController();
-                        testStage.setScene(new Scene(nodeLayout));
-                    }
-                    catch (Exception exception) {
-                        exception.printStackTrace();
-                    }
-                }
-                testStage.setTitle("Test");
-            }
-        };
-
-        testApplication.init();
-        testApplication.start(testStage);
+    public Injector getInjector() {
+        return injector;
     }
 
-    @BeforeClass
-    public static void setupSpec() throws Exception {
+    @Start
+    public abstract void start(Stage stage) throws Exception;
+
+    @BeforeAll
+    public static void beforeAll() throws Exception {
         if (Boolean.getBoolean("headless")) {
             System.setProperty("testfx.robot", "glass");
             System.setProperty("testfx.headless", "true");
@@ -75,12 +93,81 @@ public class JavaFxTestBase extends ApplicationTest {
         }
     }
 
-    @Before
-    public void beforeEachTest() throws Exception {
+    protected <N extends Node> N find(FxRobot fxRobot, String query) {
+        return fxRobot.lookup(query).query();
     }
 
-    @After
-    public void afterEachTest() throws Exception  {
-        testApplication.stop();
+    protected void loadTestController(Layout layout) throws IOException, ReflectiveOperationException {
+        module = createController(layout, injector);
+        controller = module.providesController();
+    }
+
+    private class MockedSingletonsTestModule extends AbstractModule {
+
+        @Override
+        protected void configure() {}
+
+        @Provides
+        HostServices providesHostServicesSample() {
+            return new Application() {
+                @Override
+                public void start(Stage primaryStage) throws Exception {}}.getHostServices();
+        }
+
+        @Provides
+        @RootPlaylist
+        Playlist providesRootPlaylist(PlaylistFactory factory) {
+            return factory.create("ROOT", true);
+        }
+
+        @Provides
+        TaskDemon providesTaskDemonMock() {
+            return taskDemonMock;
+        }
+
+        @Provides
+        PlayerFacade providesPlayerFacadeMock() {
+            return playerFacadeMock;
+        }
+
+        @Provides
+        ServiceDemon providesServiceDemonMock() {
+            return serviceDemonMock;
+        }
+
+        @Provides
+        MusicLibrary providesMusicLibraryMock() {
+            return musicLibraryMock;
+        }
+
+        @Provides
+        PlaylistsLibrary providesPlaylistsLibraryMock() {
+            return playlistsLibraryMock;
+        }
+
+        @Provides
+        TracksLibrary providesTracksLibraryMock() {
+            return tracksLibraryMock;
+        }
+
+        @Provides
+        ArtistsLibrary providesArtistsLibraryMock() {
+            return artistsLibraryMock;
+        }
+
+        @Provides
+        AlbumsLibrary providesAlbumsLibrary() {
+            return albumsLibraryMock;
+        }
+
+        @Provides
+        WaveformsLibrary waveformsLibraryMock() {
+            return waveformsLibraryMock;
+        }
+
+        @Provides
+        MainPreferences providesPreferencesMock() {
+            return preferencesMock;
+        }
     }
 }

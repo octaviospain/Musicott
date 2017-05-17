@@ -19,8 +19,9 @@
 
 package com.transgressoft.musicott.util;
 
-import com.transgressoft.musicott.*;
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import javafx.collections.*;
 import javafx.util.*;
 import org.jaudiotagger.audio.*;
@@ -42,11 +43,13 @@ public class MetadataParser {
 
     private static final Logger LOG = LoggerFactory.getLogger(MetadataParser.class.getName());
 
+    @Inject
+    private static TrackFactory trackFactory;
+
     private MetadataParser() {}
 
     public static Track createTrack(File fileToParse) throws TrackParseException {
-        int newId = MainPreferences.getInstance().getTrackSequence();
-        Track track = new Track(newId, fileToParse.getParent(), fileToParse.getName());
+        Track track = trackFactory.create(fileToParse.getParent(), fileToParse.getName());
         try {
             LOG.debug("Creating AudioFile instance with jAudioTagger of: {}", fileToParse);
             AudioFile audioFile = AudioFileIO.read(fileToParse);

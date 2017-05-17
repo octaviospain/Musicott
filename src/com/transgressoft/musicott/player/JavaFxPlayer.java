@@ -74,7 +74,10 @@ public class JavaFxPlayer implements TrackPlayer {
 
     @Override
     public void setVolume(double value) {
-        mediaPlayer.setVolume(value);
+        if (value < 0)
+            mediaPlayer.setVolume(0.0);
+        else
+            mediaPlayer.setVolume(value);
     }
 
     @Override

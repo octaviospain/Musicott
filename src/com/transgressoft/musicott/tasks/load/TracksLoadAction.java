@@ -21,20 +21,24 @@ package com.transgressoft.musicott.tasks.load;
 
 import com.cedarsoftware.util.io.*;
 import com.google.common.collect.*;
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
 import javafx.collections.*;
 import org.slf4j.*;
 
+import javax.annotation.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottController.*;
+import static com.transgressoft.musicott.view.MusicottLayout.*;
 
 /**
  * This class extends from {@link BaseLoadAction} in order to perform the loading
@@ -52,12 +56,17 @@ public class TracksLoadAction extends BaseLoadAction {
     private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private transient List<Track> tracksToSetProperties;
     private int totalTracks;
+    private TracksLibrary tracksLibrary;
+    @Inject
+    private LoadActionFactory loadActionFactory;
 
-    public TracksLoadAction(List<Track> tracks, int totalTracks, String applicationFolder, MusicLibrary musicLibrary,
-            Application musicottApplication) {
-        super(applicationFolder, musicLibrary, musicottApplication);
+    @Inject
+    public TracksLoadAction(TracksLibrary tracksLibrary, @Assisted @Nullable List<Track> tracks, @Assisted int totalTracks,
+            @Assisted String applicationFolder, @Assisted Application application) {
+        super(applicationFolder, application);
         tracksToSetProperties = tracks;
         this.totalTracks = totalTracks;
+        this.tracksLibrary = tracksLibrary;
     }
 
     @Override
@@ -79,12 +88,12 @@ public class TracksLoadAction extends BaseLoadAction {
             tracksToSetProperties.forEach(this::setTrackProperties);
             Map<Integer, Track> tracksMap = tracksToSetProperties.stream()
                                                     .collect(Collectors.toMap(Track::getTrackId, Function.identity()));
-            musicLibrary.tracks.add(tracksMap);
+            tracksLibrary.add(tracksMap);
         }
     }
 
     private TracksLoadAction subListToTracksLoadActionMap(List<Track> subList) {
-        return new TracksLoadAction(subList, totalTracks, applicationFolder, musicLibrary, musicottApplication);
+        return loadActionFactory.createTracksAction(subList, totalTracks, applicationFolder, musicottApplication);
     }
 
     /**
@@ -123,6 +132,7 @@ public class TracksLoadAction extends BaseLoadAction {
         catch (IOException exception) {
             tracksMap = FXCollections.observableHashMap();
             LOG.error("Error loading track library: {}", exception.getMessage(), exception);
+            // TODO improve the error handling to propagate this and show when the stage is created
         }
         return tracksMap;
     }
@@ -148,8 +158,15 @@ public class TracksLoadAction extends BaseLoadAction {
         track.lastDateModifiedProperty().setValue(track.getLastDateModified());
         track.playCountProperty().setValue(track.getPlayCount());
         track.getCoverImage().ifPresent(coverBytes -> track.hasCoverProperty().set(true));
-        track.isPlayableProperty().setValue(track.isPlayable());
         track.artistsInvolvedProperty().setValue(track.getArtistsInvolved());
+        try {
+            track.isPlayableProperty().setValue(track.isPlayable());
+        }
+        catch (IOException exception) {
+            track.isPlayableProperty().setValue(false);
+            LOG.error("Track not found when loading data: {}", exception.getMessage(), exception);
+            // TODO improve the error handling informing the user when the stage is created
+        }
         notifyPreloader(tracksStep.incrementAndGet(), totalTracks, "Loading tracks...");
     }
 }

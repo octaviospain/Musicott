@@ -19,6 +19,8 @@
 
 package com.transgressoft.musicott.model;
 
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.util.*;
 import javafx.beans.property.*;
@@ -94,15 +96,9 @@ public class Track {
     private ObservableSet<String> artistsInvolved;
 
     private Optional<File> coverFileToUpdate = Optional.empty();
-    private MetadataUpdater updater;
-    private ErrorDemon errorDemon = ErrorDemon.getInstance();
+    private MetadataUpdater updater = new MetadataUpdater(this);
 
-    public Track(int id, String fileFolder, String fileName) {
-        trackId = id;
-        updater = new MetadataUpdater(this);
-        this.fileFolder = fileFolder;
-        setFileName(fileName);
-
+    public Track() {
         nameProperty = new SimpleStringProperty(this, "name", name);
         nameProperty.addListener((observable, oldString, newString) -> setName(newString));
         artistProperty = new SimpleStringProperty(this, "artist", artist);
@@ -128,7 +124,7 @@ public class Track {
         dateModifiedProperty = new SimpleObjectProperty<>(this, "date modified", lastDateModified);
         dateModifiedProperty.addListener((observable, oldDate, newDate) -> setLastDateModified(newDate));
         playCountProperty = new SimpleIntegerProperty(this, "play count", playCount);
-        isPlayableProperty = new SimpleBooleanProperty(this, "is playable", isPlayable());
+        isPlayableProperty = new SimpleBooleanProperty(this, "is playable", true);
         hasCoverProperty = new SimpleBooleanProperty(this, "cover flag", false);
         artistsInvolvedProperty = new SimpleSetProperty<>(this, "artists involved", artistsInvolved);
         artistsInvolvedProperty.addListener((obs, oldArtists, newArtists) -> setArtistsInvolved(newArtists));
@@ -145,6 +141,15 @@ public class Track {
         propertyMap.put(TrackField.DISC_NUMBER, discNumberProperty);
         propertyMap.put(TrackField.YEAR, yearProperty);
         propertyMap.put(TrackField.BPM, bpmProperty);
+    }
+
+    @Inject
+    public Track(MainPreferences mainPreferences, @Assisted ("fileFolder") String fileFolder,
+            @Assisted ("fileName") String fileName) {
+        this();
+        trackId = mainPreferences.getTrackSequence();
+        this.fileFolder = fileFolder;
+        setFileName(fileName);
     }
 
     public void setName(String name) {
@@ -392,14 +397,13 @@ public class Track {
         return lastDateModified;
     }
 
-    public boolean isPlayable() {
+    public boolean isPlayable() throws IOException {
         boolean playable = true;
         if (isInDisk()) {
             File file = new File(fileFolder, fileName);
             if (! file.exists()) {
-                errorDemon.showErrorDialog(file.getAbsolutePath() + " not found");
                 setIsInDisk(false);
-                playable = false;
+                throw new IOException("File not found: " + fileFolder + "/" + fileName);
             }
             else if ("flac".equals(fileFormat) || encoding.startsWith("Apple") || encoder.startsWith("iTunes"))
                 playable = false;

@@ -68,8 +68,8 @@ Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki")
 * Typing on the search field while on the artists mode filters the artists list by the query.
 * Added cover thumbnail on the bottom right corner of the table that changes when hovering the rows
 * Also when a playlist is shown, the cover of the playlist changes when hovering
-* Drag & drop tracks to playlists is now possible
-* Drag & drop playlists into folders is now possible
+* Drag & drop tracks to tracksLibrary is now possible
+* Drag & drop tracksLibrary into folders is now possible
 * Ability to reorder the playlist queue by drag & drop
 * Improved audio files & iTunes importing
 * Several bug fixes and performance improvements

@@ -19,6 +19,8 @@
 
 package com.transgressoft.musicott.view.custom;
 
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.model.*;
 
 import javax.swing.*;
@@ -35,13 +37,16 @@ public class WaveformPanel extends JPanel {
     private static final long serialVersionUID = 2195160480150957593L;
     private final float[] defaultWave;
 
-    private transient MusicLibrary musicLibrary = MusicLibrary.getInstance();
+    private final transient WaveformsLibrary waveformsLibrary;
     private float[] waveData;
     private int paneWidth;
     private Color backgroundColor;
     private Color foregroundColor;
 
-    public WaveformPanel(int width, int height) {
+    @Inject
+    public WaveformPanel(WaveformsLibrary waveformsLibrary, @Assisted ("width") int width,
+            @Assisted ("height") int height) {
+        this.waveformsLibrary = waveformsLibrary;
         Dimension dim = new Dimension(width, height);
         setMinimumSize(dim);
         setMaximumSize(dim);
@@ -58,8 +63,8 @@ public class WaveformPanel extends JPanel {
     }
 
     public void setTrack(Track track) {
-        if (musicLibrary.waveforms.containsWaveform(track.getTrackId())) {
-            waveData = musicLibrary.waveforms.getWaveform(track.getTrackId());
+        if (waveformsLibrary.containsWaveform(track.getTrackId())) {
+            waveData = waveformsLibrary.getWaveform(track.getTrackId());
             if (getForeground().equals(backgroundColor))
                 setForeground(foregroundColor);
             repaint();

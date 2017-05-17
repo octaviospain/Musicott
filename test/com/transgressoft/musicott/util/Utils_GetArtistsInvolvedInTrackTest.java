@@ -20,24 +20,49 @@
 package com.transgressoft.musicott.util;
 
 import com.google.common.collect.*;
+import com.google.inject.*;
+import com.google.inject.assistedinject.*;
+import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.view.*;
 import org.junit.jupiter.api.*;
 
 import static com.transgressoft.musicott.util.Utils.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Octavio Calleya
  */
 public class Utils_GetArtistsInvolvedInTrackTest {
 
+    static Injector injector;
+    static TrackFactory trackFactory;
+
     Track testTrack;
     ImmutableSet<String> expectedArtists;
+
+    @BeforeAll
+    public static void beforeAll() {
+        injector = Guice.createInjector(binder -> {
+            binder.bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
+
+            MainPreferences preferences = mock(MainPreferences.class);
+            when(preferences.getTrackSequence()).thenReturn(0);
+            binder.bind(MainPreferences.class).toInstance(preferences);
+
+            Module trackFactoryModule = new FactoryModuleBuilder().implement(Track.class, Track.class)
+                                                                  .build(TrackFactory.class);
+            binder.install(trackFactoryModule);
+        });
+        trackFactory = injector.getInstance(TrackFactory.class);
+    }
 
     @Test
     @DisplayName ("Empty track")
     void emptyTrack() {
-        testTrack = new Track(0, "", "");
+        testTrack = trackFactory.create("", "");
         expectedArtists = ImmutableSet.of();
 
         assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
@@ -48,7 +73,7 @@ public class Utils_GetArtistsInvolvedInTrackTest {
     class namesInArtistField {
 
         private void initTrackWithArtistAndResult(String artistString, String... expectedArtist) {
-            testTrack = new Track(0, "", "");
+            testTrack = trackFactory.create("", "");
             testTrack.setArtist(artistString);
             expectedArtists = ImmutableSet.<String> builder().add(expectedArtist).build();
         }
@@ -358,7 +383,7 @@ public class Utils_GetArtistsInvolvedInTrackTest {
         }
 
         private void initTrackWithNameAndResult(String nameString, String... expectedArtist) {
-            testTrack = new Track(0, "", "");
+            testTrack = trackFactory.create("", "");
             testTrack.setName(nameString);
             expectedArtists = ImmutableSet.<String> builder().add(expectedArtist).build();
         }
@@ -455,7 +480,7 @@ public class Utils_GetArtistsInvolvedInTrackTest {
         }
 
         @Test
-        @DisplayName ("Has 'ft' and")
+        @DisplayName ("Has 'ft' and ending by 'Remix'")
         @Disabled("User should put the extra artist in the artist field, separated by a comma")
         void twoArtistsDividedByFtWithRemix() {
             initTrackWithNameAndResult("Pretendingtowalkslow ft Zeroh (M. Constant Remix)", "Zeroh", "M. Constant");
@@ -497,7 +522,7 @@ public class Utils_GetArtistsInvolvedInTrackTest {
         }
 
         private void initTrackWithNameAndResult(String albumArtistString, String... expectedArtist) {
-            testTrack = new Track(0, "", "");
+            testTrack = trackFactory.create("", "");
             testTrack.setAlbumArtist(albumArtistString);
             expectedArtists = ImmutableSet.<String> builder().add(expectedArtist).build();
         }
@@ -537,7 +562,7 @@ public class Utils_GetArtistsInvolvedInTrackTest {
 
         private void initTrackWithNameAndResult(String name, String artist, String albumArtist,
                 String... expectedArtist) {
-            testTrack = new Track(0, "", "");
+            testTrack = trackFactory.create("", "");
             testTrack.setName(name);
             testTrack.setArtist(artist);
             testTrack.setAlbumArtist(albumArtist);
