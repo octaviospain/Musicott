@@ -20,7 +20,7 @@
 package com.transgressoft.musicott.model;
 
 import com.google.inject.*;
-import com.transgressoft.musicott.tasks.*;
+import javafx.collections.*;
 
 import java.util.*;
 
@@ -34,27 +34,28 @@ import java.util.*;
 @Singleton
 public class WaveformsLibrary {
 
-    private final Provider<TaskDemon> taskDemonProvider;
-    private final Map<Integer, float[]> waveforms = new HashMap<>();
-
-    @Inject
-    public WaveformsLibrary(Provider<TaskDemon> taskDemonProvider) {this.taskDemonProvider = taskDemonProvider;}
+    private final ObservableMap<Integer, float[]> waveforms = FXCollections.observableHashMap();
 
     public Map<Integer, float[]> getWaveforms() {
         return waveforms;
     }
 
+    public void addListener(MapChangeListener<Integer, float[]> listener) {
+        waveforms.addListener(listener);
+    }
+
     public synchronized void addWaveform(int trackId, float[] waveform) {
         waveforms.put(trackId, waveform);
-        taskDemonProvider.get().saveLibrary(false, true, false);
     }
 
     public synchronized void addWaveforms(Map<Integer, float[]> newWaveforms) {
         waveforms.putAll(newWaveforms);
     }
 
-    synchronized void removeWaveform(int trackId) {
-        waveforms.keySet().remove(trackId);
+    synchronized void removeWaveforms(Collection<Track> tracks) {
+        tracks.stream()
+              .map(Track::getTrackId)
+              .forEach(id -> waveforms.keySet().remove(id));
     }
 
     public synchronized boolean containsWaveform(int trackId) {

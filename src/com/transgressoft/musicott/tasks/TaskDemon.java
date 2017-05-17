@@ -44,28 +44,24 @@ public class TaskDemon {
 			 													  "Wait for it to perform another import task.";
 	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-	private final Provider<WaveformTask> waveformTaskProvider;
-	private final SaveMusicLibraryTask saveMusicLibraryTask;
-	private final ErrorDialogController errorDialog;
+	private SaveMusicLibraryTask saveMusicLibraryTask;
 
 	private ExecutorService parseExecutorService;
 	private Future parseFuture;
-	private WaveformTask waveformTask;
 	private ParseTask parseTask;
+	private WaveformTask waveformTask;
 	private BlockingQueue<Track> tracksToProcessQueue;
+	private ErrorDialogController errorDialog;
 
 	private boolean savingsActivated = true;
 
-	@Inject
+	@Inject (optional = true)
 	private ParseTaskFactory parseTaskFactory;
+	@Inject
+	private Injector injector;
 
 	@Inject
-	public TaskDemon(Provider<SaveMusicLibraryTask> saveMusicLibraryTask, Provider<WaveformTask> waveformTaskProvider,
-			ErrorDialogController errorDialog) {
-		this.errorDialog = errorDialog;
-		this.waveformTaskProvider = waveformTaskProvider;
-		this.saveMusicLibraryTask = saveMusicLibraryTask.get();
-		this.saveMusicLibraryTask.setDaemon(true);
+	public TaskDemon() {
 		tracksToProcessQueue = new LinkedBlockingQueue<>();
 		parseExecutorService = Executors.newSingleThreadExecutor();
 	}
@@ -116,19 +112,36 @@ public class TaskDemon {
 
     public void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
 		if (savingsActivated) {
-			if (! saveMusicLibraryTask.isAlive())
+			if (saveMusicLibraryTask == null) {
+				saveMusicLibraryTask = injector.getInstance(SaveMusicLibraryTask.class);
+				saveMusicLibraryTask.setDaemon(true);
 				saveMusicLibraryTask.start();
+			}
 			saveMusicLibraryTask.saveMusicLibrary(saveTracks, saveWaveforms, savePlaylists);
 		}
     }
 
 	public void analyzeTrackWaveform(Track trackToAnalyze) {
 		if (waveformTask == null) {
-			waveformTask = waveformTaskProvider.get();
+			waveformTask = injector.getInstance(WaveformTask.class);
 			waveformTask.start();
 		}
 		tracksToProcessQueue.add(trackToAnalyze);
 		LOG.debug("Added track {} to waveform analyze queue", trackToAnalyze);
+	}
+
+	@Inject
+	public void setTracksLibrary(TracksLibrary tracksLibrary) {
+		tracksLibrary.addListener(change -> saveLibrary(true, false, false));
+	}
+
+	@Inject
+	public void setWaveformsLibrary(WaveformsLibrary waveformsLibrary) {
+		waveformsLibrary.addListener(change -> saveLibrary(false, false, true));
+	}
+
+	public void setErrorDialog(ErrorDialogController errorDialog) {
+		this.errorDialog = errorDialog;
 	}
 
 	Track getNextTrackToAnalyzeWaveform() throws InterruptedException {

@@ -47,7 +47,6 @@ public class PlaylistCreator implements ClassFactory {
         @Override
         protected void configure() {
             install(new TrackFactoryModule());
-            install(new ParseModule());
         }
 
         @Provides

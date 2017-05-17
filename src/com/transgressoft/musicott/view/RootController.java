@@ -42,6 +42,7 @@ import javafx.stage.Stage;
 import org.slf4j.*;
 
 import java.io.*;
+import java.util.AbstractMap.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.function.*;
@@ -367,10 +368,6 @@ public class RootController extends InjectableController<BorderPane> implements 
         artistsLayoutController.setArtistTrackSets(tracksByAlbum);
     }
 
-    public void removeFromTrackSets(Entry<Integer, Track> trackEntry) {
-        artistsLayoutController.removeFromTrackSets(trackEntry);
-    }
-
     public void updateShowingTrackSets() {
         artistsLayoutController.updateShowingTrackSets();
     }
@@ -404,14 +401,14 @@ public class RootController extends InjectableController<BorderPane> implements 
         showTablePane();
     }
 
-    public void showTablePane() {
+    private void showTablePane() {
         if (! tableStackPane.getChildren().contains(trackTable))
             tableStackPane.getChildren().add(trackTable);
         if (! tableStackPane.getChildren().contains(hoverCoverImageView))
             tableStackPane.getChildren().add(hoverCoverImageView);
     }
 
-    public void removeTablePane() {
+    private void removeTablePane() {
         if (tableStackPane.getChildren().contains(trackTable))
             tableStackPane.getChildren().remove(trackTable);
         if (tableStackPane.getChildren().contains(hoverCoverImageView))
@@ -525,6 +522,17 @@ public class RootController extends InjectableController<BorderPane> implements 
                 artistsLayoutController.deselectAllTracks();
                 break;
         }
+    }
+
+    @Inject
+    public void setTracksLibrary(TracksLibrary tracksLibrary) {
+        tracksLibrary.addListener(change -> {
+            if (change.wasRemoved()) {
+                Track track = change.getValueRemoved();
+                Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);
+                artistsLayoutController.removeFromTrackSets(trackEntry);
+            }
+        });
     }
 
     @Inject

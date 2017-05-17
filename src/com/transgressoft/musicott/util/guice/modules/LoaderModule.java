@@ -33,7 +33,7 @@ import com.transgressoft.musicott.util.guice.factories.*;
  * @version 0.10.1-b
  * @since 0.10.1-b
  */
-public class PreloaderModule extends AbstractModule {
+public class LoaderModule extends AbstractModule {
 
     @Override
     protected void configure() {

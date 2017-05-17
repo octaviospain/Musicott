@@ -39,7 +39,7 @@ import java.util.stream.*;
 @Singleton
 public class PlaylistsLibrary {
 
-    private final Provider<TaskDemon> taskDemonProvider;
+    private final TaskDemon taskDemon;
     private final TracksLibrary tracksLibrary;
     private final Playlist ROOT_PLAYLIST;
 
@@ -48,9 +48,9 @@ public class PlaylistsLibrary {
 
     @Inject
     public PlaylistsLibrary(@RootPlaylist Playlist rootPlaylist, TracksLibrary tracksLibrary,
-            Provider<TaskDemon> taskDemonProvider) {
+            TaskDemon taskDemon) {
         this.tracksLibrary = tracksLibrary;
-        this.taskDemonProvider = taskDemonProvider;
+        this.taskDemon = taskDemon;
         ROOT_PLAYLIST = rootPlaylist;
         playlistsTree.addNode(ROOT_PLAYLIST);
     }
@@ -61,7 +61,7 @@ public class PlaylistsLibrary {
 
     public synchronized void addPlaylist(Playlist parent, Playlist playlist) {
         playlistsTree.putEdge(parent, playlist);
-        taskDemonProvider.get().saveLibrary(false, false, true);
+        taskDemon.saveLibrary(false, false, true);
     }
 
     public synchronized void addPlaylistToRoot(Playlist playlist) {
@@ -81,7 +81,7 @@ public class PlaylistsLibrary {
         playlistsTree.removeEdge(getParentPlaylist(playlist), playlist);
         playlistsTree.removeNode(playlist);
         parent.getContainedPlaylists().remove(playlist);
-        taskDemonProvider.get().saveLibrary(false, false, true);
+        taskDemon.saveLibrary(false, false, true);
     }
 
     public synchronized void movePlaylist(Playlist movedPlaylist, Playlist targetFolder) {
@@ -90,13 +90,14 @@ public class PlaylistsLibrary {
         parentOfMovedPlaylist.getContainedPlaylists().remove(movedPlaylist);
         playlistsTree.putEdge(targetFolder, movedPlaylist);
         targetFolder.getContainedPlaylists().add(movedPlaylist);
-        taskDemonProvider.get().saveLibrary(false, false, true);
+        taskDemon.saveLibrary(false, false, true);
     }
 
-    synchronized void removeFromPlaylists(Track track) {
+    synchronized void removeFromPlaylists(Collection<Track> tracks) {
+        List<Integer> trackIds = tracks.stream().map(Track::getTrackId).collect(Collectors.toList());
         playlistsTree.nodes().stream()
                      .filter(playlist -> ! playlist.isFolder())
-                     .forEach(playlist -> playlist.removeTracks(Collections.singletonList(track.getTrackId())));
+                     .forEach(playlist -> playlist.removeTracks(trackIds));
     }
 
     public synchronized boolean containsPlaylistName(String playlistName) {

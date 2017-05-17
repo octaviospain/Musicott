@@ -86,6 +86,7 @@ public class WaveformsLoadAction extends BaseLoadAction {
         catch (IOException exception) {
             waveformsMap = new HashMap<>();
             LOG.error("Error loading waveform thumbnails: {}", exception.getMessage(), exception);
+            // TODO improve the error handling to propagate this and show when the stage is created
         }
         return waveformsMap;
     }

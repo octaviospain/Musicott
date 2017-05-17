@@ -24,9 +24,12 @@ import com.google.inject.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 
+import java.util.AbstractMap.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
+
+import static com.transgressoft.musicott.model.AlbumsLibrary.*;
 
 /**
  * Class that isolates the operations over the map of {@link Track}s
@@ -43,6 +46,11 @@ public class TracksLibrary {
     private final ObservableMap<Integer, Track> musicottTracks = FXCollections.observableHashMap();
     private final ListProperty<Entry<Integer, Track>> trackEntriesListProperty;
     private final ListProperty<Entry<Integer, Track>> showingTracksProperty;
+    private final MapChangeListener<Integer, Track> tracksMapChangeListener = tracksMapChangeListener();
+
+    private ArtistsLibrary artistsLibrary;
+    private AlbumsLibrary albumsLibrary;
+    private ReadOnlyObjectProperty<NavigationMode> navigationModeProperty;
 
     @Inject
     public TracksLibrary() {
@@ -58,18 +66,39 @@ public class TracksLibrary {
         ObservableList<Entry<Integer, Track>> showingTracksList = FXCollections.observableArrayList(trackEntries);
         showingTracksProperty = new SimpleListProperty<>(this, "showing tracks");
         showingTracksProperty.bind(new SimpleObjectProperty<>(showingTracksList));
+        addListener(tracksMapChangeListener);
     }
 
-    public ObservableMap<Integer, Track> getMusicottTracks() {
-        return musicottTracks;
+    private MapChangeListener<Integer, Track> tracksMapChangeListener() {
+        return change -> {
+            if (change.wasAdded())
+                addTrackToCollections(change.getValueAdded());
+            else if (change.wasRemoved())
+                removeTrackFromCollections(change.getValueRemoved());
+        };
     }
 
-    void addListener(MapChangeListener<Integer, Track> listener) {
+    private void addTrackToCollections(Track track) {
+        Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);
+        trackEntriesListProperty.add(trackEntry);
+        track.getArtistsInvolved().forEach(artist -> artistsLibrary.addArtistTrack(artist, track));
+        String trackAlbum = track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum();
+        albumsLibrary.addTracks(trackAlbum, Collections.singletonList(trackEntry));
+        if (navigationModeProperty != null && navigationModeProperty.get() == NavigationMode.ALL_TRACKS)
+            showingTracksProperty.add(trackEntry);
+    }
+
+    private void removeTrackFromCollections(Track track) {
+        Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);
+        trackEntriesListProperty.remove(trackEntry);
+        showingTracksProperty.remove(trackEntry);
+        track.getArtistsInvolved().forEach(artist -> artistsLibrary.removeArtistTrack(artist, track));
+        String trackAlbum = track.getAlbum().isEmpty() ? UNK_ALBUM : track.getAlbum();
+        albumsLibrary.removeTracks(trackAlbum, Collections.singletonList(trackEntry));
+    }
+
+    public void addListener(MapChangeListener<Integer, Track> listener) {
         musicottTracks.addListener(listener);
-    }
-
-    void removeListener(MapChangeListener<Integer, Track> listener) {
-        musicottTracks.removeListener(listener);
     }
 
     public synchronized void add(Map<Integer, Track> tracksMap) {
@@ -99,9 +128,11 @@ public class TracksLibrary {
     }
 
     synchronized void clear() {
+        musicottTracks.addListener(tracksMapChangeListener);
         musicottTracks.clear();
         trackEntriesListProperty.clear();
         showingTracksProperty.clear();
+        musicottTracks.removeListener(tracksMapChangeListener);
     }
 
     public synchronized void showAllTracks() {
@@ -123,18 +154,32 @@ public class TracksLibrary {
             synchronized (this) {
                 randomTrack = musicottTracks.get(randomTrackId);
             }
-            if (randomTrack.isPlayable())
+            if (randomTrack.isInDisk())
                 randomList.add(randomTrack);
         } while (randomList.size() < DEFAULT_RANDOM_QUEUE_SIZE);
         return randomList;
     }
 
-    public ReadOnlyBooleanProperty emptyTracksLibraryProperty() {
-        return trackEntriesListProperty.emptyProperty();
+    @Inject
+    public void setArtistsLibrary(ArtistsLibrary artistsLibrary) {
+        this.artistsLibrary = artistsLibrary;
     }
 
-    public ListProperty<Entry<Integer, Track>> tracksProperty() {
-        return trackEntriesListProperty;
+    @Inject
+    public void setAlbumsLibrary(AlbumsLibrary albumsLibrary) {
+        this.albumsLibrary = albumsLibrary;
+    }
+
+    public void setNavigationModeProperty(ObjectProperty<NavigationMode> navigationModeProperty) {
+        this.navigationModeProperty = navigationModeProperty;
+    }
+
+    public ObservableMap<Integer, Track> getMusicottTracks() {
+        return musicottTracks;
+    }
+
+    public ReadOnlyBooleanProperty emptyTracksLibraryProperty() {
+        return trackEntriesListProperty.emptyProperty();
     }
 
     public ListProperty<Entry<Integer, Track>> showingTrackEntriesProperty() {

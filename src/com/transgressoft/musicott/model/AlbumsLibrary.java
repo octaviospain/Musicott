@@ -21,6 +21,9 @@ package com.transgressoft.musicott.model;
 
 import com.google.common.collect.*;
 import com.google.inject.*;
+import javafx.application.Platform;
+import javafx.beans.property.*;
+import javafx.collections.*;
 
 import java.util.*;
 import java.util.Map.*;
@@ -37,15 +40,25 @@ public class AlbumsLibrary {
 
     public static final String UNK_ALBUM = "Unknown album";
 
-    private Multimap<String, Entry<Integer, Track>> albumsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
+    private final Multimap<String, Entry<Integer, Track>> albumsTracks = Multimaps.synchronizedMultimap(HashMultimap.create());
+    private final ObservableList<String> albumsList;
+    private final ListProperty<String> albumsListProperty;
 
     @Inject
-    public AlbumsLibrary() {}
+    public AlbumsLibrary() {
+        ObservableSet<String> albums = FXCollections.observableSet(albumsTracks.keySet());
+        albumsList = FXCollections.observableArrayList(albums);
+        albumsListProperty = new SimpleListProperty<>(this, "albums set");
+        albumsListProperty.bind(new SimpleObjectProperty<>(albumsList));
+    }
 
     synchronized boolean addTracks(String album, List<Entry<Integer, Track>> trackEntries) {
-        //        if (! albumsLists.contains(album)) {
-        //            // TODO update the observable albumLists when implemented album view
-        //        }
+        if (! albumsList.contains(album)) {
+            Platform.runLater(() -> {
+                albumsList.add(album);
+                FXCollections.sort(albumsList);
+            });
+        }
         return albumsTracks.putAll(album, trackEntries);
     }
 
@@ -53,7 +66,7 @@ public class AlbumsLibrary {
         boolean removed;
         removed = albumsTracks.get(album).removeAll(trackEntries);
         if (! albumsTracks.containsKey(album)) {
-            // TODO update observable albumList when implemented album view
+            Platform.runLater(() -> albumsList.remove(album));
         }
         return removed;
     }
@@ -72,5 +85,9 @@ public class AlbumsLibrary {
                 Multimaps.filterValues(
                         Multimaps.filterKeys(albumsTracks, albums::contains),
                         entry -> entry.getValue().getArtistsInvolved().contains(artist)));
+    }
+
+    public ListProperty<String> albumsListProperty() {
+        return albumsListProperty;
     }
 }

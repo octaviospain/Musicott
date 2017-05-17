@@ -132,6 +132,7 @@ public class TracksLoadAction extends BaseLoadAction {
         catch (IOException exception) {
             tracksMap = FXCollections.observableHashMap();
             LOG.error("Error loading track library: {}", exception.getMessage(), exception);
+            // TODO improve the error handling to propagate this and show when the stage is created
         }
         return tracksMap;
     }
@@ -157,8 +158,15 @@ public class TracksLoadAction extends BaseLoadAction {
         track.lastDateModifiedProperty().setValue(track.getLastDateModified());
         track.playCountProperty().setValue(track.getPlayCount());
         track.getCoverImage().ifPresent(coverBytes -> track.hasCoverProperty().set(true));
-        track.isPlayableProperty().setValue(track.isPlayable());
         track.artistsInvolvedProperty().setValue(track.getArtistsInvolved());
+        try {
+            track.isPlayableProperty().setValue(track.isPlayable());
+        }
+        catch (IOException exception) {
+            track.isPlayableProperty().setValue(false);
+            LOG.error("Track not found when loading data: {}", exception.getMessage(), exception);
+            // TODO improve the error handling informing the user when the stage is created
+        }
         notifyPreloader(tracksStep.incrementAndGet(), totalTracks, "Loading tracks...");
     }
 }

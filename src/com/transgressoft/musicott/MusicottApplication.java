@@ -21,7 +21,6 @@ package com.transgressoft.musicott;
 
 import com.google.inject.*;
 import com.sun.javafx.application.*;
-import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.tasks.load.*;
@@ -61,7 +60,7 @@ public class MusicottApplication extends Application implements InjectedApplicat
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    static Injector injector = Guice.createInjector(new PreloaderModule());
+    static Injector injector = Guice.createInjector(new LoaderModule());
 
     private TaskDemon taskDemon;
 
@@ -72,20 +71,19 @@ public class MusicottApplication extends Application implements InjectedApplicat
 
     @Override
     public void init() throws Exception {
+        injector = injector.createChildInjector(new HostServicesModule(getHostServices()));
         MainPreferences preferences = injector.getInstance(MainPreferences.class);
         if (isFirstUse(preferences))
             LauncherImpl.notifyPreloader(this, new CustomProgressNotification(0, FIRST_USE_EVENT));
 
-        String applicationFolder = preferences.getMusicottUserFolder();
         LastFmPreferences lastFmPreferences = injector.getInstance(LastFmPreferences.class);
         loadConfigProperties(lastFmPreferences);
 
-        injector.getInstance(MusicLibrary.class);
-
         taskDemon = injector.getInstance(TaskDemon.class);
         taskDemon.deactivateLibrarySaving();
-        ForkJoinPool loadForkJoinPool = new ForkJoinPool(4);
+        String applicationFolder = preferences.getMusicottUserFolder();
         LoadActionFactory loadActionFactory = injector.getInstance(LoadActionFactory.class);
+        ForkJoinPool loadForkJoinPool = new ForkJoinPool(4);
         loadForkJoinPool.invoke(loadActionFactory.createWaveformsAction(applicationFolder, this));
         loadForkJoinPool.invoke(loadActionFactory.createPlaylistAction(applicationFolder, this));
         loadForkJoinPool.invoke(loadActionFactory.createTracksAction(null, -1, applicationFolder, this));
@@ -125,7 +123,7 @@ public class MusicottApplication extends Application implements InjectedApplicat
             taskDemon.shutDownTasks();
             System.exit(0);
         });
-        injector = injector.createChildInjector(new MusicottModule(), new HostServicesModule(getHostServices()));
+        injector = injector.createChildInjector(new MusicottModule());
 
         ControllerModule<ErrorDialogController> errorModule = createController(ERROR_DIALOG, injector);
         Stage errorStage = new Stage();

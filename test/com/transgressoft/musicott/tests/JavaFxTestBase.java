@@ -30,7 +30,7 @@ import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.*;
-import javafx.scene.Node;
+import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -39,10 +39,6 @@ import org.testfx.api.*;
 import org.testfx.framework.junit5.*;
 
 import java.io.*;
-import java.util.*;
-import java.util.stream.*;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Base class for testing JavaFX classes
@@ -101,33 +97,13 @@ public abstract class JavaFxTestBase<T extends InjectableController> implements 
         controller = module.providesController();
     }
 
-    @SuppressWarnings ("unchecked")
-    protected Injector injectorWithSimpleMocks(Module module, Class... classesToMock) {
-        return Guice.createInjector(
-                binder -> {
-                    Stream.of(classesToMock).forEach(c -> binder.bind(c).toInstance(mock(c)));
-                    binder.install(module);
-                    binder.install(new MockedSingletonsTestModule());
-                });
-    }
-
-    @SuppressWarnings ("unchecked")
-    protected Injector injectorWithCustomMocks(Map<Class, Object> mockedObjects, Module... newModules) {
-        return Guice.createInjector(
-                binder -> {
-                    mockedObjects.forEach((key, value) -> binder.bind(key).toInstance(value));
-                    Stream.of(newModules).forEach(binder::install);
-                    binder.install(new MockedSingletonsTestModule());
-                });
-    }
-
     private class MockedSingletonsTestModule extends AbstractModule {
 
         @Override
         protected void configure() {}
 
         @Provides
-        HostServices providesHostServices() {
+        HostServices providesHostServicesSample() {
             return new Application() {
                 @Override
                 public void start(Stage primaryStage) throws Exception {}}.getHostServices();

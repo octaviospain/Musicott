@@ -19,7 +19,6 @@
 
 package com.transgressoft.musicott;
 
-import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.view.*;
@@ -31,7 +30,6 @@ import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
-import javafx.stage.Stage;
 
 import java.io.*;
 
@@ -48,6 +46,8 @@ import static com.transgressoft.musicott.view.MusicottLayout.*;
  */
 public class MainPreloader extends Preloader {
 
+    private final String defaultMusicottLocation = File.separator + "Music" + File.separator  + "Musicott";
+
     static final String FIRST_USE_EVENT = "first_use";
 
     private static final int SCENE_WIDTH = 450;
@@ -57,15 +57,8 @@ public class MainPreloader extends Preloader {
     private Label infoLabel;
     private ProgressBar preloaderProgressBar;
 
-    @Inject
-    private MainPreferences preferences;
-    @Inject
-    private ErrorDialogController errorDialog;
-
     @Override
     public void start(Stage primaryStage) throws Exception {
-        injector.injectMembers(this);
-
         AnchorPane rootAnchorPane = FXMLLoader.load(getClass().getResource(Layout.PRELOADER.getPath()));
         infoLabel = (Label) rootAnchorPane.lookup("#infoLabel");
         preloaderProgressBar = (ProgressBar) rootAnchorPane.lookup("#preloaderProgressBar");
@@ -109,34 +102,11 @@ public class MainPreloader extends Preloader {
      * {@code ~/Music/Musicott}
      */
     private void openFirstUseDialog() {
+        ErrorDialogController errorDialog = injector.getInstance(ErrorDialogController.class);
         try {
             Stage promptStage = new Stage();
-            AnchorPane preloaderPane = FXMLLoader.load(getClass().getResource(Layout.PRELOADER_PROMPT.getPath()));
-            Button openButton = (Button) preloaderPane.lookup("#openButton");
-            Button okButton = (Button) preloaderPane.lookup("#okButton");
-            TextField musicottFolderTextField = (TextField) preloaderPane.lookup("#musicottFolderTextField");
-
-            String sep = File.separator;
-            String userHome = System.getProperty("user.home");
-            String defaultMusicottLocation = userHome + sep + "Music" + sep + "Musicott";
-            musicottFolderTextField.setText(defaultMusicottLocation);
-
-            okButton.setOnMouseClicked(event -> {
-                preferences.setMusicottUserFolder(musicottFolderTextField.getText());
-                promptStage.close();
-            });
-            openButton.setOnMouseClicked(event -> {
-                DirectoryChooser chooser = new DirectoryChooser();
-                chooser.setInitialDirectory(new File(userHome));
-                chooser.setTitle("Choose Musicott folder");
-                File folder = chooser.showDialog(promptStage);
-                if (folder != null) {
-                    musicottFolderTextField.setText(folder.toString());
-                }
-            });
-
-            Scene promptScene = new Scene(preloaderPane, SCENE_WIDTH, SCENE_HEIGHT);
-            promptStage.setOnCloseRequest(event -> preferences.setMusicottUserFolder(defaultMusicottLocation));
+            Parent userFolderPromptPane = promptPane(promptStage);
+            Scene promptScene = new Scene(userFolderPromptPane, SCENE_WIDTH, SCENE_HEIGHT);
             promptStage.initModality(Modality.APPLICATION_MODAL);
             promptStage.initOwner(preloaderStage.getOwner());
             promptStage.setResizable(false);
@@ -145,7 +115,36 @@ public class MainPreloader extends Preloader {
             promptStage.showAndWait();
         }
         catch (IOException e) {
-            errorDialog.show("Error opening Musicott's folder selection", "", e);
+            errorDialog.show("Error loading prompt stage", "", e);
         }
+    }
+
+    private Parent promptPane(Stage promptStage) throws IOException {
+        MainPreferences preferences = injector.getInstance(MainPreferences.class);
+
+        AnchorPane preloaderPane = FXMLLoader.load(getClass().getResource(Layout.PRELOADER_PROMPT.getPath()));
+        Button openButton = (Button) preloaderPane.lookup("#openButton");
+        Button okButton = (Button) preloaderPane.lookup("#okButton");
+        TextField musicottFolderTextField = (TextField) preloaderPane.lookup("#musicottFolderTextField");
+
+        String userHome = System.getProperty("user.home");
+        String userLocation = userHome + defaultMusicottLocation;
+        musicottFolderTextField.setText(userLocation);
+        promptStage.setOnCloseRequest(event -> preferences.setMusicottUserFolder(userLocation));
+
+        okButton.setOnMouseClicked(event -> {
+            preferences.setMusicottUserFolder(musicottFolderTextField.getText());
+            promptStage.close();
+        });
+        openButton.setOnMouseClicked(event -> {
+            DirectoryChooser chooser = new DirectoryChooser();
+            chooser.setInitialDirectory(new File(userHome));
+            chooser.setTitle("Choose Musicott folder");
+            File folder = chooser.showDialog(promptStage);
+            if (folder != null) {
+                musicottFolderTextField.setText(folder.toString());
+            }
+        });
+        return preloaderPane;
     }
 }

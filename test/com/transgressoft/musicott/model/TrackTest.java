@@ -25,7 +25,6 @@ import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
-import com.transgressoft.musicott.view.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
 import javafx.util.Duration;
@@ -51,7 +50,7 @@ public class TrackTest {
     int trackId = 55;
     String fileFormat = "mp3";
     String fileName = "File Name" + "." + fileFormat;
-    String fileFolder = "File Folder";
+    String fileFolder = "./test-resources/testfiles/";
     String name = "Name";
     String artist = "artist name";
     String album = "Album";
@@ -74,7 +73,6 @@ public class TrackTest {
     public static void beforeAll() throws Exception {
         Injector injector = Guice.createInjector(binder -> {
             binder.install(new TrackFactoryModule());
-            binder.bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
 
             MainPreferences preferences = mock(MainPreferences.class);
             when(preferences.getTrackSequence()).thenReturn(0);
@@ -144,9 +142,7 @@ public class TrackTest {
         assertEquals("", propertyMap.get(TrackField.COMMENTS).getValue());
         assertEquals("", propertyMap.get(TrackField.LABEL).getValue());
         assertEquals(0, propertyMap.get(TrackField.TRACK_NUMBER).getValue());
-        ;
         assertEquals(0, propertyMap.get(TrackField.YEAR).getValue());
-        ;
         assertEquals(0, propertyMap.get(TrackField.BPM).getValue());
         assertTrue(track.lastDateModifiedProperty().get().isBefore(LocalDateTime.now()));
     }
@@ -315,14 +311,15 @@ public class TrackTest {
     @Test
     @DisplayName ("Not Playable not exists")
     void notPlayableIfNotExistsTest() {
-        track = trackFactory.create("./test-resources/testfiles/", "nonexistentfile.mp3");
+        track = trackFactory.create(fileFolder, "nonexistentfile.mp3");
         track.setIsInDisk(true);
-        assertFalse(track.isPlayable());
+        IOException exception = assertThrows(IOException.class, () -> track.isPlayable());
+        assertEquals(exception.getMessage(), "File not found: " + fileFolder + "/nonexistentfile.mp3");
     }
 
     @Test
     @DisplayName ("Not playable not in desk")
-    void notPlayableIfNotInDiskTest() {
+    void notPlayableIfNotInDiskTest() throws Exception {
         track = trackFactory.create("", "");
         track.setIsInDisk(false);
         assertFalse(track.isPlayable());
@@ -330,16 +327,16 @@ public class TrackTest {
 
     @Test
     @DisplayName ("Not playable is flac")
-    void notPlayableIfFlacTest() {
-        track = trackFactory.create("./test-resources/testfiles/", "testeable.flac");
+    void notPlayableIfFlacTest() throws Exception {
+        track = trackFactory.create(fileFolder, "testeable.flac");
         track.setIsInDisk(true);
         assertFalse(track.isPlayable());
     }
 
     @Test
     @DisplayName ("Not playable Apple encoding")
-    void notPlayableIfAppleEncodingTest() {
-        track = trackFactory.create("./test-resources/testfiles/", "testeable.mp3");
+    void notPlayableIfAppleEncodingTest() throws Exception {
+        track = trackFactory.create(fileFolder, "testeable.mp3");
         track.setIsInDisk(true);
         track.setEncoding("Apple");
         assertFalse(track.isPlayable());
@@ -347,8 +344,8 @@ public class TrackTest {
 
     @Test
     @DisplayName ("Not playable Itunes encoder")
-    void notPlayableIfEncoderItunesTest() {
-        track = trackFactory.create("./test-resources/testfiles/", "testeable.mp3");
+    void notPlayableIfEncoderItunesTest() throws Exception {
+        track = trackFactory.create(fileFolder, "testeable.mp3");
         track.setIsInDisk(true);
         track.setEncoder("iTunes");
         assertFalse(track.isPlayable());

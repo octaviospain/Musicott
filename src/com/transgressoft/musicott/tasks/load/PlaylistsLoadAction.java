@@ -103,6 +103,7 @@ public class PlaylistsLoadAction extends BaseLoadAction {
         catch (IOException exception) {
             createDefaultPlaylists();
             LOG.error("Error loading playlists: {}", exception.getMessage(), exception);
+            // TODO improve the error handling to propagate this and show when the stage is created
         }
     }
 

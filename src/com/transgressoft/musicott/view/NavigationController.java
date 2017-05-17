@@ -235,7 +235,7 @@ public class NavigationController extends InjectableController<VBox> {
         rootController = c;
     }
 
-    public ObjectProperty<NavigationMode> navigationModeProperty() {
+    public ReadOnlyObjectProperty<NavigationMode> navigationModeProperty() {
         return navigationModeProperty;
     }
 

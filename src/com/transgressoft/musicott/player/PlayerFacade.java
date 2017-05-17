@@ -35,6 +35,7 @@ import javafx.scene.media.MediaPlayer.*;
 import javafx.util.*;
 import org.slf4j.*;
 
+import java.io.*;
 import java.util.*;
 import java.util.stream.*;
 
@@ -55,6 +56,7 @@ public class PlayerFacade {
     private final TracksLibrary tracksLibrary;
     private final ServiceDemon serviceDemon;
     private final TaskDemon taskDemon;
+    private final ErrorDialogController errorDialog;
 
     private NavigationController navigationController;
     private PlayQueueController playQueueController;
@@ -68,12 +70,13 @@ public class PlayerFacade {
     private boolean scrobbled;
 
     @Inject
-    public PlayerFacade(TracksLibrary tracksLibrary, @NavigationCtrl NavigationController navCtrl,
-            Provider<ServiceDemon> serviceDemon, Provider<TaskDemon> taskDemon) {
+    public PlayerFacade(TracksLibrary tracksLibrary, ServiceDemon serviceDemon, TaskDemon taskDemon,
+            @NavigationCtrl NavigationController navCtrl, @RootCtrl ErrorDialogController errorDialog) {
         this.tracksLibrary = tracksLibrary;
         this.navigationController = navCtrl;
-        this.serviceDemon = serviceDemon.get();
-        this.taskDemon = taskDemon.get();
+        this.serviceDemon = serviceDemon;
+        this.taskDemon = taskDemon;
+        this.errorDialog = errorDialog;
         playList = FXCollections.observableArrayList();
         historyList = FXCollections.observableArrayList();
         playingRandom = false;
@@ -117,16 +120,25 @@ public class PlayerFacade {
      */
     public void addTracksToPlayQueue(Collection<Track> tracks, boolean placeFirstInPlayQueue) {
         Thread playableTracksThread = new Thread(() -> {
-            List<Track> playableTracks = tracks.stream().filter(track -> {
-                boolean isPlayable = track.isPlayable();
-                if (! isPlayable)
-                    Platform.runLater(() -> navigationController.setStatusMessage("Unplayable file"));
-                return isPlayable;
-            }).collect(Collectors.toList());
-
+            List<Track> playableTracks = tracks.stream()
+                                               .filter(this::isPlayable).collect(Collectors.toList());
             Platform.runLater(() -> addPlayableTracksToPlayQueue(playableTracks, placeFirstInPlayQueue));
         });
         playableTracksThread.start();
+    }
+
+    private boolean isPlayable(Track track) {
+        boolean isPlayable = false;
+        try {
+            isPlayable = track.isPlayable();
+        }
+        catch (IOException exception) {
+            String fullPath = track.getFileFolder() + track.getFileName();
+            errorDialog.show("Track not found", fullPath);
+        }
+        if (! isPlayable)
+            Platform.runLater(() -> navigationController.setStatusMessage("Unplayable file"));
+        return isPlayable;
     }
 
     /**
@@ -200,7 +212,7 @@ public class PlayerFacade {
     private void setPlayer(Track track) {
         scrobbled = false;
         played = false;
-        if (track.isPlayable()) {
+        if (isPlayable(track)) {
             currentTrack = Optional.of(track);
             trackPlayer.setTrack(track);
             playerController.updatePlayer(track);

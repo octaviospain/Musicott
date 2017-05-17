@@ -74,13 +74,10 @@ public class WaveformTask extends Thread {
 
     @Inject
     public WaveformTask(WaveformsLibrary waveformsLibrary, Provider<PlayerFacade> playerFacade,
-            Provider<TaskDemon> taskDemon, @PlayerCtrl PlayerController playerCtrl,
-            @NavigationCtrl NavigationController navCtrl) {
+            Provider<TaskDemon> taskDemon) {
         this.waveformsLibrary = waveformsLibrary;
         this.taskDemon = taskDemon;
         this.playerFacade = playerFacade;
-        playerController = playerCtrl;
-        navigationController = navCtrl;
     }
 
     @Override
@@ -189,5 +186,15 @@ public class WaveformTask extends Thread {
     private void checkAnalyzedTrackIsCurrentPlaying(Track currentPlayingTrack) {
         if (currentPlayingTrack.equals(trackToAnalyze))
             SwingUtilities.invokeLater(() -> playerController.setWaveform(trackToAnalyze));
+    }
+
+    @Inject
+    public void setPlayerController(@PlayerCtrl PlayerController playerController) {
+        this.playerController = playerController;
+    }
+
+    @Inject
+    public void setNavigationController(@NavigationCtrl NavigationController navigationController) {
+        this.navigationController = navigationController;
     }
 }

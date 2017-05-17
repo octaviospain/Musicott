@@ -65,7 +65,7 @@ public class ArtistsViewControllerTest extends JavaFxTestBase<ArtistsViewControl
         trackTableViewContextMenuMock = mock(TrackTableViewContextMenu.class);
         when(artistsLibraryMock.artistsListProperty()).thenReturn(artistsListProperty);
 
-        injector = injectorWithSimpleMocks(new TestModule());
+        injector = injector.createChildInjector(new TestModule());
 
         loadControllerModule(Layout.ARTISTS);
         stage.setScene(new Scene(controller.getRoot()));
