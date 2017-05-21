@@ -26,7 +26,6 @@ before_install:
   - sudo apt-get install -y libavutil51
   - sudo apt-get install -y libavformat53
   - sudo apt-get install -y libavcodec53
-  - sudo dpkg -i libav*.deb
 
 before_script:
   - "export DISPLAY=:99.0"
