@@ -19,7 +19,7 @@ directories:
 jdk:
   - oraclejdk8
 
-sudo: true
+sudo: required
 
 before_install:
   - sudo apt-get -qq update
