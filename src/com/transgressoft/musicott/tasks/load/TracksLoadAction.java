@@ -28,6 +28,7 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
+import javafx.beans.value.*;
 import javafx.collections.*;
 import org.slf4j.*;
 
@@ -59,10 +60,12 @@ public class TracksLoadAction extends BaseLoadAction {
     private TracksLibrary tracksLibrary;
     @Inject
     private LoadActionFactory loadActionFactory;
+    @Inject
+    private ChangeListener<Number> playCountListener;
 
     @Inject
-    public TracksLoadAction(TracksLibrary tracksLibrary, @Assisted @Nullable List<Track> tracks, @Assisted int totalTracks,
-            @Assisted String applicationFolder, @Assisted Application application) {
+    public TracksLoadAction(TracksLibrary tracksLibrary, @Assisted @Nullable List<Track> tracks,
+            @Assisted int totalTracks, @Assisted String applicationFolder, @Assisted Application application) {
         super(applicationFolder, application);
         tracksToSetProperties = tracks;
         this.totalTracks = totalTracks;
@@ -167,6 +170,7 @@ public class TracksLoadAction extends BaseLoadAction {
             LOG.error("Track not found when loading data: {}", exception.getMessage(), exception);
             // TODO improve the error handling informing the user when the stage is created
         }
+        track.playCountProperty().addListener(playCountListener);
         notifyPreloader(tracksStep.incrementAndGet(), totalTracks, "Loading tracks...");
     }
 }

@@ -24,6 +24,7 @@ import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.util.*;
 import javafx.beans.property.*;
+import javafx.beans.value.*;
 import javafx.collections.*;
 import javafx.util.Duration;
 import org.apache.commons.lang3.text.*;
@@ -145,10 +146,11 @@ public class Track {
 
     @Inject
     public Track(MainPreferences mainPreferences, @Assisted ("fileFolder") String fileFolder,
-            @Assisted ("fileName") String fileName) {
+            @Assisted ("fileName") String fileName, ChangeListener<Number> playCountListener) {
         this();
         trackId = mainPreferences.getTrackSequence();
         this.fileFolder = fileFolder;
+        playCountProperty.addListener(playCountListener);
         setFileName(fileName);
     }
 

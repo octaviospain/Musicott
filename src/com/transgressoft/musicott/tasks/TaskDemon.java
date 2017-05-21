@@ -25,6 +25,7 @@ import com.transgressoft.musicott.tasks.parse.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.*;
+import javafx.beans.value.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -140,19 +141,33 @@ public class TaskDemon {
 	}
 
 	@Inject
-	public void setTracksLibrary(TracksLibrary tracksLibrary) {
-		tracksLibrary.addListener(change -> saveLibrary(true, false, false));
+	public void setTracksLibraryChangeListener(TracksLibrary tracksLibrary) {
+		tracksLibrary.setListener(change -> saveLibrary(true, false, false));
 	}
 
 	@Inject
-	public void setWaveformsLibrary(WaveformsLibrary waveformsLibrary) {
-		waveformsLibrary.addListener(change -> saveLibrary(false, true, false));
+	public void setWaveformsLibraryChangeListener(WaveformsLibrary waveformsLibrary) {
+		waveformsLibrary.setListener(change -> saveLibrary(false, true, false));
+	}
+
+	@Inject
+	public void setPlaylistsLibraryChangeListener(PlaylistsLibrary playlistsLibrary) {
+		playlistsLibrary.setPlaylistTracksListener(change -> saveLibrary(false, false, true));
+		playlistsLibrary.setPlaylistNameListener((obs, o, n) -> saveLibrary(false, false, true));
 	}
 
 	@Inject (optional = true)
-	public void setErrorDialog(@ErrorCtrl ErrorDialogController errorDialog) {
+	public void setErrorDialog(@ErrorCtrl	 ErrorDialogController errorDialog) {
 		this.errorDialog = errorDialog;
 		saveMusicLibraryTask.setErrorDialog(errorDialog);
 		waveformTask.setErrorDialog(errorDialog);
+	}
+
+	public ChangeListener<Number> getIncrementPlayCountChangeListener() {
+		return (obs, o, n) -> saveLibrary(true, false, false);
+	}
+
+	public ChangeListener<String> getUserFolderListener() {
+		return (obs, o, n) -> saveLibrary(true, true, true);
 	}
 }

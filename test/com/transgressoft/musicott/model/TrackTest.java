@@ -26,6 +26,7 @@ import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
 import javafx.beans.property.*;
+import javafx.beans.value.*;
 import javafx.collections.*;
 import javafx.util.Duration;
 import org.apache.commons.lang3.text.*;
@@ -71,14 +72,7 @@ public class TrackTest {
 
     @BeforeAll
     public static void beforeAll() throws Exception {
-        Injector injector = Guice.createInjector(binder -> {
-            binder.install(new TrackFactoryModule());
-
-            MainPreferences preferences = mock(MainPreferences.class);
-            when(preferences.getTrackSequence()).thenReturn(0);
-            when(preferences.getMusicottUserFolder()).thenReturn(".");
-            binder.bind(MainPreferences.class).toInstance(preferences);
-        });
+        Injector injector = Guice.createInjector(new TestModule());
         trackFactory = injector.getInstance(TrackFactory.class);
     }
 
@@ -350,5 +344,22 @@ public class TrackTest {
         track.setIsInDisk(true);
         track.setEncoder("iTunes");
         assertFalse(track.isPlayable());
+    }
+
+    private static class TestModule extends AbstractModule {
+
+        @Override
+        protected void configure() {
+            install(new TrackFactoryModule());
+            MainPreferences preferences = mock(MainPreferences.class);
+            when(preferences.getTrackSequence()).thenReturn(0);
+            when(preferences.getMusicottUserFolder()).thenReturn(".");
+            bind(MainPreferences.class).toInstance(preferences);
+        }
+
+        @Provides
+        ChangeListener<Number> providesPlayCountListener() {
+            return (a, b, c) -> {};
+        }
     }
 }

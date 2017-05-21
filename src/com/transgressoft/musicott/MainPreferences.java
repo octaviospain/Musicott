@@ -22,6 +22,7 @@ package com.transgressoft.musicott;
 import com.google.common.io.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import javafx.beans.value.*;
 
 import java.io.*;
 import java.util.*;
@@ -79,6 +80,7 @@ public class MainPreferences {
     private Preferences preferences;
     private AtomicInteger sequence;
     private Set<String> importExtensions;
+    private ChangeListener<String> userFolderListener;
 
     /**
      * Private constructor of the class.
@@ -86,8 +88,9 @@ public class MainPreferences {
      * extension when importing files is {@code *.mp3}.
      */
     @Inject
-    public MainPreferences(TracksLibrary tracksLibrary) {
+    public MainPreferences(TracksLibrary tracksLibrary, ChangeListener<String> userFolderListener) {
         this.tracksLibrary = tracksLibrary;
+        this.userFolderListener = userFolderListener;
         preferences = Preferences.userNodeForPackage(getClass());
         sequence = new AtomicInteger(preferences.getInt(TRACK_SEQUENCE, 0));
         importExtensions = new HashSet<>();
@@ -120,16 +123,14 @@ public class MainPreferences {
     }
 
     /**
-     * Sets the application folder path, it sets it to the default one if
-     * {@code null} is given
+     * Sets the application folder path, and saves the application files in the new path
      *
      * @param path The path to the application folder
-     *
-     * @return {@code true} if the creation/deletion of the directory was successful, {@code false} otherwise
      */
     public synchronized void setMusicottUserFolder(String path) throws IOException {
         Files.createParentDirs(new File(path, "test"));
         preferences.put(MUSICOTT_FOLDER, path);
+        userFolderListener.changed(null, null, null);
     }
 
     public synchronized String getMusicottUserFolder() {

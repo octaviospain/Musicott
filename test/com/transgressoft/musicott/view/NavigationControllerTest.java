@@ -64,7 +64,7 @@ public class NavigationControllerTest extends JavaFxTestBase<NavigationControlle
         MutableGraph<Playlist> graph = GraphBuilder.directed().build();
         graph.addNode(rootPlaylist);
         when(playlistsLibraryMock.getPlaylistsTree()).thenReturn(graph);
-        playlistTreeView = new PlaylistTreeView(playlistsLibraryMock, rootPlaylist, injector);
+        playlistTreeView = new PlaylistTreeView(playlistsLibraryMock, tracksLibraryMock, rootPlaylist, injector);
 
         injector = injector.createChildInjector(new TestModule());
 

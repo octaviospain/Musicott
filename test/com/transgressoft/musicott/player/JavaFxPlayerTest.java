@@ -26,8 +26,8 @@ import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.*;
+import javafx.beans.value.*;
 import javafx.scene.media.MediaPlayer.*;
-import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.testfx.framework.junit5.*;
@@ -52,20 +52,8 @@ public class JavaFxPlayerTest {
 
     @BeforeAll
     public static void beforeAll() throws Exception {
-        injector = Guice.createInjector(binder -> {
-            binder.install(new TrackFactoryModule());
-            binder.bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
-
-            MainPreferences preferences = mock(MainPreferences.class);
-            when(preferences.getTrackSequence()).thenReturn(0);
-            binder.bind(MainPreferences.class).toInstance(preferences);
-        });
+        injector = Guice.createInjector(new TestModule());
         trackFactory = injector.getInstance(TrackFactory.class);
-    }
-
-    @Start
-    public void start(Stage stage) throws Exception {
-
     }
 
     @BeforeEach
@@ -123,5 +111,22 @@ public class JavaFxPlayerTest {
         WaitForAsyncUtils.waitForFxEvents();
 
         assertEquals(Status.READY, player.getStatus());
+    }
+
+    private static class TestModule extends AbstractModule {
+
+        @Override
+        protected void configure() {
+            install(new TrackFactoryModule());
+            bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
+            MainPreferences preferences = mock(MainPreferences.class);
+            when(preferences.getTrackSequence()).thenReturn(0);
+            bind(MainPreferences.class).toInstance(preferences);
+        }
+
+        @Provides
+        ChangeListener<Number> providesPlayCountListener() {
+            return (a, b, c) -> {};
+        }
     }
 }

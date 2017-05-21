@@ -23,7 +23,6 @@ import com.google.inject.*;
 import com.transgressoft.musicott.model.Track;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import com.transgressoft.musicott.view.custom.*;
@@ -56,7 +55,6 @@ public class PlayerFacade {
 
     private final TracksLibrary tracksLibrary;
     private final ServiceDemon serviceDemon;
-    private final TaskDemon taskDemon;
 
     private ErrorDialogController errorDialog;
     private NavigationController navigationController;
@@ -71,10 +69,9 @@ public class PlayerFacade {
     private boolean scrobbled;
 
     @Inject
-    public PlayerFacade(TracksLibrary tracksLibrary, ServiceDemon serviceDemon, TaskDemon taskDemon) {
+    public PlayerFacade(TracksLibrary tracksLibrary, ServiceDemon serviceDemon) {
         this.tracksLibrary = tracksLibrary;
         this.serviceDemon = serviceDemon;
-        this.taskDemon = taskDemon;
         playList = FXCollections.observableArrayList();
         historyList = FXCollections.observableArrayList();
         playingRandom = false;
@@ -274,7 +271,6 @@ public class PlayerFacade {
     private void incrementCurrentTrackPlayCount() {
         if (! played) {
             currentTrack.ifPresent(Track::incrementPlayCount);
-            taskDemon.saveLibrary(true, false, false);
             played = true;
         }
     }

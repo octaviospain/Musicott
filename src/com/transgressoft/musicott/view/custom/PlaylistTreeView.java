@@ -47,7 +47,8 @@ public class PlaylistTreeView extends TreeView<Playlist> {
     private ObjectProperty<Optional<Playlist>> selectedPlaylistProperty;
 
     @Inject
-    public PlaylistTreeView(PlaylistsLibrary playlistsLibrary, @RootPlaylist Playlist rootPlaylist, Injector injector) {
+    public PlaylistTreeView(PlaylistsLibrary playlistsLibrary, TracksLibrary tracksLibrary,
+            @RootPlaylist Playlist rootPlaylist, Injector injector) {
         this.playlistsLibrary = playlistsLibrary;
         createPlaylistsItems(rootPlaylist);
         setShowRoot(false);
@@ -59,7 +60,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
 
         selectedPlaylistProperty = new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
         subscribe(selectedPlaylistProperty,
-                  playlist -> playlist.ifPresent(playlistsLibrary::showPlaylist));
+                  playlist -> playlist.ifPresent(tracksLibrary::showPlaylist));
 
         getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         subscribe(getSelectionModel().selectedItemProperty(), newItem -> {
@@ -92,6 +93,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
      */
     public void addPlaylistsToFolder(Playlist parent, Set<Playlist> newPlaylists) {
         newPlaylists.forEach(playlistChild -> {
+            parent.addPlaylistChild(playlistChild);
             addPlaylistToItemsMap(playlistsItemsMap.get(parent), playlistChild);
             if (playlistChild.isFolder())
                 addPlaylistsToFolder(playlistChild, playlistChild.getContainedPlaylists());

@@ -22,7 +22,6 @@ package com.transgressoft.musicott.model;
 import com.google.common.collect.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.player.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.Platform;
@@ -47,7 +46,6 @@ public class MusicLibrary {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final TaskDemon taskDemon;
     private final PlayerFacade playerFacade;
 
     private TracksLibrary tracksLibrary;
@@ -61,8 +59,7 @@ public class MusicLibrary {
     private SimpleProgressBarController progressBarController;
 
     @Inject
-    public MusicLibrary(TaskDemon taskDemon, PlayerFacade playerFacade) {
-        this.taskDemon = taskDemon;
+    public MusicLibrary(PlayerFacade playerFacade) {
         this.playerFacade = playerFacade;
     }
 
@@ -121,7 +118,6 @@ public class MusicLibrary {
         albumsLibrary.clear();
         waveformsLibrary.clearWaveforms();
         playlistsLibrary.clearPlaylists();
-        taskDemon.saveLibrary(true, true, true); // TODO check if this call is necessary
     }
 
     /**
@@ -156,7 +152,7 @@ public class MusicLibrary {
 
     public void playPlaylistRandomly(Playlist playlist) {
         Thread randomPlaylistPlayThread = new Thread(() -> {
-            List<Track> randomList = playlistsLibrary.getRandomSortedTrackList(playlist);
+            List<Track> randomList = tracksLibrary.getRandomSortedTrackList(playlist);
             playerFacade.setRandomListAndPlay(randomList);
         }, "Shuffle Playlist Thread");
         randomPlaylistPlayThread.start();

@@ -24,7 +24,6 @@ import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
-import com.transgressoft.musicott.util.guice.modules.*;
 
 /**
  * Class needed by the {@code Json-io} library in order to deserialize a {@link Playlist}.
@@ -45,9 +44,7 @@ public class PlaylistCreator implements ClassFactory {
     private class LoaderClassFactory extends AbstractModule {
 
         @Override
-        protected void configure() {
-            install(new TrackFactoryModule());
-        }
+        protected void configure() {}
 
         @Provides
         @RootPlaylist

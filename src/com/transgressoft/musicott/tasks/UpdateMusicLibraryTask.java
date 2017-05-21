@@ -51,13 +51,13 @@ public class UpdateMusicLibraryTask extends Thread {
     
     private final AlbumsLibrary albumsLibrary;
     private final ArtistsLibrary artistsLibrary;
-    private RootController rootController;
     private final TaskDemon taskDemon;
     private final ErrorDialogController errorDialog;
     private final List<Track> tracks;
     private final Set<String> changedAlbums;
     private final Optional<String> newAlbum;
 
+    private RootController rootController;
     private CopyOption[] options = new CopyOption[]{COPY_ATTRIBUTES, REPLACE_EXISTING};
     private List<String> updateErrors = new ArrayList<>();
 

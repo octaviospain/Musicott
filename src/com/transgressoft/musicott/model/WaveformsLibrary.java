@@ -40,7 +40,7 @@ public class WaveformsLibrary {
         return waveforms;
     }
 
-    public void addListener(MapChangeListener<Integer, float[]> listener) {
+    public void setListener(MapChangeListener<Integer, float[]> listener) {
         waveforms.addListener(listener);
     }
 

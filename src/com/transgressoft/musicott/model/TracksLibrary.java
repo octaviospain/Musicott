@@ -68,7 +68,7 @@ public class TracksLibrary {
         ObservableList<Entry<Integer, Track>> showingTracksList = FXCollections.observableArrayList(trackEntries);
         showingTracksProperty = new SimpleListProperty<>(this, "showing tracks");
         showingTracksProperty.bind(new SimpleObjectProperty<>(showingTracksList));
-        addListener(tracksMapChangeListener);
+        setListener(tracksMapChangeListener);
     }
 
     private MapChangeListener<Integer, Track> tracksMapChangeListener() {
@@ -99,7 +99,7 @@ public class TracksLibrary {
         albumsLibrary.removeTracks(trackAlbum, Collections.singletonList(trackEntry));
     }
 
-    public void addListener(MapChangeListener<Integer, Track> listener) {
+    public void setListener(MapChangeListener<Integer, Track> listener) {
         musicottTracks.addListener(listener);
     }
 
@@ -142,6 +142,18 @@ public class TracksLibrary {
         showingTracksProperty.addAll(musicottTracks.entrySet());
     }
 
+    public synchronized void showPlaylist(Playlist playlist) {
+        showingTracksProperty.clear();
+        List<Entry<Integer, Track>> tracksUnderPlaylist = getTrackEntriesUnderPlaylist(playlist);
+        showingTracksProperty.addAll(tracksUnderPlaylist);
+    }
+
+    private List<Entry<Integer, Track>> getTrackEntriesUnderPlaylist(Playlist playlist) {
+        return playlist.getTracks().stream()
+                       .map(i -> new SimpleEntry<>(i, getTrack(i).get()))
+                       .collect(Collectors.toList());
+    }
+
     public List<Track> getRandomTracks() {
         List<Track> randomList = new ArrayList<>();
         ImmutableList<Integer> trackIds;
@@ -160,6 +172,14 @@ public class TracksLibrary {
                 randomList.add(randomTrack);
         } while (randomList.size() < DEFAULT_RANDOM_QUEUE_SIZE);
         return randomList;
+    }
+
+    synchronized List<Track> getRandomSortedTrackList(Playlist playlist) {
+        List<Integer> randomSortedList = new ArrayList<>(playlist.getTracks());
+        Collections.shuffle(randomSortedList, new Random());
+        return randomSortedList.stream()
+                               .map(trackId -> getTrack(trackId).get())
+                               .collect(Collectors.toList());
     }
 
     @Inject

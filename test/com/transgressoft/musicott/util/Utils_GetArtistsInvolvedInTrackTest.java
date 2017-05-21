@@ -21,11 +21,12 @@ package com.transgressoft.musicott.util;
 
 import com.google.common.collect.*;
 import com.google.inject.*;
-import com.google.inject.assistedinject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.guice.factories.*;
+import com.transgressoft.musicott.util.guice.modules.*;
 import com.transgressoft.musicott.view.*;
+import javafx.beans.value.*;
 import org.junit.jupiter.api.*;
 
 import static com.transgressoft.musicott.util.Utils.*;
@@ -45,17 +46,7 @@ public class Utils_GetArtistsInvolvedInTrackTest {
 
     @BeforeAll
     public static void beforeAll() {
-        injector = Guice.createInjector(binder -> {
-            binder.bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
-
-            MainPreferences preferences = mock(MainPreferences.class);
-            when(preferences.getTrackSequence()).thenReturn(0);
-            binder.bind(MainPreferences.class).toInstance(preferences);
-
-            Module trackFactoryModule = new FactoryModuleBuilder().implement(Track.class, Track.class)
-                                                                  .build(TrackFactory.class);
-            binder.install(trackFactoryModule);
-        });
+        injector = Guice.createInjector(new TestModule());
         trackFactory = injector.getInstance(TrackFactory.class);
     }
 
@@ -604,6 +595,23 @@ public class Utils_GetArtistsInvolvedInTrackTest {
             initTrackWithNameAndResult("Song name (Remix by Bonobo)", "Laurent Garnier & Rone", "Pete Tong",
                                        "Pete Tong", "Bonobo", "Laurent Garnier", "Rone");
             assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));
+        }
+    }
+
+    private static class TestModule extends AbstractModule {
+
+        @Override
+        protected void configure() {
+            bind(ErrorDialogController.class).toInstance(mock(ErrorDialogController.class));
+            MainPreferences preferences = mock(MainPreferences.class);
+            when(preferences.getTrackSequence()).thenReturn(0);
+            bind(MainPreferences.class).toInstance(preferences);
+            install(new TrackFactoryModule());
+        }
+
+        @Provides
+        ChangeListener<Number> providesPlayCountListener() {
+            return (a, b, c) -> {};
         }
     }
 }

@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.model;
 
+import com.google.common.collect.*;
 import com.google.inject.*;
 import com.google.inject.assistedinject.*;
 import javafx.beans.property.*;
@@ -42,6 +43,7 @@ import static com.transgressoft.musicott.view.MusicottLayout.*;
 public class Playlist {
 
     private static final String DELETION_NOT_SUPPORTED = "Deletion not supported on folder playlist";
+    private static final String ADDITION_NOT_SUPPORTED = "Adding a playlist child is only supported on folder playlist";
 
     private final TracksLibrary tracksLibrary;
 
@@ -70,6 +72,14 @@ public class Playlist {
         this.tracksLibrary = tracksLibrary;
         this.isFolder = isFolder;
         setName(name);
+    }
+
+    public void setTracksListener(ListChangeListener<Integer> listener) {
+        playlistTrackIds.addListener(listener);
+    }
+
+    public void removeTracksListener(ListChangeListener<Integer> listener) {
+        playlistTrackIds.removeListener(listener);
     }
 
     public void setName(String name) {
@@ -131,8 +141,20 @@ public class Playlist {
         playlistCoverProperty.set(DEFAULT_COVER);
     }
 
+    public void addPlaylistChild(Playlist childPlaylist) {
+        if (! isFolder)
+            throw new UnsupportedOperationException(ADDITION_NOT_SUPPORTED);
+        containedPlaylists.add(childPlaylist);
+    }
+
+    public void removePlaylistChild(Playlist childPlaylist) {
+        if (! isFolder)
+            throw new UnsupportedOperationException(DELETION_NOT_SUPPORTED);
+        containedPlaylists.remove(childPlaylist);
+    }
+
     public Set<Playlist> getContainedPlaylists() {
-        return containedPlaylists;
+        return ImmutableSet.copyOf(containedPlaylists);
     }
 
     public List<Integer> getTracks() {

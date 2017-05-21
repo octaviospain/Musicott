@@ -22,7 +22,6 @@ package com.transgressoft.musicott.view;
 import com.google.common.collect.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
@@ -62,7 +61,6 @@ public class RootController extends InjectableController<BorderPane> implements 
 
     private final MusicLibrary musicLibrary;
     private final PlaylistsLibrary playlistsLibrary;
-    private final TaskDemon taskDemon;
 
     private final Playlist ROOT_PLAYLIST;
 
@@ -123,11 +121,10 @@ public class RootController extends InjectableController<BorderPane> implements 
     private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler = changePlaylistNameTextFieldHandler();
 
     @Inject
-    public RootController(MusicLibrary musicLibrary, PlaylistsLibrary playlistsLibrary, TaskDemon taskDemon,
+    public RootController(MusicLibrary musicLibrary, PlaylistsLibrary playlistsLibrary,
             @RootPlaylist Playlist rootPlaylist) {
         this.musicLibrary = musicLibrary;
         this.playlistsLibrary = playlistsLibrary;
-        this.taskDemon = taskDemon;
         ROOT_PLAYLIST = rootPlaylist;
     }
 
@@ -229,7 +226,6 @@ public class RootController extends InjectableController<BorderPane> implements 
                 if (isValidPlaylistName(newName) || playlist.getName().equals(newName)) {
                     playlist.setName(newName);
                     removePlaylistTextField();
-                    taskDemon.saveLibrary(false, false, true);
                 }
                 event.consume();
             }
@@ -486,7 +482,7 @@ public class RootController extends InjectableController<BorderPane> implements 
 
     @Inject
     public void setTracksLibrary(TracksLibrary tracksLibrary) {
-        tracksLibrary.addListener(change -> {
+        tracksLibrary.setListener(change -> {
             if (change.wasRemoved()) {
                 Track track = change.getValueRemoved();
                 Entry<Integer, Track> trackEntry = new SimpleEntry<>(track.getTrackId(), track);

@@ -22,7 +22,6 @@ package com.transgressoft.musicott.view;
 import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.services.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import javafx.beans.binding.Binding;
 import javafx.beans.binding.*;
@@ -62,7 +61,6 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     private final ServiceDemon serviceDemon;
-    private final TaskDemon taskDemon;
 
     @FXML
     private AnchorPane root;
@@ -97,10 +95,8 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
     private ErrorDialogController errorDialog;
 
     @Inject
-    public PreferencesController(ServiceDemon serviceDemon, TaskDemon taskDemon) {
+    public PreferencesController(ServiceDemon serviceDemon) {
         this.serviceDemon = serviceDemon;
-        this.errorDialog = errorDialog;
-        this.taskDemon = taskDemon;
         LOG.debug("PreferencesController created {}", this);
     }
 
@@ -219,22 +215,26 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
      */
     private void changeMusicottUserFolder(String newApplicationUserFolder) {
         try {
+            String oldFolder = preferences.getMusicottUserFolder();
             preferences.setMusicottUserFolder(newApplicationUserFolder);
             preferences.resetTrackSequence();
-            File tracksFile = new File(newApplicationUserFolder, TRACKS_PERSISTENCE_FILE);
-            if (tracksFile.exists() && ! tracksFile.delete())
-                errorDialog.show("Unable to delete tracks file", tracksFile.getAbsolutePath());
-            File waveformsFile = new File(newApplicationUserFolder, WAVEFORMS_PERSISTENCE_FILE);
-            if (waveformsFile.exists() && ! waveformsFile.delete())
-                errorDialog.show("Unable to delete waveforms file", waveformsFile.getAbsolutePath());
-            File playlistsFile = new File(newApplicationUserFolder, PLAYLISTS_PERSISTENCE_FILE);
-            if (playlistsFile.exists() && ! playlistsFile.delete())
-                errorDialog.show("Unable to delete playlists file", playlistsFile.getAbsolutePath());
-            taskDemon.saveLibrary(true, true, true);
+            deleteOldLocationFiles(oldFolder);
         }
         catch (IOException exception) {
             errorDialog.show("Error changing application user folder", null, exception);
         }
+    }
+
+    private void deleteOldLocationFiles(String oldFolder) {
+        File tracksFile = new File(oldFolder, TRACKS_PERSISTENCE_FILE);
+        if (tracksFile.exists() && ! tracksFile.delete())
+            errorDialog.show("Unable to delete tracks file", tracksFile.getAbsolutePath());
+        File waveformsFile = new File(oldFolder, WAVEFORMS_PERSISTENCE_FILE);
+        if (waveformsFile.exists() && ! waveformsFile.delete())
+            errorDialog.show("Unable to delete waveforms file", waveformsFile.getAbsolutePath());
+        File playlistsFile = new File(oldFolder, PLAYLISTS_PERSISTENCE_FILE);
+        if (playlistsFile.exists() && ! playlistsFile.delete())
+            errorDialog.show("Unable to delete playlists file", playlistsFile.getAbsolutePath());
     }
 
     private void loadUserPreferences() {
