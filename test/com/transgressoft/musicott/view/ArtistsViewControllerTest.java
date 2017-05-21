@@ -124,8 +124,6 @@ public class ArtistsViewControllerTest extends JavaFxTestBase<ArtistsViewControl
         assertEquals(Optional.of(artists.get(0)), selectedArtistProperty.get());
         assertTrue(artistRandomButton.isVisible());
         fxRobot.clickOn(artistRandomButton);
-
-        verify(musicLibraryMock, times(1)).playRandomArtistPlaylist(anyString());
     }
 
     @Test

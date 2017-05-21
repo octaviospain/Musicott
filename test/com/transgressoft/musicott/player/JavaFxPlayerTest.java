@@ -58,7 +58,7 @@ public class JavaFxPlayerTest {
 
     @BeforeEach
     void beforeEachTest() throws Exception {
-        Track track = trackFactory.create(testFilesPath.toString(), "testeable.mp3");
+        Track track = trackFactory.create(testFilesPath.toString(), "testeable.wav");
         player = new JavaFxPlayer();
         player.setTrack(track);
     }
