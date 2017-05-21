@@ -40,7 +40,7 @@ public class ErrorDialogModule extends AbstractModule implements ControllerModul
     }
 
     @Provides
-    @EditCtrl
+    @ErrorCtrl
     public ErrorDialogController providesController() {
         return controller;
     }

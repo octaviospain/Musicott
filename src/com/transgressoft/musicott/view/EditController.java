@@ -104,7 +104,6 @@ public class EditController extends InjectableController<AnchorPane> implements 
     private Optional<String> newChangedAlbum = Optional.empty();
     private Set<String> changedAlbums = new HashSet<>();
 
-    @Inject
     private UpdateMusicLibraryTaskFactory updateTaskFactory;
 
     @FXML
@@ -140,6 +139,7 @@ public class EditController extends InjectableController<AnchorPane> implements 
 
         okButton.setOnAction(event -> editAndClose());
         cancelButton.setOnAction(event -> close());
+        LOG.debug("EditController initialized {}");
     }
 
     @Override
@@ -470,5 +470,10 @@ public class EditController extends InjectableController<AnchorPane> implements 
         else
             commonString = "-";
         return commonString;
+    }
+
+    @Inject (optional = true)
+    public void setUpdateTaskFactory(UpdateMusicLibraryTaskFactory factory) {
+        updateTaskFactory = factory;
     }
 }

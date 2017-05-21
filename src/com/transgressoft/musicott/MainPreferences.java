@@ -19,7 +19,9 @@
 
 package com.transgressoft.musicott;
 
+import com.google.common.io.*;
 import com.google.inject.*;
+import com.transgressoft.musicott.model.*;
 
 import java.io.*;
 import java.util.*;
@@ -37,6 +39,8 @@ import static com.transgressoft.musicott.tasks.parse.itunes.ItunesParseTask.*;
  */
 @Singleton
 public class MainPreferences {
+
+    public static final String DEFAULT_MUSICOTT_LOCATION = File.separator + "Music" + File.separator  + "Musicott";
 
     /**
      * The path where the application files will be stored
@@ -71,6 +75,7 @@ public class MainPreferences {
      */
     private static final String ITUNES_IMPORT_METADATA_POLICY = "itunes_import_policy";
 
+    private final TracksLibrary tracksLibrary;
     private Preferences preferences;
     private AtomicInteger sequence;
     private Set<String> importExtensions;
@@ -81,9 +86,10 @@ public class MainPreferences {
      * extension when importing files is {@code *.mp3}.
      */
     @Inject
-    public MainPreferences() {
+    public MainPreferences(TracksLibrary tracksLibrary) {
+        this.tracksLibrary = tracksLibrary;
         preferences = Preferences.userNodeForPackage(getClass());
-        sequence = new AtomicInteger();
+        sequence = new AtomicInteger(preferences.getInt(TRACK_SEQUENCE, 0));
         importExtensions = new HashSet<>();
         if (preferences.getBoolean(IMPORT_MP3, true))
             importExtensions.add("mp3");
@@ -103,30 +109,30 @@ public class MainPreferences {
      * @return The next integer to use for the track map
      */
     public synchronized int getTrackSequence() {
-        sequence.set(preferences.getInt(TRACK_SEQUENCE, 0));
-        preferences.putInt(TRACK_SEQUENCE, sequence.incrementAndGet());
+        while (tracksLibrary.getTrack(sequence.getAndIncrement()).isPresent()) ;
+        preferences.putInt(TRACK_SEQUENCE, sequence.get());
         return sequence.get();
     }
 
+    public synchronized void resetTrackSequence() {
+        sequence.set(0);
+        preferences.putInt(TRACK_SEQUENCE, 0);
+    }
+
     /**
-     * Sets the application folder path and resets the track and play list sequences or
-     * deletes it from the preferences if receives null
+     * Sets the application folder path, it sets it to the default one if
+     * {@code null} is given
      *
      * @param path The path to the application folder
      *
      * @return {@code true} if the creation/deletion of the directory was successful, {@code false} otherwise
      */
-    public boolean setMusicottUserFolder(String path) {
-        if (path == null)
-            preferences.remove(MUSICOTT_FOLDER);
-        else {
-            preferences.put(MUSICOTT_FOLDER, path);
-            preferences.putInt(TRACK_SEQUENCE, 0);
-        }
-        return path == null || new File(path).mkdirs();
+    public synchronized void setMusicottUserFolder(String path) throws IOException {
+        Files.createParentDirs(new File(path, "test"));
+        preferences.put(MUSICOTT_FOLDER, path);
     }
 
-    public String getMusicottUserFolder() {
+    public synchronized String getMusicottUserFolder() {
         return preferences.get(MUSICOTT_FOLDER, null);
     }
 

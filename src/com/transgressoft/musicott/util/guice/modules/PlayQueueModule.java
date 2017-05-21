@@ -37,6 +37,7 @@ public class PlayQueueModule extends AbstractModule implements ControllerModule<
     @Override
     protected void configure() {
         bind(InjectableController.class).annotatedWith(PlayQueueCtrl.class).toInstance(controller);
+        install(new WaveformPaneFactoryModule());
     }
 
     @Provides

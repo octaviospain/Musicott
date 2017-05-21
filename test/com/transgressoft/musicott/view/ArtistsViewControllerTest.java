@@ -56,12 +56,14 @@ public class ArtistsViewControllerTest extends JavaFxTestBase<ArtistsViewControl
     Label totalTracksLabel;
 
     ListProperty<String> artistsListProperty = new SimpleListProperty<>();
-    StringProperty searchingTextProperty = new SimpleStringProperty("");
+    StringProperty searchTextProperty = new SimpleStringProperty("");
     ObservableList<String> artists = FXCollections.observableArrayList("John Lennon", "Queen");
 
     @Override
     @Start
     public void start(Stage stage) throws Exception {
+        artistsListProperty.setValue(artists);
+        doNothing().when(musicLibraryMock).playRandomArtistPlaylist(anyString());
         trackTableViewContextMenuMock = mock(TrackTableViewContextMenu.class);
 
         injector = injector.createChildInjector(new TestModule());
@@ -97,26 +99,57 @@ public class ArtistsViewControllerTest extends JavaFxTestBase<ArtistsViewControl
     void artistNameChange(FxRobot fxRobot) {
         ReadOnlyObjectProperty<Optional<String>> selectedArtistProperty = controller.selectedArtistProperty();
 
-        assertEquals(Optional.empty(), selectedArtistProperty.get());
-        assertEquals("", nameLabel.getText());
-        assertFalse(artistRandomButton.isVisible());
-
-        Platform.runLater(() -> artistsListProperty.setValue(artists));
-        WaitForAsyncUtils.waitForFxEvents();
-
-        assertEquals(artistsListView.getItems().size(), 2);
-        assertEquals(artistsListView.getItems().get(0), artists.get(0));
-        assertEquals(artistsListView.getItems().get(1), artists.get(1));
-
-        // When clicking on the first artist
-        ListCell<String> firstItem = fxRobot.lookup("#artistsListView").lookup(".list-cell").nth(0).query();
-        fxRobot.clickOn(firstItem);
-
-        // Label and property are updated
-        assertEquals(artists.get(0), firstItem.getText());
         assertEquals(Optional.of(artists.get(0)), selectedArtistProperty.get());
         assertEquals(artists.get(0), nameLabel.getText());
+
+        // When clicking on the first artist
+        ListCell<String> firstItem = fxRobot.lookup("#artistsListView").lookup(".list-cell").nth(1).query();
+        fxRobot.clickOn(firstItem);
+
+        // Labels and properties are updated
+        assertEquals(artists.get(1), firstItem.getText());
+        assertEquals(Optional.of(artists.get(1)), selectedArtistProperty.get());
+        assertEquals(artists.get(1), nameLabel.getText());
+        assertEquals("0 tracks", totalTracksLabel.getText());
+        assertEquals("0 albums", totalAlbumsLabel.getText());
         assertTrue(artistRandomButton.isVisible());
+    }
+
+    @Test
+    @DisplayName ("Play random from artist")
+    void playRandomFromArtist(FxRobot fxRobot) {
+        ReadOnlyObjectProperty<Optional<String>> selectedArtistProperty = controller.selectedArtistProperty();
+
+        assertEquals(Optional.of(artists.get(0)), selectedArtistProperty.get());
+        assertTrue(artistRandomButton.isVisible());
+        fxRobot.clickOn(artistRandomButton);
+
+        verify(musicLibraryMock, times(1)).playRandomArtistPlaylist(anyString());
+    }
+
+    @Test
+    @DisplayName ("Double click on artist plays random from artist")
+    void artistSelectedOnLaunch(FxRobot fxRobot) {
+        ListCell<String> firstItem = fxRobot.lookup("#artistsListView").lookup(".list-cell").nth(1).query();
+        fxRobot.doubleClickOn(firstItem);
+
+        verify(musicLibraryMock, times(1)).playRandomArtistPlaylist(anyString());
+    }
+
+    @Test
+    @DisplayName ("Searching text filter the artists")
+    void searchingFilterTheArtists() {
+        assertEquals(2, artistsListView.getItems().size());
+
+        Platform.runLater(() -> searchTextProperty.setValue("nonexistentartist"));
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertEquals(0, artistsListView.getItems().size());
+
+        Platform.runLater(() -> searchTextProperty.setValue("Que"));
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertEquals(1, artistsListView.getItems().size());
     }
 
     private class TestModule extends AbstractModule {
@@ -140,7 +173,7 @@ public class ArtistsViewControllerTest extends JavaFxTestBase<ArtistsViewControl
         @Provides
         @SearchTextProperty
         StringProperty providesSearchingTextProperty() {
-            return searchingTextProperty;
+            return searchTextProperty;
         }
     }
 }

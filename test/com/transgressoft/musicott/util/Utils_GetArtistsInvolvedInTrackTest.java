@@ -140,7 +140,7 @@ public class Utils_GetArtistsInvolvedInTrackTest {
 
             @Test
             @DisplayName ("Three names with leading and trailing spaces")
-            void threeNamesCommaWithLeadingAndTrailingSpacsSeparated() {
+            void threeNamesCommaWithLeadingAndTrailingSpacesSeparated() {
                 initTrackWithArtistAndResult("Adam    Beyer  ,   Ida  Engberg ,   UMEK ", "Adam Beyer", "Ida Engberg",
                                              "UMEK");
                 assertEquals(expectedArtists, getArtistsInvolvedInTrack(testTrack));

@@ -24,7 +24,6 @@ import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.view.*;
-import javafx.application.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -59,6 +58,7 @@ public class SaveMusicLibraryTask extends Thread {
     private volatile boolean saveTracks;
     private volatile boolean saveWaveforms;
     private volatile boolean savePlaylists;
+    private boolean finish = false;
     @Inject
     private Injector injector;
     private ErrorDialogController errorDialog;
@@ -137,11 +137,18 @@ public class SaveMusicLibraryTask extends Thread {
             saveSemaphore.release();
     }
 
+    public void finish() {
+        finish = true;
+        saveSemaphore.release();
+    }
+
     @Override
     public void run() {
         try {
             while (true) {
                 saveSemaphore.acquire();
+                if (finish)
+                    break;
                 checkMusicottUserPathChanged();
 
                 if (saveTracks)
@@ -152,15 +159,13 @@ public class SaveMusicLibraryTask extends Thread {
                     serializePlaylists();
             }
         }
-        catch (IOException | RuntimeException | InterruptedException exception) {
-            Platform.runLater(() -> {
-                LOG.error("Error saving music library", exception.getCause());
-                errorDialog.show("Error saving music library", null, exception);
-            });
+        catch (IOException | InterruptedException exception) {
+            LOG.error("Error saving music library: {}", exception.getMessage(), exception);
+            errorDialog.show("Error saving music library", null, exception);
         }
     }
 
-    private void checkMusicottUserPathChanged() throws FileNotFoundException {
+    private void checkMusicottUserPathChanged() {
         MainPreferences mainPreferences = injector.getInstance(MainPreferences.class);
         String applicationPath = mainPreferences.getMusicottUserFolder();
         if (! applicationPath.equals(musicottUserPath)) {

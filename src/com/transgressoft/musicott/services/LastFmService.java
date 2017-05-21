@@ -24,6 +24,7 @@ import com.sun.jersey.api.client.*;
 import com.sun.jersey.core.util.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.lastfm.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import org.slf4j.*;
 
@@ -53,7 +54,6 @@ public class LastFmService {
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     private final LastFmPreferences lastFmPreferences;
-    private final ErrorDialogController errorDialog;
 
     /**
      * The API Key for the application submitted in LastFM.
@@ -72,10 +72,10 @@ public class LastFmService {
 
     private String sessionKey;
     private WebResource resource;
+    private ErrorDialogController errorDialog;
 
     @Inject
-    public LastFmService(LastFmPreferences lastFmPreferences, ErrorDialogController errorDialog) {
-        this.errorDialog = errorDialog;
+    public LastFmService(LastFmPreferences lastFmPreferences) {
         this.lastFmPreferences = lastFmPreferences;
         Client client = Client.create();
         resource = client.resource(API_ROOT_URL);
@@ -220,5 +220,10 @@ public class LastFmService {
             lfm.setStatus(OK);
         }
         return lfm;
+    }
+
+    @Inject
+    public void setErrorDialog(@ErrorCtrl ErrorDialogController errorDialog) {
+        this.errorDialog = errorDialog;
     }
 }

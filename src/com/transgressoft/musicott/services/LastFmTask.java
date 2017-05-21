@@ -22,6 +22,7 @@ package com.transgressoft.musicott.services;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.lastfm.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import org.slf4j.*;
@@ -44,18 +45,17 @@ public class LastFmTask extends Thread {
 
     private final LastFmService lastFmService;
     private final ServiceDemon serviceDemon;
-    private final ErrorDialogController errorDialog;
 
     private Track trackToScrobble;
     private SimpleProgressBarController progressBarController;
     private Semaphore updateAndScrobbleSemaphore = new Semaphore(0);
     private List<Map<Integer, Track>> tracksToScrobbleLater = new ArrayList<>();
     private boolean logout = false;
+    private ErrorDialogController errorDialog;
 
     @Inject
-    public LastFmTask(LastFmService lastFmService, ServiceDemon serviceDemon, ErrorDialogController errorDialog) {
+    public LastFmTask(LastFmService lastFmService, ServiceDemon serviceDemon) {
         super("LastFM Thread");
-        this.errorDialog = errorDialog;
         this.serviceDemon = serviceDemon;
         this.lastFmService = lastFmService;
     }
@@ -202,6 +202,11 @@ public class LastFmTask extends Thread {
                 done = true;
             }
         }
+    }
+
+    @Inject
+    public void setErrorDialog(@ErrorCtrl ErrorDialogController errorDialog) {
+        this.errorDialog = errorDialog;
     }
 
     @Inject

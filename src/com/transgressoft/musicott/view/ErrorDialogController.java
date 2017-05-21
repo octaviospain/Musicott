@@ -27,6 +27,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
@@ -43,6 +44,8 @@ import java.util.*;
 public class ErrorDialogController extends InjectableController<AnchorPane> implements MusicottLayout {
 
     private static final String GITHUB_LINK = "https://github.com/octaviospain/Musicott/issues";
+
+    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     @FXML
     private AnchorPane root;
@@ -80,6 +83,7 @@ public class ErrorDialogController extends InjectableController<AnchorPane> impl
     @Inject
     public ErrorDialogController(HostServices hostServices) {
         this.hostServices = hostServices;
+        LOG.debug("ErrorDialogController created {}", this);
     }
 
     @FXML
@@ -103,6 +107,7 @@ public class ErrorDialogController extends InjectableController<AnchorPane> impl
         seeDetailsToggleButton.setOnAction(expandablePaneHandler);
         seeDetailsHyperlink.setOnAction(expandablePaneHandler);
         okButton.setOnAction(event -> okButton.getScene().getWindow().hide());
+        LOG.debug("ErrorDialogController initialized {}", this);
     }
 
     @Override

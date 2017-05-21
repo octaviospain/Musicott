@@ -173,6 +173,13 @@
         </dependency>
 
         <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jool</artifactId>
+            <version>0.9.12</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
             <groupId>com.cedarsoftware</groupId>
             <artifactId>json-io</artifactId>
             <version>4.9.10</version>
@@ -238,7 +245,7 @@
         <dependency>
             <groupId>de.codecentric.centerdevice</groupId>
             <artifactId>centerdevice-nsmenufx</artifactId>
-            <version>2.1.4</version>
+            <version>2.1.5</version>
             <scope>compile</scope>
         </dependency>
 

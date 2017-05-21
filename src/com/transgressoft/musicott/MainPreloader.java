@@ -33,6 +33,7 @@ import javafx.stage.*;
 
 import java.io.*;
 
+import static com.transgressoft.musicott.MainPreferences.*;
 import static com.transgressoft.musicott.MusicottApplication.*;
 import static com.transgressoft.musicott.view.MusicottLayout.*;
 
@@ -46,8 +47,6 @@ import static com.transgressoft.musicott.view.MusicottLayout.*;
  */
 public class MainPreloader extends Preloader {
 
-    private final String defaultMusicottLocation = File.separator + "Music" + File.separator  + "Musicott";
-
     static final String FIRST_USE_EVENT = "first_use";
 
     private static final int SCENE_WIDTH = 450;
@@ -56,6 +55,8 @@ public class MainPreloader extends Preloader {
     private Stage preloaderStage;
     private Label infoLabel;
     private ProgressBar preloaderProgressBar;
+    private MainPreferences preferences;
+    private ErrorDialogController errorDialog;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -89,11 +90,14 @@ public class MainPreloader extends Preloader {
     @Override
     public void handleApplicationNotification(PreloaderNotification info) {
         CustomProgressNotification progressNotification = (CustomProgressNotification) info;
-        if (progressNotification.getDetails().equals(FIRST_USE_EVENT))
-            openFirstUseDialog();
-        else {
-            preloaderProgressBar.setProgress(progressNotification.getProgress());
-            infoLabel.setText(progressNotification.getDetails());
+        switch (progressNotification.getDetails()) {
+            case FIRST_USE_EVENT:
+                openFirstUseDialog();
+                break;
+            default:
+                preloaderProgressBar.setProgress(progressNotification.getProgress());
+                infoLabel.setText(progressNotification.getDetails());
+                break;
         }
     }
 
@@ -102,7 +106,7 @@ public class MainPreloader extends Preloader {
      * {@code ~/Music/Musicott}
      */
     private void openFirstUseDialog() {
-        ErrorDialogController errorDialog = injector.getInstance(ErrorDialogController.class);
+        errorDialog = injector.getInstance(ErrorDialogController.class);
         try {
             Stage promptStage = new Stage();
             Parent userFolderPromptPane = promptPane(promptStage);
@@ -120,7 +124,7 @@ public class MainPreloader extends Preloader {
     }
 
     private Parent promptPane(Stage promptStage) throws IOException {
-        MainPreferences preferences = injector.getInstance(MainPreferences.class);
+        preferences = injector.getInstance(MainPreferences.class);
 
         AnchorPane preloaderPane = FXMLLoader.load(getClass().getResource(Layout.PRELOADER_PROMPT.getPath()));
         Button openButton = (Button) preloaderPane.lookup("#openButton");
@@ -128,12 +132,12 @@ public class MainPreloader extends Preloader {
         TextField musicottFolderTextField = (TextField) preloaderPane.lookup("#musicottFolderTextField");
 
         String userHome = System.getProperty("user.home");
-        String userLocation = userHome + defaultMusicottLocation;
+        String userLocation = userHome + DEFAULT_MUSICOTT_LOCATION;
         musicottFolderTextField.setText(userLocation);
-        promptStage.setOnCloseRequest(event -> preferences.setMusicottUserFolder(userLocation));
+        promptStage.setOnCloseRequest(event -> setUserFolder(userLocation));
 
         okButton.setOnMouseClicked(event -> {
-            preferences.setMusicottUserFolder(musicottFolderTextField.getText());
+            setUserFolder(musicottFolderTextField.getText());
             promptStage.close();
         });
         openButton.setOnMouseClicked(event -> {
@@ -146,5 +150,15 @@ public class MainPreloader extends Preloader {
             }
         });
         return preloaderPane;
+    }
+
+    private void setUserFolder(String folder) {
+        try {
+            preferences.setMusicottUserFolder(folder);
+            preferences.resetTrackSequence();
+        }
+        catch (IOException e) {
+            errorDialog.show("Error loading prompt stage", "", e);
+        }
     }
 }

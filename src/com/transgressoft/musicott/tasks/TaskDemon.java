@@ -22,6 +22,7 @@ package com.transgressoft.musicott.tasks;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.*;
 import org.slf4j.*;
@@ -72,6 +73,7 @@ public class TaskDemon {
 
 	public void shutDownTasks() {
 		parseExecutorService.shutdown();
+		saveMusicLibraryTask.finish();
 	}
 
 	/**
@@ -144,10 +146,11 @@ public class TaskDemon {
 
 	@Inject
 	public void setWaveformsLibrary(WaveformsLibrary waveformsLibrary) {
-		waveformsLibrary.addListener(change -> saveLibrary(false, false, true));
+		waveformsLibrary.addListener(change -> saveLibrary(false, true, false));
 	}
 
-	public void setErrorDialog(ErrorDialogController errorDialog) {
+	@Inject (optional = true)
+	public void setErrorDialog(@ErrorCtrl ErrorDialogController errorDialog) {
 		this.errorDialog = errorDialog;
 		saveMusicLibraryTask.setErrorDialog(errorDialog);
 		waveformTask.setErrorDialog(errorDialog);

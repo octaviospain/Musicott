@@ -116,7 +116,7 @@ public class TrackTest {
 
     @Test
     @DisplayName ("Properties")
-    void propertiesTest() {
+    void propertiesTest() throws Exception {
         track = trackFactory.create("", "");
         assertEquals("", track.nameProperty().get());
         assertEquals("", track.artistProperty().get());
@@ -144,6 +144,7 @@ public class TrackTest {
         assertEquals(0, propertyMap.get(TrackField.TRACK_NUMBER).getValue());
         assertEquals(0, propertyMap.get(TrackField.YEAR).getValue());
         assertEquals(0, propertyMap.get(TrackField.BPM).getValue());
+        Thread.sleep(200);
         assertTrue(track.lastDateModifiedProperty().get().isBefore(LocalDateTime.now()));
     }
 

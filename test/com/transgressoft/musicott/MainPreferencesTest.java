@@ -20,38 +20,124 @@
 package com.transgressoft.musicott;
 
 import com.google.common.collect.*;
+import com.google.common.io.*;
+import com.google.inject.*;
+import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.tests.*;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.prefs.*;
 
 import static com.transgressoft.musicott.tasks.parse.itunes.ItunesParseTask.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Octavio Calleya
  */
+@ExtendWith (MockitoExtension.class)
 public class MainPreferencesTest {
 
-	@Test
-	@DisplayName ("User folder")
-	void userFolderMethodTest() {
-		MainPreferences mainPreferences = new MainPreferences();
-		String sep = File.separator;
-		String userHome = System.getProperty("user.home");
-		String newUserFolder = userHome + sep + "Musicott";
-		File newUserFolderFile = new File(newUserFolder);
-		mainPreferences.setMusicottUserFolder(newUserFolder);
+	@Mock
+	TracksLibrary tracksLibraryMock;
 
-		assertAll(() -> assertEquals(newUserFolder, mainPreferences.getMusicottUserFolder()),
-				  () -> assertEquals(1, mainPreferences.getTrackSequence()),
-				  () -> assertTrue(newUserFolderFile.exists()), () -> assertTrue(newUserFolderFile.delete()));
+	Injector injector;
+
+	private void cleanPreferences() {
+		Preferences prefs = Preferences.userNodeForPackage(MainPreferences.class);
+		prefs.remove("musicott_folder");
+		prefs.remove("import_mp3_flag");
+		prefs.remove("import_m4a_flag");
+		prefs.remove("import_wav_flag");
+		prefs.remove("import_flac_flag");
+		prefs.remove("itunes_import_hold_playcount");
+		prefs.remove("itunes_import_playlists");
+		prefs.remove("itunes_import_policy");
+	}
+
+	@BeforeEach
+	void beforeEach() {
+		injector = Guice.createInjector(binder -> binder.bind(TracksLibrary.class).toInstance(tracksLibraryMock));
+		cleanPreferences();
+	}
+
+	@AfterEach
+	void afterEachTest() {
+		cleanPreferences();
+	}
+
+	@Test
+	@DisplayName ("Default extensions")
+	void defaultExtensions() {
+		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock);
+
+		assertEquals(Sets.newHashSet("mp3"), mainPreferences.getImportFilterExtensions());
+	}
+
+	@Test
+	@DisplayName ("Prevously setted extensions")
+	void previouslySettedExtensions() {
+		Preferences prefs = Preferences.userNodeForPackage(MainPreferences.class);
+		prefs.putBoolean("import_mp3_flag", false);
+		prefs.putBoolean("import_m4a_flag", true);
+		prefs.putBoolean("import_wav_flag", true);
+		prefs.putBoolean("import_flac_flag", true);
+		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock);
+
+		assertEquals(Sets.newHashSet("m4a", "wav", "flac"), mainPreferences.getImportFilterExtensions());
+	}
+
+	@Test
+	@DisplayName ("Set user folder")
+	void userFolderMethodTest() throws Exception {
+		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock);
+		File newUserFolder = Files.createTempDir();
+		mainPreferences.setMusicottUserFolder(newUserFolder.getAbsolutePath());
+
+		assertEquals(newUserFolder.getAbsolutePath(), mainPreferences.getMusicottUserFolder());
+		assertTrue(newUserFolder.delete());
+	}
+
+	@Test
+	@DisplayName ("Set user folder to null")
+	void userFolderNull() throws Exception {
+		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock);
+		assertThrows(NullPointerException.class, () -> mainPreferences.setMusicottUserFolder(null));
+	}
+
+	@Test
+	@DisplayName ("Track sequence")
+	@SuppressWarnings ("unchecked")
+	void trackSequence() {
+		when(tracksLibraryMock.getTrack(anyInt()))
+				.thenReturn(Optional.empty(),
+							Optional.of(mock(Track.class)),
+							Optional.empty(),
+							Optional.of(mock(Track.class)),
+							Optional.empty());
+		Preferences prefs = Preferences.userNodeForPackage(MainPreferences.class);
+		prefs.putInt("track_sequence", 10);
+
+		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock);
+		assertEquals(11, mainPreferences.getTrackSequence());
+		assertEquals(13, mainPreferences.getTrackSequence());
+		assertEquals(15, mainPreferences.getTrackSequence());
+		assertEquals(16, mainPreferences.getTrackSequence());
+		assertEquals(17, mainPreferences.getTrackSequence());
+
+		mainPreferences.resetTrackSequence();
+		assertEquals(1, mainPreferences.getTrackSequence());
 	}
 
 	@Test
 	@DisplayName ("Itunes import metadata")
 	void itunesImportMetadataTest() {
-		MainPreferences mainPreferences = new MainPreferences();
+		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock);
 		mainPreferences.setItunesImportMetadataPolicy(ITUNES_DATA_POLICY);
 
 		assertEquals(ITUNES_DATA_POLICY, mainPreferences.getItunesImportMetadataPolicy());
@@ -60,7 +146,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName ("Itunes import hold playcount")
 	void itunesImportHoldPlaycountTest() {
-		MainPreferences mainPreferences = new MainPreferences();
+		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock);
 		mainPreferences.setItunesImportHoldPlaycount(false);
 
 		assertFalse(mainPreferences.getItunesImportHoldPlaycount());
@@ -69,7 +155,7 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName("Itunes import playlists")
 	void itunesImportPlaylistsTest() {
-		MainPreferences mainPreferences = new MainPreferences();
+		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock);
 		mainPreferences.setItunesImportPlaylists(true);
 
 		assertTrue(mainPreferences.getItunesImportPlaylists());
@@ -78,18 +164,18 @@ public class MainPreferencesTest {
 	@Test
 	@DisplayName("Import filter extensions empty")
 	void emptyImportFilterExtensionsTest() {
-		MainPreferences mainPreferences = new MainPreferences();
+		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock);
 		mainPreferences.setImportFilterExtensions();
 
 		assertEquals(Collections.emptySet(), mainPreferences.getImportFilterExtensions());
 	}
 
 	@Test
-	@DisplayName("One import filter extension")
+	@DisplayName("Two import filter extension")
 	void oneImportFilterExtensionsTest() {
-		MainPreferences mainPreferences = new MainPreferences();
-		mainPreferences.setImportFilterExtensions("mp3");
+		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock);
+		mainPreferences.setImportFilterExtensions("mp3", "flac");
 
-		assertEquals(Sets.newHashSet("mp3"), mainPreferences.getImportFilterExtensions());
+		assertEquals(Sets.newHashSet("mp3", "flac"), mainPreferences.getImportFilterExtensions());
 	}
 }

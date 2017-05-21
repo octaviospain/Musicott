@@ -83,7 +83,7 @@ public class WaveformsLoadAction extends BaseLoadAction {
     private Map<Integer, float[]> parseWaveformsFromJsonFile(File waveformsFile) {
         Map<Integer, float[]> waveformsMap;
         try {
-            JsonReader.assignInstantiator(ObservableListWrapper.class, new ObservableListWrapperCreator());
+            JsonReader.assignInstantiator(ObservableMapWrapper.class, new ObservableMapWrapperCreator());
             waveformsMap = (Map<Integer, float[]>) parseJsonFile(waveformsFile);
             LOG.info("Loaded waveform images from {}", waveformsFile);
         }

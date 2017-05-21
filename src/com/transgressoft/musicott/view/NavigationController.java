@@ -30,6 +30,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.input.KeyCombination.*;
 import javafx.scene.layout.*;
+import org.slf4j.*;
 
 import java.util.*;
 import java.util.Map.*;
@@ -49,6 +50,8 @@ public class NavigationController extends InjectableController<VBox> {
 
     private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
     private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(73, 73, 73);";
+
+    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     private final TracksLibrary tracksLibrary;
     private final PlaylistsLibrary playlistsLibrary;
@@ -77,6 +80,7 @@ public class NavigationController extends InjectableController<VBox> {
     public NavigationController(TracksLibrary tracksLibrary, PlaylistsLibrary playlistsLibrary) {
         this.tracksLibrary = tracksLibrary;
         this.playlistsLibrary = playlistsLibrary;
+        LOG.debug("NavigationController created {}", this);
     }
 
     @FXML
@@ -98,6 +102,7 @@ public class NavigationController extends InjectableController<VBox> {
         taskProgressBar.setProgress(0);
 
         VBox.setVgrow(navigationVBox, Priority.ALWAYS);
+        LOG.debug("NavigationController initialized {}", this);
     }
 
     /**
@@ -210,6 +215,7 @@ public class NavigationController extends InjectableController<VBox> {
         this.playlistTreeView = playlistTreeView;
         playlistsVBox.getChildren().add(1, playlistTreeView);
         VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
+        LOG.debug("playlistTreeView setted ");
 
         selectedPlaylistProperty = playlistTreeView.selectedPlaylistProperty();
         subscribe(selectedPlaylistProperty,
@@ -220,6 +226,7 @@ public class NavigationController extends InjectableController<VBox> {
     @Inject (optional = true)
     public void setRootController(@RootCtrl RootController c) {
         rootController = c;
+        LOG.debug("rootController setted ");
     }
 
     public ReadOnlyObjectProperty<NavigationMode> navigationModeProperty() {

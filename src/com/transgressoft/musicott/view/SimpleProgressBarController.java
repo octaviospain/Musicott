@@ -24,6 +24,7 @@ import javafx.fxml.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.stage.*;
 
 /**
  * Controller class of a simple progress bar
@@ -44,5 +45,7 @@ public class SimpleProgressBarController extends InjectableController<AnchorPane
     public void setStage(Stage stage) {
         this.stage = stage;
         stage.setTitle("");
+        if (! stage.isShowing())
+            stage.initStyle(StageStyle.UNDECORATED);
     }
 }

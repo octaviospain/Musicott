@@ -325,7 +325,7 @@ public class TrackSetAreaRow extends HBox {
         return album;
     }
 
-    @Inject
+    @Inject (optional = true)
     public void setContextMenu(TrackTableViewContextMenu trackTableContextMenu) {
         tracksTableView.setContextMenu(trackTableContextMenu);
         tracksTableView.addEventHandler(

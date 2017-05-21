@@ -32,7 +32,7 @@ import java.awt.*;
  * @author Octavio Calleya
  * @version 0.10-b
  */
-public class WaveformPanel extends JPanel {
+public class WaveformPane extends JPanel {
 
     private static final long serialVersionUID = 2195160480150957593L;
     private final float[] defaultWave;
@@ -44,7 +44,7 @@ public class WaveformPanel extends JPanel {
     private Color foregroundColor;
 
     @Inject
-    public WaveformPanel(WaveformsLibrary waveformsLibrary, @Assisted ("width") int width,
+    public WaveformPane(WaveformsLibrary waveformsLibrary, @Assisted ("width") int width,
             @Assisted ("height") int height) {
         this.waveformsLibrary = waveformsLibrary;
         Dimension dim = new Dimension(width, height);

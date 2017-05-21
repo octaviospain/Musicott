@@ -36,6 +36,7 @@ import javafx.stage.*;
 import javafx.stage.Stage;
 import org.controlsfx.control.*;
 import org.controlsfx.tools.*;
+import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
@@ -58,9 +59,10 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
     private static final String LOGIN = "Login";
     private static final String LOGOUT = "Logout";
 
+    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+
     private final ServiceDemon serviceDemon;
     private final TaskDemon taskDemon;
-    private final ErrorDialogController errorDialog;
 
     @FXML
     private AnchorPane root;
@@ -92,12 +94,14 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
     private MainPreferences preferences;
     private LastFmPreferences lastFmPreferences;
     private ReadOnlyBooleanProperty usingLastFmProperty;
+    private ErrorDialogController errorDialog;
 
     @Inject
-    public PreferencesController(ServiceDemon serviceDemon, TaskDemon taskDemon, ErrorDialogController errorDialog) {
+    public PreferencesController(ServiceDemon serviceDemon, TaskDemon taskDemon) {
         this.serviceDemon = serviceDemon;
-        this.taskDemon = taskDemon;
         this.errorDialog = errorDialog;
+        this.taskDemon = taskDemon;
+        LOG.debug("PreferencesController created {}", this);
     }
 
     @FXML
@@ -121,7 +125,7 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
         okButton.setOnAction(event -> saveAndClose());
         lastFmLoginButton.setOnAction(event -> lastfmLoginOrLogout());
 
-        checkLastFmLoginAtStart();
+        LOG.debug("PreferencesController initialized {}", this);
     }
 
     @Override
@@ -201,7 +205,7 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
         }
     }
 
-    private void checkLastFmLoginAtStart() {
+    public void checkLastFmLoginAtStart() {
         String lastfmUsername = lastFmPreferences.getLastFmUsername();
         String lastfmPassword = lastFmPreferences.getLastFmPassword();
         if (lastfmUsername != null && lastfmPassword != null)
@@ -214,18 +218,23 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
      * @param newApplicationUserFolder The new directory for the application
      */
     private void changeMusicottUserFolder(String newApplicationUserFolder) {
-        String newApplicationUserFolderPath = newApplicationUserFolder + File.pathSeparator;
-        File tracksFile = new File(newApplicationUserFolderPath + TRACKS_PERSISTENCE_FILE);
-        if (tracksFile.exists() && ! tracksFile.delete())
-            errorDialog.show("Unable to delete tracks file", tracksFile.getAbsolutePath());
-        File waveformsFile = new File(newApplicationUserFolderPath + WAVEFORMS_PERSISTENCE_FILE);
-        if (waveformsFile.exists() && ! waveformsFile.delete())
-            errorDialog.show("Unable to delete waveforms file", waveformsFile.getAbsolutePath());
-        File playlistsFile = new File(newApplicationUserFolderPath + PLAYLISTS_PERSISTENCE_FILE);
-        if (playlistsFile.exists() && ! playlistsFile.delete())
-            errorDialog.show("Unable to delete playlists file", playlistsFile.getAbsolutePath());
-        preferences.setMusicottUserFolder(newApplicationUserFolder);
-        taskDemon.saveLibrary(true, true, true);
+        try {
+            preferences.setMusicottUserFolder(newApplicationUserFolder);
+            preferences.resetTrackSequence();
+            File tracksFile = new File(newApplicationUserFolder, TRACKS_PERSISTENCE_FILE);
+            if (tracksFile.exists() && ! tracksFile.delete())
+                errorDialog.show("Unable to delete tracks file", tracksFile.getAbsolutePath());
+            File waveformsFile = new File(newApplicationUserFolder, WAVEFORMS_PERSISTENCE_FILE);
+            if (waveformsFile.exists() && ! waveformsFile.delete())
+                errorDialog.show("Unable to delete waveforms file", waveformsFile.getAbsolutePath());
+            File playlistsFile = new File(newApplicationUserFolder, PLAYLISTS_PERSISTENCE_FILE);
+            if (playlistsFile.exists() && ! playlistsFile.delete())
+                errorDialog.show("Unable to delete playlists file", playlistsFile.getAbsolutePath());
+            taskDemon.saveLibrary(true, true, true);
+        }
+        catch (IOException exception) {
+            errorDialog.show("Error changing application user folder", null, exception);
+        }
     }
 
     private void loadUserPreferences() {
@@ -257,13 +266,21 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
     }
 
     @Inject
+    public void setErrorDialogController(@ErrorCtrl ErrorDialogController errorDialog) {
+        this.errorDialog = errorDialog;
+        LOG.debug("errorDialogController setted");
+    }
+
+    @Inject
     public void setUsingLastFmProperty(@UsingLastFmProperty ReadOnlyBooleanProperty p) {
         usingLastFmProperty = p;
+        LOG.debug("usingLastFmProperty setted");
     }
 
     @Inject
     public void setPreferences(MainPreferences preferences) {
         this.preferences = preferences;
+        LOG.debug("preferences setted");
     }
 
     @Inject

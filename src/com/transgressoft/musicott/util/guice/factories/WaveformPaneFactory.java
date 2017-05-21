@@ -24,7 +24,7 @@ import com.transgressoft.musicott.view.custom.*;
 
 /**
  * Factory interface to be used by Guice's dependency injection for creating
- * {@link WaveformPanel} objects
+ * {@link WaveformPane} objects
  *
  * @author Octavio Calleya
  *
@@ -33,5 +33,5 @@ import com.transgressoft.musicott.view.custom.*;
  */
 public interface WaveformPaneFactory {
 
-    WaveformPanel create(@Assisted("width") int width, @Assisted("height") int height);
+    WaveformPane create(@Assisted("width") int width, @Assisted("height") int height);
 }
