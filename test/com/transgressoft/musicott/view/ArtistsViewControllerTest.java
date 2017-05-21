@@ -64,6 +64,7 @@ public class ArtistsViewControllerTest extends JavaFxTestBase<ArtistsViewControl
     public void start(Stage stage) throws Exception {
         artistsListProperty.setValue(artists);
         doNothing().when(musicLibraryMock).playRandomArtistPlaylist(anyString());
+        doNothing().when(musicLibraryMock).showArtist(anyString());
         trackTableViewContextMenuMock = mock(TrackTableViewContextMenu.class);
 
         injector = injector.createChildInjector(new TestModule());
