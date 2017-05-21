@@ -78,7 +78,7 @@ public class TaskDemon {
 	}
 
 	/**
-	 * Creates a new {@link Thread} that analyzes and imports the contents
+	 * Creates a new {@link ParseTask} that analyzes and imports the contents
 	 * of an iTunes library to the application.
 	 *
 	 * @param itunesLibraryPath The path where the {@code iTunes Music Library.xml} file is located.
@@ -94,7 +94,7 @@ public class TaskDemon {
 	}
 
 	/**
-	 * Creates a new {@link Thread} that analyzes and import several audio files
+	 * Creates a new {@link ParseTask} that analyzes and import several audio files
 	 * to the application.
 	 *
 	 * @param filesToImport The {@link List} of the files to import.

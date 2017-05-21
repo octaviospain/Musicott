@@ -111,9 +111,9 @@ public class PlaylistsLoadAction extends BaseLoadAction {
         Playlist top10 = playlistFactory.create("My Top 10", false);
         Playlist favs = playlistFactory.create("Favourites", false);
         Playlist listenLater = playlistFactory.create("Listen later", false);
-        ROOT_PLAYLIST.getContainedPlaylists().add(top10);
-        ROOT_PLAYLIST.getContainedPlaylists().add(favs);
-        ROOT_PLAYLIST.getContainedPlaylists().add(listenLater);
+        ROOT_PLAYLIST.addPlaylistChild(top10);
+        ROOT_PLAYLIST.addPlaylistChild(favs);
+        ROOT_PLAYLIST.addPlaylistChild(listenLater);
 
         playlists = GraphBuilder.directed().build();
         playlists.putEdge(ROOT_PLAYLIST, top10);
