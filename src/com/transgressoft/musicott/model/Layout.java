@@ -21,9 +21,10 @@ package com.transgressoft.musicott.model;
 
 import com.google.common.collect.*;
 import com.transgressoft.musicott.util.guice.modules.*;
-import com.transgressoft.musicott.view.*;
 
 import java.util.*;
+
+import static com.transgressoft.musicott.model.CommonObject.*;
 
 /**
  * Defines the different views with the respective paths and {@link ControllerModule} classes.
@@ -32,7 +33,7 @@ import java.util.*;
  * @version 0.10.1-b
  * @since 0.10.1-b
  */
-public enum Layout implements MusicottLayout {
+public enum Layout {
 
     ROOT (LAYOUTS_PATH + "RootLayout.fxml", RootModule.class),
     PRELOADER (LAYOUTS_PATH + "PreloaderLayout.fxml", null),

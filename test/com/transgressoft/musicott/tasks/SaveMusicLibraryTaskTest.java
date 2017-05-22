@@ -14,7 +14,8 @@ import org.mockito.*;
 
 import java.io.*;
 
-import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.model.CommonObject.*;
+import static org.awaitility.Awaitility.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -29,9 +30,9 @@ public class SaveMusicLibraryTaskTest {
     MutableGraph<Playlist> testPlaylists = GraphBuilder.directed().build();
 
     String testUserFolder = Files.createTempDir().getAbsolutePath();
-    File tracksFile = new File(testUserFolder + File.separator + TRACKS_PERSISTENCE_FILE);
-    File playlistsFile = new File(testUserFolder + File.separator + PLAYLISTS_PERSISTENCE_FILE);
-    File waveformsFile = new File(testUserFolder + File.separator + WAVEFORMS_PERSISTENCE_FILE);
+    File tracksFile = new File(testUserFolder, TRACKS_FILE.toString());
+    File playlistsFile = new File(testUserFolder, PLAYLISTS_FILE.toString());
+    File waveformsFile = new File(testUserFolder, WAVEFORMS_FILE.toString());
 
     @Mock
     TracksLibrary tracksLibraryMock;
@@ -102,9 +103,8 @@ public class SaveMusicLibraryTaskTest {
         assertTrue(task.isAlive());
 
         task.saveMusicLibrary(true, false, false);
-        Thread.sleep(1000);
+        await().untilAsserted(() -> assertTrue(tracksFile.exists()));
 
-        assertTrue(tracksFile.exists());
         verify(errorDialogControllerMock, times(0)).show(eq("Error saving music library"), any(), any());
     }
 
@@ -116,9 +116,8 @@ public class SaveMusicLibraryTaskTest {
         assertTrue(task.isAlive());
 
         task.saveMusicLibrary(false, true, false);
-        Thread.sleep(1000);
+        await().untilAsserted(() -> assertTrue(waveformsFile.exists()));
 
-        assertTrue(waveformsFile.exists());
         verify(errorDialogControllerMock, times(0)).show(eq("Error saving music library"), any(), any());
     }
 
@@ -130,9 +129,8 @@ public class SaveMusicLibraryTaskTest {
         assertTrue(task.isAlive());
 
         task.saveMusicLibrary(false, false, true);
-        Thread.sleep(1000);
+        await().untilAsserted(() -> assertTrue(playlistsFile.exists()));
 
-        assertTrue(playlistsFile.exists());
         verify(errorDialogControllerMock, times(0)).show(eq("Error saving music library"), any(), any());
     }
 }

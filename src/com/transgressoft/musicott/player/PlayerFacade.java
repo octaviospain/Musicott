@@ -80,7 +80,7 @@ public class PlayerFacade {
         currentTrack = Optional.empty();
         trackPlayer = new JavaFxPlayer();
         trackPlayer.setOnEndOfMedia(this::next);
-        LOG.debug("PlayerFacade created {} " + this);
+        LOG.debug("PlayerFacade created {} ", this);
     }
 
     public ObservableList<TrackQueueRow> getPlayList() {
@@ -401,24 +401,24 @@ public class PlayerFacade {
     @Inject (optional = true)
     public void setErrorDialogController(@ErrorCtrl ErrorDialogController errorDialogController) {
         errorDialog = errorDialogController;
-        LOG.debug("ErrorDialogController setted {} " + errorDialogController);
+        LOG.debug("ErrorDialogController setted {} ", errorDialogController);
     }
 
     @Inject (optional = true)
     public void setNavigationController(@NavigationCtrl NavigationController navigationController) {
         this.navigationController = navigationController;
-        LOG.debug("NavigationController setted {} " + navigationController);
+        LOG.debug("NavigationController setted {} ", navigationController);
     }
 
     @Inject (optional = true)
     public void setPlayerController(@PlayerCtrl PlayerController playerController) {
         this.playerController = playerController;
-        LOG.debug("PlayerController setted {} " + playerController);
+        LOG.debug("PlayerController setted {} ", playerController);
     }
 
     @Inject (optional = true)
     public void setPlayQueueController(@PlayQueueCtrl PlayQueueController playQueueController) {
         this.playQueueController = playQueueController;
-        LOG.debug("PlayQueueController setted {} " + playQueueController);
+        LOG.debug("PlayQueueController setted {} ", playQueueController);
     }
 }

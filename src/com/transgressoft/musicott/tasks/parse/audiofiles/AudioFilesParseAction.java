@@ -44,7 +44,7 @@ public class AudioFilesParseAction extends FilesParseAction {
     private static final int MAX_FILES_TO_PARSE_PER_ACTION = 250;
     private static final int NUMBER_OF_PARTITIONS = 4;
 
-    private final TracksLibrary tracksLibrary;
+    private final transient TracksLibrary tracksLibrary;
 
     /**
      * Constructor of {@link AudioFilesParseAction}

@@ -36,6 +36,7 @@ import java.io.*;
 import java.time.*;
 import java.util.*;
 
+import static org.awaitility.Awaitility.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -138,8 +139,7 @@ public class TrackTest {
         assertEquals(0, propertyMap.get(TrackField.TRACK_NUMBER).getValue());
         assertEquals(0, propertyMap.get(TrackField.YEAR).getValue());
         assertEquals(0, propertyMap.get(TrackField.BPM).getValue());
-        Thread.sleep(200);
-        assertTrue(track.lastDateModifiedProperty().get().isBefore(LocalDateTime.now()));
+        await().untilAsserted(() -> assertTrue(track.lastDateModifiedProperty().get().isBefore(LocalDateTime.now())));
     }
 
     @Test

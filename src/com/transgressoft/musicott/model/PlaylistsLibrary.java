@@ -38,7 +38,7 @@ import java.util.stream.*;
 @Singleton
 public class PlaylistsLibrary {
 
-    private final Playlist ROOT_PLAYLIST;
+    private final Playlist rootPlaylist;
 
     private MutableGraph<Playlist> playlistsTree = GraphBuilder.directed().build();
     private ListChangeListener<Integer> playlistTracksChangeListener;
@@ -46,8 +46,8 @@ public class PlaylistsLibrary {
 
     @Inject
     public PlaylistsLibrary(@RootPlaylist Playlist rootPlaylist) {
-        ROOT_PLAYLIST = rootPlaylist;
-        playlistsTree.addNode(ROOT_PLAYLIST);
+        this.rootPlaylist = rootPlaylist;
+        playlistsTree.addNode(this.rootPlaylist);
     }
 
     public void setPlaylistTracksListener(ListChangeListener<Integer> listener) {
@@ -73,7 +73,7 @@ public class PlaylistsLibrary {
     }
 
     public synchronized void addPlaylistToRoot(Playlist playlist) {
-        addPlaylist(ROOT_PLAYLIST, playlist);
+        addPlaylist(rootPlaylist, playlist);
     }
 
     public synchronized void addPlaylistsRecursively(Playlist parent, Set<Playlist> playlists) {
@@ -115,7 +115,7 @@ public class PlaylistsLibrary {
     }
 
     public synchronized boolean isEmpty() {
-        return playlistsTree.nodes().size() == 1  && playlistsTree.nodes().contains(ROOT_PLAYLIST);
+        return playlistsTree.nodes().size() == 1  && playlistsTree.nodes().contains(rootPlaylist);
     }
 
     synchronized void clearPlaylists() {

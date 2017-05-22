@@ -30,7 +30,7 @@ import org.fxmisc.easybind.*;
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.view.EditController.*;
 
 /**
  * Represents a Playlist of tracks. A {@code Playlist} can contain another playlists,
@@ -58,7 +58,7 @@ public class Playlist {
     {
         nameProperty = new SimpleStringProperty(this, "name", "");
         EasyBind.subscribe(nameProperty, this::setName);
-        playlistCoverProperty = new SimpleObjectProperty<>(this, "cover", DEFAULT_COVER);
+        playlistCoverProperty = new SimpleObjectProperty<>(this, "cover", DEFAULT_COVER_IMAGE);
         isFolderProperty = new SimpleBooleanProperty(this, "folder", isFolder);
     }
 
@@ -96,7 +96,7 @@ public class Playlist {
     }
 
     public ObjectProperty<Image> playlistCoverProperty() {
-        if (playlistCoverProperty.get().equals(DEFAULT_COVER) && ! getTracks().isEmpty())
+        if (playlistCoverProperty.get().equals(DEFAULT_COVER_IMAGE) && ! getTracks().isEmpty())
             changePlaylistCover();
         return playlistCoverProperty;
     }
@@ -138,7 +138,7 @@ public class Playlist {
         if (isFolder)
             throw new UnsupportedOperationException(DELETION_NOT_SUPPORTED);
         playlistTrackIds.clear();
-        playlistCoverProperty.set(DEFAULT_COVER);
+        playlistCoverProperty.set(DEFAULT_COVER_IMAGE);
     }
 
     public void addPlaylistChild(Playlist childPlaylist) {
@@ -185,10 +185,10 @@ public class Playlist {
                 });
             }
             else
-                playlistCoverProperty.set(DEFAULT_COVER);
+                playlistCoverProperty.set(DEFAULT_COVER_IMAGE);
         }
         else
-            playlistCoverProperty.set(DEFAULT_COVER);
+            playlistCoverProperty.set(DEFAULT_COVER_IMAGE);
     }
 
     private boolean existsTrackWithCover(int trackId) {

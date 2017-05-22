@@ -34,7 +34,9 @@ public class HostServicesModule extends AbstractModule {
     }
 
     @Override
-    protected void configure() {}
+    protected void configure() {
+        // Nothing to configure here, just provide the application Host Services
+    }
 
     @Provides
     HostServices providesHostServices() {

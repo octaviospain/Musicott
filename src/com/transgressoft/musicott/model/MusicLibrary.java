@@ -101,6 +101,7 @@ public class MusicLibrary {
                 tracksLibrary.remove(trackSelection);
                 playlistsLibrary.removeFromPlaylists(trackSelection);
                 waveformsLibrary.removeWaveforms(trackSelection);
+                LOG.debug("Deleted {} tracks from tracks, playlists and waveforms libraries", trackSelection.size());
             }
 
             String message = "Deleted " + Integer.toString(trackSelection.size()) + " tracks";
@@ -118,6 +119,7 @@ public class MusicLibrary {
         albumsLibrary.clear();
         waveformsLibrary.clearWaveforms();
         playlistsLibrary.clearPlaylists();
+        LOG.info("Cleared tracks, artists, albums, waveforms and playlists");
     }
 
     /**
@@ -146,6 +148,7 @@ public class MusicLibrary {
         Thread randomArtistPlaylistThread = new Thread(() -> {
             List<Track> randomList = artistsLibrary.getRandomListOfArtistTracks(artist);
             playerFacade.setRandomListAndPlay(randomList);
+            LOG.debug("Created random playlist from artist");
         }, "Random Artist Playlist Thread");
         randomArtistPlaylistThread.start();
     }
@@ -154,6 +157,7 @@ public class MusicLibrary {
         Thread randomPlaylistPlayThread = new Thread(() -> {
             List<Track> randomList = tracksLibrary.getRandomSortedTrackList(playlist);
             playerFacade.setRandomListAndPlay(randomList);
+            LOG.debug("Created random playlist from playlist");
         }, "Shuffle Playlist Thread");
         randomPlaylistPlayThread.start();
     }

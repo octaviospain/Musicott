@@ -26,6 +26,7 @@ import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.*;
 import javafx.collections.*;
 import javafx.scene.control.*;
+import javafx.scene.image.*;
 import javafx.scene.input.*;
 import org.fxmisc.easybind.*;
 
@@ -33,7 +34,7 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.model.CommonObject.*;
 
 /**
  * Custom {@link TableRow} that represents an {@link Entry} with
@@ -46,6 +47,7 @@ import static com.transgressoft.musicott.view.MusicottLayout.*;
 public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
 
     public static final DataFormat TRACK_IDS_MIME_TYPE = new DataFormat("application/x-java-tracks-id");
+    public static Image DRAGBOARD_ICON = new Image(TrackTableRow.class.getResourceAsStream(DRAGBOARD_ICON_PATH.toString()));
 
     private final PlayerFacade playerFacade;
     private RootController rootController;

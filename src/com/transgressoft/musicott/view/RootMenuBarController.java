@@ -47,9 +47,9 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
+import static com.transgressoft.musicott.model.CommonObject.*;
 import static com.transgressoft.musicott.model.NavigationMode.*;
 import static com.transgressoft.musicott.util.Utils.*;
-import static com.transgressoft.musicott.view.MusicottLayout.*;
 import static javafx.scene.input.KeyCombination.*;
 import static org.fxmisc.easybind.EasyBind.*;
 
@@ -70,7 +70,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     private static final String ABOUT_MUSICOTT_SECOND_LINE = " Licensed under GNU GPLv3. This product includes\n" + " " +
             "software developed by other open source projects.";
 
-    private final Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
+    private final Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO.toString()));
     private final ImageView musicottLogoImageView = new ImageView(musicottLogo);
 
     private EditController editController;
@@ -340,7 +340,6 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     private void setAboutMenuActions() {
         aboutMenuItem.setOnAction(e -> {
             Alert alert = createAlert("About Musicott", " ", "", AlertType.INFORMATION, stage);
-            alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
             Label aboutLabel1 = new Label(ABOUT_MUSICOTT_FIRST_LINE);
             Label aboutLabel2 = new Label(ABOUT_MUSICOTT_SECOND_LINE);
             Hyperlink githubLink = new Hyperlink(MUSICOTT_GITHUB_LINK);
@@ -399,7 +398,6 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
         String alertContentText = "Import " + filesToImport.size() + " files?";
         Platform.runLater(() -> {
             Alert alert = createAlert("Import", alertContentText, "", AlertType.CONFIRMATION, stage);
-            alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
             LOG.debug("Showing confirmation alert to import {} files", filesToImport.size());
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get().equals(ButtonType.OK)) {

@@ -31,7 +31,7 @@ import org.slf4j.*;
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.model.CommonObject.*;
 
 /**
  * This class extends from {@link BaseLoadAction} in order to perform the loading
@@ -46,7 +46,7 @@ public class WaveformsLoadAction extends BaseLoadAction {
 
     private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private WaveformsLibrary waveformsLibrary;
+    private final transient WaveformsLibrary waveformsLibrary;
 
     @Inject
     public WaveformsLoadAction(WaveformsLibrary waveformsLibrary, @Assisted String applicationFolder,
@@ -61,7 +61,7 @@ public class WaveformsLoadAction extends BaseLoadAction {
     @Override
     protected void compute() {
         notifyPreloader(-1, 0, "Loading waveforms...");
-        File waveformsFile = new File(applicationFolder + File.separator + WAVEFORMS_PERSISTENCE_FILE);
+        File waveformsFile = new File(applicationFolder, WAVEFORMS_FILE.toString());
         Map<Integer, float[]> waveformsMap;
         if (waveformsFile.exists())
             waveformsMap = parseWaveformsFromJsonFile(waveformsFile);
@@ -90,7 +90,6 @@ public class WaveformsLoadAction extends BaseLoadAction {
         catch (IOException exception) {
             waveformsMap = new HashMap<>();
             LOG.error("Error loading waveform thumbnails: {}", exception.getMessage(), exception);
-            // TODO improve the error handling to propagate this and show when the stage is created
         }
         return waveformsMap;
     }

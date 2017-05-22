@@ -40,6 +40,7 @@ import org.slf4j.*;
 import java.io.*;
 import java.util.*;
 
+import static com.transgressoft.musicott.model.CommonObject.*;
 import static com.transgressoft.musicott.tasks.parse.itunes.ItunesParseTask.*;
 import static org.fxmisc.easybind.EasyBind.*;
 
@@ -50,7 +51,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @version 0.10-b
  */
 @Singleton
-public class PreferencesController extends InjectableController<AnchorPane> implements MusicottLayout {
+public class PreferencesController extends InjectableController<AnchorPane> {
 
     private static final String[] EXTENSIONS = {"mp3", "m4a", "wav", "flac"};
     private static final String ITUNES_INFO = "Itunes library";
@@ -226,13 +227,13 @@ public class PreferencesController extends InjectableController<AnchorPane> impl
     }
 
     private void deleteOldLocationFiles(String oldFolder) {
-        File tracksFile = new File(oldFolder, TRACKS_PERSISTENCE_FILE);
+        File tracksFile = new File(oldFolder, TRACKS_FILE.toString());
         if (tracksFile.exists() && ! tracksFile.delete())
             errorDialog.show("Unable to delete tracks file", tracksFile.getAbsolutePath());
-        File waveformsFile = new File(oldFolder, WAVEFORMS_PERSISTENCE_FILE);
+        File waveformsFile = new File(oldFolder, WAVEFORMS_FILE.toString());
         if (waveformsFile.exists() && ! waveformsFile.delete())
             errorDialog.show("Unable to delete waveforms file", waveformsFile.getAbsolutePath());
-        File playlistsFile = new File(oldFolder, PLAYLISTS_PERSISTENCE_FILE);
+        File playlistsFile = new File(oldFolder, PLAYLISTS_FILE.toString());
         if (playlistsFile.exists() && ! playlistsFile.delete())
             errorDialog.show("Unable to delete playlists file", playlistsFile.getAbsolutePath());
     }

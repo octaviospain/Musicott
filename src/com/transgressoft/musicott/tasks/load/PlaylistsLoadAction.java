@@ -34,7 +34,7 @@ import org.slf4j.*;
 import java.io.*;
 import java.util.*;
 
-import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.model.CommonObject.*;
 
 /**
  * This class extends from {@link BaseLoadAction} in order to perform the loading
@@ -48,14 +48,14 @@ public class PlaylistsLoadAction extends BaseLoadAction {
 
     private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final PlaylistsLibrary playlistsLibrary;
-    private final Playlist ROOT_PLAYLIST;
+    private final transient PlaylistsLibrary playlistsLibrary;
+    private final transient Playlist rootPlaylist;
 
     private transient MutableGraph<Playlist> playlists;
     private int step = 0;
     private int totalPlaylists;
 
-    private PlaylistFactory playlistFactory;
+    private transient PlaylistFactory playlistFactory;
 
     @Inject
     public PlaylistsLoadAction(PlaylistsLibrary playlistsLibrary, PlaylistFactory playlistFactory,
@@ -64,21 +64,20 @@ public class PlaylistsLoadAction extends BaseLoadAction {
         super(applicationFolder, application);
         this.playlistsLibrary = playlistsLibrary;
         this.playlistFactory = playlistFactory;
-        ROOT_PLAYLIST = rootPlaylist;
+        this.rootPlaylist = rootPlaylist;
     }
 
     @Override
     protected void compute() {
         notifyPreloader(- 1, 0, "Loading playlists...");
-        String playlistsPath = applicationFolder + File.separator + PLAYLISTS_PERSISTENCE_FILE;
-        File playlistsFile = new File(playlistsPath);
+        File playlistsFile = new File(applicationFolder, PLAYLISTS_FILE.toString());
         if (playlistsFile.exists()) {
             parsePlaylistFromJsonFile(playlistsFile);
             playlists.nodes().forEach(this::setPlaylistProperties);
         }
         else
             createDefaultPlaylists();
-        playlistsLibrary.addPlaylistsRecursively(ROOT_PLAYLIST, playlists.successors(ROOT_PLAYLIST));
+        playlistsLibrary.addPlaylistsRecursively(rootPlaylist, playlists.successors(rootPlaylist));
     }
 
     /**
@@ -103,7 +102,6 @@ public class PlaylistsLoadAction extends BaseLoadAction {
         catch (IOException exception) {
             createDefaultPlaylists();
             LOG.error("Error loading playlists: {}", exception.getMessage(), exception);
-            // TODO improve the error handling to propagate this and show when the stage is created
         }
     }
 
@@ -111,14 +109,14 @@ public class PlaylistsLoadAction extends BaseLoadAction {
         Playlist top10 = playlistFactory.create("My Top 10", false);
         Playlist favs = playlistFactory.create("Favourites", false);
         Playlist listenLater = playlistFactory.create("Listen later", false);
-        ROOT_PLAYLIST.addPlaylistChild(top10);
-        ROOT_PLAYLIST.addPlaylistChild(favs);
-        ROOT_PLAYLIST.addPlaylistChild(listenLater);
+        rootPlaylist.addPlaylistChild(top10);
+        rootPlaylist.addPlaylistChild(favs);
+        rootPlaylist.addPlaylistChild(listenLater);
 
         playlists = GraphBuilder.directed().build();
-        playlists.putEdge(ROOT_PLAYLIST, top10);
-        playlists.putEdge(ROOT_PLAYLIST, favs);
-        playlists.putEdge(ROOT_PLAYLIST, listenLater);
+        playlists.putEdge(rootPlaylist, top10);
+        playlists.putEdge(rootPlaylist, favs);
+        playlists.putEdge(rootPlaylist, listenLater);
     }
 
     /**

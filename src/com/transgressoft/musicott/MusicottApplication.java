@@ -60,21 +60,20 @@ public class MusicottApplication extends Application implements InjectedApplicat
 
     private static final String CONFIG_FILE = "resources/config/config.properties";
 
-    static Injector injector = Guice.createInjector(new LoaderModule());
-
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     private Stage primaryStage;
     private TaskDemon taskDemon;
+    private Injector injector = Guice.createInjector(new LoaderModule());
     private List<ControllerModule<? extends InjectableController>> modules = new ArrayList<>();
 
     public static void main(String[] args) {
-        Utils.initializeLogger();
         LauncherImpl.launchApplication(MusicottApplication.class, MainPreloader.class, args);
     }
 
     @Override
     public void init() throws Exception {
+        Utils.initializeLogger();
         injector = injector.createChildInjector(new HostServicesModule(getHostServices()));
         MainPreferences preferences = injector.getInstance(MainPreferences.class);
         String applicationFolder = preferences.getMusicottUserFolder();

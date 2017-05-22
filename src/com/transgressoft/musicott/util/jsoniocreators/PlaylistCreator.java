@@ -44,7 +44,9 @@ public class PlaylistCreator implements ClassFactory {
     private class LoaderClassFactory extends AbstractModule {
 
         @Override
-        protected void configure() {}
+        protected void configure() {
+            // Nothing to configure here, just provide the root playlist
+        }
 
         @Provides
         @RootPlaylist

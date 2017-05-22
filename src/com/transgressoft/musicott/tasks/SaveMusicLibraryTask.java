@@ -30,7 +30,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.model.CommonObject.*;
 
 /**
  * Extends from {@link Thread} to perform the operation of save data of the {@link MusicLibrary} in the filesystem.
@@ -169,10 +169,9 @@ public class SaveMusicLibraryTask extends Thread {
         MainPreferences mainPreferences = injector.getInstance(MainPreferences.class);
         String applicationPath = mainPreferences.getMusicottUserFolder();
         if (! applicationPath.equals(musicottUserPath)) {
-            String sep = File.separator;
-            tracksFile = new File(applicationPath + sep + TRACKS_PERSISTENCE_FILE);
-            waveformsFile = new File(applicationPath + sep + WAVEFORMS_PERSISTENCE_FILE);
-            playlistsFile = new File(applicationPath + sep + PLAYLISTS_PERSISTENCE_FILE);
+            tracksFile = new File(applicationPath, TRACKS_FILE.toString());
+            waveformsFile = new File(applicationPath, WAVEFORMS_FILE.toString());
+            playlistsFile = new File(applicationPath, PLAYLISTS_FILE.toString());
             musicottUserPath = applicationPath;
         }
     }

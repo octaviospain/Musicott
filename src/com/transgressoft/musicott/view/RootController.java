@@ -44,7 +44,9 @@ import java.util.AbstractMap.*;
 import java.util.*;
 import java.util.Map.*;
 
+import static com.transgressoft.musicott.model.CommonObject.*;
 import static com.transgressoft.musicott.model.NavigationMode.*;
+import static com.transgressoft.musicott.view.EditController.*;
 import static org.fxmisc.easybind.EasyBind.*;
 
 /**
@@ -54,7 +56,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * @version 0.10-b
  */
 @Singleton
-public class RootController extends InjectableController<BorderPane> implements MusicottLayout {
+public class RootController extends InjectableController<BorderPane> {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private static final int HOVER_COVER_SIZE = 100;
@@ -62,7 +64,7 @@ public class RootController extends InjectableController<BorderPane> implements 
     private final MusicLibrary musicLibrary;
     private final PlaylistsLibrary playlistsLibrary;
 
-    private final Playlist ROOT_PLAYLIST;
+    private final Playlist rootPlaylist;
 
     @FXML
     private BorderPane rootBorderPane;
@@ -125,7 +127,7 @@ public class RootController extends InjectableController<BorderPane> implements 
             @RootPlaylist Playlist rootPlaylist) {
         this.musicLibrary = musicLibrary;
         this.playlistsLibrary = playlistsLibrary;
-        ROOT_PLAYLIST = rootPlaylist;
+        this.rootPlaylist = rootPlaylist;
     }
 
     @FXML
@@ -133,7 +135,7 @@ public class RootController extends InjectableController<BorderPane> implements 
         rootBorderPane.setOnMouseClicked(e -> playerLayoutController.hidePlayQueue());
         showingNavigationPaneProperty = new SimpleBooleanProperty(this, "showing navigation pane", true);
         showingTableInfoPaneProperty = new SimpleBooleanProperty(this, "showing table info pane", true);
-        hoverCoverProperty = new SimpleObjectProperty<>(this, "hover cover", DEFAULT_COVER);
+        hoverCoverProperty = new SimpleObjectProperty<>(this, "hover cover", DEFAULT_COVER_IMAGE);
         playlistCover.imageProperty().bind(hoverCoverProperty);
         initializeInfoPaneFields();
         initializeHoverCoverImageView();
@@ -167,7 +169,7 @@ public class RootController extends InjectableController<BorderPane> implements 
     public void setStage(Stage stage) {
         this.stage = stage;
         stage.setTitle("Musicott");
-        stage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
+        stage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON.toString())));
         stage.setMinWidth(1200);
         stage.setMinHeight(805);
     }
@@ -311,7 +313,7 @@ public class RootController extends InjectableController<BorderPane> implements 
     }
 
     private void addPlaylistToRoot(Playlist playlist) {
-        navigationLayoutController.addNewPlaylist(ROOT_PLAYLIST, playlist, true);
+        navigationLayoutController.addNewPlaylist(rootPlaylist, playlist, true);
         playlistsLibrary.addPlaylistToRoot(playlist);
     }
 
@@ -428,7 +430,8 @@ public class RootController extends InjectableController<BorderPane> implements 
     public void updateTrackHoveredCover(Optional<byte[]> coverBytes) {
         hoverCoverImageView.imageProperty().bind(hoverCoverProperty);
         Image trackHoveredImage;
-        trackHoveredImage = coverBytes.map(bytes -> new Image(new ByteArrayInputStream(bytes))).orElse(DEFAULT_COVER);
+        trackHoveredImage = coverBytes.map(bytes -> new Image(new ByteArrayInputStream(bytes)))
+                                      .orElse(DEFAULT_COVER_IMAGE);
         hoverCoverProperty.setValue(trackHoveredImage);
     }
 

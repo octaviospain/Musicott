@@ -107,7 +107,7 @@ public class MainPreferences {
     /**
      * Returns 0 if the application is used in the first time, that is,
      * if there is no record for the track sequence in the class {@link Preferences};
-     * or the next integer to use for the {@link com.transgressoft.musicott.model.Track} map
+     * or the next integer to use for the tracks map
      *
      * @return The next integer to use for the track map
      */

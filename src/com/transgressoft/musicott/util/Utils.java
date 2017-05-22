@@ -45,7 +45,8 @@ import java.util.logging.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.model.CommonObject.*;
+import static com.transgressoft.musicott.view.EditController.*;
 
 /**
  * Class that does some useful operations with files, directories, strings
@@ -382,7 +383,7 @@ public class Utils {
             updatedWithCustomImage = true;
         }
         else
-            imageView.setImage(DEFAULT_COVER);
+            imageView.setImage(DEFAULT_COVER_IMAGE);
         return updatedWithCustomImage;
     }
 
@@ -401,7 +402,7 @@ public class Utils {
      */
     public static Alert createAlert(String title, String header, String content, AlertType type, Stage stage) {
         Alert alert = new Alert(type);
-        alert.getDialogPane().getStylesheets().add(Utils.class.getResource(DIALOG_STYLE).toExternalForm());
+        alert.getDialogPane().getStylesheets().add(Utils.class.getResource(DIALOG_STYLE.toString()).toExternalForm());
         alert.setTitle(title);
         alert.setHeaderText(header);
         alert.setContentText(content);
@@ -415,29 +416,23 @@ public class Utils {
      *
      * @see <a href=http://www.slf4j.org/>slf4j</href>
      */
-    public static void initializeLogger() {
+    public static void initializeLogger() throws IOException {
         Handler baseFileHandler;
         LogManager logManager = LogManager.getLogManager();
         java.util.logging.Logger logger = logManager.getLogger("");
         Handler rootHandler = logger.getHandlers()[0];
 
-        try {
-            logManager.readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
-            baseFileHandler = new FileHandler(LOG_FILE);
-            baseFileHandler.setFormatter(new SimpleFormatter() {
+        logManager.readConfiguration(new FileInputStream(LOGGING_PROPERTIES));
+        baseFileHandler = new FileHandler(LOG_FILE);
+        baseFileHandler.setFormatter(new SimpleFormatter() {
 
-                @Override
-                public String format(LogRecord record) {
-                    return logTextString(record);
-                }
-            });
-            logManager.getLogger("").removeHandler(rootHandler);
-            logManager.getLogger("").addHandler(baseFileHandler);
-        }
-        catch (SecurityException | IOException exception) {
-            System.err.println("Error initiating logger: " + exception.getMessage());
-            exception.printStackTrace();
-        }
+            @Override
+            public String format(LogRecord record) {
+                return logTextString(record);
+            }
+        });
+        logManager.getLogger("").removeHandler(rootHandler);
+        logManager.getLogger("").addHandler(baseFileHandler);
     }
 
     /**
