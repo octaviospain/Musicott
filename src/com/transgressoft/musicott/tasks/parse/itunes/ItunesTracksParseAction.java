@@ -57,10 +57,10 @@ public class ItunesTracksParseAction extends ItunesParseAction {
     private final boolean holdPlayCount;
 
     @Inject
-    private TrackFactory trackFactory;
+    private transient TrackFactory trackFactory;
     @Inject
-    private ParseActionFactory parseActionFactory;
-    private TracksLibrary tracksLibrary;
+    private transient ParseActionFactory parseActionFactory;
+    private transient TracksLibrary tracksLibrary;
 
     /**
      * Constructor of {@link ItunesTracksParseAction}

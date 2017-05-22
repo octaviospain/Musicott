@@ -27,9 +27,12 @@ import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
+
+import static com.transgressoft.musicott.model.CommonObject.*;
 
 /**
  * Controller class of the error alert window that shows an error message and
@@ -40,9 +43,11 @@ import java.util.*;
  * @since 0.9.1-b
  */
 @Singleton
-public class ErrorDialogController extends InjectableController<AnchorPane> implements MusicottLayout {
+public class ErrorDialogController extends InjectableController<AnchorPane> {
 
     private static final String GITHUB_LINK = "https://github.com/octaviospain/Musicott/issues";
+
+    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     @FXML
     private AnchorPane root;
@@ -72,14 +77,15 @@ public class ErrorDialogController extends InjectableController<AnchorPane> impl
     private Hyperlink reportInGithubHyperlink;
     @FXML
     private Label contentLabel;
-    private Image commonErrorImage = new Image(getClass().getResourceAsStream(COMMON_ERROR_IMAGE));
-    private Image lastFmErrorImage = new Image(getClass().getResourceAsStream(LASTFM_LOGO));
+    private Image commonErrorImage = new Image(getClass().getResourceAsStream(COMMON_ERROR_IMAGE.toString()));
+    private Image lastFmErrorImage = new Image(getClass().getResourceAsStream(LASTFM_LOGO.toString()));
 
     private HostServices hostServices;
 
     @Inject
     public ErrorDialogController(HostServices hostServices) {
         this.hostServices = hostServices;
+        LOG.debug("ErrorDialogController created {}", this);
     }
 
     @FXML
@@ -103,6 +109,7 @@ public class ErrorDialogController extends InjectableController<AnchorPane> impl
         seeDetailsToggleButton.setOnAction(expandablePaneHandler);
         seeDetailsHyperlink.setOnAction(expandablePaneHandler);
         okButton.setOnAction(event -> okButton.getScene().getWindow().hide());
+        LOG.debug("ErrorDialogController initialized {}", this);
     }
 
     @Override

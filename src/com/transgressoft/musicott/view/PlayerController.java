@@ -25,7 +25,6 @@ import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
-import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 import javafx.embed.swing.*;
@@ -97,23 +96,22 @@ public class PlayerController extends InjectableController<GridPane> {
     private ProgressBar volumeProgressBar;
     @FXML
     private AnchorPane playQueueLayout;
-    private WaveformPanel mainWaveformPanel;
+    private WaveformPane mainWaveformPane;
 
     private TracksLibrary tracksLibrary;
     private WaveformsLibrary waveformsLibrary;
     private PlayerFacade player;
     private TaskDemon taskDemon;
-    private WaveformPaneFactory waveformPaneFactory;
     private ReadOnlyBooleanProperty emptyLibraryProperty;
 
     @Inject
     public PlayerController(TracksLibrary tracksLibrary, WaveformsLibrary waveformsLibrary, PlayerFacade player,
-            TaskDemon taskDemon, WaveformPaneFactory waveformPaneFactory) {
+            TaskDemon taskDemon) {
         this.tracksLibrary = tracksLibrary;
         this.waveformsLibrary = waveformsLibrary;
         this.player = player;
         this.taskDemon = taskDemon;
-        this.waveformPaneFactory = waveformPaneFactory;
+        LOG.debug("PlayerController created {}", this);
     }
 
     @FXML
@@ -142,11 +140,7 @@ public class PlayerController extends InjectableController<GridPane> {
         playQueueButton.setOnDragDropped(this::onDragDroppedOnPlayQueueButton);
         playQueueButton.setOnDragOver(this::onDragOverOnPlayQueueButton);
         playQueueButton.setOnDragExited(this::onDragExitedOnPlayQueueButton);
-
-        SwingUtilities.invokeLater(() -> {
-            mainWaveformPanel = waveformPaneFactory.create(520, 50);
-            waveformSwingNode.setContent(mainWaveformPanel);
-        });
+        LOG.debug("PlayerController initialized {}", this);
     }
 
     @Override
@@ -154,6 +148,7 @@ public class PlayerController extends InjectableController<GridPane> {
         subscribe(playQueueLayout.visibleProperty(), playQueueButton::setSelected);
         StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
         hidePlayQueue();
+        LOG.debug("PlayerController configured {}", this);
     }
 
     private void onDragDroppedOnPlayQueueButton(DragEvent event) {
@@ -219,7 +214,7 @@ public class PlayerController extends InjectableController<GridPane> {
         currentCover.setVisible(false);
         currentTimeLabel.setText("");
         remainingTimeLabel.setText("");
-        SwingUtilities.invokeLater(mainWaveformPanel::clear);
+        SwingUtilities.invokeLater(mainWaveformPane::clear);
     }
 
     public void setPlaying() {
@@ -254,7 +249,7 @@ public class PlayerController extends InjectableController<GridPane> {
         else if ("wav".equals(fileFormat) || "mp3".equals(fileFormat) || "m4a".equals(fileFormat))
             taskDemon.analyzeTrackWaveform(currentTrack);
 
-        SwingUtilities.invokeLater(() -> mainWaveformPanel.setTrack(currentTrack));
+        SwingUtilities.invokeLater(() -> mainWaveformPane.setTrack(currentTrack));
         songTitleLabel.textProperty().bind(currentTrack.nameProperty());
         artistAlbumLabel.textProperty().bind(
                 combine(currentTrack.artistProperty(), currentTrack.albumProperty(), (art, alb) -> art + " - " + alb));
@@ -270,7 +265,7 @@ public class PlayerController extends InjectableController<GridPane> {
     }
 
     public void setWaveform(Track track) {
-        mainWaveformPanel.setTrack(track);
+        mainWaveformPane.setTrack(track);
     }
 
     /**
@@ -318,9 +313,18 @@ public class PlayerController extends InjectableController<GridPane> {
         return formattedTime;
     }
 
+    @Inject (optional = true)
+    public void setWaveformPanel(WaveformPane waveformPane) {
+        SwingUtilities.invokeLater(() -> {
+            mainWaveformPane = waveformPane;
+            waveformSwingNode.setContent(mainWaveformPane);
+        });
+    }
+
     @Inject
     public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty emptyLibraryProperty) {
         this.emptyLibraryProperty = emptyLibraryProperty;
+        LOG.debug("emptyLibraryProperty setted ");
     }
 
     public StringProperty searchTextProperty() {

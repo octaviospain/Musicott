@@ -19,8 +19,10 @@
 
 package com.transgressoft.musicott;
 
+import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.*;
+import com.transgressoft.musicott.util.guice.modules.*;
 import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import javafx.event.*;
@@ -30,11 +32,12 @@ import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
 import javafx.stage.*;
+import javafx.stage.Stage;
 
 import java.io.*;
 
-import static com.transgressoft.musicott.MusicottApplication.*;
-import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.MainPreferences.*;
+import static com.transgressoft.musicott.model.CommonObject.*;
 
 /**
  * Preloader of the application. Shows the progress of the tasks of loading the tracks, the playlists, and the
@@ -46,8 +49,6 @@ import static com.transgressoft.musicott.view.MusicottLayout.*;
  */
 public class MainPreloader extends Preloader {
 
-    private final String defaultMusicottLocation = File.separator + "Music" + File.separator  + "Musicott";
-
     static final String FIRST_USE_EVENT = "first_use";
 
     private static final int SCENE_WIDTH = 450;
@@ -56,6 +57,9 @@ public class MainPreloader extends Preloader {
     private Stage preloaderStage;
     private Label infoLabel;
     private ProgressBar preloaderProgressBar;
+    private MainPreferences preferences;
+    private ErrorDialogController errorDialog;
+    private Injector injector = Guice.createInjector(new LoaderModule(), new HostServicesModule(getHostServices()));
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -65,7 +69,7 @@ public class MainPreloader extends Preloader {
         preloaderStage = primaryStage;
         preloaderStage.setOnCloseRequest(Event::consume);
         preloaderStage.setTitle("Musicott");
-        preloaderStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON)));
+        preloaderStage.getIcons().add(new Image(getClass().getResourceAsStream(MUSICOTT_APP_ICON.toString())));
         preloaderStage.setScene(new Scene(rootAnchorPane));
         preloaderStage.setResizable(false);
         preloaderStage.initStyle(StageStyle.UNDECORATED);
@@ -102,7 +106,7 @@ public class MainPreloader extends Preloader {
      * {@code ~/Music/Musicott}
      */
     private void openFirstUseDialog() {
-        ErrorDialogController errorDialog = injector.getInstance(ErrorDialogController.class);
+        errorDialog = injector.getInstance(ErrorDialogController.class);
         try {
             Stage promptStage = new Stage();
             Parent userFolderPromptPane = promptPane(promptStage);
@@ -120,7 +124,7 @@ public class MainPreloader extends Preloader {
     }
 
     private Parent promptPane(Stage promptStage) throws IOException {
-        MainPreferences preferences = injector.getInstance(MainPreferences.class);
+        preferences = injector.getInstance(MainPreferences.class);
 
         AnchorPane preloaderPane = FXMLLoader.load(getClass().getResource(Layout.PRELOADER_PROMPT.getPath()));
         Button openButton = (Button) preloaderPane.lookup("#openButton");
@@ -128,12 +132,12 @@ public class MainPreloader extends Preloader {
         TextField musicottFolderTextField = (TextField) preloaderPane.lookup("#musicottFolderTextField");
 
         String userHome = System.getProperty("user.home");
-        String userLocation = userHome + defaultMusicottLocation;
+        String userLocation = userHome + DEFAULT_MUSICOTT_LOCATION;
         musicottFolderTextField.setText(userLocation);
-        promptStage.setOnCloseRequest(event -> preferences.setMusicottUserFolder(userLocation));
+        promptStage.setOnCloseRequest(event -> setUserFolder(userLocation));
 
         okButton.setOnMouseClicked(event -> {
-            preferences.setMusicottUserFolder(musicottFolderTextField.getText());
+            setUserFolder(musicottFolderTextField.getText());
             promptStage.close();
         });
         openButton.setOnMouseClicked(event -> {
@@ -146,5 +150,15 @@ public class MainPreloader extends Preloader {
             }
         });
         return preloaderPane;
+    }
+
+    private void setUserFolder(String folder) {
+        try {
+            preferences.setMusicottUserFolder(folder);
+            preferences.resetTrackSequence();
+        }
+        catch (IOException e) {
+            errorDialog.show("Error loading prompt stage", "", e);
+        }
     }
 }

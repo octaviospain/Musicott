@@ -42,7 +42,7 @@ public abstract class FilesParseAction
     protected transient Map<Integer, Track> parsedTracks;
 
     @Inject
-    private ParseActionFactory parseActionFactory;
+    private transient ParseActionFactory parseActionFactory;
 
     public FilesParseAction(List<File> itemsToParse, BaseParseTask parentTask) {
         super(itemsToParse, parentTask);

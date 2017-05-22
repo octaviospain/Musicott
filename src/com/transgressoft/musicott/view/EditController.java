@@ -45,6 +45,7 @@ import java.util.Map.*;
 import java.util.stream.*;
 
 import static com.transgressoft.musicott.model.AlbumsLibrary.*;
+import static com.transgressoft.musicott.model.CommonObject.*;
 import static com.transgressoft.musicott.util.Utils.*;
 
 /**
@@ -54,7 +55,9 @@ import static com.transgressoft.musicott.util.Utils.*;
  * @version 0.10-b
  */
 @Singleton
-public class EditController extends InjectableController<AnchorPane> implements MusicottLayout {
+public class EditController extends InjectableController<AnchorPane> {
+
+    public static final Image DEFAULT_COVER_IMAGE = new Image(EditController.class.getResourceAsStream(DEFAULT_COVER.toString()));
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
@@ -104,7 +107,6 @@ public class EditController extends InjectableController<AnchorPane> implements 
     private Optional<String> newChangedAlbum = Optional.empty();
     private Set<String> changedAlbums = new HashSet<>();
 
-    @Inject
     private UpdateMusicLibraryTaskFactory updateTaskFactory;
 
     @FXML
@@ -128,7 +130,7 @@ public class EditController extends InjectableController<AnchorPane> implements 
 
         setNumericValidationFilters();
 
-        coverImage.setImage(DEFAULT_COVER);
+        coverImage.setImage(DEFAULT_COVER_IMAGE);
         coverImage.setCacheHint(CacheHint.QUALITY);
         coverImage.setOnDragOver(this::onDragOverCoverImage);
         coverImage.setOnDragExited(this::onDragExitedOutOfCoverImage);
@@ -140,6 +142,7 @@ public class EditController extends InjectableController<AnchorPane> implements 
 
         okButton.setOnAction(event -> editAndClose());
         cancelButton.setOnAction(event -> close());
+        LOG.debug("EditController initialized {}");
     }
 
     @Override
@@ -245,7 +248,7 @@ public class EditController extends InjectableController<AnchorPane> implements 
             if (commonCover.isPresent())
                 coverImage.setImage(new Image(new ByteArrayInputStream(commonCover.get())));
             else
-                coverImage.setImage(DEFAULT_COVER);
+                coverImage.setImage(DEFAULT_COVER_IMAGE);
         }
         event.consume();
     }
@@ -264,7 +267,7 @@ public class EditController extends InjectableController<AnchorPane> implements 
         newCoverImage = null;
         newChangedAlbum = Optional.empty();
         changedAlbums.clear();
-        coverImage.setImage(DEFAULT_COVER);
+        coverImage.setImage(DEFAULT_COVER_IMAGE);
         commonCover = commonCover();
         commonCover.ifPresent(coverBytes -> coverImage.setImage(new Image(new ByteArrayInputStream(coverBytes))));
 
@@ -470,5 +473,10 @@ public class EditController extends InjectableController<AnchorPane> implements 
         else
             commonString = "-";
         return commonString;
+    }
+
+    @Inject (optional = true)
+    public void setUpdateTaskFactory(UpdateMusicLibraryTaskFactory factory) {
+        updateTaskFactory = factory;
     }
 }

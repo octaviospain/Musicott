@@ -22,9 +22,11 @@ package com.transgressoft.musicott.util.guice.modules;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.services.*;
+import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import javafx.beans.property.*;
+import javafx.beans.value.*;
 
 import java.util.Map.*;
 
@@ -44,6 +46,16 @@ public class LoaderModule extends AbstractModule {
         install(new LoadActionFactoryModule());
         install(new WaveformTaskFactoryModule());
         install(new TrackFactoryModule());
+    }
+
+    @Provides
+    ChangeListener<String> providesUserFolderListener(TaskDemon taskDemon) {
+        return taskDemon.getUserFolderListener();
+    }
+
+    @Provides
+    ChangeListener<Number> providesPlayCountListener(TaskDemon taskDemon) {
+        return taskDemon.getIncrementPlayCountChangeListener();
     }
 
     @Provides

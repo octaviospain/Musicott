@@ -25,7 +25,7 @@ import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.custom.*;
 
 /**
- * Guice {@link Module} that configures the instantiation of {@link WaveformPanel}
+ * Guice {@link Module} that configures the instantiation of {@link WaveformPane}
  * classes using a {@link WaveformPaneFactory}.
  *
  * @author Octavio Calleya
@@ -38,7 +38,12 @@ public class WaveformPaneFactoryModule extends AbstractModule {
     @Override
     protected void configure() {
         Module waveformPaneFactoryModule = new FactoryModuleBuilder()
-                .implement(WaveformPanel.class, WaveformPanel.class).build(WaveformPaneFactory.class);
+                .implement(WaveformPane.class, WaveformPane.class).build(WaveformPaneFactory.class);
         install(waveformPaneFactoryModule);
+    }
+
+    @Provides
+    WaveformPane providesWaveformPane(WaveformPaneFactory factory) {
+        return factory.create(520, 50);
     }
 }

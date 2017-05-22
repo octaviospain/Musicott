@@ -19,7 +19,13 @@ directories:
 jdk:
   - oraclejdk8
 
-sudo: false
+sudo: required
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libavutil51
+  - sudo apt-get install -y libavformat53
+  - sudo apt-get install -y libavcodec53
 
 before_script:
   - "export DISPLAY=:99.0"

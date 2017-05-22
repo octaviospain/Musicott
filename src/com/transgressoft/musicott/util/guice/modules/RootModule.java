@@ -37,6 +37,8 @@ public class RootModule extends AbstractModule implements ControllerModule<RootC
     @Override
     protected void configure() {
         bind(InjectableController.class).annotatedWith(RootCtrl.class).toInstance(controller);
+        install(new MusicottModule());
+        install(new TrackSetAreaRowFactoryModule());
     }
 
     @Provides

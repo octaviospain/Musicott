@@ -50,14 +50,14 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
     private static final int MAX_PLAYLISTS_TO_PARSE_PER_ACTION = 250;
     private static final int NUMBER_OF_PARTITIONS = 2;
 
-    private final PlaylistsLibrary playlistsLibrary;
+    private final transient PlaylistsLibrary playlistsLibrary;
 
     @Inject
-    private PlaylistFactory playlistFactory;
+    private transient PlaylistFactory playlistFactory;
     @Inject
-    private ParseActionFactory parseActionFactory;
-    private NavigationController navigationController;
-    private Playlist ROOT_PLAYLIST;
+    private transient ParseActionFactory parseActionFactory;
+    private transient NavigationController navigationController;
+    private transient Playlist rootPlaylist;
     private transient Map<Integer, Track> itunesIdToMusicottTrackMap;
 
     /**
@@ -77,7 +77,7 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
         this.navigationController = navCtrl;
         this.playlistsLibrary = playlistsLibrary;
         this.itunesIdToMusicottTrackMap = itunesIdToMusicottTrackMap;
-        ROOT_PLAYLIST = rootPlaylist;
+        this.rootPlaylist = rootPlaylist;
     }
 
     @Override
@@ -90,8 +90,8 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
                 if (playlistsLibrary.containsPlaylistName(playlist.getName()))
                     addTracksToExistingPlaylist(playlist);
                 else {
-                    Platform.runLater(() -> navigationController.addNewPlaylist(ROOT_PLAYLIST, playlist, false));
-                    playlistsLibrary.addPlaylist(ROOT_PLAYLIST, playlist);
+                    Platform.runLater(() -> navigationController.addNewPlaylist(rootPlaylist, playlist, false));
+                    playlistsLibrary.addPlaylist(rootPlaylist, playlist);
                 }
             });
         }

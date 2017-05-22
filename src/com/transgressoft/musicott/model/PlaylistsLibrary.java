@@ -21,12 +21,11 @@ package com.transgressoft.musicott.model;
 
 import com.google.common.graph.*;
 import com.google.inject.*;
-import com.transgressoft.musicott.tasks.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
+import javafx.beans.value.*;
+import javafx.collections.*;
 
-import java.util.AbstractMap.*;
 import java.util.*;
-import java.util.Map.*;
 import java.util.stream.*;
 
 /**
@@ -39,20 +38,24 @@ import java.util.stream.*;
 @Singleton
 public class PlaylistsLibrary {
 
-    private final TaskDemon taskDemon;
-    private final TracksLibrary tracksLibrary;
-    private final Playlist ROOT_PLAYLIST;
+    private final Playlist rootPlaylist;
 
     private MutableGraph<Playlist> playlistsTree = GraphBuilder.directed().build();
-    private Random random = new Random();
+    private ListChangeListener<Integer> playlistTracksChangeListener;
+    private ChangeListener<String> playlistNameChangeListener;
 
     @Inject
-    public PlaylistsLibrary(@RootPlaylist Playlist rootPlaylist, TracksLibrary tracksLibrary,
-            TaskDemon taskDemon) {
-        this.tracksLibrary = tracksLibrary;
-        this.taskDemon = taskDemon;
-        ROOT_PLAYLIST = rootPlaylist;
-        playlistsTree.addNode(ROOT_PLAYLIST);
+    public PlaylistsLibrary(@RootPlaylist Playlist rootPlaylist) {
+        this.rootPlaylist = rootPlaylist;
+        playlistsTree.addNode(this.rootPlaylist);
+    }
+
+    public void setPlaylistTracksListener(ListChangeListener<Integer> listener) {
+        playlistTracksChangeListener = listener;
+    }
+
+    public void setPlaylistNameListener(ChangeListener<String> listener) {
+        playlistNameChangeListener = listener;
     }
 
     public synchronized Graph<Playlist> getPlaylistsTree() {
@@ -61,11 +64,16 @@ public class PlaylistsLibrary {
 
     public synchronized void addPlaylist(Playlist parent, Playlist playlist) {
         playlistsTree.putEdge(parent, playlist);
-        taskDemon.saveLibrary(false, false, true);
+        parent.addPlaylistChild(playlist);
+        playlist.setTracksListener(playlistTracksChangeListener);
+        playlist.nameProperty().addListener(playlistNameChangeListener);
+        if (! playlist.getContainedPlaylists().isEmpty())
+            addPlaylistsRecursively(playlist, playlist.getContainedPlaylists());
+        playlistNameChangeListener.changed(null, null, null);
     }
 
     public synchronized void addPlaylistToRoot(Playlist playlist) {
-        addPlaylist(ROOT_PLAYLIST, playlist);
+        addPlaylist(rootPlaylist, playlist);
     }
 
     public synchronized void addPlaylistsRecursively(Playlist parent, Set<Playlist> playlists) {
@@ -80,17 +88,19 @@ public class PlaylistsLibrary {
         Playlist parent = getParentPlaylist(playlist);
         playlistsTree.removeEdge(getParentPlaylist(playlist), playlist);
         playlistsTree.removeNode(playlist);
-        parent.getContainedPlaylists().remove(playlist);
-        taskDemon.saveLibrary(false, false, true);
+        parent.removePlaylistChild(playlist);
+        playlist.removeTracksListener(playlistTracksChangeListener);
+        playlist.nameProperty().removeListener(playlistNameChangeListener);
+        playlistNameChangeListener.changed(null, null, null);
     }
 
     public synchronized void movePlaylist(Playlist movedPlaylist, Playlist targetFolder) {
         Playlist parentOfMovedPlaylist = getParentPlaylist(movedPlaylist);
         playlistsTree.removeEdge(parentOfMovedPlaylist, movedPlaylist);
-        parentOfMovedPlaylist.getContainedPlaylists().remove(movedPlaylist);
+        parentOfMovedPlaylist.removePlaylistChild(movedPlaylist);
         playlistsTree.putEdge(targetFolder, movedPlaylist);
-        targetFolder.getContainedPlaylists().add(movedPlaylist);
-        taskDemon.saveLibrary(false, false, true);
+        targetFolder.addPlaylistChild(movedPlaylist);
+        playlistNameChangeListener.changed(null, null, null);
     }
 
     synchronized void removeFromPlaylists(Collection<Track> tracks) {
@@ -105,31 +115,11 @@ public class PlaylistsLibrary {
     }
 
     public synchronized boolean isEmpty() {
-        return playlistsTree.nodes().size() == 1  && playlistsTree.nodes().contains(ROOT_PLAYLIST);
+        return playlistsTree.nodes().size() == 1  && playlistsTree.nodes().contains(rootPlaylist);
     }
 
     synchronized void clearPlaylists() {
         playlistsTree.nodes().stream().filter(playlist -> ! playlist.isFolder()).forEach(Playlist::clearTracks);
-    }
-
-    public synchronized void showPlaylist(Playlist playlist) {
-        tracksLibrary.showingTrackEntriesProperty().clear();
-        List<Entry<Integer, Track>> tracksUnderPlaylist = getTrackEntriesUnderPlaylist(playlist);
-        tracksLibrary.showingTrackEntriesProperty().addAll(tracksUnderPlaylist);
-    }
-
-    private List<Entry<Integer, Track>> getTrackEntriesUnderPlaylist(Playlist playlist) {
-        return playlist.getTracks().stream()
-                       .map(i -> new SimpleEntry<>(i, tracksLibrary.getTrack(i).get()))
-                       .collect(Collectors.toList());
-    }
-
-    synchronized List<Track> getRandomSortedTrackList(Playlist playlist) {
-        List<Integer> randomSortedList = new ArrayList<>(playlist.getTracks());
-        Collections.shuffle(randomSortedList, random);
-        return randomSortedList.stream()
-                               .map(trackId -> tracksLibrary.getTrack(trackId).get())
-                               .collect(Collectors.toList());
     }
 
     /**

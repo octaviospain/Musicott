@@ -22,8 +22,10 @@ package com.transgressoft.musicott.tasks;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.*;
+import javafx.beans.value.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -72,10 +74,11 @@ public class TaskDemon {
 
 	public void shutDownTasks() {
 		parseExecutorService.shutdown();
+		saveMusicLibraryTask.finish();
 	}
 
 	/**
-	 * Creates a new {@link Thread} that analyzes and imports the contents
+	 * Creates a new {@link ParseTask} that analyzes and imports the contents
 	 * of an iTunes library to the application.
 	 *
 	 * @param itunesLibraryPath The path where the {@code iTunes Music Library.xml} file is located.
@@ -91,7 +94,7 @@ public class TaskDemon {
 	}
 
 	/**
-	 * Creates a new {@link Thread} that analyzes and import several audio files
+	 * Creates a new {@link ParseTask} that analyzes and import several audio files
 	 * to the application.
 	 *
 	 * @param filesToImport The {@link List} of the files to import.
@@ -138,18 +141,33 @@ public class TaskDemon {
 	}
 
 	@Inject
-	public void setTracksLibrary(TracksLibrary tracksLibrary) {
-		tracksLibrary.addListener(change -> saveLibrary(true, false, false));
+	public void setTracksLibraryChangeListener(TracksLibrary tracksLibrary) {
+		tracksLibrary.setListener(change -> saveLibrary(true, false, false));
 	}
 
 	@Inject
-	public void setWaveformsLibrary(WaveformsLibrary waveformsLibrary) {
-		waveformsLibrary.addListener(change -> saveLibrary(false, false, true));
+	public void setWaveformsLibraryChangeListener(WaveformsLibrary waveformsLibrary) {
+		waveformsLibrary.setListener(change -> saveLibrary(false, true, false));
 	}
 
-	public void setErrorDialog(ErrorDialogController errorDialog) {
+	@Inject
+	public void setPlaylistsLibraryChangeListener(PlaylistsLibrary playlistsLibrary) {
+		playlistsLibrary.setPlaylistTracksListener(change -> saveLibrary(false, false, true));
+		playlistsLibrary.setPlaylistNameListener((obs, o, n) -> saveLibrary(false, false, true));
+	}
+
+	@Inject (optional = true)
+	public void setErrorDialog(@ErrorCtrl	 ErrorDialogController errorDialog) {
 		this.errorDialog = errorDialog;
 		saveMusicLibraryTask.setErrorDialog(errorDialog);
 		waveformTask.setErrorDialog(errorDialog);
+	}
+
+	public ChangeListener<Number> getIncrementPlayCountChangeListener() {
+		return (obs, o, n) -> saveLibrary(true, false, false);
+	}
+
+	public ChangeListener<String> getUserFolderListener() {
+		return (obs, o, n) -> saveLibrary(true, true, true);
 	}
 }

@@ -34,6 +34,7 @@ import javafx.collections.transformation.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
+import org.slf4j.*;
 
 import java.util.*;
 import java.util.Map.*;
@@ -52,6 +53,8 @@ import static org.fxmisc.easybind.EasyBind.*;
  */
 @Singleton
 public class ArtistsViewController extends InjectableController<SplitPane> {
+
+    private final Logger LOG  = LoggerFactory.getLogger(getClass().getName());
 
     private final MusicLibrary musicLibrary;
     private final ArtistsLibrary artistsLibrary;
@@ -82,6 +85,7 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
     public ArtistsViewController(MusicLibrary musicLibrary, ArtistsLibrary artistsLibrary) {
         this.musicLibrary = musicLibrary;
         this.artistsLibrary = artistsLibrary;
+        LOG.debug("ArtistsViewController created {}", this);
     }
 
     @FXML
@@ -126,6 +130,7 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
         FilteredList<String> filteredArtists = new FilteredList<>(artistsListProperty, artist -> true);
 
         subscribe(searchTextProperty, query -> filteredArtists.setPredicate(filterArtistsByQuery(query)));
+        LOG.debug("Binded artistsListProperty: filtered with searchTextProperty");
         return filteredArtists;
     }
 
@@ -316,10 +321,16 @@ public class ArtistsViewController extends InjectableController<SplitPane> {
     @Inject
     public void setSearchTextProperty(@SearchTextProperty StringProperty p) {
         this.searchTextProperty = p;
+        if (artistsListProperty != null &&  artistsListView != null)
+            artistsListView.setItems(bindedToSearchFieldArtists());
+        LOG.debug("searchTextProperty setted");
     }
 
     @Inject
     public void setArtistsLibrary(@ArtistsProperty ListProperty<String> p) {
         this.artistsListProperty = p;
+        if (searchTextProperty != null &&  artistsListView != null)
+            artistsListView.setItems(bindedToSearchFieldArtists());
+        LOG.debug("artistsProperty setted");
     }
 }

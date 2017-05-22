@@ -47,9 +47,9 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
+import static com.transgressoft.musicott.model.CommonObject.*;
 import static com.transgressoft.musicott.model.NavigationMode.*;
 import static com.transgressoft.musicott.util.Utils.*;
-import static com.transgressoft.musicott.view.MusicottLayout.*;
 import static javafx.scene.input.KeyCombination.*;
 import static org.fxmisc.easybind.EasyBind.*;
 
@@ -63,14 +63,14 @@ import static org.fxmisc.easybind.EasyBind.*;
 @Singleton
 public class RootMenuBarController extends InjectableController<MenuBar> {
 
-	private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-	private static final String MUSICOTT_GITHUB_LINK = "https://github.com/octaviospain/Musicott/";
-	private static final String ABOUT_MUSICOTT_FIRST_LINE = " Version 0.10-b\n\n Copyright © 2015-2017 Octavio Calleya.";
-	private static final String ABOUT_MUSICOTT_SECOND_LINE = " Licensed under GNU GPLv3. This product includes\n" + " " +
-																"software developed by other open source projects.";
+    private static final String MUSICOTT_GITHUB_LINK = "https://github.com/octaviospain/Musicott/";
+    private static final String ABOUT_MUSICOTT_FIRST_LINE = " Version 0.10-b\n\n Copyright © 2015-2017 Octavio Calleya.";
+    private static final String ABOUT_MUSICOTT_SECOND_LINE = " Licensed under GNU GPLv3. This product includes\n" + " " +
+            "software developed by other open source projects.";
 
-    private final Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO));
+    private final Image musicottLogo = new Image(getClass().getResourceAsStream(MUSICOTT_ABOUT_LOGO.toString()));
     private final ImageView musicottLogoImageView = new ImageView(musicottLogo);
 
     private EditController editController;
@@ -92,7 +92,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
 
     @FXML
     private MenuBar rootMenuBar;
-	@FXML
+    @FXML
     private Menu fileMenu;
     @FXML
     private MenuItem openFileMenuItem;
@@ -148,7 +148,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     private Injector injector;
     private ReadOnlyObjectProperty<NavigationMode> selectedMenuProperty;
     private ReadOnlyBooleanProperty editingProperty;
-    private ReadOnlyBooleanProperty showingNavigationPanePropery;
+    private ReadOnlyBooleanProperty showingNavigationPaneProperty;
     private ReadOnlyBooleanProperty showingTableInfoPaneProperty;
 
     @Inject
@@ -159,12 +159,14 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
         this.hostServices = hostServices;
         this.taskDemon = taskDemon;
         this.playerFacade = playerFacade;
+        LOG.debug("RootMenuBarController created {} ", this);
     }
 
     @FXML
     public void initialize() {
         setAboutMenuActions();
         setFileMenuActions();
+        LOG.debug("RootMenuBarController initialized {} ", this);
     }
 
     @Override
@@ -176,7 +178,8 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
         bindShowHideTableInfo();
         bindEditingProperty();
         bindShowingNavigationPane();
-            bindShowingTableInfoPane();
+        bindShowingTableInfoPane();
+        LOG.debug("RootMenuBarController configured {} ", this);
     }
 
     private void bindShowHideTableInfo() {
@@ -194,9 +197,9 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     }
 
     private void bindShowingNavigationPane() {
-        if (showingNavigationPanePropery != null && showHideNavigationPaneMenuItem != null)
+        if (showingNavigationPaneProperty != null && showHideNavigationPaneMenuItem != null)
             showHideNavigationPaneMenuItem.textProperty().bind(
-                    map(showingNavigationPanePropery,
+                    map(showingNavigationPaneProperty,
                         showing -> showing ? "Hide navigation pane" : "Show navigation pane"));
     }
 
@@ -231,7 +234,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
         menuToolkit.setGlobalMenuBar(rootMenuBar);
 
         setAccelerators(KeyCodeCombination.META_DOWN);
-        LOG.debug("OS X native menubar created");
+        LOG.debug("OS X native menu bar created");
     }
 
     /**
@@ -315,7 +318,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
                 Entry<Integer, Track> currentEntry = new SimpleEntry<>(currentTrackId, track);
                 rootController.selectTrack(currentEntry);
             });
-            LOG.debug("Current track in the player selected in the table");
+            LOG.trace("Current track in the player selected in the table");
         });
     }
 
@@ -337,7 +340,6 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     private void setAboutMenuActions() {
         aboutMenuItem.setOnAction(e -> {
             Alert alert = createAlert("About Musicott", " ", "", AlertType.INFORMATION, stage);
-            alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
             Label aboutLabel1 = new Label(ABOUT_MUSICOTT_FIRST_LINE);
             Label aboutLabel2 = new Label(ABOUT_MUSICOTT_SECOND_LINE);
             Hyperlink githubLink = new Hyperlink(MUSICOTT_GITHUB_LINK);
@@ -347,7 +349,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
             alert.getDialogPane().contentProperty().set(flowPane);
             alert.setGraphic(musicottLogoImageView);
             alert.showAndWait();
-            LOG.debug("Showing about window");
+            LOG.trace("Showing about window");
         });
     }
 
@@ -375,7 +377,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
             navigationController.setStatusMessage("");
             navigationController.setStatusProgress(0);
         });
-        LOG.debug("Counting files to import {}", extensions);
+        LOG.trace("Counting files to import {}", extensions);
         List<File> files = Utils.getAllFilesInFolder(folder, filter, 0);
         if (files.isEmpty())
             showNoFilesToImportAlert();
@@ -385,7 +387,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
 
     private void showNoFilesToImportAlert() {
         String alertContentText = "There are no valid files to import in the selected folder. " + "Change the folder " +
-				"" + "or the import options in preferences";
+                "" + "or the import options in preferences";
         Platform.runLater(() -> {
             Alert alert = createAlert("Import", "No files", alertContentText, AlertType.WARNING, stage);
             alert.showAndWait();
@@ -396,7 +398,6 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
         String alertContentText = "Import " + filesToImport.size() + " files?";
         Platform.runLater(() -> {
             Alert alert = createAlert("Import", alertContentText, "", AlertType.CONFIRMATION, stage);
-            alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
             LOG.debug("Showing confirmation alert to import {} files", filesToImport.size());
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get().equals(ButtonType.OK)) {
@@ -434,74 +435,97 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     @Inject (optional = true)
     public void setRootController(@RootCtrl RootController c) {
         rootController = c;
+        LOG.debug("rootController setted");
     }
 
     @Inject (optional = true)
     public void setEditController(@EditCtrl EditController c) {
         editController = c;
+        LOG.debug("editController setted");
     }
 
     @Inject
     public void setNavigationController(@NavigationCtrl NavigationController c) {
         navigationController = c;
+        LOG.debug("navigationController setted");
     }
 
     @Inject
     public void setPlayerController(@PlayerCtrl PlayerController c) {
         playerController = c;
+        LOG.debug("playerController setted");
     }
 
     @Inject
     public void setPreferencesController(@PrefCtrl PreferencesController c) {
         preferencesController = c;
+        LOG.debug("preferencesController setted");
     }
 
     @Inject
     public void setEmptyLibraryProperty(@EmptyLibraryProperty ReadOnlyBooleanProperty p) {
         this.emptyLibraryProperty = p;
+        LOG.debug("emptyLibraryProperty setted");
+        if (playPauseMenuItem != null)
+            playPauseMenuItem.disableProperty().bind(emptyLibraryProperty);
     }
 
     @Inject
     public void setSearchFieldFocusedProperty(@SearchingProperty ReadOnlyBooleanProperty p) {
         searchingProperty = p;
+        LOG.debug("searchingProperty setted");
+        bindEditingProperty();
     }
 
     @Inject
     public void setPlayPauseProperty(@PlayPauseProperty BooleanProperty p) {
         playPauseProperty = p;
+        LOG.debug("playPauseProperty setted");
+        if (playPauseMenuItem != null)
+            playPauseMenuItem.textProperty().bind(map(playPauseProperty, play -> play ? "Pause" : "Play"));
     }
 
     @Inject
     public void setPrevButtonDisabledProperty(@PreviousButtonDisabledProperty ReadOnlyBooleanProperty p) {
         previousButtonDisabledProperty = p;
+        LOG.debug("previousButtonDisabledProperty setted");
+        if (previousMenuItem != null)
+            previousMenuItem.disableProperty().bind(previousButtonDisabledProperty);
     }
 
     @Inject
     public void setNextButtonDisabledProperty(@NextButtonDisabledProperty ReadOnlyBooleanProperty p) {
         nextButtonDisabledProperty = p;
+        LOG.debug("nextButtonDisabledProperty setted");
+        if (nextMenuItem != null)
+            nextMenuItem.disableProperty().bind(nextButtonDisabledProperty);
     }
 
     @Inject (optional = true)
     public void setSelectedMenuProperty(@SelectedMenuProperty ReadOnlyObjectProperty<NavigationMode> p) {
         selectedMenuProperty = p;
+        LOG.debug("selectedMenuProperty setted");
         bindShowHideTableInfo();
     }
 
     @Inject (optional = true)
     public void setShowingNavigationPaneProperty(@ShowingNavigationPaneProperty ReadOnlyBooleanProperty property) {
-        showingNavigationPanePropery = property;
+        showingNavigationPaneProperty = property;
+        LOG.debug("showingNavigationPaneProperty setted");
         bindShowingNavigationPane();
     }
 
     @Inject (optional = true)
     public void setShowingTableInfoPaneProperty(@ShowingTableInfoPaneProperty ReadOnlyBooleanProperty property) {
         showingTableInfoPaneProperty = property;
+        LOG.debug("showingTableInfoPaneProperty setted");
         bindShowingTableInfoPane();
     }
 
     @Inject (optional = true)
     public void setShowingEditingProperty(@ShowingEditing ReadOnlyBooleanProperty property) {
         editingProperty = property;
+        LOG.debug("editingProperty setted");
         bindEditingProperty();
     }
 }

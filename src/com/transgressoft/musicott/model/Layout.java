@@ -19,8 +19,12 @@
 
 package com.transgressoft.musicott.model;
 
+import com.google.common.collect.*;
 import com.transgressoft.musicott.util.guice.modules.*;
-import com.transgressoft.musicott.view.*;
+
+import java.util.*;
+
+import static com.transgressoft.musicott.model.CommonObject.*;
 
 /**
  * Defines the different views with the respective paths and {@link ControllerModule} classes.
@@ -29,7 +33,7 @@ import com.transgressoft.musicott.view.*;
  * @version 0.10.1-b
  * @since 0.10.1-b
  */
-public enum Layout implements MusicottLayout {
+public enum Layout {
 
     ROOT (LAYOUTS_PATH + "RootLayout.fxml", RootModule.class),
     PRELOADER (LAYOUTS_PATH + "PreloaderLayout.fxml", null),
@@ -58,5 +62,24 @@ public enum Layout implements MusicottLayout {
 
     public Class<? extends ControllerModule> getControllerModule() {
         return controllerModule;
+    }
+
+    public static boolean isIndependentLayout(Layout layout) {
+        return layout == ERROR_DIALOG || layout == PREFERENCES || layout == PROGRESS_BAR || layout == EDITION;
+    }
+
+    public static List<Layout> getLayoutsInLoadingOrder() {
+        return ImmutableList.<Layout>builder()
+                           .add(ERROR_DIALOG)
+                           .add(PREFERENCES)
+                           .add(PROGRESS_BAR)
+                           .add(PLAY_QUEUE)
+                           .add(PLAYER)
+                           .add(ARTISTS)
+                           .add(NAVIGATION)
+                           .add(MENU_BAR)
+                           .add(EDITION)
+                           .add(ROOT)
+                           .build();
     }
 }

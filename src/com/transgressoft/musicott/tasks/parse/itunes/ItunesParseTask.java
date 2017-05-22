@@ -45,7 +45,7 @@ import java.util.concurrent.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.model.CommonObject.*;
 
 /**
  * Extends from {@link BaseParseTask} to perform the operation of import a
@@ -188,7 +188,7 @@ public class ItunesParseTask extends BaseParseTask {
         String headerText = "Import " + itunesTracksString + " songs " + playlistsAlertText + "from itunes?";
 
         Alert alert = new Alert(AlertType.CONFIRMATION);
-        alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE).toExternalForm());
+        alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE.toString()).toExternalForm());
         alert.setTitle("Import");
         alert.initModality(Modality.APPLICATION_MODAL);
         alert.setHeaderText(headerText);

@@ -43,7 +43,7 @@ import java.util.Map.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.model.CommonObject.*;
 import static com.transgressoft.musicott.view.custom.TrackTableViewContextMenu.*;
 import static javafx.scene.media.MediaPlayer.Status.*;
 import static org.fxmisc.easybind.EasyBind.*;
@@ -105,7 +105,7 @@ public class TrackTableView extends TableView<Entry<Integer, Track>> {
         getSortOrder().add(dateAddedCol);
         setRowFactory(tableView -> injector.getInstance(TrackTableRow.class));
         addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
-        getStylesheets().add(getClass().getResource(TRACK_TABLE_STYLE).toExternalForm());
+        getStylesheets().add(getClass().getResource(TRACK_TABLE_STYLE.toString()).toExternalForm());
     }
 
     private void initColumns() {

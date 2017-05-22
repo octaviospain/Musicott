@@ -33,15 +33,14 @@ import com.transgressoft.musicott.view.*;
 import javafx.application.*;
 import javafx.scene.*;
 import javafx.stage.Stage;
+import org.jooq.lambda.*;
 import org.slf4j.*;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.*;
 
 import static com.transgressoft.musicott.MainPreloader.*;
-import static com.transgressoft.musicott.model.Layout.*;
 
 /**
  * Creates and launches Musicott. The creation of the application follows this steps:
@@ -61,19 +60,20 @@ public class MusicottApplication extends Application implements InjectedApplicat
 
     private static final String CONFIG_FILE = "resources/config/config.properties";
 
-    static Injector injector = Guice.createInjector(new LoaderModule());
-
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
+    private Stage primaryStage;
     private TaskDemon taskDemon;
+    private Injector injector = Guice.createInjector(new LoaderModule());
+    private List<ControllerModule<? extends InjectableController>> modules = new ArrayList<>();
 
     public static void main(String[] args) {
-        Utils.initializeLogger();
         LauncherImpl.launchApplication(MusicottApplication.class, MainPreloader.class, args);
     }
 
     @Override
     public void init() throws Exception {
+        Utils.initializeLogger();
         injector = injector.createChildInjector(new HostServicesModule(getHostServices()));
         MainPreferences preferences = injector.getInstance(MainPreferences.class);
         String applicationFolder = preferences.getMusicottUserFolder();
@@ -129,35 +129,13 @@ public class MusicottApplication extends Application implements InjectedApplicat
     }
 
     @Override
-    public void start(Stage primaryStage) throws IOException, ReflectiveOperationException {
-        ControllerModule<ErrorDialogController> errorModule = loadControllerModule(ERROR_DIALOG);
-        taskDemon.setErrorDialog(errorModule.providesController());
-
-        ControllerModule<PreferencesController> prefsModule = loadControllerModule(PREFERENCES);
-        ControllerModule<SimpleProgressBarController> progressModule = loadControllerModule(PROGRESS_BAR);
-        ControllerModule<PlayQueueController> playQueueModule = loadControllerModule(PLAY_QUEUE, primaryStage);
-        injector = injector.createChildInjector(new WaveformPaneFactoryModule());
-
-        ControllerModule<PlayerController> playerModule = loadControllerModule(PLAYER, primaryStage);
-        injector = injector.createChildInjector(playerModule);
-
-        ControllerModule<ArtistsViewController> artistsModule = loadControllerModule(ARTISTS, primaryStage);
-        ControllerModule<NavigationController> navigationModule = loadControllerModule(NAVIGATION, primaryStage);
-        injector = injector.createChildInjector(errorModule, prefsModule, progressModule, playQueueModule,
-                                                artistsModule, navigationModule);
-
-        ControllerModule<RootMenuBarController> menuBarModule = loadControllerModule(MENU_BAR, primaryStage);
-        injector = injector.createChildInjector(menuBarModule);
-
-        ControllerModule<RootController> rootModule = loadControllerModule(ROOT, primaryStage);
-        RootController rootController = rootModule.providesController();
-        injector = injector.createChildInjector(rootModule, new MusicottModule());
-
-        ControllerModule<EditController> editModule = loadControllerModule(EDITION);
-        injector = injector.createChildInjector(editModule, new TrackSetAreaRowFactoryModule());
-
-        wireViewsAndSingletons(artistsModule, menuBarModule, navigationModule, rootModule);
-
+    public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+        Layout.getLayoutsInLoadingOrder().forEach(Unchecked.consumer(this::loadLayoutsInOrder));
+        wireViewsAndSingletons(modules);
+        PreferencesController preferencesController = injector.getInstance(PreferencesController.class);
+        preferencesController.checkLastFmLoginAtStart();
+        RootController rootController = injector.getInstance(RootController.class);
         primaryStage.setScene(new Scene(rootController.getRoot()));
         primaryStage.setOnCloseRequest(event -> {
             LOG.info("Exiting Musicott");
@@ -167,14 +145,26 @@ public class MusicottApplication extends Application implements InjectedApplicat
         primaryStage.show();
     }
 
-    private void wireViewsAndSingletons(ControllerModule... modules) {
+    private void loadLayoutsInOrder(Layout layout) throws IOException, ReflectiveOperationException {
+        ControllerModule<?> loadedModule;
+        if (Layout.isIndependentLayout(layout))
+            loadedModule = loadControllerModule(layout);
+        else
+            loadedModule = loadControllerModule(layout, primaryStage);
+        modules.add(loadedModule);
+        injector = injector.createChildInjector(loadedModule);
+    }
+
+    private void wireViewsAndSingletons(Collection<ControllerModule<?>> modules) {
         PlayerFacade player = injector.getInstance(PlayerFacade.class);
+        ServiceDemon serviceDemon = injector.getInstance(ServiceDemon.class);
         MusicLibrary musicLibrary = injector.getInstance(MusicLibrary.class);
         TracksLibrary tracksLibrary = injector.getInstance(TracksLibrary.class);
         injector.injectMembers(player);
+        injector.injectMembers(serviceDemon);
         injector.injectMembers(musicLibrary);
         injector.injectMembers(tracksLibrary);
         injector.injectMembers(taskDemon);
-        Stream.of(modules).forEach(m -> injector.injectMembers(m.providesController()));
+        modules.forEach(m -> injector.injectMembers(m.providesController()));
     }
 }

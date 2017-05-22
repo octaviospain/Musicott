@@ -82,6 +82,7 @@ public class PlayQueueController extends InjectableController<AnchorPane> {
             else
                 showPlayQueue();
         });
+        LOG.debug("PlayQueueController initialized {}", this);
     }
 
     private void clearHistoryQueue() {
@@ -115,6 +116,7 @@ public class PlayQueueController extends InjectableController<AnchorPane> {
     @Inject
     public void setPlayer(PlayerFacade player) {
         this.player = player;
+        LOG.debug("playerFacade setted");
     }
 
     /**

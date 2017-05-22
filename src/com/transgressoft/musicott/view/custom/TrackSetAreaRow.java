@@ -38,8 +38,8 @@ import java.util.*;
 import java.util.Map.*;
 import java.util.stream.*;
 
+import static com.transgressoft.musicott.model.CommonObject.*;
 import static com.transgressoft.musicott.util.Utils.*;
-import static com.transgressoft.musicott.view.MusicottLayout.*;
 import static com.transgressoft.musicott.view.custom.TrackTableView.*;
 import static com.transgressoft.musicott.view.custom.TrackTableViewContextMenu.*;
 import static javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY;
@@ -96,7 +96,7 @@ public class TrackSetAreaRow extends HBox {
         placeRightVBox();
         setPrefWidth(USE_COMPUTED_SIZE);
         setPrefHeight(USE_COMPUTED_SIZE);
-        getStylesheets().add(getClass().getResource(BASE_STYLE).toExternalForm());
+        getStylesheets().add(getClass().getResource(BASE_STYLE.toString()).toExternalForm());
         tracksTableView.setItems(containedTracks);
         tracksTableView.sort();
         updateRelatedArtistsLabel();
@@ -217,7 +217,8 @@ public class TrackSetAreaRow extends HBox {
         tracksTableView.setPrefWidth(USE_COMPUTED_SIZE);
         tracksTableView.setPrefHeight(USE_COMPUTED_SIZE);
         tracksTableView.setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
-        tracksTableView.getStylesheets().add(getClass().getResource(TRACKAREASET_TRACK_TABLE_STYLE).toExternalForm());
+        String trackStyle = getClass().getResource(TRACKAREASET_TRACK_TABLE_STYLE.toString()).toExternalForm();
+        tracksTableView.getStylesheets().add(trackStyle);
         tracksTableView.getStyleClass().add("no-header");
         tracksTableView.setRowFactory(tableView -> injector.getInstance(TrackTableRow.class));
         tracksTableView.addEventHandler(KeyEvent.KEY_PRESSED, KEY_PRESSED_ON_TRACK_TABLE_HANDLER);
@@ -325,7 +326,7 @@ public class TrackSetAreaRow extends HBox {
         return album;
     }
 
-    @Inject
+    @Inject (optional = true)
     public void setContextMenu(TrackTableViewContextMenu trackTableContextMenu) {
         tracksTableView.setContextMenu(trackTableContextMenu);
         tracksTableView.addEventHandler(

@@ -28,6 +28,7 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
+import javafx.beans.value.*;
 import javafx.collections.*;
 import org.slf4j.*;
 
@@ -38,7 +39,7 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-import static com.transgressoft.musicott.view.MusicottLayout.*;
+import static com.transgressoft.musicott.model.CommonObject.*;
 
 /**
  * This class extends from {@link BaseLoadAction} in order to perform the loading
@@ -56,13 +57,15 @@ public class TracksLoadAction extends BaseLoadAction {
     private final transient Logger LOG = LoggerFactory.getLogger(getClass().getName());
     private transient List<Track> tracksToSetProperties;
     private int totalTracks;
-    private TracksLibrary tracksLibrary;
+    private transient TracksLibrary tracksLibrary;
     @Inject
-    private LoadActionFactory loadActionFactory;
+    private transient LoadActionFactory loadActionFactory;
+    @Inject
+    private ChangeListener<Number> playCountListener;
 
     @Inject
-    public TracksLoadAction(TracksLibrary tracksLibrary, @Assisted @Nullable List<Track> tracks, @Assisted int totalTracks,
-            @Assisted String applicationFolder, @Assisted Application application) {
+    public TracksLoadAction(TracksLibrary tracksLibrary, @Assisted @Nullable List<Track> tracks,
+            @Assisted int totalTracks, @Assisted String applicationFolder, @Assisted Application application) {
         super(applicationFolder, application);
         tracksToSetProperties = tracks;
         this.totalTracks = totalTracks;
@@ -101,7 +104,7 @@ public class TracksLoadAction extends BaseLoadAction {
      */
     private void loadTracks() {
         notifyPreloader(- 1, 0, "Loading tracks...");
-        File tracksFile = new File(applicationFolder + File.separator + TRACKS_PERSISTENCE_FILE);
+        File tracksFile = new File(applicationFolder, TRACKS_FILE.toString());
         ObservableMap<Integer, Track> tracksMap;
         if (tracksFile.exists())
             tracksMap = parseTracksFromJsonFile(tracksFile);
@@ -132,7 +135,6 @@ public class TracksLoadAction extends BaseLoadAction {
         catch (IOException exception) {
             tracksMap = FXCollections.observableHashMap();
             LOG.error("Error loading track library: {}", exception.getMessage(), exception);
-            // TODO improve the error handling to propagate this and show when the stage is created
         }
         return tracksMap;
     }
@@ -165,8 +167,8 @@ public class TracksLoadAction extends BaseLoadAction {
         catch (IOException exception) {
             track.isPlayableProperty().setValue(false);
             LOG.error("Track not found when loading data: {}", exception.getMessage(), exception);
-            // TODO improve the error handling informing the user when the stage is created
         }
+        track.playCountProperty().addListener(playCountListener);
         notifyPreloader(tracksStep.incrementAndGet(), totalTracks, "Loading tracks...");
     }
 }

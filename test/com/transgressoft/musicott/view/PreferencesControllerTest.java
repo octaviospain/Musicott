@@ -83,6 +83,7 @@ public class PreferencesControllerTest extends JavaFxTestBase<PreferencesControl
         }
 
         @Provides
+        @ErrorCtrl
         ErrorDialogController providesErrorDialogMock() {
             return errorDialogMock;
         }

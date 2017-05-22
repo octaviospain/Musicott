@@ -118,6 +118,13 @@
         </dependency>
 
         <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>3.0.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.jfxtras</groupId>
             <artifactId>openjfx-monocle</artifactId>
             <version>1.8.0_20</version>
@@ -170,6 +177,13 @@
             <artifactId>testfx-junit</artifactId>
             <version>4.0.6-alpha</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jool</artifactId>
+            <version>0.9.12</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -238,7 +252,7 @@
         <dependency>
             <groupId>de.codecentric.centerdevice</groupId>
             <artifactId>centerdevice-nsmenufx</artifactId>
-            <version>2.1.4</version>
+            <version>2.1.5</version>
             <scope>compile</scope>
         </dependency>
 
