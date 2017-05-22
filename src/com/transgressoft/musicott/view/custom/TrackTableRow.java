@@ -47,7 +47,8 @@ import static com.transgressoft.musicott.model.CommonObject.*;
 public class TrackTableRow extends TableRow<Entry<Integer, Track>> {
 
     public static final DataFormat TRACK_IDS_MIME_TYPE = new DataFormat("application/x-java-tracks-id");
-    public static Image DRAGBOARD_ICON = new Image(TrackTableRow.class.getResourceAsStream(DRAGBOARD_ICON_PATH.toString()));
+
+    static final Image DRAGBOARD_ICON = new Image(TrackTableRow.class.getResourceAsStream(DRAGBOARD_ICON_PATH.toString()));
 
     private final PlayerFacade playerFacade;
     private RootController rootController;
