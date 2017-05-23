@@ -28,7 +28,6 @@ import com.transgressoft.musicott.view.custom.*;
 import javafx.application.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
-import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
@@ -62,18 +61,14 @@ public class ArtistsViewControllerTest extends JavaFxTestBase<ArtistsViewControl
     @Override
     @Start
     public void start(Stage stage) throws Exception {
+        this.stage = stage;
         artistsListProperty.setValue(artists);
         doNothing().when(musicLibraryMock).playRandomArtistPlaylist(anyString());
         doNothing().when(musicLibraryMock).showArtist(anyString());
         trackTableViewContextMenuMock = mock(TrackTableViewContextMenu.class);
 
         injector = injector.createChildInjector(new TestModule());
-
         loadTestController(Layout.ARTISTS);
-        stage.setScene(new Scene(controller.getRoot()));
-
-        injector = injector.createChildInjector(module);
-
         stage.show();
     }
 

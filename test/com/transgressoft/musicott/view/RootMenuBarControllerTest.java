@@ -24,7 +24,6 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import javafx.beans.property.*;
-import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
@@ -55,15 +54,12 @@ public class RootMenuBarControllerTest extends JavaFxTestBase<RootMenuBarControl
     @Override
     @Start
     public void start(Stage stage) throws Exception {
+        this.stage = stage;
         when(editControllerMock.showingProperty()).thenReturn(falseProperty);
 
         injector = injector.createChildInjector(new TestModule());
 
         loadTestController(MENU_BAR);
-        stage.setScene(new Scene(controller.getRoot()));
-
-        injector = injector.createChildInjector(module);
-
         stage.show();
     }
 

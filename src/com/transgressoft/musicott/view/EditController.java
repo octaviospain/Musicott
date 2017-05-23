@@ -147,11 +147,11 @@ public class EditController extends InjectableController<AnchorPane> {
 
     @Override
     public void setStage(Stage stage) {
-        super.setStage(stage);
+        this.stage = stage;
         stage.setTitle("Edit");
         stage.setResizable(false);
+        stage.initModality(Modality.APPLICATION_MODAL);
         stage.setOnCloseRequest(e -> close());
-        stage.setOnShowing(e -> setEditFieldsValues());
     }
 
     /**
@@ -162,18 +162,24 @@ public class EditController extends InjectableController<AnchorPane> {
      */
     public void editTracks(List<Track> trackSelection) {
         this.trackSelection = trackSelection;
-        if (trackSelection.size() > 1) {
-            String alertHeader = "Are you sure you want to edit multiple files?";
-            Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION, stage);
-            Optional<ButtonType> result = alert.showAndWait();
+        if (! trackSelection.isEmpty()) {
+            if (trackSelection.size() > 1) {
+                String alertHeader = "Are you sure you want to edit multiple files?";
+                Alert alert = createAlert("", alertHeader, "", AlertType.CONFIRMATION, stage);
+                Optional<ButtonType> result = alert.showAndWait();
 
-            if (result.isPresent() && result.get().getButtonData().isDefaultButton())
+                if (result.isPresent() && result.get().getButtonData().isDefaultButton()) {
+                    setEditFieldsValues();
+                    stage.showAndWait();
+                }
+                else
+                    alert.close();
+            }
+            else {
+                setEditFieldsValues();
                 stage.showAndWait();
-            else
-                alert.close();
+            }
         }
-        else
-            stage.showAndWait();
     }
 
     private void setNumericValidationFilters() {

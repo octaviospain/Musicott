@@ -65,12 +65,6 @@ public class MainPreferences {
     private static final String ITUNES_IMPORT_HOLD_PLAYCOUNT = "itunes_import_hold_playcount";
 
     /**
-     * Flag that indicates of the iTunes playlists must be imported
-     * too when importing from a iTunes library.
-     */
-    private static final String ITUNES_IMPORT_PLAYLISTS = "itunes_import_playlists";
-
-    /**
      * The flag to choose between parse the metadata of the imported files,
      * or the iTunes data saved in the library, when importing from a iTunes library.
      */
@@ -151,14 +145,6 @@ public class MainPreferences {
 
     public void setItunesImportHoldPlaycount(boolean holdPlayCount) {
         preferences.putBoolean(ITUNES_IMPORT_HOLD_PLAYCOUNT, holdPlayCount);
-    }
-
-    public boolean getItunesImportPlaylists() {
-        return preferences.getBoolean(ITUNES_IMPORT_PLAYLISTS, false);
-    }
-
-    public void setItunesImportPlaylists(boolean importPlaylists) {
-        preferences.putBoolean(ITUNES_IMPORT_PLAYLISTS, importPlaylists);
     }
 
     public Set<String> getImportFilterExtensions() {

@@ -26,7 +26,6 @@ import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
-import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
@@ -60,6 +59,7 @@ public class NavigationControllerTest extends JavaFxTestBase<NavigationControlle
     @Override
     @Start
     public void start(Stage stage) throws Exception {
+        this.stage = stage;
         Playlist rootPlaylist = new Playlist(tracksLibraryMock, "ROOT", true);
         MutableGraph<Playlist> graph = GraphBuilder.directed().build();
         graph.addNode(rootPlaylist);
@@ -67,12 +67,7 @@ public class NavigationControllerTest extends JavaFxTestBase<NavigationControlle
         playlistTreeView = new PlaylistTreeView(playlistsLibraryMock, tracksLibraryMock, rootPlaylist, injector);
 
         injector = injector.createChildInjector(new TestModule());
-
         loadTestController(Layout.NAVIGATION);
-        stage.setScene(new Scene(controller.getRoot()));
-
-        injector = injector.createChildInjector(module);
-
         stage.show();
     }
 

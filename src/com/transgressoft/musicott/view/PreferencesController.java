@@ -86,8 +86,6 @@ public class PreferencesController extends InjectableController<AnchorPane> {
     @FXML
     private CheckBox holdPlayCountCheckBox;
     @FXML
-    private CheckBox importPlaylistsCheckBox;
-    @FXML
     private ComboBox<String> itunesImportPolicyCheckBox;
     private CheckComboBox<String> extensionsCheckComboBox;
     private MainPreferences preferences;
@@ -130,6 +128,7 @@ public class PreferencesController extends InjectableController<AnchorPane> {
         super.setStage(stage);
         stage.setTitle("Preferences");
         stage.setResizable(false);
+        stage.initModality(Modality.APPLICATION_MODAL);
         stage.setOnShowing(event -> loadUserPreferences());
     }
 
@@ -186,7 +185,6 @@ public class PreferencesController extends InjectableController<AnchorPane> {
 
         preferences.setImportFilterExtensions(newExtensions);
         preferences.setItunesImportHoldPlaycount(holdPlayCountCheckBox.isSelected());
-        preferences.setItunesImportPlaylists(importPlaylistsCheckBox.isSelected());
         okButton.getScene().getWindow().hide();
     }
 
@@ -256,7 +254,6 @@ public class PreferencesController extends InjectableController<AnchorPane> {
             itunesImportPolicyCheckBox.getSelectionModel().select(METADATA_INFO);
 
         holdPlayCountCheckBox.setSelected(preferences.getItunesImportHoldPlaycount());
-        importPlaylistsCheckBox.setSelected(preferences.getItunesImportPlaylists());
     }
 
     private void loadLastFmSettings() {

@@ -46,8 +46,8 @@ public enum CommonObject {
     DIALOG_STYLE(STYLES_PATH + "dialog.css"),
     BASE_STYLE(STYLES_PATH + "base.css"),
     TRACK_TABLE_STYLE(STYLES_PATH + "tracktable.css"),
-    TRACKAREASET_TRACK_TABLE_STYLE(STYLES_PATH + "tracktable-trackareaset.css");
-
+    TRACKAREASET_TRACK_TABLE_STYLE(STYLES_PATH + "tracktable-trackareaset.css"),
+    ITUNES_XSD(File.separator + "config" + File.separator + "PropertyList-1.0.xsd");
 
     private String path;
 

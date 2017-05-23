@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="550.0" stylesheets="@../css/preferences.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.PreferencesController">
+<AnchorPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="550.0" stylesheets="@../css/preferences.css" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.PreferencesController">
    <children>
       <VBox>
          <children>
@@ -59,7 +59,7 @@
                                                       <ComboBox fx:id="itunesImportPolicyCheckBox" prefWidth="200.0" />
                                                    </children>
                                                 </HBox>
-                                                <HBox alignment="CENTER_LEFT" prefHeight="50.0">
+                                                <HBox alignment="CENTER" prefHeight="50.0">
                                                    <children>
                                                       <Label text="Hold play count from iTunes">
                                                          <HBox.margin>
@@ -71,12 +71,6 @@
                                                             <Insets />
                                                          </HBox.margin>
                                                       </CheckBox>
-                                                      <Label text="Import all playlists">
-                                                         <HBox.margin>
-                                                            <Insets bottom="10.0" left="20.0" right="18.0" top="10.0" />
-                                                         </HBox.margin>
-                                                      </Label>
-                                                      <CheckBox fx:id="importPlaylistsCheckBox" mnemonicParsing="false" />
                                                    </children>
                                                    <VBox.margin>
                                                       <Insets />

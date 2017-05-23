@@ -40,8 +40,8 @@ import javafx.stage.*;
  * @version 0.10.1-b
  * @since 0.10.1-b
  *
- * @see MetadataParser.FXGuiceInjectionBuilderFactory
- * @see MetadataParser.FXMLControllerLoader
+ * @see FXGuiceInjectionBuilderFactory
+ * @see FXMLControllerLoader
  * @see <a href="https://github.com/google/guice">Guice</a>
  */
 public abstract class InjectableController<R extends Parent> {
@@ -51,7 +51,7 @@ public abstract class InjectableController<R extends Parent> {
 
     /**
      * This method is intended to be called when an instance of this class
-     * is created in the {@link MetadataParser.FXMLControllerLoader#load} method.
+     * is created in the {@link FXMLControllerLoader#load} method.
      * <p>
      * When using nested {@code FXML} views and {@code Guice}, fields injected
      * by both frameworks are messed up.

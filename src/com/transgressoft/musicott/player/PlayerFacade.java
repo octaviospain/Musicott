@@ -201,11 +201,17 @@ public class PlayerFacade {
         scrobbled = false;
         played = false;
         if (isPlayable(track)) {
-            currentTrack = Optional.of(track);
-            trackPlayer.setTrack(track);
-            playerController.updatePlayer(track);
-            bindMediaPlayer();
-            LOG.debug("Created new player");
+            try {
+                trackPlayer.setTrack(track);
+                currentTrack = Optional.of(track);
+                playerController.updatePlayer(track);
+                bindMediaPlayer();
+                LOG.debug("Created new player");
+            }
+            catch (MediaException exception) {
+                currentTrack = Optional.empty();
+                LOG.warn("MediaException, track not playable: {}", exception);
+            }
         }
     }
 

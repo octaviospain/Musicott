@@ -25,7 +25,6 @@ import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.modules.*;
 import javafx.beans.property.*;
-import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
@@ -44,13 +43,9 @@ public class PlayerControllerTest extends JavaFxTestBase<PlayerController> {
     @Override
     @Start
     public void start(Stage stage) throws Exception {
+        this.stage = stage;
         injector = injector.createChildInjector(new TestModule());
-
         loadTestController(Layout.PLAYER);
-        stage.setScene(new Scene(controller.getRoot()));
-
-        injector = injector.createChildInjector(module);
-
         stage.show();
     }
 

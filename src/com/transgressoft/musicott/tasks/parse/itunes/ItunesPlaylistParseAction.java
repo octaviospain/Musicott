@@ -37,7 +37,7 @@ import java.util.stream.*;
  * This class extends from {@link RecursiveTask} so it can be used inside a
  * {@link ForkJoinPool} in order to perform the parse of a collection of
  * {@link ItunesPlaylist} objects into instances of the system's {@link Playlist}.
- *
+ * <p>
  * If it receives more than a certain amount of items to parse, the task is forked
  * with partitions of the items collection and their results joined after their completion.
  *
@@ -47,7 +47,7 @@ import java.util.stream.*;
  */
 public class ItunesPlaylistParseAction extends PlaylistParseAction {
 
-    private static final int MAX_PLAYLISTS_TO_PARSE_PER_ACTION = 250;
+    private static final int MAX_PLAYLISTS_TO_PARSE_PER_ACTION = 50;
     private static final int NUMBER_OF_PARTITIONS = 2;
 
     private final transient PlaylistsLibrary playlistsLibrary;
@@ -87,31 +87,12 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
         else {
             itemsToParse.forEach(this::parseItem);
             parsedPlaylists.forEach(playlist -> {
-                if (playlistsLibrary.containsPlaylistName(playlist.getName()))
-                    addTracksToExistingPlaylist(playlist);
-                else {
-                    Platform.runLater(() -> navigationController.addNewPlaylist(rootPlaylist, playlist, false));
-                    playlistsLibrary.addPlaylist(rootPlaylist, playlist);
-                }
+                ensureUniquePlaylistName(playlist);
+                Platform.runLater(() -> navigationController.addNewPlaylist(rootPlaylist, playlist, false));
+                playlistsLibrary.addPlaylist(rootPlaylist, playlist);
             });
         }
         return new PlaylistsParseResult(parsedPlaylists);
-    }
-
-    private void addTracksToExistingPlaylist(Playlist parsedPlaylist) {
-        Set<Playlist> playlists = playlistsLibrary.getPlaylistsTree().nodes();
-        synchronized (playlistsLibrary) {
-            boolean found = false;
-            Iterator<Playlist> iterator = playlists.iterator();
-            while (!found && iterator.hasNext()) {
-
-                Playlist next = iterator.next();
-                if (next.equals(parsedPlaylist)) {
-                    next.addTracks(parsedPlaylist.getTracks());
-                    found = true;
-                }
-            }
-        }
     }
 
     @Override
@@ -156,5 +137,28 @@ public class ItunesPlaylistParseAction extends PlaylistParseAction {
                            .filter(itunesTrack -> itunesIdToMusicottTrackMap.containsKey(itunesTrack.getTrackID()))
                            .map(itunesTrack -> itunesIdToMusicottTrackMap.get(itunesTrack.getTrackID()).getTrackId())
                            .collect(Collectors.toList());
+    }
+
+    /**
+     * Ensures that the given playlist name is unique in the {@link PlaylistsLibrary}, appending
+     * (1), (2)... (n+1) to the file name in case it already exists
+     *
+     * @param playlist   The string of the playlist name name
+     */
+    private void ensureUniquePlaylistName(Playlist playlist) {
+        if (playlistsLibrary.containsPlaylistName(playlist.getName())) {
+            String name = playlist.getName();
+            if (name.matches(".+\\(\\d+\\)")) {
+                while (name.matches(".+\\(\\d+\\)")) {
+                    int posL = name.lastIndexOf('(');
+                    int posR = name.lastIndexOf(')');
+                    int num = Integer.parseInt(name.substring(posL + 1, posR));
+                    name = name.substring(0, posL + 1) + ++ num + ")";
+                }
+            }
+            else
+                name += "(1)";
+            playlist.setName(name);
+        }
     }
 }

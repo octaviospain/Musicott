@@ -46,7 +46,8 @@ public enum Layout {
     PLAYER (LAYOUTS_PATH + "PlayerLayout.fxml", PlayerModule.class),
     PLAY_QUEUE (LAYOUTS_PATH + "PlayQueueLayout.fxml", PlayQueueModule.class),
     MENU_BAR (LAYOUTS_PATH + "RootMenuBarLayout.fxml", RootMenuBarModule.class),
-    ERROR_DIALOG (LAYOUTS_PATH + "ErrorDialogLayout.fxml", ErrorDialogModule.class);
+    ERROR_DIALOG (LAYOUTS_PATH + "ErrorDialogLayout.fxml", ErrorDialogModule.class),
+    PLAYLISTS_PICKER (LAYOUTS_PATH + "ItunesPlaylistsPickerLayout.fxml", ItunesPlaylistsPickerModule.class);
 
     private String path;
     private Class<? extends ControllerModule> controllerModule;
@@ -65,7 +66,12 @@ public enum Layout {
     }
 
     public static boolean isIndependentLayout(Layout layout) {
-        return layout == ERROR_DIALOG || layout == PREFERENCES || layout == PROGRESS_BAR || layout == EDITION;
+        boolean isPicker = layout == PLAYLISTS_PICKER;
+        boolean isError = layout == ERROR_DIALOG;
+        boolean isPreferences = layout == PREFERENCES;
+        boolean isProgress = layout == PROGRESS_BAR;
+        boolean isEdition = layout == EDITION;
+        return isError || isPreferences || isProgress || isEdition || isPicker;
     }
 
     public static List<Layout> getLayoutsInLoadingOrder() {
@@ -79,6 +85,7 @@ public enum Layout {
                            .add(NAVIGATION)
                            .add(MENU_BAR)
                            .add(EDITION)
+                           .add(PLAYLISTS_PICKER)
                            .add(ROOT)
                            .build();
     }

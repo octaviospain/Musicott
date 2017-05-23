@@ -69,6 +69,7 @@ public abstract class JavaFxTestBase<T extends InjectableController> implements 
     @Mock
     protected MainPreferences preferencesMock;
 
+    protected Stage stage;
     protected T controller;
     protected ControllerModule<T> module;
     protected Module mockedSingletonsTestModule = new MockedSingletonsTestModule();
@@ -100,6 +101,7 @@ public abstract class JavaFxTestBase<T extends InjectableController> implements 
     protected void loadTestController(Layout layout) throws IOException, ReflectiveOperationException {
         module = createController(layout, injector);
         controller = module.providesController();
+        stage.setScene(new Scene(controller.getRoot()));
     }
 
     private class MockedSingletonsTestModule extends AbstractModule {

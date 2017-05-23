@@ -17,34 +17,21 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.view;
+package com.transgressoft.musicott.util.guice.annotations;
 
-import com.transgressoft.musicott.tests.*;
-import javafx.stage.*;
-import org.junit.jupiter.api.*;
-import org.testfx.framework.junit5.*;
+import com.google.inject.*;
 
-import static com.transgressoft.musicott.model.Layout.*;
-import static org.junit.jupiter.api.Assertions.*;
+import java.lang.annotation.*;
+
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.*;
 
 /**
  * @author Octavio Calleya
  */
-public class PlayQueueControllerTest extends JavaFxTestBase<PlayQueueController> {
+@Target ({FIELD, PARAMETER, METHOD})
+@Retention (RUNTIME)
+@BindingAnnotation
+public @interface ItunesPlaylistsPicker {
 
-    @Override
-    @Start
-    public void start(Stage stage) throws Exception {
-        this.stage = stage;
-        loadTestController(PLAY_QUEUE);
-        stage.show();
-    }
-
-    @Test
-    @DisplayName ("Singleton controller")
-    void singletonController() {
-        PlayQueueController anotherController = injector.getInstance(PlayQueueController.class);
-
-        assertSame(controller, anotherController);
-    }
 }
