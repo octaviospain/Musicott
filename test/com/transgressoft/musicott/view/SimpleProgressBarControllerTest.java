@@ -21,7 +21,6 @@ package com.transgressoft.musicott.view;
 
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tests.*;
-import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.stage.*;
 import org.junit.jupiter.api.*;
@@ -35,7 +34,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class SimpleProgressBarControllerTest extends JavaFxTestBase<SimpleProgressBarController> {
 
-    Stage stage;
     ProgressBar progressBar;
 
     @Override
@@ -43,9 +41,6 @@ public class SimpleProgressBarControllerTest extends JavaFxTestBase<SimpleProgre
     public void start(Stage stage) throws Exception {
         this.stage = stage;
         loadTestController(Layout.PROGRESS_BAR);
-        controller.setStage(stage);
-        stage.setScene(new Scene(controller.getRoot()));
-        injector = injector.createChildInjector(module);
         stage.show();
     }
 

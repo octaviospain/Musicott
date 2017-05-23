@@ -22,9 +22,11 @@ package com.transgressoft.musicott.tasks;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tasks.parse.*;
+import com.transgressoft.musicott.tasks.parse.itunes.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.view.*;
+import com.worldsworstsoftware.itunes.*;
 import javafx.beans.value.*;
 import org.slf4j.*;
 
@@ -72,7 +74,7 @@ public class TaskDemon {
 		savingsActivated = true;
 	}
 
-	public void shutDownTasks() {
+	public synchronized void shutDownTasks() {
 		parseExecutorService.shutdown();
 		saveMusicLibraryTask.finish();
 	}
@@ -83,7 +85,7 @@ public class TaskDemon {
 	 *
 	 * @param itunesLibraryPath The path where the {@code iTunes Music Library.xml} file is located.
 	 */
-	public void importFromItunesLibrary(String itunesLibraryPath) {
+	public synchronized void importFromItunesLibrary(String itunesLibraryPath) {
 		if (parseFuture != null && ! parseFuture.isDone())
 			errorDialog.show(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
@@ -93,13 +95,23 @@ public class TaskDemon {
 		}
 	}
 
+	public synchronized void setItunesPlaylistsToImport(List<ItunesPlaylist> itunesPlaylists) {
+		if (parseFuture != null && ! parseFuture.isDone() && parseTask instanceof ItunesParseTask)
+			((ItunesParseTask) parseTask).setItunesPlaylistsToParse(itunesPlaylists);
+	}
+
+	public synchronized void cancelItunesImport() {
+		if (parseFuture != null && ! parseFuture.isDone())
+			parseFuture.cancel(true);
+	}
+
 	/**
 	 * Creates a new {@link ParseTask} that analyzes and import several audio files
 	 * to the application.
 	 *
 	 * @param filesToImport The {@link List} of the files to import.
 	 */
-	public void importFiles(List<File> filesToImport, boolean playAtTheEnd) {
+	public synchronized void importFiles(List<File> filesToImport, boolean playAtTheEnd) {
 		if (parseFuture != null && ! parseFuture.isDone())
 			errorDialog.show(ALREADY_IMPORTING_ERROR_MESSAGE, "");
 		else {
@@ -109,7 +121,7 @@ public class TaskDemon {
 		}
 	}
 
-    public void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
+    public synchronized void saveLibrary(boolean saveTracks, boolean saveWaveforms, boolean savePlaylists) {
 		if (savingsActivated) {
 			if (! saveMusicLibraryTask.isAlive())
 				saveMusicLibraryTask.start();

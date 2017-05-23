@@ -157,15 +157,6 @@ public class MainPreferencesTest {
 	}
 
 	@Test
-	@DisplayName("Itunes import playlists")
-	void itunesImportPlaylistsTest() {
-		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock, userFolderListener) ;
-		mainPreferences.setItunesImportPlaylists(true);
-
-		assertTrue(mainPreferences.getItunesImportPlaylists());
-	}
-
-	@Test
 	@DisplayName("Import filter extensions empty")
 	void emptyImportFilterExtensionsTest() {
 		MainPreferences mainPreferences = new MainPreferences(tracksLibraryMock, userFolderListener) ;

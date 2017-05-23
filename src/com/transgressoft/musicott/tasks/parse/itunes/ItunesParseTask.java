@@ -37,13 +37,15 @@ import javafx.scene.control.Alert.*;
 import javafx.stage.*;
 import org.slf4j.*;
 
+import javax.xml.*;
+import javax.xml.transform.*;
+import javax.xml.transform.stream.*;
+import javax.xml.validation.*;
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.regex.*;
-import java.util.stream.*;
 
 import static com.transgressoft.musicott.model.CommonObject.*;
 
@@ -64,14 +66,15 @@ public class ItunesParseTask extends BaseParseTask {
     private final TracksLibrary tracksLibrary;
     private final String itunesLibraryXmlPath;
     private final int metadataPolicy;
-    private final boolean importPlaylists;
     private final boolean holdPlayCount;
 
+    private ForkJoinPool forkJoinPool;
     private Semaphore waitConfirmationSemaphore;
 
     private List<ItunesTrack> itunesTracks;
     private List<ItunesPlaylist> itunesPlaylists;
     private List<String> notFoundFiles;
+    private Map<Integer, Track> idsMap;
 
     private volatile int currentItunesItemsParsed;
     private int totalItunesItemsToParse;
@@ -80,16 +83,20 @@ public class ItunesParseTask extends BaseParseTask {
 
     @Inject
     private ParseActionFactory parseActionFactory;
+    @Inject
+    @ItunesPlaylistsPicker
+    private ItunesPlaylistsPickerController playlistsPickerController;
 
     @Inject
     public ItunesParseTask(TracksLibrary tracksLibrary, MainPreferences mainPreferences,
-            @NavigationCtrl NavigationController navCtrl, ErrorDialogController errorDialog, @Assisted String path) {
+            @NavigationCtrl NavigationController navCtrl, @ErrorCtrl ErrorDialogController errorDialog,
+            @Assisted String path) {
         super(navCtrl, errorDialog);
         this.tracksLibrary = tracksLibrary;
         itunesLibraryXmlPath = path;
         metadataPolicy = mainPreferences.getItunesImportMetadataPolicy();
-        importPlaylists = mainPreferences.getItunesImportPlaylists();
         holdPlayCount = mainPreferences.getItunesImportHoldPlaycount();
+        forkJoinPool = new ForkJoinPool(4);
         waitConfirmationSemaphore = new Semaphore(0);
         currentItunesItemsParsed = 0;
     }
@@ -106,102 +113,110 @@ public class ItunesParseTask extends BaseParseTask {
 
     @Override
     protected Void call() throws Exception {
-        if (isValidItunesXML())
+        if (isValidItunesFile()) {
             parseItunesFile();
-        else {
-            errorDialog.show("The selected xml file is not valid");
+            Platform.runLater(() -> {
+                playlistsPickerController.pickPlaylists(itunesPlaylists);
+                playlistsPickerController.getStage().show();
+            });
+        }
+        else
             cancel();
-        }
         waitConfirmationSemaphore.acquire();
-
+        showConfirmationAlert();
+        waitConfirmationSemaphore.acquire();
         startMillis = System.currentTimeMillis();
-        ForkJoinPool forkJoinPool = new ForkJoinPool(6);
-        ItunesTracksParseAction itunesTracksParseAction =
-                parseActionFactory.create(itunesTracks, metadataPolicy, holdPlayCount, this);
-        ItunesParseResult itunesParseResult = forkJoinPool.invoke(itunesTracksParseAction);
-
-        parsedTracksSize = itunesParseResult.getParsedResults().size();
-        parseErrors = itunesParseResult.getParseErrors();
-        notFoundFiles = itunesParseResult.getNotFoundFiles();
-
-        if (importPlaylists) {
-            currentItunesItemsParsed = 0;
-            totalItunesItemsToParse = itunesPlaylists.size();
-            Map<Integer, Track> idsMap = ImmutableMap.copyOf(itunesParseResult.getItunesIdToMusicottTrackMap());
-            ItunesPlaylistParseAction itunesPlaylistParseAction = parseActionFactory.create(itunesPlaylists, idsMap, this);
-            forkJoinPool.invoke(itunesPlaylistParseAction);
-            parsedPlaylistsSize = itunesPlaylistParseAction.get().getParsedResults().size();
-        }
-
+        parseItunesTracks();
+        parseItunesPlaylists();
         forkJoinPool.shutdown();
         return null;
     }
 
-    private boolean isValidItunesXML() {
-        boolean valid = false;
-        String itunesXmlSampleLine = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-        String itunesPlistSampleLine = "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" " + "\"http"
-                + "://www.apple.com/DTDs/PropertyList-1.0.dtd\">";
-        try (Scanner scanner = new Scanner(new File(itunesLibraryXmlPath))) {
-            scanner.useDelimiter(Pattern.compile(">"));
-            if (scanner.hasNextLine() && scanner.nextLine().contains(itunesXmlSampleLine))
-                valid = true;
-            if (scanner.hasNextLine() && scanner.nextLine().contains(itunesPlistSampleLine))
-                valid = true;
-        }
-        catch (FileNotFoundException exception) {
-            LOG.info("Error accessing to the itunes xml: ", exception);
-            errorDialog.show("Error opening the iTunes Library file", "", exception);
-            valid = false;
-        }
-        return valid;
+    public void setItunesPlaylistsToParse(List<ItunesPlaylist> playlists) {
+        itunesPlaylists = playlists;
+        waitConfirmationSemaphore.release();
     }
 
-    /**
-     * Parses the iTunes Library file and asks the user for a confirmation to continue
-     * showing the number of itunes items and playlists to import.
-     */
     @SuppressWarnings ("unchecked")
     private void parseItunesFile() {
         Platform.runLater(() -> updateTaskProgressOnView(- 1 ,"Scanning itunes library..."));
         ItunesParserLogger itunesLogger = new ItunesParserLogger();
         ItunesLibrary itunesLibrary = ItunesLibraryParser.parseLibrary(itunesLibraryXmlPath, itunesLogger);
         Map<Integer, ItunesTrack> itunesTrackMap = ImmutableMap.copyOf(itunesLibrary.getTracks());
-        itunesTracks = (List<ItunesTrack>) itunesTrackMap.values();
-        itunesTracks = itunesTracks.stream().filter(this::isValidItunesTrack).collect(Collectors.toList());
-        itunesTracks = ImmutableList.copyOf(itunesTracks);
-        totalItunesItemsToParse = itunesTracks.size();
-
-        String[] playlistsAlertText = new String[]{""};
-        if (importPlaylists) {
-            itunesPlaylists = (List<ItunesPlaylist>) itunesLibrary.getPlaylists();
-            itunesPlaylists = itunesPlaylists.stream().filter(this::isValidItunesPlaylist).collect(Collectors.toList());
-
-            int totalPlaylists = itunesPlaylists.size();
-            playlistsAlertText[0] += "and " + Integer.toString(totalPlaylists) + " playlists ";
-        }
-        Platform.runLater(() -> showConfirmationAlert(playlistsAlertText[0]));
+        itunesTracks = itunesTrackMap.values().stream()
+                                     .filter(this::isValidItunesTrack)
+                                     .collect(ImmutableList.toImmutableList());
+        itunesPlaylists = (List<ItunesPlaylist>) itunesLibrary.getPlaylists();
+        itunesPlaylists = itunesPlaylists.stream()
+                                         .filter(this::isValidItunesPlaylist)
+                                         .collect(ImmutableList.toImmutableList());
+        Platform.runLater(() -> updateTaskProgressOnView(0.0 ,""));
     }
 
-    private void showConfirmationAlert(String playlistsAlertText) {
-        String itunesTracksString = Integer.toString(totalItunesItemsToParse);
-        String headerText = "Import " + itunesTracksString + " songs " + playlistsAlertText + "from itunes?";
+    private void parseItunesTracks() {
+        currentItunesItemsParsed = 0;
+        totalItunesItemsToParse = itunesTracks.size();
+        ItunesTracksParseAction parseAction = parseActionFactory.create(itunesTracks, metadataPolicy, holdPlayCount, this);
+        ItunesParseResult itunesParseResult = forkJoinPool.invoke(parseAction);
 
-        Alert alert = new Alert(AlertType.CONFIRMATION);
-        alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE.toString()).toExternalForm());
-        alert.setTitle("Import");
-        alert.initModality(Modality.APPLICATION_MODAL);
-        alert.setHeaderText(headerText);
+        parsedTracksSize = itunesParseResult.getParsedResults().size();
+        parseErrors = itunesParseResult.getParseErrors();
+        notFoundFiles = itunesParseResult.getNotFoundFiles();
+        idsMap = itunesParseResult.getItunesIdToMusicottTrackMap();
+    }
 
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get().equals(ButtonType.OK)) {
-            waitConfirmationSemaphore.release();
-            navigationController.setStatusMessage("Importing files");
+    private void parseItunesPlaylists() throws ExecutionException, InterruptedException {
+        if (! itunesPlaylists.isEmpty()) {
+            currentItunesItemsParsed = 0;
+            totalItunesItemsToParse = itunesPlaylists.size();
+            ItunesPlaylistParseAction playlistParseAction = parseActionFactory.create(itunesPlaylists, idsMap, this);
+            forkJoinPool.invoke(playlistParseAction);
+            parsedPlaylistsSize = playlistParseAction.get().getParsedResults().size();
         }
-        else {
-            Platform.runLater(() -> updateTaskProgressOnView(0.0, ""));
-            cancel();
+    }
+
+    private void showConfirmationAlert() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.CONFIRMATION);
+            alert.getDialogPane().getStylesheets().add(getClass().getResource(DIALOG_STYLE.toString()).toExternalForm());
+            alert.setTitle("Import");
+            alert.initModality(Modality.APPLICATION_MODAL);
+            alert.setHeaderText(getAlertText());
+
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get().equals(ButtonType.OK))
+                waitConfirmationSemaphore.release();
+            else {
+                Platform.runLater(() -> updateTaskProgressOnView(0.0, ""));
+                cancel();
+            }
+        });
+    }
+
+    private String getAlertText() {
+        StringBuilder stringBuilder = new StringBuilder("Import ");
+        stringBuilder.append(itunesTracks.size()).append(" songs ");
+        if (! itunesPlaylists.isEmpty())
+            stringBuilder.append("and " ).append(itunesPlaylists.size()).append(" playlists ");
+        stringBuilder.append("from itunes?");
+        return stringBuilder.toString();
+    }
+
+    private boolean isValidItunesFile() {
+        boolean isValid;
+        try {
+            Source xmlFile = new StreamSource(new File(itunesLibraryXmlPath));
+            SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            Schema schema = schemaFactory.newSchema(getClass().getResource(ITUNES_XSD.toString()));
+            Validator validator = schema.newValidator();
+            validator.validate(xmlFile);
+            isValid = true;
+        } catch (Exception exception) {
+            LOG.error("Error accessing to the itunes xml: {}", exception.getMessage(), exception);
+            errorDialog.show("Error opening the iTunes Library file", "", exception);
+            isValid = false;
         }
+        return isValid;
     }
 
     private boolean isValidItunesTrack(ItunesTrack itunesTrack) {
@@ -214,7 +229,7 @@ public class ItunesParseTask extends BaseParseTask {
             String fileExtension = itunesFile.toString().substring(index + 1);
             if (! ("mp3".equals(fileExtension) || "m4a".equals(fileExtension) || "wav".equals(fileExtension)))
                 valid = false;
-            if (tracksLibrary.containsTrackPath(itunesFile.getParent(), itunesFile.getName()))
+            if (tracksLibrary. containsTrackPath(itunesFile.getParent(), itunesFile.getName()))
                 valid = false;
         }
         return valid;
@@ -223,7 +238,7 @@ public class ItunesParseTask extends BaseParseTask {
     private boolean isValidItunesPlaylist(ItunesPlaylist itunesPlaylist) {
         boolean notStrangeName = ! "####!####".equals(itunesPlaylist.getName());
         boolean notEmpty = ! itunesPlaylist.getPlaylistItems().isEmpty();
-        boolean notHugeSize = itunesPlaylist.getTrackIDs().size() < totalItunesItemsToParse;
+        boolean notHugeSize = itunesPlaylist.getTrackIDs().size() < itunesTracks.size();
         return notStrangeName && notEmpty && notHugeSize;
     }
 

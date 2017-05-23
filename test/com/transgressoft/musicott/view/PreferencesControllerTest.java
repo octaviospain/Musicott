@@ -26,7 +26,6 @@ import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import javafx.beans.property.*;
-import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
@@ -50,16 +49,12 @@ public class PreferencesControllerTest extends JavaFxTestBase<PreferencesControl
     @Override
     @Start
     public void start(Stage stage) throws Exception {
+        this.stage = stage;
         when(lastFmPreferencesMock.getLastFmUsername()).thenReturn("user");
         when(lastFmPreferencesMock.getLastFmPassword()).thenReturn("pass");
 
         injector = Guice.createInjector(Modules.override(mockedSingletonsTestModule).with(new TestModule()));
-
         loadTestController(Layout.PREFERENCES);
-        stage.setScene(new Scene(controller.getRoot()));
-
-        injector = injector.createChildInjector(module);
-
         stage.show();
     }
 

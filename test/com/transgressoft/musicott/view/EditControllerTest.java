@@ -23,7 +23,6 @@ import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tests.*;
 import com.transgressoft.musicott.util.guice.factories.*;
-import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
@@ -42,13 +41,9 @@ public class EditControllerTest extends JavaFxTestBase<EditController> {
     @Override
     @Start
     public void start(Stage stage) throws Exception {
+        this.stage = stage;
         injector = injector.createChildInjector(new TestModule());
-
         loadTestController(Layout.EDITION);
-        stage.setScene(new Scene(controller.getRoot()));
-
-        injector = injector.createChildInjector(module);
-
         stage.show();
     }
 

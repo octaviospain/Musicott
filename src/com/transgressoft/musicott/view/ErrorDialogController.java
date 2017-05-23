@@ -26,6 +26,7 @@ import javafx.fxml.*;
 import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.layout.*;
+import javafx.stage.*;
 import javafx.stage.Stage;
 import org.slf4j.*;
 
@@ -116,6 +117,7 @@ public class ErrorDialogController extends InjectableController<AnchorPane> {
     public void setStage(Stage stage) {
         this.stage = stage;
         stage.setTitle("Error");
+        stage.initModality(Modality.APPLICATION_MODAL);
         stage.setResizable(false);
     }
 

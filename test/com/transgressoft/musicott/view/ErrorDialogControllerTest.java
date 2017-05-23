@@ -22,7 +22,6 @@ package com.transgressoft.musicott.view;
 import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.tests.*;
 import javafx.application.*;
-import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.stage.*;
 import org.junit.jupiter.api.*;
@@ -42,7 +41,6 @@ public class ErrorDialogControllerTest extends JavaFxTestBase<ErrorDialogControl
 
     static final String defaultErrorContent = "Improve Musicott reporting this error on github.";
 
-    Stage stage;
     Button okButton;
     Label titleLabel;
 
@@ -50,11 +48,6 @@ public class ErrorDialogControllerTest extends JavaFxTestBase<ErrorDialogControl
     public void start(Stage stage) throws Exception {
         this.stage = stage;
         loadTestController(Layout.ERROR_DIALOG);
-        stage.setScene(new Scene(controller.getRoot()));
-
-        injector = injector.createChildInjector(module);
-        controller.setStage(stage);
-
         stage.show();
     }
 

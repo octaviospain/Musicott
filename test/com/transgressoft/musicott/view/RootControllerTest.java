@@ -29,7 +29,6 @@ import com.transgressoft.musicott.util.guice.modules.*;
 import com.transgressoft.musicott.view.custom.*;
 import javafx.beans.property.*;
 import javafx.collections.*;
-import javafx.scene.*;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
@@ -77,6 +76,7 @@ public class RootControllerTest extends JavaFxTestBase<RootController> {
     @Override
     @Start
     public void start(Stage stage) throws Exception {
+        this.stage = stage;
         trackTableView = new TrackTableView(injector);
 
         ListProperty<String> artistsListProperty = new SimpleListProperty<>();
@@ -90,8 +90,6 @@ public class RootControllerTest extends JavaFxTestBase<RootController> {
 
         injector = injector.createChildInjector(new TestModule());
         loadTestController(Layout.ROOT);
-        stage.setScene(new Scene(controller.getRoot()));
-
         stage.show();
     }
 

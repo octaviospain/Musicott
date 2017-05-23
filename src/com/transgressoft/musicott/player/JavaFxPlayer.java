@@ -57,7 +57,7 @@ public class JavaFxPlayer implements TrackPlayer {
     }
 
     @Override
-    public void setTrack(Track track) {
+    public void setTrack(Track track) throws MediaException {
         this.track = track;
         if (mediaPlayer != null)
             mediaPlayer.dispose();

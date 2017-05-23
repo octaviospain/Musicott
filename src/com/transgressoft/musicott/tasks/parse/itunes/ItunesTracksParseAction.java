@@ -50,8 +50,8 @@ import java.util.*;
  */
 public class ItunesTracksParseAction extends ItunesParseAction {
 
-    private static final int MAX_ITEMS_TO_PARSE_PER_ACTION = 300;
-    private static final int NUMBER_OF_PARTITIONS = 6;
+    private static final int MAX_ITEMS_TO_PARSE_PER_ACTION = 1000;
+    private static final int NUMBER_OF_PARTITIONS = 4;
 
     private final int metadataPolicy;
     private final boolean holdPlayCount;

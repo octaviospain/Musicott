@@ -17,34 +17,32 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.view;
+package com.transgressoft.musicott.util.guice.modules;
 
-import com.transgressoft.musicott.tests.*;
-import javafx.stage.*;
-import org.junit.jupiter.api.*;
-import org.testfx.framework.junit5.*;
-
-import static com.transgressoft.musicott.model.Layout.*;
-import static org.junit.jupiter.api.Assertions.*;
+import com.google.inject.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
+import com.transgressoft.musicott.view.*;
 
 /**
  * @author Octavio Calleya
  */
-public class PlayQueueControllerTest extends JavaFxTestBase<PlayQueueController> {
+public class ItunesPlaylistsPickerModule extends AbstractModule
+        implements ControllerModule<ItunesPlaylistsPickerController> {
 
-    @Override
-    @Start
-    public void start(Stage stage) throws Exception {
-        this.stage = stage;
-        loadTestController(PLAY_QUEUE);
-        stage.show();
+    private ItunesPlaylistsPickerController controller;
+
+    public ItunesPlaylistsPickerModule(ItunesPlaylistsPickerController controller) {
+        this.controller = controller;
     }
 
-    @Test
-    @DisplayName ("Singleton controller")
-    void singletonController() {
-        PlayQueueController anotherController = injector.getInstance(PlayQueueController.class);
+    @Override
+    protected void configure() {
+        bind(InjectableController.class).annotatedWith(ItunesPlaylistsPicker.class).toInstance(controller);
+    }
 
-        assertSame(controller, anotherController);
+    @Provides
+    @ItunesPlaylistsPicker
+    public ItunesPlaylistsPickerController providesController() {
+        return controller;
     }
 }
