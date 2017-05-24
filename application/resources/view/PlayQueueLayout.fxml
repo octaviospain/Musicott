@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<AnchorPane fx:id="playQueuePane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="467.0" prefWidth="300.0" stylesheets="@../css/playqueuepane.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.view.PlayQueueController">
+   <children>
+      <BorderPane prefHeight="467.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <center>
+            <ListView id="queuesListView" fx:id="queuesListView" BorderPane.alignment="CENTER">
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin></ListView>
+         </center>
+         <bottom>
+            <GridPane prefHeight="35.0" BorderPane.alignment="CENTER">
+               <columnConstraints>
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="175.0" minWidth="10.0" prefWidth="144.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="244.0" minWidth="10.0" prefWidth="146.0" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES" />
+               </rowConstraints>
+               <children>
+                  <Label fx:id="titleQueueLabel" text="Play Queue">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="8.0" left="10.0" top="5.0" />
+                     </padding>
+                  </Label>
+                  <Button fx:id="deleteAllButton" maxHeight="-Infinity" maxWidth="-Infinity" mnemonicParsing="false" prefHeight="18.0" prefWidth="38.0" text="Delete" GridPane.columnIndex="1" GridPane.halignment="RIGHT">
+                     <font>
+                        <Font size="11.0" />
+                     </font>
+                     <GridPane.margin>
+                        <Insets bottom="2.0" right="10.0" />
+                     </GridPane.margin>
+                  </Button>
+                  <ToggleButton fx:id="historyQueueButton" cacheHint="QUALITY" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" GridPane.columnIndex="1" GridPane.halignment="CENTER">
+                     <GridPane.margin>
+                        <Insets bottom="2.0" right="30.0" />
+                     </GridPane.margin></ToggleButton>
+               </children>
+               <BorderPane.margin>
+                  <Insets bottom="26.0" left="20.0" right="20.0" />
+               </BorderPane.margin>
+            </GridPane>
+         </bottom>
+      </BorderPane>
+   </children>
+</AnchorPane>

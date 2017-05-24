@@ -1,5 +1,7 @@
 /bin/
-/target/
+application/target/
+common/target/
+preloader/target/
 /build/
 /deploy/
 /_site/
@@ -18,4 +20,4 @@ Musicott-main-log.txt
 .idea
 *.iml
 build.fxbuild
-/resources/config/config.properties
+application/resources/config/config.properties
