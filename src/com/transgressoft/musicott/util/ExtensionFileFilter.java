@@ -31,7 +31,7 @@ import java.util.*;
  * the file is not accepted. The extensions must be given without the dot.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class ExtensionFileFilter implements FileFilter {
 

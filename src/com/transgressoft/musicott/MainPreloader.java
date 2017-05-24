@@ -45,7 +45,7 @@ import static com.transgressoft.musicott.model.CommonObject.*;
  * application folder. </p>
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class MainPreloader extends Preloader {
 

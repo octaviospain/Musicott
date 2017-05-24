@@ -31,7 +31,7 @@ import java.util.*;
  * an {@link ItunesParseResult} that contains the resulting {@link Track} instances
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.10-b
  */
 public abstract class ItunesParseAction extends BaseParseAction<ItunesTrack, Map<Integer, Track>, ItunesParseResult> {

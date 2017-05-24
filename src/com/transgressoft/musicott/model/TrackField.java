@@ -24,7 +24,7 @@ package com.transgressoft.musicott.model;
  * (and most of them editable) on the table.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public enum TrackField {
     TRACK_ID,

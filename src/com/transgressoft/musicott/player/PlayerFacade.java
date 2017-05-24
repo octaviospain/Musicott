@@ -46,7 +46,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * Singleton class that isolates the usage of the music player.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 @Singleton
 public class PlayerFacade {

@@ -28,7 +28,7 @@ import java.util.*;
  * Class that isolates the operations over the collection of track waveforms
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.10-b
  */
 @Singleton

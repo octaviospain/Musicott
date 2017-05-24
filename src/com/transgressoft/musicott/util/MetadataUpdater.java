@@ -37,7 +37,7 @@ import java.nio.file.*;
  * to the audio metadata of the file.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
 public class MetadataUpdater {

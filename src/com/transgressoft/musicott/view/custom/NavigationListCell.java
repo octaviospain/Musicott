@@ -31,7 +31,7 @@ import static com.transgressoft.musicott.model.NavigationMode.*;
  * the {@link NavigationMenuListView}, managed by pseudo classes.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.10-b
  */
 public class NavigationListCell extends ListCell<NavigationMode> {

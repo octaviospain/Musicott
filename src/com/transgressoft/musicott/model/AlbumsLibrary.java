@@ -32,7 +32,7 @@ import java.util.Map.*;
  * Class that isolates the operations over the collection of albums
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.10-b
  */
 @Singleton

@@ -29,7 +29,7 @@ import java.util.*;
  * of {@link Playlist}s as result
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.10-b
  */
 public class PlaylistsParseResult extends BaseParseResult<List<Playlist>> {

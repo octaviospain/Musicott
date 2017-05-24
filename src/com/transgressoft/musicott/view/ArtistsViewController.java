@@ -48,7 +48,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * Controller class that isolates the behaviour of the artists view.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.10-b
  */
 @Singleton

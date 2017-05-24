@@ -53,7 +53,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * instances in their rows, showing almost all of the properties of a {@code Track} in the columns.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 @Singleton
 public class TrackTableView extends TableView<Entry<Integer, Track>> {

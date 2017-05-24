@@ -23,7 +23,7 @@ package com.transgressoft.musicott.model;
  * Class enum that represents a showing mode of the application
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public enum NavigationMode {
 

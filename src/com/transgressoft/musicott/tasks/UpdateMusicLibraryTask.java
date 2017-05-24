@@ -43,7 +43,7 @@ import static java.nio.file.StandardCopyOption.*;
  * updating the metadata of the audio files.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class UpdateMusicLibraryTask extends Thread {
 

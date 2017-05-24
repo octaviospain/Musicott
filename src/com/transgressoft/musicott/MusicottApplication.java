@@ -53,7 +53,7 @@ import static com.transgressoft.musicott.MainPreloader.*;
  * </ol>
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @see <a href="https://octaviospain.github.io/Musicott">Musicott</a>
  */
 public class MusicottApplication extends Application implements InjectedApplication {

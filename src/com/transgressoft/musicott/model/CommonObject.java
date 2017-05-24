@@ -25,7 +25,7 @@ import java.io.*;
  * Stores constants of layout files, logos and css stylesheets
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.9
  */
 public enum CommonObject {

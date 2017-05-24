@@ -35,7 +35,7 @@ import java.util.concurrent.*;
  * service in order to scrobble and updates the user profile.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class LastFmTask extends Thread {
 

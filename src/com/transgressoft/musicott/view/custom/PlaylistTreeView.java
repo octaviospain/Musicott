@@ -36,7 +36,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * playlists inside of them.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 @Singleton
 public class PlaylistTreeView extends TreeView<Playlist> {

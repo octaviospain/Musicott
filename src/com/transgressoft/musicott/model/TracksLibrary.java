@@ -37,7 +37,7 @@ import static com.transgressoft.musicott.model.AlbumsLibrary.*;
  * Class that isolates the operations over the map of {@link Track}s
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.10-b
  */
 @Singleton

@@ -39,7 +39,7 @@ import static javax.ws.rs.HttpMethod.*;
  * Performs the usage of the LastFM API.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @see <a href="http://www.last.fm/es/api/scrobbling">LastFM API documentation</a>
  */
 public class LastFmService {

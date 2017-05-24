@@ -29,7 +29,7 @@ import javafx.util.*;
  * Track player interface
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public interface TrackPlayer {
 

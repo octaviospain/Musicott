@@ -30,7 +30,7 @@ import java.awt.*;
  * Swing panel paints the waveform of a track.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class WaveformPane extends JPanel {
 

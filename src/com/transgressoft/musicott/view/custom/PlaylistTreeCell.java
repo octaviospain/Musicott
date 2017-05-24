@@ -35,7 +35,7 @@ import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
  * managed by pseudo classes.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.9
  */
 public class PlaylistTreeCell extends TreeCell<Playlist> {

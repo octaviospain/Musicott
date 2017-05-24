@@ -31,7 +31,7 @@ import java.util.*;
  * a {@link BaseParseResult} that contains the resulting {@link Playlist} instances
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.10-b
  */
 public abstract class PlaylistParseAction

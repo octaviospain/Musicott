@@ -2,7 +2,8 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.transgressoft</groupId>
     <artifactId>musicott</artifactId>
-    <version>0.10-b</version>
+    <version>0.10.1-b</version>
+    <url>https://octaviospain.github.io/Musicott</url>
     <name>Musicott</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

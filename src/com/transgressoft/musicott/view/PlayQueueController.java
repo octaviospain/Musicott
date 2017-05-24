@@ -32,7 +32,7 @@ import org.slf4j.*;
  * Controller class of the play queue pane.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 @Singleton
 public class PlayQueueController extends InjectableController<AnchorPane> {

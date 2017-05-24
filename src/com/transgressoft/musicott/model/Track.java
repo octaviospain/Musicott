@@ -37,7 +37,7 @@ import java.util.*;
  * Represents an audio file and its metadata information.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class Track {
 

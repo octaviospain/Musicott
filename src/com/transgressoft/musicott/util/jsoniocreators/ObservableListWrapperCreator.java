@@ -26,7 +26,7 @@ import javafx.collections.*;
  * Class needed by the {@code Json-io} library in order to deserialize an {@link ObservableList}.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
  */
 public class ObservableListWrapperCreator implements ClassFactory {

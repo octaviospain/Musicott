@@ -35,7 +35,7 @@ import java.util.concurrent.*;
  * @param <R> The type of the returned {@link BaseParseResult}
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.10-b
  */
 public abstract class BaseParseAction<I, P, R extends BaseParseResult<P>> extends RecursiveTask<R>

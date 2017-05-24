@@ -39,7 +39,7 @@ import static com.transgressoft.musicott.util.Utils.*;
  * collection of tracksLibrary, waveformsLibrary, playlistsLibrary, artistsLibrary and albumsLibrary.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 @Singleton
 public class MusicLibrary {

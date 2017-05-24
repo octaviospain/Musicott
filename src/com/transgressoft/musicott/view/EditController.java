@@ -52,7 +52,7 @@ import static com.transgressoft.musicott.util.Utils.*;
  * Controller class of the window that edits the information of tracks
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 @Singleton
 public class EditController extends InjectableController<AnchorPane> {

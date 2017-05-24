@@ -28,7 +28,7 @@ import java.util.*;
  * Class needed by the {@code Json-io} library in order to deserialize an {@link ObservableSet}.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @see <a href="https://github.com/jdereg/json-io">Json-io</a>
  */
 public class ObservableSetWrapperCreator implements ClassFactory {

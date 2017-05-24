@@ -47,7 +47,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * Controller class of the bottom pane that includes the player and the search field.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 @Singleton
 public class PlayerController extends InjectableController<GridPane> {

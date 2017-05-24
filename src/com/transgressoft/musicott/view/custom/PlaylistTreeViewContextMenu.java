@@ -28,7 +28,7 @@ import javafx.scene.control.*;
  * Context menu to be shown on the playlist pane
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class PlaylistTreeViewContextMenu extends ContextMenu {
 

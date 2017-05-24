@@ -24,7 +24,7 @@ package com.transgressoft.musicott.util;
  * information of a {@link com.transgressoft.musicott.model.Track} instance was unsuccessful.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.9
  */
 public class TrackUpdateException extends Exception {

@@ -31,7 +31,7 @@ import java.util.concurrent.*;
  * Base class of a {@link LoadAction} implementation
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.9.2-b
  */
 public abstract class BaseLoadAction extends RecursiveAction implements LoadAction {

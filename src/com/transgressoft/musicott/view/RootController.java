@@ -53,7 +53,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * Controller class of the root layout of the whole application.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 @Singleton
 public class RootController extends InjectableController<BorderPane> {

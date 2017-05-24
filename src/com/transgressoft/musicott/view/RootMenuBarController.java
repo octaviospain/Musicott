@@ -58,7 +58,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * is Max OS X, creates native OS X menu bar with the same behaviour.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 @Singleton
 public class RootMenuBarController extends InjectableController<MenuBar> {
@@ -66,7 +66,7 @@ public class RootMenuBarController extends InjectableController<MenuBar> {
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
     private static final String MUSICOTT_GITHUB_LINK = "https://github.com/octaviospain/Musicott/";
-    private static final String ABOUT_MUSICOTT_FIRST_LINE = " Version 0.10-b\n\n Copyright © 2015-2017 Octavio Calleya.";
+    private static final String ABOUT_MUSICOTT_FIRST_LINE = " Version 0.10.1-b\n\n Copyright © 2015-2017 Octavio Calleya.";
     private static final String ABOUT_MUSICOTT_SECOND_LINE = " Licensed under GNU GPLv3. This product includes\n" + " " +
             "software developed by other open source projects.";
 

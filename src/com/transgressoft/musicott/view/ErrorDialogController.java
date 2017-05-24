@@ -40,7 +40,7 @@ import static com.transgressoft.musicott.model.CommonObject.*;
  * optionally a text area with exception stack traces or multiple error messages.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.9.1-b
  */
 @Singleton

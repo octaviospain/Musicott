@@ -53,7 +53,7 @@ import static com.transgressoft.musicott.view.EditController.*;
  * or other operations utilities to be used for the application
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class Utils {
 

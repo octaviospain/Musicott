@@ -54,7 +54,7 @@ import static com.transgressoft.musicott.model.CommonObject.*;
  * {@code iTunes} library to the {@link MusicLibrary} of the application.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class ItunesParseTask extends BaseParseTask {
 

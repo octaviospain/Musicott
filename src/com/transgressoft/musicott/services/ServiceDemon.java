@@ -29,7 +29,7 @@ import javafx.beans.property.*;
  * from external services.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 @Singleton
 public class ServiceDemon {

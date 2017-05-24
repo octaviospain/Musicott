@@ -36,7 +36,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * to remove the {@code TrackQueueRow} from his list.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class TrackQueueRow extends GridPane {
 

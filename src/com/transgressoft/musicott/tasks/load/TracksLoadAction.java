@@ -46,7 +46,7 @@ import static com.transgressoft.musicott.model.CommonObject.*;
  * of the {@link Map} of tracks of the application's music library stored on a {@code json} file.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.9.2-b
  */
 public class TracksLoadAction extends BaseLoadAction {

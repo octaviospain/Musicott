@@ -34,7 +34,7 @@ import static com.transgressoft.musicott.view.custom.TrackTableRow.*;
  * that represents
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @since 0.10-b
  */
 public class TrackQueueListCell extends ListCell<TrackQueueRow> {

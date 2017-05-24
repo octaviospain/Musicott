@@ -36,7 +36,7 @@ import java.util.*;
  * Performs the operation of parsing an audio file to a {@link Track} instance.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  * @see <a href="http://www.jthink.net/jaudiotagger/">jAudioTagger</a>
  */
 public class MetadataParser {

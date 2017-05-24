@@ -38,7 +38,7 @@ import static com.transgressoft.musicott.model.CommonObject.*;
  * each save request.</p>
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class SaveMusicLibraryTask extends Thread {
 

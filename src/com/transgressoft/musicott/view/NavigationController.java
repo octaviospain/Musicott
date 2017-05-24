@@ -43,7 +43,7 @@ import static org.fxmisc.easybind.EasyBind.*;
  * music library menus, and the status progress and status messages.
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 @Singleton
 public class NavigationController extends InjectableController<VBox> {

@@ -31,7 +31,7 @@ import java.io.*;
  * Basic player that uses the native {@link MediaPlayer}
  *
  * @author Octavio Calleya
- * @version 0.10-b
+ * @version 0.10.1-b
  */
 public class JavaFxPlayer implements TrackPlayer {
 
