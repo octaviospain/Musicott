@@ -7,4 +7,6 @@ coverage:
 
   ignore:
       - "test/com/transgressoft/musicott/tests/JavaFxTestBase.java"
-      - "test/com/transgressoft/musicott/tests/MusicottTestSuite.java"
+      - "src/com/google/common/graph/ConfigurableMutableGraph.java"
+      - "src/com/google/common/graph/ConfigurableMutableValueGraph.java"
+      - "src/com/google/common/graph/ElementOrder.java"

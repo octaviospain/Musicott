@@ -19,9 +19,20 @@ directories:
 jdk:
   - oraclejdk8
 
-sudo: false
+sudo: required
 
-script: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONAR_TOKEN
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libavutil51
+  - sudo apt-get install -y libavformat53
+  - sudo apt-get install -y libavcodec53
+
+before_script:
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
+
+script: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.host.url=https://sonarqube.com -Dsonar.organization=octaviospain-github -Dsonar.login=$SONAR_TOKEN
 
 addons:
   apt:
