@@ -1,31 +1,26 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.transgressoft</groupId>
+
+    <groupId>com.transgressoft.musicott</groupId>
     <artifactId>musicott</artifactId>
-    <version>0.10-b</version>
+    <packaging>pom</packaging>
+    <version>0.10.1-b</version>
+    <url>https://octaviospain.github.io/Musicott</url>
     <name>Musicott</name>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
     </properties>
+
+    <modules>
+        <module>application</module>
+        <module>preloader</module>
+        <module>common</module>
+    </modules>
+
     <build>
-        <directory>target</directory>
-        <sourceDirectory>src</sourceDirectory>
-        <outputDirectory>target/classes</outputDirectory>
-        <testSourceDirectory>test</testSourceDirectory>
-        <testOutputDirectory>target/test-classes</testOutputDirectory>
-
-        <resources>
-            <resource>
-                <directory>resources</directory>
-            </resource>
-        </resources>
-
-        <testResources>
-            <testResource>
-                <directory>test-resources</directory>
-            </testResource>
-        </testResources>
 
         <pluginManagement>
             <plugins>
@@ -38,15 +33,6 @@
         </pluginManagement>
 
         <plugins>
-
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.6.1</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -100,8 +86,30 @@
             </plugin>
 
         </plugins>
+
     </build>
     <dependencies>
+
+        <dependency>
+            <groupId>org.fxmisc.easybind</groupId>
+            <artifactId>easybind</artifactId>
+            <version>1.0.4-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cedarsoftware</groupId>
+            <artifactId>json-io</artifactId>
+            <version>4.9.10</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>21.0</version>
+            <scope>compile</scope>
+        </dependency>
 
         <dependency>
             <groupId>com.google.inject</groupId>
@@ -118,17 +126,24 @@
         </dependency>
 
         <dependency>
-            <groupId>org.awaitility</groupId>
-            <artifactId>awaitility</artifactId>
-            <version>3.0.0</version>
-            <scope>test</scope>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.1</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.jfxtras</groupId>
-            <artifactId>openjfx-monocle</artifactId>
-            <version>1.8.0_20</version>
-            <scope>test</scope>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.24</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>1.7.24</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -153,181 +168,18 @@
         </dependency>
 
         <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>3.0.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>2.7.22</version>
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.testfx</groupId>
-            <artifactId>testfx-junit5</artifactId>
-            <version>4.0.6-alpha</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.testfx</groupId>
-            <artifactId>testfx-core</artifactId>
-            <version>4.0.6-alpha</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.testfx</groupId>
-            <artifactId>testfx-junit</artifactId>
-            <version>4.0.6-alpha</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jooq</groupId>
-            <artifactId>jool</artifactId>
-            <version>0.9.12</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.cedarsoftware</groupId>
-            <artifactId>json-io</artifactId>
-            <version>4.9.10</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.5</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.googlecode.soundlibs</groupId>
-            <artifactId>tritonus-share</artifactId>
-            <version>0.3.7.4</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.googlecode.soundlibs</groupId>
-            <artifactId>jlayer</artifactId>
-            <version>1.0.1.4</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.googlecode.soundlibs</groupId>
-            <artifactId>mp3spi</artifactId>
-            <version>1.9.5.4</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.24</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-jdk14</artifactId>
-            <version>1.7.24</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.controlsfx</groupId>
-            <artifactId>controlsfx</artifactId>
-            <version>8.40.12</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-client</artifactId>
-            <version>1.19.3</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>de.codecentric.centerdevice</groupId>
-            <artifactId>centerdevice-nsmenufx</artifactId>
-            <version>2.1.5</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>21.0</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.1</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.fxmisc.easybind</groupId>
-            <artifactId>easybind</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>net.jthink</groupId>
-            <artifactId>jaudiotagger</artifactId>
-            <scope>system</scope>
-            <version>2.2.6-SNAPSHOT</version>
-            <systemPath>${project.basedir}/lib/jaudiotagger-2.2.6-SNAPSHOT.jar</systemPath>
-        </dependency>
-
-        <dependency>
-            <groupId>be.tarsos</groupId>
-            <artifactId>transcoder</artifactId>
-            <scope>system</scope>
-            <version>1.2</version>
-            <systemPath>${project.basedir}/lib/TarsosTranscoder-1.2.jar</systemPath>
-        </dependency>
-
-        <dependency>
-            <groupId>com.worldsworstsoftware</groupId>
-            <artifactId>itunesutilities</artifactId>
-            <scope>system</scope>
-            <version>1.2</version>
-            <systemPath>${project.basedir}/lib/iTunesUtilities.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>net.bytebuddy</groupId>
-            <artifactId>byte-buddy</artifactId>
-            <version>1.6.11</version>
-        </dependency>
     </dependencies>
-
-    <repositories>
-
-        <repository>
-            <id>maven-central-repo</id>
-            <url>http://repo1.maven.org/maven2</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-
-        <repository>
-            <id>sonatype-snapshots-repo</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
 </project>

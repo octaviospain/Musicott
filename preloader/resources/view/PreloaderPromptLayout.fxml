@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="120.0" prefWidth="450.0" stylesheets="@../../../application/resources/css/dialog.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <BorderPane layoutX="175.0" layoutY="14.0" prefHeight="200.0" prefWidth="500.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <bottom>
+            <HBox alignment="CENTER_RIGHT" minHeight="-Infinity" prefHeight="70.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Label text="Choose the folder where Musicott files will be stored">
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
+                  </Label>
+                  <Button fx:id="okButton" alignment="CENTER" contentDisplay="CENTER" defaultButton="true" mnemonicParsing="false" prefHeight="26.0" prefWidth="80.0" text="OK" textAlignment="CENTER">
+                     <HBox.margin>
+                        <Insets left="15.0" right="15.0" />
+                     </HBox.margin>
+                  </Button>
+               </children>
+            </HBox>
+         </bottom>
+         <top>
+            <HBox alignment="CENTER_LEFT">
+               <children>
+                  <Button fx:id="openButton" mnemonicParsing="false" text="Open..">
+                     <HBox.margin>
+                        <Insets left="15.0" right="15.0" />
+                     </HBox.margin>
+                  </Button>
+                  <TextField fx:id="musicottFolderTextField" maxHeight="-Infinity" prefHeight="29.0" prefWidth="344.0" />
+               </children>
+               <BorderPane.margin>
+                  <Insets top="15.0" />
+               </BorderPane.margin>
+            </HBox>
+         </top>
+      </BorderPane>
+   </children>
+</AnchorPane>

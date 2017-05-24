@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane fx:id="rootAnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="500.0" stylesheets="@../css/dialog.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.transgressoft.musicott.MainPreloader">
+   <children>
+      <VBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <ImageView fitHeight="107.0" fitWidth="390.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../images/musicott-about-logo.png" />
+               </image>
+            </ImageView>
+            <Label fx:id="infoLabel" VBox.vgrow="SOMETIMES">
+               <VBox.margin>
+                  <Insets bottom="10.0" top="10.0" />
+               </VBox.margin>
+            </Label>
+            <ProgressBar fx:id="preloaderProgressBar" prefHeight="25.0" prefWidth="320.0" progress="0.0" />
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>
