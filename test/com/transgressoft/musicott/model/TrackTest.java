@@ -104,8 +104,8 @@ public class TrackTest {
         assertEquals(false, track.isInDisk());
         assertEquals(false, track.isPartOfCompilation());
         assertEquals(false, track.isVariableBitRate());
-        assertTrue(LocalDateTime.now().isAfter(track.getLastDateModified()));
-        assertTrue(LocalDateTime.now().isAfter(track.getDateAdded()));
+        await().untilAsserted(() -> assertTrue(track.lastDateModifiedProperty().get().isBefore(LocalDateTime.now())));
+        await().untilAsserted(() -> assertTrue(track.getDateAdded().isBefore(LocalDateTime.now())));
         assertFalse(track.getCoverImage().isPresent());
     }
 
