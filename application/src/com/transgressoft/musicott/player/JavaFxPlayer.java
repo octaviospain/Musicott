@@ -74,10 +74,12 @@ public class JavaFxPlayer implements TrackPlayer {
 
     @Override
     public void setVolume(double value) {
-        if (value < 0)
-            mediaPlayer.setVolume(0.0);
-        else
-            mediaPlayer.setVolume(value);
+        if (mediaPlayer != null) {
+            if (value < 0)
+                mediaPlayer.setVolume(0.0);
+            else
+                mediaPlayer.setVolume(value);
+        }
     }
 
     @Override
@@ -112,7 +114,10 @@ public class JavaFxPlayer implements TrackPlayer {
 
     @Override
     public DoubleProperty volumeProperty() {
-        return mediaPlayer.volumeProperty();
+        if (mediaPlayer == null)
+            return new SimpleDoubleProperty(1.0);
+        else
+            return mediaPlayer.volumeProperty();
     }
 
     @Override

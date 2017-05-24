@@ -21,3 +21,4 @@ Musicott-main-log.txt
 *.iml
 build.fxbuild
 application/resources/config/config.properties
+/target/

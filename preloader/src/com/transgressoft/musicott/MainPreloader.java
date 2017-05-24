@@ -45,6 +45,7 @@ import java.io.*;
 public class MainPreloader extends Preloader {
 
     static final String FIRST_USE_EVENT = "first_use";
+    static final String SET_INJECTOR = "set_injector";
 
     private static final int SCENE_WIDTH = 450;
     private static final int SCENE_HEIGHT = 120;
@@ -90,13 +91,15 @@ public class MainPreloader extends Preloader {
         CustomProgressNotification progressNotification = (CustomProgressNotification) info;
         if (progressNotification.getDetails().equals(FIRST_USE_EVENT))
             openFirstUseDialog();
+        else if (progressNotification.getDetails().equals(SET_INJECTOR))
+            progressNotification.getInjector().injectMembers(this);
         else {
             preloaderProgressBar.setProgress(progressNotification.getProgress());
             infoLabel.setText(progressNotification.getDetails());
         }
     }
 
-    @Inject
+    @Inject (optional = true)
     public void setErrorDialog(@ErrorCtrl ErrorDialogController errorDialog) {
         this.errorDialog = errorDialog;
     }

@@ -75,6 +75,8 @@ public class MusicottApplication extends Application implements InjectedApplicat
     public void init() throws Exception {
         Utils.initializeLogger();
         injector = injector.createChildInjector(new HostServicesModule(getHostServices()));
+        LauncherImpl.notifyPreloader(this, new CustomProgressNotification(injector, SET_INJECTOR));
+
         MainPreferences preferences = injector.getInstance(MainPreferences.class);
         String applicationFolder = preferences.getMusicottUserFolder();
         if (isFirstUse(applicationFolder))

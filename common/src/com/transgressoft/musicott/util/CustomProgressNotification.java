@@ -19,6 +19,7 @@
 
 package com.transgressoft.musicott.util;
 
+import com.google.inject.*;
 import javafx.application.Preloader.*;
 
 /**
@@ -29,8 +30,14 @@ import javafx.application.Preloader.*;
  */
 public class CustomProgressNotification implements PreloaderNotification {
 
-    private final double progress;
-    private final String details;
+    private double progress;
+    private String details;
+    private Injector injector;
+
+    public CustomProgressNotification(Injector injector, String details) {
+        this.injector = injector;
+        this.details = details;
+    }
 
     public CustomProgressNotification(double progress, String details) {
         this.progress = progress;
@@ -43,5 +50,9 @@ public class CustomProgressNotification implements PreloaderNotification {
 
     public String getDetails() {
         return details;
+    }
+
+    public Injector getInjector() {
+        return injector;
     }
 }

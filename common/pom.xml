@@ -66,9 +66,8 @@
         <dependency>
             <groupId>com.worldsworstsoftware</groupId>
             <artifactId>itunesutilities</artifactId>
-            <scope>system</scope>
+            <scope>compile</scope>
             <version>1.2</version>
-            <systemPath>${project.basedir}/lib/iTunesUtilities.jar</systemPath>
         </dependency>
 
     </dependencies>
