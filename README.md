@@ -15,7 +15,7 @@
 
 ![Musicott title logo](http://imageshack.com/a/img921/1074/4WJ9yl.png)
 
-# Musicott is an application that manages and plays music files. Coded in Java 8 with JavaFX.
+Musicott is an application that manages and plays music files. Coded in Java 8 with JavaFX.
 Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to read and write the metadata,
 [Json-io](https://github.com/jdereg/json-io "Json-io") for persistence,
 [TestFx](https://github.com/TestFX/TestFX "TestFx") for testing, [Guice](https://github.com/google/guice/) for dependency injection and some components from
