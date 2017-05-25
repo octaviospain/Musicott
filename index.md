@@ -18,11 +18,10 @@ title: Musicott by octaviospain
 
 ![Musicott title logo](http://imageshack.com/a/img921/1074/4WJ9yl.png)
 
-#
 Musicott is an application that manages and plays music files. Coded in Java 8 with JavaFX.
 Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to read and write the metadata,
 [Json-io](https://github.com/jdereg/json-io "Json-io") for persistence,
-[TestFx](https://github.com/TestFX/TestFX "TestFx") for testing, and some components from
+[TestFx](https://github.com/TestFX/TestFX "TestFx") for testing, [Guice](https://github.com/google/guice/) for dependency injection and some components from
 [ControlsFx](https://bitbucket.org/controlsfx/controlsfx/ "ControlsFx").
 
 [![Musicott-video](http://imageshack.com/a/img922/6599/x91wgY.png)](https://youtu.be/HHvfC3L8A3g)
@@ -40,15 +39,19 @@ Uses [JAudioTagger](https://bitbucket.org/ijabz/jaudiotagger "jAudioTagger") to 
 * Smart playlists
 
 ## Download
-[Download](https://github.com/octaviospain/Musicott/releases "Download") the last release (version 0.9-b).
-Version 0.10 is already on the develop branch, and the next version to release 0.10.1 will be soon.
+I had some trouble creating the native packages and even the jar file, since now the project is structured in several modules. I will work on it and I will upload the release packages when I'll achieve this. Running as described as described in the following section is the recommended way.
 
 ## How to build and run
 To build you need at least Java 8 update 40 and Maven
 
  1. Clone Musicott at any directory `git clone https://github.com/octaviospain/Musicott.git`
- 2. Build with maven at Musicott's root folder (where `pom.xml` is located)  with `mvn package`
- 3. Run with `mvn exec:java -D exec.mainClass=com.transgressoft.musicott.MusicottApplication`
+ 2. Build with maven at Musicott's root folder (where `pom.xml` is located)  with `mvn package -Dmaven.test.skip=true`
+ 4. Install this two required jar libraries into the local maven repository executing
+ ```
+ mvn install:install-file -Dfile=application/lib/TarsosTranscoder-1.2.jar -DgroupId=be.tarsos -DartifactId=transcoder -Dversion=1.2 -Dpackaging=jar
+ mvn install:install-file -Dfile=common/lib/iTunesUtilities.jar -DgroupId=com.worldsworstsoftware -DartifactId=itunesutilities -Dversion=1.2 -Dpackaging=jar
+ ```
+ 3. Run with `mvn exec:java -Dexec.mainClass=com.transgressoft.musicott.MusicottApplication`
 
 ## How to contribute
 
@@ -66,13 +69,18 @@ Check out the [Wiki pages](https://github.com/octaviospain/Musicott/wiki "Wiki")
 
 ## Changes history
 
+### Version 0.10.1
+* Improved Itunes import. Now the application shows a window to let the user selects which playlists to import.
+* Refactored with guice's dependency injection framework.
+* Refactored to use maven multi modules.
+
 ### Version 0.10
 * Added Artists navigation mode. A list of artists is shown, and clicking one artist shows their albums, with useful information of them.
 * Typing on the search field while on the artists mode filters the artists list by the query.
 * Added cover thumbnail on the bottom right corner of the table that changes when hovering the rows
 * Also when a playlist is shown, the cover of the playlist changes when hovering
-* Drag & drop tracks to playlists is now possible
-* Drag & drop playlists into folders is now possible
+* Drag & drop tracks to tracksLibrary is now possible
+* Drag & drop tracksLibrary into folders is now possible
 * Ability to reorder the playlist queue by drag & drop
 * Improved audio files & iTunes importing
 * Several bug fixes and performance improvements
@@ -99,6 +107,6 @@ the number of tracks and the size of the playlist
 * Big refactor implementing better concurrent model
 
 ## Copyright
-Copyright (c) 2015-2016 Octavio Calleya.
+Copyright (c) 2015-2017 Octavio Calleya.
 
 Musicott is free software under GNU GPL version 3 license. The license of Musicott and the licenses of the included libraries in this software are in the [LICENSE](https://github.com/octaviospain/Musicott/tree/master/license "License") folder
