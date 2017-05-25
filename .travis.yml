@@ -26,13 +26,15 @@ before_install:
   - sudo apt-get install -y libavutil51
   - sudo apt-get install -y libavformat53
   - sudo apt-get install -y libavcodec53
+  - mvn install:install-file -Dfile=lib/TarsosTranscoder-1.2.jar -DgroupId=be.tarsos -DartifactId=transcoder -Dversion=1.2 -Dpackaging=jar
+  - mvn install:install-file -Dfile=lib/iTunesUtilities.jar -DgroupId=com.worldsworstsoftware -DartifactId=itunesutilities -Dversion=1.2 -Dpackaging=jar
 
 before_script:
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
   - sleep 3 # give xvfb some time to start
 
-script: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.host.url=https://sonarqube.com -Dsonar.login=$SONAR_TOKEN
+script: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.host.url=https://sonarqube.com -Dsonar.organization=octaviospain-github -Dsonar.login=$SONAR_TOKEN
 
 addons:
   apt:

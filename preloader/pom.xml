@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.transgressoft.musicott</groupId>
+        <artifactId>musicott</artifactId>
+        <version>0.10.1-b</version>
+    </parent>
+
+    <artifactId>preloader</artifactId>
+    <version>0.10.1-b</version>
+
+    <build>
+        <directory>target</directory>
+        <sourceDirectory>src</sourceDirectory>
+        <outputDirectory>target/classes</outputDirectory>
+
+        <plugins>
+
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.6.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+
+        </plugins>
+
+        <resources>
+            <resource>
+                <directory>resources</directory>
+            </resource>
+        </resources>
+
+    </build>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>com.transgressoft.musicott</groupId>
+            <artifactId>common</artifactId>
+            <version>0.10.1-b</version>
+        </dependency>
+
+    </dependencies>
+</project>
