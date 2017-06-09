@@ -25,6 +25,7 @@ import com.transgressoft.musicott.model.*;
 import com.transgressoft.musicott.player.*;
 import com.transgressoft.musicott.services.*;
 import com.transgressoft.musicott.tasks.*;
+import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.annotations.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.guice.modules.*;

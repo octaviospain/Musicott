@@ -17,15 +17,13 @@
  * Copyright (C) 2015 - 2017 Octavio Calleya
  */
 
-package com.transgressoft.musicott.tests;
+package com.transgressoft.musicott.util;
 
 import org.junit.jupiter.api.extension.*;
 import org.junit.jupiter.api.extension.ExtensionContext.*;
 import org.mockito.*;
 
 import java.lang.reflect.*;
-
-import static org.mockito.Mockito.*;
 
 /**
  * {@code MockitoExtension} showcases the {@link TestInstancePostProcessor}
@@ -58,10 +56,10 @@ public class MockitoExtension implements TestInstancePostProcessor, ParameterRes
         String mockName = getMockName(parameter);
 
         if (mockName != null) {
-            return mocks.getOrComputeIfAbsent(mockName, key -> mock(mockType, mockName));
+            return mocks.getOrComputeIfAbsent(mockName, key -> Mockito.mock(mockType, mockName));
         }
         else {
-            return mocks.getOrComputeIfAbsent(mockType.getCanonicalName(), key -> mock(mockType));
+            return mocks.getOrComputeIfAbsent(mockType.getCanonicalName(), key -> Mockito.mock(mockType));
         }
     }
 

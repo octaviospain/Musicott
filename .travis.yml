@@ -28,6 +28,7 @@ before_install:
   - sudo apt-get install -y libavcodec53
   - mvn install:install-file -Dfile=lib/TarsosTranscoder-1.2.jar -DgroupId=be.tarsos -DartifactId=transcoder -Dversion=1.2 -Dpackaging=jar
   - mvn install:install-file -Dfile=lib/iTunesUtilities.jar -DgroupId=com.worldsworstsoftware -DartifactId=itunesutilities -Dversion=1.2 -Dpackaging=jar
+  - mvn install:install-file -Dfile=lib/jaudiotagger-2.2.6-SNAPSHOT.jar -DgroupId=net.jthink -DartifactId=jaudiotagger -Dversion=2.2.6-SNAPSHOT -Dpackaging=jar
 
 before_script:
   - "export DISPLAY=:99.0"

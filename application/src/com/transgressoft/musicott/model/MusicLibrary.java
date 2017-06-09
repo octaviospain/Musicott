@@ -125,7 +125,7 @@ public class MusicLibrary {
     /**
      * Searches and returns all the tracks, mapped by album, in which an artist is involved.
      *
-     * @param artist The given artist to find their related tracksLibrary
+     * @param artist The given artist to find their related tracks
      * @return A {@link ImmutableMultimap} with the albums as keys, and {@code Entries} as values
      */
     public ImmutableMultimap<String, Entry<Integer, Track>> getAlbumTracksOfArtist(String artist) {

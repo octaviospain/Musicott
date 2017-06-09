@@ -25,6 +25,7 @@ import com.google.inject.*;
 import com.google.inject.assistedinject.*;
 import com.sun.javafx.collections.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.util.guice.factories.*;
 import com.transgressoft.musicott.util.jsoniocreators.*;
 import javafx.application.*;
@@ -168,6 +169,7 @@ public class TracksLoadAction extends BaseLoadAction {
             track.isPlayableProperty().setValue(false);
             LOG.error("Track not found when loading data: {}", exception.getMessage(), exception);
         }
+        track.setUpdater(new MetadataUpdater());
         track.playCountProperty().addListener(playCountListener);
         notifyPreloader(tracksStep.incrementAndGet(), totalTracks, "Loading tracks...");
     }

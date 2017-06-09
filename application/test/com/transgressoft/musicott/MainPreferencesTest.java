@@ -23,7 +23,7 @@ import com.google.common.collect.*;
 import com.google.common.io.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.tests.*;
+import com.transgressoft.musicott.util.*;
 import javafx.beans.value.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
