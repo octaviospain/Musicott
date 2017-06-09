@@ -39,6 +39,8 @@ import org.mockito.*;
 
 import java.io.*;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 /**
  * @author Octavio Calleya
  */
@@ -69,7 +71,7 @@ public class MetadataParserTest {
     @BeforeAll
     public static void beforeAllTests() throws Exception {
         injector = Guice.createInjector(new TestModule());
-        testCover = new File(MetadataParser.class.getResource("/testfiles/testcover.jpg").toURI());
+        testCover = new File(MetadataParser.class.getResource("/testfiles/cover.jpg").toURI());
         mp3File = new File(MetadataParser.class.getResource("/testfiles/testeable.mp3").toURI());
         m4aFile = new File(MetadataParser.class.getResource("/testfiles/testeable.m4a").toURI());
         waveFile = new File(MetadataParser.class.getResource("/testfiles/testeable.wav").toURI());
@@ -136,7 +138,7 @@ public class MetadataParserTest {
     @Test
     @DisplayName ("Wav parse")
     void wavParseTest() throws Exception {
-//        resetWavFile();
+        resetWavFile();
         prepareFile(waveFile);
         Track parsedTrack = MetadataParser.createTrack(waveFile);
         assertTrack(parsedTrack);
@@ -152,18 +154,18 @@ public class MetadataParserTest {
     }
 
     void assertTrack(Track parsedTrack) {
-        Assertions.assertEquals(name, parsedTrack.getName());
-        Assertions.assertEquals(album, parsedTrack.getAlbum());
-        Assertions.assertEquals(albumArtist, parsedTrack.getAlbumArtist());
-        Assertions.assertEquals(artist, parsedTrack.getArtist());
-        Assertions.assertEquals(genre, parsedTrack.getGenre());
-        Assertions.assertEquals(comments, parsedTrack.getComments());
-        Assertions.assertEquals(label, parsedTrack.getLabel());
-        Assertions.assertEquals(trackNumber, parsedTrack.getTrackNumber());
-        Assertions.assertEquals(discNumber, parsedTrack.getDiscNumber());
-        Assertions.assertEquals(year, parsedTrack.getYear());
-        Assertions.assertEquals(bpm, parsedTrack.getBpm());
-        Assertions.assertEquals(isPartOfCompilation, parsedTrack.isPartOfCompilation());
+        assertEquals(name, parsedTrack.getName());
+        assertEquals(album, parsedTrack.getAlbum());
+        assertEquals(albumArtist, parsedTrack.getAlbumArtist());
+        assertEquals(artist, parsedTrack.getArtist());
+        assertEquals(genre, parsedTrack.getGenre());
+        assertEquals(comments, parsedTrack.getComments());
+        assertEquals(label, parsedTrack.getLabel());
+        assertEquals(trackNumber, parsedTrack.getTrackNumber());
+        assertEquals(discNumber, parsedTrack.getDiscNumber());
+        assertEquals(year, parsedTrack.getYear());
+        assertEquals(bpm, parsedTrack.getBpm());
+        assertEquals(isPartOfCompilation, parsedTrack.isPartOfCompilation());
     }
 
     void resetMp3File() throws Exception {

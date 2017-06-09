@@ -46,8 +46,6 @@ public class MetadataParser {
     @Inject
     private static TrackFactory trackFactory;
 
-    private MetadataParser() {}
-
     public static Track createTrack(File fileToParse) throws TrackParseException {
         Track track = trackFactory.create(fileToParse.getParent(), fileToParse.getName());
         try {
@@ -106,32 +104,28 @@ public class MetadataParser {
                 int bpm = Integer.parseInt(tag.getFirst(FieldKey.BPM));
                 track.setBpm(bpm < 1 ? 0 : bpm);
             }
-            catch (NumberFormatException e) {
-            }
+            catch (NumberFormatException e) {}
         }
         if (tag.hasField(FieldKey.DISC_NO)) {
             try {
                 int dn = Integer.parseInt(tag.getFirst(FieldKey.DISC_NO));
                 track.setDiscNumber(dn < 1 ? 0 : dn);
             }
-            catch (NumberFormatException e) {
-            }
+            catch (NumberFormatException e) {}
         }
         if (tag.hasField(FieldKey.TRACK)) {
             try {
                 int trackNumber = Integer.parseInt(tag.getFirst(FieldKey.TRACK));
                 track.setTrackNumber(trackNumber < 1 ? 0 : trackNumber);
             }
-            catch (NumberFormatException e) {
-            }
+            catch (NumberFormatException e) {}
         }
         if (tag.hasField(FieldKey.YEAR)) {
             try {
                 int year = Integer.parseInt(tag.getFirst(FieldKey.YEAR));
                 track.setYear(year < 1 ? 0 : year);
             }
-            catch (NumberFormatException e) {
-            }
+            catch (NumberFormatException e) {}
         }
     }
 

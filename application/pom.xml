@@ -136,12 +136,6 @@
 
         <dependency>
             <groupId>org.testfx</groupId>
-            <artifactId>testfx-junit5</artifactId>
-            <version>4.0.6-alpha</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.testfx</groupId>
             <artifactId>testfx-core</artifactId>
             <version>4.0.6-alpha</version>
             <scope>test</scope>
