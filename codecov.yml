@@ -6,7 +6,6 @@ coverage:
   round: up
 
   ignore:
-      - "test/com/transgressoft/musicott/tests/JavaFxTestBase.java"
-      - "src/com/google/common/graph/ConfigurableMutableGraph.java"
-      - "src/com/google/common/graph/ConfigurableMutableValueGraph.java"
-      - "src/com/google/common/graph/ElementOrder.java"
+      - "common/src/com/google/common/graph/ConfigurableMutableGraph.java"
+      - "common/src/com/google/common/graph/ConfigurableMutableValueGraph.java"
+      - "common/src/com/google/common/graph/ElementOrder.java"

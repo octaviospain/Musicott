@@ -5,7 +5,7 @@ import com.google.common.io.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.tests.*;
+import com.transgressoft.musicott.util.*;
 import com.transgressoft.musicott.view.*;
 import javafx.collections.*;
 import org.junit.jupiter.api.*;

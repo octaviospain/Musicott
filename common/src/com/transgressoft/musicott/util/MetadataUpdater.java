@@ -46,7 +46,7 @@ public class MetadataUpdater {
 
     private Track track;
 
-    public MetadataUpdater(Track track) {
+    public void setTrack(Track track) {
         this.track = track;
     }
 

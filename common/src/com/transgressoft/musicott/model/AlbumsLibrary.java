@@ -73,6 +73,7 @@ public class AlbumsLibrary {
 
     synchronized void clear() {
         albumsTracks.clear();
+        albumsListProperty.clear();
     }
 
     public synchronized void updateTrackAlbums(List<Entry<Integer, Track>> modifiedTracks, Set<String> oldAlbums, String newAlbum) {
