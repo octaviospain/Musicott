@@ -138,27 +138,29 @@ public class WaveformTask extends Thread {
     }
 
     private int[] getWavAmplitudes(File file) throws UnsupportedAudioFileException, IOException {
-        AudioInputStream input = AudioSystem.getAudioInputStream(file);
-        AudioFormat baseFormat = input.getFormat();
+        int[] amplitudes;
+        try (AudioInputStream input = AudioSystem.getAudioInputStream(file)) {
+            AudioFormat baseFormat = input.getFormat();
 
-        Encoding encoding = AudioFormat.Encoding.PCM_UNSIGNED;
-        float sampleRate = baseFormat.getSampleRate();
-        int numChannels = baseFormat.getChannels();
+            Encoding encoding = AudioFormat.Encoding.PCM_UNSIGNED;
+            float sampleRate = baseFormat.getSampleRate();
+            int numChannels = baseFormat.getChannels();
 
-        AudioFormat decodedFormat = new AudioFormat(encoding, sampleRate, 16, numChannels, numChannels * 2, sampleRate,
-                                                    false);
-        int available = input.available();
-        int[] amplitudes = new int[available];
+            AudioFormat decodedFormat = new AudioFormat(encoding, sampleRate, 16, numChannels, numChannels * 2,
+                                                        sampleRate, false);
+            int available = input.available();
+            amplitudes = new int[available];
 
-        try (AudioInputStream pcmDecodedInput = AudioSystem.getAudioInputStream(decodedFormat, input)) {
-            byte[] buffer = new byte[available];
-            pcmDecodedInput.read(buffer, 0, available);
-            for (int i = 0; i < available - 1; i += 2) {
-                amplitudes[i] = ((buffer[i + 1] << 8) | buffer[i] & 0xff) << 16;
-                amplitudes[i] /= 32767;
-                amplitudes[i] *= WAVEFORM_HEIGHT_COEFFICIENT;
+            try (AudioInputStream pcmDecodedInput = AudioSystem.getAudioInputStream(decodedFormat, input)) {
+                byte[] buffer = new byte[available];
+                pcmDecodedInput.read(buffer, 0, available);
+                for (int i = 0; i < available - 1; i += 2) {
+                    amplitudes[i] = ((buffer[i + 1] << 8) | buffer[i] & 0xff) << 16;
+                    amplitudes[i] /= 32767;
+                    amplitudes[i] *= WAVEFORM_HEIGHT_COEFFICIENT;
+                }
+                input.close();
             }
-            input.close();
         }
         return amplitudes;
     }
