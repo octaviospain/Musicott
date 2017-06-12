@@ -147,19 +147,19 @@ public class WaveformTask extends Thread {
 
         AudioFormat decodedFormat = new AudioFormat(encoding, sampleRate, 16, numChannels, numChannels * 2, sampleRate,
                                                     false);
-        AudioInputStream pcmDecodedInput = AudioSystem.getAudioInputStream(decodedFormat, input);
-
         int available = input.available();
         int[] amplitudes = new int[available];
-        byte[] buffer = new byte[available];
-        pcmDecodedInput.read(buffer, 0, available);
-        for (int i = 0; i < available - 1; i += 2) {
-            amplitudes[i] = ((buffer[i + 1] << 8) | buffer[i] & 0xff) << 16;
-            amplitudes[i] /= 32767;
-            amplitudes[i] *= WAVEFORM_HEIGHT_COEFFICIENT;
+
+        try (AudioInputStream pcmDecodedInput = AudioSystem.getAudioInputStream(decodedFormat, input)) {
+            byte[] buffer = new byte[available];
+            pcmDecodedInput.read(buffer, 0, available);
+            for (int i = 0; i < available - 1; i += 2) {
+                amplitudes[i] = ((buffer[i + 1] << 8) | buffer[i] & 0xff) << 16;
+                amplitudes[i] /= 32767;
+                amplitudes[i] *= WAVEFORM_HEIGHT_COEFFICIENT;
+            }
+            input.close();
         }
-        input.close();
-        pcmDecodedInput.close();
         return amplitudes;
     }
 
