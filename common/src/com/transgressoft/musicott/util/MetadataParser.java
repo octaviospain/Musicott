@@ -46,6 +46,8 @@ public class MetadataParser {
     @Inject
     private static TrackFactory trackFactory;
 
+    private MetadataParser() {}
+
     public static Track createTrack(File fileToParse) throws TrackParseException {
         Track track = trackFactory.create(fileToParse.getParent(), fileToParse.getName());
         try {
