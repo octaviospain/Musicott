@@ -103,6 +103,7 @@ public class PlaylistTreeView extends TreeView<Playlist> {
     private void addPlaylistToItemsMap(TreeItem<Playlist> parentPlaylistItem, Playlist playlist) {
         TreeItem<Playlist> item = new TreeItem<>(playlist);
         parentPlaylistItem.getChildren().add(item);
+        parentPlaylistItem.getChildren().sort(Comparator.comparing(a -> a.getValue().getName()));
         playlistsItemsMap.put(playlist, item);
     }
 

@@ -21,6 +21,7 @@ package com.transgressoft.musicott.view.custom;
 
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
+import com.transgressoft.musicott.util.guice.annotations.*;
 import javafx.beans.value.*;
 import javafx.css.*;
 import javafx.scene.control.*;
@@ -51,11 +52,16 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
     private final PseudoClass folderSelected = PseudoClass.getPseudoClass("folder-selected");
 
     private MusicLibrary musicLibrary;
+    private PlaylistsLibrary playlistsLibrary;
+    private Playlist rootPlaylist;
+    private boolean dragOnRoot;
 
     @Inject
-    public PlaylistTreeCell(MusicLibrary musicLibrary) {
+    public PlaylistTreeCell(MusicLibrary musicLibrary, PlaylistsLibrary playlistsLibrary, @RootPlaylist Playlist root) {
         super();
         this.musicLibrary = musicLibrary;
+        this.playlistsLibrary = playlistsLibrary;
+        rootPlaylist = root;
         setOnMouseClicked(this::doubleClickOnPlaylistHandler);
 
         ChangeListener<Boolean> isFolderListener = (obs, oldPlaylistIsFolder, newPlaylistIsFolder) -> {
@@ -130,11 +136,13 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
         else
             if (event.getDragboard().hasContent(PLAYLIST_NAME_MIME_TYPE)) {
                 getTreeView().setStyle(dragOverRootPlaylistStyle);
+                dragOnRoot = true;
             }
         event.consume();
     }
 
     private void onDragExited(DragEvent event) {
+        dragOnRoot = false;
         setStyle("");
         getTreeView().setStyle("");
         setOpacity(1.0);
@@ -148,11 +156,17 @@ public class PlaylistTreeCell extends TreeCell<Playlist> {
             List<Integer> selectedTracksIds = (List<Integer>) dragBoard.getContent(TRACK_IDS_MIME_TYPE);
             getItem().addTracks(selectedTracksIds);
         }
-        else
-            if (dragBoard.hasContent(PLAYLIST_NAME_MIME_TYPE) && getItem().isFolder()) {
-                String playlistName = (String) dragBoard.getContent(PLAYLIST_NAME_MIME_TYPE);
-                ((PlaylistTreeView) getTreeView()).movePlaylist(playlistName, getItem());
-            }
+        else if (dragBoard.hasContent(PLAYLIST_NAME_MIME_TYPE)) {
+            String playlistName = (String) dragBoard.getContent(PLAYLIST_NAME_MIME_TYPE);
+            PlaylistTreeView treeView = ((PlaylistTreeView) getTreeView());
+            
+            if (getItem().isFolder() && ! playlistName.equals(getItem().getName()))
+                treeView.movePlaylist(playlistName, getItem());
+            else if (playlistsLibrary.getParentPlaylist(getItem()).equals(rootPlaylist) && ! getItem().isFolder())
+                treeView.movePlaylist(playlistName, rootPlaylist);
+            else if (dragOnRoot)
+                treeView.movePlaylist(playlistName, rootPlaylist);
+        }
         event.consume();
     }
 
