@@ -45,8 +45,9 @@ To build you need at least Java 8 update 40 and Maven
  2. Build with maven at Musicott's root folder (where `pom.xml` is located)  with `mvn package -Dmaven.test.skip=true`
  4. Install this two required jar libraries into the local maven repository executing
  ```
- mvn install:install-file -Dfile=application/lib/TarsosTranscoder-1.2.jar -DgroupId=be.tarsos -DartifactId=transcoder -Dversion=1.2 -Dpackaging=jar
- mvn install:install-file -Dfile=common/lib/iTunesUtilities.jar -DgroupId=com.worldsworstsoftware -DartifactId=itunesutilities -Dversion=1.2 -Dpackaging=jar
+ mvn install:install-file -Dfile=lib/TarsosTranscoder-1.2.jar -DgroupId=be.tarsos -DartifactId=transcoder -Dversion=1.2 -Dpackaging=jar
+ mvn install:install-file -Dfile=lib/iTunesUtilities.jar -DgroupId=com.worldsworstsoftware -DartifactId=itunesutilities -Dversion=1.2 -Dpackaging=jar
+ mvn install:install-file -Dfile=lib/jaudiotagger-2.2.6-SNAPSHOT.jar -DgroupId=net.jthink -DartifactId=jaudiotagger -Dversion=2.2.6-SNAPSHOT -Dpackaging=jar
  ```
  3. Run with `mvn exec:java -Dexec.mainClass=com.transgressoft.musicott.MusicottApplication`
 

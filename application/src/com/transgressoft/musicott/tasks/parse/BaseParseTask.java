@@ -47,7 +47,7 @@ public abstract class BaseParseTask extends Task<Void> implements ParseTask {
         this.navigationController = navigationController;
     }
 
-    public synchronized void updateProgressTask() {
+    public void updateProgressTask() {
         int parsedItems = getNumberOfParsedItemsAndIncrement();
         int totalItemsToParse = getTotalItemsToParse();
         double progress = (double) parsedItems / totalItemsToParse;

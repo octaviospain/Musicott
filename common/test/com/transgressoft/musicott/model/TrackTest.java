@@ -31,6 +31,7 @@ import javafx.collections.*;
 import javafx.util.Duration;
 import org.apache.commons.lang3.text.*;
 import org.awaitility.*;
+import org.jaudiotagger.audio.*;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -75,7 +76,7 @@ public class TrackTest {
     public static void beforeAll() throws Exception {
         Injector injector = Guice.createInjector(new TestModule());
         trackFactory = injector.getInstance(TrackFactory.class);
-        testCover = new File(TrackTest.class.getResource("/testfiles/testcover.jpg").toURI());
+        testCover = new File(TrackTest.class.getResource("/testfiles/cover.jpg").toURI());
         fileFolder = testCover.getParent();
     }
 
@@ -280,6 +281,7 @@ public class TrackTest {
     }
 
     @Test
+    @DisplayName ("toString")
     void toStringTest() {
         track = trackFactory.create("", "");
         track.setName(name);
@@ -346,6 +348,58 @@ public class TrackTest {
         track.setIsInDisk(true);
         track.setEncoder("iTunes");
         assertFalse(track.isPlayable());
+    }
+
+    @Test
+    @DisplayName ("Set none artists involved adds an empty string one")
+    void noneArtistsInvolved() {
+        track = trackFactory.create(fileFolder, "testeable.mp3");
+        track.setArtistsInvolved(FXCollections.observableSet());
+        assertEquals(FXCollections.observableSet(" "), track.getArtistsInvolved());
+        assertEquals(FXCollections.observableSet(" "), track.artistsInvolvedProperty().get());
+    }
+
+    @Test
+    @DisplayName ("Cover image")
+    void coverImage() throws Exception {
+        File trackFile = new File(fileFolder, "testeable.mp3");
+        AudioFile audio = AudioFileIO.read(trackFile);
+        audio.setTag(null);
+        audio.commit();
+
+        track = trackFactory.create(fileFolder, "testeable.mp3");
+        track.setCoverImage(null);
+        assertEquals(Optional.empty(), track.getCoverImage());
+    }
+
+    @Test
+    @DisplayName ("Write metadata with no cover to update")
+    void writeMetadataNoCover() throws Exception {
+        MetadataUpdater metadataUpdaterMock = mock(MetadataUpdater.class);
+        doNothing().when(metadataUpdaterMock).writeAudioMetadata();
+        doNothing().when(metadataUpdaterMock).updateCover(any());
+
+        track = trackFactory.create(fileFolder, "testeable.mp3");
+        track.setCoverImage(null);
+        track.setUpdater(metadataUpdaterMock);
+        track.writeMetadata();
+        verify(metadataUpdaterMock, times(1)).writeAudioMetadata();
+        verify(metadataUpdaterMock, times(0)).updateCover(any());
+    }
+
+    @Test
+    @DisplayName ("Write metadata with cover to update")
+    void writeMetadataWithCover() throws Exception {
+        MetadataUpdater metadataUpdaterMock = mock(MetadataUpdater.class);
+        doNothing().when(metadataUpdaterMock).writeAudioMetadata();
+        doNothing().when(metadataUpdaterMock).updateCover(any());
+
+        track = trackFactory.create(fileFolder, "testeable.mp3");
+        track.setCoverImage(testCover);
+        track.setUpdater(metadataUpdaterMock);
+        track.writeMetadata();
+        verify(metadataUpdaterMock, times(1)).writeAudioMetadata();
+        verify(metadataUpdaterMock, times(1)).updateCover(testCover);
     }
 
     private static class TestModule extends AbstractModule {

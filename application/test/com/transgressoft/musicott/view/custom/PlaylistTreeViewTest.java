@@ -22,7 +22,7 @@ package com.transgressoft.musicott.view.custom;
 import com.google.common.graph.*;
 import com.google.inject.*;
 import com.transgressoft.musicott.model.*;
-import com.transgressoft.musicott.tests.*;
+import com.transgressoft.musicott.util.*;
 import javafx.beans.property.*;
 import javafx.scene.control.*;
 import org.junit.jupiter.api.*;

@@ -97,8 +97,8 @@ public class Track {
     private Map<TrackField, Property> propertyMap;
     private ObservableSet<String> artistsInvolved;
 
+    private MetadataUpdater updater;
     private Optional<File> coverFileToUpdate = Optional.empty();
-    private MetadataUpdater updater = new MetadataUpdater(this);
 
     public Track() {
         nameProperty = new SimpleStringProperty(this, "name", name);
@@ -503,6 +503,12 @@ public class Track {
     public void incrementPlayCount() {
         playCount++;
         playCountProperty.setValue(playCount);
+    }
+
+    @Inject
+    public void setUpdater(MetadataUpdater updater) {
+        this.updater = updater;
+        updater.setTrack(this);
     }
 
     @Override
