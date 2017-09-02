@@ -103,7 +103,7 @@
         <dependency>
             <groupId>org.fxmisc.easybind</groupId>
             <artifactId>easybind</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
+            <version>1.0.3</version>
             <scope>compile</scope>
         </dependency>
 
