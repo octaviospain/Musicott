@@ -42,7 +42,7 @@ I had some trouble creating the native packages and even the jar file, since now
 To build you need at least Java 8 update 40 and Maven
 
  1. Clone Musicott at any directory `git clone https://github.com/octaviospain/Musicott.git`
- 2. Build with maven at Musicott's root folder (where `pom.xml` is located)  with `mvn package -Dmaven.test.skip=true`
+ 2. Build with maven at Musicott's root folder (where `pom.xml` is located)  with `mvn install -Dmaven.test.skip=true`
  4. Install this two required jar libraries into the local maven repository executing
  ```
  mvn install:install-file -Dfile=lib/TarsosTranscoder-1.2.jar -DgroupId=be.tarsos -DartifactId=transcoder -Dversion=1.2 -Dpackaging=jar
