@@ -8,10 +8,6 @@ branches:
   - master
   - tests
 
-env:
-  global:
-    - secure: "P/eyCzQU9xjAfsr08tLabfiRAI4+ChjnaZeqlu7rIxAEqLg3M11e58UB10fRFSBxBbVUcnB4rhVDqSsaPuVmb/jZ2yuaiu/DEqVFP7NE41GdwnoRGhdifTW9NuEVoiRaGnqvUA3FlI1qDsZjE1PnIu3XCTRsKVmXS4bb4MWV0/oz8jVPpeKR2qaI9jKFsQXCh5Zihrchp318v6Qrxi6N9UCGiTPa47U+HwtxHbwcOCpUDmJ9ycgP05Gk9dk54BzevSib2C5mo5+qk6aaccUThMvsWid0giz5qzo+T7/ebA9rIRyQ1CSREObli7LclaRFgONXmOpAbn1RQKBhtIbF9yZTfRBr4dTn2qh6B6hJ0jDxmNl1WhltZ6iHzm8XV4XummNn8B6SbGOaip2qA3nIwoUR18xSN1k5Y+/zpURexARZ49r80mmd6X1lIPGwI8ntPGigo/TumiFzhH7pA5UUMxAX0gRWcCWXh1c4A9sbq75i4KJnAbXaiyUPM8RMC32BEmYIZlkOQ30IsUGEizWp6Cq5RHHwZ/vGYN+0+5siBpfuy6DLULiMwXNW0iXZ2lsywWhbaVAjj6QvKMiwpb8dl1z7ZfY9xs3iPQA8yH0ttmZ6EVmeg3olcbcVcQOZ6GFGmqN/hwEkdyYKJnZoNfob7bujD477sfRBYZC9L+SBCns="
-
 directories:
   - $HOME/.m2
   - $HOME/.sonar/cache
@@ -32,12 +28,18 @@ before_script:
   - "sh -e /etc/init.d/xvfb start"
   - sleep 3 # give xvfb some time to start
 
-script: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.host.url=https://sonarqube.com -Dsonar.organization=octaviospain-github -Dsonar.login=$SONAR_TOKEN
+script: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar
 
 addons:
   apt:
     packages:
       - oracle-java8-installer
+  sonarcloud:
+    organization: "octaviospain-github"
+    token:
+      secure: "P/eyCzQU9xjAfsr08tLabfiRAI4+ChjnaZeqlu7rIxAEqLg3M11e58UB10fRFSBxBbVUcnB4rhVDqSsaPuVmb/jZ2yuaiu/DEqVFP7NE41GdwnoRGhdifTW9NuEVoiRaGnqvUA3FlI1qDsZjE1PnIu3XCTRsKVmXS4bb4MWV0/oz8jVPpeKR2qaI9jKFsQXCh5Zihrchp318v6Qrxi6N9UCGiTPa47U+HwtxHbwcOCpUDmJ9ycgP05Gk9dk54BzevSib2C5mo5+qk6aaccUThMvsWid0giz5qzo+T7/ebA9rIRyQ1CSREObli7LclaRFgONXmOpAbn1RQKBhtIbF9yZTfRBr4dTn2qh6B6hJ0jDxmNl1WhltZ6iHzm8XV4XummNn8B6SbGOaip2qA3nIwoUR18xSN1k5Y+/zpURexARZ49r80mmd6X1lIPGwI8ntPGigo/TumiFzhH7pA5UUMxAX0gRWcCWXh1c4A9sbq75i4KJnAbXaiyUPM8RMC32BEmYIZlkOQ30IsUGEizWp6Cq5RHHwZ/vGYN+0+5siBpfuy6DLULiMwXNW0iXZ2lsywWhbaVAjj6QvKMiwpb8dl1z7ZfY9xs3iPQA8yH0ttmZ6EVmeg3olcbcVcQOZ6GFGmqN/hwEkdyYKJnZoNfob7bujD477sfRBYZC9L+SBCns="
+    branches:
+      - master
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
