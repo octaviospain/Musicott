@@ -1,0 +1,124 @@
+package net.transgressoft.musicott;
+
+import net.transgressoft.musicott.config.LastFmConfiguration;
+import net.transgressoft.musicott.events.StageReadyEvent;
+import net.transgressoft.musicott.events.StopApplicationEvent;
+
+import javafx.application.Application;
+import javafx.application.HostServices;
+import javafx.application.Platform;
+import javafx.scene.Node;
+import javafx.stage.Stage;
+import net.rgielen.fxweaver.core.FxControllerAndView;
+import net.rgielen.fxweaver.core.FxWeaver;
+import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
+import net.rgielen.fxweaver.spring.SpringFxWeaver;
+import org.springframework.beans.factory.InjectionPoint;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
+import org.springframework.boot.autoconfigure.task.TaskSchedulingAutoConfiguration;
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.embedded.EmbeddedWebServerFactoryCustomizerAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.servlet.DispatcherServletAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.*;
+import org.springframework.context.event.EventListener;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.core.io.ClassPathResource;
+
+import java.util.function.Supplier;
+
+@Configuration
+@ComponentScan
+@EnableConfigurationProperties
+@EnableAutoConfiguration(exclude = {
+        WebMvcAutoConfiguration.class,
+        DataSourceAutoConfiguration.class,
+        JmxAutoConfiguration.class,
+        JacksonAutoConfiguration.class,
+        SecurityAutoConfiguration.class,
+        EmbeddedWebServerFactoryCustomizerAutoConfiguration.class,
+        ErrorMvcAutoConfiguration.class,
+        DispatcherServletAutoConfiguration.class,
+        ValidationAutoConfiguration.class,
+        TaskExecutionAutoConfiguration.class,
+        TaskSchedulingAutoConfiguration.class,
+        RabbitAutoConfiguration.class,
+        MongoAutoConfiguration.class
+})
+public class MusicottApplication {
+
+    public static void main(String[] args) {
+        Application.launch(SpringbootJavaFxApplication.class, args);
+    }
+
+    public static class SpringbootJavaFxApplication extends Application {
+
+        private ConfigurableApplicationContext context;
+
+        @Override
+        public void init() {
+            this.context = new SpringApplicationBuilder()
+                    .sources(MusicottApplication.class, LastFmConfiguration.class)
+                    .run(getParameters().getRaw().toArray(new String[0]));
+        }
+
+        @Override
+        public void start(Stage primaryStage) {
+            context.publishEvent(new StageReadyEvent(primaryStage));
+        }
+
+        @Override
+        public void stop() {
+            stopApplication(new StopApplicationEvent(this));
+        }
+
+        @Bean
+        public FxWeaver fxWeaver(ConfigurableApplicationContext applicationContext) {
+            return new SpringFxWeaver(applicationContext);
+        }
+
+        @Bean
+        public static PropertySourcesPlaceholderConfigurer properties() {
+            PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer = new PropertySourcesPlaceholderConfigurer();
+            YamlPropertiesFactoryBean yaml = new YamlPropertiesFactoryBean();
+            yaml.setResources(new ClassPathResource("application.yml"));
+            propertySourcesPlaceholderConfigurer.setProperties(yaml.getObject());
+            return propertySourcesPlaceholderConfigurer;
+        }
+
+        @Bean
+        @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+        public <C, V extends Node> FxControllerAndView<C, V> controllerAndView(FxWeaver fxWeaver, InjectionPoint injectionPoint) {
+            return new InjectionPointLazyFxControllerAndViewResolver(fxWeaver).resolve(injectionPoint);
+        }
+
+        @Bean
+        public HostServices hostServices() {
+            return getHostServices();
+        }
+
+        @Bean
+        public Supplier<Stage> stageSupplier() {
+            return Stage::new;
+        }
+
+        @EventListener
+        public void stopApplication(StopApplicationEvent event) {
+            Platform.exit();
+            System.exit(0);
+        }
+    }
+}
