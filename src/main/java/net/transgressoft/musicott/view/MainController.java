@@ -1,15 +1,5 @@
 package net.transgressoft.musicott.view;
 
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItemJsonRepository;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistJsonRepository;
-import net.transgressoft.musicott.config.SettingsRepository;
-import net.transgressoft.musicott.events.*;
-import net.transgressoft.musicott.view.custom.ApplicationImage;
-import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
-import net.transgressoft.musicott.view.custom.table.FullAudioItemTableView;
-
 import de.codecentric.centerdevice.MenuToolkit;
 import javafx.application.Platform;
 import javafx.beans.property.ListProperty;
@@ -32,7 +22,19 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import net.rgielen.fxweaver.core.FxmlView;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItemJsonRepository;
+import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
+import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistJsonRepository;
+import net.transgressoft.commons.music.audio.AudioFileType;
+import net.transgressoft.musicott.config.SettingsRepository;
+import net.transgressoft.musicott.events.*;
+import net.transgressoft.musicott.services.MediaImportService;
+import net.transgressoft.musicott.view.custom.ApplicationImage;
+import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
+import net.transgressoft.musicott.view.custom.table.FullAudioItemTableView;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,10 +43,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 
+import static net.transgressoft.musicott.config.SettingsRepository.*;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALL_AUDIO_ITEMS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.PLAYLIST;
 import static org.fxmisc.easybind.EasyBind.map;
@@ -142,11 +145,21 @@ public class MainController {
     private ObjectProperty<Image> playlistImageProperty;
 
     private ListProperty<ObservableAudioItem> showingTracksProperty;
+    @Autowired
+    private SettingsRepository settingsRepository;
+    @Autowired
+    private MediaImportService mediaImportService;
 
     @Autowired
-    public MainController(ObservableAudioItemJsonRepository audioRepository, ObservablePlaylistJsonRepository playlistRepository,
-        PlayerController playerController, PreferencesController preferencesController, NavigationController navigationController,
-        ArtistViewController artistViewController, AlertFactory alertFactory, ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty) {
+    public MainController(ObservableAudioItemJsonRepository audioRepository,
+                          ObservablePlaylistJsonRepository playlistRepository,
+                          PlayerController playerController,
+                          PreferencesController preferencesController,
+                          NavigationController navigationController,
+                          ArtistViewController artistViewController,
+                          AlertFactory alertFactory,
+                          ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty,
+                          MediaImportService mediaImportService) {
         this.audioRepository = audioRepository;
         this.playlistRepository = playlistRepository;
         this.playerController = playerController;
@@ -155,6 +168,7 @@ public class MainController {
         this.artistViewController = artistViewController;
         this.alertFactory = alertFactory;
         this.selectedPlaylistProperty = selectedPlaylistProperty;
+        this.mediaImportService = mediaImportService;
     }
 
     @FXML
@@ -167,6 +181,8 @@ public class MainController {
         mainTrackTable = new FullAudioItemTableView(selectedPlaylistProperty, searchTextField.textProperty(),
                 playlistRepository.getPlaylistsProperty(), applicationEventPublisher);
         showingTracksProperty = new SimpleListProperty<>(this, "showing audio items", FXCollections.emptyObservableList());
+
+
 
         GridPane.setHgrow(mainTrackTable, Priority.ALWAYS);
         GridPane.setVgrow(mainTrackTable, Priority.ALWAYS);
@@ -197,7 +213,7 @@ public class MainController {
         });
 
         audioRepository.emptyLibraryProperty().addListener((observable, wasEmpty, isEmpty) -> {
-            if (isEmpty) {
+            if (Boolean.TRUE.equals(isEmpty)) {
                 trackHoveredCoverImageView.setImage(defaultPlaylistImage);
                 menuBarController.playPauseMenuItem.setDisable(true);
             } else {
@@ -384,17 +400,10 @@ public class MainController {
 
     private Optional<ObservableList<ObservableAudioItem>> selectedAudioItems() {
         var mode = navigationController.navigationModeProperty().getValue();
-        Optional<ObservableList<ObservableAudioItem>> result = Optional.empty();
-        switch (mode) {
-            case ALL_AUDIO_ITEMS:
-            case PLAYLIST:
-                result = Optional.ofNullable(mainTrackTable.getSelectionModel().getSelectedItems());
-                break;
-            case ARTISTS:
-                result = Optional.ofNullable(artistViewController.getSelectedTracks());
-                break;
-        }
-        return result;
+        return switch (mode) {
+            case ALL_AUDIO_ITEMS, PLAYLIST -> Optional.ofNullable(mainTrackTable.getSelectionModel().getSelectedItems());
+            case ARTISTS -> Optional.ofNullable(artistViewController.getSelectedTracks());
+        };
     }
 
     public void deleteSelectedAudioItems() {
@@ -404,8 +413,7 @@ public class MainController {
     public void selectAllTracks() {
         var mode = navigationController.navigationModeProperty().get();
         switch (mode) {
-            case ALL_AUDIO_ITEMS:
-            case PLAYLIST:
+            case ALL_AUDIO_ITEMS, PLAYLIST:
                 mainTrackTable.getSelectionModel().selectAll();
                 break;
             case ARTISTS:
@@ -417,8 +425,7 @@ public class MainController {
     public void unselectTracks() {
         var mode = navigationController.navigationModeProperty().get();
         switch (mode) {
-            case ALL_AUDIO_ITEMS:
-            case PLAYLIST:
+            case ALL_AUDIO_ITEMS, PLAYLIST:
                 mainTrackTable.getSelectionModel().clearSelection();
                 break;
             case ARTISTS:
@@ -623,7 +630,7 @@ public class MainController {
             setAboutMenuAction();
             bindShowHideTableInfo();
 
-            if (SettingsRepository.OS_SPECIFIC_KEY_MODIFIER.equals(KeyCodeCombination.META_DOWN)) {
+            if (OS_SPECIFIC_KEY_MODIFIER.equals(KeyCodeCombination.META_DOWN)) {
                 MenuToolkit menuToolkit = MenuToolkit.toolkit();
                 Menu appMenu = new Menu("Musicott");
                 appMenu.getItems().addAll(preferencesMenuItem, new SeparatorMenuItem());
@@ -644,7 +651,7 @@ public class MainController {
                 headerVBox.getChildren().add(rootMenuBar);
             }
 
-            setAccelerators(SettingsRepository.OS_SPECIFIC_KEY_MODIFIER);
+            setAccelerators();
         }
 
         private void setAboutMenuAction() {
@@ -660,22 +667,9 @@ public class MainController {
             openFileMenuItem.setOnAction(e -> {
                 FileChooser chooser = new FileChooser();
                 chooser.setTitle("Open file(s)...");
-                chooser.getExtensionFilters()
-                    .addAll(new FileChooser.ExtensionFilter("All Supported (*.mp3, *.flac, *.wav, *.m4a)", "*.mp3", "*.flac",
-                            "*.wav", "*.m4a"
-                        ), new FileChooser.ExtensionFilter("mp3 files (*.mp3)", "*.mp3"),
-                        new FileChooser.ExtensionFilter("flac files (*.flac)", "*.flac"),
-                        new FileChooser.ExtensionFilter("wav files (*.wav)", "*.wav"),
-                        new FileChooser.ExtensionFilter("m4a files (*.wav)", "*.m4a")
-                    );
-                // TODO
-                //                List<File> filesToImport = chooser.showOpenMultipleDialog(primaryStage);
-                //                if (filesToImport != null) {
-                //                    subscribe(getSelectionModel().selectedItem(), {
-                //                taskDemon.importFiles(filesToImport, true);
-                //                        applicationEventPublisher.publishEvent(new StatusMessageUpdateEvent("Opening files"));
-                //                    }
-                //                }
+                chooser.getExtensionFilters().addAll(buildAudioExtensionFilters());
+                List<File> filesToOpen = chooser.showOpenMultipleDialog(rootBorderPane.getScene().getWindow());
+                mediaImportService.importFiles(filesToOpen);
             });
             importFolderMenuItem.setOnAction(e -> {
                 //            LOG.debug("Choosing folder to being imported");
@@ -698,6 +692,52 @@ public class MainController {
                 // TODO free resources, finish tasks
                 Platform.exit();
             });
+        }
+
+        private List<ExtensionFilter> buildAudioExtensionFilters() {
+            Set<AudioFileType> acceptedAudioFileExtensions = settingsRepository.getAcceptedAudioFileExtensions();
+
+            if (acceptedAudioFileExtensions.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            List<ExtensionFilter> filters = new ArrayList<>();
+            List<String> allExtensions = new ArrayList<>();
+            Map<AudioFileType, String> extensionMap = new EnumMap<>(AudioFileType.class);
+
+            // First, build all the wildcard strings and store them
+            for (AudioFileType type : acceptedAudioFileExtensions) {
+                String wildcardExtension = "*." + type.getExtension();
+                extensionMap.put(type, wildcardExtension);
+                allExtensions.add(wildcardExtension);
+            }
+
+            // Add the "All Supported" filter first
+            StringBuilder allSupportedTitle = new StringBuilder("All Supported (");
+            Iterator<AudioFileType> iterator = acceptedAudioFileExtensions.iterator();
+
+            while (iterator.hasNext()) {
+                allSupportedTitle.append("*.").append(iterator.next().getExtension());
+                if (iterator.hasNext()) {
+                    allSupportedTitle.append(", ");
+                }
+            }
+            allSupportedTitle.append(")");
+
+            filters.add(new ExtensionFilter(allSupportedTitle.toString(),
+                    allExtensions.toArray(new String[0])));
+
+            // Add individual filters for each extension
+            for (AudioFileType type : acceptedAudioFileExtensions) {
+                String extension = type.getExtension();
+                String wildcardExtension = extensionMap.get(type);
+                filters.add(new ExtensionFilter(
+                        extension + " files (*." + extension + ")",
+                        wildcardExtension
+                ));
+            }
+
+            return filters;
         }
 
         private void setViewMenuActions() {
@@ -727,28 +767,28 @@ public class MainController {
                 map(navigationController.navigationModeProperty(), menu -> !menu.equals(PLAYLIST)));
         }
 
-        private void setAccelerators(KeyCombination.Modifier osSpecificModifier) {
-            KeyCombination.Modifier shiftDown = KeyCodeCombination.SHIFT_DOWN;
-            openFileMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, osSpecificModifier));
-            importFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, osSpecificModifier, shiftDown));
-            importItunesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, osSpecificModifier, shiftDown));
-            preferencesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.COMMA, osSpecificModifier));
-            editMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, osSpecificModifier));
-            deleteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.BACK_SPACE, osSpecificModifier));
+        private void setAccelerators() {
+            KeyCombination.Modifier shiftDown = KeyCombination.SHIFT_DOWN;
+            openFileMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, OS_SPECIFIC_KEY_MODIFIER));
+            importFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
+            importItunesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
+            preferencesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.COMMA, OS_SPECIFIC_KEY_MODIFIER));
+            editMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, OS_SPECIFIC_KEY_MODIFIER));
+            deleteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.BACK_SPACE, OS_SPECIFIC_KEY_MODIFIER));
             playPauseMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE));
-            previousMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.LEFT, osSpecificModifier));
-            nextMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, osSpecificModifier));
-            increaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, osSpecificModifier));
-            decreaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, osSpecificModifier));
-            selectCurrentTrackMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.L, osSpecificModifier));
-            newPlaylistMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, osSpecificModifier));
-            newPlaylistFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, osSpecificModifier, shiftDown));
-            showHideNavigationPaneMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.R, osSpecificModifier, shiftDown));
-            showHideTableInfoPaneMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.U, osSpecificModifier, shiftDown));
-            selectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, osSpecificModifier));
-            unselectMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, osSpecificModifier, shiftDown));
-            findMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.F, osSpecificModifier));
-            closeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, osSpecificModifier));
+            previousMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.LEFT, OS_SPECIFIC_KEY_MODIFIER));
+            nextMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, OS_SPECIFIC_KEY_MODIFIER));
+            increaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, OS_SPECIFIC_KEY_MODIFIER));
+            decreaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, OS_SPECIFIC_KEY_MODIFIER));
+            selectCurrentTrackMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.L, OS_SPECIFIC_KEY_MODIFIER));
+            newPlaylistMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, OS_SPECIFIC_KEY_MODIFIER));
+            newPlaylistFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
+            showHideNavigationPaneMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.R, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
+            showHideTableInfoPaneMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.U, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
+            selectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, OS_SPECIFIC_KEY_MODIFIER));
+            unselectMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
+            findMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.F, OS_SPECIFIC_KEY_MODIFIER));
+            closeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, OS_SPECIFIC_KEY_MODIFIER));
         }
 
         private void setControlsMenuActions() {

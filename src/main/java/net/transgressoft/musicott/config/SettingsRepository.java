@@ -1,20 +1,26 @@
 package net.transgressoft.musicott.config;
 
-import net.transgressoft.commons.data.json.FlexibleJsonFileRepository;
-import net.transgressoft.commons.data.json.primitives.ReactiveBoolean;
-
-import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import net.transgressoft.commons.music.audio.AudioFileType;
+import net.transgressoft.commons.persistence.json.FlexibleJsonFileRepository;
+import net.transgressoft.commons.persistence.json.primitives.ReactiveBoolean;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.File;
-import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static net.transgressoft.commons.music.audio.AudioFileType.MP3;
+import static net.transgressoft.commons.music.audio.AudioFileType.M4A;
+import static net.transgressoft.commons.music.audio.AudioFileType.FLAC;
+import static net.transgressoft.commons.music.audio.AudioFileType.WAV;
 
 public class SettingsRepository extends FlexibleJsonFileRepository {
 
     public static final KeyCombination.Modifier OS_SPECIFIC_KEY_MODIFIER =
-            SystemUtils.IS_OS_MAC_OSX ? KeyCodeCombination.META_DOWN : KeyCodeCombination.CONTROL_DOWN;
+            SystemUtils.IS_OS_MAC_OSX ? KeyCombination.META_DOWN : KeyCombination.CONTROL_DOWN;
 
     /**
      * The policy when importing music from iTunes file.
@@ -37,25 +43,23 @@ public class SettingsRepository extends FlexibleJsonFileRepository {
      */
     private final ReactiveBoolean itunesImportIgnoreNotFoundPolicy = createReactiveBoolean("itunes.policy.ignoreNotFound", true);
 
-    /**
-     * The audio file extensions that are accepted by the application.
-     */
-    private final ReactiveBoolean
-            importMp3Policy = createReactiveBoolean("itunes.policy.import.mp3", true),
-            importM4aPolicy = createReactiveBoolean("itunes.policy.import.m4a",true),
-            importWavPolicy = createReactiveBoolean("itunes.policy.import.wav",true),
-            importFlacPolicy = createReactiveBoolean("itunes.policy.import.flac",true);
+    private final Map<AudioFileType, ReactiveBoolean> audioFilePolicies = Map.of(
+            MP3, createReactiveBoolean("itunes.policy.import.mp3", true),
+            M4A, createReactiveBoolean("itunes.policy.import.m4a", true),
+            WAV, createReactiveBoolean("itunes.policy.import.wav", true),
+            FLAC, createReactiveBoolean("itunes.policy.import.flac", true)
+    );
 
     public SettingsRepository(File jsonFile) {
         super(jsonFile);
     }
 
     public void setItunesImportHoldPlayCountPolicy(boolean value) {
-        itunesImportMetadataPolicy.setValue(value);
+        itunesImportHoldPlayCountPolicy.setValue(value);
     }
 
     public boolean getItunesImportHoldPlayCountPolicy() {
-        return Boolean.TRUE.equals(itunesImportMetadataPolicy.getValue());
+        return Boolean.TRUE.equals(itunesImportHoldPlayCountPolicy.getValue());
     }
 
     public void setItunesImportMetadataPolicy(boolean value) {
@@ -82,39 +86,15 @@ public class SettingsRepository extends FlexibleJsonFileRepository {
         return Boolean.TRUE.equals(itunesImportIgnoreNotFoundPolicy.getValue());
     }
 
-    public Set<String> getAcceptedAudioFileExtensions() {
-        var set = new LinkedHashSet<String>(4);
-        if (Boolean.TRUE.equals(importMp3Policy.getValue()))
-            set.add("mp3");
-        if (Boolean.TRUE.equals(importM4aPolicy.getValue()))
-            set.add("m4a");
-        if (Boolean.TRUE.equals(importWavPolicy.getValue()))
-            set.add("wav");
-        if (Boolean.TRUE.equals(importFlacPolicy.getValue()))
-            set.add("flac");
-        return set;
+    public Set<AudioFileType> getAcceptedAudioFileExtensions() {
+        return audioFilePolicies.entrySet().stream()
+                .filter(entry -> Boolean.TRUE.equals(entry.getValue().getValue()))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toUnmodifiableSet());
     }
 
-    public void setAcceptedAudioFileExtensions(String... extensions) {
-        importMp3Policy.setValue(false);
-        importM4aPolicy.setValue(false);
-        importWavPolicy.setValue(false);
-        importFlacPolicy.setValue(false);
-        for (String extension : extensions) {
-            switch (extension) {
-                case "mp3":
-                    importMp3Policy.setValue(true);
-                    break;
-                case "m4a":
-                    importM4aPolicy.setValue(true);
-                    break;
-                case "wav":
-                    importWavPolicy.setValue(true);
-                    break;
-                case "flac":
-                    importFlacPolicy.setValue(true);
-                    break;
-            }
-        }
+    public void setAcceptedAudioFileExtensions(List<AudioFileType> acceptedAudioFileExtensions) {
+        audioFilePolicies.forEach(
+                (extension, property) -> property.setValue(acceptedAudioFileExtensions.contains(extension)));
     }
 }

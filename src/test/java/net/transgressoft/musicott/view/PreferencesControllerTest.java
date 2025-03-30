@@ -1,5 +1,6 @@
 package net.transgressoft.musicott.view;
 
+import net.transgressoft.commons.music.audio.AudioFileType;
 import net.transgressoft.musicott.config.SettingsRepository;
 import net.transgressoft.musicott.services.lastfm.LastFmService;
 
@@ -54,7 +55,7 @@ class PreferencesControllerTest {
     void beforeEach() {
         errorPresenter = mock(ErrorPresenter.class);
         settingsRepository = mock(SettingsRepository.class);
-        when(settingsRepository.getAcceptedAudioFileExtensions()).thenReturn(Set.of("mp3"));
+        when(settingsRepository.getAcceptedAudioFileExtensions()).thenReturn(Set.of(AudioFileType.MP3));
         when(settingsRepository.getItunesImportMetadataPolicy()).thenReturn(true);
         when(settingsRepository.getItunesImportHoldPlayCountPolicy()).thenReturn(true);
         when(settingsRepository.getItunesImportWriteMetadataPolicy()).thenReturn(true);

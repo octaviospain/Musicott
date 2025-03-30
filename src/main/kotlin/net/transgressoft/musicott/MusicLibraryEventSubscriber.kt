@@ -1,9 +1,9 @@
 package net.transgressoft.musicott
 
 import mu.KotlinLogging
-import net.transgressoft.commons.data.StandardCrudEvent.Type.CREATE
-import net.transgressoft.commons.data.StandardCrudEvent.Type.DELETE
-import net.transgressoft.commons.data.StandardCrudEvent.Type.UPDATE
+import net.transgressoft.commons.event.StandardCrudEvent.Type.CREATE
+import net.transgressoft.commons.event.StandardCrudEvent.Type.DELETE
+import net.transgressoft.commons.event.StandardCrudEvent.Type.UPDATE
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItemJsonRepository
 import net.transgressoft.commons.music.audio.AudioItemManipulationException

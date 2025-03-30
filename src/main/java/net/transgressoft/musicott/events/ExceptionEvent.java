@@ -4,9 +4,9 @@ import org.springframework.context.ApplicationEvent;
 
 public class ExceptionEvent extends ApplicationEvent {
 
-    public final Exception exception;
+    public final Throwable exception;
 
-    public ExceptionEvent(Exception exception, Object source) {
+    public ExceptionEvent(Throwable exception, Object source) {
         super(source);
         this.exception = exception;
     }
