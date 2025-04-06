@@ -63,14 +63,12 @@ public class PlayerController {
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
     private final AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final PlayerCore playerCore;
     private final Image defaultCoverImage = ApplicationImage.DEFAULT_COVER.get();
 
     private final ObservableList<TrackQueueRow> playQueueList;
     private final ObservableList<TrackQueueRow> historyQueueList;
-
-    @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
 
     @FXML
     private GridPane playerGridPane;
@@ -117,8 +115,9 @@ public class PlayerController {
     private ReadOnlyBooleanProperty emptyLibraryProperty;
 
     @Autowired
-    public PlayerController(AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository) {
+    public PlayerController(AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository, ApplicationEventPublisher applicationEventPublisher) {
         this.waveformRepository = waveformRepository;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.playQueueList = FXCollections.observableArrayList();
         this.historyQueueList = FXCollections.observableArrayList();
         this.playerCore = new PlayerCore(playQueueList, historyQueueList);

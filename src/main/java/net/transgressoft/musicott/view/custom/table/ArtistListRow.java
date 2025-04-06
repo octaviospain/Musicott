@@ -4,6 +4,8 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.music.audio.AlbumView;
 import net.transgressoft.commons.music.audio.Artist;
+import net.transgressoft.commons.music.audio.Genre;
+import net.transgressoft.commons.music.audio.ReactiveAudioItem;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 
 import com.google.common.base.Joiner;
@@ -50,12 +52,7 @@ public class ArtistListRow extends HBox {
     private Label yearLabel;
     private Label relatedArtistsLabel;
 
-    public ArtistListRow(Artist artist,
-                         AlbumView<ObservableAudioItem> albumView,
-                         ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty,
-                         ReadOnlySetProperty<ObservablePlaylist> playlistsProperty,
-                         StringProperty searchTextProperty,
-                         ApplicationEventPublisher applicationEventPublisher) {
+    public ArtistListRow(Artist artist, AlbumView<ObservableAudioItem> albumView, ApplicationEventPublisher applicationEventPublisher) {
         super();
         this.artist = artist;
         this.albumView = albumView;
@@ -70,7 +67,7 @@ public class ArtistListRow extends HBox {
         setPrefWidth(USE_COMPUTED_SIZE);
         setPrefHeight(USE_COMPUTED_SIZE);
         getStylesheets().add(getClass().getResource(BASE_STYLE).toExternalForm());
-        audioItemsTableView = new SimpleAudioItemTableView(selectedPlaylistProperty, playlistsProperty, searchTextProperty, applicationEventPublisher);
+        audioItemsTableView = new SimpleAudioItemTableView(applicationEventPublisher);
         audioItemsTableView.setItems(containedAudioItems);
         audioItemsTableView.sort();
         updateRelatedArtistsLabel();
@@ -134,8 +131,9 @@ public class ArtistListRow extends HBox {
     }
 
     private String getGenresString() {
-        var genres = containedAudioItems.stream().filter(entry -> ! entry.getGenre().name().isEmpty())
-                .map(entry -> entry.getGenre().name())
+        var genres = containedAudioItems.stream()
+                .map(ReactiveAudioItem::getGenre)
+                .filter(genre -> ! Genre.UNDEFINED.equals(genre))
                 .collect(Collectors.toSet());
         return Joiner.on(", ").join(genres);
     }
@@ -207,7 +205,7 @@ public class ArtistListRow extends HBox {
     private ReadOnlyIntegerProperty listenAudioItemChangesAndSort(ObservableAudioItem audioItem) {
         subscribe(audioItem.getTrackNumberProperty(), tn -> containedAudioItems.sort(trackComparator));
         subscribe(audioItem.getDiscNumberProperty(), dn -> containedAudioItems.sort(trackComparator));
-        subscribe(audioItem.getGenreNameProperty(), g -> genresLabel.setText(getGenresString()));
+        subscribe(audioItem.getGenreProperty(), g -> genresLabel.setText(getGenresString()));
         subscribe(audioItem.getAlbumProperty(), y -> {
             yearLabel.setText(getYearsString());
             updateAlbumLabelLabel();
@@ -265,11 +263,11 @@ public class ArtistListRow extends HBox {
         return albumView;
     }
 
-    public ListProperty<ObservableAudioItem> selectedgetAudioItemsProperty() {
+    public ListProperty<ObservableAudioItem> selectedAudioItemsProperty() {
         return selectedAudioItemsProperty;
     }
 
-    public ListProperty<ObservableAudioItem> containedgetAudioItemsProperty() {
+    public ListProperty<ObservableAudioItem> containedAudioItemsProperty() {
         return containedAudioItemsProperty;
     }
 }

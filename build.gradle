@@ -44,7 +44,7 @@ dependencies {
     implementation 'net.transgressoft:music-commons-api:1.2.0-SNAPSHOT'
     implementation 'net.transgressoft:music-commons-core:1.2.0-SNAPSHOT'
     implementation 'net.transgressoft:music-commons-fx:1.2.0-SNAPSHOT'
-    implementation 'net.transgressoft:transgressoft-commons-core:1.2.0-SNAPSHOT'
+    implementation 'net.transgressoft:transgressoft-commons-core:1.3.0-SNAPSHOT'
     implementation 'org.apache.commons:commons-lang3:3.17.0'
     implementation 'org.apache.poi:poi-ooxml:5.4.0'
     implementation 'org.controlsfx:controlsfx:11.2.1'

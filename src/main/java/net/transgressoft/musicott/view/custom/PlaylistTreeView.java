@@ -19,13 +19,13 @@
 
 package net.transgressoft.musicott.view.custom;
 
+import javafx.beans.property.*;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistJsonRepository;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.view.custom.table.AudioItemTableViewBase;
 
 import com.google.common.collect.ImmutableList;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.css.PseudoClass;
 import javafx.scene.control.*;
@@ -64,9 +64,9 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
     private ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
-    public PlaylistTreeView(ObservablePlaylistJsonRepository playlistRepository, ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty) {
+    public PlaylistTreeView(ObservablePlaylistJsonRepository playlistRepository) {
         this.playlistRepository = playlistRepository;
-        this.selectedPlaylistProperty = selectedPlaylistProperty;
+        this.selectedPlaylistProperty = new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
         setCellFactory(PlaylistTreeViewCell::new);
         setContextMenu(new PlaylistTreeViewContextMenu());
         setRoot(createRootPlaylistTreeViewItem());
@@ -242,6 +242,14 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
         return playlistRepository.findByName(name).isPresent();
     }
 
+    public ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty() {
+        return selectedPlaylistProperty;
+    }
+
+    public ReadOnlySetProperty<ObservablePlaylist> playlistsProperty() {
+        return playlistRepository.getPlaylistsProperty();
+    }
+
     private static class PlaylistTreeViewItem extends TreeItem<ObservablePlaylist> implements Comparable<ObservablePlaylist> {
 
         public PlaylistTreeViewItem(ObservablePlaylist value) {
@@ -275,8 +283,8 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof PlaylistTreeViewItem) {
-                return getValue().equals(((PlaylistTreeViewItem) obj).getValue());
+            if (obj instanceof PlaylistTreeViewItem playlistTreeViewItem) {
+                return getValue().equals(playlistTreeViewItem.getValue());
             } else
                 return false;
         }

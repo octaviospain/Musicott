@@ -1,13 +1,5 @@
 package net.transgressoft.musicott.view.custom.table;
 
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.player.JavaFxPlayer;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.commons.music.audio.Album;
-import net.transgressoft.commons.music.audio.Artist;
-import net.transgressoft.musicott.events.*;
-import net.transgressoft.musicott.view.custom.ApplicationImage;
-
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,13 +7,20 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.css.PseudoClass;
 import javafx.event.EventHandler;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.*;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
+import net.transgressoft.commons.fx.music.player.JavaFxPlayer;
+import net.transgressoft.commons.music.audio.Album;
+import net.transgressoft.commons.music.audio.Artist;
+import net.transgressoft.commons.music.audio.Genre;
+import net.transgressoft.musicott.events.*;
+import net.transgressoft.musicott.view.custom.ApplicationImage;
 import org.apache.commons.io.FileUtils;
 import org.fxmisc.easybind.EasyBind;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -29,9 +28,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-import static org.fxmisc.easybind.EasyBind.subscribe;
 
 /**
  * @author Octavio Calleya
@@ -48,14 +44,14 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
     protected static final String CENTER_LEFT_ALIGN = "-fx-alignment: CENTER-LEFT";
     protected static final String CENTER_ALIGN = "-fx-alignment: CENTER";
 
-    private final ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty;
-    private final ReadOnlySetProperty<ObservablePlaylist> playlistsProperty;
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final FilteredList<ObservableAudioItem> filteredAudioItems;
 
     protected TableColumn<ObservableAudioItem, String> nameCol;
     protected TableColumn<ObservableAudioItem, Artist> artistCol;
     protected TableColumn<ObservableAudioItem, Album> albumCol;
-    protected TableColumn<ObservableAudioItem, String> genreCol;
+    protected TableColumn<ObservableAudioItem, Genre> genreCol;
     protected TableColumn<ObservableAudioItem, String> commentsCol;
     protected TableColumn<ObservableAudioItem, Album> albumArtistCol;
     protected TableColumn<ObservableAudioItem, Album> labelCol;
@@ -70,25 +66,26 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
     protected TableColumn<ObservableAudioItem, LocalDateTime> dateAddedCol;
     protected TableColumn<ObservableAudioItem, Duration> totalTimeCol;
 
-    protected AudioItemTableViewBase(ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty, StringProperty searchTextProperty,
-                                     ReadOnlySetProperty<ObservablePlaylist> playlistsProperty, ApplicationEventPublisher applicationEventPublisher) {
+    protected AudioItemTableViewBase(ApplicationEventPublisher applicationEventPublisher) {
         super();
-        this.selectedPlaylistProperty = selectedPlaylistProperty;
-        this.playlistsProperty = playlistsProperty;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.filteredAudioItems = new FilteredList<>(FXCollections.observableArrayList(), t -> true);
+
         initColumns();
 
-        setContextMenu(new AudioItemTableViewContextMenu());
         addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClickedEventHandler());
         addEventHandler(KeyEvent.KEY_PRESSED, keyPressedEventHandler());
         getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         getStylesheets().add(getClass().getResource(TRACK_TABLE_BASE_STYLE).toExternalForm());
         setRowFactory(tableview -> new AudioItemTableRow());
-        setItems(getAudioItemListBoundToSearchField(searchTextProperty));
+
+        var sortedAudioItems = new SortedList<>(filteredAudioItems);
+        sortedAudioItems.comparatorProperty().bind(comparatorProperty());
+        setItems(sortedAudioItems);
     }
 
     private void initColumns() {
-        nameCol = new TableColumn<>("Name");
+        nameCol = new TableColumn<>("Title");
         nameCol.setCellValueFactory(cellData -> cellData.getValue().getTitleProperty());
         nameCol.setPrefWidth(170);
 
@@ -103,7 +100,8 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         albumCol.setPrefWidth(170);
 
         genreCol = new TableColumn<>("Genre");
-        genreCol.setCellValueFactory(cellData -> cellData.getValue().getGenreNameProperty());
+        genreCol.setCellValueFactory(cellData -> cellData.getValue().getGenreProperty());
+        genreCol.setCellFactory(GenreTableCell::new);
         genreCol.setPrefWidth(120);
 
         commentsCol = new TableColumn<>("Comments");
@@ -178,7 +176,7 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
 
         bpmCol = new TableColumn<>("BPM");
         bpmCol.setCellValueFactory(cellData -> cellData.getValue().getBpmProperty());
-        bpmCol.setCellFactory(NumericTableCell::new);
+        bpmCol.setCellFactory(FloatTableCell::new);
         bpmCol.setStyle(CENTER_RIGHT_ALIGN);
         bpmCol.setPrefWidth(60);
     }
@@ -203,18 +201,9 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         };
     }
 
-    /**
-     * Binds the text typed on the search text field to a filtered subset of items shown on the table
-     */
-    private SortedList<ObservableAudioItem> getAudioItemListBoundToSearchField(StringProperty searchTextProperty) {
-        ObservableList<ObservableAudioItem> audioItems = FXCollections.observableArrayList();
-        var filteredAudioItems = new FilteredList<>(audioItems, t -> true);
-
-        subscribe(searchTextProperty, query -> filteredAudioItems.setPredicate(filterAudioItemPredicate(query)));
-
-        var sortedAudioItems = new SortedList<>(filteredAudioItems);
-        sortedAudioItems.comparatorProperty().bind(comparatorProperty());
-        return sortedAudioItems;
+    @EventListener
+    public void searchTextTypedEvent(SearchTextTypedEvent event) {
+        filteredAudioItems.setPredicate(filterAudioItemPredicate(event.searchText));
     }
 
     /**
@@ -271,7 +260,7 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
                 dragBoard.setDragView(DRAGBOARD_IMAGE);
 
                 var selection = getSelectionModel().getSelectedItems();
-                var audioItemSelectionIds = selection.stream().map(ObservableAudioItem::getId).collect(Collectors.toList());
+                var audioItemSelectionIds = selection.stream().map(ObservableAudioItem::getId).toList();
                 var clipboardContent = new ClipboardContent();
                 clipboardContent.put(TRACKS_DATA_FORMAT, audioItemSelectionIds);
                 dragBoard.setContent(clipboardContent);
@@ -296,86 +285,6 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
                     pseudoClassStateChanged(unplayableRow, false);
                 }
             };
-        }
-    }
-
-    private class AudioItemTableViewContextMenu extends ContextMenu {
-
-        private final Menu addToPlaylistMenu;
-        private final MenuItem deleteFromPlaylistMenuItem;
-        private final List<MenuItem> playlistsInMenu = new ArrayList<>();
-
-        public AudioItemTableViewContextMenu() {
-            super();
-            addToPlaylistMenu = new Menu("Add to playlist");
-
-            MenuItem playMenuItem = new MenuItem("Play");
-            playMenuItem.setOnAction(event -> {
-                ObservableList<ObservableAudioItem> selectedAudioItems = getSelectionModel().getSelectedItems();
-                if (selectedAudioItems != null && !selectedAudioItems.isEmpty()) {
-                    applicationEventPublisher.publishEvent(new PlayItemEvent(selectedAudioItems, this));
-                }
-            });
-
-            MenuItem editMenuItem = new MenuItem("Edit");
-            editMenuItem.setOnAction(event -> {
-                ObservableList<ObservableAudioItem> selectedAudioItems = getSelectionModel().getSelectedItems();
-                if (! selectedAudioItems.isEmpty()) {
-                    applicationEventPublisher.publishEvent(new OpenAudioItemEditorView(new HashSet<>(selectedAudioItems), this));
-                }
-            });
-
-            MenuItem deleteMenuItem = new MenuItem("Delete");
-            deleteMenuItem.setOnAction(event -> {
-                ObservableList<ObservableAudioItem> selectedAudioItems = getSelectionModel().getSelectedItems();
-                if (selectedAudioItems != null && !selectedAudioItems.isEmpty())
-                    applicationEventPublisher.publishEvent(new DeleteAudioItemsEvent(new HashSet<>(selectedAudioItems), this));
-            });
-
-            MenuItem addToQueueMenuItem = new MenuItem("Add to play queue");
-            addToQueueMenuItem.setOnAction(event -> {
-                ObservableList<ObservableAudioItem> selectedAudioItems = getSelectionModel().getSelectedItems();
-                if (selectedAudioItems != null && !selectedAudioItems.isEmpty())
-                    applicationEventPublisher.publishEvent(new AddToPlayQueueEvent(selectedAudioItems, this));
-            });
-
-            deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
-            deleteFromPlaylistMenuItem.setId("deleteFromPlaylistMenuItem");
-            deleteFromPlaylistMenuItem.setOnAction(event ->
-                    selectedPlaylistProperty.get().ifPresent(audioPlaylist -> {
-                    ObservableList<ObservableAudioItem> selectedAudioItems = getSelectionModel().getSelectedItems();
-                    audioPlaylist.getAudioItemsProperty().removeAll(selectedAudioItems);
-                }));
-
-            getItems().addAll(playMenuItem, editMenuItem, deleteMenuItem, addToQueueMenuItem, new SeparatorMenuItem());
-            getItems().addAll(deleteFromPlaylistMenuItem, addToPlaylistMenu);
-        }
-
-        @Override
-        public void show(Node anchor, double screenX, double screenY) {
-            playlistsInMenu.clear();
-            Optional<ObservablePlaylist> selectedPlaylist = selectedPlaylistProperty.get();
-            if (selectedPlaylist.isPresent() && ! selectedPlaylist.get().isDirectory())  {
-                playlistsProperty.stream()
-                        .filter(p -> ! p.isDirectory())
-                        .forEach(this::addPlaylistToMenuList);
-
-                addToPlaylistMenu.getItems().clear();
-                addToPlaylistMenu.getItems().addAll(playlistsInMenu);
-                deleteFromPlaylistMenuItem.setVisible(true);
-            }
-            else
-                deleteFromPlaylistMenuItem.setVisible(false);
-            super.show(anchor, screenX, screenY);
-        }
-
-        private void addPlaylistToMenuList(ObservablePlaylist playlist) {
-            Optional<ObservablePlaylist> selectedPlaylist = selectedPlaylistProperty.get();
-            if (! (selectedPlaylist.isPresent() && selectedPlaylist.get().equals(playlist))) {
-                MenuItem playlistMenuItem = new MenuItem(playlist.getName());
-                playlistMenuItem.setOnAction(event -> playlist.getAudioItemsProperty().addAll(getSelectionModel().getSelectedItems()));
-                playlistsInMenu.add(playlistMenuItem);
-            }
         }
     }
 }
@@ -453,7 +362,7 @@ class AlbumYearTableCell extends TableCell<ObservableAudioItem, Album> {
     @Override
     protected void updateItem(Album album, boolean empty) {
         super.updateItem(album, empty);
-        if (empty || album == null)
+        if (empty || album == null || album.getYear() == null)
             setText("");
         else
             setText(String.valueOf(album.getYear()));
@@ -470,6 +379,22 @@ class NumericTableCell extends TableCell<ObservableAudioItem, Number> {
     protected void updateItem(Number item, boolean empty) {
         super.updateItem(item, empty);
         if (empty || item == null || ((int) item) < 1)
+            setText("");
+        else
+            setText("" + item);
+    }
+}
+
+class FloatTableCell extends TableCell<ObservableAudioItem, Number> {
+
+    public FloatTableCell(TableColumn<ObservableAudioItem, Number> column) {
+        super();
+    }
+
+    @Override
+    protected void updateItem(Number item, boolean empty) {
+        super.updateItem(item, empty);
+        if (empty || item == null || ((float) item) < 1.0)
             setText("");
         else
             setText("" + item);
@@ -556,5 +481,21 @@ class BitRateTableCell extends TableCell<ObservableAudioItem, Number> {
             setText("");
         else
             setText("" + item);
+    }
+}
+
+class GenreTableCell extends TableCell<ObservableAudioItem, Genre> {
+
+    public GenreTableCell(TableColumn<ObservableAudioItem, Genre> column) {
+        super();
+    }
+
+    @Override
+    protected void updateItem(Genre item, boolean empty) {
+        super.updateItem(item, empty);
+        if (empty || item == null || Genre.UNDEFINED.equals(item))
+            setText("");
+        else
+            setText(item.capitalize());
     }
 }

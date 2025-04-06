@@ -1,5 +1,6 @@
 package net.transgressoft.musicott.view;
 
+import javafx.beans.property.*;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.musicott.config.SettingsRepository;
@@ -10,9 +11,6 @@ import net.transgressoft.musicott.events.StatusProgressUpdateEvent;
 import net.transgressoft.musicott.view.custom.PlaylistTreeView;
 
 import javafx.application.Platform;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.css.PseudoClass;
@@ -56,7 +54,6 @@ public class NavigationController {
 
     private final PlaylistTreeView playlistTreeView;
     private final ObjectProperty<NavigationMode> navigationModeProperty;
-    private final ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty;
 
     @FXML
     private VBox navigationPaneVBox;
@@ -77,10 +74,9 @@ public class NavigationController {
     private Optional<ObservablePlaylist> currentPlayingPlaylist;
 
     @Autowired
-    public NavigationController(PlaylistTreeView playlistTreeView, ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty) {
+    public NavigationController(PlaylistTreeView playlistTreeView) {
         this.playlistTreeView = playlistTreeView;
         this.navigationModeProperty = new SimpleObjectProperty<>(this, "navigation mode", NavigationMode.ARTISTS);
-        this.selectedPlaylistProperty = selectedPlaylistProperty;
     }
 
     @FXML
@@ -110,16 +106,16 @@ public class NavigationController {
         playlistsVBox.getChildren().add(1, playlistTreeView);
         VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
 
-        subscribe(selectedPlaylistProperty,
+        subscribe(selectedPlaylistProperty(),
                   playlist -> playlist.ifPresent(
                           p -> navigationModeProperty.set(NavigationMode.PLAYLIST))
         );
 
         subscribe(playlistTreeView.getSelectionModel().selectedItemProperty(), newItem -> {
            if (newItem != null) {
-               selectedPlaylistProperty.set(Optional.of(newItem.getValue()));
+               selectedPlaylistProperty().set(Optional.of(newItem.getValue()));
            } else {
-               selectedPlaylistProperty.set(Optional.empty());
+               selectedPlaylistProperty().set(Optional.empty());
            }
         });
     }
@@ -199,11 +195,19 @@ public class NavigationController {
 
     public void selectPlaylist(ObservablePlaylist playlist) {
         playlistTreeView.selectPlaylist(playlist);
-        selectedPlaylistProperty.set(Optional.of(playlist));
+        selectedPlaylistProperty().set(Optional.of(playlist));
     }
 
     public ReadOnlyObjectProperty<NavigationMode> navigationModeProperty() {
         return navigationModeProperty;
+    }
+
+    public ReadOnlySetProperty<ObservablePlaylist> playlistsProperty() {
+        return playlistTreeView.playlistsProperty();
+    }
+
+    public ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty() {
+        return playlistTreeView.selectedPlaylistProperty();
     }
 
     /**

@@ -1,17 +1,14 @@
 package net.transgressoft.musicott.view;
 
 import de.codecentric.centerdevice.MenuToolkit;
-import javafx.application.Platform;
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleListProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
+import javafx.beans.property.*;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -21,6 +18,7 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -46,6 +44,7 @@ import org.springframework.stereotype.Controller;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 
 import static net.transgressoft.musicott.config.SettingsRepository.*;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALL_AUDIO_ITEMS;
@@ -71,16 +70,11 @@ public class MainController {
     private final NavigationController navigationController;
     private final ArtistViewController artistViewController;
     private final AlertFactory alertFactory;
+    private final SettingsRepository settingsRepository;
+    private final MediaImportService mediaImportService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty;
-
-    /**
-     * Handles the action of changing the name of a playlist
-     */
-    private final EventHandler<KeyEvent> changePlaylistNameTextFieldHandler = changePlaylistNameTextFieldHandler();
-
-    @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
 
     private MenuBarController menuBarController;
 
@@ -122,7 +116,7 @@ public class MainController {
     /**
      * The table where tracks are displayed
      */
-    private FullAudioItemTableView mainTrackTable;
+    private FullAudioItemTableView mainAudioItemTable;
 
     /**
      * The TextField that is shown to set a new playlist name or rename an existing one
@@ -130,14 +124,14 @@ public class MainController {
     private TextField playlistTitleTextField;
 
     /**
-     * The image that is shown on the bottom right corner of the table when hovering over a track
+     * The image that is shown in the bottom right corner of the table when hovering over a track
      */
-    private ImageView trackHoveredCoverImageView;
+    private ImageView miniatureCoverImageView;
 
     /**
      * The object property of the image shown in the trackHoveredCoverImageView object
      */
-    private ObjectProperty<Image> trackHoveredCoverImageProperty;
+    private ObjectProperty<Image> miniatureCoverImageProperty;
 
     /**
      * The object property of the image of the playlist in the playlistImageView
@@ -145,10 +139,6 @@ public class MainController {
     private ObjectProperty<Image> playlistImageProperty;
 
     private ListProperty<ObservableAudioItem> showingTracksProperty;
-    @Autowired
-    private SettingsRepository settingsRepository;
-    @Autowired
-    private MediaImportService mediaImportService;
 
     @Autowired
     public MainController(ObservableAudioItemJsonRepository audioRepository,
@@ -158,8 +148,9 @@ public class MainController {
                           NavigationController navigationController,
                           ArtistViewController artistViewController,
                           AlertFactory alertFactory,
-                          ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty,
-                          MediaImportService mediaImportService) {
+                          MediaImportService mediaImportService,
+                          SettingsRepository settingsRepository,
+                          ApplicationEventPublisher applicationEventPublisher) {
         this.audioRepository = audioRepository;
         this.playlistRepository = playlistRepository;
         this.playerController = playerController;
@@ -167,36 +158,24 @@ public class MainController {
         this.navigationController = navigationController;
         this.artistViewController = artistViewController;
         this.alertFactory = alertFactory;
-        this.selectedPlaylistProperty = selectedPlaylistProperty;
         this.mediaImportService = mediaImportService;
+        this.settingsRepository = settingsRepository;
+        this.applicationEventPublisher = applicationEventPublisher;
+        this.selectedPlaylistProperty = navigationController.selectedPlaylistProperty();
     }
 
     @FXML
     public void initialize() throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/MenuBarController.fxml"));
-        menuBarController = new MenuBarController();
-        loader.setController(menuBarController);
-        loader.load();
+        initMenuBar();
+        initAudioItemTable();
+        initializeMiniatureCoverImageView();
+        initializeInfoPaneFields();
 
-        mainTrackTable = new FullAudioItemTableView(selectedPlaylistProperty, searchTextField.textProperty(),
-                playlistRepository.getPlaylistsProperty(), applicationEventPublisher);
-        showingTracksProperty = new SimpleListProperty<>(this, "showing audio items", FXCollections.emptyObservableList());
-
-
-
-        GridPane.setHgrow(mainTrackTable, Priority.ALWAYS);
-        GridPane.setVgrow(mainTrackTable, Priority.ALWAYS);
-
-        initializeTrackHoveredCoverImageView();
         playlistImageProperty = new SimpleObjectProperty<>(this, "playlist image", defaultPlaylistImage);
         playlistImageView.imageProperty().bind(playlistImageProperty);
 
-        initializeInfoPaneFields();
-
-        hideTableInfoPane();
-
-        navigationController.setOnNewPlaylistAction(e -> changeViewToPlaylistCreationMode());
-        navigationController.setOnNewFolderPlaylistAction(e -> changeViewToPlaylistCreationMode());
+        navigationController.setOnNewPlaylistAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylist));
+        navigationController.setOnNewFolderPlaylistAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylistDirectory));
         navigationController.navigationModeProperty().addListener((obs, oldMode, newMode) -> {
             switch (newMode) {
                 case ALL_AUDIO_ITEMS:
@@ -214,23 +193,53 @@ public class MainController {
 
         audioRepository.emptyLibraryProperty().addListener((observable, wasEmpty, isEmpty) -> {
             if (Boolean.TRUE.equals(isEmpty)) {
-                trackHoveredCoverImageView.setImage(defaultPlaylistImage);
+                miniatureCoverImageView.setImage(defaultPlaylistImage);
                 menuBarController.playPauseMenuItem.setDisable(true);
             } else {
                 menuBarController.playPauseMenuItem.setDisable(false);
             }
         });
+
+        searchTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 3) {
+                applicationEventPublisher.publishEvent(new SearchTextTypedEvent(newValue, this));
+            }
+        });
+
+        hideTableInfoPane();
+    }
+
+    private void initMenuBar() throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/MenuBarController.fxml"));
+        menuBarController = new MenuBarController();
+        loader.setController(menuBarController);
+        loader.load();
+    }
+
+    private void initAudioItemTable() {
+        mainAudioItemTable = new FullAudioItemTableView(applicationEventPublisher);
+        mainAudioItemTable.setContextMenu(new AudioItemTableViewContextMenu());
+
+        showingTracksProperty = new SimpleListProperty<>(this, "showing audio items");
+        showingTracksProperty.bind(audioRepository.getAudioItemsProperty());
+        mainAudioItemTable.itemsProperty().bind(showingTracksProperty);
+
+        GridPane.setHgrow(mainAudioItemTable, Priority.ALWAYS);
+        GridPane.setVgrow(mainAudioItemTable, Priority.ALWAYS);
     }
 
     private void initializeInfoPaneFields() {
         playRandomButton.visibleProperty().bind(showingTracksProperty.emptyProperty().not());
+        playlistTracksNumberLabel.textProperty().bind(map(showingTracksProperty.sizeProperty(), s -> s + " tracks"));
+
         playRandomButton.setOnAction(e -> selectedPlaylistProperty.get().ifPresent(
             playlist -> applicationEventPublisher.publishEvent(new PlayPlaylistRandomlyEvent(playlist, this))));
-        playlistTracksNumberLabel.textProperty().bind(map(showingTracksProperty.sizeProperty(), s -> s + " tracks"));
-        playlistSizeLabel.textProperty().bind(map(showingTracksProperty, (ObservableList<ObservableAudioItem> tracks) -> {
-            var sizeSum = tracks.stream().mapToLong(ObservableAudioItem::getLength).sum();
+
+        playlistSizeLabel.textProperty().bind(map(showingTracksProperty, (ObservableList<ObservableAudioItem> audioItems) -> {
+            var sizeSum = audioItems.stream().mapToLong(ObservableAudioItem::getLength).sum();
             return FileUtils.byteCountToDisplaySize(sizeSum);
         }));
+
         playlistTitleLabel.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {   // double click to edit the playlist name
                 replacePlaylistTitleLabelByTextField();
@@ -248,51 +257,42 @@ public class MainController {
         playlistTitleTextField.setPadding(new Insets(-10, 0, -10, 0));
         playlistTitleTextField.setFont(new Font("Avenir", 19));
         VBox.setMargin(playlistTitleTextField, new Insets(30, 0, 5, 15));
-        playlistTitleTextField.setOnKeyPressed(changePlaylistNameTextFieldHandler);
+        playlistTitleTextField.setOnKeyPressed(this::changePlaylistNameTextFieldHandler);
     }
 
-    private EventHandler<KeyEvent> changePlaylistNameTextFieldHandler() {
-        return event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                selectedPlaylistProperty.get().ifPresent(playlist -> {
-                    var newName = playlistTitleTextField.getText();
-                    if (isValidPlaylistName(newName) || playlist.getNameProperty().get().equals(newName)) {
-                        playlist.setName(newName);
-                        replacePlaylistTextFieldByTitleLabel();
-                    }
-                    event.consume();
-                });
-            } else if (event.getCode() == KeyCode.ESCAPE) {
-                replacePlaylistTextFieldByTitleLabel();
+    private void changePlaylistNameTextFieldHandler(KeyEvent event) {
+        if (event.getCode() == KeyCode.ENTER) {
+            selectedPlaylistProperty.get().ifPresent(playlist -> {
+                var newName = playlistTitleTextField.getText();
+                if (isValidPlaylistName(newName) || playlist.getNameProperty().get().equals(newName)) {
+                    playlist.setName(newName);
+                    replacePlaylistTextFieldByTitleLabel();
+                }
                 event.consume();
-            }
-        };
+            });
+        } else if (event.getCode() == KeyCode.ESCAPE) {
+            replacePlaylistTextFieldByTitleLabel();
+            event.consume();
+        }
     }
 
-    /**
-     * Ensures that a string for a playlist is valid, checking if
-     * it is empty, or another playlist has the same name.
-     *
-     * @param newName The name of the playlist to check
-     * @return {@code true} if its a valid name, {@code false} otherwise
-     */
     private boolean isValidPlaylistName(String newName) {
-        return !newName.isEmpty() && !navigationController.containsPlaylistName(newName);
+        return ! newName.isEmpty() && ! navigationController.containsPlaylistName(newName);
     }
 
-    private void initializeTrackHoveredCoverImageView() {
-        trackHoveredCoverImageView = new ImageView();
-        trackHoveredCoverImageProperty = new SimpleObjectProperty<>(this, "track hovered cover image", defaultPlaylistImage);
-        trackHoveredCoverImageView.imageProperty().bind(trackHoveredCoverImageProperty);
-        trackHoveredCoverImageView.setFitWidth(HOVER_COVER_SIZE);
-        trackHoveredCoverImageView.setFitHeight(HOVER_COVER_SIZE);
-        trackHoveredCoverImageView.translateXProperty().bind(
+    private void initializeMiniatureCoverImageView() {
+        miniatureCoverImageView = new ImageView();
+        miniatureCoverImageProperty = new SimpleObjectProperty<>(this, "miniature cover image", defaultPlaylistImage);
+        miniatureCoverImageView.imageProperty().bind(miniatureCoverImageProperty);
+        miniatureCoverImageView.setFitWidth(HOVER_COVER_SIZE);
+        miniatureCoverImageView.setFitHeight(HOVER_COVER_SIZE);
+        miniatureCoverImageView.translateXProperty().bind(
             map(tableStackPane.widthProperty(),
-                width -> (width.doubleValue() / 2) - (HOVER_COVER_SIZE / 2) - 10
+                width -> (width.doubleValue() / 2) - (HOVER_COVER_SIZE / 2.0) - 10
             ));
-        trackHoveredCoverImageView.translateYProperty().bind(
+        miniatureCoverImageView.translateYProperty().bind(
             map(tableStackPane.heightProperty(),
-                height -> (height.doubleValue() / 2) - (HOVER_COVER_SIZE / 2) - 27
+                height -> (height.doubleValue() / 2) - (HOVER_COVER_SIZE / 2.0) - 27
             ));
     }
 
@@ -321,30 +321,29 @@ public class MainController {
 
     private void showAllAudioItemsView() {
         tableStackPane.getChildren().remove(artistsLayout);
-        trackHoveredCoverImageView.setVisible(true);
+        miniatureCoverImageView.setVisible(true);
         hideTableInfoPane();
         showTablePane();
     }
 
     private void showTablePane() {
-        if (!tableStackPane.getChildren().contains(mainTrackTable)) {
-            tableStackPane.getChildren().add(mainTrackTable);
+        if (!tableStackPane.getChildren().contains(mainAudioItemTable)) {
+            tableStackPane.getChildren().add(mainAudioItemTable);
         }
-        if (!tableStackPane.getChildren().contains(trackHoveredCoverImageView)) {
-            tableStackPane.getChildren().add(trackHoveredCoverImageView);
+        if (!tableStackPane.getChildren().contains(miniatureCoverImageView)) {
+            tableStackPane.getChildren().add(miniatureCoverImageView);
         }
     }
 
     private void showArtistsView() {
         hideTableInfoPane();
-        trackHoveredCoverImageView.setVisible(false);
-        tableStackPane.getChildren().remove(mainTrackTable);
-        tableStackPane.getChildren().remove(trackHoveredCoverImageView);
+        miniatureCoverImageView.setVisible(false);
+        tableStackPane.getChildren().remove(mainAudioItemTable);
+        tableStackPane.getChildren().remove(miniatureCoverImageView);
         artistViewController.checkSelectedArtist();
         if (!tableStackPane.getChildren().contains(artistsLayout)) {
             tableStackPane.getChildren().remove(tableBorderPane);
             tableStackPane.getChildren().add(artistsLayout);
-            logger.debug("Showing artists view pane");
         }
     }
 
@@ -373,65 +372,21 @@ public class MainController {
     public void showNavigationPane() {
         if (!wrapperBorderPane.getChildren().equals(navigationLayout)) {
             wrapperBorderPane.setLeft(navigationLayout);
-            logger.debug("Showing navigation pane");
         }
     }
 
     public void hideNavigationPane() {
-        if (wrapperBorderPane.getChildren().contains(navigationLayout)) {
-            wrapperBorderPane.getChildren().remove(navigationLayout);
-            logger.debug("Showing navigation pane");
-        }
+        wrapperBorderPane.getChildren().remove(navigationLayout);
     }
 
     public void showTableInfoPane() {
         if (!contentBorderPane.getChildren().contains(tableInfoHBox)) {
             contentBorderPane.setTop(tableInfoHBox);
-            logger.debug("Showing info pane");
         }
     }
 
     public void hideTableInfoPane() {
-        if (contentBorderPane.getChildren().contains(tableInfoHBox)) {
-            contentBorderPane.getChildren().remove(tableInfoHBox);
-            logger.debug("Hiding info pane");
-        }
-    }
-
-    private Optional<ObservableList<ObservableAudioItem>> selectedAudioItems() {
-        var mode = navigationController.navigationModeProperty().getValue();
-        return switch (mode) {
-            case ALL_AUDIO_ITEMS, PLAYLIST -> Optional.ofNullable(mainTrackTable.getSelectionModel().getSelectedItems());
-            case ARTISTS -> Optional.ofNullable(artistViewController.getSelectedTracks());
-        };
-    }
-
-    public void deleteSelectedAudioItems() {
-        selectedAudioItems().ifPresent(audioItems -> audioRepository.removeAll(new HashSet<>(audioItems)));
-    }
-
-    public void selectAllTracks() {
-        var mode = navigationController.navigationModeProperty().get();
-        switch (mode) {
-            case ALL_AUDIO_ITEMS, PLAYLIST:
-                mainTrackTable.getSelectionModel().selectAll();
-                break;
-            case ARTISTS:
-                artistViewController.selectAllTracks();
-                break;
-        }
-    }
-
-    public void unselectTracks() {
-        var mode = navigationController.navigationModeProperty().get();
-        switch (mode) {
-            case ALL_AUDIO_ITEMS, PLAYLIST:
-                mainTrackTable.getSelectionModel().clearSelection();
-                break;
-            case ARTISTS:
-                artistViewController.deselectAllTracks();
-                break;
-        }
+        contentBorderPane.getChildren().remove(tableInfoHBox);
     }
 
     public void selectCurrentPlayingTrack() {
@@ -439,7 +394,7 @@ public class MainController {
         currentPlayingTrack.ifPresent(track -> {
             var mode = navigationController.navigationModeProperty().getValue();
             if (mode == ALL_AUDIO_ITEMS || mode == PLAYLIST) {
-                mainTrackTable.selectFocusAndScroll(track);
+                mainAudioItemTable.selectFocusAndScroll(track);
             } else if (mode == NavigationController.NavigationMode.ARTISTS) {
                 artistViewController.findAudioItemInArtistViewAndSelect(track);
             }
@@ -452,89 +407,52 @@ public class MainController {
      */
     @EventListener(classes = CreatePlaylistEvent.class)
     public void createPlaylistEventListener() {
-        changeViewToPlaylistCreationMode();
-    }
-
-    private void changeViewToPlaylistCreationMode() {
-        showingTracksProperty.clear();
-        tableStackPane.getChildren().remove(artistsLayout);
-        replacePlaylistTitleLabelByTextField();
-
-        playlistTitleTextField.clear();
-        playlistTitleTextField.setOnKeyPressed(onPlaylistTitleTextFieldKeyPressed());
-    }
-
-    private EventHandler<KeyEvent> onPlaylistTitleTextFieldKeyPressed() {
-        return event -> {
-            String newPlaylistName = playlistTitleTextField.getText();
-            if (event.getCode() == KeyCode.ENTER && isValidPlaylistName(newPlaylistName)) {
-                try {
-                    ObservablePlaylist newPlaylist = playlistRepository.createPlaylist(newPlaylistName);
-
-                    subscribe(newPlaylist.getCoverImageProperty(),
-                        playlistCover -> playlistImageProperty.set(playlistCover.orElse(defaultPlaylistImage))
-                    );
-                    replacePlaylistTextFieldByTitleLabel();
-                    // Necessary to enable changing the name of the playlist afterwards
-                    playlistTitleTextField.setOnKeyPressed(changePlaylistNameTextFieldHandler);
-
-                    navigationController.addNewPlaylist(newPlaylist);
-                } catch (IllegalArgumentException exception) {
-                    logger.error("Attempted to create playlist with existing name", exception);
-                    applicationEventPublisher.publishEvent(new ExceptionEvent(exception, this));
-                } finally {
-                    event.consume();
-                }
-            } else if (event.getCode() == KeyCode.ESCAPE) {
-                replacePlaylistTextFieldByTitleLabel();
-                selectedPlaylistProperty.get().ifPresentOrElse(navigationController::selectPlaylist, navigationController::selectFirstPlaylist);
-                event.consume();
-            }
-        };
+        changeViewToPlaylistCreationMode(playlistRepository::createPlaylist);
     }
 
     @EventListener(classes = CreatePlaylistDirectoryEvent.class)
     public void createPlaylistFolderEventListener() {
-        changeViewToPlaylistFolderCreationMode();
+        changeViewToPlaylistCreationMode(playlistRepository::createPlaylistDirectory);
     }
 
-    private void changeViewToPlaylistFolderCreationMode() {
+    private void changeViewToPlaylistCreationMode(Function<String, ObservablePlaylist> playlistCreationFunction) {
         showingTracksProperty.clear();
         tableStackPane.getChildren().remove(artistsLayout);
         replacePlaylistTitleLabelByTextField();
 
         playlistTitleTextField.clear();
-        playlistTitleTextField.setOnKeyPressed(onPlaylistFolderTitleTextFieldKeyPressed());
+        playlistTitleTextField.setOnKeyPressed(keyEvent ->
+                onPlaylistTitleTextFieldKeyPressed(keyEvent, playlistCreationFunction));
     }
 
-    private EventHandler<KeyEvent> onPlaylistFolderTitleTextFieldKeyPressed() {
-        return event -> {
-            String newPlaylistName = playlistTitleTextField.getText();
-            if (event.getCode() == KeyCode.ENTER && isValidPlaylistName(newPlaylistName)) {
-                try {
-                    ObservablePlaylist newPlaylistDirectory = playlistRepository.createPlaylistDirectory(newPlaylistName);
+    private void onPlaylistTitleTextFieldKeyPressed(KeyEvent event, Function<String, ObservablePlaylist> playlistCreationFunction) {
+        String newPlaylistName = playlistTitleTextField.getText();
 
-                    subscribe(newPlaylistDirectory.getCoverImageProperty(),
-                        playlistCover -> playlistImageProperty.set(playlistCover.orElse(defaultPlaylistImage))
-                    );
-                    replacePlaylistTextFieldByTitleLabel();
-                    // Necessary to enable changing the name of the playlist afterwards
-                    playlistTitleTextField.setOnKeyPressed(changePlaylistNameTextFieldHandler);
+        // If the user presses Enter, we check if the name is valid and create the playlist
+        if (event.getCode() == KeyCode.ENTER && isValidPlaylistName(newPlaylistName)) {
+            try {
+                var newPlaylist = playlistCreationFunction.apply(newPlaylistName);
 
-                    navigationController.addNewPlaylist(newPlaylistDirectory);
-                } catch (IllegalArgumentException exception) {
-                    logger.error("Attempted to create playlist directory with existing name", exception);
-                    applicationEventPublisher.publishEvent(new ExceptionEvent(exception, this));
-                } finally {
-                    event.consume();
-                }
-            } else if (event.getCode() == KeyCode.ESCAPE) {
+                subscribe(newPlaylist.getCoverImageProperty(),
+                    playlistCover -> playlistImageProperty.set(playlistCover.orElse(defaultPlaylistImage))
+                );
                 replacePlaylistTextFieldByTitleLabel();
-                selectedPlaylistProperty.get()
-                    .ifPresentOrElse(navigationController::selectPlaylist, navigationController::selectFirstPlaylist);
+                // Necessary to enable changing the name of the playlist afterward
+                playlistTitleTextField.setOnKeyPressed(this::changePlaylistNameTextFieldHandler);
+
+                navigationController.addNewPlaylist(newPlaylist);
+            } catch (IllegalArgumentException exception) {
+                logger.error("Attempted to create playlist with existing name", exception);
+                applicationEventPublisher.publishEvent(new ExceptionEvent(exception, this));
+            } finally {
                 event.consume();
             }
-        };
+        // If the user presses Escape, we cancel the creation of the playlist
+        } else if (event.getCode() == KeyCode.ESCAPE) {
+            replacePlaylistTextFieldByTitleLabel();
+            selectedPlaylistProperty.get().ifPresentOrElse(navigationController::selectPlaylist, navigationController::selectFirstPlaylist);
+            event.consume();
+        }
     }
 
     @EventListener(classes = DeleteSelectedPlaylistEvent.class)
@@ -549,17 +467,13 @@ public class MainController {
     @EventListener
     public void updateFloatingTrackCoverEventListener(AudioItemHoveredEvent audioItemHoveredEvent) {
         var audioItem = audioItemHoveredEvent.audioItem;
-        trackHoveredCoverImageProperty.setValue(audioItem.getCoverImageProperty().get().orElse(defaultPlaylistImage));
+        miniatureCoverImageProperty.setValue(audioItem.getCoverImageProperty().get().orElse(defaultPlaylistImage));
     }
 
     @EventListener(classes = EditionFinishedEvent.class)
     public void editionFinishedEventListener() {
         menuBarController.selectAllMenuItem.setDisable(false);
         menuBarController.unselectMenuItem.setDisable(false);
-    }
-
-    public void focusSearchField() {
-        searchTextField.requestFocus();
     }
 
     public class MenuBarController {
@@ -623,38 +537,17 @@ public class MainController {
 
         @FXML
         public void initialize() {
-            setFileMenuActions();
-            setEditMenuActions();
-            setControlsMenuActions();
-            setViewMenuActions();
-            setAboutMenuAction();
+            initFileMenuActions();
+            initEditMenuActions();
+            initControlsMenuActions();
+            initViewMenuActions();
+            initAboutMenuAction();
             bindShowHideTableInfo();
-
-            if (OS_SPECIFIC_KEY_MODIFIER.equals(KeyCodeCombination.META_DOWN)) {
-                MenuToolkit menuToolkit = MenuToolkit.toolkit();
-                Menu appMenu = new Menu("Musicott");
-                appMenu.getItems().addAll(preferencesMenuItem, new SeparatorMenuItem());
-                appMenu.getItems().add(menuToolkit.createQuitMenuItem("Musicott"));
-                Menu windowMenu = new Menu("Window");
-                windowMenu.getItems().addAll(menuToolkit.createMinimizeMenuItem(), menuToolkit.createCloseWindowMenuItem());
-                windowMenu.getItems().addAll(menuToolkit.createZoomMenuItem(), new SeparatorMenuItem());
-                windowMenu.getItems().addAll(menuToolkit.createHideOthersMenuItem(), menuToolkit.createUnhideAllMenuItem());
-                windowMenu.getItems().addAll(menuToolkit.createBringAllToFrontItem());
-
-                fileMenu.getItems().remove(5, 8);
-                menuToolkit.setApplicationMenu(appMenu);
-                rootMenuBar.getMenus().add(0, appMenu);
-                rootMenuBar.getMenus().add(5, windowMenu);
-                menuToolkit.autoAddWindowMenuItems(windowMenu);
-                menuToolkit.setGlobalMenuBar(rootMenuBar);
-            } else {
-                headerVBox.getChildren().add(rootMenuBar);
-            }
-
-            setAccelerators();
+            initMenuBarItems();
+            initAccelerators();
         }
 
-        private void setAboutMenuAction() {
+        private void initAboutMenuAction() {
             aboutMenuItem.setOnAction(e -> {
                 if (aboutWindowAlert == null) {
                     aboutWindowAlert = alertFactory.aboutWindowAlert();
@@ -663,39 +556,35 @@ public class MainController {
             });
         }
 
-        private void setFileMenuActions() {
+        private void initFileMenuActions() {
+            var acceptedAudioFileExtensions = settingsRepository.getAcceptedAudioFileExtensions();
             openFileMenuItem.setOnAction(e -> {
                 FileChooser chooser = new FileChooser();
                 chooser.setTitle("Open file(s)...");
                 chooser.getExtensionFilters().addAll(buildAudioExtensionFilters());
                 List<File> filesToOpen = chooser.showOpenMultipleDialog(rootBorderPane.getScene().getWindow());
-                mediaImportService.importFiles(filesToOpen);
+                if (filesToOpen != null && ! filesToOpen.isEmpty()) {
+                    mediaImportService.importFiles(filesToOpen);
+                }
             });
             importFolderMenuItem.setOnAction(e -> {
-                //            LOG.debug("Choosing folder to being imported");
-                //            DirectoryChooser chooser = new DirectoryChooser();
-                //            chooser.setTitle("Choose folder");
-                //            File folder = chooser.showDialog(primaryStage);
-                //            if (folder != null)
-                //                countFilesToImport(folder);
+                DirectoryChooser chooser = new DirectoryChooser();
+                chooser.setTitle("Choose folder");
+                File directory = chooser.showDialog(rootBorderPane.getScene().getWindow());
+                if (directory != null)
+                    mediaImportService.importDirectory(directory, acceptedAudioFileExtensions);
             });
             importItunesMenuItem.setOnAction(e -> {
-                //            LOG.debug("Choosing Itunes xml file");
-                //            File xmlFile = selectItunesFile();
-                //            if (xmlFile != null)
-                //                taskDemon.importFromItunesLibrary(xmlFile.getAbsolutePath());
+                // TODO
             });
             preferencesMenuItem.setOnAction(e -> preferencesController.show());
-            newPlaylistMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode());
-            newPlaylistFolderMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode());
-            closeMenuItem.setOnAction(e -> {
-                // TODO free resources, finish tasks
-                Platform.exit();
-            });
+            newPlaylistMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylist));
+            newPlaylistFolderMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylistDirectory));
+            closeMenuItem.setOnAction(e -> applicationEventPublisher.publishEvent(new StopApplicationEvent(this)));
         }
 
         private List<ExtensionFilter> buildAudioExtensionFilters() {
-            Set<AudioFileType> acceptedAudioFileExtensions = settingsRepository.getAcceptedAudioFileExtensions();
+            var acceptedAudioFileExtensions = settingsRepository.getAcceptedAudioFileExtensions();
 
             if (acceptedAudioFileExtensions.isEmpty()) {
                 return Collections.emptyList();
@@ -740,7 +629,7 @@ public class MainController {
             return filters;
         }
 
-        private void setViewMenuActions() {
+        private void initViewMenuActions() {
             showHideNavigationPaneMenuItem.setOnAction(e -> {
                 if (showHideNavigationPaneMenuItem.getText().startsWith("Show")) {
                     showHideNavigationPaneMenuItem.setText("Hide navigation pane");
@@ -767,7 +656,31 @@ public class MainController {
                 map(navigationController.navigationModeProperty(), menu -> !menu.equals(PLAYLIST)));
         }
 
-        private void setAccelerators() {
+        private void initMenuBarItems() {
+            // If the OS is Mac, we need to set the menu bar in a different way using the native menu bar
+            if (OS_SPECIFIC_KEY_MODIFIER.equals(KeyCombination.META_DOWN)) {
+                MenuToolkit menuToolkit = MenuToolkit.toolkit();
+                Menu appMenu = new Menu("Musicott");
+                appMenu.getItems().addAll(preferencesMenuItem, new SeparatorMenuItem());
+                appMenu.getItems().add(menuToolkit.createQuitMenuItem("Musicott"));
+                Menu windowMenu = new Menu("Window");
+                windowMenu.getItems().addAll(menuToolkit.createMinimizeMenuItem(), menuToolkit.createCloseWindowMenuItem());
+                windowMenu.getItems().addAll(menuToolkit.createZoomMenuItem(), new SeparatorMenuItem());
+                windowMenu.getItems().addAll(menuToolkit.createHideOthersMenuItem(), menuToolkit.createUnhideAllMenuItem());
+                windowMenu.getItems().addAll(menuToolkit.createBringAllToFrontItem());
+
+                fileMenu.getItems().remove(5, 8);
+                menuToolkit.setApplicationMenu(appMenu);
+                rootMenuBar.getMenus().add(0, appMenu);
+                rootMenuBar.getMenus().add(5, windowMenu);
+                menuToolkit.autoAddWindowMenuItems(windowMenu);
+                menuToolkit.setGlobalMenuBar(rootMenuBar);
+            } else {
+                headerVBox.getChildren().add(rootMenuBar);
+            }
+        }
+
+        private void initAccelerators() {
             KeyCombination.Modifier shiftDown = KeyCombination.SHIFT_DOWN;
             openFileMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, OS_SPECIFIC_KEY_MODIFIER));
             importFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
@@ -791,8 +704,10 @@ public class MainController {
             closeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, OS_SPECIFIC_KEY_MODIFIER));
         }
 
-        private void setControlsMenuActions() {
-            playPauseMenuItem.textProperty().bind(map(playerController.playButtonSelectedProperty(), play -> play ? "Pause" : "Play"));
+        private void initControlsMenuActions() {
+            playPauseMenuItem.textProperty().bind(
+                    map(playerController.playButtonSelectedProperty(),
+                            play -> Boolean.TRUE.equals(play) ? "Pause" : "Play"));
             playPauseMenuItem.setOnAction(e -> playerController.playPause());
             previousMenuItem.disableProperty().bind(playerController.previousButtonDisabledProperty());
             previousMenuItem.setOnAction(e -> playerController.previous());
@@ -806,7 +721,7 @@ public class MainController {
             selectCurrentTrackMenuItem.setOnAction(e -> selectCurrentPlayingTrack());
         }
 
-        private void setEditMenuActions() {
+        private void initEditMenuActions() {
             // When editing tracks or using the search text field, Select All and Deselect All are disabled because
             // their Accelerators can be used when typing text: CTRL + A and CTRL + SHIFT + A, which are used to select or deselect text
             // inside a text field too, by default.
@@ -819,7 +734,7 @@ public class MainController {
                     unselectMenuItem.setDisable(true);
                 }));
             searchTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue) {
+                if (Boolean.TRUE.equals(newValue)) {
                     selectAllMenuItem.setDisable(true);
                     unselectMenuItem.setDisable(true);
                 } else {
@@ -828,10 +743,126 @@ public class MainController {
                 }
             });
 
-            deleteMenuItem.setOnAction(e -> deleteSelectedAudioItems());
-            selectAllMenuItem.setOnAction(e -> selectAllTracks());
-            unselectMenuItem.setOnAction(e -> unselectTracks());
-            findMenuItem.setOnAction(e -> focusSearchField());
+            deleteMenuItem.setOnAction(this::deleteSelectedAudioItems);
+            selectAllMenuItem.setOnAction(this::selectAllTracks);
+            unselectMenuItem.setOnAction(this::unselectTracks);
+            findMenuItem.setOnAction(e -> searchTextField.requestFocus());
+        }
+
+        private Optional<ObservableList<ObservableAudioItem>> selectedAudioItems() {
+            var mode = navigationController.navigationModeProperty().getValue();
+            return switch (mode) {
+                case ALL_AUDIO_ITEMS, PLAYLIST -> Optional.ofNullable(mainAudioItemTable.getSelectionModel().getSelectedItems());
+                case ARTISTS -> Optional.ofNullable(artistViewController.getSelectedTracks());
+            };
+        }
+
+        private void deleteSelectedAudioItems(ActionEvent event) {
+            selectedAudioItems().ifPresent(audioItems -> audioRepository.removeAll(new HashSet<>(audioItems)));
+        }
+
+        private void selectAllTracks(ActionEvent event) {
+            var mode = navigationController.navigationModeProperty().get();
+            switch (mode) {
+                case ALL_AUDIO_ITEMS, PLAYLIST:
+                    mainAudioItemTable.getSelectionModel().selectAll();
+                    break;
+                case ARTISTS:
+                    artistViewController.selectAllTracks();
+                    break;
+            }
+        }
+
+        private void unselectTracks(ActionEvent event) {
+            var mode = navigationController.navigationModeProperty().get();
+            switch (mode) {
+                case ALL_AUDIO_ITEMS, PLAYLIST:
+                    mainAudioItemTable.getSelectionModel().clearSelection();
+                    break;
+                case ARTISTS:
+                    artistViewController.deselectAllTracks();
+                    break;
+            }
+        }
+    }
+
+    private class AudioItemTableViewContextMenu extends ContextMenu {
+
+        private final Menu addToPlaylistMenu;
+        private final MenuItem deleteFromPlaylistMenuItem;
+        private final List<MenuItem> playlistsInMenu = new ArrayList<>();
+
+        public AudioItemTableViewContextMenu() {
+            super();
+            addToPlaylistMenu = new Menu("Add to playlist");
+
+            MenuItem playMenuItem = new MenuItem("Play");
+            playMenuItem.setOnAction(event -> {
+                ObservableList<ObservableAudioItem> selectedAudioItems = mainAudioItemTable.getSelectionModel().getSelectedItems();
+                if (selectedAudioItems != null && !selectedAudioItems.isEmpty()) {
+                    applicationEventPublisher.publishEvent(new PlayItemEvent(selectedAudioItems, this));
+                }
+            });
+
+            MenuItem editMenuItem = new MenuItem("Edit");
+            editMenuItem.setOnAction(event -> {
+                ObservableList<ObservableAudioItem> selectedAudioItems = mainAudioItemTable.getSelectionModel().getSelectedItems();
+                if (! selectedAudioItems.isEmpty()) {
+                    applicationEventPublisher.publishEvent(new OpenAudioItemEditorView(new HashSet<>(selectedAudioItems), this));
+                }
+            });
+
+            MenuItem deleteMenuItem = new MenuItem("Delete");
+            deleteMenuItem.setOnAction(event -> {
+                ObservableList<ObservableAudioItem> selectedAudioItems = mainAudioItemTable.getSelectionModel().getSelectedItems();
+                if (selectedAudioItems != null && !selectedAudioItems.isEmpty())
+                    applicationEventPublisher.publishEvent(new DeleteAudioItemsEvent(new HashSet<>(selectedAudioItems), this));
+            });
+
+            MenuItem addToQueueMenuItem = new MenuItem("Add to play queue");
+            addToQueueMenuItem.setOnAction(event -> {
+                ObservableList<ObservableAudioItem> selectedAudioItems = mainAudioItemTable.getSelectionModel().getSelectedItems();
+                if (selectedAudioItems != null && !selectedAudioItems.isEmpty())
+                    applicationEventPublisher.publishEvent(new AddToPlayQueueEvent(selectedAudioItems, this));
+            });
+
+            deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
+            deleteFromPlaylistMenuItem.setId("deleteFromPlaylistMenuItem");
+            deleteFromPlaylistMenuItem.setOnAction(event ->
+                    selectedPlaylistProperty.get().ifPresent(audioPlaylist -> {
+                        ObservableList<ObservableAudioItem> selectedAudioItems = mainAudioItemTable.getSelectionModel().getSelectedItems();
+                        audioPlaylist.getAudioItemsProperty().removeAll(selectedAudioItems);
+                    }));
+
+            getItems().addAll(playMenuItem, editMenuItem, deleteMenuItem, addToQueueMenuItem, new SeparatorMenuItem());
+            getItems().addAll(deleteFromPlaylistMenuItem, addToPlaylistMenu);
+        }
+
+        @Override
+        public void show(Node anchor, double screenX, double screenY) {
+            playlistsInMenu.clear();
+            Optional<ObservablePlaylist> selectedPlaylist = selectedPlaylistProperty.get();
+            if (selectedPlaylist.isPresent() && ! selectedPlaylist.get().isDirectory())  {
+                navigationController.playlistsProperty().stream()
+                        .filter(p -> ! p.isDirectory())
+                        .forEach(this::addPlaylistToMenuList);
+
+                addToPlaylistMenu.getItems().clear();
+                addToPlaylistMenu.getItems().addAll(playlistsInMenu);
+                deleteFromPlaylistMenuItem.setVisible(true);
+            }
+            else
+                deleteFromPlaylistMenuItem.setVisible(false);
+            super.show(anchor, screenX, screenY);
+        }
+
+        private void addPlaylistToMenuList(ObservablePlaylist playlist) {
+            Optional<ObservablePlaylist> selectedPlaylist = selectedPlaylistProperty.get();
+            if (! (selectedPlaylist.isPresent() && selectedPlaylist.get().equals(playlist))) {
+                MenuItem playlistMenuItem = new MenuItem(playlist.getName());
+                playlistMenuItem.setOnAction(event -> playlist.getAudioItemsProperty().addAll(mainAudioItemTable.getSelectionModel().getSelectedItems()));
+                playlistsInMenu.add(playlistMenuItem);
+            }
         }
     }
 }

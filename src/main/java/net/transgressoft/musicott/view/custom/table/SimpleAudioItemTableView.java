@@ -1,13 +1,6 @@
 package net.transgressoft.musicott.view.custom.table;
 
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlySetProperty;
-import javafx.beans.property.StringProperty;
 import org.springframework.context.ApplicationEventPublisher;
-
-import java.util.Optional;
 
 /**
  * @author Octavio Calleya
@@ -17,11 +10,8 @@ public class SimpleAudioItemTableView extends AudioItemTableViewBase {
     private static final String SIMPLE_TRACK_TABLE_STYLE = "/css/tracktable-trackareaset.css";
 
     @SuppressWarnings ("unchecked")
-    public SimpleAudioItemTableView(ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty,
-                                    ReadOnlySetProperty<ObservablePlaylist> playlistsProperty,
-                                    StringProperty searchTextProperty,
-                                    ApplicationEventPublisher applicationEventPublisher) {
-        super(selectedPlaylistProperty, searchTextProperty, playlistsProperty, applicationEventPublisher);
+    public SimpleAudioItemTableView(ApplicationEventPublisher applicationEventPublisher) {
+        super(applicationEventPublisher);
 
         getColumns().addAll(trackNumberCol, nameCol, totalTimeCol);
         getSortOrder().add(trackNumberCol);

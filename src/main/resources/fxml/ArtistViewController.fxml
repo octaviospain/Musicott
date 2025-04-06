@@ -55,7 +55,7 @@
                     <center>
                         <AnchorPane minWidth="700.0" BorderPane.alignment="CENTER">
                             <children>
-                                <ListView fx:id="trackSetsListView" focusTraversable="false" minWidth="700.0" AnchorPane.bottomAnchor="0.0"
+                                <ListView fx:id="albumsListView" focusTraversable="false" minWidth="700.0" AnchorPane.bottomAnchor="0.0"
                                           AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
                             </children>
                         </AnchorPane>

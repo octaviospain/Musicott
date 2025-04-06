@@ -2,15 +2,10 @@ package net.transgressoft.musicott.config;
 
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItemJsonRepository;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistJsonRepository;
 import net.transgressoft.commons.music.waveform.AudioWaveform;
 import net.transgressoft.commons.music.waveform.AudioWaveformJsonRepository;
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository;
-
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlySetProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,7 +13,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 
 @Configuration
 public class ApplicationConfiguration {
@@ -71,15 +65,5 @@ public class ApplicationConfiguration {
         audioRepository.subscribe(observablePlaylistJsonRepository.getAudioItemEventSubscriber());
         audioRepository.subscribe(audioWaveformRepository.getAudioItemEventSubscriber());
         return audioWaveformRepository;
-    }
-
-    @Bean
-    public ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty() {
-        return new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
-    }
-
-    @Bean
-    public ReadOnlySetProperty<ObservablePlaylist> playlistsProperty(ObservablePlaylistJsonRepository observablePlaylistJsonRepository) {
-        return observablePlaylistJsonRepository.getPlaylistsProperty();
     }
 }
