@@ -17,7 +17,7 @@
 
 package net.transgressoft.musicott.services;
 
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItemJsonRepository;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.AudioFileType;
 import net.transgressoft.musicott.events.ExceptionEvent;
 import net.transgressoft.musicott.events.StatusMessageUpdateEvent;
@@ -47,11 +47,11 @@ public class MediaImportService {
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final ApplicationEventPublisher applicationEventPublisher;
-    private final ObservableAudioItemJsonRepository audioRepository;
+    private final ObservableAudioLibrary audioRepository;
     private final AtomicInteger progress = new AtomicInteger();
     private int totalFiles;
 
-    public MediaImportService(ApplicationEventPublisher applicationEventPublisher, ObservableAudioItemJsonRepository audioRepository) {
+    public MediaImportService(ApplicationEventPublisher applicationEventPublisher, ObservableAudioLibrary audioRepository) {
         this.applicationEventPublisher = applicationEventPublisher;
         this.audioRepository = audioRepository;
     }

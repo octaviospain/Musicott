@@ -6,9 +6,13 @@ import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItemJsonRepository;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItemSerializer;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItemSerializerKt;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistJsonRepository;
+import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
+import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistSerializerKt;
+import net.transgressoft.commons.persistence.json.JsonFileRepository;
 import net.transgressoft.musicott.test.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +32,8 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
+import static net.transgressoft.commons.fx.music.audio.ObservableAudioItemSerializerKt.*;
+import static net.transgressoft.commons.fx.music.playlist.ObservablePlaylistSerializerKt.*;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.*;
@@ -38,7 +44,7 @@ import static org.testfx.matcher.control.LabeledMatchers.hasText;
 public class PlaylistTreeViewComponentTest extends ApplicationTestBase<PlaylistTreeView> {
 
     @Autowired
-    ObservablePlaylistJsonRepository playlistRepository;
+    ObservablePlaylistHierarchy playlistRepository;
 
     @Autowired
     ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty;
@@ -122,7 +128,7 @@ public class PlaylistTreeViewComponentTest extends ApplicationTestBase<PlaylistT
         verifyNoMoreInteractions(playlistRepository);
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         JavaFxViewTestLauncher.launch(PlaylistTreeViewTestConfiguration.class, args);
     }
 }
@@ -131,7 +137,7 @@ public class PlaylistTreeViewComponentTest extends ApplicationTestBase<PlaylistT
         type = FilterType.ASSIGNABLE_TYPE,
         classes = PlaylistTreeView.class
 ))
-class PlaylistTreeViewTestConfiguration extends ApplicationTestConfigurationBase {
+class PlaylistTreeViewTestConfiguration {
 
     File playlistsFile, audioItemsFile;
 
@@ -141,8 +147,9 @@ class PlaylistTreeViewTestConfiguration extends ApplicationTestConfigurationBase
     }
 
     @Bean
-    public ObservableAudioItemJsonRepository audioRepository() {
-        return new ObservableAudioItemJsonRepository("Test AudioItems", audioItemsFile);
+    public ObservableAudioLibrary audioRepository() {
+        return new ObservableAudioLibrary(
+                new JsonFileRepository<>(audioItemsFile, ObservableAudioItemMapSerializer()));
     }
 
     // ├──Best hits
@@ -150,8 +157,12 @@ class PlaylistTreeViewTestConfiguration extends ApplicationTestConfigurationBase
     // │     └──>rock hit 1
     // └──This weeks' favorites songs
     @Bean
-    public ObservablePlaylistJsonRepository playlistRepository() {
-        var playlistRepository = spy(ObservablePlaylistJsonRepository.Companion.createNew("Test Playlists", playlistsFile));
+    public ObservablePlaylistHierarchy playlistRepository() {
+        var playlistRepository = spy(
+                new ObservablePlaylistHierarchy(
+                        new JsonFileRepository<>(playlistsFile, ObservablePlaylistMapSerializer()))
+        );
+
         var rockHit1 = mock(ObservableAudioItem.class);
         when(rockHit1.getCoverImageProperty()).thenReturn(new SimpleObjectProperty<>(Optional.empty()));
 

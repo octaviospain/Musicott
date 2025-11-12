@@ -4,7 +4,6 @@ import de.codecentric.centerdevice.MenuToolkit;
 import javafx.beans.property.*;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -23,9 +22,9 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import net.rgielen.fxweaver.core.FxmlView;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItemJsonRepository;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistJsonRepository;
+import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
 import net.transgressoft.commons.music.audio.AudioFileType;
 import net.transgressoft.musicott.config.SettingsRepository;
 import net.transgressoft.musicott.events.*;
@@ -37,7 +36,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
@@ -62,8 +61,8 @@ public class MainController {
 
     private final Image defaultPlaylistImage = ApplicationImage.DEFAULT_COVER.get();
 
-    private final ObservableAudioItemJsonRepository audioRepository;
-    private final ObservablePlaylistJsonRepository playlistRepository;
+    private final ObservableAudioLibrary audioRepository;
+    private final ObservablePlaylistHierarchy playlistRepository;
 
     private final PlayerController playerController;
     private final PreferencesController preferencesController;
@@ -72,7 +71,7 @@ public class MainController {
     private final AlertFactory alertFactory;
     private final SettingsRepository settingsRepository;
     private final MediaImportService mediaImportService;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final ApplicationContext applicationContext;
 
     private final ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty;
 
@@ -140,9 +139,11 @@ public class MainController {
 
     private ListProperty<ObservableAudioItem> showingTracksProperty;
 
+    private AudioItemTableViewContextMenu audioItemContextMenu;
+
     @Autowired
-    public MainController(ObservableAudioItemJsonRepository audioRepository,
-                          ObservablePlaylistJsonRepository playlistRepository,
+    public MainController(ObservableAudioLibrary audioRepository,
+                          ObservablePlaylistHierarchy playlistRepository,
                           PlayerController playerController,
                           PreferencesController preferencesController,
                           NavigationController navigationController,
@@ -150,7 +151,7 @@ public class MainController {
                           AlertFactory alertFactory,
                           MediaImportService mediaImportService,
                           SettingsRepository settingsRepository,
-                          ApplicationEventPublisher applicationEventPublisher) {
+                          ApplicationContext applicationContext) {
         this.audioRepository = audioRepository;
         this.playlistRepository = playlistRepository;
         this.playerController = playerController;
@@ -160,7 +161,7 @@ public class MainController {
         this.alertFactory = alertFactory;
         this.mediaImportService = mediaImportService;
         this.settingsRepository = settingsRepository;
-        this.applicationEventPublisher = applicationEventPublisher;
+        this.applicationContext = applicationContext;
         this.selectedPlaylistProperty = navigationController.selectedPlaylistProperty();
     }
 
@@ -193,6 +194,7 @@ public class MainController {
 
         audioRepository.emptyLibraryProperty().addListener((observable, wasEmpty, isEmpty) -> {
             if (Boolean.TRUE.equals(isEmpty)) {
+                miniatureCoverImageView.imageProperty().unbind();
                 miniatureCoverImageView.setImage(defaultPlaylistImage);
                 menuBarController.playPauseMenuItem.setDisable(true);
             } else {
@@ -202,9 +204,11 @@ public class MainController {
 
         searchTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.length() > 3) {
-                applicationEventPublisher.publishEvent(new SearchTextTypedEvent(newValue, this));
+                applicationContext.publishEvent(new SearchTextTypedEvent(newValue, this));
             }
         });
+
+        audioItemContextMenu = new AudioItemTableViewContextMenu();
 
         hideTableInfoPane();
     }
@@ -217,11 +221,10 @@ public class MainController {
     }
 
     private void initAudioItemTable() {
-        mainAudioItemTable = new FullAudioItemTableView(applicationEventPublisher);
-        mainAudioItemTable.setContextMenu(new AudioItemTableViewContextMenu());
+        mainAudioItemTable = applicationContext.getBean(FullAudioItemTableView.class);
 
         showingTracksProperty = new SimpleListProperty<>(this, "showing audio items");
-        showingTracksProperty.bind(audioRepository.getAudioItemsProperty());
+        showingTracksProperty.bind(audioRepository.audioItemsProperty());
         mainAudioItemTable.itemsProperty().bind(showingTracksProperty);
 
         GridPane.setHgrow(mainAudioItemTable, Priority.ALWAYS);
@@ -233,7 +236,7 @@ public class MainController {
         playlistTracksNumberLabel.textProperty().bind(map(showingTracksProperty.sizeProperty(), s -> s + " tracks"));
 
         playRandomButton.setOnAction(e -> selectedPlaylistProperty.get().ifPresent(
-            playlist -> applicationEventPublisher.publishEvent(new PlayPlaylistRandomlyEvent(playlist, this))));
+            playlist -> applicationContext.publishEvent(new PlayPlaylistRandomlyEvent(playlist, this))));
 
         playlistSizeLabel.textProperty().bind(map(showingTracksProperty, (ObservableList<ObservableAudioItem> audioItems) -> {
             var sizeSum = audioItems.stream().mapToLong(ObservableAudioItem::getLength).sum();
@@ -340,7 +343,7 @@ public class MainController {
         miniatureCoverImageView.setVisible(false);
         tableStackPane.getChildren().remove(mainAudioItemTable);
         tableStackPane.getChildren().remove(miniatureCoverImageView);
-        artistViewController.checkSelectedArtist();
+        artistViewController.checkForNullSelectedArtist();
         if (!tableStackPane.getChildren().contains(artistsLayout)) {
             tableStackPane.getChildren().remove(tableBorderPane);
             tableStackPane.getChildren().add(artistsLayout);
@@ -443,7 +446,7 @@ public class MainController {
                 navigationController.addNewPlaylist(newPlaylist);
             } catch (IllegalArgumentException exception) {
                 logger.error("Attempted to create playlist with existing name", exception);
-                applicationEventPublisher.publishEvent(new ExceptionEvent(exception, this));
+                applicationContext.publishEvent(new ExceptionEvent(exception, this));
             } finally {
                 event.consume();
             }
@@ -580,7 +583,7 @@ public class MainController {
             preferencesMenuItem.setOnAction(e -> preferencesController.show());
             newPlaylistMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylist));
             newPlaylistFolderMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylistDirectory));
-            closeMenuItem.setOnAction(e -> applicationEventPublisher.publishEvent(new StopApplicationEvent(this)));
+            closeMenuItem.setOnAction(e -> applicationContext.publishEvent(new StopApplicationEvent(this)));
         }
 
         private List<ExtensionFilter> buildAudioExtensionFilters() {
@@ -729,7 +732,7 @@ public class MainController {
             // trackEditingFinishedEventListener
             editMenuItem.setOnAction(e ->
                 selectedAudioItems().ifPresent(audioItems -> {
-                    applicationEventPublisher.publishEvent(new OpenAudioItemEditorView(new HashSet<>(audioItems), this));
+                    applicationContext.publishEvent(new OpenAudioItemEditorView(new HashSet<>(audioItems), this));
                     selectAllMenuItem.setDisable(true);
                     unselectMenuItem.setDisable(true);
                 }));
@@ -786,11 +789,18 @@ public class MainController {
         }
     }
 
+    @EventListener
+    public void showTableViewContextMenuEventListener(ShowTableViewContextMenuEvent event) {
+        audioItemContextMenu.show(event.selectedAudioItems, (Node) event.getSource(), event.screenX, event.screenY);
+    }
+
     private class AudioItemTableViewContextMenu extends ContextMenu {
 
         private final Menu addToPlaylistMenu;
         private final MenuItem deleteFromPlaylistMenuItem;
         private final List<MenuItem> playlistsInMenu = new ArrayList<>();
+
+        private ObservableList<ObservableAudioItem> selection;
 
         public AudioItemTableViewContextMenu() {
             super();
@@ -798,50 +808,54 @@ public class MainController {
 
             MenuItem playMenuItem = new MenuItem("Play");
             playMenuItem.setOnAction(event -> {
-                ObservableList<ObservableAudioItem> selectedAudioItems = mainAudioItemTable.getSelectionModel().getSelectedItems();
-                if (selectedAudioItems != null && !selectedAudioItems.isEmpty()) {
-                    applicationEventPublisher.publishEvent(new PlayItemEvent(selectedAudioItems, this));
+                if (! selection.isEmpty()) {
+                    applicationContext.publishEvent(new PlayItemEvent(selection, this));
                 }
             });
 
             MenuItem editMenuItem = new MenuItem("Edit");
             editMenuItem.setOnAction(event -> {
-                ObservableList<ObservableAudioItem> selectedAudioItems = mainAudioItemTable.getSelectionModel().getSelectedItems();
-                if (! selectedAudioItems.isEmpty()) {
-                    applicationEventPublisher.publishEvent(new OpenAudioItemEditorView(new HashSet<>(selectedAudioItems), this));
+                if (! selection.isEmpty()) {
+                    applicationContext.publishEvent(new OpenAudioItemEditorView(new HashSet<>(selection), this));
                 }
             });
 
             MenuItem deleteMenuItem = new MenuItem("Delete");
             deleteMenuItem.setOnAction(event -> {
-                ObservableList<ObservableAudioItem> selectedAudioItems = mainAudioItemTable.getSelectionModel().getSelectedItems();
-                if (selectedAudioItems != null && !selectedAudioItems.isEmpty())
-                    applicationEventPublisher.publishEvent(new DeleteAudioItemsEvent(new HashSet<>(selectedAudioItems), this));
+                if (! selection.isEmpty()) {
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Delete selected track(s)?");
+                    alert.showAndWait().ifPresent(response -> {
+                        if (response == ButtonType.OK) {
+                            var selectionSet = new HashSet<>(selection);
+                            // TODO spread removal throw places if necessary with an event
+                            applicationContext.publishEvent(new DeleteAudioItemsEvent(selectionSet, this));
+                            audioRepository.removeAll(selectionSet);
+                        }
+                    });
+                }
             });
 
             MenuItem addToQueueMenuItem = new MenuItem("Add to play queue");
             addToQueueMenuItem.setOnAction(event -> {
-                ObservableList<ObservableAudioItem> selectedAudioItems = mainAudioItemTable.getSelectionModel().getSelectedItems();
-                if (selectedAudioItems != null && !selectedAudioItems.isEmpty())
-                    applicationEventPublisher.publishEvent(new AddToPlayQueueEvent(selectedAudioItems, this));
+                if (! selection.isEmpty())
+                    applicationContext.publishEvent(new AddToPlayQueueEvent(selection, this));
             });
 
             deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
             deleteFromPlaylistMenuItem.setId("deleteFromPlaylistMenuItem");
             deleteFromPlaylistMenuItem.setOnAction(event ->
                     selectedPlaylistProperty.get().ifPresent(audioPlaylist -> {
-                        ObservableList<ObservableAudioItem> selectedAudioItems = mainAudioItemTable.getSelectionModel().getSelectedItems();
-                        audioPlaylist.getAudioItemsProperty().removeAll(selectedAudioItems);
+                        audioPlaylist.getAudioItemsProperty().removeAll(selection);
                     }));
 
             getItems().addAll(playMenuItem, editMenuItem, deleteMenuItem, addToQueueMenuItem, new SeparatorMenuItem());
             getItems().addAll(deleteFromPlaylistMenuItem, addToPlaylistMenu);
         }
 
-        @Override
-        public void show(Node anchor, double screenX, double screenY) {
+        public void show(ObservableList<ObservableAudioItem> selection, Node anchor, double screenX, double screenY) {
+            this.selection = selection;
             playlistsInMenu.clear();
-            Optional<ObservablePlaylist> selectedPlaylist = selectedPlaylistProperty.get();
+            var selectedPlaylist = selectedPlaylistProperty.get();
             if (selectedPlaylist.isPresent() && ! selectedPlaylist.get().isDirectory())  {
                 navigationController.playlistsProperty().stream()
                         .filter(p -> ! p.isDirectory())

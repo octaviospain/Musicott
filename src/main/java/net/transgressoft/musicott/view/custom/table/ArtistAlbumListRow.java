@@ -1,14 +1,5 @@
 package net.transgressoft.musicott.view.custom.table;
 
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.commons.music.audio.AlbumView;
-import net.transgressoft.commons.music.audio.Artist;
-import net.transgressoft.commons.music.audio.Genre;
-import net.transgressoft.commons.music.audio.ReactiveAudioItem;
-import net.transgressoft.musicott.view.custom.ApplicationImage;
-
-import com.google.common.base.Joiner;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -19,11 +10,14 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import org.springframework.context.ApplicationEventPublisher;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
+import net.transgressoft.commons.music.audio.AlbumView;
+import net.transgressoft.commons.music.audio.Artist;
+import net.transgressoft.commons.music.audio.Genre;
+import net.transgressoft.musicott.view.custom.ApplicationImage;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.fxmisc.easybind.EasyBind.map;
@@ -32,7 +26,9 @@ import static org.fxmisc.easybind.EasyBind.subscribe;
 /**
  * @author Octavio Calleya
  */
-public class ArtistListRow extends HBox {
+@Component
+@Scope("prototype")
+public class ArtistAlbumListRow extends HBox {
 
     private static final String BASE_STYLE = "/css/base.css";
     private static final double COVER_SIZE = 130.0;
@@ -42,7 +38,6 @@ public class ArtistListRow extends HBox {
     private final ListProperty<ObservableAudioItem> selectedAudioItemsProperty;
     private final ObservableList<ObservableAudioItem> containedAudioItems;
     private final ListProperty<ObservableAudioItem> containedAudioItemsProperty;
-    private final Comparator<ObservableAudioItem> trackComparator;
     private final SimpleAudioItemTableView audioItemsTableView;
 
     private ImageView coverImageView;
@@ -52,13 +47,13 @@ public class ArtistListRow extends HBox {
     private Label yearLabel;
     private Label relatedArtistsLabel;
 
-    public ArtistListRow(Artist artist, AlbumView<ObservableAudioItem> albumView, ApplicationEventPublisher applicationEventPublisher) {
+    public ArtistAlbumListRow(Artist artist, AlbumView<ObservableAudioItem> albumView, SimpleAudioItemTableView audioItemsTableView) {
         super();
         this.artist = artist;
         this.albumView = albumView;
-        trackComparator = audioItemComparator();
+        this.audioItemsTableView = audioItemsTableView;
         containedAudioItems = FXCollections.observableArrayList(albumView.getAudioItems());
-        containedAudioItems.sort(trackComparator);
+        containedAudioItems.sort(this::audioItemComparator);
         containedAudioItemsProperty = new SimpleListProperty<>(this, "contained tracks");
         containedAudioItemsProperty.bind(new SimpleObjectProperty<>(containedAudioItems));
 
@@ -67,12 +62,11 @@ public class ArtistListRow extends HBox {
         setPrefWidth(USE_COMPUTED_SIZE);
         setPrefHeight(USE_COMPUTED_SIZE);
         getStylesheets().add(getClass().getResource(BASE_STYLE).toExternalForm());
-        audioItemsTableView = new SimpleAudioItemTableView(applicationEventPublisher);
         audioItemsTableView.setItems(containedAudioItems);
         audioItemsTableView.sort();
-        updateRelatedArtistsLabel();
+        setRelatedArtistsLabel();
         updateAlbumLabelLabel();
-        checkArtistColumn();
+        setArtistColumn();
         selectedAudioItemsProperty = new SimpleListProperty<>(this, "selected artist tracks");
         selectedAudioItemsProperty.bind(new SimpleObjectProperty<>(audioItemsTableView.getSelectionModel().getSelectedItems()));
     }
@@ -81,11 +75,11 @@ public class ArtistListRow extends HBox {
         coverImageView = new ImageView();
         coverImageView.setFitWidth(COVER_SIZE);
         coverImageView.setFitHeight(COVER_SIZE);
-        updateTrackSetImage();
+        updateAudioItemsImage();
         var sizeLabel = new Label();
         sizeLabel.setId("sizeLabel");
         sizeLabel.textProperty().bind(map(containedAudioItemsProperty.sizeProperty(), this::getAlbumSizeString));
-        yearLabel = new Label(getYearsString());
+        yearLabel = new Label(buildYearsString());
         yearLabel.setId("yearLabel");
 
         var underImageGridPane = new GridPane();
@@ -115,7 +109,7 @@ public class ArtistListRow extends HBox {
         relatedArtistsLabel.setWrapText(true);
         relatedArtistsLabel.setMaxWidth(480);
         relatedArtistsLabel.setPrefWidth(USE_COMPUTED_SIZE);
-        genresLabel = new Label(getGenresString());
+        genresLabel = new Label(buildGenresString());
         genresLabel.setId("genresLabel");
         genresLabel.setWrapText(true);
         genresLabel.setMaxWidth(480);
@@ -130,19 +124,19 @@ public class ArtistListRow extends HBox {
         getChildren().add(albumInfoVBox);
     }
 
-    private String getGenresString() {
-        var genres = containedAudioItems.stream()
-                .map(ReactiveAudioItem::getGenre)
-                .filter(genre -> ! Genre.UNDEFINED.equals(genre))
-                .collect(Collectors.toSet());
-        return Joiner.on(", ").join(genres);
+    private String buildGenresString() {
+        return containedAudioItems.stream()
+                .filter(audioItem -> ! Genre.UNDEFINED.equals(audioItem.getGenre()))
+                .map(observableAudioItem -> observableAudioItem.getGenre().capitalize())
+                .collect(Collectors.joining(", "));
     }
 
-    private String getYearsString() {
-        var differentYears = containedAudioItems.stream().filter(track -> track.getAlbum().getYear() != 0)
+    private String buildYearsString() {
+        return containedAudioItems.stream()
+                .filter(track -> track.getAlbum().getYear() != null)
                 .map(track -> String.valueOf(track.getAlbum().getYear()))
-                .collect(Collectors.toSet());
-        return Joiner.on(", ").join(differentYears);
+                .sorted()
+                .collect(Collectors.joining(", "));
     }
 
     private String getAlbumSizeString(Number numberOfTracks) {
@@ -150,7 +144,7 @@ public class ArtistListRow extends HBox {
         return numberOfTracks + appendix;
     }
 
-    private void updateTrackSetImage() {
+    private void updateAudioItemsImage() {
         containedAudioItems.stream()
                 .filter(track -> track.getCoverImageProperty().get().isPresent())
                 .findAny()
@@ -161,10 +155,11 @@ public class ArtistListRow extends HBox {
     }
 
     private void updateAlbumLabelLabel() {
-        var differentLabels = containedAudioItems.stream().map(entry -> entry.getAlbum().getLabel().getName())
-                .collect(Collectors.toSet());
-        differentLabels.remove("");
-        var labelString = Joiner.on(", ").join(differentLabels);
+        var labelString = containedAudioItems.stream()
+                .filter(entry -> ! entry.getAlbum().getLabel().getName().isEmpty())
+                .map(entry -> entry.getAlbum().getLabel().getName())
+                .collect(Collectors.joining(", "));
+
         albumLabelLabel.setText(labelString);
         if (labelString.isEmpty())
             albumInfoVBox.getChildren().remove(albumLabelLabel);
@@ -172,15 +167,14 @@ public class ArtistListRow extends HBox {
             albumInfoVBox.getChildren().add(albumInfoVBox.getChildren().size() - 2, albumLabelLabel);
     }
 
-    private void updateRelatedArtistsLabel() {
-        var relatedArtists = containedAudioItems.stream()
-                .flatMap(t -> t.getArtistsInvolved().stream())
-                .collect(Collectors.toCollection(HashSet::new));
+    private void setRelatedArtistsLabel() {
+        var relatedArtistsString = containedAudioItems.stream()
+                .flatMap(t -> t.getArtistsInvolved().stream().map(Artist::getName))
+                .filter(artistName -> ! artistName.equalsIgnoreCase(artist.getName()))
+                .collect(Collectors.joining(", ", "with ", ""));
 
-        relatedArtists.remove(artist.getName());
-        var relatedArtistsString = "with " + Joiner.on(", ").join(relatedArtists);
         relatedArtistsLabel.setText(relatedArtistsString);
-        if (relatedArtists.isEmpty())
+        if (relatedArtistsString.isEmpty())
             albumInfoVBox.getChildren().remove(relatedArtistsLabel);
         else if (! albumInfoVBox.getChildren().contains(relatedArtistsLabel))
             albumInfoVBox.getChildren().add(1, relatedArtistsLabel);
@@ -196,47 +190,46 @@ public class ArtistListRow extends HBox {
     }
 
     /**
-     * Extracts some properties of the track in each row and listen for the changes to update the view
+     * Extracts some properties of the audioItem in each row and listen for the changes to update the view
      *
      * @param audioItem The {@link ObservableAudioItem} in the row
      *
-     * @return The {@link IntegerProperty} of the track number
+     * @return The {@link IntegerProperty} of the audioItem number
      */
     private ReadOnlyIntegerProperty listenAudioItemChangesAndSort(ObservableAudioItem audioItem) {
-        subscribe(audioItem.getTrackNumberProperty(), tn -> containedAudioItems.sort(trackComparator));
-        subscribe(audioItem.getDiscNumberProperty(), dn -> containedAudioItems.sort(trackComparator));
-        subscribe(audioItem.getGenreProperty(), g -> genresLabel.setText(getGenresString()));
+        subscribe(audioItem.getTrackNumberProperty(), tn -> containedAudioItems.sort(this::audioItemComparator));
+        subscribe(audioItem.getDiscNumberProperty(), dn -> containedAudioItems.sort(this::audioItemComparator));
+        subscribe(audioItem.getGenreProperty(), g -> genresLabel.setText(buildGenresString()));
         subscribe(audioItem.getAlbumProperty(), y -> {
-            yearLabel.setText(getYearsString());
+            yearLabel.setText(buildYearsString());
             updateAlbumLabelLabel();
         });
         subscribe(audioItem.getArtistsInvolvedProperty(), ai ->
                 Platform.runLater(() -> {
-                    updateRelatedArtistsLabel();
-                    checkArtistColumn();
+                    setRelatedArtistsLabel();
+                    setArtistColumn();
                 }));
-        //        subscribe(observableAudioItem.hasCoverProperty(), c -> updateTrackSetImage()); //TODO
+        // TODO subscribe to changes on the audioItem cover property
+        //        subscribe(observableAudioItem.hasCoverProperty(), c -> updateTrackSetImage());
         return audioItem.getTrackNumberProperty();
     }
 
-    private Comparator<ObservableAudioItem> audioItemComparator() {
-        return (te1, te2) -> {
-            // TODO change this when implementing other tables for other discs in the same album
-            int te1DiscNum = te1.getDiscNumber();
-            int te2DiscNum = te2.getDiscNumber();
-            int result = te1DiscNum - te2DiscNum;
-            int te1TrackNum = te1.getTrackNumber();
-            int te2TrackNum = te2.getTrackNumber();
-            return result == 0 ? te1TrackNum - te2TrackNum : result;
-        };
+    private Integer audioItemComparator(ObservableAudioItem audioItem1, ObservableAudioItem audioItem2) {
+        // TODO Improve for the case when an album has more than 1 disc, showing them in different tables
+        int ai1DiscNum = audioItem1.getDiscNumber() == null ? 0 : audioItem1.getDiscNumber().intValue();
+        int ai2DiscNum = audioItem2.getDiscNumber() == null ? 0 : audioItem2.getDiscNumber().intValue();
+        int result = ai1DiscNum - ai2DiscNum;
+        int ai1TrackNum = audioItem1.getTrackNumber() == null ? 0 : audioItem1.getTrackNumber().intValue();
+        int ai2TrackNum = audioItem2.getTrackNumber() == null ? 0 : audioItem2.getTrackNumber().intValue();
+        return result == 0 ? ai1TrackNum - ai2TrackNum : result;
     }
 
     /**
      * Places the artist column only if there are more than 1 different artist on the columns,
      * or removes it from the table if there aren't or the only common artist is the same of this
-     * showing {@code TrackSetAreaRow}
+     * showing {@code ArtistAlbumListRow}
      */
-    private void checkArtistColumn() {
+    private void setArtistColumn() {
         var commonColumnArtists = containedAudioItems.stream().map(ObservableAudioItem::getArtist).collect(Collectors.toSet());
         if (commonColumnArtists.isEmpty() || (commonColumnArtists.size() == 1 && commonColumnArtists.contains(artist)))
             audioItemsTableView.removeArtistColumn();
@@ -244,11 +237,11 @@ public class ArtistListRow extends HBox {
             audioItemsTableView.placeArtistColumn();
     }
 
-    public void selectAudioItem(ObservableAudioItem track) {
+    public void selectAudioItem(ObservableAudioItem audioItem) {
         audioItemsTableView.getSelectionModel().clearSelection();
-        audioItemsTableView.getSelectionModel().select(track);
-        var entryPos = audioItemsTableView.getSelectionModel().getSelectedIndex();
-        audioItemsTableView.getSelectionModel().focus(entryPos);
+        audioItemsTableView.getSelectionModel().select(audioItem);
+        var index = audioItemsTableView.getSelectionModel().getSelectedIndex();
+        audioItemsTableView.getSelectionModel().focus(index);
     }
 
     public void selectAllAudioItems() {

@@ -47,6 +47,23 @@ import static org.fxmisc.easybind.EasyBind.subscribe;
 @Controller
 public class NavigationController {
 
+    public enum NavigationMode {
+        ALL_AUDIO_ITEMS("All tracks"),
+        ARTISTS("Artists"),
+        PLAYLIST("Playlists");
+
+        final String name;
+
+        NavigationMode(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
     private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
     private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(73, 73, 73);";
 
@@ -208,40 +225,6 @@ public class NavigationController {
 
     public ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty() {
         return playlistTreeView.selectedPlaylistProperty();
-    }
-
-    /**
-     * Class enum that represents a view modality of the application
-     *
-     * @author Octavio Calleya
-     */
-    public enum NavigationMode {
-
-        /**
-         * All tracks in Musicott are shown on the table
-         */
-        ALL_AUDIO_ITEMS("All tracks"),
-
-        /**
-         * A section with all the artists is shown with an adapted inner view
-         */
-        ARTISTS("Artists"),
-
-        /**
-         * The {@link ObservableAudioItem}s of a selected {@link ObservablePlaylist} are shown on the table
-         */
-        PLAYLIST("Playlists");
-
-        final String name;
-
-        NavigationMode(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
     }
 
     /**

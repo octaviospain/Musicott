@@ -1,10 +1,14 @@
 package net.transgressoft.musicott.view.custom.table;
 
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.*;
+import org.springframework.context.annotation.*;
+import org.springframework.stereotype.*;
 
 /**
  * @author Octavio Calleya
  */
+@Component
+@Scope("prototype")
 public class SimpleAudioItemTableView extends AudioItemTableViewBase {
 
     private static final String SIMPLE_TRACK_TABLE_STYLE = "/css/tracktable-trackareaset.css";
@@ -17,7 +21,6 @@ public class SimpleAudioItemTableView extends AudioItemTableViewBase {
         getSortOrder().add(trackNumberCol);
         getStylesheets().add(getClass().getResource(SIMPLE_TRACK_TABLE_STYLE).toExternalForm());
         getStyleClass().add("no-header");
-        setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
         setFixedCellSize(25);
 
         nameCol.setMinWidth(150);

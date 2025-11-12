@@ -1,2 +1,6 @@
 javafx:
-    title: Musicott
+  title: Musicott
+
+spring:
+  main:
+    banner-mode: "off"

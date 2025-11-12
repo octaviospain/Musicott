@@ -1,5 +1,6 @@
 package net.transgressoft.musicott;
 
+import net.transgressoft.musicott.config.ApplicationPaths;
 import net.transgressoft.musicott.config.LastFmConfiguration;
 import net.transgressoft.musicott.events.StageReadyEvent;
 import net.transgressoft.musicott.events.StopApplicationEvent;
@@ -38,6 +39,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.io.ClassPathResource;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.function.Supplier;
 
 @Configuration
@@ -72,7 +75,7 @@ public class MusicottApplication {
         public void init() {
             this.context = new SpringApplicationBuilder()
                     .sources(MusicottApplication.class, LastFmConfiguration.class)
-                    .run(getParameters().getRaw().toArray(new String[0]));
+                    .run();
         }
 
         @Override
@@ -113,6 +116,17 @@ public class MusicottApplication {
         @Bean
         public Supplier<Stage> stageSupplier() {
             return Stage::new;
+        }
+
+        @Bean
+        public ApplicationPaths applicationPaths() {
+            Path defaultApplicationDirectory = Paths.get((System.getProperty("user.home")), ".config", "musicott");
+            return new ApplicationPaths(
+                    defaultApplicationDirectory.resolve("settings.json"),
+                    defaultApplicationDirectory.resolve("audioItems.json"),
+                    defaultApplicationDirectory.resolve("playlists.json"),
+                    defaultApplicationDirectory.resolve("waveforms.json")
+            );
         }
 
         @EventListener

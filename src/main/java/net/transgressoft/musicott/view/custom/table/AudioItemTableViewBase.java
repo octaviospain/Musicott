@@ -87,17 +87,17 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
     private void initColumns() {
         nameCol = new TableColumn<>("Title");
         nameCol.setCellValueFactory(cellData -> cellData.getValue().getTitleProperty());
-        nameCol.setPrefWidth(170);
+        nameCol.setPrefWidth(200);
 
         artistCol = new TableColumn<>("Artist");
         artistCol.setCellValueFactory(cellData -> cellData.getValue().getArtistProperty());
         artistCol.setCellFactory(ArtistNameTableCell::new);
-        artistCol.setPrefWidth(170);
+        artistCol.setPrefWidth(200);
 
         albumCol = new TableColumn<>("Album");
         albumCol.setCellValueFactory(cellData -> cellData.getValue().getAlbumProperty());
         albumCol.setCellFactory(AlbumNameTableCell::new);
-        albumCol.setPrefWidth(170);
+        albumCol.setPrefWidth(200);
 
         genreCol = new TableColumn<>("Genre");
         genreCol.setCellValueFactory(cellData -> cellData.getValue().getGenreProperty());
@@ -121,13 +121,13 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         dateModifiedCol = new TableColumn<>("Modified");
         dateModifiedCol.setCellValueFactory(cellData -> cellData.getValue().getLastDateModifiedProperty());
         dateModifiedCol.setCellFactory(DateTimeTableCell::new);
-        dateModifiedCol.setPrefWidth(110);
+        dateModifiedCol.setPrefWidth(150);
         dateModifiedCol.setStyle(CENTER_RIGHT_ALIGN);
 
         dateAddedCol = new TableColumn<>("Added");
         dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getDateOfCreation()));
         dateAddedCol.setCellFactory(DateTimeTableCell::new);
-        dateAddedCol.setPrefWidth(110);
+        dateAddedCol.setPrefWidth(150);
         dateAddedCol.setStyle(CENTER_RIGHT_ALIGN);
         dateAddedCol.setSortType(TableColumn.SortType.DESCENDING);
 
@@ -140,9 +140,7 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         totalTimeCol = new TableColumn<>("Duration");
         totalTimeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getDuration()));
         totalTimeCol.setCellFactory(DurationTableCell::new);
-        totalTimeCol.setPrefWidth(60);
-        totalTimeCol.setMinWidth(60);   // TODO needed ?
-        totalTimeCol.setMaxWidth(60);
+        totalTimeCol.setPrefWidth(80);
         totalTimeCol.setStyle(CENTER_RIGHT_ALIGN);
 
         yearCol = new TableColumn<>("Year");
@@ -183,10 +181,10 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
 
     private EventHandler<MouseEvent> mouseClickedEventHandler() {
         return event -> {
-            if (event.getButton() == MouseButton.SECONDARY)
-                getContextMenu().show(this, event.getScreenX(), event.getScreenY());
-            else if (event.getButton() == MouseButton.PRIMARY && getContextMenu().isShowing())
-                getContextMenu().hide();
+            if (event.getButton() == MouseButton.SECONDARY) {
+                var selection = getSelectionModel().getSelectedItems();
+                applicationEventPublisher.publishEvent(new ShowTableViewContextMenuEvent(selection, event));
+            }
         };
     }
 

@@ -21,7 +21,7 @@ package net.transgressoft.musicott.view.custom;
 
 import javafx.beans.property.*;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistJsonRepository;
+import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.view.custom.table.AudioItemTableViewBase;
 
@@ -57,14 +57,14 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
 
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
-    private final ObservablePlaylistJsonRepository playlistRepository;
+    private final ObservablePlaylistHierarchy playlistRepository;
     private final ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
-    public PlaylistTreeView(ObservablePlaylistJsonRepository playlistRepository) {
+    public PlaylistTreeView(ObservablePlaylistHierarchy playlistRepository) {
         this.playlistRepository = playlistRepository;
         this.selectedPlaylistProperty = new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
         setCellFactory(PlaylistTreeViewCell::new);

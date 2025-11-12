@@ -393,12 +393,12 @@ public class EditController {
 
     private AudioItemMetadataChange getEditionResult() {
        String title = getEditionFieldResult(titleTextField);
-       Artist artist = getEditionFieldResult(artistTextField) != null ? new ImmutableArtist(getEditionFieldResult(artistTextField), CountryCode.UNDEFINED) : null;
+       Artist artist = getEditionFieldResult(artistTextField) != null ? ImmutableArtist.of(getEditionFieldResult(artistTextField)) : null;
        String albumName = getEditionFieldResult(albumTextField);
-       Artist albumArtist = getEditionFieldResult(albumArtistTextField) != null ? new ImmutableArtist(getEditionFieldResult(albumArtistTextField), CountryCode.UNDEFINED) : null;
+       Artist albumArtist = getEditionFieldResult(albumArtistTextField) != null ? ImmutableArtist.of(getEditionFieldResult(albumArtistTextField)) : null;
        boolean isCompilation = isCompilationCheckBox.isIndeterminate() ? null : isCompilationCheckBox.isSelected();
        Short year = getEditionFieldResult(yearTextField) != null ? Short.valueOf(getEditionFieldResult(yearTextField)) : null;
-       net.transgressoft.commons.music.audio.Label label = getEditionFieldResult(labelTextField) != null ? new ImmutableLabel(getEditionFieldResult(labelTextField), CountryCode.UNDEFINED) : null;
+       net.transgressoft.commons.music.audio.Label label = getEditionFieldResult(labelTextField) != null ? ImmutableLabel.of(getEditionFieldResult(labelTextField)) : null;
        Genre genre = getEditionFieldResult(genreTextField) != null ? Genre.parseGenre(getEditionFieldResult(genreTextField)) : null;
        String comments = getEditionFieldResult(commentsTextField);
        Short trackNum = getEditionFieldResult(trackNumTextField) != null ? Short.valueOf(getEditionFieldResult(trackNumTextField)) : null;

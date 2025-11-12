@@ -11,8 +11,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class AlertFactory {
 
+    private final SimpleWebRedirectionService webRedirectionService;
+
     @Autowired
-    SimpleWebRedirectionService webRedirectionService;
+    public AlertFactory(SimpleWebRedirectionService webRedirectionService) {
+        this.webRedirectionService = webRedirectionService;
+    }
 
     public Alert aboutWindowAlert() {
         return new AboutWindowAlert(webRedirectionService);

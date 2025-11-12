@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,17 @@ public abstract class ApplicationTestBase<T extends Parent> extends ApplicationT
             testStage.setScene(scene);
             testStage.show();
         });
+        WaitForAsyncUtils.waitForFxEvents();
+    }
+
+    @AfterAll
+    static void afterAll() throws Exception {
+        Platform.runLater(() -> {
+            if (testStage != null && testStage.isShowing()) {
+                testStage.close();
+            }
+        });
+        FxToolkit.cleanupStages();
         WaitForAsyncUtils.waitForFxEvents();
     }
 

@@ -347,7 +347,7 @@ public class PlayerController {
         return formattedTime;
     }
 
-    @Value("#{audioRepository.emptyLibraryProperty()}")
+    @Value("#{audioLibrary.emptyLibraryProperty()}")
     public void setEmptyLibraryProperty(ReadOnlyBooleanProperty emptyLibraryProperty) {
         this.emptyLibraryProperty = emptyLibraryProperty;
     }

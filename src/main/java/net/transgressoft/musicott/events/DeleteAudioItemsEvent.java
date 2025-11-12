@@ -4,16 +4,16 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 
 import org.springframework.context.ApplicationEvent;
 
-import java.util.Set;
+import java.util.Collection;
 
 /**
  * @author Octavio Calleya
  */
 public class DeleteAudioItemsEvent extends ApplicationEvent {
 
-    public final Set<ObservableAudioItem> audioItems;
+    public final Collection<ObservableAudioItem> audioItems;
 
-    public DeleteAudioItemsEvent(Set<ObservableAudioItem> audioItems, Object source) {
+    public DeleteAudioItemsEvent(Collection<ObservableAudioItem> audioItems, Object source) {
         super(source);
         this.audioItems = audioItems;
     }

@@ -6,11 +6,11 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7'
     id 'java'
     id 'jacoco'
-    id 'org.jetbrains.kotlin.jvm' version '2.1.10'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.10'
-    id 'org.sonarqube' version '6.0.1.5171'
-    id 'org.springframework.boot' version '3.4.3'
-    id 'pl.allegro.tech.build.axion-release' version '1.18.17'
+    id 'org.jetbrains.kotlin.jvm' version '2.2.21'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.2.21'
+    id 'org.sonarqube' version '7.0.1.6134'
+    id 'org.springframework.boot' version '3.5.7'
+    id 'pl.allegro.tech.build.axion-release' version '1.21.0'
 }
 
 repositories {
@@ -20,36 +20,40 @@ repositories {
 }
 
 ext {
-    kotlinVersion = '2.1.10'
+    kotlinVersion = '2.2.21'
+    kotestVersion = '5.9.1'
+    transgressoftVersion = '1.5.1'
+    musicCommonsVersion = '0.1.0'
 }
 
 dependencies {
-    implementation 'org.apache.commons:commons-lang3:3.17.0'
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.18.3'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.18.3'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.3'
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.3'
-    implementation 'com.google.guava:guava:33.4.0-jre'
+    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    implementation 'org.apache.commons:commons-lang3:3.19.0'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.20.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.20'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.20.1'
+    implementation 'com.google.guava:guava:33.5.0-jre'
     implementation 'com.neovisionaries:nv-i18n:1.29'
     implementation 'com.worldsworstsoftware:itunesutilities:1.2'
-    implementation 'commons-io:commons-io:2.18.0'
+    implementation 'commons-io:commons-io:2.21.0'
     implementation 'de.codecentric.centerdevice:centerdevice-nsmenufx:2.1.7'
     implementation 'io.github.microutils:kotlin-logging-jvm:3.0.5'
     implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.10.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
     implementation 'net.jthink:jaudiotagger:3.0.1'
     implementation 'net.rgielen:javafx-weaver-core:2.0.1'
     implementation 'net.rgielen:javafx-weaver-spring:2.0.1'
-    implementation 'net.transgressoft:music-commons-api:1.2.0-SNAPSHOT'
-    implementation 'net.transgressoft:music-commons-core:1.2.0-SNAPSHOT'
-    implementation 'net.transgressoft:music-commons-fx:1.2.0-SNAPSHOT'
-    implementation 'net.transgressoft:transgressoft-commons-core:1.3.0-SNAPSHOT'
-    implementation 'org.apache.commons:commons-lang3:3.17.0'
-    implementation 'org.apache.poi:poi-ooxml:5.4.0'
-    implementation 'org.controlsfx:controlsfx:11.2.1'
+    implementation "net.transgressoft:music-commons-api:$musicCommonsVersion"
+    implementation "net.transgressoft:music-commons-core:$musicCommonsVersion"
+    implementation "net.transgressoft:music-commons-fx:$musicCommonsVersion"
+    implementation "net.transgressoft:transgressoft-commons-core:$transgressoftVersion"
+    implementation 'org.apache.commons:commons-lang3:3.19.0'
+    implementation 'org.apache.poi:poi-ooxml:5.4.1'
+    implementation 'org.controlsfx:controlsfx:11.2.2'
     implementation 'org.fxmisc.easybind:easybind:1.0.3'
-    api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-logging'
     implementation 'org.yaml:snakeyaml:2.2'
@@ -58,30 +62,35 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
+    testImplementation "net.transgressoft:music-commons-test:$musicCommonsVersion"
+    testImplementation "net.transgressoft:music-commons-fx-test:$musicCommonsVersion"
     testImplementation 'org.hamcrest:hamcrest:3.0'
-    testImplementation 'org.mockito:mockito-core:5.16.0'
+    testImplementation 'org.mockito:mockito-core:5.20.0'
     testImplementation 'org.testfx:testfx-junit5:4.0.18'
     testImplementation 'org.testfx:testfx-core:4.0.18'
-    testImplementation 'org.testfx:openjfx-monocle:17.0.10'
+    testImplementation 'org.testfx:openjfx-monocle:21.0.2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation(platform('org.junit:junit-bom:5.12.0'))
+    testImplementation(platform('org.junit:junit-bom:6.0.1'))
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1'
     testImplementation('org.junit.jupiter:junit-jupiter')
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(24)
 }
 
 application {
     applicationName = 'musicott'
-    mainClassName = 'net.transgressoft.musicott.MusicottApplication'
+    mainClass = 'net.transgressoft.musicott.MusicottApplication'
 
     applicationDefaultJvmArgs = [
+            '--enable-native-access=javafx.graphics',
             '--add-opens=javafx.controls/javafx.scene.control=ALL-UNNAMED',
             '--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED',
             '--add-opens=javafx.graphics/com.sun.javafx.css=ALL-UNNAMED',
-            '--add-opens=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED'
+            '--add-opens=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED'
     ]
 }
 
@@ -95,14 +104,13 @@ scmVersion {
 }
 
 jar {
-    mainClassName = 'net.transgressoft.musicott.MusicottApplication'
     enabled = true
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     zip64 = true
 
     manifest {
-        attributes 'Main-Class': 'net.transgressoft.musicott.MusicotttApplication'
+        attributes 'Main-Class': 'net.transgressoft.musicott.MusicottApplication'
     }
 
     from {
@@ -156,7 +164,7 @@ tasks.register('javadocJar', Jar) {
 
 tasks.withType(KotlinJvmCompile).configureEach {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_24)
         freeCompilerArgs.add('-Xjsr305=strict')
         freeCompilerArgs.add('-Xjvm-default=all')
     }
@@ -199,8 +207,10 @@ test {
     }
 
     jvmArgs = [
+            '--enable-native-access=javafx.graphics',
             '--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
             '--add-exports=javafx.graphics/com.sun.glass.utils=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
             '--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
             '--add-exports=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
             '--add-exports=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
@@ -208,12 +218,17 @@ test {
             '--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
             '--add-exports=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
             '--add-opens=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
             '--add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
             '--add-opens=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/javafx.scene.image=ALL-UNNAMED',
             '--add-opens=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
             '--add-opens=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
             '--add-opens=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
             '--add-opens=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.beans=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.collections=ALL-UNNAMED',
     ]
 }
 

@@ -2,15 +2,10 @@ package net.transgressoft.musicott.test;
 
 import javafx.application.Application;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 import net.transgressoft.musicott.events.StageReadyEvent;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.stereotype.Component;
-import org.testfx.framework.junit5.ApplicationTest;
 
 /**
  * Utility class for launching JavaFX Spring test applications.
@@ -18,22 +13,27 @@ import org.testfx.framework.junit5.ApplicationTest;
  */
 public class JavaFxViewTestLauncher {
 
-    // Static reference to configuration class that will be used by the test application
     private static Class<?> currentConfigClass;
 
-    /**
-     * Launches a JavaFX Spring test application.
-     *
-     * @param configClass The Spring configuration class
-     * @param args Command line arguments
-     * @throws Exception If an error occurs during launch
-     */
-    public static <T extends Parent> void launch(Class<?> configClass, String... args) throws Exception {
-        // Set the configuration class to be used by the application
+    static {
+        System.setProperty("testfx.robot", "awt");
+        System.setProperty("java.awt.headless", "false");
+        System.setProperty("testfx.headless", "false");
+        System.setProperty("prism.order", "sw");
+        System.setProperty("glass.platform", "Gtk");
+    }
+
+    public static <T extends Parent> void launch(Class<?> configClass, String... args) {
         currentConfigClass = configClass;
 
-        // Launch the test application
-        ApplicationTest.launch(JavaFxSpringTestApplication.class, args);
+        System.out.println("==============================================");
+        System.out.println("LAUNCHING JAVAFX COMPONENT TEST");
+        System.out.println("If you see module access errors, you need to add VM arguments:");
+        System.out.println("--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED");
+        System.out.println("--add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED");
+        System.out.println("==============================================");
+
+        Application.launch(JavaFxSpringTestApplication.class, args);
     }
 
     /**
@@ -45,7 +45,6 @@ public class JavaFxViewTestLauncher {
 
         @Override
         public void init() {
-            // Make sure configuration class is set
             if (currentConfigClass == null) {
                 throw new IllegalStateException("Configuration class not set. Call JavaFxSpringTestLauncher.launch() first.");
             }
@@ -58,7 +57,26 @@ public class JavaFxViewTestLauncher {
 
         @Override
         public void start(Stage primaryStage) {
-            context.publishEvent(new StageReadyEvent(primaryStage));
+            try {
+                primaryStage.setTitle("JavaFX Component Test - " + currentConfigClass.getSimpleName());
+                primaryStage.setWidth(800);
+                primaryStage.setHeight(600);
+                primaryStage.centerOnScreen();
+
+                context.publishEvent(new StageReadyEvent(primaryStage));
+
+                // Add a confirmation message for visibility
+                System.out.println("✅ Stage created and about to be shown");
+
+                // Force the stage to be shown and stay on top
+                primaryStage.setAlwaysOnTop(true);
+                primaryStage.toFront();
+
+                System.out.println("✅ JavaFX window should now be visible");
+            } catch (Exception e) {
+                System.err.println("❌ ERROR showing JavaFX window: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
 
         @Override
@@ -67,29 +85,6 @@ public class JavaFxViewTestLauncher {
                 context.close();
             }
             super.stop();
-        }
-    }
-
-    /**
-     * Generic component initializer for JavaFX Spring test applications.
-     *
-     * @param <T> The type of JavaFX component to initialize
-     */
-    @Component
-    public static class FxViewInitializer<T extends Parent> implements ApplicationListener<StageReadyEvent> {
-
-        private final T component;
-
-        @Autowired
-        public FxViewInitializer(T component) {
-            this.component = component;
-        }
-
-        @Override
-        public void onApplicationEvent(StageReadyEvent event) {
-            var scene = new Scene(component);
-            event.primaryStage.setScene(scene);
-            event.primaryStage.show();
         }
     }
 }
