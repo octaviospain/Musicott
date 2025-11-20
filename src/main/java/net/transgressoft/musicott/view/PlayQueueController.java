@@ -99,18 +99,21 @@ public class PlayQueueController {
     public void setPlayQueueList(ObservableList<TrackQueueRow> playQueueList) {
         this.playQueueList = playQueueList;
 
-        // Remove the item from the list when delete button is clicked on each TrackQueueRow
-        playQueueList.addListener((ListChangeListener<TrackQueueRow>) change ->
-                change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
-                    playQueueList.remove(trackQueueRow);
-                    LOG.debug("Removing track from play queue by clicking the button. Queue size: {}", playQueueList.size());
-                })));
+        // Remove the item from the list when the delete button is clicked on each TrackQueueRow
+        playQueueList.addListener((ListChangeListener<TrackQueueRow>) change -> {
+                while (change.next()) {
+                    change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
+                        playQueueList.remove(trackQueueRow);
+                        LOG.debug("Removing track from play queue by clicking the button. Queue size: {}", playQueueList.size());
+                    }));
+                }
+        });
     }
 
     public void setHistoryQueueList(ObservableList<TrackQueueRow> historyQueueList) {
         this.historyQueueList = historyQueueList;
 
-        // Remove the item from the list when delete button is clicked on each TrackQueueRow
+        // Remove the item from the list when the delete button is clicked on each TrackQueueRow
         historyQueueList.addListener((ListChangeListener<TrackQueueRow>) change ->
                 change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
                     historyQueueList.remove(trackQueueRow);

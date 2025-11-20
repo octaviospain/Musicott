@@ -2,7 +2,7 @@ package net.transgressoft.musicott.events;
 
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.music.audio.Artist;
-import net.transgressoft.commons.music.audio.ArtistView;
+import net.transgressoft.commons.music.audio.ReactiveArtistCatalog;
 
 import org.springframework.context.ApplicationEvent;
 
@@ -13,9 +13,9 @@ import java.util.Map;
  */
 public class UpdateArtistViewEvent extends ApplicationEvent {
 
-    public final Map<Artist, ArtistView<ObservableAudioItem>> artistViews;
+    public final Map<Artist, ReactiveArtistCatalog<ObservableAudioItem>> artistViews;
 
-    public UpdateArtistViewEvent(Map<Artist, ArtistView<ObservableAudioItem>> artistViews, Object source) {
+    public UpdateArtistViewEvent(Map<Artist, ReactiveArtistCatalog<ObservableAudioItem>> artistViews, Object source) {
         super(source);
         this.artistViews = artistViews;
     }

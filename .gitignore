@@ -5,6 +5,7 @@
 out/
 build/
 .kotlin
+.claude
 .serena
 lastfm.properties
 CLAUDE.md

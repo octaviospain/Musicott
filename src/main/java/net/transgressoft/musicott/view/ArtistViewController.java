@@ -1,42 +1,31 @@
 package net.transgressoft.musicott.view;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
+import javafx.beans.binding.*;
+import javafx.beans.property.*;
+import javafx.beans.value.*;
 import javafx.collections.*;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
-import javafx.fxml.FXML;
+import javafx.collections.transformation.*;
+import javafx.fxml.*;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
-import net.rgielen.fxweaver.core.FxmlView;
-import net.transgressoft.commons.event.CrudEvent;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
-import net.transgressoft.commons.music.audio.AlbumView;
-import net.transgressoft.commons.music.audio.Artist;
-import net.transgressoft.commons.music.audio.ArtistView;
-import net.transgressoft.musicott.events.PlayItemEvent;
-import net.transgressoft.musicott.events.SearchTextTypedEvent;
-import net.transgressoft.musicott.view.custom.table.ArtistAlbumListRow;
-import net.transgressoft.musicott.view.custom.table.SimpleAudioItemTableView;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import javafx.scene.control.Label;
+import javafx.scene.input.*;
+import net.rgielen.fxweaver.core.*;
+import net.transgressoft.commons.event.*;
+import net.transgressoft.commons.fx.music.audio.*;
+import net.transgressoft.commons.music.audio.*;
+import net.transgressoft.musicott.events.*;
+import net.transgressoft.musicott.view.custom.table.*;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.context.*;
 import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.*;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.function.*;
+import java.util.stream.*;
 
 import static org.fxmisc.easybind.EasyBind.map;
-import static org.fxmisc.easybind.EasyBind.subscribe;
 
 /**
  * @author Octavio Calleya
@@ -65,46 +54,63 @@ public class ArtistViewController {
     @FXML
     private Button artistRandomButton;
 
-    private ObservableMap<AlbumView<ObservableAudioItem>, ArtistAlbumListRow> albumViews;
+    private ObservableMap<AlbumView<ObservableAudioItem>, ArtistAlbumListRow> artistAlbumListRowMap;
     private ObjectProperty<Optional<Artist>> selectedArtistProperty;
     private FilteredList<Artist> filteredArtists;
 
     @Autowired
-    public ArtistViewController(ObservableAudioLibrary audioRepository, ApplicationContext applicationContext) {
-        this.audioRepository = audioRepository;
+    public ArtistViewController(ObservableAudioLibrary audioLibrary, ApplicationContext applicationContext) {
+        this.audioRepository = audioLibrary;
         this.applicationContext = applicationContext;
     }
 
     @FXML
     public void initialize() {
-        albumViews = FXCollections.observableMap(new TreeMap<>());
-        albumViews.addListener(this::albumViewsChangeListener);
+        artistAlbumListRowMap = FXCollections.observableMap(new TreeMap<>());
+        artistAlbumListRowMap.addListener(this::artistAlbumListRowMapChangeListener);
 
         // TODO replace listener from artistsListView to selectedArtistProperty ?
         artistsListView.getSelectionModel().selectedItemProperty().addListener(this::selectedArtistListener);
 
-        artistsListView.setCellFactory(listview -> new ArtistCell());
+        artistsListView.setCellFactory(_ -> new ArtistCell());
         artistsListView.setOnMouseClicked(this::doubleClickOnArtistHandler);
+        configureArtistsListViewBacking();
+
         totalAlbumsLabel.setText("0 albums");
         totalTracksLabel.setText("0 tracks");
         artistRandomButton.visibleProperty().bind(map(nameLabel.textProperty().isEmpty().not(), Function.identity()));
         artistRandomButton.setOnAction(e -> playRandomArtistTracks());
         selectedArtistProperty = new SimpleObjectProperty<>(this, "selected artist", Optional.empty());
-        nameLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-            if (selectedArtistProperty.get().isPresent()) {
-                return selectedArtistProperty.get().get().getName();
-            } else {
-                return "";
-            }
-        }, selectedArtistProperty));
+        nameLabel.textProperty().bind(Bindings.createStringBinding(() ->
+                selectedArtistProperty.get().isPresent() ? selectedArtistProperty.get().get().getName() : "",
+                selectedArtistProperty));
 
+//        artistsListView.getSelectionModel().select(0);
         audioRepository.subscribe(this::audioItemsChangeSubscription);
+    }
 
-        filteredArtists = new FilteredList<>(audioRepository.artistsProperty(), artist -> true);
-        filteredArtists.addListener((ListChangeListener<? super Artist>) this::artistsListener);
-        var sortedAudioItems = new SortedList<>(filteredArtists, Comparator.comparing(Artist::getName));
-        artistsListView.setItems(sortedAudioItems);
-        artistsListView.getSelectionModel().select(0);
+    /**
+     * Configure the artists ListView to remain backed by the repository's artistsProperty.
+     * <p>
+     * JavaFX filtering/sorting APIs operate on ObservableList, but the source of truth
+     * for artists in the repository is a ReadOnlySetProperty to guarantee uniqueness and
+     * set semantics.
+     */
+    private void configureArtistsListViewBacking() {
+        var artistsBackingList = FXCollections.observableArrayList(audioRepository.artistsProperty());
+
+        audioRepository.artistsProperty().addListener((SetChangeListener<Artist>) change -> {
+            if (change.wasAdded()) {
+                Platform.runLater(() -> artistsBackingList.add(change.getElementAdded()));
+            }
+            if (change.wasRemoved()) {
+                Platform.runLater(() -> artistsBackingList.remove(change.getElementRemoved()));
+            }
+        });
+
+        filteredArtists = new FilteredList<>(artistsBackingList);
+        filteredArtists.addListener(this::artistsListener);
+        artistsListView.setItems(new SortedList<>(filteredArtists, Comparator.comparing(Artist::getName)));
     }
 
     private void artistsListener(ListChangeListener.Change<? extends Artist> change) {
@@ -114,16 +120,18 @@ public class ArtistViewController {
         }
     }
 
-    @SuppressWarnings("java:S4968") // Type parameter AlbumView is final in kotlin but the compiler does not allow to remove the extends clause
-    private void albumViewsChangeListener(MapChangeListener.Change<? extends AlbumView<ObservableAudioItem>, ? extends ArtistAlbumListRow> change) {
-        if (change.wasAdded()) {
-            albumsListView.getItems().add(change.getValueAdded());
-        } else if (change.wasRemoved()) {
-            albumsListView.getItems().remove(change.getValueRemoved());
-        }
-        totalTracksLabel.setText(getTotalArtistTracksString());
-        totalAlbumsLabel.setText(getAlbumString());
-        checkForNullSelectedArtist();
+    @SuppressWarnings("java:S4968") // Type parameter AlbumView is final in kotlin, but the compiler does not allow to remove the extends clause
+    private void artistAlbumListRowMapChangeListener(MapChangeListener.Change<? extends AlbumView<ObservableAudioItem>, ? extends ArtistAlbumListRow> change) {
+        Platform.runLater(() -> {
+            if (change.wasAdded()) {
+                albumsListView.getItems().add(change.getValueAdded());
+            } else if (change.wasRemoved()) {
+                albumsListView.getItems().remove(change.getValueRemoved());
+            }
+            totalTracksLabel.setText(getTotalArtistTracksString());
+            totalAlbumsLabel.setText(getAlbumString());
+        });
+//        checkForNullSelectedArtist();
     }
 
     private void selectedArtistListener(ObservableValue<? extends Artist> obs, Artist oldArtist, Artist newArtist) {
@@ -136,15 +144,15 @@ public class ArtistViewController {
         } else {
             if (artistsListView.getItems().isEmpty()) {
                 selectedArtistProperty.set(Optional.empty());
-                albumViews.clear();
+                Platform.runLater(artistAlbumListRowMap::clear);
             } else {
-                checkForNullSelectedArtist();
+//                checkForNullSelectedArtist();
             }
         }
     }
 
     private void doubleClickOnArtistHandler(MouseEvent event) {
-        selectedArtistProperty.get().ifPresent(selectedArtist -> {
+        selectedArtistProperty.get().ifPresent(_ -> {
             if (event.getClickCount() == 2) {
                 playRandomArtistTracks();
             }
@@ -157,16 +165,16 @@ public class ArtistViewController {
         applicationContext.publishEvent(new PlayItemEvent(randomAudioItemsFromArtist, this));
     }
 
-    private void setArtistView(ArtistView<ObservableAudioItem> artist) {
-        albumViews.clear();
+    private void setArtistView(ReactiveArtistCatalog<ObservableAudioItem> artist) {
+        artistAlbumListRowMap.clear();
         artist.getAlbums().forEach(this::addAlbumView);
-        if (albumViews.isEmpty() && !artistsListView.getItems().isEmpty()) {
-            checkForNullSelectedArtist();
-        }
+//        if (albumViews.isEmpty() && !artistsListView.getItems().isEmpty()) {
+//            checkForNullSelectedArtist();
+//        }
     }
 
     private String getTotalArtistTracksString() {
-        int totalArtistTracks = albumViews.values().stream()
+        int totalArtistTracks = artistAlbumListRowMap.values().stream()
             .mapToInt(trackSet -> trackSet.containedAudioItemsProperty().size())
             .sum();
         String appendix = totalArtistTracks == 1 ? " track" : " tracks";
@@ -174,7 +182,7 @@ public class ArtistViewController {
     }
 
     private String getAlbumString() {
-        int numberOfTrackSets = albumViews.size();
+        int numberOfTrackSets = artistAlbumListRowMap.size();
         var appendix = numberOfTrackSets == 1 ? " album" : " albums";
         return numberOfTrackSets + appendix;
     }
@@ -186,46 +194,89 @@ public class ArtistViewController {
      * @param event The event that contains the audio items that were changed.
      */
     private void audioItemsChangeSubscription(CrudEvent<Integer, ObservableAudioItem> event) {
-        selectedArtistProperty.get().ifPresent(artist -> {
-            var selectedArtistIsUpdated = event.getEntities().values()
+        selectedArtistProperty.get().ifPresent(selectedArtist -> {
+            var artistAudioItems = event.getEntities().values()
                     .stream()
-                    .anyMatch(audioItem -> audioItem.getArtistsInvolved().contains(artist.getName()));
-            if (selectedArtistIsUpdated) {
-                var artistView = audioRepository.getArtistCatalog(artist);
+                    .filter(audioItem -> audioItem.getArtistsInvolved().contains(selectedArtist))
+                    .toList();
+
+            if (! artistAudioItems.isEmpty()) {
+                var artistView = audioRepository.getArtistCatalog(selectedArtist);
                 if (artistView.isEmpty()) {
-                    throw new IllegalStateException("Artist " + artist + " should be present at this point");
+                    throw new IllegalStateException("Artist " + selectedArtist + " should be present at this point");
                 }
-                modifyArtistView(artistView.get());
+                modifyArtistView(event.getType(), artistAudioItems);
             }
         });
     }
 
-    private void modifyArtistView(ArtistView<ObservableAudioItem> artistView) {
-        var oldAlbums = albumViews.keySet();
-        var newAlbums = artistView.getAlbums();
-        var addedAlbums = Sets.difference(newAlbums, oldAlbums).immutableCopy();
-        var removedAlbums = Sets.difference(oldAlbums, newAlbums).immutableCopy();
-        var keptAlbums = Sets.intersection(oldAlbums, newAlbums).immutableCopy();
+    private void modifyArtistView(CrudEvent.Type eventType, List<ObservableAudioItem> modifiedAudioItems) {
+        switch (eventType) {
+            case CREATE -> {
+                var a = artistAlbumListRowMap.keySet().stream()
+                        .filter(albumView -> modifiedAudioItems.stream().anyMatch(i -> i.getAlbum().getName().equals(albumView.getAlbumName())))
+                        .toList();
 
-        updateKeptAlbums(keptAlbums);
-        addedAlbums.forEach(albumView -> Platform.runLater(() -> addAlbumView(albumView)));
-        removedAlbums.forEach(albumView -> Platform.runLater(() -> albumViews.remove(albumView)));
+            }
+            case UPDATE -> {
+            }
+            case DELETE -> {
+            }
+            case READ -> {} // Nothing to do
+        }
 
-        totalTracksLabel.setText(getTotalArtistTracksString());
-        totalAlbumsLabel.setText(getAlbumString());
+        var currentAlbums = artistAlbumListRowMap.keySet();
+        if (updatedAlbums.isEmpty()) {
+            Platform.runLater(artistAlbumListRowMap::clear);
+            return;
+        }
+
+        updatedAlbums.forEach(albumView -> {
+            currentAlbums.removeIf(a -> a.getAlbumName().equals(albumView.getAlbumName()));
+            Platform.runLater(() -> {
+                var audioItemsTableView = applicationContext.getBean(SimpleAudioItemTableView.class);
+                var showingArtist = selectedArtistProperty.getValue().get();
+                var artistListRow = applicationContext.getBean(ArtistAlbumListRow.class, showingArtist, albumView, audioItemsTableView);
+                artistAlbumListRowMap.put(albumView, artistListRow);
+            });
+        });
+
+        Platform.runLater(() -> {
+            totalTracksLabel.setText(getTotalArtistTracksString());
+            totalAlbumsLabel.setText(getAlbumString());
+        });
+//
+//        // Added albums = updated - current
+//        var albumsToAdd = new HashSet<>(updatedAlbums);
+//        albumsToAdd.removeAll(currentAlbums);
+//
+//        // Removed albums = current - updated
+//        var albumsToRemove = new HashSet<>(currentAlbums);
+//        albumsToRemove.removeAll(updatedAlbums);
+//
+//        // Kept albums = intersection of current and updated
+//        var albumsToUpdate = new HashSet<>(currentAlbums);
+//        albumsToUpdate.retainAll(updatedAlbums);
+//
+//        updateKeptAlbums(albumsToUpdate);
+//        albumsToAdd.forEach(albumView -> Platform.runLater(() -> addAlbumView(albumView)));
+//        albumsToRemove.forEach(albumView -> Platform.runLater(() -> artistAlbumListRowMap.remove(albumView)));
+//
+//        totalTracksLabel.setText(getTotalArtistTracksString());
+//        totalAlbumsLabel.setText(getAlbumString());
     }
 
     private void updateKeptAlbums(Collection<AlbumView<ObservableAudioItem>> albumViewsToUpdate) {
         albumViewsToUpdate.forEach(albumView -> {
-            var albumTrackSet = albumViews.get(albumView);
-            var oldTracks = ImmutableSet.copyOf(albumTrackSet.containedAudioItemsProperty());
-            var newTracks = albumView.getAudioItems();
-            var addedTracks = Sets.difference(newTracks, oldTracks).immutableCopy();
-            var removedTracks = Sets.difference(oldTracks, newTracks).immutableCopy();
+            var albumTrackSet = artistAlbumListRowMap.get(albumView);
+            var oldTracks = new HashSet<>(albumTrackSet.containedAudioItemsProperty());
+            var newTracks = new HashSet<>(albumView.getAudioItems());
+            newTracks.removeAll(oldTracks);
+            oldTracks.removeAll(newTracks);
 
             Platform.runLater(() -> {
-                albumViews.get(albumView).containedAudioItemsProperty().addAll(addedTracks);
-                albumViews.get(albumView).containedAudioItemsProperty().removeAll(removedTracks);
+                artistAlbumListRowMap.get(albumView).containedAudioItemsProperty().addAll(newTracks);
+                artistAlbumListRowMap.get(albumView).containedAudioItemsProperty().removeAll(oldTracks);
             });
         });
     }
@@ -234,25 +285,24 @@ public class ArtistViewController {
         selectedArtistProperty.getValue().ifPresent(showingArtist -> {
             var audioItemsTableView = applicationContext.getBean(SimpleAudioItemTableView.class);
             var artistListRow = applicationContext.getBean(ArtistAlbumListRow.class, showingArtist, albumView, audioItemsTableView);
-            subscribe(artistListRow.selectedAudioItemsProperty(), selection -> checkForNullSelectedArtist());
-            albumViews.put(albumView, artistListRow);
+//            subscribe(artistListRow.selectedAudioItemsProperty(), selection -> checkForNullSelectedArtist());
+            artistAlbumListRowMap.put(albumView, artistListRow);
         });
     }
 
     // TODO is this needed?
-    void checkForNullSelectedArtist() {
-        if (artistsListView.getSelectionModel().getSelectedItem() == null ||
-                !artistsListView.getItems().isEmpty()) {
-            Platform.runLater(() -> {
-                artistsListView.getSelectionModel().select(0);
-                artistsListView.getFocusModel().focus(0);
-                artistsListView.scrollTo(0);
-            });
-        }
-    }
+//    void checkForNullSelectedArtist() {
+//        if (artistsListView.getSelectionModel().getSelectedItem() == null || !artistsListView.getItems().isEmpty()) {
+//            Platform.runLater(() -> {
+//                artistsListView.getSelectionModel().select(0);
+//                artistsListView.getFocusModel().focus(0);
+//                artistsListView.scrollTo(0);
+//            });
+//        }
+//    }
 
     public ObservableList<ObservableAudioItem> getSelectedTracks() {
-        return albumViews.values().stream()
+        return artistAlbumListRowMap.values().stream()
             .flatMap(entry -> entry.selectedAudioItemsProperty().stream())
             .collect(Collectors.toCollection(FXCollections::observableArrayList));
     }
@@ -267,7 +317,7 @@ public class ArtistViewController {
             artistsListView.getSelectionModel().select(newArtist);  // This should work
             artistsListView.scrollTo(newArtist);
         } else {
-            albumViews.values().forEach(trackSet -> {
+            artistAlbumListRowMap.values().forEach(trackSet -> {
                 if (trackSet.getAlbumView().getAlbumName().equals(audioItem.getAlbum().getName())) {
                     trackSet.selectAudioItem(audioItem);
                     albumsListView.scrollTo(trackSet);
@@ -279,11 +329,11 @@ public class ArtistViewController {
     }
 
     public void selectAllTracks() {
-        albumViews.values().forEach(ArtistAlbumListRow::selectAllAudioItems);
+        artistAlbumListRowMap.values().forEach(ArtistAlbumListRow::selectAllAudioItems);
     }
 
     public void deselectAllTracks() {
-        albumViews.values().forEach(ArtistAlbumListRow::deselectAllAudioItems);
+        artistAlbumListRowMap.values().forEach(ArtistAlbumListRow::deselectAllAudioItems);
     }
 
     @EventListener

@@ -121,10 +121,10 @@ class ArtistViewControllerTest extends ApplicationTestBase<SplitPane> {
 })
 class ArtistViewControllerTestConfiguration {
 
-//    @Bean
-//    public ListProperty<Artist> artistsProperty() {
-//        return new SimpleListProperty<>(FXCollections.observableArrayList());
-//    }
+    @Bean
+    public ListProperty<Artist> artistsProperty() {
+        return new SimpleListProperty<>(FXCollections.observableArrayList());
+    }
 
     @Bean
     public ObservableAudioLibrary audioRepository(ReadOnlyListProperty<Artist> artistsProperty) {
