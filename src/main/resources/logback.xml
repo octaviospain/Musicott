@@ -11,7 +11,7 @@
     </appender>
 
     <logger name="org.springframework" level="INFO"/>
-    <logger name="org.jaudiotagger" level="WARN"/>
+    <logger name="org.jaudiotagger" level="ERROR"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>

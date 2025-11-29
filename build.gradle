@@ -23,7 +23,7 @@ ext {
     kotlinVersion = '2.2.21'
     kotestVersion = '5.9.1'
     transgressoftVersion = '1.5.1'
-    musicCommonsVersion = '0.2.1-bugfix--8-SNAPSHOT'
+    musicCommonsVersion = '0.2.1-feature-artist-catalog-subscription-SNAPSHOT'
 }
 
 dependencies {

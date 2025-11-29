@@ -11,9 +11,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.music.audio.AlbumView;
-import net.transgressoft.commons.music.audio.Artist;
-import net.transgressoft.commons.music.audio.Genre;
+import net.transgressoft.commons.music.audio.*;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -34,7 +32,7 @@ public class ArtistAlbumListRow extends HBox {
     private static final double COVER_SIZE = 130.0;
 
     private final Artist artist;
-    private final AlbumView<ObservableAudioItem> albumView;
+    private final AlbumSet<ObservableAudioItem> albumSet;
     private final ListProperty<ObservableAudioItem> selectedAudioItemsProperty;
     private final ObservableList<ObservableAudioItem> containedAudioItems;
     private final ListProperty<ObservableAudioItem> containedAudioItemsProperty;
@@ -47,12 +45,12 @@ public class ArtistAlbumListRow extends HBox {
     private Label yearLabel;
     private Label relatedArtistsLabel;
 
-    public ArtistAlbumListRow(Artist artist, AlbumView<ObservableAudioItem> albumView, SimpleAudioItemTableView audioItemsTableView) {
+    public ArtistAlbumListRow(Artist artist, AlbumSet<ObservableAudioItem> albumSet, SimpleAudioItemTableView audioItemsTableView) {
         super();
         this.artist = artist;
-        this.albumView = albumView;
+        this.albumSet = albumSet;
         this.audioItemsTableView = audioItemsTableView;
-        containedAudioItems = FXCollections.observableArrayList(albumView.getAudioItems());
+        containedAudioItems = FXCollections.observableArrayList(albumSet);
         containedAudioItems.sort(this::audioItemComparator);
         containedAudioItemsProperty = new SimpleListProperty<>(this, "contained tracks");
         containedAudioItemsProperty.bind(new SimpleObjectProperty<>(containedAudioItems));
@@ -101,7 +99,7 @@ public class ArtistAlbumListRow extends HBox {
     }
 
     private void placeRightVBox() {
-        var albumTitleLabel = new Label(albumView.getAlbumName());
+        var albumTitleLabel = new Label(albumSet.getAlbumName());
         albumTitleLabel.setId("albumTitleLabel");
         albumTitleLabel.setMaxWidth(480);
         relatedArtistsLabel = new Label();
@@ -252,8 +250,8 @@ public class ArtistAlbumListRow extends HBox {
         audioItemsTableView.getSelectionModel().clearSelection();
     }
 
-    public AlbumView<ObservableAudioItem> getAlbumView() {
-        return albumView;
+    public AlbumSet<ObservableAudioItem> getAlbumSet() {
+        return albumSet;
     }
 
     public ListProperty<ObservableAudioItem> selectedAudioItemsProperty() {

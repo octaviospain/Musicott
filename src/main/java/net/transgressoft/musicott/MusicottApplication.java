@@ -1,5 +1,6 @@
 package net.transgressoft.musicott;
 
+import net.transgressoft.config.*;
 import net.transgressoft.musicott.config.ApplicationPaths;
 import net.transgressoft.musicott.config.LastFmConfiguration;
 import net.transgressoft.musicott.events.StageReadyEvent;
@@ -44,6 +45,7 @@ import java.nio.file.Paths;
 import java.util.function.Supplier;
 
 @Configuration
+@Import(ApplicationConfiguration.class)
 @ComponentScan
 @EnableConfigurationProperties
 @EnableAutoConfiguration(exclude = {

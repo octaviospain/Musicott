@@ -1,9 +1,6 @@
 package net.transgressoft.musicott.view;
 
-import javafx.application.Platform;
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.ReadOnlyListProperty;
-import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
@@ -122,12 +119,12 @@ class ArtistViewControllerTest extends ApplicationTestBase<SplitPane> {
 class ArtistViewControllerTestConfiguration {
 
     @Bean
-    public ListProperty<Artist> artistsProperty() {
-        return new SimpleListProperty<>(FXCollections.observableArrayList());
+    public SetProperty<Artist> artistsProperty() {
+        return new SimpleSetProperty<>(FXCollections.observableSet());
     }
 
     @Bean
-    public ObservableAudioLibrary audioRepository(ReadOnlyListProperty<Artist> artistsProperty) {
+    public ObservableAudioLibrary audioRepository(ReadOnlySetProperty<Artist> artistsProperty) {
         var repository = mock(ObservableAudioLibrary.class);
         when(repository.artistsProperty()).thenReturn(artistsProperty);
         return repository;

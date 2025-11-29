@@ -30,6 +30,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.css.PseudoClass;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
+import org.jetbrains.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,8 +87,13 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
     }
 
     private PlaylistTreeViewItem createRootPlaylistTreeViewItem() {
-        ObservablePlaylist rootPlaylist = playlistRepository.findByName("ROOT_PLAYLIST")
-                .orElseGet(() -> playlistRepository.createPlaylistDirectory("ROOT_PLAYLIST"));
+        ObservablePlaylist rootPlaylist;
+        var maybeRootPlaylist = playlistRepository.findByName("ROOT_PLAYLIST");
+        if (maybeRootPlaylist.isEmpty()) {
+            rootPlaylist = playlistRepository.createPlaylistDirectory("ROOT_PLAYLIST");
+        } else {
+            rootPlaylist = maybeRootPlaylist.get();
+        }
 
         var rootTreeVieItem = new PlaylistTreeViewItem(rootPlaylist);
 
