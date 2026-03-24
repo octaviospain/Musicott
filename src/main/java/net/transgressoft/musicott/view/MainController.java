@@ -26,7 +26,7 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
 import net.transgressoft.commons.music.audio.AudioFileType;
-import net.transgressoft.musicott.config.SettingsRepository;
+import net.transgressoft.config.*;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.services.MediaImportService;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
@@ -45,7 +45,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 
-import static net.transgressoft.musicott.config.SettingsRepository.*;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALL_AUDIO_ITEMS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.PLAYLIST;
 import static org.fxmisc.easybind.EasyBind.map;
@@ -111,6 +110,9 @@ public class MainController {
     private GridPane playerLayout;
     @FXML
     private TextField searchTextField;
+    
+    @Autowired
+    private KeyCombination.Modifier operativeSystemKeyModifier;
 
     /**
      * The table where tracks are displayed
@@ -660,8 +662,8 @@ public class MainController {
         }
 
         private void initMenuBarItems() {
-            // If the OS is Mac, we need to set the menu bar in a different way using the native menu bar
-            if (OS_SPECIFIC_KEY_MODIFIER.equals(KeyCombination.META_DOWN)) {
+            // If the host is running an Apple OS, we need to set the menu bar in a different way using the native menu bar
+            if (operativeSystemKeyModifier.equals(KeyCombination.META_DOWN)) {
                 MenuToolkit menuToolkit = MenuToolkit.toolkit();
                 Menu appMenu = new Menu("Musicott");
                 appMenu.getItems().addAll(preferencesMenuItem, new SeparatorMenuItem());
@@ -685,26 +687,26 @@ public class MainController {
 
         private void initAccelerators() {
             KeyCombination.Modifier shiftDown = KeyCombination.SHIFT_DOWN;
-            openFileMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, OS_SPECIFIC_KEY_MODIFIER));
-            importFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
-            importItunesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
-            preferencesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.COMMA, OS_SPECIFIC_KEY_MODIFIER));
-            editMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, OS_SPECIFIC_KEY_MODIFIER));
-            deleteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.BACK_SPACE, OS_SPECIFIC_KEY_MODIFIER));
+            openFileMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, operativeSystemKeyModifier));
+            importFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, operativeSystemKeyModifier, shiftDown));
+            importItunesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, operativeSystemKeyModifier, shiftDown));
+            preferencesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.COMMA, operativeSystemKeyModifier));
+            editMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, operativeSystemKeyModifier));
+            deleteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.BACK_SPACE, operativeSystemKeyModifier));
             playPauseMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE));
-            previousMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.LEFT, OS_SPECIFIC_KEY_MODIFIER));
-            nextMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, OS_SPECIFIC_KEY_MODIFIER));
-            increaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, OS_SPECIFIC_KEY_MODIFIER));
-            decreaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, OS_SPECIFIC_KEY_MODIFIER));
-            selectCurrentTrackMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.L, OS_SPECIFIC_KEY_MODIFIER));
-            newPlaylistMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, OS_SPECIFIC_KEY_MODIFIER));
-            newPlaylistFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
-            showHideNavigationPaneMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.R, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
-            showHideTableInfoPaneMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.U, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
-            selectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, OS_SPECIFIC_KEY_MODIFIER));
-            unselectMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, OS_SPECIFIC_KEY_MODIFIER, shiftDown));
-            findMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.F, OS_SPECIFIC_KEY_MODIFIER));
-            closeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, OS_SPECIFIC_KEY_MODIFIER));
+            previousMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.LEFT, operativeSystemKeyModifier));
+            nextMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, operativeSystemKeyModifier));
+            increaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, operativeSystemKeyModifier));
+            decreaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, operativeSystemKeyModifier));
+            selectCurrentTrackMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.L, operativeSystemKeyModifier));
+            newPlaylistMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, operativeSystemKeyModifier));
+            newPlaylistFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, operativeSystemKeyModifier, shiftDown));
+            showHideNavigationPaneMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.R, operativeSystemKeyModifier, shiftDown));
+            showHideTableInfoPaneMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.U, operativeSystemKeyModifier, shiftDown));
+            selectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemKeyModifier));
+            unselectMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemKeyModifier, shiftDown));
+            findMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.F, operativeSystemKeyModifier));
+            closeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, operativeSystemKeyModifier));
         }
 
         private void initControlsMenuActions() {

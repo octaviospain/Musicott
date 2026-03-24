@@ -1,7 +1,7 @@
 package net.transgressoft.musicott.view;
 
 import net.transgressoft.commons.music.audio.AudioFileType;
-import net.transgressoft.musicott.config.SettingsRepository;
+import net.transgressoft.config.*;
 import net.transgressoft.musicott.services.lastfm.LastFmService;
 
 import javafx.beans.property.BooleanProperty;

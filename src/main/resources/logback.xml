@@ -12,6 +12,7 @@
 
     <logger name="org.springframework" level="INFO"/>
     <logger name="org.jaudiotagger" level="ERROR"/>
+    <logger name="net.transgressoft" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>

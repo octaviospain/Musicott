@@ -69,7 +69,7 @@ public class ArtistViewController {
         totalAlbumsLabel.setText("0 albums");
         totalTracksLabel.setText("0 tracks");
         artistRandomButton.visibleProperty().bind(map(nameLabel.textProperty().isEmpty().not(), Function.identity()));
-        artistRandomButton.setOnAction(e -> playRandomArtistTracks());
+        artistRandomButton.setOnAction(_ -> playRandomArtistTracks());
         selectedArtistProperty = new SimpleObjectProperty<>(this, "selected artist", Optional.empty());
         nameLabel.textProperty().bind(Bindings.createStringBinding(() ->
                         selectedArtistProperty.get().isPresent() ? selectedArtistProperty.get().get().getName() : "",
@@ -163,7 +163,7 @@ public class ArtistViewController {
 
     private void playRandomArtistTracks() {
         var selectedArtist = selectedArtistProperty.get().get();
-        List<ObservableAudioItem> randomAudioItemsFromArtist = audioRepository.getRandomAudioItemsFromArtist(selectedArtist, DEFAULT_RANDOM_PLAYLIST_SIZE);
+        var randomAudioItemsFromArtist = audioRepository.getRandomAudioItemsFromArtist(selectedArtist, DEFAULT_RANDOM_PLAYLIST_SIZE);
         applicationContext.publishEvent(new PlayItemEvent(randomAudioItemsFromArtist, this));
     }
 
@@ -188,7 +188,7 @@ public class ArtistViewController {
      * @param event The event that contains the artist catalog that changed.
      */
     private void artistCatalogChangeHandler(CrudEvent<Artist, ArtistCatalog<ObservableAudioItem>> event) {
-        selectedArtistProperty.get().ifPresent(selectedArtist -> {
+        selectedArtistProperty.get().ifPresent(selectedArtist ->
             event.getEntities().forEach((artist, artistCatalog) -> {
                 if (artist.equals(selectedArtist)) {
                     albumListRowMap.clear();
@@ -198,8 +198,8 @@ public class ArtistViewController {
                         albumListRowMap.put(albumSet, artistListRow);
                     });
                 }
-            });
-        });
+            })
+        );
     }
 
     public ObservableList<ObservableAudioItem> getSelectedTracks() {
@@ -212,7 +212,7 @@ public class ArtistViewController {
         Set<Artist> artistsInvolved = audioItem.getArtistsInvolved();
         Optional<Artist> selectedArtist = selectedArtistProperty.getValue();
         if (selectedArtist.isPresent() && !artistsInvolved.contains(selectedArtist.get())) {
-            Artist newArtist = artistsInvolved.stream().findFirst().get();
+            var newArtist = artistsInvolved.stream().findFirst().get();
             selectedArtistProperty.setValue(Optional.of(newArtist));
 
             artistsListView.getSelectionModel().select(newArtist);  // This should work
@@ -243,24 +243,27 @@ public class ArtistViewController {
     }
 
     private Predicate<Artist> filterArtistsByQuery(String query) {
-        return artist -> {
-            boolean result = query == null || query.isEmpty();
-            if (!result) {
-                result = artistMatchesQuery(artist, query.toLowerCase());
-            }
-            return result;
-        };
+        return artist ->
+                albumListRowMap.keySet().stream()
+                        .flatMap(Collection::stream)
+                        .anyMatch(audioItem -> artistMatchesQuery(audioItem, artist, query.toLowerCase()));
     }
 
-    private boolean artistMatchesQuery(Artist artist, String query) {
-        boolean matchesName = artist.getName().toLowerCase().contains(query.toLowerCase());
+    private boolean artistMatchesQuery(ObservableAudioItem audioItem, Artist artist, String query) {
+        if (query == null || query.isEmpty())
+            return true;
 
-        // TODO test if logic can be replaced by looking into the albums
-        boolean containsMatchedTrack = audioRepository.contains(audioItem -> audioItem.getArtist().equals(artist) &&
-                (audioItem.getArtist().getName().toLowerCase().contains(query) ||
-                        audioItem.getAlbum().getAlbumArtist().getName().toLowerCase().contains(query) ||
-                        audioItem.getComments().toLowerCase().contains(query) ||
-                        audioItem.getAlbum().getName().toLowerCase().contains(query)));
+        var matchesName = artist.getName().toLowerCase().contains(query.toLowerCase());
+        var matchesArtist = audioItem.getArtist().equals(artist);
+        var matchesArtistName = audioItem.getArtist().getName().toLowerCase().contains(query);
+        var matchesAlbumArtist = audioItem.getAlbum().getAlbumArtist().getName().toLowerCase().contains(query);
+        var matchesComments = audioItem.getComments() != null && audioItem.getComments().toLowerCase().contains(query);
+        var matchesAlbumName = audioItem.getAlbum().getName().toLowerCase().contains(query);
+
+        var containsMatchedTrack =
+                matchesArtist &&
+                (matchesName || matchesArtistName || matchesAlbumArtist || matchesComments || matchesAlbumName);
+
         return matchesName || containsMatchedTrack;
     }
 

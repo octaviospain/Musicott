@@ -35,7 +35,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import net.rgielen.fxweaver.core.FxmlView;
 import net.transgressoft.commons.music.audio.AudioFileType;
-import net.transgressoft.musicott.config.SettingsRepository;
+import net.transgressoft.config.*;
 import net.transgressoft.musicott.services.lastfm.LastFmService;
 import org.controlsfx.control.CheckComboBox;
 import org.controlsfx.tools.Borders;
@@ -105,7 +105,7 @@ public class PreferencesController {
         });
         wrapItunesSectionWithBorder();
 
-        ObservableList<AudioFileType> selectedExtensions = FXCollections.observableArrayList(AudioFileType.values());
+        ObservableList<AudioFileType> selectedExtensions = FXCollections.observableArrayList(AudioFileType.getEntries());
         extensionsCheckComboBox = new CheckComboBox<>(selectedExtensions);
         extensionsCheckComboBox.setMinWidth(100);
         HBox.setHgrow(extensionsCheckComboBox, Priority.SOMETIMES);
@@ -181,13 +181,13 @@ public class PreferencesController {
         for (AudioFileType audioFileType : importFilterExtensions)
             extensionsCheckComboBox.getCheckModel().check(audioFileType);
 
-        if (Boolean.TRUE.equals(settingsRepository.getItunesImportMetadataPolicy()))
+        if (settingsRepository.getItunesImportMetadataPolicy())
             itunesImportPolicyCheckBox.getSelectionModel().select(METADATA_INFO);
         else
             itunesImportPolicyCheckBox.getSelectionModel().select(ITUNES_INFO);
 
         holdPlayCountCheckBox.setSelected(settingsRepository.getItunesImportHoldPlayCountPolicy());
-        writeMetadataFromItunesCheckBox.setSelected(settingsRepository.getItunesImportHoldPlayCountPolicy());
+        writeMetadataFromItunesCheckBox.setSelected(settingsRepository.getItunesImportMetadataPolicy());
         ignoreNotFoundFromItunesCheckBox.setSelected(settingsRepository.getItunesImportIgnoreNotFoundPolicy());
     }
 

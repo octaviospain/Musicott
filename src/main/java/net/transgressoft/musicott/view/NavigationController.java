@@ -3,7 +3,7 @@ package net.transgressoft.musicott.view;
 import javafx.beans.property.*;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.musicott.config.SettingsRepository;
+import net.transgressoft.config.*;
 import net.transgressoft.musicott.events.ExportSelectedPlaylistsEvent;
 import net.transgressoft.musicott.events.SelectCurrentPlayingAudioItemEvent;
 import net.transgressoft.musicott.events.StatusMessageUpdateEvent;
@@ -85,6 +85,9 @@ public class NavigationController {
     @FXML
     private Label statusLabel;
 
+    @Autowired
+    private KeyCombination.Modifier operativeSystemKeyModifier;
+
     private MenuItem newPlaylistMI;
     private MenuItem newFolderPlaylistMI;
     private NavigationMenuListView navigationMenuListView;
@@ -138,12 +141,12 @@ public class NavigationController {
     }
 
     public void setOnNewPlaylistAction(EventHandler<ActionEvent> handler) {
-        newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, SettingsRepository.OS_SPECIFIC_KEY_MODIFIER));
+        newPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, operativeSystemKeyModifier));
         newPlaylistMI.setOnAction(handler);
     }
 
     public void setOnNewFolderPlaylistAction(EventHandler<ActionEvent> handler) {
-        newFolderPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, SettingsRepository.OS_SPECIFIC_KEY_MODIFIER, KeyCombination.SHIFT_DOWN));
+        newFolderPlaylistMI.setAccelerator(new KeyCodeCombination(KeyCode.N, operativeSystemKeyModifier, KeyCombination.SHIFT_DOWN));
         newFolderPlaylistMI.setOnAction(handler);
     }
 

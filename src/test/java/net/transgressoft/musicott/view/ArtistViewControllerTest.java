@@ -4,6 +4,9 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
+import kotlin.*;
+import kotlin.coroutines.*;
+import kotlin.jvm.functions.*;
 import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
@@ -54,7 +57,7 @@ class ArtistViewControllerTest extends ApplicationTestBase<SplitPane> {
     @Autowired
     FxControllerAndView<ArtistViewController, SplitPane> artistViewAndController;
 
-    Consumer<CrudEvent<Integer, ObservableAudioItem>> capturedConsumer;
+    Consumer<? super CrudEvent<Integer, ? extends ObservableAudioItem>> capturedConsumer;
 
     @Override
     protected SplitPane javaFxComponent() {
@@ -65,7 +68,7 @@ class ArtistViewControllerTest extends ApplicationTestBase<SplitPane> {
     @BeforeEach
     protected void beforeEach() {
         super.beforeEach();
-        ArgumentCaptor<Consumer<CrudEvent<Integer, ObservableAudioItem>>> audioItemChangeSubscription = ArgumentCaptor.forClass(Consumer.class);
+        ArgumentCaptor<Consumer<? super CrudEvent<Integer, ? extends ObservableAudioItem>>> audioItemChangeSubscription = ArgumentCaptor.forClass(Consumer.class);
         verify(audioRepository).subscribe(audioItemChangeSubscription.capture());
         capturedConsumer = audioItemChangeSubscription.getValue();
     }

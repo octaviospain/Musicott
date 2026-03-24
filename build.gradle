@@ -15,15 +15,14 @@ plugins {
 
 repositories {
     flatDir { dirs 'lib' }
-    mavenLocal()
     mavenCentral()
 }
 
 ext {
     kotlinVersion = '2.2.21'
     kotestVersion = '5.9.1'
-    transgressoftVersion = '1.5.1'
-    musicCommonsVersion = '0.2.1-feature-artist-catalog-subscription-SNAPSHOT'
+    transgressoftVersion = '1.7.0'
+    musicCommonsVersion = '0.4.0-feature-observable-artist-catalog-SNAPSHOT'
 }
 
 dependencies {

@@ -17,6 +17,7 @@
 
 package net.transgressoft.config
 
+import javafx.scene.input.KeyCombination
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItemMapSerializer
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary
@@ -29,7 +30,7 @@ import net.transgressoft.commons.music.waveform.AudioWaveformRepository
 import net.transgressoft.commons.music.waveform.DefaultAudioWaveformRepository
 import net.transgressoft.commons.persistence.json.JsonFileRepository
 import net.transgressoft.musicott.config.ApplicationPaths
-import net.transgressoft.musicott.config.SettingsRepository
+import org.apache.commons.lang3.SystemUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -65,6 +66,13 @@ open class ApplicationConfiguration @Autowired constructor(private val applicati
     }
 
     @Bean
+    open fun operativeSystemKeyModifier(): KeyCombination.Modifier =
+        if (SystemUtils.IS_OS_MAC_OSX)
+            KeyCombination.META_DOWN
+        else
+            KeyCombination.CONTROL_DOWN
+
+    @Bean
     open fun settingsRepository(): SettingsRepository =
         SettingsRepository(applicationPaths.settingsPath.toFile())
 
@@ -89,8 +97,8 @@ open class ApplicationConfiguration @Autowired constructor(private val applicati
             DefaultAudioWaveformRepository<ObservableAudioItem>(
                 JsonFileRepository(applicationPaths.waveformsPath.toFile(), AudioWaveformMapSerializer))
 
-        audioLibrary.subscribe(observablePlaylistHierarchy.audioItemEventSubscriber)
-        audioLibrary.subscribe(audioWaveformRepository.audioItemEventSubscriber)
+        audioLibrary.subscribe(observablePlaylistHierarchy)
+        audioLibrary.subscribe(audioWaveformRepository)
         return audioWaveformRepository
     }
 }
