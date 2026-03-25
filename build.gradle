@@ -14,6 +14,7 @@ plugins {
 }
 
 repositories {
+    mavenLocal()
     flatDir { dirs 'lib' }
     mavenCentral()
 }
@@ -21,8 +22,8 @@ repositories {
 ext {
     kotlinVersion = '2.2.21'
     kotestVersion = '5.9.1'
-    transgressoftVersion = '1.7.0'
-    musicCommonsVersion = '0.4.0-feature-observable-artist-catalog-SNAPSHOT'
+    lirpVersion = '1.2.0'
+    musicCommonsVersion = '0.5.0-SNAPSHOT'
 }
 
 dependencies {
@@ -48,7 +49,7 @@ dependencies {
     implementation "net.transgressoft:music-commons-api:$musicCommonsVersion"
     implementation "net.transgressoft:music-commons-core:$musicCommonsVersion"
     implementation "net.transgressoft:music-commons-fx:$musicCommonsVersion"
-    implementation "net.transgressoft:transgressoft-commons-core:$transgressoftVersion"
+    implementation "net.transgressoft:lirp-core:$lirpVersion"
     implementation 'org.apache.commons:commons-lang3:3.19.0'
     implementation 'org.apache.poi:poi-ooxml:5.4.1'
     implementation 'org.controlsfx:controlsfx:11.2.2'
@@ -83,7 +84,7 @@ application {
     mainClass = 'net.transgressoft.musicott.MusicottApplication'
 
     applicationDefaultJvmArgs = [
-            '--enable-native-access=javafx.graphics',
+            '--enable-native-access=javafx.graphics,ALL-UNNAMED',
             '--add-opens=javafx.controls/javafx.scene.control=ALL-UNNAMED',
             '--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED',
             '--add-opens=javafx.graphics/com.sun.javafx.css=ALL-UNNAMED',
@@ -184,6 +185,13 @@ tasks.named('check') {
     dependsOn tasks.named('jacocoTestReport', JacocoReport)
 }
 
+jacocoTestReport {
+    reports {
+        xml.required.set true
+        html.required = true
+    }
+}
+
 test {
     useJUnitPlatform()
     exclude '**/*IT.class'
@@ -238,6 +246,7 @@ tasks.register('integrationTest', Test) {
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
     useJUnitPlatform()
+    shouldRunAfter tasks.named('test')
     include '**/*IT.class'
 
     if (System.getProperty('testfx.headless') == 'false') {
@@ -285,11 +294,4 @@ tasks.register('integrationTest', Test) {
 
 tasks.named('check') {
     dependsOn tasks.named('integrationTest')
-}
-
-jacocoTestReport {
-    reports {
-        xml.required.set true
-        html.required = true
-    }
 }

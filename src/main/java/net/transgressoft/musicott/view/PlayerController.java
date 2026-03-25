@@ -1,24 +1,24 @@
 package net.transgressoft.musicott.view;
 
-import net.transgressoft.commons.fx.WaveformPane;
+import net.transgressoft.commons.fx.music.waveform.WaveformPane;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.player.JavaFxPlayer;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.music.player.AudioItemPlayer.Status;
 import net.transgressoft.commons.music.waveform.AudioWaveform;
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository;
 import net.transgressoft.musicott.events.*;
+import net.transgressoft.musicott.services.PlayerService;
 import net.transgressoft.musicott.services.lastfm.LastFmService;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.table.AudioItemTableViewBase;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
@@ -32,7 +32,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
-import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,8 +41,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static net.transgressoft.commons.music.player.AudioItemPlayer.Status.*;
@@ -51,7 +50,9 @@ import static org.fxmisc.easybind.EasyBind.combine;
 import static org.fxmisc.easybind.EasyBind.subscribe;
 
 /**
- * @author Octavio Calleya
+ * Controller for the player UI pane. Delegates all playback and queue operations
+ * to {@link PlayerService}. Handles view bindings and responds to Spring events
+ * to keep the UI in sync with playback state.
  */
 @FxmlView("/fxml/PlayerController.fxml")
 @Controller
@@ -64,11 +65,9 @@ public class PlayerController {
 
     private final AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
-    private final PlayerCore playerCore;
+    private final PlayerService playerService;
+    private final ObservableAudioLibrary audioLibrary;
     private final Image defaultCoverImage = ApplicationImage.DEFAULT_COVER.get();
-
-    private final ObservableList<TrackQueueRow> playQueueList;
-    private final ObservableList<TrackQueueRow> historyQueueList;
 
     @FXML
     private GridPane playerGridPane;
@@ -107,32 +106,31 @@ public class PlayerController {
 
     @FXML
     private AnchorPane playQueueLayout;
-    @Autowired
-    private FxControllerAndView<PlayQueueController, AnchorPane> playQueueControllerFxControllerAndView;
+    @FXML
+    private PlayQueueController playQueueLayoutController;
 
     private LastFmService lastFmService;
     private WaveformPane waveformPane;
     private ReadOnlyBooleanProperty emptyLibraryProperty;
+    private boolean scrobbled = false;
 
     @Autowired
-    public PlayerController(AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository, ApplicationEventPublisher applicationEventPublisher) {
+    public PlayerController(AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository,
+                            ApplicationEventPublisher applicationEventPublisher,
+                            PlayerService playerService,
+                            ObservableAudioLibrary audioLibrary) {
         this.waveformRepository = waveformRepository;
         this.applicationEventPublisher = applicationEventPublisher;
-        this.playQueueList = FXCollections.observableArrayList();
-        this.historyQueueList = FXCollections.observableArrayList();
-        this.playerCore = new PlayerCore(playQueueList, historyQueueList);
+        this.playerService = playerService;
+        this.audioLibrary = audioLibrary;
     }
 
     @FXML
     public void initialize() {
-        PlayQueueController controller = playQueueControllerFxControllerAndView.getController();
-        controller.setHistoryQueueList(historyQueueList);
-        controller.setPlayQueueList(playQueueList);
-
         playButton.disableProperty().bind(emptyLibraryProperty);
-        playButton.setOnAction(event -> playPause());
-        prevButton.setOnAction(e -> previous());
-        nextButton.setOnAction(e -> next());
+        playButton.setOnAction(_ -> playPause());
+        prevButton.setOnAction(_ -> previous());
+        nextButton.setOnAction(_ -> next());
         subscribe(volumeSlider.valueChangingProperty(), changing -> {
             if (!changing)
                 volumeProgressBar.setProgress(volumeSlider.getValue());
@@ -146,8 +144,14 @@ public class PlayerController {
         AnchorPane.setTopAnchor(waveformPane, 0.0);
         AnchorPane.setLeftAnchor(waveformPane, 0.0);
         AnchorPane.setRightAnchor(waveformPane, 0.0);
-        waveformPane.widthProperty().bind(waveformAnchorPane.widthProperty());
-        waveformPane.heightProperty().bind(waveformAnchorPane.heightProperty());
+
+        PauseTransition resizeDebounce = new PauseTransition(Duration.millis(150));
+        resizeDebounce.setOnFinished(e -> {
+            waveformPane.setWidth(waveformAnchorPane.getWidth());
+            waveformPane.setHeight(waveformAnchorPane.getHeight());
+        });
+        waveformAnchorPane.widthProperty().addListener((_, _, _) -> resizeDebounce.playFromStart());
+        waveformAnchorPane.heightProperty().addListener((_, _, _) -> resizeDebounce.playFromStart());
 
         playQueueButton.setOnAction(event -> {
             if (playQueueLayout.isVisible())
@@ -176,9 +180,19 @@ public class PlayerController {
     @SuppressWarnings("unchecked")
     private void onDragDroppedOnPlayQueueButton(DragEvent event) {
         var dragBoard = event.getDragboard();
-        var selectedTracksIds = (List<Integer>) dragBoard.getContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT);
-        //        List<Track> selectedTracks = tracksLibrary.getTracks(selectedTracksIds);  //TODO Fix
-        //        player.addTracksToPlayQueue(selectedTracks, false);
+        if (dragBoard.hasContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT)) {
+            var selectedTracksIds = (List<Integer>) dragBoard.getContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT);
+            var resolvedItems = selectedTracksIds.stream()
+                    .map(id -> audioLibrary.findById(id).orElse(null))
+                    .filter(Objects::nonNull)
+                    .map(item -> (ObservableAudioItem) item)
+                    .toList();
+            if (!resolvedItems.isEmpty()) {
+                playerService.addToQueue(resolvedItems);
+                logger.debug("Added {} tracks to queue via play queue button drop", resolvedItems.size());
+            }
+            event.setDropCompleted(true);
+        }
         event.consume();
     }
 
@@ -198,25 +212,26 @@ public class PlayerController {
     public void playPause() {
         logger.trace("Play/pause button clicked");
         if (playButton.isSelected()) {
-            if (playerCore.currentTrack().isPresent()) {
-                playerCore.resume();
+            if (playerService.currentTrack().isPresent()) {
+                playerService.resume();
             } else {
-                playerCore.playRandom();
+                playerService.playRandom();
             }
-        } else
-            playerCore.pause();
+        } else {
+            playerService.pause();
+        }
     }
 
     public void previous() {
-        playerCore.previous();
+        playerService.previous();
     }
 
     public void next() {
-        playerCore.next();
+        playerService.next();
     }
 
     public Optional<ObservableAudioItem> currentTrack() {
-        return playerCore.currentTrack();
+        return playerService.currentTrack();
     }
 
     public void hidePlayQueue() {
@@ -257,12 +272,12 @@ public class PlayerController {
     }
 
     public void increaseVolume() {
-        playerCore.increaseVolume();
+        playerService.increaseVolume();
         volumeSlider.setValue(volumeSlider.getValue() + VOLUME_AMOUNT);
     }
 
     public void decreaseVolume() {
-        playerCore.decreaseVolume();
+        playerService.decreaseVolume();
         volumeSlider.setValue(volumeSlider.getValue() - VOLUME_AMOUNT);
     }
 
@@ -272,8 +287,8 @@ public class PlayerController {
      */
     public void updatePlayerComponents(ObservableAudioItem currentTrack) {
         logger.debug("Setting up player and view for track {}", currentTrack);
-        Color backgroundColor = Color.color(73, 73, 73);
-        Color waveformColor = Color.color(34, 34, 34);
+        Color backgroundColor = Color.rgb(73, 73, 73);
+        Color waveformColor = Color.rgb(34, 34, 34);
 
         // Show default waveform animation while computing the waveform
         // and then
@@ -289,17 +304,17 @@ public class PlayerController {
             Double endTime = trackSlider.getMax();
             if (!endTime.equals(Double.POSITIVE_INFINITY) || !endTime.equals(Double.NaN)) {
                 trackProgressBar.setProgress(trackSlider.getValue() / endTime);
-                playerCore.seek(Duration.millis(trackSlider.getValue()));
+                playerService.seek(Duration.millis(trackSlider.getValue()));
             }
         });
     }
 
     public void playFromQueue(TrackQueueRow trackQueueRow) {
-        playerCore.playFromQueue(trackQueueRow);
+        playerService.playFromQueue(trackQueueRow);
     }
 
     public void playFromHistoryQueue(TrackQueueRow trackQueueRow) {
-        playerCore.playFromHistoryQueue(trackQueueRow);
+        playerService.playFromHistoryQueue(trackQueueRow);
     }
 
     /**
@@ -371,238 +386,101 @@ public class PlayerController {
 
     @EventListener(classes = PauseEvent.class)
     public void pauseEventListener() {
-        playerCore.pause();
+        playerService.pause();
     }
 
     @EventListener
     public void playEventListener(PlayItemEvent playItemEvent) {
         List<ObservableAudioItem> audioItems = playItemEvent.audioItems;
-        playerCore.addToQueue(audioItems);
+        playerService.addToQueue(audioItems);
+        playerService.next();
     }
 
     @EventListener
     public void playPlaylistRandomlyEventListener(PlayPlaylistRandomlyEvent playPlaylistRandomlyEvent) {
         ObservablePlaylist playlist = playPlaylistRandomlyEvent.playlist;
-        playerCore.addToQueue(playlist.getAudioItemsProperty());
+        playerService.addToQueue(playlist.getAudioItemsProperty());
+        playerService.next();
     }
 
     @EventListener
     public void addAudioItemsToPlayQueueEventListener(AddToPlayQueueEvent addToPlayQueueEvent) {
-        playerCore.addToQueue(addToPlayQueueEvent.audioItems);
+        playerService.addToQueue(addToPlayQueueEvent.audioItems);
     }
 
-    // Move object
-    private class PlayerCore {
+    @EventListener
+    public void trackChangedEventListener(AudioItemChangedEvent event) {
+        scrobbled = false;
+        updatePlayerComponents(event.currentTrack);
 
-        private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
-
-        private final ObservableList<TrackQueueRow> playQueueList;
-        private final ObservableList<TrackQueueRow> historyQueueList;
-
-        private Optional<ObservableAudioItem> currentTrack = Optional.empty();
-        private JavaFxPlayer trackPlayer;
-        private boolean playingRandom = false;
-        private boolean played = false;
-        private boolean scrobbled = false;
-
-        public PlayerCore(ObservableList<TrackQueueRow> playQueueList, ObservableList<TrackQueueRow> historyQueueList) {
-            this.playQueueList = playQueueList;
-            this.historyQueueList = historyQueueList;
+        // Bind volume slider bidirectionally to new player
+        DoubleProperty volumeProp = playerService.getVolumeProperty();
+        if (volumeProp != null) {
+            volumeProp.bindBidirectional(volumeSlider.valueProperty());
         }
 
-        public void play(ObservableAudioItem audioItem) {
-            if (!audioItem.getPath().toFile().exists()) {
-                applicationEventPublisher.publishEvent(new ErrorEvent("File not found", audioItem.getPath().toString(), this));
-                // and remove from queue
-            } else {
-                if (trackPlayer.status().equals(STOPPED) ||
-                        trackPlayer.status().equals(PAUSED) ||
-                        trackPlayer.status().equals(UNKNOWN)) {
-                    // if nothing is currently being played
-                    setPlayer(audioItem);
-                } else if (trackPlayer.status().equals(PLAYING)) {
-                    // if something is being played
-                    // TODO ask user if stop current and play or add to top of the queue
-
-                    stop();
-                    setPlayer(audioItem);
-                }
-            }
-        }
-
-        private void setPlayer(ObservableAudioItem audioItem) {
-            scrobbled = false;
-            played = false;
-            trackPlayer = new JavaFxPlayer();
-            trackPlayer.play(audioItem);
-            currentTrack = Optional.of(audioItem);
-            updatePlayerComponents(audioItem);
-            bindMediaPlayer();
-            LOG.debug("Created new player");
-        }
-
-        private void bindMediaPlayer() {
-            trackPlayer.getVolumeProperty().bindBidirectional(volumeSlider.valueProperty());
-
-            bindPlayerConfiguration(trackPlayer);
-
-            subscribe(trackPlayer.getStatusProperty(), status -> {
-                if (PLAYING == status)
-                    setPlaying();
-                else if (PAUSED == status)
-                    playButtonSelectedProperty().setValue(false);
-                else if (STOPPED == status) {
-                    setStopped();
-                    volumeSlider.valueProperty().unbindBidirectional(trackPlayer.getVolumeProperty());
-                }
-            });
-        }
-
-        private void bindPlayerConfiguration(JavaFxPlayer trackPlayer) {
-            subscribe(trackPlayer.getCurrentTimeProperty(), time -> {
-                Duration halfTime = trackPlayer.getTotalDuration().divide(2.0);
-                if (time.greaterThanOrEqualTo(halfTime))
-                    currentTrack.get().getPlayCountProperty().add(1);
-                if (isCurrentTrackValidToScrobble(trackPlayer, time)) {
-                    scrobbled = true;
-                    if (lastFmService != null) {
-                        lastFmService.updateNowPlaying(currentTrack.get());
-                        lastFmService.scrobble(currentTrack.get());
-                    }
-                }
-            });
-
+        // Re-subscribe to current time for slider, progress bar, labels, and scrobbling
+        var currentTimeProp = playerService.getCurrentTimeProperty();
+        if (currentTimeProp != null) {
             DoubleProperty trackSliderMaxProperty = trackSlider.maxProperty();
-            currentTrack.ifPresent(track -> trackSliderMaxProperty.setValue(track.getDuration().toMillis()));
+            playerService.currentTrack().ifPresent(track -> trackSliderMaxProperty.setValue(track.getDuration().toMillis()));
 
             BooleanProperty trackSliderValueChangingProperty = trackSlider.valueChangingProperty();
             DoubleProperty trackSliderValueProperty = trackSlider.valueProperty();
-            subscribe(trackPlayer.getCurrentTimeProperty(), time -> {
+            subscribe(currentTimeProp, time -> {
                 if (!trackSliderValueChangingProperty.get())
                     trackSliderValueProperty.setValue(time.toMillis());
             });
 
             DoubleProperty trackProgressBarProgressProperty = trackProgressBar.progressProperty();
             subscribe(trackSliderValueProperty, value -> {
-                Double endTime = trackPlayer.getTotalDuration().toMillis();
+                Double endTime = playerService.getTotalDuration().toMillis();
                 if (trackSliderValueChangingProperty.get() && (!endTime.equals(Double.POSITIVE_INFINITY) || !endTime.equals(Double.NaN))) {
                     trackProgressBarProgressProperty.set(value.doubleValue() / endTime);
-                    trackPlayer.seek(value.doubleValue());
+                    playerService.seek(Duration.millis(value.doubleValue()));
                 }
             });
 
-            subscribe(trackPlayer.getCurrentTimeProperty(),
-                      t -> trackProgressBarProgressProperty.set(t.toMillis() / trackSliderMaxProperty.get())
-            );
-            subscribe(trackPlayer.getCurrentTimeProperty(),
-                      t -> updateTrackLabels(t, trackPlayer.getTotalDuration()) // or trackPlayer.getDuration() ?
-            );
+            subscribe(currentTimeProp, t -> trackProgressBarProgressProperty.set(t.toMillis() / trackSliderMaxProperty.get()));
+            subscribe(currentTimeProp, t -> updateTrackLabels(t, playerService.getTotalDuration()));
+
+            subscribe(currentTimeProp, time -> {
+                if (isCurrentTrackValidToScrobble(time)) {
+                    scrobbled = true;
+                    playerService.currentTrack().ifPresent(track -> {
+                        if (lastFmService != null) {
+                            lastFmService.updateNowPlaying(track);
+                            lastFmService.scrobble(track);
+                        }
+                    });
+                }
+            });
         }
+    }
 
-        private boolean isCurrentTrackValidToScrobble(JavaFxPlayer trackPlayer, Duration newTime) {
-            boolean isDurationBeyond30Seconds = trackPlayer.getTotalDuration().greaterThanOrEqualTo(Duration.seconds(30));
-            boolean isDurationBeyondMidTime = newTime.greaterThanOrEqualTo(trackPlayer.getTotalDuration().divide(2.0));
-            boolean isDurationLongerThan4Minutes = newTime.greaterThanOrEqualTo(Duration.minutes(4));
-
-            return !scrobbled && isDurationBeyond30Seconds && (isDurationBeyondMidTime || isDurationLongerThan4Minutes);
-        }
-
-        public void playRandom() {
-            // TODO
-        }
-
-        public void playFromQueue(TrackQueueRow trackQueueRow) {
-            ObservableAudioItem track = trackQueueRow.getTrack();
-            setPlayer(track);
-            historyQueueList.add(0, trackQueueRow);
-            playQueueList.remove(trackQueueRow);
-            LOG.debug("Play from queue selected. Queue size {}, history queue size {}", playQueueList.size(), historyQueueList.size());
-        }
-
-        public void playFromHistoryQueue(TrackQueueRow trackQueueRow) {
-            ObservableAudioItem track = trackQueueRow.getTrack();
-            setPlayer(track);
-            historyQueueList.remove(trackQueueRow);
-            LOG.debug("Play from history selected. History queue size {}", historyQueueList.size());
-        }
-
-        public void pause() {
-            switch (playerStatus()) {
-                case PLAYING:
-                    trackPlayer.pause();
-                    LOG.info("Player paused");
-                    break;
-                case PAUSED:
-                    resume();
-                    break;
-                case STOPPED:
-                    playRandom();
-                    break;
-                default:
+    @EventListener
+    public void playbackStatusChangedEventListener(PlaybackStatusChangedEvent event) {
+        Status status = event.status;
+        if (PLAYING == status) {
+            setPlaying();
+        } else if (PAUSED == status) {
+            playButtonSelectedProperty().setValue(false);
+        } else if (STOPPED == status) {
+            setStopped();
+            // Unbind volume slider when player stops
+            DoubleProperty volumeProp = playerService.getVolumeProperty();
+            if (volumeProp != null) {
+                volumeSlider.valueProperty().unbindBidirectional(volumeProp);
             }
         }
+    }
 
-        public void resume() {
-            trackPlayer.resume();
-            LOG.info("Player resumed");
-        }
+    private boolean isCurrentTrackValidToScrobble(Duration newTime) {
+        Duration totalDuration = playerService.getTotalDuration();
+        boolean isDurationBeyond30Seconds = totalDuration.greaterThanOrEqualTo(Duration.seconds(30));
+        boolean isDurationBeyondMidTime = newTime.greaterThanOrEqualTo(totalDuration.divide(2.0));
+        boolean isDurationLongerThan4Minutes = newTime.greaterThanOrEqualTo(Duration.minutes(4));
 
-        private void stop() {
-            trackPlayer.stop();
-            currentTrack = Optional.empty();
-            LOG.info("Player topped");
-        }
-
-        public void previous() {
-            if (!historyQueueList.isEmpty()) {
-                setPlayer(historyQueueList.get(0).getTrack());
-                historyQueueList.remove(0);
-            } else
-                stop();
-        }
-
-        public void next() {
-            if (playQueueList.isEmpty())
-                stop();
-            else {
-                ObservableAudioItem nextTrack = playQueueList.get(0).getTrack();
-                play(nextTrack);
-            }
-        }
-
-        public void addToQueue(Collection<ObservableAudioItem> audioItems) {
-            if (playingRandom) {
-                playQueueList.clear();
-                playingRandom = false;
-            }
-            audioItems.stream().filter(JavaFxPlayer.Companion::isPlayable).map(TrackQueueRow::new).forEach(playQueueList::add);
-        }
-
-        public void increaseVolume() {
-            if (trackPlayer != null) {
-                double currentVolume = trackPlayer.getVolumeProperty().get();
-                trackPlayer.setVolume(currentVolume + VOLUME_AMOUNT);
-            }
-        }
-
-        public void decreaseVolume() {
-            if (trackPlayer != null) {
-                double currentVolume = trackPlayer.getVolumeProperty().get();
-                trackPlayer.setVolume(currentVolume - VOLUME_AMOUNT);
-            }
-        }
-
-        public void seek(Duration seekTime) {
-            trackPlayer.seek(seekTime.toMillis());
-            LOG.debug("Player seeked value {}", seekTime.toSeconds());
-        }
-
-        private Optional<ObservableAudioItem> currentTrack() {
-            return currentTrack;
-        }
-
-        private Status playerStatus() {
-            return trackPlayer == null ? UNKNOWN : trackPlayer.status();
-        }
+        return !scrobbled && isDurationBeyond30Seconds && (isDurationBeyondMidTime || isDurationLongerThan4Minutes);
     }
 }

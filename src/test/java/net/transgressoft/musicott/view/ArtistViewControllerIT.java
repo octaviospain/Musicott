@@ -9,7 +9,7 @@ import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
-import net.transgressoft.commons.event.TransEventPublisher;
+import net.transgressoft.lirp.event.LirpEventPublisher;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.musicott.test.ApplicationTestBase;
@@ -104,10 +104,11 @@ class ArtistViewControllerITConfiguration {
     }
 
     @Bean
+    @SuppressWarnings("unchecked")
     public ObservableAudioLibrary audioRepository(ReadOnlySetProperty<Artist> artistsProperty) {
         var repository = mock(ObservableAudioLibrary.class);
         when(repository.artistsProperty()).thenReturn(artistsProperty);
-        when(repository.getArtistCatalogPublisher()).thenReturn(mock(TransEventPublisher.class));
+        when(repository.getArtistCatalogPublisher()).thenReturn(mock(LirpEventPublisher.class));
         return repository;
     }
 

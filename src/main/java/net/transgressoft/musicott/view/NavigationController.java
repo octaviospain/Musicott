@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -138,6 +139,12 @@ public class NavigationController {
                selectedPlaylistProperty().set(Optional.empty());
            }
         });
+
+        subscribe(navigationModeProperty, mode -> {
+            if (mode == ALL_AUDIO_ITEMS || mode == ARTISTS) {
+                playlistTreeView.getSelectionModel().clearSelection();
+            }
+        });
     }
 
     public void setOnNewPlaylistAction(EventHandler<ActionEvent> handler) {
@@ -152,6 +159,7 @@ public class NavigationController {
 
     public void addNewPlaylist(ObservablePlaylist newPlaylist) {
         playlistTreeView.addNewPlaylist(newPlaylist);
+        playlistTreeView.selectPlaylist(newPlaylist);
     }
 
     /**
@@ -224,6 +232,10 @@ public class NavigationController {
 
     public ReadOnlySetProperty<ObservablePlaylist> playlistsProperty() {
         return playlistTreeView.playlistsProperty();
+    }
+
+    public List<ObservablePlaylist> selectedPlaylists() {
+        return playlistTreeView.selectedPlaylists();
     }
 
     public ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty() {

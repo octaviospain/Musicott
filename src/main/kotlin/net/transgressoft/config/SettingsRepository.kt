@@ -18,8 +18,8 @@
 package net.transgressoft.config
 
 import net.transgressoft.commons.music.audio.AudioFileType
-import net.transgressoft.commons.persistence.json.FlexibleJsonFileRepository
-import net.transgressoft.commons.persistence.json.primitives.ReactiveBoolean
+import net.transgressoft.lirp.persistence.json.FlexibleJsonFileRepository
+import net.transgressoft.lirp.persistence.json.primitives.ReactiveBoolean
 import java.io.File
 
 /**

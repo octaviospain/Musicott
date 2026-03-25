@@ -20,6 +20,7 @@
 package net.transgressoft.musicott.view.custom;
 
 import javafx.beans.property.*;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
 import net.transgressoft.musicott.events.*;
@@ -65,9 +66,13 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
     private ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
-    public PlaylistTreeView(ObservablePlaylistHierarchy playlistRepository) {
+    private ObservableAudioLibrary audioRepository;
+
+    @Autowired
+    public PlaylistTreeView(ObservablePlaylistHierarchy playlistRepository,
+                            ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty) {
         this.playlistRepository = playlistRepository;
-        this.selectedPlaylistProperty = new SimpleObjectProperty<>(this, "selected playlist", Optional.empty());
+        this.selectedPlaylistProperty = selectedPlaylistProperty;
         setCellFactory(PlaylistTreeViewCell::new);
         setContextMenu(new PlaylistTreeViewContextMenu());
         setRoot(createRootPlaylistTreeViewItem());
@@ -143,7 +148,7 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
      * @param newPlaylist The new {@link ObservablePlaylist}s to include in the TreeView
      */
     private void addNewPlaylistsToFirstLevel(ObservablePlaylist newPlaylist) {
-        addNewPlaylist(newPlaylist, getRoot().getValue());
+        addNewPlaylist(newPlaylist, (PlaylistTreeViewItem) getRoot());
     }
 
     /**
@@ -158,6 +163,7 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
         if (parentPlaylistTreeViewItem.getValue().isDirectory()) {
             var playlistTreeItem = new PlaylistTreeViewItem(playlist);
             parentPlaylistTreeViewItem.getChildren().add(playlistTreeItem);
+            playlistRepository.addPlaylistToDirectory(playlist, parentPlaylistTreeViewItem.getValue().getName());
 
             if (playlist.isDirectory()) {
                 var includedPlaylists = playlist.getPlaylists();
@@ -184,8 +190,11 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
         for (TreeItem<ObservablePlaylist> treeItem : playlistTreeItem.getChildren()) {
             if (treeItem.getValue().equals(playlist))
                 return (PlaylistTreeViewItem) treeItem;
-            else if (! treeItem.getChildren().isEmpty())
-                return findPlaylistTreeItemRecursively(treeItem, playlist);
+            else if (! treeItem.getChildren().isEmpty()) {
+                var found = findPlaylistTreeItemRecursively(treeItem, playlist);
+                if (found != null)
+                    return found;
+            }
         }
         return null;
     }
@@ -320,9 +329,9 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
                 setId(getItem().getUniqueId());
             }
 
-            ChangeListener<Boolean> isSelectedListener = (wasSelectedValue, isSelectedVale, observable) -> {
+            ChangeListener<Boolean> isSelectedListener = (observable, wasSelected, isSelected) -> {
                 var isFolder = ! getTreeItem().isLeaf();
-                updatePseudoClassesStates(isFolder, isSelectedVale);
+                updatePseudoClassesStates(isFolder, isSelected);
             };
 
             itemProperty().addListener((obs, oldPlaylist, newPlaylist) -> {
@@ -336,7 +345,7 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
                     textProperty().bind(newPlaylist.getNameProperty());
                     selectedProperty().addListener(isSelectedListener);
 
-                    var isFolder = getTreeItem().isLeaf();
+                    var isFolder = ! getTreeItem().isLeaf();
                     updatePseudoClassesStates(isFolder, selectedProperty().get());
                 } else
                     disablePseudoClassesStates();
@@ -406,7 +415,12 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
             var dragBoard = event.getDragboard();
             if (dragBoard.hasContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT) && isValidAudioItemToDragAndDrop()) {
                 var selectedAudioItemIds = (List<Integer>) dragBoard.getContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT);
-//                getItem().addAudioItems(selectedAudioItemIds); // TODO fix
+                var audioItems = selectedAudioItemIds.stream()
+                    .map(id -> audioRepository.findById(id))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .toList();
+                getItem().addAudioItems(audioItems);
             } else if (dragBoard.hasContent(PLAYLIST_DATA_FORMAT)) {
                 var playlist = (ObservablePlaylist) dragBoard.getContent(PLAYLIST_DATA_FORMAT);
                 var isFolder = getItem() != null && ! getTreeItem().isLeaf();
@@ -440,7 +454,7 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
         }
 
         private boolean isValidAudioItemToDragAndDrop() {
-            var validDrag = getItem() != null && getTreeItem().getValue().isDirectory();
+            var validDrag = getItem() != null && !getTreeItem().getValue().isDirectory();
             if (validDrag) {
                 var selectedPlaylist = selectedPlaylistProperty.get();
                 validDrag = ! (selectedPlaylist.isPresent() && selectedPlaylist.get().equals(getItem()));

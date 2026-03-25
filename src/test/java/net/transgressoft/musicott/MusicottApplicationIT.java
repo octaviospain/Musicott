@@ -18,9 +18,9 @@ import org.testfx.util.WaitForAsyncUtils;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest(classes = MusicottApplication.class)
-@ActiveProfiles("system-test")
+@ActiveProfiles("e2e")
 @ExtendWith(ApplicationExtension.class)
-class MusicottApplicationTest {
+class MusicottApplicationIT {
 
 	static Stage testStage;
 

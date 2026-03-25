@@ -11,7 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Label;
 import javafx.scene.input.*;
 import net.rgielen.fxweaver.core.*;
-import net.transgressoft.commons.event.*;
+import net.transgressoft.lirp.event.*;
 import net.transgressoft.commons.fx.music.audio.*;
 import net.transgressoft.commons.music.audio.*;
 import net.transgressoft.musicott.events.*;
@@ -187,7 +187,7 @@ public class ArtistViewController {
      *
      * @param event The event that contains the artist catalog that changed.
      */
-    private void artistCatalogChangeHandler(CrudEvent<Artist, ArtistCatalog<ObservableAudioItem>> event) {
+    private void artistCatalogChangeHandler(CrudEvent<Artist, ObservableArtistCatalog> event) {
         selectedArtistProperty.get().ifPresent(selectedArtist ->
             event.getEntities().forEach((artist, artistCatalog) -> {
                 if (artist.equals(selectedArtist)) {

@@ -27,7 +27,7 @@ import static org.testfx.util.NodeQueryUtils.hasText;
  * @author Octavio Calleya
  */
 @ExtendWith ({ApplicationExtension.class, MockitoExtension.class})
-class ErrorDialogControllerTest {
+class ErrorDialogControllerIT {
 
     @Mock
     SimpleWebRedirectionService webRedirectionService;

@@ -1,5 +1,9 @@
 package net.transgressoft.musicott.view;
 
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
+import net.transgressoft.musicott.services.PlayerService;
+import net.transgressoft.musicott.view.custom.table.AudioItemTableViewBase;
 import net.transgressoft.musicott.view.custom.table.TrackQueueListCell;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 
@@ -7,6 +11,8 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.slf4j.Logger;
@@ -14,16 +20,27 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
+import java.util.List;
+import java.util.Objects;
+
 /**
+ * Controller for the play queue and history queue pane. Uses {@link PlayerService} directly
+ * to access the queue and history observable lists, eliminating the previous coupling to
+ * {@link PlayerController}. Supports toggling between queue and history views, clearing
+ * each list independently, and accepting drag-and-drop from the library table.
+ *
  * @author Octavio Calleya
  */
 @FxmlView ("/fxml/PlayQueueController.fxml")
 @Controller
 public class PlayQueueController {
 
+    private static final String DRAG_OVER_STYLE = "-fx-border-color: rgb(99, 255, 109); -fx-border-width: 2px;";
+
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
-    private final PlayerController playerController;
+    private final PlayerService playerService;
+    private final ObservableAudioLibrary audioLibrary;
 
     private ObservableList<TrackQueueRow> playQueueList;
     private ObservableList<TrackQueueRow> historyQueueList;
@@ -40,24 +57,48 @@ public class PlayQueueController {
     private ListView<TrackQueueRow> queuesListView;
 
     @Autowired
-    public PlayQueueController(PlayerController playerController) {
-        this.playerController = playerController;
+    public PlayQueueController(PlayerService playerService, ObservableAudioLibrary audioLibrary) {
+        this.playerService = playerService;
+        this.audioLibrary = audioLibrary;
     }
 
     @FXML
     public void initialize() {
+        playQueueList = playerService.getPlayQueueList();
+        historyQueueList = playerService.getHistoryQueueList();
+
+        playQueueList.addListener((ListChangeListener<TrackQueueRow>) change -> {
+            while (change.next()) {
+                change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
+                    playQueueList.remove(trackQueueRow);
+                    LOG.debug("Removing track from play queue by clicking the button. Queue size: {}", playQueueList.size());
+                }));
+            }
+        });
+
+        historyQueueList.addListener((ListChangeListener<TrackQueueRow>) change ->
+                change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
+                    historyQueueList.remove(trackQueueRow);
+                    LOG.debug("Removing track from history queue by clicking the button. History queue size: {}", historyQueueList.size());
+                })));
+
         historyQueueButton.setId("historyQueueButton");
-        queuesListView.setCellFactory(listView -> new TrackQueueListCell(this));
+        queuesListView.setCellFactory(_ -> new TrackQueueListCell(() -> historyQueueButton.isSelected()));
         queuesListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         queuesListView.setItems(playQueueList);
         queuesListView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2)
                 if (historyQueueButton.isSelected()) {
-                    playerController.playFromHistoryQueue(queuesListView.getSelectionModel().getSelectedItem());
+                    playerService.playFromHistoryQueue(queuesListView.getSelectionModel().getSelectedItem());
                 } else {
-                    playerController.playFromQueue(queuesListView.getSelectionModel().getSelectedItem());
+                    playerService.playFromQueue(queuesListView.getSelectionModel().getSelectedItem());
                 }
         });
+
+        queuesListView.setOnDragOver(this::onDragOverQueue);
+        queuesListView.setOnDragDropped(this::onDragDroppedQueue);
+        queuesListView.setOnDragExited(this::onDragExitedQueue);
+
         deleteAllButton.setOnAction(event -> {
             if (historyQueueButton.isSelected())
                 clearHistoryQueue();
@@ -70,6 +111,39 @@ public class PlayQueueController {
             else
                 showPlayQueue();
         });
+    }
+
+    private void onDragOverQueue(DragEvent event) {
+        if (event.getDragboard().hasContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT) && !historyQueueButton.isSelected()) {
+            event.acceptTransferModes(TransferMode.COPY);
+            queuesListView.setStyle(DRAG_OVER_STYLE);
+        }
+        event.consume();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void onDragDroppedQueue(DragEvent event) {
+        var dragboard = event.getDragboard();
+        if (dragboard.hasContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT)) {
+            var audioItemIds = (List<Integer>) dragboard.getContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT);
+            var resolvedItems = audioItemIds.stream()
+                    .map(id -> audioLibrary.findById(id).orElse(null))
+                    .filter(Objects::nonNull)
+                    .map(item -> (ObservableAudioItem) item)
+                    .toList();
+            if (!resolvedItems.isEmpty()) {
+                playerService.addToQueue(resolvedItems);
+                LOG.debug("Added {} tracks to queue from drag-drop", resolvedItems.size());
+            }
+            event.setDropCompleted(true);
+        }
+        queuesListView.setStyle("");
+        event.consume();
+    }
+
+    private void onDragExitedQueue(DragEvent event) {
+        queuesListView.setStyle("");
+        event.consume();
     }
 
     private void clearHistoryQueue() {
@@ -94,34 +168,5 @@ public class PlayQueueController {
         queuesListView.getSelectionModel().clearSelection();
         titleQueueLabel.setText("Play Queue");
         LOG.trace("Showing play queue on the pane");
-    }
-
-    public void setPlayQueueList(ObservableList<TrackQueueRow> playQueueList) {
-        this.playQueueList = playQueueList;
-
-        // Remove the item from the list when the delete button is clicked on each TrackQueueRow
-        playQueueList.addListener((ListChangeListener<TrackQueueRow>) change -> {
-                while (change.next()) {
-                    change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
-                        playQueueList.remove(trackQueueRow);
-                        LOG.debug("Removing track from play queue by clicking the button. Queue size: {}", playQueueList.size());
-                    }));
-                }
-        });
-    }
-
-    public void setHistoryQueueList(ObservableList<TrackQueueRow> historyQueueList) {
-        this.historyQueueList = historyQueueList;
-
-        // Remove the item from the list when the delete button is clicked on each TrackQueueRow
-        historyQueueList.addListener((ListChangeListener<TrackQueueRow>) change ->
-                change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
-                    historyQueueList.remove(trackQueueRow);
-                    LOG.debug("Removing track from history queue by clicking the button. History queue size: {}", playQueueList.size());
-                })));
-    }
-
-    public boolean isShowingHistoryQueue() {
-        return queuesListView.getItems().equals(historyQueueList);
     }
 }

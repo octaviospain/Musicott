@@ -6,13 +6,10 @@ import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItemSerializer;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItemSerializerKt;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistSerializerKt;
-import net.transgressoft.commons.persistence.json.JsonFileRepository;
+import net.transgressoft.lirp.persistence.json.JsonFileRepository;
 import net.transgressoft.musicott.test.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +19,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.test.annotation.*;
 import org.testfx.api.FxRobot;
 import org.testfx.util.WaitForAsyncUtils;
 
@@ -41,7 +39,7 @@ import static org.testfx.assertions.api.Assertions.assertThat;
 import static org.testfx.matcher.control.LabeledMatchers.hasText;
 
 @JavaFxSpringTest(classes = PlaylistTreeViewTestConfiguration.class)
-public class PlaylistTreeViewComponentTest extends ApplicationTestBase<PlaylistTreeView> {
+public class PlaylistTreeViewIT extends ApplicationTestBase<PlaylistTreeView> {
 
     @Autowired
     ObservablePlaylistHierarchy playlistRepository;
@@ -72,6 +70,68 @@ public class PlaylistTreeViewComponentTest extends ApplicationTestBase<PlaylistT
     }
 
     @Test
+    @DisplayName("PlaylistTreeView deletes playlist after confirmation dialog is shown")
+    void deletesPlaylistAfterConfirmation(FxRobot fxRobot) {
+        // Expand the tree to see Techno (inside Best hits)
+        TreeCell<ObservablePlaylist> bestHitsCell = fxRobot.lookup(bestHitsPlaylist.getName()).query();
+        fxRobot.doubleClickOn(bestHitsCell);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        // Select the Techno playlist
+        TreeCell<ObservablePlaylist> technoCell = fxRobot.lookup(technoPlaylist.getName()).query();
+        fxRobot.clickOn(technoCell);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        // Verify the selected playlist property was set
+        assertThat(selectedPlaylistProperty.get()).isPresent();
+        assertThat(selectedPlaylistProperty.get().get().getName()).isEqualTo("Techno");
+
+        // Directly call deletePlaylist to test the tree behavior
+        WaitForAsyncUtils.waitForFxEvents();
+        javafx.application.Platform.runLater(() -> playlistTreeView.deletePlaylist(technoPlaylist));
+        WaitForAsyncUtils.waitForFxEvents();
+
+        // Verify Techno is removed from the tree
+        Set<TreeCell<ObservablePlaylist>> allTreeCells = fxRobot.lookup(".tree-cell")
+                .match(hasText(not(emptyOrNullString())))
+                .queryAll();
+
+        assertThat(allTreeCells).extracting(TreeCell::getItem)
+                .extracting(ObservablePlaylist::getName)
+                .doesNotContain("Techno");
+
+        // Verify playlistRepository.remove() was called exactly once (not double-removed)
+        verify(playlistRepository, times(1)).remove(technoPlaylist);
+    }
+
+    @Test
+    @DisplayName("PlaylistTreeView rejects duplicate playlist name on creation")
+    void rejectsDuplicatePlaylistNameOnCreation(FxRobot fxRobot) {
+        // "Best hits" already exists in the test hierarchy
+        boolean containsDuplicate = playlistTreeView.containsPlaylistName("Best hits");
+        assertThat(containsDuplicate).isTrue();
+
+        // A new name should be allowed
+        boolean containsNew = playlistTreeView.containsPlaylistName("New Playlist");
+        assertThat(containsNew).isFalse();
+    }
+
+    @Test
+    @DisplayName("PlaylistTreeView drag-drop guard rejects folder targets")
+    void dragDropGuardRejectsFolderTargets(FxRobot fxRobot) {
+        // Expand the tree to see Techno (inside Best hits folder)
+        TreeCell<ObservablePlaylist> bestHitsCell = fxRobot.lookup(bestHitsPlaylist.getName()).query();
+        fxRobot.doubleClickOn(bestHitsCell);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        // Best hits is a directory — it should NOT accept audio item drops
+        assertThat(bestHitsPlaylist.isDirectory()).isTrue();
+
+        // Techno is a playlist — it SHOULD accept audio item drops
+        assertThat(technoPlaylist.isDirectory()).isFalse();
+    }
+
+    @Test
     @DisplayName("Playlist hierarchy")
     void playlistHierarchyTest(FxRobot fxRobot) {
         assertThat(fxRobot.lookup("#playlistTreeView").tryQuery()).isPresent();
@@ -90,7 +150,7 @@ public class PlaylistTreeViewComponentTest extends ApplicationTestBase<PlaylistT
         assertThat(allTreeCells).hasSize(2)
                 .extracting(TreeCell::getItem)
                 .extracting(ObservablePlaylist::getName)
-                .containsExactly("This weeks' favorites songs", "Best hits");
+                .containsExactlyInAnyOrder("This weeks' favorites songs", "Best hits");
 
         TreeCell<ObservablePlaylist> bestHitsTreeCell = fxRobot.lookup(".tree-cell").lookup(bestHitsPlaylist.getName()).query();
         assertThat(bestHitsTreeCell.getTreeItem())

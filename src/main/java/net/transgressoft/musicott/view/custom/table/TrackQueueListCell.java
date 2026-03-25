@@ -19,7 +19,6 @@
 
 package net.transgressoft.musicott.view.custom.table;
 
-import net.transgressoft.musicott.view.PlayQueueController;
 import net.transgressoft.musicott.view.custom.DragBoardImage;
 
 import javafx.scene.control.ListCell;
@@ -28,22 +27,28 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 
+import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 /**
- * Custom {@link ListCell} that defines the behaviour of the {@link TrackQueueRow}
- * that represents
+ * Custom {@link ListCell} that defines the behaviour of the {@link TrackQueueRow} items
+ * in the play queue list view. Supports drag-and-drop reordering within the queue.
+ * Dragging is suppressed when the history queue is active, as determined by the
+ * {@code showingHistoryQueue} supplier provided at construction time.
  *
  * @author Octavio Calleya
  */
 public class TrackQueueListCell extends ListCell<TrackQueueRow> {
 
     private static final String DRAG_OVER_STYLE = "-fx-border-color: rgb(99, 255, 109); -fx-border-width: 0px 0px 1px 0px";
-    private final PlayQueueController playQueueController;
+    private final BooleanSupplier showingHistoryQueue;
 
-    public TrackQueueListCell(PlayQueueController playQueueController) {    //TODO This dependency can be replaced with an observable
+    /**
+     * @param isHistoryQueueShowing supplier that returns {@code true} when the history queue is currently displayed
+     */
+    public TrackQueueListCell(BooleanSupplier isHistoryQueueShowing) {
         super();
-        this.playQueueController = playQueueController;
+        this.showingHistoryQueue = isHistoryQueueShowing;
         setOnDragOver(this::onDragOver);
         setOnDragDetected(this::onDragDetected);
         setOnDragDropped(this::onDragDropped);
@@ -64,7 +69,7 @@ public class TrackQueueListCell extends ListCell<TrackQueueRow> {
     }
 
     private void onDragDetected(MouseEvent event) {
-        if (! isEmpty() && ! playQueueController.isShowingHistoryQueue()) { //TODO or is this here just to prevent reoreding of history?
+        if (! isEmpty() && ! showingHistoryQueue.getAsBoolean()) {
             var dragboard = startDragAndDrop(TransferMode.COPY_OR_MOVE);
             dragboard.setDragView(new DragBoardImage());
 

@@ -1,13 +1,15 @@
 package net.transgressoft.musicott.view;
 
+import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
-import net.transgressoft.commons.persistence.json.JsonFileRepository;
+import net.transgressoft.lirp.persistence.json.JsonFileRepository;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
 import net.transgressoft.musicott.view.custom.PlaylistTreeView;
 
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;
@@ -36,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
+import java.util.Set;
 
 import static net.transgressoft.commons.fx.music.playlist.ObservablePlaylistSerializerKt.ObservablePlaylistMapSerializer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -83,6 +86,46 @@ class NavigationControllerIT extends ApplicationTestBase<VBox> {
         assertThat(fxRobot.lookup("All tracks").tryQuery()).isPresent();
         assertThat(fxRobot.lookup("Artists").tryQuery()).isPresent();
     }
+
+    @Test
+    @DisplayName("NavigationController clears playlist selection on navigation mode switch")
+    void clearsPlaylistSelectionOnNavigationModeSwitch(FxRobot fxRobot) {
+        WaitForAsyncUtils.waitForFxEvents();
+
+        // The navigation mode list should exist
+        assertThat(fxRobot.lookup("#navigationModeListView").tryQuery()).isPresent();
+
+        // Click "All tracks" navigation entry
+        fxRobot.clickOn("All tracks");
+        WaitForAsyncUtils.waitForFxEvents();
+
+        // Verify playlist tree has no selection
+        TreeView<?> treeView = fxRobot.lookup("#playlistTreeView").query();
+        assertThat(treeView.getSelectionModel().getSelectedItem()).isNull();
+    }
+
+    @Test
+    @DisplayName("NavigationController sets selectedPlaylistProperty when playlist is clicked")
+    void setsSelectedPlaylistPropertyOnPlaylistClick(FxRobot fxRobot) {
+        WaitForAsyncUtils.waitForFxEvents();
+
+        // The playlist tree should contain the "Test Playlist" created in the config
+        TreeView<?> treeView = fxRobot.lookup("#playlistTreeView").query();
+        assertThat(treeView.getRoot()).isNotNull();
+
+        // Expand the root to reveal "Test Playlist"
+        Platform.runLater(() -> treeView.getRoot().setExpanded(true));
+        WaitForAsyncUtils.waitForFxEvents();
+
+        // Click on "Test Playlist" cell
+        fxRobot.clickOn("Test Playlist");
+        WaitForAsyncUtils.waitForFxEvents();
+
+        // Verify selectedPlaylistProperty is set to the clicked playlist
+        var selectedProperty = navigationControllerAndView.getController().selectedPlaylistProperty();
+        assertThat(selectedProperty.get()).isPresent();
+        assertThat(selectedProperty.get().get().getName()).isEqualTo("Test Playlist");
+    }
 }
 
 @JavaFxSpringTestConfiguration(includeFilters = {
@@ -104,12 +147,19 @@ class NavigationControllerITConfiguration {
         var repository = new ObservablePlaylistHierarchy(
                 new JsonFileRepository<>(playlistsFile, ObservablePlaylistMapSerializer()));
         repository.createPlaylistDirectory("ROOT_PLAYLIST");
+        var testPlaylist = repository.createPlaylist("Test Playlist");
+        repository.addPlaylistsToDirectory(Set.of(testPlaylist), "ROOT_PLAYLIST");
         return repository;
     }
 
     @Bean
     public ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty() {
         return new SimpleObjectProperty<>(this, "selected nav test playlist", Optional.empty());
+    }
+
+    @Bean
+    public ObservableAudioLibrary audioRepository() {
+        return mock(ObservableAudioLibrary.class);
     }
 
     @Bean

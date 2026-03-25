@@ -17,6 +17,8 @@
 
 package net.transgressoft.config
 
+import javafx.beans.property.ObjectProperty
+import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.input.KeyCombination
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItemMapSerializer
@@ -28,7 +30,7 @@ import net.transgressoft.commons.music.waveform.AudioWaveform
 import net.transgressoft.commons.music.waveform.AudioWaveformMapSerializer
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository
 import net.transgressoft.commons.music.waveform.DefaultAudioWaveformRepository
-import net.transgressoft.commons.persistence.json.JsonFileRepository
+import net.transgressoft.lirp.persistence.json.JsonFileRepository
 import net.transgressoft.musicott.config.ApplicationPaths
 import org.apache.commons.lang3.SystemUtils
 import org.springframework.beans.factory.annotation.Autowired
@@ -37,6 +39,7 @@ import org.springframework.context.annotation.Configuration
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Optional
 
 @Configuration
 open class ApplicationConfiguration @Autowired constructor(private val applicationPaths: ApplicationPaths) {
@@ -71,6 +74,15 @@ open class ApplicationConfiguration @Autowired constructor(private val applicati
             KeyCombination.META_DOWN
         else
             KeyCombination.CONTROL_DOWN
+
+    /**
+     * Shared property tracking the currently selected playlist in the playlist tree.
+     * Injected into [net.transgressoft.musicott.view.custom.PlaylistTreeView] so that
+     * tests and production code share the same observable instance.
+     */
+    @Bean
+    open fun selectedPlaylistProperty(): ObjectProperty<Optional<ObservablePlaylist>> =
+        SimpleObjectProperty(null, "selected playlist", Optional.empty())
 
     @Bean
     open fun settingsRepository(): SettingsRepository =

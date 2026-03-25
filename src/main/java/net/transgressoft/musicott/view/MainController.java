@@ -2,6 +2,7 @@ package net.transgressoft.musicott.view;
 
 import de.codecentric.centerdevice.MenuToolkit;
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -33,6 +34,7 @@ import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
 import net.transgressoft.musicott.view.custom.table.FullAudioItemTableView;
 import org.apache.commons.io.FileUtils;
+import org.fxmisc.easybind.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +75,9 @@ public class MainController {
     private final ApplicationContext applicationContext;
 
     private final ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty;
+
+    private Subscription playlistCoverSubscription;
+    private Subscription playlistItemsSubscription;
 
     private MenuBarController menuBarController;
 
@@ -139,8 +144,6 @@ public class MainController {
      */
     private ObjectProperty<Image> playlistImageProperty;
 
-    private ListProperty<ObservableAudioItem> showingTracksProperty;
-
     private AudioItemTableViewContextMenu audioItemContextMenu;
 
     @Autowired
@@ -194,6 +197,12 @@ public class MainController {
             }
         });
 
+        selectedPlaylistProperty.addListener((_, _, newPlaylist) -> {
+            if (newPlaylist.isPresent() && navigationController.navigationModeProperty().get() == PLAYLIST) {
+                showPlaylistView();
+            }
+        });
+
         audioRepository.emptyLibraryProperty().addListener((observable, wasEmpty, isEmpty) -> {
             if (Boolean.TRUE.equals(isEmpty)) {
                 miniatureCoverImageView.imageProperty().unbind();
@@ -205,8 +214,10 @@ public class MainController {
         });
 
         searchTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.length() > 3) {
+            if (newValue.length() >= 3) {
                 applicationContext.publishEvent(new SearchTextTypedEvent(newValue, this));
+            } else if (newValue.isEmpty() || newValue.length() < 3) {
+                applicationContext.publishEvent(new SearchTextTypedEvent("", this));
             }
         });
 
@@ -224,23 +235,21 @@ public class MainController {
 
     private void initAudioItemTable() {
         mainAudioItemTable = applicationContext.getBean(FullAudioItemTableView.class);
-
-        showingTracksProperty = new SimpleListProperty<>(this, "showing audio items");
-        showingTracksProperty.bind(audioRepository.audioItemsProperty());
-        mainAudioItemTable.itemsProperty().bind(showingTracksProperty);
+        mainAudioItemTable.setSourceItems(audioRepository.audioItemsProperty());
 
         GridPane.setHgrow(mainAudioItemTable, Priority.ALWAYS);
         GridPane.setVgrow(mainAudioItemTable, Priority.ALWAYS);
     }
 
     private void initializeInfoPaneFields() {
-        playRandomButton.visibleProperty().bind(showingTracksProperty.emptyProperty().not());
-        playlistTracksNumberLabel.textProperty().bind(map(showingTracksProperty.sizeProperty(), s -> s + " tracks"));
+        var tableItemsProperty = new SimpleListProperty<>(mainAudioItemTable.getItems());
+        playRandomButton.visibleProperty().bind(tableItemsProperty.emptyProperty().not());
+        playlistTracksNumberLabel.textProperty().bind(map(tableItemsProperty.sizeProperty(), s -> s + " tracks"));
 
         playRandomButton.setOnAction(e -> selectedPlaylistProperty.get().ifPresent(
             playlist -> applicationContext.publishEvent(new PlayPlaylistRandomlyEvent(playlist, this))));
 
-        playlistSizeLabel.textProperty().bind(map(showingTracksProperty, (ObservableList<ObservableAudioItem> audioItems) -> {
+        playlistSizeLabel.textProperty().bind(map(tableItemsProperty, (ObservableList<ObservableAudioItem> audioItems) -> {
             var sizeSum = audioItems.stream().mapToLong(ObservableAudioItem::getLength).sum();
             return FileUtils.byteCountToDisplaySize(sizeSum);
         }));
@@ -325,6 +334,7 @@ public class MainController {
     }
 
     private void showAllAudioItemsView() {
+        mainAudioItemTable.setSourceItems(audioRepository.audioItemsProperty());
         tableStackPane.getChildren().remove(artistsLayout);
         miniatureCoverImageView.setVisible(true);
         hideTableInfoPane();
@@ -354,19 +364,36 @@ public class MainController {
 
     private void showPlaylistView() {
         if (selectedPlaylistProperty.get().isPresent()) {
-            //            trackHoveredCoverImageView.setVisible(false); // TODO Changed, now showing, test.
-
             var playlist = selectedPlaylistProperty.get().get();
-            subscribe(playlist.getCoverImageProperty(),
+
+            if (playlistCoverSubscription != null)
+                playlistCoverSubscription.unsubscribe();
+            if (playlistItemsSubscription != null)
+                playlistItemsSubscription.unsubscribe();
+
+            playlistCoverSubscription = subscribe(playlist.getCoverImageProperty(),
                 playlistCover -> playlistImageProperty.set(playlistCover.orElse(defaultPlaylistImage))
             );
 
+            tableStackPane.getChildren().remove(artistsLayout);
             replacePlaylistTextFieldByTitleLabel();
-            // TODO this may be unnecessary and only set operation here and at inside changePlaylistNameTextFieldHandler would work
+            playlistTitleLabel.textProperty().unbind();
             playlistTitleLabel.textProperty().bind(playlist.getNameProperty());
 
-            showingTracksProperty.clear();
-            showingTracksProperty.bind(playlist.getAudioItemsProperty());  // TODO test if is necessary to unbind somewhere when changing content
+            mainAudioItemTable.setSourceItems(playlist.getAudioItemsProperty());
+            boolean hasItems = ! playlist.getAudioItemsProperty().isEmpty();
+            miniatureCoverImageView.setVisible(hasItems);
+            playlistTracksNumberLabel.setVisible(hasItems);
+            playlistSizeLabel.setVisible(hasItems);
+
+            playlistItemsSubscription = subscribe(playlist.getAudioItemsProperty(), audioItems -> {
+                boolean notEmpty = ! audioItems.isEmpty();
+                miniatureCoverImageView.setVisible(notEmpty);
+                playlistTracksNumberLabel.setVisible(notEmpty);
+                playlistSizeLabel.setVisible(notEmpty);
+            });
+
+            showTablePane();
         } else {
             // If there was no present playlist object in the observable, something went wrong, since
             // this method is to be executed when a playlist is selected
@@ -421,9 +448,14 @@ public class MainController {
     }
 
     private void changeViewToPlaylistCreationMode(Function<String, ObservablePlaylist> playlistCreationFunction) {
-        showingTracksProperty.clear();
+        mainAudioItemTable.setSourceItems(FXCollections.observableArrayList());
         tableStackPane.getChildren().remove(artistsLayout);
         replacePlaylistTitleLabelByTextField();
+        playlistImageProperty.set(defaultPlaylistImage);
+        miniatureCoverImageView.setVisible(false);
+        playlistTracksNumberLabel.setVisible(false);
+        playlistSizeLabel.setVisible(false);
+        showTablePane();
 
         playlistTitleTextField.clear();
         playlistTitleTextField.setOnKeyPressed(keyEvent ->
@@ -462,9 +494,25 @@ public class MainController {
 
     @EventListener(classes = DeleteSelectedPlaylistEvent.class)
     public void deleteSelectedPlaylistEventListener() {
-        selectedPlaylistProperty.get().ifPresent(selectedPlaylist -> {
-            playlistRepository.remove(selectedPlaylist);
-            navigationController.deletePlaylist(selectedPlaylist);
+        var selectedPlaylists = navigationController.selectedPlaylists();
+        if (selectedPlaylists.isEmpty()) {
+            return;
+        }
+
+        // Show confirmation for the first selected playlist (representative)
+        var first = selectedPlaylists.getFirst();
+        int totalItems = selectedPlaylists.stream().mapToInt(p -> p.getAudioItemsProperty().size()).sum();
+        boolean hasFolder = selectedPlaylists.stream().anyMatch(ObservablePlaylist::isDirectory);
+        int nestedCount = selectedPlaylists.stream()
+                .filter(ObservablePlaylist::isDirectory)
+                .mapToInt(p -> p.getPlaylists().size()).sum();
+
+        String name = selectedPlaylists.size() == 1 ? first.getName() : selectedPlaylists.size() + " playlists";
+        Alert confirmation = alertFactory.deletePlaylistConfirmationAlert(name, totalItems, hasFolder, nestedCount);
+        confirmation.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                List.copyOf(selectedPlaylists).forEach(navigationController::deletePlaylist);
+            }
         });
         showAllAudioItemsView();
     }
@@ -857,24 +905,26 @@ public class MainController {
         public void show(ObservableList<ObservableAudioItem> selection, Node anchor, double screenX, double screenY) {
             this.selection = selection;
             playlistsInMenu.clear();
-            var selectedPlaylist = selectedPlaylistProperty.get();
-            if (selectedPlaylist.isPresent() && ! selectedPlaylist.get().isDirectory())  {
-                navigationController.playlistsProperty().stream()
-                        .filter(p -> ! p.isDirectory())
-                        .forEach(this::addPlaylistToMenuList);
+            addToPlaylistMenu.getItems().clear();
 
-                addToPlaylistMenu.getItems().clear();
-                addToPlaylistMenu.getItems().addAll(playlistsInMenu);
-                deleteFromPlaylistMenuItem.setVisible(true);
-            }
-            else
-                deleteFromPlaylistMenuItem.setVisible(false);
+            // Populate "Add to Playlist" submenu unconditionally in all navigation views (D-07)
+            navigationController.playlistsProperty().stream()
+                    .filter(p -> ! p.isDirectory())
+                    .forEach(this::addPlaylistToMenuList);
+            addToPlaylistMenu.getItems().addAll(playlistsInMenu);
+
+            // "Delete from playlist" only makes sense when viewing a specific non-folder playlist
+            var selectedPlaylist = selectedPlaylistProperty.get();
+            deleteFromPlaylistMenuItem.setVisible(
+                selectedPlaylist.isPresent() && ! selectedPlaylist.get().isDirectory());
+
             super.show(anchor, screenX, screenY);
         }
 
         private void addPlaylistToMenuList(ObservablePlaylist playlist) {
             Optional<ObservablePlaylist> selectedPlaylist = selectedPlaylistProperty.get();
-            if (! (selectedPlaylist.isPresent() && selectedPlaylist.get().equals(playlist))) {
+            // In playlist view, exclude the current playlist from the submenu (can't add tracks to itself)
+            if (selectedPlaylist.isEmpty() || ! selectedPlaylist.get().equals(playlist)) {
                 MenuItem playlistMenuItem = new MenuItem(playlist.getName());
                 playlistMenuItem.setOnAction(event -> playlist.getAudioItemsProperty().addAll(mainAudioItemTable.getSelectionModel().getSelectedItems()));
                 playlistsInMenu.add(playlistMenuItem);

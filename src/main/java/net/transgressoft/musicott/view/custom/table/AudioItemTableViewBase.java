@@ -2,6 +2,7 @@ package net.transgressoft.musicott.view.custom.table;
 
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
@@ -47,6 +48,9 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
     private final ApplicationEventPublisher applicationEventPublisher;
 
     private final FilteredList<ObservableAudioItem> filteredAudioItems;
+
+    private ListChangeListener<ObservableAudioItem> sourceItemsListener;
+    private ObservableList<ObservableAudioItem> currentSourceItems;
 
     protected TableColumn<ObservableAudioItem, String> nameCol;
     protected TableColumn<ObservableAudioItem, Artist> artistCol;
@@ -202,6 +206,31 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
     @EventListener
     public void searchTextTypedEvent(SearchTextTypedEvent event) {
         filteredAudioItems.setPredicate(filterAudioItemPredicate(event.searchText));
+    }
+
+    /**
+     * Sets the source items for this table view, routing them through the internal
+     * {@link FilteredList}/{@link SortedList} pipeline so that search filtering applies correctly.
+     * This must be used instead of {@code itemsProperty().bind()} to keep the filter chain connected.
+     *
+     * @param sourceItems the observable list of audio items to display
+     */
+    @SuppressWarnings("unchecked")
+    public void setSourceItems(ObservableList<ObservableAudioItem> sourceItems) {
+        if (currentSourceItems != null && sourceItemsListener != null) {
+            currentSourceItems.removeListener(sourceItemsListener);
+        }
+
+        ObservableList<ObservableAudioItem> backingList = (ObservableList<ObservableAudioItem>) filteredAudioItems.getSource();
+        backingList.setAll(sourceItems);
+
+        // Keep in sync with future changes to the source list
+        sourceItemsListener = change -> {
+            ObservableList<ObservableAudioItem> backing = (ObservableList<ObservableAudioItem>) filteredAudioItems.getSource();
+            backing.setAll(sourceItems);
+        };
+        sourceItems.addListener(sourceItemsListener);
+        currentSourceItems = sourceItems;
     }
 
     /**
