@@ -186,6 +186,7 @@ tasks.named('check') {
 
 test {
     useJUnitPlatform()
+    exclude '**/*IT.class'
 
     // Allow overriding headless mode
     if (System.getProperty('testfx.headless') == 'false') {
@@ -229,6 +230,61 @@ test {
             '--add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED',
             '--add-opens=javafx.base/javafx.collections=ALL-UNNAMED',
     ]
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests (*IT classes)'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform()
+    include '**/*IT.class'
+
+    if (System.getProperty('testfx.headless') == 'false') {
+        systemProperty 'testfx.robot', 'awt'
+        systemProperty 'java.awt.headless', 'false'
+    } else {
+        systemProperty 'testfx.headless', 'true'
+        systemProperty 'java.awt.headless', 'true'
+        systemProperty 'testfx.robot', 'glass'
+        systemProperty 'prism.order', 'sw'
+        systemProperty 'prism.text', 't2k'
+        systemProperty 'glass.platform', 'Gtk'
+        systemProperty 'monocle.platform', 'Headless'
+    }
+
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+
+    jvmArgs = [
+            '--enable-native-access=javafx.graphics',
+            '--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.glass.utils=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/javafx.scene.image=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.beans=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.collections=ALL-UNNAMED',
+    ]
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('integrationTest')
 }
 
 jacocoTestReport {

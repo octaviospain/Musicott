@@ -115,7 +115,8 @@ public class EditController {
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.setOnCloseRequest(e -> close());
 
-        multipleEditionConfirmationAlert = new MultipleEditionConfirmationAlert(stage);
+        // Defer MultipleEditionConfirmationAlert creation to first use; at this point the stage
+        // has no scene yet, and Dialog.initOwner() requires the owner to have a scene in JavaFX 24.
 
         titleNameLabel.textProperty().bind(titleTextField.textProperty());
         titleArtistLabel.textProperty().bind(artistTextField.textProperty());
@@ -269,6 +270,9 @@ public class EditController {
         if (! audioItemSelection.isEmpty()) {
             this.audioItemSelection = audioItemSelection;
             if (audioItemSelection.size() > 1) {
+                if (multipleEditionConfirmationAlert == null) {
+                    multipleEditionConfirmationAlert = new MultipleEditionConfirmationAlert(stage);
+                }
                 multipleEditionConfirmationAlert.showAndWait().ifPresent(result -> {
                     if (result.getButtonData().isDefaultButton()) {
                         updateFields();

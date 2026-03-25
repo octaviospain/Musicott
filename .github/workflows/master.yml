@@ -1,0 +1,74 @@
+name: master build
+
+on:
+    push:
+        branches:
+            - master
+        paths-ignore:
+            - "**.md"
+            - '.gitignore'
+            - 'docs/**'
+
+jobs:
+    build-analyze:
+        runs-on: ubuntu-latest
+
+        steps:
+            -   uses: actions/checkout@v4
+                with:
+                    fetch-depth: 0
+
+            -   name: Set up JDK 24
+                uses: actions/setup-java@v4
+                with:
+                    java-version: '24'
+                    distribution: 'zulu'
+
+            -   name: Install dependencies
+                run: |
+                    sudo apt-get update
+                    sudo apt-get install -y \
+                      libgstreamer1.0-0 \
+                      gstreamer1.0-plugins-base \
+                      gstreamer1.0-plugins-good \
+                      gstreamer1.0-plugins-bad \
+                      gstreamer1.0-libav \
+                      gstreamer1.0-tools \
+                      libgstreamer-plugins-base1.0-dev \
+                      xvfb
+                    export DISPLAY=:99.0
+                    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+                    echo "DISPLAY=:99.0" >> $GITHUB_ENV
+
+            -   name: Cache SonarQube packages
+                uses: actions/cache@v4
+                with:
+                    path: ~/.sonar/cache
+                    key: ${{ runner.os }}-sonar
+                    restore-keys: ${{ runner.os }}-sonar
+
+            -   name: Cache Gradle packages
+                uses: actions/cache@v4
+                with:
+                    path: |
+                        ~/.gradle/caches
+                        ~/.gradle/wrapper
+                    key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                    restore-keys: |
+                        ${{ runner.os }}-gradle-
+
+            -   name: Build
+                run: ./gradlew check
+
+            -   name: Upload Artifacts
+                uses: actions/upload-artifact@v4
+                with:
+                    name: release-build-libs
+                    path: build/libs
+                    retention-days: 14
+                    overwrite: true
+
+            -   name: SonarQube Scan
+                env:
+                    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+                run: ./gradlew sonar --info
