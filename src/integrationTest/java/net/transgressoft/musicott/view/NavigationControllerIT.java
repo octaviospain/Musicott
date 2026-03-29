@@ -44,6 +44,7 @@ import static net.transgressoft.commons.fx.music.playlist.ObservablePlaylistSeri
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.springframework.context.annotation.ComponentScan.Filter;
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
 /**
  * Integration test for {@link NavigationController}, validating the sidebar navigation rendering
@@ -64,7 +65,7 @@ class NavigationControllerIT extends ApplicationTestBase<VBox> {
     @Test
     @DisplayName("NavigationController renders navigation sidebar with visible playlist tree")
     void rendersNavigationSidebarWithVisiblePlaylistTree(FxRobot fxRobot) {
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         assertThat(fxRobot.lookup("#navigationPaneVBox").tryQuery()).isPresent();
         assertThat(fxRobot.lookup("#navigationVBox").tryQuery()).isPresent();
@@ -80,7 +81,7 @@ class NavigationControllerIT extends ApplicationTestBase<VBox> {
     @Test
     @DisplayName("NavigationController displays navigation mode list with All Tracks and Artists entries")
     void displaysNavigationModeListWithEntries(FxRobot fxRobot) {
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         assertThat(fxRobot.lookup("#navigationModeListView").tryQuery()).isPresent();
         assertThat(fxRobot.lookup("All tracks").tryQuery()).isPresent();
@@ -90,14 +91,14 @@ class NavigationControllerIT extends ApplicationTestBase<VBox> {
     @Test
     @DisplayName("NavigationController clears playlist selection on navigation mode switch")
     void clearsPlaylistSelectionOnNavigationModeSwitch(FxRobot fxRobot) {
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         // The navigation mode list should exist
         assertThat(fxRobot.lookup("#navigationModeListView").tryQuery()).isPresent();
 
         // Click "All tracks" navigation entry
         fxRobot.clickOn("All tracks");
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         // Verify playlist tree has no selection
         TreeView<?> treeView = fxRobot.lookup("#playlistTreeView").query();
@@ -107,7 +108,7 @@ class NavigationControllerIT extends ApplicationTestBase<VBox> {
     @Test
     @DisplayName("NavigationController sets selectedPlaylistProperty when playlist is clicked")
     void setsSelectedPlaylistPropertyOnPlaylistClick(FxRobot fxRobot) {
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         // The playlist tree should contain the "Test Playlist" created in the config
         TreeView<?> treeView = fxRobot.lookup("#playlistTreeView").query();
@@ -115,11 +116,11 @@ class NavigationControllerIT extends ApplicationTestBase<VBox> {
 
         // Expand the root to reveal "Test Playlist"
         Platform.runLater(() -> treeView.getRoot().setExpanded(true));
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         // Click on "Test Playlist" cell
         fxRobot.clickOn("Test Playlist");
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         // Verify selectedPlaylistProperty is set to the clicked playlist
         var selectedProperty = navigationControllerAndView.getController().selectedPlaylistProperty();

@@ -13,14 +13,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.testfx.api.FxRobot;
 import org.testfx.api.FxToolkit;
 import org.testfx.framework.junit5.ApplicationExtension;
-import org.testfx.util.WaitForAsyncUtils;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
 @SpringBootTest(classes = MusicottApplication.class)
 @ActiveProfiles("e2e")
 @ExtendWith(ApplicationExtension.class)
-class MusicottApplicationIT {
+class MusicottApplicationE2E {
 
 	static Stage testStage;
 
@@ -39,7 +39,7 @@ class MusicottApplicationIT {
 			testStage.setScene(scene);
 			testStage.show();
 		});
-		WaitForAsyncUtils.waitForFxEvents();
+		waitForFxEvents();
 	}
 
 	@AfterEach
@@ -49,7 +49,7 @@ class MusicottApplicationIT {
 				testStage.hide();
 			}
 		});
-		WaitForAsyncUtils.waitForFxEvents();
+		waitForFxEvents();
 	}
 
 	@Test

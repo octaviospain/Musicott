@@ -51,6 +51,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.context.annotation.ComponentScan.Filter;
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
 /**
  * Integration test for {@link PlayerController}, verifying that the playback controls render
@@ -75,7 +76,7 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
     @Test
     @DisplayName("PlayerController renders playback controls")
     void rendersPlaybackControls(FxRobot fxRobot) {
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         assertThat(fxRobot.lookup("#playerGridPane").tryQuery()).isPresent();
         assertThat(fxRobot.lookup("#playButton").tryQuery()).isPresent();
@@ -89,13 +90,13 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
     @DisplayName("PlayerController play button is disabled when library is empty")
     void playButtonIsDisabledWhenLibraryIsEmpty(FxRobot fxRobot) {
         Platform.runLater(() -> configuration.emptyLibraryProperty.set(true));
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         ToggleButton playButton = fxRobot.lookup("#playButton").queryAs(ToggleButton.class);
         assertThat(playButton.isDisable()).isTrue();
 
         Platform.runLater(() -> configuration.emptyLibraryProperty.set(false));
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
     }
 
     @Test
@@ -130,7 +131,7 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
 
         // Pause
         Platform.runLater(playerController::pauseEventListener);
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         // Track should still be present after pause (not cleared like stop)
         assertThat(playerController.currentTrack()).isPresent();
@@ -147,7 +148,7 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
 
         // Stop — call next() when queue is empty to trigger stop
         Platform.runLater(playerController::next);
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         try {
             WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> playerController.currentTrack().isEmpty());
@@ -177,7 +178,7 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
             playerController.playEventListener(new PlayItemEvent(List.of(audioItem), this));
             playerController.next();
         });
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         // waitFor checks the WaitForAsyncUtils exception queue (populated by the FX thread
         // uncaught exception handler). If jfxmedia is unavailable, the stored RuntimeException
@@ -214,7 +215,7 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
     }
 
     private void verifyPlaybackStartsForAudioItem(FxRobot fxRobot, ObservableAudioItem audioItem) throws Exception {
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
         var playerController = playerControllerAndView.getController();
 
         boolean mediaAvailable = startPlayback(playerController, audioItem);
@@ -224,7 +225,7 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
 
         // Stop playback to clean up for next test
         Platform.runLater(playerController::next);
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
     }
 
     @SuppressWarnings("unchecked")

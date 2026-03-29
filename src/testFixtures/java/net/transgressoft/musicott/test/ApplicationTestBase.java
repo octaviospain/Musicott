@@ -12,6 +12,8 @@ import org.testfx.api.FxToolkit;
 import org.testfx.framework.junit5.ApplicationTest;
 import org.testfx.util.WaitForAsyncUtils;
 
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
+
 public abstract class ApplicationTestBase<T extends Parent> extends ApplicationTest {
 
     protected static Stage testStage;
@@ -28,7 +30,7 @@ public abstract class ApplicationTestBase<T extends Parent> extends ApplicationT
             testStage.setScene(scene);
             testStage.show();
         });
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
     }
 
     @AfterAll
@@ -39,7 +41,7 @@ public abstract class ApplicationTestBase<T extends Parent> extends ApplicationT
             }
         });
         FxToolkit.cleanupStages();
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
     }
 
     protected abstract T javaFxComponent();
@@ -51,6 +53,6 @@ public abstract class ApplicationTestBase<T extends Parent> extends ApplicationT
                 testStage.hide();
             }
         });
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
     }
 }

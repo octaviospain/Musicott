@@ -22,12 +22,13 @@ import static org.mockito.Mockito.verify;
 import static org.testfx.api.FxAssert.verifyThat;
 import static org.testfx.matcher.base.NodeMatchers.hasChild;
 import static org.testfx.util.NodeQueryUtils.hasText;
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
 /**
  * @author Octavio Calleya
  */
 @ExtendWith ({ApplicationExtension.class, MockitoExtension.class})
-class ErrorDialogControllerIT {
+class ErrorDialogControllerTest {
 
     @Mock
     SimpleWebRedirectionService webRedirectionService;
@@ -51,24 +52,24 @@ class ErrorDialogControllerIT {
     @Test
     void showWithContentTest(FxRobot fxRobot) throws Exception {
         errorDialogController.showWithExpandableContent("Bazinga!", "Dolor ipsum amet", Collections.singleton("Line message"));
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         verifyThat("#titleLabel", hasText("Bazinga!"));
         verifyThat("#contentLabel", hasText("Dolor ipsum amet"));
         verifyThat("#seeDetailsHyperlink", hasText("See details"));
 
         fxRobot.clickOn("#seeDetailsToggleButton");
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         verifyThat("#rootBorderPane", hasChild("#textAreaVBox"));
 
         fxRobot.clickOn("#seeDetailsToggleButton");
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         verifyThat("#rootBorderPane", not(hasChild("#textAreaVBox")));
 
         errorDialogController.show("Error!");
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         verifyThat("#titleLabel", hasText("Error!"));
         verifyThat("#contentBorderPane", not(hasChild("#contentLabel")));
@@ -77,7 +78,7 @@ class ErrorDialogControllerIT {
         verifyThat("#reportInGithubHyperlink", hasText("Improve Musicott reporting this error on github."));
 
         fxRobot.clickOn("#reportInGithubHyperlink");
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         verify(webRedirectionService).navigateToGithub();
 

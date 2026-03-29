@@ -34,6 +34,7 @@ import static net.transgressoft.commons.music.audio.ImmutableArtist.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.context.annotation.ComponentScan.Filter;
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
 /**
  * Integration test for {@link ArtistViewController}, verifying artist list rendering and
@@ -69,7 +70,7 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         var artist = of("Laurent Garnier");
 
         Platform.runLater(() -> artistsProperty.add(artist));
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         assertThat(fxRobot.lookup("#artistsListView").tryQuery()).isPresent();
         assertThat(artistsProperty).hasSize(1);
@@ -79,10 +80,10 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
     @DisplayName("ArtistViewController validates album display when an artist is clicked")
     void validatesAlbumDisplayWhenArtistIsClicked(FxRobot fxRobot) {
         Platform.runLater(() -> artistsProperty.add(of("Bonobo")));
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         fxRobot.clickOn("Bonobo");
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         // Artist list view remains accessible after artist selection
         assertThat(fxRobot.lookup("#artistsListView").tryQuery()).isPresent();

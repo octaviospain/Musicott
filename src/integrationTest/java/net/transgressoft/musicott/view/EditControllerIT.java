@@ -26,6 +26,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
 /**
  * Integration test for {@link EditController}, verifying metadata editor view rendering
@@ -70,7 +71,7 @@ class EditControllerIT {
 
         var event = new OpenAudioItemEditorView(Set.of(mockItem), this);
         editController.editAudioItemsEventListener(event);
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         var captor = ArgumentCaptor.forClass(InvalidAudioItemsForEditionEvent.class);
         verify(applicationEventPublisher).publishEvent(captor.capture());

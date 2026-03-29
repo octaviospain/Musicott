@@ -23,6 +23,7 @@ import java.util.concurrent.CompletionException;
 import static org.mockito.Mockito.*;
 import static org.testfx.api.FxAssert.verifyThat;
 import static org.testfx.matcher.control.LabeledMatchers.hasText;
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
 /**
  * @author Octavio Calleya
@@ -71,20 +72,20 @@ class PreferencesControllerTest {
         when(lastFmService.logIn()).thenReturn(CompletableFuture.completedFuture(true));
 
         preferencesController.show();
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         fxRobot.clickOn("#lastFmTab");
 
         verifyThat("#lastFmAuthorizationButton", hasText("Grant permission"));
 
         fxRobot.clickOn("#lastFmAuthorizationButton");
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         verifyNoInteractions(errorPresenter);
         verifyThat("#lastFmAuthorizationButton", hasText("Logout"));
 
         fxRobot.clickOn("#lastFmAuthorizationButton");
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         verifyNoInteractions(errorPresenter);
         verifyThat("#lastFmAuthorizationButton", hasText("Grant permission"));
@@ -96,7 +97,7 @@ class PreferencesControllerTest {
         when(lastFmService.logIn()).thenReturn(CompletableFuture.completedFuture(false));
 
         preferencesController.show();
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         fxRobot.clickOn("#lastFmTab");
 
@@ -114,7 +115,7 @@ class PreferencesControllerTest {
         when(lastFmService.logIn()).thenReturn(CompletableFuture.failedFuture(new CompletionException("Failed!", null)));
 
         preferencesController.show();
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         fxRobot.clickOn("#lastFmTab");
 

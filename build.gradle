@@ -3,8 +3,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     id 'application'
+    id 'idea'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'java'
+    id 'java-test-fixtures'
     id 'jacoco'
     id 'org.jetbrains.kotlin.jvm' version '2.2.21'
     id 'org.jetbrains.kotlin.plugin.serialization' version '2.2.21'
@@ -24,6 +26,46 @@ ext {
     kotestVersion = '5.9.1'
     lirpVersion = '1.2.0'
     musicCommonsVersion = '0.5.0-SNAPSHOT'
+
+    testJvmArgs = [
+            '--enable-native-access=javafx.graphics',
+            '--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.glass.utils=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/javafx.scene.image=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.beans=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.collections=ALL-UNNAMED',
+    ]
+
+    configureTestFxSystemProperties = { Test task ->
+        if (System.getProperty('testfx.headless') == 'false') {
+            task.systemProperty 'testfx.robot', 'awt'
+            task.systemProperty 'java.awt.headless', 'false'
+        } else {
+            task.systemProperty 'testfx.headless', 'true'
+            task.systemProperty 'java.awt.headless', 'true'
+            task.systemProperty 'testfx.robot', 'glass'
+            task.systemProperty 'prism.order', 'sw'
+            task.systemProperty 'prism.text', 't2k'
+            task.systemProperty 'glass.platform', 'Gtk'
+            task.systemProperty 'monocle.platform', 'Headless'
+        }
+    }
 }
 
 dependencies {
@@ -62,6 +104,19 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
+    testFixturesImplementation "net.transgressoft:music-commons-test:$musicCommonsVersion"
+    testFixturesImplementation "net.transgressoft:music-commons-fx-test:$musicCommonsVersion"
+    testFixturesImplementation 'org.hamcrest:hamcrest:3.0'
+    testFixturesImplementation 'org.mockito:mockito-core:5.20.0'
+    testFixturesImplementation 'org.testfx:testfx-junit5:4.0.18'
+    testFixturesImplementation 'org.testfx:testfx-core:4.0.18'
+    testFixturesImplementation 'org.testfx:openjfx-monocle:21.0.2'
+    testFixturesImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testFixturesImplementation(platform('org.junit:junit-bom:6.0.1'))
+    testFixturesImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1'
+    testFixturesImplementation('org.junit.jupiter:junit-jupiter')
+
+    testImplementation testFixtures(project)
     testImplementation "net.transgressoft:music-commons-test:$musicCommonsVersion"
     testImplementation "net.transgressoft:music-commons-fx-test:$musicCommonsVersion"
     testImplementation 'org.hamcrest:hamcrest:3.0'
@@ -148,6 +203,10 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
 }
 
+tasks.withType(ProcessResources).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
 tasks.register('sourceJar', Jar) {
     dependsOn classes
     archiveClassifier.set('sources')
@@ -170,6 +229,57 @@ tasks.withType(KotlinJvmCompile).configureEach {
     }
 }
 
+sourceSets {
+    integrationTest {
+        java.srcDir 'src/integrationTest/java'
+        resources.srcDir 'src/integrationTest/resources'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+    uiTest {
+        java.srcDir 'src/uiTest/java'
+        resources.srcDir 'src/uiTest/resources'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+    e2eTest {
+        java.srcDir 'src/e2eTest/java'
+        resources.srcDir 'src/e2eTest/resources'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+idea {
+    module {
+        testSources.from(
+                sourceSets.integrationTest.java.srcDirs,
+                sourceSets.uiTest.java.srcDirs,
+                sourceSets.e2eTest.java.srcDirs
+        )
+        testResources.from(
+                sourceSets.integrationTest.resources.srcDirs,
+                sourceSets.uiTest.resources.srcDirs,
+                sourceSets.e2eTest.resources.srcDirs
+        )
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+    uiTestImplementation.extendsFrom testImplementation
+    uiTestRuntimeOnly.extendsFrom testRuntimeOnly
+    e2eTestImplementation.extendsFrom testImplementation
+    e2eTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+dependencies {
+    integrationTestImplementation testFixtures(project)
+    uiTestImplementation testFixtures(project)
+    e2eTestImplementation testFixtures(project)
+}
+
 sonar {
     properties {
         property 'sonar.host.url', 'http://sonar.transgressoft.net'
@@ -177,121 +287,81 @@ sonar {
         property 'sonar.projectName', 'musicott'
         property 'sonar.projectVersion', version
         property 'sonar.sources', 'src/main'
-        property 'sonar.exclusions', 'src/test/**'
+        property 'sonar.tests', 'src/test,src/integrationTest,src/uiTest,src/e2eTest'
+        property 'sonar.exclusions', 'src/test/**,src/integrationTest/**,src/uiTest/**,src/e2eTest/**'
+        property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/test/jacocoTestReport.xml'
+        property 'sonar.junit.reportPaths', [
+                'build/test-results/test',
+                'build/test-results/integrationTest',
+                'build/test-results/uiTest',
+                'build/test-results/e2eTest'
+        ].join(',')
     }
 }
 
-tasks.named('check') {
-    dependsOn tasks.named('jacocoTestReport', JacocoReport)
-}
-
-jacocoTestReport {
-    reports {
-        xml.required.set true
-        html.required = true
-    }
-}
+// ---------------------------------------------------------------------------
+// Test tasks
+// ---------------------------------------------------------------------------
 
 test {
     useJUnitPlatform()
-    exclude '**/*IT.class'
-
-    // Allow overriding headless mode
-    if (System.getProperty('testfx.headless') == 'false') {
-        systemProperty 'testfx.robot', 'awt'
-        systemProperty 'java.awt.headless', 'false'
-    } else {
-        systemProperty 'testfx.headless', 'true'
-        systemProperty 'java.awt.headless', 'true'
-        systemProperty 'testfx.robot', 'glass'
-        systemProperty 'prism.order', 'sw'
-        systemProperty 'prism.text', 't2k'
-        systemProperty 'glass.platform', 'Gtk'
-        systemProperty 'monocle.platform', 'Headless'
-    }
-
-    testLogging {
-        events "passed", "skipped", "failed"
-    }
-
-    jvmArgs = [
-            '--enable-native-access=javafx.graphics',
-            '--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
-            '--add-exports=javafx.graphics/com.sun.glass.utils=ALL-UNNAMED',
-            '--add-exports=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
-            '--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
-            '--add-exports=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
-            '--add-exports=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
-            '--add-exports=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
-            '--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
-            '--add-exports=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
-            '--add-opens=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
-            '--add-opens=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
-            '--add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
-            '--add-opens=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
-            '--add-opens=javafx.graphics/javafx.scene.image=ALL-UNNAMED',
-            '--add-opens=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
-            '--add-opens=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
-            '--add-opens=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
-            '--add-opens=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
-            '--add-opens=javafx.base/javafx.beans=ALL-UNNAMED',
-            '--add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED',
-            '--add-opens=javafx.base/javafx.collections=ALL-UNNAMED',
-    ]
+    configureTestFxSystemProperties(it)
+    testLogging { events "passed", "skipped", "failed" }
+    jvmArgs = testJvmArgs
 }
 
 tasks.register('integrationTest', Test) {
     description = 'Runs integration tests (*IT classes)'
     group = 'verification'
-    testClassesDirs = sourceSets.test.output.classesDirs
-    classpath = sourceSets.test.runtimeClasspath
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
     useJUnitPlatform()
     shouldRunAfter tasks.named('test')
-    include '**/*IT.class'
+    configureTestFxSystemProperties(it)
+    testLogging { events "passed", "skipped", "failed" }
+    jvmArgs = testJvmArgs
+}
 
-    if (System.getProperty('testfx.headless') == 'false') {
-        systemProperty 'testfx.robot', 'awt'
-        systemProperty 'java.awt.headless', 'false'
-    } else {
-        systemProperty 'testfx.headless', 'true'
-        systemProperty 'java.awt.headless', 'true'
-        systemProperty 'testfx.robot', 'glass'
-        systemProperty 'prism.order', 'sw'
-        systemProperty 'prism.text', 't2k'
-        systemProperty 'glass.platform', 'Gtk'
-        systemProperty 'monocle.platform', 'Headless'
+tasks.register('uiTest', Test) {
+    description = 'Runs UI tests (*UIT classes)'
+    group = 'verification'
+    testClassesDirs = sourceSets.uiTest.output.classesDirs
+    classpath = sourceSets.uiTest.runtimeClasspath
+    useJUnitPlatform()
+    shouldRunAfter tasks.named('integrationTest')
+    configureTestFxSystemProperties(it)
+    testLogging { events "passed", "skipped", "failed" }
+    jvmArgs = testJvmArgs
+}
+
+tasks.register('e2eTest', Test) {
+    description = 'Runs end-to-end tests (*E2E classes)'
+    group = 'verification'
+    testClassesDirs = sourceSets.e2eTest.output.classesDirs
+    classpath = sourceSets.e2eTest.runtimeClasspath
+    useJUnitPlatform()
+    shouldRunAfter tasks.named('uiTest')
+    configureTestFxSystemProperties(it)
+    testLogging { events "passed", "skipped", "failed" }
+    jvmArgs = testJvmArgs
+}
+
+jacocoTestReport {
+    executionData.setFrom(fileTree(buildDir).include('jacoco/*.exec'))
+    sourceDirectories.from(sourceSets.main.allSource.srcDirs)
+    classDirectories.from(sourceSets.main.output)
+    reports {
+        xml.required.set true
+        html.required = true
     }
-
-    testLogging {
-        events "passed", "skipped", "failed"
-    }
-
-    jvmArgs = [
-            '--enable-native-access=javafx.graphics',
-            '--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
-            '--add-exports=javafx.graphics/com.sun.glass.utils=ALL-UNNAMED',
-            '--add-exports=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
-            '--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
-            '--add-exports=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
-            '--add-exports=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
-            '--add-exports=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
-            '--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
-            '--add-exports=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
-            '--add-opens=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
-            '--add-opens=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
-            '--add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
-            '--add-opens=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
-            '--add-opens=javafx.graphics/javafx.scene.image=ALL-UNNAMED',
-            '--add-opens=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
-            '--add-opens=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
-            '--add-opens=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
-            '--add-opens=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
-            '--add-opens=javafx.base/javafx.beans=ALL-UNNAMED',
-            '--add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED',
-            '--add-opens=javafx.base/javafx.collections=ALL-UNNAMED',
-    ]
+    dependsOn tasks.named('test'), tasks.named('integrationTest'),
+              tasks.named('uiTest'), tasks.named('e2eTest')
 }
 
 tasks.named('check') {
+    dependsOn tasks.named('test')
     dependsOn tasks.named('integrationTest')
+    dependsOn tasks.named('uiTest')
+    dependsOn tasks.named('e2eTest')
+    dependsOn tasks.named('jacocoTestReport', JacocoReport)
 }

@@ -26,6 +26,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testfx.api.FxAssert.verifyThat;
 import static org.testfx.matcher.base.NodeMatchers.isVisible;
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
 /**
  * Integration test for {@link ItunesPlaylistsPickerController}, validating the playlist picker UI
@@ -73,7 +74,7 @@ class ItunesPlaylistsPickerControllerTest {
         when(playlist.getTotalSize()).thenReturn(0L);
 
         Platform.runLater(() -> controller.pickPlaylists(List.of(playlist)));
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         ListView<ItunesPlaylist> sourcePlaylists = fxRobot.lookup("#sourcePlaylists").query();
         ListView<ItunesPlaylist> targetPlaylists = fxRobot.lookup("#targetPlaylists").query();
@@ -82,10 +83,10 @@ class ItunesPlaylistsPickerControllerTest {
         assertThat(targetPlaylists.getItems()).isEmpty();
 
         Platform.runLater(() -> sourcePlaylists.getSelectionModel().select(0));
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         fxRobot.clickOn("#addSelectedButton");
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         assertThat(sourcePlaylists.getItems()).isEmpty();
         assertThat(targetPlaylists.getItems()).hasSize(1);

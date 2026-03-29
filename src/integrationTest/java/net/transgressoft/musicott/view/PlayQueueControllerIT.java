@@ -25,6 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testfx.api.FxAssert.verifyThat;
 import static org.testfx.matcher.base.NodeMatchers.isVisible;
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
 /**
  * Integration test for {@link PlayQueueController}, verifying play queue view rendering and
@@ -60,7 +61,7 @@ class PlayQueueControllerIT {
     @Test
     @DisplayName("PlayQueueController renders play queue view")
     void rendersPlayQueueView() {
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         verifyThat("#playQueuePane", isVisible());
         verifyThat("#queuesListView", isVisible());
@@ -72,13 +73,13 @@ class PlayQueueControllerIT {
     @Test
     @DisplayName("PlayQueueController toggles between queue and history queue views")
     void togglesBetweenQueueAndHistoryQueueViews(FxRobot fxRobot) {
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         Label titleLabel = fxRobot.lookup("#titleQueueLabel").queryAs(Label.class);
         assertThat(titleLabel.getText()).isEqualTo("Play Queue");
 
         fxRobot.clickOn("#historyQueueButton");
-        WaitForAsyncUtils.waitForFxEvents();
+        waitForFxEvents();
 
         assertThat(titleLabel.getText()).isEqualTo("Recently played");
         ToggleButton historyButton = fxRobot.lookup("#historyQueueButton").queryAs(ToggleButton.class);
