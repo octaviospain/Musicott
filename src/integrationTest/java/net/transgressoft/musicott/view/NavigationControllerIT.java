@@ -1,5 +1,6 @@
 package net.transgressoft.musicott.view;
 
+import net.transgressoft.commons.fx.music.*;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
@@ -144,9 +145,15 @@ class NavigationControllerITConfiguration {
     }
 
     @Bean
-    public ObservablePlaylistHierarchy playlistRepository() {
-        var repository = new ObservablePlaylistHierarchy(
-                new JsonFileRepository<>(playlistsFile, ObservablePlaylistMapSerializer()));
+    public FXMusicLibrary musicLibrary() {
+        return FXMusicLibrary.builder()
+                .playlistHierarchyJsonFile(playlistsFile)
+                .build();
+    }
+
+    @Bean
+    public ObservablePlaylistHierarchy playlistRepository(FXMusicLibrary musicLibrary) {
+        var repository = musicLibrary.playlistHierarchy();
         repository.createPlaylistDirectory("ROOT_PLAYLIST");
         var testPlaylist = repository.createPlaylist("Test Playlist");
         repository.addPlaylistsToDirectory(Set.of(testPlaylist), "ROOT_PLAYLIST");

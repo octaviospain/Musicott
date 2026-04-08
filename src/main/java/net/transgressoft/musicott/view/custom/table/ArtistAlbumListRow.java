@@ -123,10 +123,9 @@ public class ArtistAlbumListRow extends HBox {
     }
 
     private String buildGenresString() {
-        return containedAudioItems.stream()
-                .filter(audioItem -> ! Genre.UNDEFINED.equals(audioItem.getGenre()))
-                .map(observableAudioItem -> observableAudioItem.getGenre().capitalize())
-                .collect(Collectors.joining(", "));
+        return Genre.joinGenres(containedAudioItems.stream()
+                .flatMap(observableAudioItem -> observableAudioItem.getGenres().stream())
+                .collect(Collectors.toSet()));
     }
 
     private String buildYearsString() {
@@ -197,7 +196,7 @@ public class ArtistAlbumListRow extends HBox {
     private ReadOnlyIntegerProperty listenAudioItemChangesAndSort(ObservableAudioItem audioItem) {
         subscribe(audioItem.getTrackNumberProperty(), tn -> containedAudioItems.sort(this::audioItemComparator));
         subscribe(audioItem.getDiscNumberProperty(), dn -> containedAudioItems.sort(this::audioItemComparator));
-        subscribe(audioItem.getGenreProperty(), g -> genresLabel.setText(buildGenresString()));
+        subscribe(audioItem.getGenresProperty(), g -> genresLabel.setText(buildGenresString()));
         subscribe(audioItem.getAlbumProperty(), y -> {
             yearLabel.setText(buildYearsString());
             updateAlbumLabelLabel();

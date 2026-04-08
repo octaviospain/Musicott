@@ -15,23 +15,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.     *
  ******************************************************************************/
 
-package net.transgressoft.config
+package net.transgressoft.musicott.config
 
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.input.KeyCombination
+import net.transgressoft.commons.fx.music.FXMusicLibrary
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItemMapSerializer
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistMapSerializer
 import net.transgressoft.commons.music.waveform.AudioWaveform
-import net.transgressoft.commons.music.waveform.AudioWaveformMapSerializer
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository
-import net.transgressoft.commons.music.waveform.DefaultAudioWaveformRepository
-import net.transgressoft.lirp.persistence.json.JsonFileRepository
-import net.transgressoft.musicott.config.ApplicationPaths
 import org.apache.commons.lang3.SystemUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
@@ -42,7 +37,7 @@ import java.nio.file.Path
 import java.util.Optional
 
 @Configuration
-open class ApplicationConfiguration @Autowired constructor(private val applicationPaths: ApplicationPaths) {
+class ApplicationConfiguration @Autowired constructor(private val applicationPaths: ApplicationPaths) {
 
     init {
         initializeApplicationFiles()
@@ -69,7 +64,7 @@ open class ApplicationConfiguration @Autowired constructor(private val applicati
     }
 
     @Bean
-    open fun operativeSystemKeyModifier(): KeyCombination.Modifier =
+    fun operativeSystemKeyModifier(): KeyCombination.Modifier =
         if (SystemUtils.IS_OS_MAC_OSX)
             KeyCombination.META_DOWN
         else
@@ -81,36 +76,27 @@ open class ApplicationConfiguration @Autowired constructor(private val applicati
      * tests and production code share the same observable instance.
      */
     @Bean
-    open fun selectedPlaylistProperty(): ObjectProperty<Optional<ObservablePlaylist>> =
+    fun selectedPlaylistProperty(): ObjectProperty<Optional<ObservablePlaylist>> =
         SimpleObjectProperty(null, "selected playlist", Optional.empty())
 
     @Bean
-    open fun settingsRepository(): SettingsRepository =
-        SettingsRepository(applicationPaths.settingsPath.toFile())
+    fun settingsRepository(): SettingsRepository = SettingsRepository(applicationPaths.settingsPath.toFile())
 
     @Bean
-    open fun audioLibrary(): ObservableAudioLibrary =
-        ObservableAudioLibrary(
-            JsonFileRepository(applicationPaths.audioItemsPath.toFile(), ObservableAudioItemMapSerializer))
+    fun musicLibrary(): FXMusicLibrary =
+        FXMusicLibrary.builder()
+            .audioLibraryJsonFile(applicationPaths.audioItemsPath.toFile())
+            .playlistHierarchyJsonFile(applicationPaths.playlistsPath.toFile())
+            .waveformRepositoryJsonFile(applicationPaths.waveformsPath.toFile())
+            .build()
 
     @Bean
-    open fun playlistHierarchy(audioLibrary: ObservableAudioLibrary): ObservablePlaylistHierarchy =
-        ObservablePlaylistHierarchy(
-            JsonFileRepository(applicationPaths.playlistsPath.toFile(), ObservablePlaylistMapSerializer),
-            audioLibrary)
+    fun audioLibrary(musicLibrary: FXMusicLibrary): ObservableAudioLibrary = musicLibrary.audioLibrary()
 
     @Bean
-    open fun waveformRepository(
-        observablePlaylistHierarchy: ObservablePlaylistHierarchy,
-        audioLibrary: ObservableAudioLibrary
-    ): AudioWaveformRepository<AudioWaveform, ObservableAudioItem> {
+    fun playlistHierarchy(musicLibrary: FXMusicLibrary): ObservablePlaylistHierarchy = musicLibrary.playlistHierarchy()
 
-        val audioWaveformRepository =
-            DefaultAudioWaveformRepository<ObservableAudioItem>(
-                JsonFileRepository(applicationPaths.waveformsPath.toFile(), AudioWaveformMapSerializer))
-
-        audioLibrary.subscribe(observablePlaylistHierarchy)
-        audioLibrary.subscribe(audioWaveformRepository)
-        return audioWaveformRepository
-    }
+    @Bean
+    fun waveformRepository(musicLibrary: FXMusicLibrary): AudioWaveformRepository<AudioWaveform, ObservableAudioItem> =
+        musicLibrary.waveformRepository()
 }

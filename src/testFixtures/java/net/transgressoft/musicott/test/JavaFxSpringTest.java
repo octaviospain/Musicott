@@ -2,6 +2,7 @@ package net.transgressoft.musicott.test;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.annotation.AliasFor;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.testfx.framework.junit5.ApplicationExtension;
@@ -19,6 +20,9 @@ import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER
 @DirtiesContext(classMode = AFTER_EACH_TEST_METHOD)
 @ExtendWith(ApplicationExtension.class)
 public @interface JavaFxSpringTest {
+    @AliasFor(annotation = SpringBootTest.class, attribute = "classes")
     Class<?>[] classes() default {};
+
+    @AliasFor(annotation = SpringBootTest.class, attribute = "properties")
     String[] properties() default {};
 }

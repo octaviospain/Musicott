@@ -1,8 +1,7 @@
 package net.transgressoft.musicott;
 
-import net.transgressoft.config.*;
-import net.transgressoft.musicott.config.ApplicationPaths;
-import net.transgressoft.musicott.config.LastFmConfiguration;
+import net.transgressoft.musicott.config.*;
+import net.transgressoft.musicott.config.*;
 import net.transgressoft.musicott.events.StageReadyEvent;
 import net.transgressoft.musicott.events.StopApplicationEvent;
 
@@ -18,22 +17,7 @@ import net.rgielen.fxweaver.spring.SpringFxWeaver;
 import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
-import org.springframework.boot.autoconfigure.task.TaskSchedulingAutoConfiguration;
-import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.embedded.EmbeddedWebServerFactoryCustomizerAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.servlet.DispatcherServletAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.context.event.EventListener;
@@ -47,22 +31,6 @@ import java.util.function.Supplier;
 @Configuration
 @Import(ApplicationConfiguration.class)
 @ComponentScan
-@EnableConfigurationProperties
-@EnableAutoConfiguration(exclude = {
-        WebMvcAutoConfiguration.class,
-        DataSourceAutoConfiguration.class,
-        JmxAutoConfiguration.class,
-        JacksonAutoConfiguration.class,
-        SecurityAutoConfiguration.class,
-        EmbeddedWebServerFactoryCustomizerAutoConfiguration.class,
-        ErrorMvcAutoConfiguration.class,
-        DispatcherServletAutoConfiguration.class,
-        ValidationAutoConfiguration.class,
-        TaskExecutionAutoConfiguration.class,
-        TaskSchedulingAutoConfiguration.class,
-        RabbitAutoConfiguration.class,
-        MongoAutoConfiguration.class
-})
 public class MusicottApplication {
 
     public static void main(String[] args) {

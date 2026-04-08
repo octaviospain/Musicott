@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.     *
  ******************************************************************************/
 
-package net.transgressoft.config
+package net.transgressoft.musicott.config
 
 import net.transgressoft.commons.music.audio.AudioFileType
 import net.transgressoft.lirp.persistence.json.FlexibleJsonFileRepository

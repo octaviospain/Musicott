@@ -3,7 +3,7 @@ package net.transgressoft.musicott.view;
 import javafx.beans.property.*;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.config.*;
+import net.transgressoft.musicott.config.*;
 import net.transgressoft.musicott.events.ExportSelectedPlaylistsEvent;
 import net.transgressoft.musicott.events.SelectCurrentPlayingAudioItemEvent;
 import net.transgressoft.musicott.events.StatusMessageUpdateEvent;

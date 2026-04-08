@@ -1,7 +1,7 @@
 package net.transgressoft.musicott.view;
 
 import net.transgressoft.commons.music.audio.AudioFileType;
-import net.transgressoft.config.*;
+import net.transgressoft.musicott.config.SettingsRepository;
 import net.transgressoft.musicott.services.lastfm.LastFmService;
 
 import javafx.beans.property.BooleanProperty;
@@ -14,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
-import org.testfx.util.WaitForAsyncUtils;
 
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -32,7 +31,7 @@ import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 class PreferencesControllerTest {
 
     PreferencesController preferencesController;
-    SettingsRepository settingsRepository;
+    net.transgressoft.musicott.config.SettingsRepository settingsRepository;
     LastFmService lastFmService;
     BooleanProperty loggedInProperty;
     ErrorPresenter errorPresenter;

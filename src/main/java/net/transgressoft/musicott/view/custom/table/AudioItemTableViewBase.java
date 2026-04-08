@@ -55,7 +55,7 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
     protected TableColumn<ObservableAudioItem, String> nameCol;
     protected TableColumn<ObservableAudioItem, Artist> artistCol;
     protected TableColumn<ObservableAudioItem, Album> albumCol;
-    protected TableColumn<ObservableAudioItem, Genre> genreCol;
+    protected TableColumn<ObservableAudioItem, Set<Genre>> genreCol;
     protected TableColumn<ObservableAudioItem, String> commentsCol;
     protected TableColumn<ObservableAudioItem, Album> albumArtistCol;
     protected TableColumn<ObservableAudioItem, Album> labelCol;
@@ -104,7 +104,7 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         albumCol.setPrefWidth(200);
 
         genreCol = new TableColumn<>("Genre");
-        genreCol.setCellValueFactory(cellData -> cellData.getValue().getGenreProperty());
+        genreCol.setCellValueFactory(cellData -> cellData.getValue().getGenresProperty());
         genreCol.setCellFactory(GenreTableCell::new);
         genreCol.setPrefWidth(120);
 
@@ -511,18 +511,18 @@ class BitRateTableCell extends TableCell<ObservableAudioItem, Number> {
     }
 }
 
-class GenreTableCell extends TableCell<ObservableAudioItem, Genre> {
+class GenreTableCell extends TableCell<ObservableAudioItem, Set<Genre>> {
 
-    public GenreTableCell(TableColumn<ObservableAudioItem, Genre> column) {
+    public GenreTableCell(TableColumn<ObservableAudioItem, Set<Genre>> column) {
         super();
     }
 
     @Override
-    protected void updateItem(Genre item, boolean empty) {
+    protected void updateItem(Set<Genre> item, boolean empty) {
         super.updateItem(item, empty);
-        if (empty || item == null || Genre.UNDEFINED.equals(item))
+        if (empty || item == null || item.isEmpty())
             setText("");
         else
-            setText(item.capitalize());
+            setText(Genre.joinGenres(item));
     }
 }

@@ -8,11 +8,12 @@ plugins {
     id 'java'
     id 'java-test-fixtures'
     id 'jacoco'
-    id 'org.jetbrains.kotlin.jvm' version '2.2.21'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '2.2.21'
-    id 'org.sonarqube' version '7.0.1.6134'
-    id 'org.springframework.boot' version '3.5.7'
-    id 'pl.allegro.tech.build.axion-release' version '1.21.0'
+    id 'org.jetbrains.kotlin.jvm' version '2.3.20'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.3.20'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.3.20'
+    id 'org.sonarqube' version '7.2.3.7755'
+    id 'org.springframework.boot' version '4.0.5'
+    id 'pl.allegro.tech.build.axion-release' version '1.21.1'
 }
 
 repositories {
@@ -22,9 +23,9 @@ repositories {
 }
 
 ext {
-    kotlinVersion = '2.2.21'
+    kotlinVersion = '2.3.20'
     kotestVersion = '5.9.1'
-    lirpVersion = '1.2.0'
+    lirpVersion = '2.3.1'
     musicCommonsVersion = '0.5.0-SNAPSHOT'
 
     testJvmArgs = [
@@ -70,11 +71,11 @@ ext {
 
 dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-    implementation 'org.apache.commons:commons-lang3:3.19.0'
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.20.1'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.20'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.20.1'
+    implementation 'org.apache.commons:commons-lang3:3.20.0'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.21.2'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.21'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.2'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.21.2'
     implementation 'com.google.guava:guava:33.5.0-jre'
     implementation 'com.neovisionaries:nv-i18n:1.29'
     implementation 'com.worldsworstsoftware:itunesutilities:1.2'
@@ -84,7 +85,7 @@ dependencies {
     implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.10.1'
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0'
     implementation 'net.jthink:jaudiotagger:3.0.1'
     implementation 'net.rgielen:javafx-weaver-core:2.0.1'
     implementation 'net.rgielen:javafx-weaver-spring:2.0.1'
@@ -92,11 +93,11 @@ dependencies {
     implementation "net.transgressoft:music-commons-core:$musicCommonsVersion"
     implementation "net.transgressoft:music-commons-fx:$musicCommonsVersion"
     implementation "net.transgressoft:lirp-core:$lirpVersion"
-    implementation 'org.apache.commons:commons-lang3:3.19.0'
-    implementation 'org.apache.poi:poi-ooxml:5.4.1'
-    implementation 'org.controlsfx:controlsfx:11.2.2'
+    implementation 'org.apache.commons:commons-lang3:3.20.0'
+    implementation 'org.apache.poi:poi-ooxml:5.5.1'
+    implementation 'org.controlsfx:controlsfx:11.2.3'
     implementation 'org.fxmisc.easybind:easybind:1.0.3'
-    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot'
     implementation 'org.springframework.boot:spring-boot-starter-logging'
     implementation 'org.yaml:snakeyaml:2.2'
 
@@ -107,12 +108,12 @@ dependencies {
     testFixturesImplementation "net.transgressoft:music-commons-test:$musicCommonsVersion"
     testFixturesImplementation "net.transgressoft:music-commons-fx-test:$musicCommonsVersion"
     testFixturesImplementation 'org.hamcrest:hamcrest:3.0'
-    testFixturesImplementation 'org.mockito:mockito-core:5.20.0'
+    testFixturesImplementation 'org.mockito:mockito-core:5.23.0'
     testFixturesImplementation 'org.testfx:testfx-junit5:4.0.18'
     testFixturesImplementation 'org.testfx:testfx-core:4.0.18'
     testFixturesImplementation 'org.testfx:openjfx-monocle:21.0.2'
     testFixturesImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testFixturesImplementation(platform('org.junit:junit-bom:6.0.1'))
+    testFixturesImplementation(platform('org.junit:junit-bom:6.0.3'))
     testFixturesImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1'
     testFixturesImplementation('org.junit.jupiter:junit-jupiter')
 
@@ -120,12 +121,12 @@ dependencies {
     testImplementation "net.transgressoft:music-commons-test:$musicCommonsVersion"
     testImplementation "net.transgressoft:music-commons-fx-test:$musicCommonsVersion"
     testImplementation 'org.hamcrest:hamcrest:3.0'
-    testImplementation 'org.mockito:mockito-core:5.20.0'
+    testImplementation 'org.mockito:mockito-core:5.23.0'
     testImplementation 'org.testfx:testfx-junit5:4.0.18'
     testImplementation 'org.testfx:testfx-core:4.0.18'
     testImplementation 'org.testfx:openjfx-monocle:21.0.2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation(platform('org.junit:junit-bom:6.0.1'))
+    testImplementation(platform('org.junit:junit-bom:6.0.3'))
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1'
     testImplementation('org.junit.jupiter:junit-jupiter')
 }
@@ -184,8 +185,6 @@ version = scmVersion.version
 description = 'musicott'
 
 configurations.configureEach {
-    exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
-    exclude group: 'org.springframework.boot', module: 'spring-boot-starter-web'
     resolutionStrategy.force 'org.yaml:snakeyaml:2.2'
     resolutionStrategy {
         cacheChangingModulesFor 0, 'seconds'
@@ -194,6 +193,9 @@ configurations.configureEach {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.group == 'org.jetbrains.kotlinx' && details.requested.name.startsWith('kotlinx-coroutines')) {
             details.useVersion('1.10.1')
+        }
+        if (details.requested.group == 'org.jetbrains.kotlinx' && details.requested.name.startsWith('kotlinx-serialization')) {
+            details.useVersion('1.10.0')
         }
     }
 }

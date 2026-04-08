@@ -284,7 +284,7 @@ class PlayerControllerITConfiguration {
     @Bean
     public ObservableAudioLibrary audioLibrary() {
         var library = mock(ObservableAudioLibrary.class);
-        when(library.emptyLibraryProperty()).thenReturn(emptyLibraryProperty);
+        when(library.getEmptyLibraryProperty()).thenReturn(emptyLibraryProperty);
         return library;
     }
 

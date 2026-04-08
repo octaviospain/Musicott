@@ -5,11 +5,11 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import net.transgressoft.commons.fx.music.*;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
-import net.transgressoft.lirp.persistence.json.JsonFileRepository;
 import net.transgressoft.musicott.test.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,13 +25,13 @@ import org.testfx.util.WaitForAsyncUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
-import static net.transgressoft.commons.fx.music.audio.ObservableAudioItemSerializerKt.*;
-import static net.transgressoft.commons.fx.music.playlist.ObservablePlaylistSerializerKt.*;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.*;
@@ -207,9 +207,11 @@ class PlaylistTreeViewTestConfiguration {
     }
 
     @Bean
-    public ObservableAudioLibrary audioRepository() {
-        return new ObservableAudioLibrary(
-                new JsonFileRepository<>(audioItemsFile, ObservableAudioItemMapSerializer()));
+    public FXMusicLibrary musicLibrary() {
+        return FXMusicLibrary.builder()
+                .audioLibraryJsonFile(audioItemsFile)
+                .playlistHierarchyJsonFile(playlistsFile)
+                .build();
     }
 
     // ├──Best hits
@@ -217,14 +219,21 @@ class PlaylistTreeViewTestConfiguration {
     // │     └──>rock hit 1
     // └──This weeks' favorites songs
     @Bean
-    public ObservablePlaylistHierarchy playlistRepository() {
-        var playlistRepository = spy(
-                new ObservablePlaylistHierarchy(
-                        new JsonFileRepository<>(playlistsFile, ObservablePlaylistMapSerializer()))
-        );
+    public ObservableAudioLibrary audioRepository(FXMusicLibrary musicLibrary) {
+        return musicLibrary.audioLibrary();
+    }
 
-        var rockHit1 = mock(ObservableAudioItem.class);
-        when(rockHit1.getCoverImageProperty()).thenReturn(new SimpleObjectProperty<>(Optional.empty()));
+    @Bean
+    public ObservablePlaylistHierarchy playlistRepository(FXMusicLibrary musicLibrary) throws Exception {
+        var audioLibrary = musicLibrary.audioLibrary();
+        var playlistRepository = spy(musicLibrary.playlistHierarchy());
+
+        var tempFile = Files.createTempFile("musicott-test-", ".mp3");
+        tempFile.toFile().deleteOnExit();
+        try (InputStream in = getClass().getResourceAsStream("/testfiles/testeable.mp3")) {
+            Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        }
+        ObservableAudioItem rockHit1 = audioLibrary.createFromFile(tempFile);
 
         var bestHitsPlaylist = playlistRepository.createPlaylistDirectory("Best hits");
         var technoPlaylist = playlistRepository.createPlaylist("Techno", Collections.singletonList(rockHit1));

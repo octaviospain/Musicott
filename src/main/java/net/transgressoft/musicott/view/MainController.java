@@ -27,9 +27,10 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
 import net.transgressoft.commons.music.audio.AudioFileType;
-import net.transgressoft.config.*;
+import net.transgressoft.musicott.config.*;
+import net.transgressoft.musicott.config.*;
 import net.transgressoft.musicott.events.*;
-import net.transgressoft.musicott.services.MediaImportService;
+import net.transgressoft.musicott.service.MediaImportService;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
 import net.transgressoft.musicott.view.custom.table.FullAudioItemTableView;
@@ -203,7 +204,7 @@ public class MainController {
             }
         });
 
-        audioRepository.emptyLibraryProperty().addListener((observable, wasEmpty, isEmpty) -> {
+        audioRepository.getEmptyLibraryProperty().addListener((observable, wasEmpty, isEmpty) -> {
             if (Boolean.TRUE.equals(isEmpty)) {
                 miniatureCoverImageView.imageProperty().unbind();
                 miniatureCoverImageView.setImage(defaultPlaylistImage);
@@ -235,7 +236,7 @@ public class MainController {
 
     private void initAudioItemTable() {
         mainAudioItemTable = applicationContext.getBean(FullAudioItemTableView.class);
-        mainAudioItemTable.setSourceItems(audioRepository.audioItemsProperty());
+        mainAudioItemTable.setSourceItems(audioRepository.getAudioItemsProperty());
 
         GridPane.setHgrow(mainAudioItemTable, Priority.ALWAYS);
         GridPane.setVgrow(mainAudioItemTable, Priority.ALWAYS);
@@ -334,7 +335,7 @@ public class MainController {
     }
 
     private void showAllAudioItemsView() {
-        mainAudioItemTable.setSourceItems(audioRepository.audioItemsProperty());
+        mainAudioItemTable.setSourceItems(audioRepository.getAudioItemsProperty());
         tableStackPane.getChildren().remove(artistsLayout);
         miniatureCoverImageView.setVisible(true);
         hideTableInfoPane();
@@ -615,7 +616,7 @@ public class MainController {
                 FileChooser chooser = new FileChooser();
                 chooser.setTitle("Open file(s)...");
                 chooser.getExtensionFilters().addAll(buildAudioExtensionFilters());
-                List<File> filesToOpen = chooser.showOpenMultipleDialog(rootBorderPane.getScene().getWindow());
+                var filesToOpen = chooser.showOpenMultipleDialog(rootBorderPane.getScene().getWindow());
                 if (filesToOpen != null && ! filesToOpen.isEmpty()) {
                     mediaImportService.importFiles(filesToOpen);
                 }

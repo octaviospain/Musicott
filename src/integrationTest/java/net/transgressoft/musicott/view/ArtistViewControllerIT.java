@@ -108,7 +108,7 @@ class ArtistViewControllerITConfiguration {
     @SuppressWarnings("unchecked")
     public ObservableAudioLibrary audioRepository(ReadOnlySetProperty<Artist> artistsProperty) {
         var repository = mock(ObservableAudioLibrary.class);
-        when(repository.artistsProperty()).thenReturn(artistsProperty);
+        when(repository.getArtistsProperty()).thenReturn(artistsProperty);
         when(repository.getArtistCatalogPublisher()).thenReturn(mock(LirpEventPublisher.class));
         return repository;
     }

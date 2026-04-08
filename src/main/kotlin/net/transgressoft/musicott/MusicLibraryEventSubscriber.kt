@@ -9,9 +9,7 @@ import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 
 @Component
-class MusicLibraryEventSubscriber(
-    private val applicationEventPublisher: ApplicationEventPublisher,
-) {
+class MusicLibraryEventSubscriber(private val applicationEventPublisher: ApplicationEventPublisher) {
     private val logger = KotlinLogging.logger {}
 
     @EventListener

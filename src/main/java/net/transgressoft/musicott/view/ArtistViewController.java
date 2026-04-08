@@ -95,9 +95,9 @@ public class ArtistViewController {
      * set semantics.
      */
     private void configureArtistsListViewBacking() {
-        var artistsBackingList = FXCollections.observableArrayList(audioRepository.artistsProperty());
+        var artistsBackingList = FXCollections.observableArrayList(audioRepository.getArtistsProperty());
 
-        audioRepository.artistsProperty().addListener((SetChangeListener<Artist>) change -> {
+        audioRepository.getArtistsProperty().addListener((SetChangeListener<Artist>) change -> {
             if (change.wasAdded()) {
                 Platform.runLater(() -> artistsBackingList.add(change.getElementAdded()));
             }

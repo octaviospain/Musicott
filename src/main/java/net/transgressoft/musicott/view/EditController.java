@@ -1,10 +1,8 @@
 package net.transgressoft.musicott.view;
 
+import javafx.scene.control.Label;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.music.audio.Artist;
-import net.transgressoft.commons.music.audio.Genre;
-import net.transgressoft.commons.music.audio.ImmutableArtist;
-import net.transgressoft.commons.music.audio.ImmutableLabel;
+import net.transgressoft.commons.music.audio.*;
 import net.transgressoft.musicott.events.EditAudioItemsMetadataEvent;
 import net.transgressoft.musicott.events.ExceptionEvent;
 import net.transgressoft.musicott.events.InvalidAudioItemsForEditionEvent;
@@ -347,7 +345,9 @@ public class EditController {
     }
 
     private String commonGenre() {
-        return commonString(audioItemSelection.stream().map(t -> t.getGenre().name()).collect(toList()));
+        return commonString(audioItemSelection.stream()
+                .map(it -> Genre.joinGenres(it.getGenres()))
+                .toList());
     }
 
     private String commonComments() {
@@ -403,13 +403,13 @@ public class EditController {
        boolean isCompilation = isCompilationCheckBox.isIndeterminate() ? null : isCompilationCheckBox.isSelected();
        Short year = getEditionFieldResult(yearTextField) != null ? Short.valueOf(getEditionFieldResult(yearTextField)) : null;
        net.transgressoft.commons.music.audio.Label label = getEditionFieldResult(labelTextField) != null ? ImmutableLabel.of(getEditionFieldResult(labelTextField)) : null;
-       Genre genre = getEditionFieldResult(genreTextField) != null ? Genre.parseGenre(getEditionFieldResult(genreTextField)) : null;
+       Set<Genre> genres = getEditionFieldResult(genreTextField) != null ? Genre.parseGenre(getEditionFieldResult(genreTextField)) : null;
        String comments = getEditionFieldResult(commentsTextField);
        Short trackNum = getEditionFieldResult(trackNumTextField) != null ? Short.valueOf(getEditionFieldResult(trackNumTextField)) : null;
        Short discNum = getEditionFieldResult(discNumTextField) != null ? Short.valueOf(getEditionFieldResult(discNumTextField)) : null;
        Float bpm = getEditionFieldResult(bpmTextField) != null ? Float.valueOf(getEditionFieldResult(bpmTextField)) : null;
 
-       return new AudioItemMetadataChange(title, artist, albumName, albumArtist, isCompilation, year, label, newCoverImageBytes, genre, comments, trackNum, discNum, bpm);
+       return new AudioItemMetadataChange(title, artist, albumName, albumArtist, isCompilation, year, label, newCoverImageBytes, genres, comments, trackNum, discNum, bpm);
     }
 
     private String getEditionFieldResult(TextInputControl textField) {
@@ -432,7 +432,7 @@ public class EditController {
             Short year,
             net.transgressoft.commons.music.audio.Label label,
             byte[] coverImageBytes,
-            Genre genre,
+            Set<Genre> genres,
             String comments,
             Short trakNum,
             Short discNum,
