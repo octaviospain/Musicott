@@ -19,13 +19,12 @@
 
 package net.transgressoft.musicott.view.custom;
 
+import net.transgressoft.commons.music.itunes.ItunesPlaylist;
 import net.transgressoft.musicott.view.ItunesPlaylistsPickerController;
 
-import com.worldsworstsoftware.itunes.ItunesPlaylist;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.input.MouseEvent;
-import org.apache.commons.io.FileUtils;
 
 /**
  * Custom {@link ListCell} that defines the behaviour of an {@link ItunesPlaylist}
@@ -58,10 +57,8 @@ public class ItunesPlaylistListCell extends ListCell<ItunesPlaylist> {
     }
 
     private String getPlaylistString(ItunesPlaylist itunesPlaylist) {
-        var numTracks = itunesPlaylist.getTrackIDs().size();
-        var totalSize = itunesPlaylist.getTotalSize();
-        var sizeString = FileUtils.byteCountToDisplaySize(totalSize);
+        var numTracks = itunesPlaylist.getTrackIds().size();
         var name = itunesPlaylist.getName();
-        return name + " [" + numTracks + " tracks]" + " [" + sizeString + "]";
+        return name + " [" + numTracks + " tracks]";
     }
 }

@@ -1,8 +1,8 @@
 package net.transgressoft.musicott.view;
 
-import net.transgressoft.musicott.tasks.TaskDemon;
+import net.transgressoft.commons.music.itunes.ItunesPlaylist;
+import net.transgressoft.musicott.service.MediaImportService;
 
-import com.worldsworstsoftware.itunes.ItunesPlaylist;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -22,30 +22,29 @@ import org.testfx.util.WaitForAsyncUtils;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.testfx.api.FxAssert.verifyThat;
 import static org.testfx.matcher.base.NodeMatchers.isVisible;
 import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
 /**
- * Integration test for {@link ItunesPlaylistsPickerController}, validating the playlist picker UI
+ * Unit test for {@link ItunesPlaylistsPickerController}, validating the playlist picker UI
  * rendering and the move-between-lists interaction using a standalone pattern (no Spring context required).
  *
  * @author Octavio Calleya
  */
 @ExtendWith({ApplicationExtension.class, MockitoExtension.class})
+@DisplayName("ItunesPlaylistsPickerController")
 class ItunesPlaylistsPickerControllerTest {
 
     @Mock
-    TaskDemon taskDemon;
+    MediaImportService mediaImportService;
 
     ItunesPlaylistsPickerController controller;
 
     @Start
     void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/ItunesPlaylistsPickerController.fxml"));
-        loader.setControllerFactory(type -> new ItunesPlaylistsPickerController(taskDemon));
+        loader.setControllerFactory(type -> new ItunesPlaylistsPickerController(mediaImportService));
         Parent root = loader.load();
         controller = loader.getController();
         stage.setScene(new Scene(root));
@@ -68,10 +67,7 @@ class ItunesPlaylistsPickerControllerTest {
     @Test
     @DisplayName("ItunesPlaylistsPickerController moves selected playlist from source to target list")
     void movesSelectedPlaylistFromSourceToTargetList(FxRobot fxRobot) {
-        ItunesPlaylist playlist = mock(ItunesPlaylist.class);
-        when(playlist.getName()).thenReturn("My Playlist");
-        when(playlist.getTrackIDs()).thenReturn(List.of());
-        when(playlist.getTotalSize()).thenReturn(0L);
+        var playlist = new ItunesPlaylist("My Playlist", "id-1", null, false, List.of());
 
         Platform.runLater(() -> controller.pickPlaylists(List.of(playlist)));
         waitForFxEvents();

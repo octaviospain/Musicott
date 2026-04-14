@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Tracks</key>
+    <dict>
+        <key>1</key>
+        <dict>
+            <key>Track ID</key><integer>1</integer>
+            <key>Name</key><string>Test Track</string>
+            <key>Artist</key><string>Test Artist</string>
+            <key>Album</key><string>Test Album</string>
+            <key>Total Time</key><integer>180000</integer>
+            <key>Location</key><string>file:///tmp/testeable.mp3</string>
+        </dict>
+    </dict>
+    <key>Playlists</key>
+    <array>
+        <dict>
+            <key>Name</key><string>Test Playlist</string>
+            <key>Playlist Persistent ID</key><string>ABCD1234</string>
+            <key>Playlist Items</key>
+            <array>
+                <dict>
+                    <key>Track ID</key><integer>1</integer>
+                </dict>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

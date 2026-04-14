@@ -1,6 +1,7 @@
 package net.transgressoft.musicott.view.custom.alerts;
 
 import javafx.scene.control.Alert;
+import net.transgressoft.commons.music.itunes.ItunesImportResult;
 import net.transgressoft.musicott.services.SimpleWebRedirectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -43,5 +44,19 @@ public class AlertFactory {
      */
     public Alert deletePlaylistConfirmationAlert(String playlistName, int itemCount, boolean isFolder, int nestedPlaylistCount) {
         return new DeletePlaylistConfirmationAlert(playlistName, itemCount, isFolder, nestedPlaylistCount);
+    }
+
+    /**
+     * Creates a dialog displaying iTunes import results with optional expandable error list.
+     *
+     * @param result the import result containing counts and errors
+     * @return an INFORMATION alert with result summary
+     */
+    public Alert itunesImportResultAlert(ItunesImportResult result) {
+        return new ItunesImportResultAlert(result);
+    }
+
+    public Alert importInProgressAlert() {
+        return new ImportInProgressAlert();
     }
 }

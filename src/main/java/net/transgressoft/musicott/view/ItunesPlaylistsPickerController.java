@@ -1,9 +1,9 @@
 package net.transgressoft.musicott.view;
 
-import net.transgressoft.musicott.tasks.TaskDemon;
+import net.transgressoft.commons.music.itunes.ItunesPlaylist;
+import net.transgressoft.musicott.service.MediaImportService;
 import net.transgressoft.musicott.view.custom.ItunesPlaylistListCell;
 
-import com.worldsworstsoftware.itunes.ItunesPlaylist;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -17,10 +17,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 /**
+ * Controller for the iTunes playlists picker window, allowing the user to select
+ * which playlists to import from a parsed iTunes library.
+ *
  * @author Octavio Calleya
  */
 @FxmlView ("/fxml/ItunesPlaylistsPickerController.fxml")
@@ -29,7 +33,7 @@ public class ItunesPlaylistsPickerController {
 
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
-    private final TaskDemon taskDemon;
+    private final MediaImportService mediaImportService;
 
     @FXML
     private ListView<ItunesPlaylist> sourcePlaylists;
@@ -49,8 +53,8 @@ public class ItunesPlaylistsPickerController {
     private Button importButton;
 
     @Autowired
-    public ItunesPlaylistsPickerController(TaskDemon taskDemon) {
-        this.taskDemon = taskDemon;
+    public ItunesPlaylistsPickerController(MediaImportService mediaImportService) {
+        this.mediaImportService = mediaImportService;
         logger.debug("ItunesPlaylistsPickerController created {}", this);
     }
 
@@ -65,11 +69,15 @@ public class ItunesPlaylistsPickerController {
         targetPlaylists.setCellFactory(cell -> new ItunesPlaylistListCell(this));
         targetPlaylists.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         cancelButton.setOnAction(e -> {
-            taskDemon.cancelItunesImport();
+            mediaImportService.cancelImport();
             cancelButton.getScene().getWindow().hide();
         });
         importButton.setOnAction(e -> {
-            taskDemon.setItunesPlaylistsToImport(targetPlaylists.getItems());
+            try {
+                mediaImportService.importSelectedPlaylists(new ArrayList<>(targetPlaylists.getItems()));
+            } catch (IllegalStateException ex) {
+                logger.error("iTunes import failed: {}", ex.getMessage(), ex);
+            }
             cancelButton.getScene().getWindow().hide();
         });
         logger.debug("ItunesPlaylistsPickerController initialized {}", this);
