@@ -57,28 +57,6 @@
 	-fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 15, 0.3, 0, 0);
 }
 
-#trackSlider .track {
-    -fx-background-color: null;
-	-fx-background-insets: 0 0 0 0;
-}
-
-#trackSlider .thumb {
-	-fx-background-color: null;
-	-fx-background-image: url('../icons/sliderthumb-icon.png');
- 	-fx-background-repeat:no-repeat ;
-}
-
-#trackProgressBar .bar {
-	-fx-background-color: rgb(99,255,109);
-	-fx-background-insets: 0 0 1 0;
-	-fx-background-radius: null;
-}
-
-#trackProgressBar .track {
-	-fx-control-inner-background: null;
-	-fx-background-radius: null;
-}
-
 #volumeSlider .track {
     -fx-background-color: null;
 }

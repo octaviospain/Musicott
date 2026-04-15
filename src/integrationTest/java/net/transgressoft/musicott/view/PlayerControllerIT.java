@@ -2,6 +2,8 @@ package net.transgressoft.musicott.view;
 
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
+import net.transgressoft.commons.fx.music.waveform.PlayableWaveformPane;
+import net.transgressoft.commons.fx.music.waveform.SeekEvent;
 import net.transgressoft.commons.music.waveform.AudioWaveform;
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository;
 import net.transgressoft.musicott.events.PlayItemEvent;
@@ -16,9 +18,12 @@ import javafx.collections.FXCollections;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 
 import java.time.Duration;
 import net.rgielen.fxweaver.core.FxControllerAndView;
@@ -49,6 +54,9 @@ import java.util.concurrent.TimeoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.context.annotation.ComponentScan.Filter;
 import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
@@ -68,6 +76,9 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
     @Autowired
     PlayerControllerITConfiguration configuration;
 
+    @Autowired
+    PlayerService playerService;
+
     @Override
     protected GridPane javaFxComponent() {
         return playerControllerAndView.getView().get();
@@ -83,7 +94,48 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
         assertThat(fxRobot.lookup("#prevButton").tryQuery()).isPresent();
         assertThat(fxRobot.lookup("#nextButton").tryQuery()).isPresent();
         assertThat(fxRobot.lookup("#volumeSlider").tryQuery()).isPresent();
-        assertThat(fxRobot.lookup("#trackSlider").tryQuery()).isPresent();
+        assertThat(fxRobot.lookup("#playerStackPane").tryQuery()).isPresent();
+        StackPane playerStackPane = fxRobot.lookup("#playerStackPane").queryAs(StackPane.class);
+        boolean hasWaveformPane = playerStackPane.getChildren().stream()
+                .anyMatch(node -> node instanceof PlayableWaveformPane);
+        assertThat(hasWaveformPane).as("playerStackPane should contain a PlayableWaveformPane").isTrue();
+    }
+
+    @Test
+    @DisplayName("PlayerController waveform pane has zero progress before playback")
+    void waveformPaneHasZeroProgressBeforePlayback(FxRobot fxRobot) {
+        waitForFxEvents();
+
+        StackPane playerStackPane = fxRobot.lookup("#playerStackPane").queryAs(StackPane.class);
+        PlayableWaveformPane waveformPane = (PlayableWaveformPane) playerStackPane.getChildren().stream()
+                .filter(node -> node instanceof PlayableWaveformPane)
+                .findFirst()
+                .orElseThrow();
+        assertThat(waveformPane.getProgressProperty().get()).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("PlayerController seek event handler calls playerService.seek when duration is available")
+    void seekEventHandlerCallsPlayerServiceSeek(FxRobot fxRobot) {
+        waitForFxEvents();
+
+        StackPane playerStackPane = fxRobot.lookup("#playerStackPane").queryAs(StackPane.class);
+        PlayableWaveformPane waveformPane = (PlayableWaveformPane) playerStackPane.getChildren().stream()
+                .filter(node -> node instanceof PlayableWaveformPane)
+                .findFirst()
+                .orElseThrow();
+
+        // With Duration.ZERO (default mock), seek should NOT be called
+        when(playerService.getTotalDuration()).thenReturn(javafx.util.Duration.ZERO);
+        Platform.runLater(() -> Event.fireEvent(waveformPane, new SeekEvent(waveformPane, waveformPane, 0.5)));
+        waitForFxEvents();
+        verify(playerService, never()).seek(any());
+
+        // With valid duration, seek SHOULD be called
+        when(playerService.getTotalDuration()).thenReturn(javafx.util.Duration.millis(10000));
+        Platform.runLater(() -> Event.fireEvent(waveformPane, new SeekEvent(waveformPane, waveformPane, 0.5)));
+        waitForFxEvents();
+        verify(playerService).seek(javafx.util.Duration.millis(5000));
     }
 
     @Test
@@ -278,6 +330,7 @@ class PlayerControllerITConfiguration {
         when(service.getPlayQueueList()).thenReturn(FXCollections.observableArrayList());
         when(service.getHistoryQueueList()).thenReturn(FXCollections.observableArrayList());
         when(service.currentTrack()).thenReturn(Optional.empty());
+        when(service.getTotalDuration()).thenReturn(javafx.util.Duration.ZERO);
         return service;
     }
 

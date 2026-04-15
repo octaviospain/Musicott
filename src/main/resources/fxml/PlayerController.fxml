@@ -38,9 +38,8 @@
                            preserveRatio="true"/>
                 <StackPane fx:id="playerStackPane" GridPane.columnIndex="2" HBox.hgrow="ALWAYS">
                     <children>
-                        <VBox>
+                        <VBox fx:id="waveformVbox" mouseTransparent="true">
                             <children>
-                                <AnchorPane fx:id="waveformAnchorPane" VBox.vgrow="ALWAYS"/>
                                 <BorderPane minWidth="-Infinity" prefHeight="50.0" VBox.vgrow="NEVER">
                                     <left>
                                         <Label fx:id="currentTimeLabel" prefWidth="50.0" textFill="#000000be"
@@ -80,33 +79,6 @@
                                         </Label>
                                     </top>
                                 </BorderPane>
-                                <StackPane GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="NEVER">
-                                    <children>
-                                        <ProgressBar fx:id="trackProgressBar" maxWidth="1.7976931348623157E308"
-                                                     minHeight="-Infinity" prefHeight="5.0"
-                                                     progress="0.0" StackPane.alignment="CENTER">
-                                            <StackPane.margin>
-                                                <Insets bottom="-1.0"/>
-                                            </StackPane.margin>
-                                        </ProgressBar>
-                                        <Slider fx:id="trackSlider" disable="true" maxWidth="1.7976931348623157E308"
-                                                minHeight="-Infinity" prefHeight="5.0"
-                                                StackPane.alignment="CENTER">
-                                            <StackPane.margin>
-                                                <Insets bottom="-1.0"/>
-                                            </StackPane.margin>
-                                            <rotationAxis>
-                                                <Point3D/>
-                                            </rotationAxis>
-                                            <padding>
-                                                <Insets right="-15.0"/>
-                                            </padding>
-                                        </Slider>
-                                    </children>
-                                    <VBox.margin>
-                                        <Insets/>
-                                    </VBox.margin>
-                                </StackPane>
                             </children>
                         </VBox>
                     </children>

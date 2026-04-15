@@ -1,6 +1,7 @@
 package net.transgressoft.musicott.view;
 
-import net.transgressoft.commons.fx.music.waveform.WaveformPane;
+import net.transgressoft.commons.fx.music.waveform.PlayableWaveformPane;
+import net.transgressoft.commons.fx.music.waveform.SeekEvent;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
@@ -14,7 +15,7 @@ import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.table.AudioItemTableViewBase;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 
-import javafx.animation.PauseTransition;
+import jakarta.annotation.PreDestroy;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -25,11 +26,12 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -46,6 +48,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static net.transgressoft.commons.music.player.AudioItemPlayer.Status.*;
+import org.fxmisc.easybind.Subscription;
+
 import static org.fxmisc.easybind.EasyBind.combine;
 import static org.fxmisc.easybind.EasyBind.subscribe;
 
@@ -82,8 +86,6 @@ public class PlayerController {
     @FXML
     private ImageView currentCover;
     @FXML
-    private AnchorPane waveformAnchorPane;
-    @FXML
     private StackPane playerStackPane;
     @FXML
     private StackPane playQueueStackPane;
@@ -96,11 +98,7 @@ public class PlayerController {
     @FXML
     private Label remainingTimeLabel;
     @FXML
-    private Slider trackSlider;
-    @FXML
     private Slider volumeSlider;
-    @FXML
-    private ProgressBar trackProgressBar;
     @FXML
     private ProgressBar volumeProgressBar;
 
@@ -110,9 +108,12 @@ public class PlayerController {
     private PlayQueueController playQueueLayoutController;
 
     private LastFmService lastFmService;
-    private WaveformPane waveformPane;
+    private PlayableWaveformPane playableWaveformPane;
     private ReadOnlyBooleanProperty emptyLibraryProperty;
     private boolean scrobbled = false;
+    private Subscription progressSubscription;
+    private Subscription labelsSubscription;
+    private Subscription scrobbleSubscription;
 
     @Autowired
     public PlayerController(AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository,
@@ -137,21 +138,19 @@ public class PlayerController {
         });
         subscribe(volumeSlider.valueProperty(), p -> volumeProgressBar.setProgress(p.doubleValue()));
 
-        playerStackPane.getChildren().add(0, waveformAnchorPane);
-        waveformPane = new WaveformPane();
-        waveformAnchorPane.getChildren().add(waveformPane);
-        AnchorPane.setBottomAnchor(waveformPane, 0.0);
-        AnchorPane.setTopAnchor(waveformPane, 0.0);
-        AnchorPane.setLeftAnchor(waveformPane, 0.0);
-        AnchorPane.setRightAnchor(waveformPane, 0.0);
+        playableWaveformPane = new PlayableWaveformPane();
+        playableWaveformPane.getBackgroundColorProperty().set(Color.rgb(73, 73, 73));
+        playableWaveformPane.getWaveformColorProperty().set(Color.rgb(34, 34, 34));
+        playableWaveformPane.getPlayedColorProperty().set(Color.rgb(99, 255, 109));
+        // Add waveform behind the labels VBox in the StackPane (z-order: waveform at index 0, VBox on top)
+        playerStackPane.getChildren().add(0, playableWaveformPane);
 
-        PauseTransition resizeDebounce = new PauseTransition(Duration.millis(150));
-        resizeDebounce.setOnFinished(e -> {
-            waveformPane.setWidth(waveformAnchorPane.getWidth());
-            waveformPane.setHeight(waveformAnchorPane.getHeight());
+        playableWaveformPane.addEventHandler(SeekEvent.Companion.getSEEK(), event -> {
+            Duration total = playerService.getTotalDuration();
+            if (total != null && total.toMillis() > 0) {
+                playerService.seek(Duration.millis(event.getSeekRatio() * total.toMillis()));
+            }
         });
-        waveformAnchorPane.widthProperty().addListener((_, _, _) -> resizeDebounce.playFromStart());
-        waveformAnchorPane.heightProperty().addListener((_, _, _) -> resizeDebounce.playFromStart());
 
         playQueueButton.setOnAction(event -> {
             if (playQueueLayout.isVisible())
@@ -175,6 +174,11 @@ public class PlayerController {
         subscribe(playQueueLayout.visibleProperty(), playQueueButton::setSelected);
         StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
         hidePlayQueue();
+    }
+
+    @PreDestroy
+    public void dispose() {
+        playableWaveformPane.dispose();
     }
 
     @SuppressWarnings("unchecked")
@@ -250,7 +254,7 @@ public class PlayerController {
 
     public void setStopped() {
         playButton.setSelected(false);
-        trackSlider.setDisable(true);
+        playableWaveformPane.getProgressProperty().set(0.0);
         nextButton.setDisable(true);
         prevButton.setDisable(true);
         songTitleLabel.textProperty().unbind();
@@ -260,12 +264,10 @@ public class PlayerController {
         currentCover.setVisible(false);
         currentTimeLabel.setText("");
         remainingTimeLabel.setText("");
-        waveformPane.getGraphicsContext2D().clearRect(0, 0, waveformPane.getWidth(), waveformPane.getHeight());
     }
 
     public void setPlaying() {
         playButton.setSelected(true);
-        trackSlider.setDisable(false);
         nextButton.setDisable(false);
         prevButton.setDisable(false);
         currentCover.setVisible(true);
@@ -287,26 +289,17 @@ public class PlayerController {
      */
     public void updatePlayerComponents(ObservableAudioItem currentTrack) {
         logger.debug("Setting up player and view for track {}", currentTrack);
-        Color backgroundColor = Color.rgb(73, 73, 73);
-        Color waveformColor = Color.rgb(34, 34, 34);
 
-        // Show default waveform animation while computing the waveform
-        // and then
-        waveformRepository.getOrCreateWaveformAsync(currentTrack, (short) waveformAnchorPane.getWidth(), (short) waveformAnchorPane.getHeight())
-                .thenAccept(waveform -> Platform.runLater(() -> waveformPane.drawWaveformAsync(waveform, waveformColor, backgroundColor)));
+        waveformRepository.getOrCreateWaveformAsync(currentTrack,
+                        (short) playableWaveformPane.getWidth(),
+                        (short) playableWaveformPane.getHeight())
+                .thenAccept(waveform -> Platform.runLater(() -> playableWaveformPane.loadWaveform(waveform)));
 
         songTitleLabel.textProperty().bind(currentTrack.getTitleProperty());
         artistAlbumLabel.textProperty().bind(
                 combine(currentTrack.getArtistProperty(), currentTrack.getAlbumProperty(), (art, alb) -> art.getName() + " - " + alb.getName()));
 
         currentTrack.getCoverImageProperty().get().ifPresentOrElse(currentCover::setImage, () -> currentCover.setImage(defaultCoverImage));
-        trackSlider.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            Double endTime = trackSlider.getMax();
-            if (!endTime.equals(Double.POSITIVE_INFINITY) || !endTime.equals(Double.NaN)) {
-                trackProgressBar.setProgress(trackSlider.getValue() / endTime);
-                playerService.seek(Duration.millis(trackSlider.getValue()));
-            }
-        });
     }
 
     public void playFromQueue(TrackQueueRow trackQueueRow) {
@@ -419,32 +412,27 @@ public class PlayerController {
             volumeProp.bindBidirectional(volumeSlider.valueProperty());
         }
 
-        // Re-subscribe to current time for slider, progress bar, labels, and scrobbling
+        // Unsubscribe previous track subscriptions to prevent listener accumulation
+        if (progressSubscription != null) progressSubscription.unsubscribe();
+        if (labelsSubscription != null) labelsSubscription.unsubscribe();
+        if (scrobbleSubscription != null) scrobbleSubscription.unsubscribe();
+
+        // Re-subscribe to current time for progress binding, labels, and scrobbling
         var currentTimeProp = playerService.getCurrentTimeProperty();
         if (currentTimeProp != null) {
-            DoubleProperty trackSliderMaxProperty = trackSlider.maxProperty();
-            playerService.currentTrack().ifPresent(track -> trackSliderMaxProperty.setValue(track.getDuration().toMillis()));
-
-            BooleanProperty trackSliderValueChangingProperty = trackSlider.valueChangingProperty();
-            DoubleProperty trackSliderValueProperty = trackSlider.valueProperty();
-            subscribe(currentTimeProp, time -> {
-                if (!trackSliderValueChangingProperty.get())
-                    trackSliderValueProperty.setValue(time.toMillis());
-            });
-
-            DoubleProperty trackProgressBarProgressProperty = trackProgressBar.progressProperty();
-            subscribe(trackSliderValueProperty, value -> {
-                Double endTime = playerService.getTotalDuration().toMillis();
-                if (trackSliderValueChangingProperty.get() && (!endTime.equals(Double.POSITIVE_INFINITY) || !endTime.equals(Double.NaN))) {
-                    trackProgressBarProgressProperty.set(value.doubleValue() / endTime);
-                    playerService.seek(Duration.millis(value.doubleValue()));
+            progressSubscription = subscribe(currentTimeProp, time -> {
+                Duration total = playerService.getTotalDuration();
+                if (total != null && total.toMillis() > 0) {
+                    playableWaveformPane.getProgressProperty().set(time.toMillis() / total.toMillis());
                 }
             });
 
-            subscribe(currentTimeProp, t -> trackProgressBarProgressProperty.set(t.toMillis() / trackSliderMaxProperty.get()));
-            subscribe(currentTimeProp, t -> updateTrackLabels(t, playerService.getTotalDuration()));
+            labelsSubscription = subscribe(currentTimeProp, t -> {
+                Duration total = playerService.getTotalDuration();
+                if (total != null) updateTrackLabels(t, total);
+            });
 
-            subscribe(currentTimeProp, time -> {
+            scrobbleSubscription = subscribe(currentTimeProp, time -> {
                 if (isCurrentTrackValidToScrobble(time)) {
                     scrobbled = true;
                     playerService.currentTrack().ifPresent(track -> {
