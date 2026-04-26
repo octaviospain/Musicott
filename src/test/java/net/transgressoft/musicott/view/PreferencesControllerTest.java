@@ -59,7 +59,6 @@ class PreferencesControllerTest {
         when(settingsRepository.getItunesImportMetadataPolicy()).thenReturn(true);
         when(settingsRepository.getItunesImportHoldPlayCountPolicy()).thenReturn(true);
         when(settingsRepository.getItunesImportWriteMetadataPolicy()).thenReturn(true);
-        when(settingsRepository.getItunesImportIgnoreNotFoundPolicy()).thenReturn(true);
 
         preferencesController.setSettingsRepository(settingsRepository);
         preferencesController.setErrorPresenter(errorPresenter);

@@ -1,7 +1,7 @@
 package net.transgressoft.musicott.view.custom.alerts;
 
 import javafx.scene.control.Alert;
-import net.transgressoft.commons.music.itunes.ItunesImportResult;
+import net.transgressoft.commons.music.itunes.ImportResult;
 import net.transgressoft.musicott.services.SimpleWebRedirectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -47,12 +47,13 @@ public class AlertFactory {
     }
 
     /**
-     * Creates a dialog displaying iTunes import results with optional expandable error list.
+     * Creates a dialog displaying iTunes import results with an expandable detail list
+     * of unresolved tracks and rejected playlist names.
      *
-     * @param result the import result containing counts and errors
+     * @param result the import result containing imported items, unresolved tracks, and rejected playlist names
      * @return an INFORMATION alert with result summary
      */
-    public Alert itunesImportResultAlert(ItunesImportResult result) {
+    public Alert itunesImportResultAlert(ImportResult result) {
         return new ItunesImportResultAlert(result);
     }
 

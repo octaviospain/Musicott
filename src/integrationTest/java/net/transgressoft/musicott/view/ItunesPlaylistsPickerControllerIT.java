@@ -1,6 +1,6 @@
 package net.transgressoft.musicott.view;
 
-import net.transgressoft.commons.music.itunes.ItunesImportResult;
+import net.transgressoft.commons.music.itunes.ImportResult;
 import net.transgressoft.commons.music.itunes.ItunesPlaylist;
 import net.transgressoft.musicott.service.MediaImportService;
 
@@ -60,7 +60,7 @@ class ItunesPlaylistsPickerControllerIT {
         var playlistB = new ItunesPlaylist("Playlist B", "id-2", null, false, List.of(2));
 
         when(mediaImportService.importSelectedPlaylists(anyList()))
-            .thenReturn(CompletableFuture.completedFuture(new ItunesImportResult(1, 0, 0, List.of(), 0)));
+            .thenReturn(CompletableFuture.completedFuture(new ImportResult(List.of(), List.of(), List.of())));
 
         Platform.runLater(() -> controller.pickPlaylists(List.of(playlistA, playlistB)));
         waitForFxEvents();

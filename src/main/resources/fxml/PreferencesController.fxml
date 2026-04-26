@@ -74,16 +74,6 @@
                                                                                 <Insets bottom="5.0" />
                                                                             </VBox.margin>
                                                                         </HBox>
-                                                                        <HBox alignment="CENTER_RIGHT" layoutX="10.0" layoutY="34.0">
-                                                                            <children>
-                                                                                <Label fx:id="ignoreNotFoundFromItunesLabel" text="Ignore missing files from iTunes">
-                                                                                    <HBox.margin>
-                                                                                        <Insets right="20.0" />
-                                                                                    </HBox.margin>
-                                                                                </Label>
-                                                                                <CheckBox fx:id="ignoreNotFoundFromItunesCheckBox" mnemonicParsing="false" prefWidth="14.0" selected="false" />
-                                                                            </children>
-                                                                        </HBox>
                                                                     </children>
                                                                     <VBox.margin>
                                                                         <Insets left="20.0" />

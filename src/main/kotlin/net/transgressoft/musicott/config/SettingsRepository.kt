@@ -35,8 +35,6 @@ class SettingsRepository(jsonFile: File) : FlexibleJsonFileRepository(jsonFile) 
 
     private val itunesImportWriteMetadataPolicyProperty = getReactiveBoolean("itunes.policy.writeMetadata", true)
 
-    private val itunesImportIgnoreNotFoundPolicyProperty = getReactiveBoolean("itunes.policy.ignoreNotFound", true)
-
     /**
      * The policy when importing music from an iTunes file.
      * True means the information from the file metadata will be used.
@@ -64,15 +62,6 @@ class SettingsRepository(jsonFile: File) : FlexibleJsonFileRepository(jsonFile) 
         get() = itunesImportWriteMetadataPolicyProperty.value == true
         set(value) {
             itunesImportWriteMetadataPolicyProperty.value = value
-        }
-
-    /**
-     * The policy to ignore files that are not found in the iTunes library.
-     */
-    var itunesImportIgnoreNotFoundPolicy: Boolean
-        get() = itunesImportIgnoreNotFoundPolicyProperty.value == true
-        set(value) {
-            itunesImportIgnoreNotFoundPolicyProperty.value = value
         }
 
     private val audioFilePolicies: Map<AudioFileType, ReactiveBoolean> =

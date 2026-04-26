@@ -80,8 +80,6 @@ public class PreferencesController {
     @FXML
     private CheckBox writeMetadataFromItunesCheckBox;
     @FXML
-    private CheckBox ignoreNotFoundFromItunesCheckBox;
-    @FXML
     private HBox itunesInformationHBox;
     @FXML
     private ComboBox<String> itunesImportPolicyCheckBox;
@@ -172,7 +170,6 @@ public class PreferencesController {
         settingsRepository.setAcceptedAudioFileExtensions(checkedItems);
         settingsRepository.setItunesImportHoldPlayCountPolicy(holdPlayCountCheckBox.isSelected());
         settingsRepository.setItunesImportWriteMetadataPolicy(writeMetadataFromItunesCheckBox.isSelected());
-        settingsRepository.setItunesImportIgnoreNotFoundPolicy(ignoreNotFoundFromItunesCheckBox.isSelected());
         okButton.getScene().getWindow().hide();
     }
 
@@ -189,7 +186,6 @@ public class PreferencesController {
 
         holdPlayCountCheckBox.setSelected(settingsRepository.getItunesImportHoldPlayCountPolicy());
         writeMetadataFromItunesCheckBox.setSelected(settingsRepository.getItunesImportMetadataPolicy());
-        ignoreNotFoundFromItunesCheckBox.setSelected(settingsRepository.getItunesImportIgnoreNotFoundPolicy());
     }
 
     public void show() {

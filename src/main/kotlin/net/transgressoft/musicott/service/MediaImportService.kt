@@ -19,18 +19,23 @@ package net.transgressoft.musicott.service
 import javafx.application.Platform
 import mu.KotlinLogging
 import net.transgressoft.commons.fx.music.FXMusicLibrary
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItem
 import net.transgressoft.commons.music.audio.AudioFileType
+import net.transgressoft.commons.music.itunes.ImportResult
 import net.transgressoft.commons.music.itunes.ItunesImportPolicy
-import net.transgressoft.commons.music.itunes.ItunesImportResult
 import net.transgressoft.commons.music.itunes.ItunesImportService
 import net.transgressoft.commons.music.itunes.ItunesLibrary
 import net.transgressoft.commons.music.itunes.ItunesLibraryParser
 import net.transgressoft.commons.music.itunes.ItunesPlaylist
+import net.transgressoft.lirp.entity.LirpEntity
+import net.transgressoft.lirp.event.CrudEvent
+import net.transgressoft.lirp.event.LirpEventSubscription
 import net.transgressoft.musicott.config.SettingsRepository
 import net.transgressoft.musicott.events.ExceptionEvent
 import net.transgressoft.musicott.events.StatusMessageUpdateEvent
 import net.transgressoft.musicott.events.StatusProgressUpdateEvent
 import net.transgressoft.musicott.view.custom.alerts.AlertFactory
+import org.jetbrains.annotations.UnknownNullability
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import java.io.File
@@ -40,6 +45,7 @@ import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.BiConsumer
 import kotlin.io.path.extension
 
 /**
@@ -63,10 +69,11 @@ class MediaImportService(
     private var totalFiles = 0
 
     private val coreItunesImportService = ItunesImportService(musicLibrary)
-    private var currentImportFuture: CompletableFuture<ItunesImportResult>? = null
-    private var lastParsedLibrary: ItunesLibrary? = null
-
+    private var currentImportFuture: CompletableFuture<ImportResult>? = null
     private val audioLibrary = musicLibrary.audioLibrary()
+
+    final var lastParsedLibrary: ItunesLibrary? = null
+        private set
 
     fun isImporting(): Boolean = importing.get()
 
@@ -86,15 +93,7 @@ class MediaImportService(
             }
 
         audioLibrary.createFromFileBatchAsync(paths)
-            .whenComplete { _, ex ->
-                progressSubscription.cancel()
-                if (ex != null) {
-                    logger.error(ex.message, ex)
-                    applicationEventPublisher.publishEvent(ExceptionEvent(ex, this))
-                }
-                applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Import process completed", this))
-                finishImport()
-            }
+            .whenComplete(completeImport(progressSubscription))
     }
 
     fun importDirectory(directory: File, acceptedAudioFileExtensions: Set<AudioFileType>) {
@@ -119,16 +118,21 @@ class MediaImportService(
 
         CompletableFuture.supplyAsync { findAcceptedFiles(directory, extensions) }
             .thenCompose(audioLibrary::createFromFileBatchAsync)
-            .whenComplete { _, ex ->
-                progressSubscription.cancel()
-                if (ex != null) {
-                    logger.error(ex.message, ex)
-                    applicationEventPublisher.publishEvent(ExceptionEvent(ex, this))
-                }
-                applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Import process completed", this))
-                finishImport()
-            }
+            .whenComplete(completeImport(progressSubscription))
     }
+
+    private fun completeImport(
+        progressSubscription: LirpEventSubscription<in LirpEntity, CrudEvent.Type, CrudEvent<Int, ObservableAudioItem>>):
+            BiConsumer<in @UnknownNullability List<ObservableAudioItem>, in @UnknownNullability Throwable?> =
+        { _, ex ->
+            progressSubscription.cancel()
+            if (ex != null) {
+                logger.error(ex.message, ex)
+                applicationEventPublisher.publishEvent(ExceptionEvent(ex, this))
+            }
+            applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Import process completed", this))
+            finishImport()
+        }
 
     fun parseLibrary(xmlPath: Path): ItunesLibrary {
         logger.info { "Parsing iTunes library from $xmlPath" }
@@ -138,9 +142,7 @@ class MediaImportService(
         return library
     }
 
-    fun getLastParsedLibrary(): ItunesLibrary? = lastParsedLibrary
-
-    fun importSelectedPlaylists(selectedPlaylists: List<ItunesPlaylist>): CompletableFuture<ItunesImportResult> {
+    fun importSelectedPlaylists(selectedPlaylists: List<ItunesPlaylist>): CompletableFuture<ImportResult> {
         if (!tryStartImport()) return CompletableFuture.completedFuture(null)
 
         val library = lastParsedLibrary
@@ -197,7 +199,6 @@ class MediaImportService(
             useFileMetadata = settingsRepository.itunesImportMetadataPolicy,
             holdPlayCount = settingsRepository.itunesImportHoldPlayCountPolicy,
             writeMetadata = settingsRepository.itunesImportWriteMetadataPolicy,
-            ignoreNotFound = settingsRepository.itunesImportIgnoreNotFoundPolicy,
             acceptedFileTypes = settingsRepository.acceptedAudioFileExtensions
         )
 

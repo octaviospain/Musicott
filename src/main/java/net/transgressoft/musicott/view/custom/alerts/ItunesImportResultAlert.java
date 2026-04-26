@@ -1,39 +1,63 @@
 package net.transgressoft.musicott.view.custom.alerts;
 
-import net.transgressoft.commons.music.itunes.ImportError;
-import net.transgressoft.commons.music.itunes.ItunesImportResult;
+import net.transgressoft.commons.music.itunes.ImportResult;
+import net.transgressoft.commons.music.itunes.RejectedPlaylistName;
+import net.transgressoft.commons.music.itunes.UnresolvedReason;
+import net.transgressoft.commons.music.itunes.UnresolvedTrack;
 
 import javafx.scene.control.TextArea;
 
 /**
  * Alert dialog displaying the results of an iTunes library import operation.
- * Shows counts for imported, skipped, and errored tracks. When errors exist,
- * provides an expandable text area listing each error's track title and message.
+ * Reports four counts in the header — imported tracks, skipped tracks (file not
+ * found or unsupported type), errored tracks, and rejected playlist names — and
+ * shows an expandable text area listing every unresolved track and rejected
+ * playlist with its reason when any non-imported items exist.
  *
  * @author Octavio Calleya
  */
 public class ItunesImportResultAlert extends ApplicationAlertBase {
 
-    public ItunesImportResultAlert(ItunesImportResult result) {
+    public ItunesImportResultAlert(ImportResult result) {
         super(AlertType.INFORMATION);
         setTitle("iTunes Import Complete");
-        setHeaderText(String.format("Imported: %d    Skipped: %d    Errors: %d    Playlists: %d",
-            result.getImportedCount(), result.getSkippedCount(),
-            result.getErrorCount(), result.getPlaylistsCreated()));
 
-        if (!result.getErrors().isEmpty()) {
-            var errorText = new StringBuilder();
-            for (ImportError error : result.getErrors()) {
-                errorText.append(error.getTrackTitle())
-                         .append(" — ")
-                         .append(error.getMessage())
-                         .append("\n");
+        int imported = result.getImported().size();
+        int skipped = 0;
+        int errored = 0;
+        for (UnresolvedTrack unresolved : result.getUnresolved()) {
+            UnresolvedReason reason = unresolved.getReason();
+            if (reason instanceof UnresolvedReason.ImportError) {
+                errored++;
+            } else {
+                skipped++;
             }
-            var errorArea = new TextArea(errorText.toString());
-            errorArea.setEditable(false);
-            errorArea.setWrapText(true);
-            errorArea.setPrefRowCount(10);
-            getDialogPane().setExpandableContent(errorArea);
+        }
+        int rejectedPlaylists = result.getRejectedPlaylistNames().size();
+
+        setHeaderText(String.format("Imported: %d    Skipped: %d    Errors: %d    Rejected playlists: %d",
+            imported, skipped, errored, rejectedPlaylists));
+
+        if (!result.getUnresolved().isEmpty() || !result.getRejectedPlaylistNames().isEmpty()) {
+            var details = new StringBuilder();
+            for (UnresolvedTrack unresolved : result.getUnresolved()) {
+                details.append(unresolved.getTitle())
+                       .append(" — ")
+                       .append(unresolved.getReason())
+                       .append("\n");
+            }
+            for (RejectedPlaylistName rejected : result.getRejectedPlaylistNames()) {
+                details.append("[playlist] ")
+                       .append(rejected.getName())
+                       .append(" — ")
+                       .append(rejected.getReason())
+                       .append("\n");
+            }
+            var detailsArea = new TextArea(details.toString());
+            detailsArea.setEditable(false);
+            detailsArea.setWrapText(true);
+            detailsArea.setPrefRowCount(10);
+            getDialogPane().setExpandableContent(detailsArea);
         }
     }
 }
