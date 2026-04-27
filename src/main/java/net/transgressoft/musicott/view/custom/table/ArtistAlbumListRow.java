@@ -57,7 +57,8 @@ public class ArtistAlbumListRow extends HBox {
 
         placeLeftVBox();
         placeRightVBox();
-        setPrefWidth(USE_COMPUTED_SIZE);
+        setPrefWidth(0);
+        setMinWidth(0);
         setPrefHeight(USE_COMPUTED_SIZE);
         getStylesheets().add(getClass().getResource(BASE_STYLE).toExternalForm());
         audioItemsTableView.setItems(containedAudioItems);

@@ -37,6 +37,32 @@
     -fx-text-fill: rgb(99, 255, 109);
 }
 
+#albumsListView {
+    -fx-background-color: rgb(34, 34, 34);
+    -fx-focus-color: rgb(73, 73, 73);
+    -fx-faint-focus-color: transparent;
+}
+
+#albumsListView .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgb(182, 182, 182);
+    -fx-font-size: 13px;
+    -fx-font-family: "Avenir", sans-serif;
+}
+
+#albumsListView .list-cell:empty {
+    -fx-background-color: rgb(34, 34, 34);
+}
+
+#albumsListView .list-cell:filled:hover {
+    -fx-background-color: black;
+}
+
+#albumsListView .list-cell:filled:selected {
+    -fx-background-color: rgb(73, 73, 73);
+    -fx-text-fill: rgb(99, 255, 109);
+}
+
 #infoHBox {
     -fx-border-color: rgb(73, 73, 73);
     -fx-border-width: 0 0 2 0;

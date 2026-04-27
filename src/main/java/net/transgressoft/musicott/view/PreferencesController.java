@@ -28,6 +28,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TabPane;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -192,7 +193,15 @@ public class PreferencesController {
         Platform.runLater(() -> {
             if (stage == null) {
                 stage = stageSupplier.get();
-                stage.setScene(new Scene(root));
+                Scene scene = new Scene(root);
+                // ESC closes the Preferences dialog without persisting changes — saves only happen via the OK button.
+                scene.setOnKeyPressed(event -> {
+                    if (event.getCode() == KeyCode.ESCAPE) {
+                        stage.close();
+                        event.consume();
+                    }
+                });
+                stage.setScene(scene);
                 stage.setTitle("Preferences");
                 stage.setResizable(false);
                 stage.setOnShowing(event -> loadImportPreferences());

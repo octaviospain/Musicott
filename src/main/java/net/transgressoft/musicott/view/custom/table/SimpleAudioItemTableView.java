@@ -22,14 +22,15 @@ public class SimpleAudioItemTableView extends AudioItemTableViewBase {
         getStylesheets().add(getClass().getResource(SIMPLE_TRACK_TABLE_STYLE).toExternalForm());
         getStyleClass().add("no-header");
         setFixedCellSize(25);
+        setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
 
-        nameCol.setMinWidth(150);
-        nameCol.setPrefWidth(USE_COMPUTED_SIZE);
         nameCol.setStyle(CENTER_LEFT_ALIGN);
         artistCol.setPrefWidth(150);
         artistCol.setStyle(CENTER_LEFT_ALIGN);
         trackNumberCol.setMinWidth(24);
         trackNumberCol.setMaxWidth(24);
+        totalTimeCol.setMinWidth(68);
+        totalTimeCol.setMaxWidth(68);
     }
 
     public void removeArtistColumn() {

@@ -580,6 +580,8 @@ public class MainController {
         @FXML
         private MenuItem decreaseVolumeMenuItem;
         @FXML
+        private MenuItem muteMenuItem;
+        @FXML
         private MenuItem selectCurrentTrackMenuItem;
         @FXML
         private Menu viewMenu;
@@ -591,8 +593,11 @@ public class MainController {
         private Menu aboutMenu;
         @FXML
         private MenuItem aboutMenuItem;
+        @FXML
+        private MenuItem keyboardShortcutsMenuItem;
 
         private Alert aboutWindowAlert;
+        private Dialog<Void> keyboardShortcutsDialog;
 
         @FXML
         public void initialize() {
@@ -601,6 +606,7 @@ public class MainController {
             initControlsMenuActions();
             initViewMenuActions();
             initAboutMenuAction();
+            initKeyboardShortcutsAction();
             bindShowHideTableInfo();
             initMenuBarItems();
             initAccelerators();
@@ -612,6 +618,15 @@ public class MainController {
                     aboutWindowAlert = alertFactory.aboutWindowAlert();
                 }
                 aboutWindowAlert.showAndWait();
+            });
+        }
+
+        private void initKeyboardShortcutsAction() {
+            keyboardShortcutsMenuItem.setOnAction(e -> {
+                if (keyboardShortcutsDialog == null) {
+                    keyboardShortcutsDialog = alertFactory.keyboardShortcutsDialog(rootMenuBar);
+                }
+                keyboardShortcutsDialog.showAndWait();
             });
         }
 
@@ -766,6 +781,7 @@ public class MainController {
             nextMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, operativeSystemKeyModifier));
             increaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.UP, operativeSystemKeyModifier));
             decreaseVolumeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.DOWN, operativeSystemKeyModifier));
+            muteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.M));
             selectCurrentTrackMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.L, operativeSystemKeyModifier));
             newPlaylistMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, operativeSystemKeyModifier));
             newPlaylistFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, operativeSystemKeyModifier, shiftDown));
@@ -775,6 +791,7 @@ public class MainController {
             unselectMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemKeyModifier, shiftDown));
             findMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.F, operativeSystemKeyModifier));
             closeMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, operativeSystemKeyModifier));
+            keyboardShortcutsMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.SLASH, KeyCombination.SHIFT_DOWN));
         }
 
         private void initControlsMenuActions() {
@@ -790,6 +807,7 @@ public class MainController {
 
             increaseVolumeMenuItem.setOnAction(e -> playerController.increaseVolume());
             decreaseVolumeMenuItem.setOnAction(e -> playerController.decreaseVolume());
+            muteMenuItem.setOnAction(e -> playerController.toggleMute());
 
             selectCurrentTrackMenuItem.setOnAction(e -> selectCurrentPlayingTrack());
         }

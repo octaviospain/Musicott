@@ -36,6 +36,7 @@
                 <SeparatorMenuItem mnemonicParsing="false"/>
                 <MenuItem fx:id="increaseVolumeMenuItem" mnemonicParsing="false" text="Increase volume"/>
                 <MenuItem fx:id="decreaseVolumeMenuItem" mnemonicParsing="false" text="Decrease volume"/>
+                <MenuItem fx:id="muteMenuItem" mnemonicParsing="false" text="Mute"/>
                 <SeparatorMenuItem mnemonicParsing="false"/>
                 <MenuItem fx:id="selectCurrentTrackMenuItem" mnemonicParsing="false" text="Select current track"/>
             </items>
@@ -49,6 +50,8 @@
         <Menu fx:id="aboutMenu" mnemonicParsing="false" text="About">
             <items>
                 <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="About Musicott"/>
+                <SeparatorMenuItem mnemonicParsing="false"/>
+                <MenuItem fx:id="keyboardShortcutsMenuItem" mnemonicParsing="false" text="Keyboard Shortcuts"/>
             </items>
         </Menu>
     </menus>

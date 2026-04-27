@@ -111,6 +111,8 @@ public class PlayerController {
     private PlayableWaveformPane playableWaveformPane;
     private ReadOnlyBooleanProperty emptyLibraryProperty;
     private boolean scrobbled = false;
+    private boolean muted = false;
+    private double preMuteVolume = 0.0;
     private Subscription progressSubscription;
     private Subscription labelsSubscription;
     private Subscription scrobbleSubscription;
@@ -172,8 +174,45 @@ public class PlayerController {
         playQueueButton.setOnDragExited(this::onDragExitedOnPlayQueueButton);
 
         subscribe(playQueueLayout.visibleProperty(), playQueueButton::setSelected);
-        StackPane.setMargin(playQueueLayout, new Insets(0, 0, 480, 0));
+        configurePlayQueuePopupSizing();
         hidePlayQueue();
+    }
+
+    /**
+     * Sizes and positions the play-queue popup so it always fits within the current scene.
+     * The popup's height is capped to leave room for the menubar + player area, and the
+     * StackPane bottom margin is recomputed on every scene-height change so the popup
+     * tracks the available space instead of relying on a fixed offset that overflows the
+     * top of the window at small heights.
+     */
+    private void configurePlayQueuePopupSizing() {
+        double designedHeight = playQueueLayout.getPrefHeight();   // 467 in PlayQueueController.fxml
+        double topReserved = 30.0;                                 // menubar + small gap
+        double bottomReserved = 60.0;                              // player area + small gap
+
+        Runnable apply = () -> {
+            var scene = playQueueLayout.getScene();
+            if (scene == null) return;
+            double sceneH = scene.getHeight();
+            if (sceneH <= 0) return;
+            double maxAllowed = Math.max(120.0, sceneH - topReserved - bottomReserved);
+            double popupH = Math.min(designedHeight, maxAllowed);
+            playQueueLayout.setPrefHeight(popupH);
+            playQueueLayout.setMaxHeight(popupH);
+            // Pin popup just above the player area; if the window is taller than the
+            // popup needs, push it up so it sits near the top of the window (preserves
+            // the original design intent of having the queue float above the table area).
+            double bottomMargin = Math.max(bottomReserved, sceneH - popupH - topReserved);
+            StackPane.setMargin(playQueueLayout, new Insets(0, 0, bottomMargin, 0));
+        };
+
+        playQueueLayout.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.heightProperty().addListener((o, ov, nv) -> apply.run());
+                apply.run();
+            }
+        });
+        apply.run();
     }
 
     @PreDestroy
@@ -281,6 +320,29 @@ public class PlayerController {
     public void decreaseVolume() {
         playerService.decreaseVolume();
         volumeSlider.setValue(volumeSlider.getValue() - VOLUME_AMOUNT);
+    }
+
+    /**
+     * Toggles the muted state of the audio output. While muted, the previous volume value is
+     * preserved and restored on unmute. When toggled while paused, the muted state is pre-armed
+     * for the next play — no audio change occurs until playback resumes, at which point the
+     * underlying player picks up the muted volume from the bidirectionally-bound slider.
+     */
+    public void toggleMute() {
+        if (muted) {
+            volumeSlider.setValue(preMuteVolume);
+            muted = false;
+            logger.debug("Player unmuted (volume restored to {})", preMuteVolume);
+        } else {
+            preMuteVolume = volumeSlider.getValue();
+            volumeSlider.setValue(0.0);
+            muted = true;
+            logger.debug("Player muted (pre-mute volume saved as {})", preMuteVolume);
+        }
+    }
+
+    public boolean isMuted() {
+        return muted;
     }
 
     /**

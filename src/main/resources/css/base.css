@@ -41,6 +41,13 @@
     -fx-border-color: transparent;
 }
 
+#searchTextField:focused {
+    -fx-border-color: rgb(99, 255, 109);
+    -fx-border-width: 2px;
+    -fx-border-radius: 5;
+    -fx-effect: dropshadow(gaussian, rgb(99, 255, 109), 8, 0.4, 0, 0);
+}
+
 .text-area .scroll-pane .scroll-bar,
 .text-area .scroll-pane .scroll-bar {
     -fx-opacity: 0;

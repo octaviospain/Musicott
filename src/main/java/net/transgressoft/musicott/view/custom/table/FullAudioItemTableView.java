@@ -14,7 +14,7 @@ public class FullAudioItemTableView extends AudioItemTableViewBase {
         getColumns().addAll(artistCol, nameCol, albumCol, genreCol, labelCol, bpmCol, totalTimeCol);
         getColumns().addAll(yearCol, sizeCol, trackNumberCol, discNumberCol, albumArtistCol, commentsCol);
         getColumns().addAll(bitRateCol, playCountCol, dateModifiedCol, dateAddedCol);
-        setColumnResizePolicy(UNCONSTRAINED_RESIZE_POLICY);
+        setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
         getSortOrder().add(dateAddedCol);
     }
 }

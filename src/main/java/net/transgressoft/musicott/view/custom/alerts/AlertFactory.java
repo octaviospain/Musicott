@@ -1,6 +1,8 @@
 package net.transgressoft.musicott.view.custom.alerts;
 
 import javafx.scene.control.Alert;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.MenuBar;
 import net.transgressoft.commons.music.itunes.ImportResult;
 import net.transgressoft.musicott.services.SimpleWebRedirectionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,16 @@ public class AlertFactory {
 
     public Alert aboutWindowAlert() {
         return new AboutWindowAlert(webRedirectionService);
+    }
+
+    /**
+     * Builds a self-maintaining keyboard shortcuts help dialog populated by walking the supplied menu bar.
+     *
+     * @param rootMenuBar the live application menu bar whose accelerators populate the dialog
+     * @return a modal dialog displaying every menu item with an accelerator
+     */
+    public Dialog<Void> keyboardShortcutsDialog(MenuBar rootMenuBar) {
+        return new KeyboardShortcutsDialog(rootMenuBar);
     }
 
     public Alert importConfirmationAlert(int importSize) {

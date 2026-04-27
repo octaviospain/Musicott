@@ -72,3 +72,9 @@
 	-fx-background-insets: 1 1 2 1;
 	-fx-background-radius: 0;
 }
+
+#currentTimeLabel, #remainingTimeLabel, #artistAlbumLabel, #songTitleLabel {
+    -fx-text-fill: rgb(255, 255, 255);
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 4, 0.6, 0, 0);
+}

@@ -14,7 +14,7 @@
                           AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
             </children>
         </AnchorPane>
-        <AnchorPane minWidth="700.0">
+        <AnchorPane>
             <children>
                 <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
                             AnchorPane.topAnchor="0.0">
@@ -53,9 +53,9 @@
                         </HBox>
                     </top>
                     <center>
-                        <AnchorPane minWidth="700.0" BorderPane.alignment="CENTER">
+                        <AnchorPane BorderPane.alignment="CENTER">
                             <children>
-                                <ListView fx:id="albumsListView" focusTraversable="false" minWidth="700.0" AnchorPane.bottomAnchor="0.0"
+                                <ListView fx:id="albumsListView" focusTraversable="false" AnchorPane.bottomAnchor="0.0"
                                           AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
                             </children>
                         </AnchorPane>

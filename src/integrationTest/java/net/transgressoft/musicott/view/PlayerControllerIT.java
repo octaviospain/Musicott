@@ -20,10 +20,20 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.Event;
 import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import java.time.Duration;
 import net.rgielen.fxweaver.core.FxControllerAndView;
@@ -48,8 +58,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -136,6 +148,100 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
         Platform.runLater(() -> Event.fireEvent(waveformPane, new SeekEvent(waveformPane, waveformPane, 0.5)));
         waitForFxEvents();
         verify(playerService).seek(javafx.util.Duration.millis(5000));
+    }
+
+    @Test
+    @DisplayName("toggles mute state when M key is pressed and no text field is focused")
+    void togglesMuteStateWhenMKeyPressedAndNoTextFieldIsFocused(FxRobot fxRobot) throws Exception {
+        waitForFxEvents();
+
+        var playerController = playerControllerAndView.getController();
+        Slider volumeSlider = fxRobot.lookup("#volumeSlider").queryAs(Slider.class);
+
+        // GIVEN — a non-zero baseline volume on the slider, unmuted
+        Platform.runLater(() -> volumeSlider.setValue(0.6));
+        waitForFxEvents();
+        assertThat(playerController.isMuted()).isFalse();
+        assertThat(volumeSlider.getValue()).isEqualTo(0.6);
+
+        // WHEN — toggleMute fires (the action wired to the bare-M accelerator)
+        Platform.runLater(playerController::toggleMute);
+        waitForFxEvents();
+
+        // THEN — muted, slider at 0 (pre-arms next play at zero volume)
+        assertThat(playerController.isMuted()).isTrue();
+        assertThat(volumeSlider.getValue()).isEqualTo(0.0);
+
+        // WHEN — toggleMute fires again
+        Platform.runLater(playerController::toggleMute);
+        waitForFxEvents();
+
+        // THEN — unmuted, pre-mute volume restored
+        assertThat(playerController.isMuted()).isFalse();
+        assertThat(volumeSlider.getValue()).isEqualTo(0.6);
+    }
+
+    @Test
+    @DisplayName("does not trigger mute when M key is pressed while a text field is focused")
+    void doesNotTriggerMuteWhenMKeyPressedWhileTextFieldIsFocused(FxRobot fxRobot) throws Exception {
+        // Builds a stand-alone scene with a MenuBar carrying a bare-M accelerator and a TextField.
+        // This validates JavaFX's documented focus-scope behaviour for menu accelerators —
+        // the very mechanism the production code relies on (see MenuBarController.initAccelerators).
+        AtomicInteger muteFireCount = new AtomicInteger(0);
+        CompletableFuture<Stage> stageFuture = new CompletableFuture<>();
+        CompletableFuture<TextField> textFieldFuture = new CompletableFuture<>();
+
+        Platform.runLater(() -> {
+            MenuItem menuItem = new MenuItem("Mute");
+            menuItem.setAccelerator(new KeyCodeCombination(KeyCode.M));
+            menuItem.setOnAction(e -> muteFireCount.incrementAndGet());
+            Menu controlsMenu = new Menu("Controls");
+            controlsMenu.getItems().add(menuItem);
+            MenuBar menuBar = new MenuBar(controlsMenu);
+
+            TextField textField = new TextField();
+            textField.setId("muteFocusScopeTextField");
+
+            VBox root = new VBox(menuBar, textField);
+            Stage probeStage = new Stage();
+            probeStage.setScene(new Scene(root, 200, 100));
+            probeStage.show();
+            textField.requestFocus();
+            stageFuture.complete(probeStage);
+            textFieldFuture.complete(textField);
+        });
+        Stage probeStage = stageFuture.get(5, TimeUnit.SECONDS);
+        TextField textField = textFieldFuture.get(5, TimeUnit.SECONDS);
+        waitForFxEvents();
+
+        // GIVEN — TextField has focus
+        assertThat(textField.isFocused()).isTrue();
+
+        // WHEN — M key event is fired into the focused TextField
+        Platform.runLater(() -> {
+            KeyEvent pressed = new KeyEvent(KeyEvent.KEY_PRESSED, "m", "M", KeyCode.M, false, false, false, false);
+            Event.fireEvent(textField, pressed);
+            KeyEvent released = new KeyEvent(KeyEvent.KEY_RELEASED, "m", "M", KeyCode.M, false, false, false, false);
+            Event.fireEvent(textField, released);
+        });
+        waitForFxEvents();
+
+        // THEN — accelerator did NOT fire while the TextField had focus
+        assertThat(muteFireCount.get()).isZero();
+
+        // WHEN — focus moves to a non-text-input node and M is fired into the scene root
+        Platform.runLater(() -> {
+            probeStage.getScene().getRoot().requestFocus();
+            KeyEvent pressed = new KeyEvent(KeyEvent.KEY_PRESSED, "m", "M", KeyCode.M, false, false, false, false);
+            Event.fireEvent(probeStage.getScene(), pressed);
+        });
+        waitForFxEvents();
+
+        // THEN — accelerator fires when no text input is focused
+        assertThat(muteFireCount.get()).isEqualTo(1);
+
+        Platform.runLater(probeStage::close);
+        waitForFxEvents();
     }
 
     @Test

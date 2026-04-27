@@ -19,6 +19,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
@@ -112,6 +113,16 @@ public class EditController {
         stage.setResizable(false);
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.setOnCloseRequest(e -> close());
+        stage.setOnShown(e -> {
+            if (stage.getScene() != null) {
+                stage.getScene().setOnKeyPressed(ke -> {
+                    if (ke.getCode() == KeyCode.ESCAPE) {
+                        cancelButton.fire();
+                        ke.consume();
+                    }
+                });
+            }
+        });
 
         // Defer MultipleEditionConfirmationAlert creation to first use; at this point the stage
         // has no scene yet, and Dialog.initOwner() requires the owner to have a scene in JavaFX 24.
