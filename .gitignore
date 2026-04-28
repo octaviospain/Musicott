@@ -46,3 +46,7 @@ CLAUDE.md
 .graphify_uncached.txt
 
 lastfm.properties
+
+# Beryx Runtime plugin outputs (jpackage installers + jlink-trimmed runtime image)
+build/jpackage/
+build/image/

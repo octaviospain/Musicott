@@ -18,7 +18,10 @@ import net.transgressoft.lirp.persistence.json.JsonFileRepository;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.test.*;
 import net.transgressoft.musicott.view.custom.PlaylistTreeView;
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -300,13 +303,18 @@ class PlaylistManagementUIT extends ApplicationTestBase<VBox> {
     }
 
     // -----------------------------------------------------------------------
-    // User journey: multi-select with CTRL
+    // User journey: multi-select via the OS modifier key (Cmd on macOS, Ctrl elsewhere)
     // -----------------------------------------------------------------------
 
     @Test
     @Order(9)
-    @DisplayName("CTRL-click selects multiple playlists")
-    void ctrlClickSelectsMultiplePlaylists(FxRobot fxRobot) {
+    @DisplayName("modifier-click selects multiple playlists")
+    // TestFX's Glass robot does not propagate Cmd as MouseEvent.isShortcutDown=true
+    // through Monocle headless on macOS, so the multi-select modifier never registers
+    // even when KeyCode.META is pressed. Tracked in issue #17; passes on Linux and
+    // Windows where Ctrl propagates through the synthetic event chain reliably.
+    @DisabledOnOs(value = OS.MAC, disabledReason = "TestFX Cmd-modifier flake on Monocle macOS — see #17")
+    void modifierClickSelectsMultiplePlaylists(FxRobot fxRobot) {
         waitForFxEvents();
 
         var cells = visiblePlaylistCells(fxRobot).stream().toList();
@@ -315,7 +323,10 @@ class PlaylistManagementUIT extends ApplicationTestBase<VBox> {
         fxRobot.clickOn(cells.get(0));
         waitForFxEvents();
 
-        fxRobot.press(KeyCode.CONTROL).clickOn(cells.get(1)).release(KeyCode.CONTROL);
+        // JavaFX maps multi-select to Cmd on macOS and Ctrl elsewhere; pressing the
+        // wrong one produces a single-select that overrides the prior selection.
+        KeyCode multiSelect = SystemUtils.IS_OS_MAC_OSX ? KeyCode.META : KeyCode.CONTROL;
+        fxRobot.press(multiSelect).clickOn(cells.get(1)).release(multiSelect);
         waitForFxEvents();
 
         TreeView<?> treeView = fxRobot.lookup("#playlistTreeView").query();

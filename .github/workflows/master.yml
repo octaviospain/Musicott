@@ -10,21 +10,31 @@ on:
             - 'docs/**'
 
 jobs:
-    build-analyze:
-        runs-on: ubuntu-latest
+    build:
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-latest, windows-latest, macos-latest]
+        runs-on: ${{ matrix.os }}
 
         steps:
             -   uses: actions/checkout@v4
                 with:
                     fetch-depth: 0
 
-            -   name: Set up JDK 24
+            -   name: Set up JDK 24 (Liberica + JavaFX)
                 uses: actions/setup-java@v4
                 with:
                     java-version: '24'
-                    distribution: 'zulu'
+                    distribution: 'liberica'
+                    java-package: 'jdk+fx'
 
-            -   name: Install dependencies
+            # GStreamer is what JavaFX media plays through on Linux; without these
+            # packages javafx.media tests crash on first MediaPlayer construction.
+            # Xvfb provides a virtual X display for any test that bypasses Monocle's
+            # headless mode. Windows + macOS bundle their media stack in the JDK.
+            -   name: Install Linux runtime deps
+                if: matrix.os == 'ubuntu-latest'
                 run: |
                     sudo apt-get update
                     sudo apt-get install -y \
@@ -41,6 +51,7 @@ jobs:
                     echo "DISPLAY=:99.0" >> $GITHUB_ENV
 
             -   name: Cache SonarQube packages
+                if: matrix.os == 'ubuntu-latest'
                 uses: actions/cache@v4
                 with:
                     path: ~/.sonar/cache
@@ -58,9 +69,14 @@ jobs:
                         ${{ runner.os }}-gradle-
 
             -   name: Build
+                shell: bash
                 run: ./gradlew check
 
+            # Only the Linux leg uploads artifacts and runs Sonar — installer
+            # artifacts come from release.yml; SonarCloud needs a single canonical
+            # source per project.
             -   name: Upload Artifacts
+                if: matrix.os == 'ubuntu-latest'
                 uses: actions/upload-artifact@v4
                 with:
                     name: release-build-libs
@@ -69,6 +85,7 @@ jobs:
                     overwrite: true
 
             -   name: SonarQube Scan
+                if: matrix.os == 'ubuntu-latest'
                 env:
                     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
                 run: ./gradlew sonar --info

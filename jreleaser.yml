@@ -1,0 +1,61 @@
+# JReleaser configuration for Musicott — consumed by .github/workflows/release.yml (Plan 04).
+# - Aggregates the three matrix-leg artifacts (AppImage, EXE, DMG) into a draft GitHub Release.
+# - Generates a changelog from the commit range since the previous tag.
+# - Does NOT handle AUR (no AUR/pacman packager in JReleaser 1.23.0); AUR is a separate workflow job.
+# - Does NOT sign anything (D-PKG-MAC, D-PKG-WIN-SIGNING — no notarization, no Authenticode).
+
+project:
+  name: musicott
+  version: '{{ Env.JRELEASER_PROJECT_VERSION }}'
+  description: A JavaFX desktop music player
+  longDescription: |
+    Musicott is a cross-platform desktop music player built with JavaFX and Spring Boot.
+    Manage your local music library, organize playlists, and play tracks with waveform visualization.
+  authors:
+    - Octavio Calleya
+  license: GPL-3.0
+  inceptionYear: '2015'
+  java:
+    version: '24'
+    groupId: net.transgressoft
+    artifactId: musicott
+  links:
+    homepage: https://github.com/octaviospain/Musicott
+    documentation: https://github.com/octaviospain/Musicott/wiki
+
+release:
+  github:
+    owner: octaviospain
+    name: Musicott
+    overwrite: false
+    # Draft = true so the human flips Release public after manually verifying installs on Mac/Windows hardware.
+    draft: true
+    # The release.yml `tag` job pushes v{{projectVersion}} via axion-release BEFORE the build matrix
+    # and BEFORE JReleaser runs. Setting skipTag here prevents JReleaser from attempting a duplicate tag push.
+    skipTag: true
+    tagName: 'v{{projectVersion}}'
+    releaseName: 'Musicott {{projectVersion}}'
+    changelog:
+      formatted: ALWAYS
+      # Conventional-commits as best-effort; falls back to raw commit list when commits don't follow the spec.
+      preset: conventional-commits
+      contributors:
+        format: '- {{contributorName}}'
+      hide:
+        contributors:
+          - 'GitHub'
+          - 'dependabot[bot]'
+
+# Files attached to the GitHub Release. Paths are relative to the JReleaser working directory,
+# which Plan 04 sets to `artifacts/` (the merged download-artifact target).
+files:
+  artifacts:
+    - path: artifacts/Musicott-{{projectVersion}}-x86_64.AppImage
+      platform: linux-x86_64
+    - path: artifacts/Musicott-{{projectVersion}}.exe
+      platform: windows-x86_64
+    - path: artifacts/Musicott-{{projectVersion}}.dmg
+      platform: osx-x86_64
+
+# No `signing:` block — D-PKG-MAC and D-PKG-WIN-SIGNING explicitly opt out of all code signing.
+# No `distributions:` block — JReleaser is GitHub-Release-only here; AUR push is a separate workflow job.

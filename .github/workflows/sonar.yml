@@ -16,7 +16,8 @@ jobs:
                 uses: actions/setup-java@v4
                 with:
                     java-version: '24'
-                    distribution: 'zulu'
+                    distribution: 'liberica'
+                    java-package: 'jdk+fx'
 
             -   name: Install dependencies
                 run: |

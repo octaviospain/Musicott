@@ -1,0 +1,195 @@
+// ---------------------------------------------------------------------------
+// Test source sets, JVM args, tasks, and JaCoCo coverage.
+// ---------------------------------------------------------------------------
+
+// TestFX/Monocle reach into JavaFX internals (com.sun.glass.ui, com.sun.javafx.*) via
+// reflection, so the test JVM needs --add-exports / --add-opens to relax module access.
+// These flags are only meaningful when the toolchain JDK ships JavaFX as real modules
+// (e.g. BellSoft Liberica Full). On a plain JDK like Zulu, the org.openjfx.javafxplugin
+// puts JavaFX JARs on the classpath, where there is no module enforcement and no
+// `javafx.graphics` module exists — the JVM emits "Unknown module: javafx.graphics" for
+// each flag. Detect once at config time and only emit the flags when they apply.
+def hasBundledJavafx = providers.provider {
+    def launcher = javaToolchains.launcherFor(java.toolchain).get()
+    def jdkHome = launcher.metadata.installationPath.asFile
+    new File(jdkHome, 'jmods/javafx.graphics.jmod').exists()
+}.get()
+
+ext {
+    testJvmArgs = hasBundledJavafx ? [
+            '--enable-native-access=javafx.graphics',
+            '--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.glass.utils=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
+            '--add-exports=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/javafx.scene.image=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
+            '--add-opens=javafx.base/com.sun.javafx.logging=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.beans=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED',
+            '--add-opens=javafx.base/javafx.collections=ALL-UNNAMED',
+    ] : []
+
+    configureTestFxSystemProperties = { Test task ->
+        if (System.getProperty('testfx.headless') == 'false') {
+            task.systemProperty 'testfx.robot', 'awt'
+            task.systemProperty 'java.awt.headless', 'false'
+        } else {
+            task.systemProperty 'testfx.headless', 'true'
+            task.systemProperty 'java.awt.headless', 'true'
+            task.systemProperty 'testfx.robot', 'glass'
+            task.systemProperty 'prism.order', 'sw'
+            task.systemProperty 'prism.text', 't2k'
+            task.systemProperty 'glass.platform', 'Gtk'
+            task.systemProperty 'monocle.platform', 'Headless'
+        }
+    }
+}
+
+sourceSets {
+    integrationTest {
+        java.srcDir 'src/integrationTest/java'
+        resources.srcDir 'src/integrationTest/resources'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+    uiTest {
+        java.srcDir 'src/uiTest/java'
+        resources.srcDir 'src/uiTest/resources'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+    e2eTest {
+        java.srcDir 'src/e2eTest/java'
+        resources.srcDir 'src/e2eTest/resources'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+idea {
+    module {
+        testSources.from(
+                sourceSets.integrationTest.java.srcDirs,
+                sourceSets.uiTest.java.srcDirs,
+                sourceSets.e2eTest.java.srcDirs
+        )
+        testResources.from(
+                sourceSets.integrationTest.resources.srcDirs,
+                sourceSets.uiTest.resources.srcDirs,
+                sourceSets.e2eTest.resources.srcDirs
+        )
+    }
+}
+
+configurations {
+    // testFixtures needs main's deps (JavaFX, Spring) since base classes reference them
+    // directly; the org.openjfx.javafxplugin only targets the `implementation` config.
+    testFixturesImplementation.extendsFrom implementation
+
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+    uiTestImplementation.extendsFrom testImplementation
+    uiTestRuntimeOnly.extendsFrom testRuntimeOnly
+    e2eTestImplementation.extendsFrom testImplementation
+    e2eTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+dependencies {
+    testFixturesImplementation libs.bundles.music.commons.test
+    testFixturesImplementation libs.hamcrest
+    testFixturesImplementation libs.mockito.core
+    testFixturesImplementation libs.bundles.testfx
+    testFixturesImplementation libs.spring.boot.starter.test
+    testFixturesImplementation(platform(libs.junit.bom))
+    testFixturesImplementation libs.kotlinx.coroutines.test
+    testFixturesImplementation libs.junit.jupiter
+
+    testImplementation testFixtures(project)
+    testImplementation libs.bundles.music.commons.test
+    testImplementation libs.hamcrest
+    testImplementation libs.mockito.core
+    testImplementation libs.bundles.testfx
+    testImplementation libs.spring.boot.starter.test
+    testImplementation(platform(libs.junit.bom))
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.junit.jupiter
+
+    integrationTestImplementation testFixtures(project)
+    uiTestImplementation testFixtures(project)
+    e2eTestImplementation testFixtures(project)
+}
+
+test {
+    useJUnitPlatform()
+    configureTestFxSystemProperties(it)
+    testLogging { events "passed", "skipped", "failed" }
+    jvmArgs = testJvmArgs
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests (*IT classes)'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    useJUnitPlatform()
+    shouldRunAfter tasks.named('test')
+    configureTestFxSystemProperties(it)
+    testLogging { events "passed", "skipped", "failed" }
+    jvmArgs = testJvmArgs
+}
+
+tasks.register('uiTest', Test) {
+    description = 'Runs UI tests (*UIT classes)'
+    group = 'verification'
+    testClassesDirs = sourceSets.uiTest.output.classesDirs
+    classpath = sourceSets.uiTest.runtimeClasspath
+    useJUnitPlatform()
+    shouldRunAfter tasks.named('integrationTest')
+    configureTestFxSystemProperties(it)
+    testLogging { events "passed", "skipped", "failed" }
+    jvmArgs = testJvmArgs
+}
+
+tasks.register('e2eTest', Test) {
+    description = 'Runs end-to-end tests (*E2E classes)'
+    group = 'verification'
+    testClassesDirs = sourceSets.e2eTest.output.classesDirs
+    classpath = sourceSets.e2eTest.runtimeClasspath
+    useJUnitPlatform()
+    shouldRunAfter tasks.named('uiTest')
+    configureTestFxSystemProperties(it)
+    testLogging { events "passed", "skipped", "failed" }
+    jvmArgs = testJvmArgs
+}
+
+jacocoTestReport {
+    executionData.setFrom(fileTree(buildDir).include('jacoco/*.exec'))
+    sourceDirectories.from(sourceSets.main.allSource.srcDirs)
+    classDirectories.from(sourceSets.main.output)
+    reports {
+        xml.required.set true
+        html.required = true
+    }
+    dependsOn tasks.named('test'), tasks.named('integrationTest'),
+              tasks.named('uiTest'), tasks.named('e2eTest')
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('test')
+    dependsOn tasks.named('integrationTest')
+    dependsOn tasks.named('uiTest')
+    dependsOn tasks.named('e2eTest')
+    dependsOn tasks.named('jacocoTestReport', JacocoReport)
+}

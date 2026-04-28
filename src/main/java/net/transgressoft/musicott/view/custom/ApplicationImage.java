@@ -2,35 +2,39 @@ package net.transgressoft.musicott.view.custom;
 
 import javafx.scene.image.Image;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.InputStream;
 
 /**
  * @author Octavio Calleya
  */
 public enum ApplicationImage {
 
-    DEFAULT_COVER(Paths.get("/images", "default-cover-image.png")),
-    ABOUT_IMAGE(Paths.get("/images", "musicott-about-logo.png")),
-    COMMON_ERROR(Paths.get("/images", "common-error.png")),
-    DRAGBOARD_ICON(Paths.get("/icons", "dragboard-icon.png")),
-    LASTFM_LOGO(Paths.get("/images", "lastfm-logo.png"));
+    DEFAULT_COVER("/images/default-cover-image.png"),
+    ABOUT_IMAGE("/images/musicott-about-logo.png"),
+    COMMON_ERROR("/images/common-error.png"),
+    DRAGBOARD_ICON("/icons/dragboard-icon.png"),
+    LASTFM_LOGO("/images/lastfm-logo.png"),
+    APP_ICON("/icons/musicott.png");
 
-    private final Path path;
+    private final String path;
     private Image image;
 
-    ApplicationImage(Path path) {
+    ApplicationImage(String path) {
         this.path = path;
     }
 
     public Image get() {
         if (image == null) {
-            image = fromPath(path.toString());
+            image = fromPath(path);
         }
         return image;
     }
 
     private static Image fromPath(String path) {
-        return new Image(ApplicationImage.class.getResourceAsStream(path));
+        InputStream stream = ApplicationImage.class.getResourceAsStream(path);
+        if (stream == null) {
+            throw new IllegalStateException("Missing classpath resource: " + path);
+        }
+        return new Image(stream);
     }
 }

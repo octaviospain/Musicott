@@ -1,0 +1,23 @@
+// ---------------------------------------------------------------------------
+// SonarQube analysis configuration.
+// ---------------------------------------------------------------------------
+
+sonar {
+    properties {
+        property 'sonar.host.url', 'https://sonarcloud.io'
+        property 'sonar.organization', 'transgressoft'
+        property 'sonar.projectKey', 'octaviospain_musicott'
+        property 'sonar.projectName', 'musicott'
+        property 'sonar.projectVersion', version
+        property 'sonar.sources', 'src/main'
+        property 'sonar.tests', 'src/test,src/integrationTest,src/uiTest,src/e2eTest'
+        property 'sonar.exclusions', 'src/test/**,src/integrationTest/**,src/uiTest/**,src/e2eTest/**'
+        property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/test/jacocoTestReport.xml'
+        property 'sonar.junit.reportPaths', [
+                'build/test-results/test',
+                'build/test-results/integrationTest',
+                'build/test-results/uiTest',
+                'build/test-results/e2eTest'
+        ].join(',')
+    }
+}

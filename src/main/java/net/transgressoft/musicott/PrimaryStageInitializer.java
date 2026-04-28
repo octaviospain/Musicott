@@ -5,6 +5,7 @@ import net.transgressoft.musicott.events.StopApplicationEvent;
 import net.transgressoft.musicott.view.ErrorDialogController;
 import net.transgressoft.musicott.view.MainController;
 import net.transgressoft.musicott.view.PreferencesController;
+import net.transgressoft.musicott.view.custom.ApplicationImage;
 
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -56,6 +57,7 @@ public class PrimaryStageInitializer implements ApplicationListener<StageReadyEv
 
         wirePublishStopApplicationOnClose(primaryStage);
         primaryStage.setScene(scene);
+        primaryStage.getIcons().add(ApplicationImage.APP_ICON.get());
         installSceneDrivenMinimumSize(primaryStage, scene);
 
         primaryStage.show();

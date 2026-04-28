@@ -1,0 +1,120 @@
+[versions]
+# Languages & runtime
+kotlin = "2.3.20"
+kotlinx-coroutines = "1.10.1"
+kotlinx-serialization = "1.10.0"
+
+# Frameworks
+spring-boot = "4.0.5"
+spring-dependency-management = "1.1.7"
+
+# Music ecosystem
+music-commons = "0.5.0"
+lirp = "2.4.0"
+
+# JavaFX integration
+javafx-weaver = "2.0.1"
+controlsfx = "11.2.3"
+easybind = "1.0.3"
+nsmenufx = "2.1.7"
+
+# Audio / media
+jaudiotagger = "3.0.1"
+
+# Persistence / serialization
+jackson = "2.21.2"
+jackson-annotations = "2.21"
+
+# Utilities
+guava = "33.5.0-jre"
+nv-i18n = "1.29"
+commons-io = "2.21.0"
+commons-lang3 = "3.20.0"
+kotlin-logging = "3.0.5"
+jakarta-annotation = "3.0.0"
+
+# Testing
+junit-bom = "6.0.3"
+mockito = "5.23.0"
+testfx = "4.0.18"
+monocle = "21.0.2"
+hamcrest = "3.0"
+kotest = "5.9.1"
+
+# Build plugins
+sonarqube = "7.2.3.7755"
+axion-release = "1.21.1"
+beryx-runtime = "2.0.1"
+
+[libraries]
+# Kotlin
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-javafx = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-javafx", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlin-logging-jvm = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "kotlin-logging" }
+
+# Spring Boot (versions managed by the spring-boot plugin)
+spring-boot = { module = "org.springframework.boot:spring-boot" }
+spring-boot-starter-logging = { module = "org.springframework.boot:spring-boot-starter-logging" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+snakeyaml = { module = "org.yaml:snakeyaml" }
+
+# Music ecosystem
+music-commons-api = { module = "net.transgressoft:music-commons-api", version.ref = "music-commons" }
+music-commons-core = { module = "net.transgressoft:music-commons-core", version.ref = "music-commons" }
+music-commons-fx = { module = "net.transgressoft:music-commons-fx", version.ref = "music-commons" }
+music-commons-test = { module = "net.transgressoft:music-commons-test", version.ref = "music-commons" }
+music-commons-fx-test = { module = "net.transgressoft:music-commons-fx-test", version.ref = "music-commons" }
+lirp-core = { module = "net.transgressoft:lirp-core", version.ref = "lirp" }
+
+# JavaFX UI
+javafx-weaver-core = { module = "net.rgielen:javafx-weaver-core", version.ref = "javafx-weaver" }
+javafx-weaver-spring = { module = "net.rgielen:javafx-weaver-spring", version.ref = "javafx-weaver" }
+controlsfx = { module = "org.controlsfx:controlsfx", version.ref = "controlsfx" }
+easybind = { module = "org.fxmisc.easybind:easybind", version.ref = "easybind" }
+nsmenufx = { module = "de.codecentric.centerdevice:centerdevice-nsmenufx", version.ref = "nsmenufx" }
+
+# Audio
+jaudiotagger = { module = "net.jthink:jaudiotagger", version.ref = "jaudiotagger" }
+
+# Persistence / serialization
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson-annotations" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-dataformat-xml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml", version.ref = "jackson" }
+
+# Utilities
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+nv-i18n = { module = "com.neovisionaries:nv-i18n", version.ref = "nv-i18n" }
+commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+jakarta-annotation = { module = "jakarta.annotation:jakarta.annotation-api", version.ref = "jakarta-annotation" }
+
+# Testing
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+testfx-core = { module = "org.testfx:testfx-core", version.ref = "testfx" }
+testfx-junit5 = { module = "org.testfx:testfx-junit5", version.ref = "testfx" }
+openjfx-monocle = { module = "org.testfx:openjfx-monocle", version.ref = "monocle" }
+hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
+
+[bundles]
+music-commons = ["music-commons-api", "music-commons-core", "music-commons-fx"]
+music-commons-test = ["music-commons-test", "music-commons-fx-test"]
+javafx-weaver = ["javafx-weaver-core", "javafx-weaver-spring"]
+jackson = ["jackson-core", "jackson-annotations", "jackson-databind", "jackson-dataformat-xml"]
+testfx = ["testfx-core", "testfx-junit5", "openjfx-monocle"]
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
+axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }
+beryx-runtime = { id = "org.beryx.runtime", version.ref = "beryx-runtime" }

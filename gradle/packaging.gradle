@@ -1,0 +1,113 @@
+// ---------------------------------------------------------------------------
+// Application launcher, trimmed JRE (Beryx runtime)
+// ---------------------------------------------------------------------------
+
+import static org.gradle.internal.os.OperatingSystem.current
+
+application {
+    applicationName = 'musicott'
+    mainClass = 'net.transgressoft.musicott.MusicottApplication'
+
+    applicationDefaultJvmArgs = [
+            '--enable-native-access=javafx.graphics,ALL-UNNAMED',
+            '--add-opens=javafx.controls/javafx.scene.control=ALL-UNNAMED',
+            '--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.javafx.css=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
+            '--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED'
+    ]
+}
+
+runtime {
+    // jdeps-driven base + Spring Boot/JavaFX manual augmentations. Spring Boot's classpath
+    // scanning hides modules from jdeps, so the curated default below covers them. If
+    // `gradle runtime --info` reveals NoClassDefFoundError on first launch, add the missing
+    // module here and re-run.
+    //
+    // The JDK is expected to ship JavaFX as platform modules (BellSoft Liberica Full /
+    // 'jdk+fx' on CI) — javafx.* below is jlinked into the trimmed runtime so the
+    // installed app's launcher loads JavaFX as proper modules, not from the unnamed module
+    // (which produced `Unsupported JavaFX configuration: classes were loaded from
+    // 'unnamed module @...'` warnings and made the --add-opens flags no-ops).
+    modules = [
+            'java.base',
+            'java.desktop',
+            'java.logging',
+            'java.management',
+            'java.naming',
+            'java.net.http',
+            'java.scripting',
+            'java.security.jgss',
+            'java.sql',
+            'java.xml',
+            'java.prefs',
+            'java.instrument',
+            'java.rmi',
+            'jdk.crypto.ec',
+            'jdk.crypto.cryptoki',
+            'jdk.unsupported',
+            'jdk.jfr',
+            'jdk.localedata',
+            'jdk.management',
+            'javafx.base',
+            'javafx.controls',
+            'javafx.fxml',
+            'javafx.graphics',
+            'javafx.media',
+            'javafx.web',
+    ]
+
+    options = [
+            '--strip-debug',
+            '--compress', 'zip-9',
+            '--no-header-files',
+            '--no-man-pages',
+    ]
+
+    // applicationDefaultJvmArgs does NOT auto-propagate to Beryx — mirror in both places:
+    // the launcher (gradle run via the trimmed JRE) AND the installed app's jpackage launcher.
+    launcher {
+        jvmArgs = application.applicationDefaultJvmArgs.toList()
+    }
+
+    jpackage {
+        imageName = 'Musicott'
+        installerName = 'Musicott'
+        // jpackage rejects -SNAPSHOT in appVersion; strip it for dry-run / local builds.
+        appVersion = project.version.toString().replaceAll(/-SNAPSHOT$/, '')
+
+        jvmArgs = application.applicationDefaultJvmArgs.toList()
+
+        if (current().isWindows()) {
+            installerType = 'exe'
+            // Beryx JPackageData has no `icon` field; icon is passed via --icon in imageOptions.
+            imageOptions = ['--icon', file('packaging/icons/musicott.ico').absolutePath]
+            installerOptions = [
+                    '--win-shortcut',
+                    '--win-menu',
+                    '--win-menu-group', 'Musicott',
+                    '--win-dir-chooser',
+                    '--win-per-user-install',
+                    // Stable upgrade GUID — must NEVER change across releases. Windows
+                    // matches it to detect that a new installer upgrades an existing
+                    // Musicott install in place rather than registering a parallel app.
+                    '--win-upgrade-uuid', '69eb6da0-58ce-48ff-818d-4012e87f45ea',
+            ]
+        } else if (current().isMacOsX()) {
+            installerType = 'dmg'
+            imageOptions = ['--icon', file('packaging/icons/musicott.icns').absolutePath]
+            installerOptions = [
+                    '--mac-package-name', 'Musicott',
+                    '--mac-package-identifier', 'net.transgressoft.musicott',
+            ]
+        } else {
+            // Linux: produce app-image (raw bundle directory); appimagetool wraps it in CI.
+            installerType = 'app-image'
+            imageOptions = ['--icon', file('packaging/icons/musicott.png').absolutePath]
+            installerOptions = [
+                    '--linux-shortcut',
+            ]
+        }
+    }
+}

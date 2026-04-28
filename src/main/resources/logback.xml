@@ -11,6 +11,10 @@
     <logger name="org.springframework" level="INFO"/>
     <logger name="org.jaudiotagger" level="ERROR"/>
     <logger name="net.transgressoft" level="INFO"/>
+    <!-- JavaFX's PrismImageLoader emits empty WARN messages via JUL when constructing
+         Image instances (one per FXML <Image> + the Stage icon). Images render
+         correctly — but the bridged JUL log messages have no payload. Suppress. -->
+    <logger name="javafx.scene.image" level="ERROR"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Musicott
+GenericName=Music Player
+Comment=A JavaFX desktop music player
+Exec=Musicott
+Icon=musicott
+Categories=AudioVideo;Audio;Player;
+Terminal=false
+StartupWMClass=Musicott

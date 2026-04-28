@@ -1,0 +1,410 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      increment:
+        description: 'How axion-release should compute the next version from the latest tag.'
+        required: true
+        type: choice
+        default: incrementMinor
+        options:
+          - incrementMinor
+          - incrementPatch
+          - incrementMajor
+      dry_run:
+        description: 'Skip tag push, JReleaser publish, and AUR push. Artifacts still uploaded to run summary.'
+        required: false
+        type: boolean
+        default: false
+
+# JReleaser needs contents:write to create the GitHub Release and upload assets.
+# The `tag` job also needs contents:write to push the computed v<X.Y.Z> tag.
+# Master.yml stays at default permissions; this is purely additive.
+permissions:
+  contents: write
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Compute the next version from the latest tag using the chosen incrementer.
+  # In real runs, also create and push v<X.Y.Z> so the build matrix can check
+  # out the tag and have axion-release read project.version directly from it.
+  # In dry-run runs, the version is still computed so artifact filenames match
+  # what a real run would produce; the matrix falls back to github.sha.
+  # The resolved version is exposed as a job output for all downstream jobs.
+  # -------------------------------------------------------------------------
+  tag:
+    name: Create release tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.compute.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0       # axion-release needs full history
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'liberica'
+          java-package: 'jdk+fx'
+
+      - name: Create and push tag (real run only)
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # createRelease only creates the tag locally; the explicit git push step pushes
+          # it using the credentials actions/checkout already configured for this token.
+          gradle --no-daemon createRelease \
+            -Prelease.versionIncrementer=${{ inputs.increment }} \
+            -Prelease.disableChecks
+          git push --tags origin HEAD
+
+      - name: Compute resolved version
+        id: compute
+        shell: bash
+        run: |
+          set -euo pipefail
+          # In a real run the tag was just created+pushed, so axion resolves the bare
+          # release version (e.g. 1.2.0). In dry-run no tag exists yet, so axion reports
+          # the next-version SNAPSHOT for the chosen incrementer (e.g. 1.2.0-SNAPSHOT) —
+          # which is fine because dry-run artifacts are only used for private testing.
+          VERSION="$(gradle --no-daemon -q currentVersion \
+              -Prelease.versionIncrementer=${{ inputs.increment }} \
+              | tail -1 | awk '{print $NF}')"
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: could not resolve version"
+            exit 1
+          fi
+          echo "Resolved version (${{ inputs.increment }}): ${VERSION}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Dry-run notice
+        if: ${{ inputs.dry_run == true }}
+        run: |
+          echo "Dry run: did not push a tag. Build matrix will check out github.sha."
+          echo "Artifacts will be labeled ${{ steps.compute.outputs.version }} (SNAPSHOT)."
+
+  # -------------------------------------------------------------------------
+  # Per-platform installer build. Matrix runs in parallel; each leg uploads
+  # one installer artifact named musicott-${{ matrix.os }}-installer.
+  # Each leg checks out the just-pushed tag ref so axion-release reads
+  # project.version from the tag directly.
+  # -------------------------------------------------------------------------
+  build:
+    name: Build ${{ matrix.os }}
+    needs: tag
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact-name: musicott-linux-installer
+            installer-glob: 'build/jpackage/Musicott-*-x86_64.AppImage'
+          - os: windows-latest
+            artifact-name: musicott-windows-installer
+            installer-glob: 'build/jpackage/Musicott-*.exe'
+          - os: macos-latest
+            artifact-name: musicott-macos-installer
+            installer-glob: 'build/jpackage/Musicott-*.dmg'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout (tag ref or HEAD in dry-run)
+        uses: actions/checkout@v4
+        with:
+          # In a real run the `tag` job just pushed v${{ needs.tag.outputs.version }}, so we
+          # check that tag out and axion-release reads project.version from it.
+          # In dry-run no tag exists, so we fall back to the dispatch ref's commit and
+          # use the chosen incrementer to make axion compute the same SNAPSHOT.
+          ref: ${{ inputs.dry_run == true && github.sha || format('v{0}', needs.tag.outputs.version) }}
+          fetch-depth: 0
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'liberica'
+          java-package: 'jdk+fx'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # ------------------------- Linux-specific setup -----------------------
+      - name: Install Linux runtime deps (for jpackage smoke and gstreamer)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgstreamer1.0-0 \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-libav \
+            gstreamer1.0-tools \
+            libgstreamer-plugins-base1.0-dev \
+            fakeroot
+
+      # ------------------------- Windows-specific setup ---------------------
+      # Pin WiX 3.14 — JDK 24 jpackage is broken with WiX 4/5/6 (Pitfall 1, JDK-8356592).
+      # Locate the WiX bin directory dynamically via Get-Command, falling back to the
+      # Chocolatey default install path. This survives chocolatey changing its layout.
+      - name: Install WiX Toolset 3.14
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          # Skip choco install if a WiX 3.14.x is already present on the runner — recent
+          # windows-latest images ship 3.14.1 preinstalled and choco refuses to downgrade,
+          # exiting 1 even though the tools are usable.
+          if (Test-Path "C:\Program Files (x86)\WiX Toolset v3.14\bin\light.exe") {
+              Write-Host "WiX 3.14 already installed, skipping choco install."
+          } else {
+              choco install wixtoolset --version=3.14.0 -y
+              if ($LASTEXITCODE -ne 0) {
+                  Write-Error "choco install wixtoolset failed with exit code $LASTEXITCODE"
+                  exit 1
+              }
+          }
+          # refreshenv is provided by chocolatey-core profile; it makes light.exe / candle.exe
+          # discoverable on the current PowerShell session's PATH.
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" -ErrorAction SilentlyContinue
+          refreshenv
+
+          $lightExe = Get-Command light.exe -ErrorAction SilentlyContinue
+          if ($lightExe) {
+              $wixPath = Split-Path $lightExe.Source -Parent
+          } elseif (Test-Path "C:\Program Files (x86)\WiX Toolset v3.14\bin") {
+              $wixPath = "C:\Program Files (x86)\WiX Toolset v3.14\bin"
+          } else {
+              Write-Error "WiX 3.14 not found after choco install"
+              exit 1
+          }
+          "$wixPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          Write-Host "WiX path: $wixPath"
+
+      # ------------------------- Build the installer ------------------------
+      # No need to pass -Prelease.version: axion-release reads project.version from the
+      # checked-out tag ref. In dry-run, project.version becomes the next-minor SNAPSHOT
+      # which Beryx's appVersion replaceAll(/-SNAPSHOT$/, '') strips per D-PKG-VERSION-STRIP.
+      - name: Build native installer (Beryx jpackage)
+        shell: bash
+        run: |
+          # On Linux installerType is `app-image`, which Beryx's `jpackage` task mishandles:
+          # it forwards `--app-image=...` to a `--type app-image` jpackage invocation, which
+          # jpackage rejects ("Option [--app-image] is not valid with type [app-image]").
+          # `jpackageImage` produces the app-image directory we need; the next step wraps
+          # it into a real .AppImage with appimagetool.
+          #
+          # Pass the chosen versionIncrementer so dry-run builds (which check out
+          # github.sha and have no new tag) compute the same version as the tag job did.
+          # In real runs the matrix has the v<X.Y.Z> tag checked out and axion ignores
+          # the incrementer.
+          INCREMENTER="-Prelease.versionIncrementer=${{ inputs.increment }}"
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            gradle --no-daemon jpackageImage $INCREMENTER
+          else
+            gradle --no-daemon jpackage $INCREMENTER
+          fi
+          # Use the version computed by the tag job — single source of truth across legs.
+          echo "MUSICOTT_VERSION=${{ needs.tag.outputs.version }}" >> $GITHUB_ENV
+
+      # --------------------- Linux: wrap into AppImage ----------------------
+      # Beryx produced build/jpackage/Musicott/ (app-image dir).
+      # appimagetool wraps it; we rename the resulting file to match jreleaser.yml's expected pattern.
+      - name: Wrap Linux app-image into AppImage
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APPDIR="build/Musicott.AppDir"
+          rm -rf "$APPDIR"
+          cp -r build/jpackage/Musicott "$APPDIR"
+
+          # AppImage AppDir-spec files at AppDir root (not under usr/share/applications)
+          cp packaging/linux/musicott.desktop "$APPDIR/musicott.desktop"
+          cp packaging/icons/musicott.png    "$APPDIR/musicott.png"
+
+          # AppRun symlink → the launcher binary jpackage produced
+          cd "$APPDIR" && ln -sf bin/Musicott AppRun && cd -
+
+          # Download appimagetool (continuous build) — Pitfall 4: --appimage-extract-and-run because no libfuse2
+          wget -q -O appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+
+          ARCH=x86_64 ./appimagetool --appimage-extract-and-run \
+            "$APPDIR" "build/jpackage/Musicott-${MUSICOTT_VERSION}-x86_64.AppImage"
+
+          ls -la build/jpackage/
+
+      # ------------------------- Smoke test ---------------------------------
+      # Test the actual Beryx-produced launcher, not bare java. The launcher script applies
+      # the curated module list and the JVM args mirrored from applicationDefaultJvmArgs
+      # (per Plan 01 D-PKG-JVM-ARGS). We don't run the GUI; we just confirm the launcher
+      # starts the JVM cleanly. The app exits quickly because JavaFX cannot render headlessly
+      # without the proper flags, but a clean module/classpath resolution shows up as a low
+      # exit code (0 or 1), NOT an rc 125+ "module not found" / "class not found" failure.
+      - name: Smoke test the installed launcher (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          # The :jpackageImage task produces the jpackage app-image at
+          # build/jpackage/Musicott/, with the launcher at bin/Musicott (capitalized to match
+          # the Beryx imageName). The :runtime task (which would create build/image/) is no
+          # longer in the dependency graph for jpackageImage on Linux.
+          LAUNCHER="build/jpackage/Musicott/bin/Musicott"
+          if [ ! -f "$LAUNCHER" ]; then
+            echo "ERROR: Beryx jpackageImage task did not produce launcher at $LAUNCHER"
+            exit 1
+          fi
+          # Run the launcher with --help (or whatever it falls through to) for max 10s.
+          # rc semantics:
+          #   0   → clean exit (unlikely but acceptable)
+          #   1   → JavaFX init failure (acceptable — means JVM resolved all classes/modules)
+          #   124 → timeout fired (acceptable — means JVM started and was running)
+          #   125+ → JRE/launcher misconfiguration (NOT acceptable — block release)
+          rc=0
+          timeout 10 "$LAUNCHER" --help 2>&1 | head -20 || rc=$?
+          echo "Launcher exited with rc=${rc}"
+          if [ "${rc}" -ge 125 ] && [ "${rc}" -ne 124 ]; then
+            echo "ERROR: launcher rc=${rc} indicates a missing JRE module or classpath issue"
+            exit 1
+          fi
+          echo "Launcher smoke test passed."
+
+      # ------------------------- Upload artifact ----------------------------
+      # Per D-REL-ARTIFACTS: unique name per matrix leg. v4 disallows duplicates.
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.installer-glob }}
+          retention-days: 30
+          if-no-files-found: error
+
+  # -------------------------------------------------------------------------
+  # Aggregation: download all three installers, run JReleaser to create
+  # the draft GitHub Release with the artifacts attached.
+  # -------------------------------------------------------------------------
+  release:
+    name: Publish release
+    needs: [tag, build]
+    if: ${{ inputs.dry_run != true }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.tag.outputs.version }}
+          fetch-depth: 0
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'liberica'
+          java-package: 'jdk+fx'
+
+      - name: Download all installer artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: musicott-*-installer
+          merge-multiple: true
+
+      - name: List downloaded artifacts (debug)
+        shell: bash
+        run: |
+          ls -la artifacts/
+          # Sanity check: exactly 3 files (AppImage + exe + dmg).
+          ARTIFACT_COUNT=$(find artifacts -maxdepth 1 -type f | wc -l)
+          if [ "$ARTIFACT_COUNT" -ne 3 ]; then
+            echo "ERROR: expected 3 artifacts in artifacts/, found $ARTIFACT_COUNT"
+            exit 1
+          fi
+
+      - name: Run JReleaser (publish to GitHub Releases)
+        uses: jreleaser/release-action@v2
+        env:
+          JRELEASER_PROJECT_VERSION: ${{ needs.tag.outputs.version }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # -------------------------------------------------------------------------
+  # AUR publish: render PKGBUILD from template and hand off to the
+  # KSXGitHub/github-actions-deploy-aur@v2 Action, which handles SSH setup,
+  # .SRCINFO regeneration, and the git push to ssh://aur@aur.archlinux.org/musicott.git.
+  # Locked decisions D-PKG-LINUX-AUR + D-REL-AUR-JOB mandate this Action — do NOT
+  # hand-roll the AUR git push; the Action handles SSH setup and push internally.
+  # Runs only on real (non-dry) runs; depends on `release` so the GitHub
+  # Release exists before AUR points at the source tarball.
+  # -------------------------------------------------------------------------
+  aur-publish:
+    name: Publish AUR
+    needs: [tag, release]
+    if: ${{ inputs.dry_run != true }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.tag.outputs.version }}
+          fetch-depth: 0
+
+      - name: Compute SHA256 of source tarball
+        id: sha
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.tag.outputs.version }}"
+          TARBALL_URL="https://github.com/octaviospain/Musicott/archive/v${VERSION}.tar.gz"
+          # Wait for GitHub to materialize the tarball (the tag was pushed in the `tag` job;
+          # GitHub auto-generates the source tarball on first request, but propagation can take
+          # a few seconds — retry a few times before failing).
+          for i in 1 2 3 4 5; do
+            if curl -sLfo /tmp/source.tar.gz "$TARBALL_URL"; then
+              break
+            fi
+            echo "Tarball not yet available, retry $i/5..."
+            sleep 10
+          done
+          if [ ! -s /tmp/source.tar.gz ]; then
+            echo "ERROR: failed to download source tarball from $TARBALL_URL"
+            exit 1
+          fi
+          SHA=$(sha256sum /tmp/source.tar.gz | cut -d' ' -f1)
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Tarball SHA256: $SHA"
+
+      - name: Render PKGBUILD from template
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p aur-staging
+          VERSION="${{ needs.tag.outputs.version }}"
+          SHA="${{ steps.sha.outputs.sha256 }}"
+          sed -e "s|@VERSION@|${VERSION}|g" \
+              -e "s|@SHA256@|${SHA}|g" \
+              packaging/aur/PKGBUILD.template > aur-staging/PKGBUILD
+          cat aur-staging/PKGBUILD
+
+      - name: Deploy to AUR (KSXGitHub action)
+        uses: KSXGitHub/github-actions-deploy-aur@v2
+        with:
+          pkgname: musicott
+          pkgbuild: aur-staging/PKGBUILD
+          commit_username: ${{ vars.AUR_MAINTAINER_NAME }}
+          commit_email: ${{ vars.AUR_MAINTAINER_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: 'Update to ${{ needs.tag.outputs.version }}'
+          force_push: 'false'
