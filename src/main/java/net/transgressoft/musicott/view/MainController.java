@@ -69,11 +69,9 @@ public class MainController {
     private final ObservablePlaylistHierarchy playlistRepository;
 
     private final PlayerController playerController;
-    private final PreferencesController preferencesController;
     private final NavigationController navigationController;
     private final ArtistViewController artistViewController;
     private final AlertFactory alertFactory;
-    private final SettingsRepository settingsRepository;
     private final MediaImportService mediaImportService;
     private final ApplicationContext applicationContext;
 
@@ -156,22 +154,18 @@ public class MainController {
     public MainController(ObservableAudioLibrary audioRepository,
                           ObservablePlaylistHierarchy playlistRepository,
                           PlayerController playerController,
-                          PreferencesController preferencesController,
                           NavigationController navigationController,
                           ArtistViewController artistViewController,
                           AlertFactory alertFactory,
                           MediaImportService mediaImportService,
-                          SettingsRepository settingsRepository,
                           ApplicationContext applicationContext) {
         this.audioRepository = audioRepository;
         this.playlistRepository = playlistRepository;
         this.playerController = playerController;
-        this.preferencesController = preferencesController;
         this.navigationController = navigationController;
         this.artistViewController = artistViewController;
         this.alertFactory = alertFactory;
         this.mediaImportService = mediaImportService;
-        this.settingsRepository = settingsRepository;
         this.applicationContext = applicationContext;
         this.selectedPlaylistProperty = navigationController.selectedPlaylistProperty();
     }
@@ -552,8 +546,6 @@ public class MainController {
         @FXML
         private MenuItem newPlaylistFolderMenuItem;
         @FXML
-        private MenuItem preferencesMenuItem;
-        @FXML
         private MenuItem closeMenuItem;
         @FXML
         private Menu editMenu;
@@ -631,7 +623,6 @@ public class MainController {
         }
 
         private void initFileMenuActions() {
-            var acceptedAudioFileExtensions = settingsRepository.getAcceptedAudioFileExtensions();
             openFileMenuItem.setOnAction(e -> {
                 FileChooser chooser = new FileChooser();
                 chooser.setTitle("Open file(s)...");
@@ -646,7 +637,7 @@ public class MainController {
                 chooser.setTitle("Choose folder");
                 File directory = chooser.showDialog(rootBorderPane.getScene().getWindow());
                 if (directory != null)
-                    mediaImportService.importDirectory(directory, acceptedAudioFileExtensions);
+                    mediaImportService.importDirectory(directory);
             });
             importItunesMenuItem.setOnAction(e -> {
                 FileChooser chooser = new FileChooser();
@@ -665,18 +656,13 @@ public class MainController {
                     stage.showAndWait();
                 }
             });
-            preferencesMenuItem.setOnAction(e -> preferencesController.show());
             newPlaylistMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylist));
             newPlaylistFolderMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylistDirectory));
             closeMenuItem.setOnAction(e -> applicationContext.publishEvent(new StopApplicationEvent(this)));
         }
 
         private List<ExtensionFilter> buildAudioExtensionFilters() {
-            var acceptedAudioFileExtensions = settingsRepository.getAcceptedAudioFileExtensions();
-
-            if (acceptedAudioFileExtensions.isEmpty()) {
-                return Collections.emptyList();
-            }
+            List<AudioFileType> acceptedAudioFileExtensions = Arrays.asList(AudioFileType.values());
 
             List<ExtensionFilter> filters = new ArrayList<>();
             List<String> allExtensions = new ArrayList<>();
@@ -749,7 +735,6 @@ public class MainController {
             if (operativeSystemKeyModifier.equals(KeyCombination.META_DOWN)) {
                 MenuToolkit menuToolkit = MenuToolkit.toolkit();
                 Menu appMenu = new Menu("Musicott");
-                appMenu.getItems().addAll(preferencesMenuItem, new SeparatorMenuItem());
                 appMenu.getItems().add(menuToolkit.createQuitMenuItem("Musicott"));
                 Menu windowMenu = new Menu("Window");
                 windowMenu.getItems().addAll(menuToolkit.createMinimizeMenuItem(), menuToolkit.createCloseWindowMenuItem());
@@ -757,7 +742,6 @@ public class MainController {
                 windowMenu.getItems().addAll(menuToolkit.createHideOthersMenuItem(), menuToolkit.createUnhideAllMenuItem());
                 windowMenu.getItems().addAll(menuToolkit.createBringAllToFrontItem());
 
-                fileMenu.getItems().remove(5, 8);
                 menuToolkit.setApplicationMenu(appMenu);
                 rootMenuBar.getMenus().add(0, appMenu);
                 rootMenuBar.getMenus().add(5, windowMenu);
@@ -773,7 +757,6 @@ public class MainController {
             openFileMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, operativeSystemKeyModifier));
             importFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.O, operativeSystemKeyModifier, shiftDown));
             importItunesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, operativeSystemKeyModifier, shiftDown));
-            preferencesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.COMMA, operativeSystemKeyModifier));
             editMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.I, operativeSystemKeyModifier));
             deleteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.BACK_SPACE, operativeSystemKeyModifier));
             playPauseMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.SPACE));

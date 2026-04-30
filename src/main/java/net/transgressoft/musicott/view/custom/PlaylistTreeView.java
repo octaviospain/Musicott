@@ -26,7 +26,6 @@ import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.view.custom.table.AudioItemTableViewBase;
 
-import com.google.common.collect.ImmutableList;
 import javafx.beans.value.ChangeListener;
 import javafx.css.PseudoClass;
 import javafx.scene.control.*;
@@ -42,6 +41,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.fxmisc.easybind.EasyBind.subscribe;
 
@@ -242,7 +242,7 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
     public List<ObservablePlaylist> selectedPlaylists() {
         return getSelectionModel().getSelectedItems().stream()
                 .map(TreeItem::getValue)
-                .collect(ImmutableList.toImmutableList());
+                .collect(Collectors.toUnmodifiableList());
     }
 
     public void selectPlaylist(ObservablePlaylist playlist) {

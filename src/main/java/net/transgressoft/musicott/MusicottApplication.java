@@ -44,7 +44,7 @@ public class MusicottApplication {
         @Override
         public void init() {
             this.context = new SpringApplicationBuilder()
-                    .sources(MusicottApplication.class, LastFmConfiguration.class)
+                    .sources(MusicottApplication.class)
                     .run();
         }
 
@@ -92,7 +92,6 @@ public class MusicottApplication {
         public ApplicationPaths applicationPaths() {
             Path defaultApplicationDirectory = Paths.get((System.getProperty("user.home")), ".config", "musicott");
             return new ApplicationPaths(
-                    defaultApplicationDirectory.resolve("settings.json"),
                     defaultApplicationDirectory.resolve("audioItems.json"),
                     defaultApplicationDirectory.resolve("playlists.json"),
                     defaultApplicationDirectory.resolve("waveforms.json")

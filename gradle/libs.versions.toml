@@ -26,7 +26,6 @@ jackson = "2.21.2"
 jackson-annotations = "2.21"
 
 # Utilities
-guava = "33.5.0-jre"
 nv-i18n = "1.29"
 commons-io = "2.21.0"
 commons-lang3 = "3.20.0"
@@ -84,10 +83,8 @@ jaudiotagger = { module = "net.jthink:jaudiotagger", version.ref = "jaudiotagger
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson-annotations" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
-jackson-dataformat-xml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml", version.ref = "jackson" }
 
 # Utilities
-guava = { module = "com.google.guava:guava", version.ref = "guava" }
 nv-i18n = { module = "com.neovisionaries:nv-i18n", version.ref = "nv-i18n" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
@@ -106,7 +103,7 @@ hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
 music-commons = ["music-commons-api", "music-commons-core", "music-commons-fx"]
 music-commons-test = ["music-commons-test", "music-commons-fx-test"]
 javafx-weaver = ["javafx-weaver-core", "javafx-weaver-spring"]
-jackson = ["jackson-core", "jackson-annotations", "jackson-databind", "jackson-dataformat-xml"]
+jackson = ["jackson-core", "jackson-annotations", "jackson-databind"]
 testfx = ["testfx-core", "testfx-junit5", "openjfx-monocle"]
 
 [plugins]

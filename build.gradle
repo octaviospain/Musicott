@@ -63,7 +63,6 @@ dependencies {
 
     implementation libs.commons.lang3
     implementation libs.commons.io
-    implementation libs.guava
     implementation libs.nv.i18n
     implementation libs.jakarta.annotation
 }

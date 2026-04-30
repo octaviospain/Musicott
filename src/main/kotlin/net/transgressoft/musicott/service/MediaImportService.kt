@@ -30,7 +30,6 @@ import net.transgressoft.commons.music.itunes.ItunesPlaylist
 import net.transgressoft.lirp.entity.LirpEntity
 import net.transgressoft.lirp.event.CrudEvent
 import net.transgressoft.lirp.event.LirpEventSubscription
-import net.transgressoft.musicott.config.SettingsRepository
 import net.transgressoft.musicott.events.ExceptionEvent
 import net.transgressoft.musicott.events.StatusMessageUpdateEvent
 import net.transgressoft.musicott.events.StatusProgressUpdateEvent
@@ -59,7 +58,6 @@ import kotlin.io.path.extension
 class MediaImportService(
     private val applicationEventPublisher: ApplicationEventPublisher,
     private val musicLibrary: FXMusicLibrary,
-    private val settingsRepository: SettingsRepository,
     private val alertFactory: AlertFactory
 ) {
     private val logger = KotlinLogging.logger {}
@@ -96,7 +94,7 @@ class MediaImportService(
             .whenComplete(completeImport(progressSubscription))
     }
 
-    fun importDirectory(directory: File, acceptedAudioFileExtensions: Set<AudioFileType>) {
+    fun importDirectory(directory: File) {
         if (!tryStartImport()) return
 
         applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing files...", this))
@@ -112,7 +110,7 @@ class MediaImportService(
                 }
             }
 
-        val extensions = acceptedAudioFileExtensions
+        val extensions = AudioFileType.values()
             .map(AudioFileType::extension)
             .toSet()
 
@@ -194,12 +192,13 @@ class MediaImportService(
         importing.set(false)
     }
 
+    // Defaults stand in until the import wizard collects these values from the user at import time.
     private fun buildPolicy(): ItunesImportPolicy =
         ItunesImportPolicy(
-            useFileMetadata = settingsRepository.itunesImportMetadataPolicy,
-            holdPlayCount = settingsRepository.itunesImportHoldPlayCountPolicy,
-            writeMetadata = settingsRepository.itunesImportWriteMetadataPolicy,
-            acceptedFileTypes = settingsRepository.acceptedAudioFileExtensions
+            useFileMetadata = true,
+            holdPlayCount = true,
+            writeMetadata = true,
+            acceptedFileTypes = AudioFileType.values().toSet()
         )
 
     private fun findAcceptedFiles(directory: File, acceptedExtensions: Set<String>): List<Path> {

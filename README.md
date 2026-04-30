@@ -33,7 +33,6 @@ After years of this refactoring and redesign work, in April 2026 I moved the old
 - **iTunes XML import** — bring your existing iTunes library across with playlists and metadata intact
 - **Hierarchical playlists** — folders of playlists, drag-and-drop reordering, and full-text search across the library
 - **Waveform visualization** — generated once per track, cached locally, and used for visual seeking during playback
-- **Last.fm scrobbling** — opt-in scrobbling with browser-based authorization
 - **Native installers** for Linux (AppImage / AUR), Windows, and macOS — no JDK install required by end users
 
 ## Download
