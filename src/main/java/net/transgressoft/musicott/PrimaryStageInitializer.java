@@ -4,7 +4,6 @@ import net.transgressoft.musicott.events.StageReadyEvent;
 import net.transgressoft.musicott.events.StopApplicationEvent;
 import net.transgressoft.musicott.view.ErrorDialogController;
 import net.transgressoft.musicott.view.MainController;
-import net.transgressoft.musicott.view.PreferencesController;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 
 import javafx.scene.Scene;
@@ -65,12 +64,10 @@ public class PrimaryStageInitializer implements ApplicationListener<StageReadyEv
 
     /**
      * Pre-loads the auxiliary FXML views so their controllers and node trees are cached
-     * by FxWeaver before the user can trigger them. Without this, the first
-     * {@code preferencesController.show()} or error-dialog raise would block on FXML
-     * parsing and node construction on the FX thread.
+     * by FxWeaver before the user can trigger them. Without this, the first error-dialog
+     * raise would block on FXML parsing and node construction on the FX thread.
      */
     private void prewarmAuxiliaryViews() {
-        fxWeaver.loadView(PreferencesController.class);
         fxWeaver.loadView(ErrorDialogController.class);
     }
 

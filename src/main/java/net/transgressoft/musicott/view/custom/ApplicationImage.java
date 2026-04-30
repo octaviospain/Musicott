@@ -13,7 +13,6 @@ public enum ApplicationImage {
     ABOUT_IMAGE("/images/musicott-about-logo.png"),
     COMMON_ERROR("/images/common-error.png"),
     DRAGBOARD_ICON("/icons/dragboard-icon.png"),
-    LASTFM_LOGO("/images/lastfm-logo.png"),
     APP_ICON("/icons/musicott.png");
 
     private final String path;

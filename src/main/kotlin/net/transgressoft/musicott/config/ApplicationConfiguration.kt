@@ -45,9 +45,8 @@ class ApplicationConfiguration @Autowired constructor(private val applicationPat
 
     private fun initializeApplicationFiles() {
         try {
-            applicationPaths.settingsPath.parent?.let { Files.createDirectories(it) }
+            applicationPaths.audioItemsPath.parent?.let { Files.createDirectories(it) }
 
-            createFileIfNotExists(applicationPaths.settingsPath)
             createFileIfNotExists(applicationPaths.audioItemsPath)
             createFileIfNotExists(applicationPaths.playlistsPath)
             createFileIfNotExists(applicationPaths.waveformsPath)
@@ -78,9 +77,6 @@ class ApplicationConfiguration @Autowired constructor(private val applicationPat
     @Bean
     fun selectedPlaylistProperty(): ObjectProperty<Optional<ObservablePlaylist>> =
         SimpleObjectProperty(null, "selected playlist", Optional.empty())
-
-    @Bean
-    fun settingsRepository(): SettingsRepository = SettingsRepository(applicationPaths.settingsPath.toFile())
 
     @Bean
     fun musicLibrary(): FXMusicLibrary =

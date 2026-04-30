@@ -41,7 +41,6 @@ public class ErrorDialogController implements ErrorPresenter {
 
     private static final String INVALID_AUDIO_ITEMS_MESSAGE = "Some tracks cannot be edited because they were not found";
     private final Image commonErrorImage = ApplicationImage.COMMON_ERROR.get();
-    private final Image lastFmErrorImage = ApplicationImage.LASTFM_LOGO.get();
 
     @FXML
     private AnchorPane root;
@@ -193,19 +192,6 @@ public class ErrorDialogController implements ErrorPresenter {
     private void addExpandableButtons() {
         if (! bottomBorderPane.getChildren().contains(seeDetailsHBox))
             bottomBorderPane.setLeft(seeDetailsHBox);
-    }
-
-    @Override
-    public void showLastFmError(String message, String content) {
-        titleLabel.setText(message);
-        setErrorContent(content);
-        putLastFmGraphic();
-        Platform.runLater(stage::show);
-    }
-
-    private void putLastFmGraphic() {
-        if (! errorImageView.getImage().equals(lastFmErrorImage))
-            errorImageView.setImage(lastFmErrorImage);
     }
 
     @EventListener

@@ -143,7 +143,7 @@ gradle build
 gradle run
 
 # Run a single test class
-gradle test --tests "net.transgressoft.musicott.view.PreferencesControllerTest"
+gradle test --tests "net.transgressoft.musicott.view.custom.alerts.KeyboardShortcutsDialogTest"
 ```
 
 ### Test Source Sets

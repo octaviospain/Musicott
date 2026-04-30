@@ -44,7 +44,6 @@ class MusicottApplicationE2E {
 			Path tempDir = Files.createTempDirectory("musicott-e2e");
 			tempDir.toFile().deleteOnExit();
 			return new ApplicationPaths(
-					tempDir.resolve("settings.json"),
 					tempDir.resolve("audioItems.json"),
 					tempDir.resolve("playlists.json"),
 					tempDir.resolve("waveforms.json")

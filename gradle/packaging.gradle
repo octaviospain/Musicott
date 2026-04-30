@@ -55,7 +55,6 @@ runtime {
             'javafx.fxml',
             'javafx.graphics',
             'javafx.media',
-            'javafx.web',
     ]
 
     options = [

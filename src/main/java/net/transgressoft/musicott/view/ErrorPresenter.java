@@ -15,8 +15,6 @@ public interface ErrorPresenter {
 
     void show(String message, String content, Throwable exception);
 
-    void showLastFmError(String message, String content);
-
     void showWithExpandableContent(String message, Collection<String> messagesToBeExpanded);
 
     void showWithExpandableContent(String message, String content, Collection<String> messagesToBeExpanded);

@@ -10,7 +10,6 @@ import net.transgressoft.commons.music.waveform.AudioWaveform;
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.services.PlayerService;
-import net.transgressoft.musicott.services.lastfm.LastFmService;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.table.AudioItemTableViewBase;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
@@ -107,15 +106,12 @@ public class PlayerController {
     @FXML
     private PlayQueueController playQueueLayoutController;
 
-    private LastFmService lastFmService;
     private PlayableWaveformPane playableWaveformPane;
     private ReadOnlyBooleanProperty emptyLibraryProperty;
-    private boolean scrobbled = false;
     private boolean muted = false;
     private double preMuteVolume = 0.0;
     private Subscription progressSubscription;
     private Subscription labelsSubscription;
-    private Subscription scrobbleSubscription;
 
     @Autowired
     public PlayerController(AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository,
@@ -422,11 +418,6 @@ public class PlayerController {
         this.emptyLibraryProperty = emptyLibraryProperty;
     }
 
-    @Autowired(required = false)
-    public void setLastFmService(LastFmService lastFmService) {
-        this.lastFmService = lastFmService;
-    }
-
     public ReadOnlyBooleanProperty previousButtonDisabledProperty() {
         return prevButton.disabledProperty();
     }
@@ -465,7 +456,6 @@ public class PlayerController {
 
     @EventListener
     public void trackChangedEventListener(AudioItemChangedEvent event) {
-        scrobbled = false;
         updatePlayerComponents(event.currentTrack);
 
         // Bind volume slider bidirectionally to new player
@@ -477,9 +467,8 @@ public class PlayerController {
         // Unsubscribe previous track subscriptions to prevent listener accumulation
         if (progressSubscription != null) progressSubscription.unsubscribe();
         if (labelsSubscription != null) labelsSubscription.unsubscribe();
-        if (scrobbleSubscription != null) scrobbleSubscription.unsubscribe();
 
-        // Re-subscribe to current time for progress binding, labels, and scrobbling
+        // Re-subscribe to current time for progress binding and labels
         var currentTimeProp = playerService.getCurrentTimeProperty();
         if (currentTimeProp != null) {
             progressSubscription = subscribe(currentTimeProp, time -> {
@@ -492,18 +481,6 @@ public class PlayerController {
             labelsSubscription = subscribe(currentTimeProp, t -> {
                 Duration total = playerService.getTotalDuration();
                 if (total != null) updateTrackLabels(t, total);
-            });
-
-            scrobbleSubscription = subscribe(currentTimeProp, time -> {
-                if (isCurrentTrackValidToScrobble(time)) {
-                    scrobbled = true;
-                    playerService.currentTrack().ifPresent(track -> {
-                        if (lastFmService != null) {
-                            lastFmService.updateNowPlaying(track);
-                            lastFmService.scrobble(track);
-                        }
-                    });
-                }
             });
         }
     }
@@ -525,12 +502,4 @@ public class PlayerController {
         }
     }
 
-    private boolean isCurrentTrackValidToScrobble(Duration newTime) {
-        Duration totalDuration = playerService.getTotalDuration();
-        boolean isDurationBeyond30Seconds = totalDuration.greaterThanOrEqualTo(Duration.seconds(30));
-        boolean isDurationBeyondMidTime = newTime.greaterThanOrEqualTo(totalDuration.divide(2.0));
-        boolean isDurationLongerThan4Minutes = newTime.greaterThanOrEqualTo(Duration.minutes(4));
-
-        return !scrobbled && isDurationBeyond30Seconds && (isDurationBeyondMidTime || isDurationLongerThan4Minutes);
-    }
 }
