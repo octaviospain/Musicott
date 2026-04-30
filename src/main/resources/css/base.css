@@ -19,7 +19,7 @@
     -fx-background-color: rgb(73, 73, 73);
 }
 
-.label, .check-box {
+.label, .check-box, .radio-button, .toggle-switch {
     -fx-text-fill: white;
     -fx-font-family: "Avenir", sans-serif;
 }
