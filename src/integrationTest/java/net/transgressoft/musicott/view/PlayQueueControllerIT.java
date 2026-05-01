@@ -110,6 +110,7 @@ class PlayQueueControllerIT {
         var album = mock(net.transgressoft.commons.music.audio.Album.class);
         when(album.getName()).thenReturn("Test Album");
         when(item.getAlbumProperty()).thenReturn(new SimpleObjectProperty<>(album));
+        when(item.getCoverImageProperty()).thenReturn(new SimpleObjectProperty<>(java.util.Optional.empty()));
 
         // TrackQueueRow extends GridPane and must be created on the FX thread.
         TrackQueueRow[] rowHolder = new TrackQueueRow[1];

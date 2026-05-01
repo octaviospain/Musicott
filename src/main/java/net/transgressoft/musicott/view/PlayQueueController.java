@@ -74,6 +74,7 @@ public class PlayQueueController {
 
         playQueueList.addListener((ListChangeListener<TrackQueueRow>) change -> {
             while (change.next()) {
+                change.getRemoved().forEach(TrackQueueRow::dispose);
                 change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
                     playQueueList.remove(trackQueueRow);
                     LOG.debug("Removing track from play queue by clicking the button. Queue size: {}", playQueueList.size());
@@ -83,6 +84,7 @@ public class PlayQueueController {
 
         historyQueueList.addListener((ListChangeListener<TrackQueueRow>) change -> {
             while (change.next()) {
+                change.getRemoved().forEach(TrackQueueRow::dispose);
                 change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
                     historyQueueList.remove(trackQueueRow);
                     LOG.debug("Removing track from history queue by clicking the button. History queue size: {}", historyQueueList.size());

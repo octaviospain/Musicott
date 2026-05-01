@@ -20,6 +20,7 @@
 package net.transgressoft.musicott.view.custom.table;
 
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
+import net.transgressoft.musicott.view.custom.ApplicationImage;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -28,12 +29,15 @@ import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import org.fxmisc.easybind.Subscription;
 
 import static org.fxmisc.easybind.EasyBind.combine;
+import static org.fxmisc.easybind.EasyBind.subscribe;
 
 /**
  * Class that represents a single {@link ObservableAudioItem} in the play queue or the history queue.
@@ -52,6 +56,7 @@ public class TrackQueueRow extends GridPane {
     private ImageView coverImage;
     private VBox labelBox;
     private Button deleteTrackQueueRowButton;
+    private Subscription coverSubscription;
 
     public TrackQueueRow(ObservableAudioItem track) {
         super();
@@ -77,12 +82,17 @@ public class TrackQueueRow extends GridPane {
     private void placeCover() {
         coverImage = new ImageView();
         coverImage.setId("coverImage");
-//        subscribe(track.hasCoverProperty(), c -> Utils.updateCoverImage(track, coverImage)); //TODO
         coverImage.setCacheHint(CacheHint.QUALITY);
         coverImage.setCache(false);
         coverImage.setSmooth(true);
         coverImage.setFitWidth(COVER_SIZE);
         coverImage.setFitHeight(COVER_SIZE);
+
+        Image defaultCover = ApplicationImage.DEFAULT_COVER.get();
+        coverImage.setImage(track.getCoverImageProperty().get().orElse(defaultCover));
+        coverSubscription = subscribe(track.getCoverImageProperty(),
+                opt -> coverImage.setImage(opt.orElse(defaultCover)));
+
         add(coverImage, 0, 0);
     }
 
@@ -112,5 +122,17 @@ public class TrackQueueRow extends GridPane {
 
     public void setOnDeleteButtonClickedHandler(EventHandler<ActionEvent> onDeleteListener) {
         deleteTrackQueueRowButton.setOnAction(onDeleteListener);
+    }
+
+    /**
+     * Releases the cover-property subscription. Call when the row leaves both the play queue and
+     * the history queue so the row no longer pins {@code track} as a listener target and can be
+     * garbage-collected.
+     */
+    public void dispose() {
+        if (coverSubscription != null) {
+            coverSubscription.unsubscribe();
+            coverSubscription = null;
+        }
     }
 }
