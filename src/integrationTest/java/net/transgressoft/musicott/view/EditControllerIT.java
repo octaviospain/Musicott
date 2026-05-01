@@ -23,9 +23,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
-import org.testfx.util.WaitForAsyncUtils;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -82,6 +84,32 @@ class EditControllerIT {
         verify(applicationEventPublisher).publishEvent(captor.capture());
         assertThat(captor.getValue().invalidAudioItems).hasSize(1);
         assertThat(captor.getValue().invalidAudioItems.get(0)).isEqualTo(mockItem);
+    }
+
+    @Test
+    @DisplayName("commonString returns dash when entries differ and tolerates nulls without throwing")
+    void commonStringReturnsDashWhenEntriesDifferAndToleratesNulls() {
+        // Mixed: one null and one non-null — the legacy lambda invoked equalsIgnoreCase on the null,
+        // throwing NullPointerException and crashing the JavaFX Application Thread when Ctrl+I was
+        // pressed for a track whose getComments() returned null.
+        assertThat((String) ReflectionTestUtils.invokeMethod(editController, "commonString",
+                Arrays.asList(null, "hello"))).isEqualTo("-");
+        assertThat((String) ReflectionTestUtils.invokeMethod(editController, "commonString",
+                Arrays.asList("hello", null))).isEqualTo("-");
+
+        // All-null and empty cases collapse to empty string (no NPE, no spurious dash).
+        assertThat((String) ReflectionTestUtils.invokeMethod(editController, "commonString",
+                Arrays.asList(null, null))).isEmpty();
+        assertThat((String) ReflectionTestUtils.invokeMethod(editController, "commonString",
+                Collections.<String>emptyList())).isEmpty();
+
+        // Differing non-null values still produce the dash.
+        assertThat((String) ReflectionTestUtils.invokeMethod(editController, "commonString",
+                List.of("hello", "world"))).isEqualTo("-");
+
+        // All-equal (case-insensitive) returns the first value, preserving prior behaviour.
+        assertThat((String) ReflectionTestUtils.invokeMethod(editController, "commonString",
+                List.of("Hello", "hello", "HELLO"))).isEqualTo("Hello");
     }
 
     @Test

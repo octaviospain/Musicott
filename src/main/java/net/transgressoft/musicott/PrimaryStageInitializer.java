@@ -2,6 +2,7 @@ package net.transgressoft.musicott;
 
 import net.transgressoft.musicott.events.StageReadyEvent;
 import net.transgressoft.musicott.events.StopApplicationEvent;
+import net.transgressoft.musicott.view.EditController;
 import net.transgressoft.musicott.view.ErrorDialogController;
 import net.transgressoft.musicott.view.MainController;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
@@ -69,6 +70,7 @@ public class PrimaryStageInitializer implements ApplicationListener<StageReadyEv
      */
     private void prewarmAuxiliaryViews() {
         fxWeaver.loadView(ErrorDialogController.class);
+        fxWeaver.loadView(EditController.class);
     }
 
     /**

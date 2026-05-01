@@ -175,8 +175,7 @@ class MediaImportService(
         val future = coreItunesImportService.importAsync(
             selectedPlaylists,
             library,
-            policy,
-            rootDirectoryName = ROOT_PLAYLIST_NAME
+            policy
         ) { progress ->
             Platform.runLater {
                 // Guard against an empty import surfacing Infinity / NaN to the status bar.

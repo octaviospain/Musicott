@@ -14,6 +14,7 @@ import com.neovisionaries.i18n.CountryCode;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -112,6 +114,7 @@ public class EditController {
         stage.setTitle("Edit");
         stage.setResizable(false);
         stage.initModality(Modality.APPLICATION_MODAL);
+        stage.getIcons().add(ApplicationImage.APP_ICON.get());
         stage.setOnCloseRequest(e -> close());
         stage.setOnShown(e -> {
             if (stage.getScene() != null) {
@@ -285,15 +288,32 @@ public class EditController {
                 multipleEditionConfirmationAlert.showAndWait().ifPresent(result -> {
                     if (result.getButtonData().isDefaultButton()) {
                         updateFields();
-                        stage.showAndWait();
+                        showStage();
                     } else {
                         close();
                     }
                 });
             } else {
                 updateFields();
-                stage.showAndWait();
+                showStage();
             }
+        }
+    }
+
+    /**
+     * Ensures the modal dialog stage owns a Scene wrapping the FXML root before showing it.
+     * Without this attachment {@code showAndWait} opens an empty black window: the controller's
+     * stage is constructed in {@link #initialize()} but the FXML root has no implicit scene
+     * since the editor is loaded standalone (not embedded by another controller).
+     */
+    private void showStage() {
+        attachSceneIfNeeded();
+        stage.showAndWait();
+    }
+
+    void attachSceneIfNeeded() {
+        if (stage.getScene() == null && rootPane.getScene() == null) {
+            stage.setScene(new Scene(rootPane));
         }
     }
 
@@ -330,12 +350,16 @@ public class EditController {
     }
 
     private String commonString(List<String> list) {
-        String commonString;
-        if (list.stream().allMatch(st -> st.equalsIgnoreCase(list.get(0))))
-            commonString = list.get(0);
-        else
-            commonString = "-";
-        return commonString;
+        if (list.isEmpty()) {
+            return "";
+        }
+        String first = list.get(0);
+        for (String value : list) {
+            if (!Objects.equals(first, value) && !(first != null && value != null && first.equalsIgnoreCase(value))) {
+                return "-";
+            }
+        }
+        return first == null ? "" : first;
     }
 
     private String commonTitle() {
@@ -374,19 +398,30 @@ public class EditController {
     }
 
     private String commonTrackNumber() {
-        return commonString(audioItemSelection.stream().map(t -> String.valueOf(t.getTrackNumber())).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getTrackNumber())).collect(toList()));
     }
 
     private String commonDiscNumber() {
-        return commonString(audioItemSelection.stream().map(t -> String.valueOf(t.getDiscNumber())).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getDiscNumber())).collect(toList()));
     }
 
     private String commonYear() {
-        return commonString(audioItemSelection.stream().map(t -> String.valueOf(t.getAlbum().getYear())).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getAlbum().getYear())).collect(toList()));
     }
 
     private String commonBpm() {
-        return commonString(audioItemSelection.stream().map(t -> String.valueOf(t.getBpm())).collect(toList()));
+        return commonString(audioItemSelection.stream()
+                .map(t -> {
+                    Float bpm = t.getBpm();
+                    return bpm == null || bpm <= 0f ? null : bpm.toString();
+                }).collect(toList()));
+    }
+
+    // Track/disc/year are nullable Short on the music-commons API; when unset the getter returns
+    // null. Treat null and any non-positive value as "unset" so the field renders empty instead
+    // of the literal "null" string (which is what String.valueOf(null) would have produced).
+    private String formatPositiveShort(Short value) {
+        return value == null || value <= 0 ? null : value.toString();
     }
 
     private Optional<byte[]> commonCoverImage() {
@@ -424,7 +459,11 @@ public class EditController {
     }
 
     private String getEditionFieldResult(TextInputControl textField) {
-        return textField.getText().equals("-") ? null : textField.getText();
+        // commonString() returns "" when every selected track has the field unset; treat empty
+        // and the multi-value dash sentinel both as null so a no-op save doesn't overwrite
+        // unset metadata with empty strings.
+        String value = textField.getText();
+        return value == null || value.isEmpty() || value.equals("-") ? null : value;
     }
 
     private void close() {
