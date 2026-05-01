@@ -76,11 +76,14 @@ public class PlayQueueController {
             }
         });
 
-        historyQueueList.addListener((ListChangeListener<TrackQueueRow>) change ->
+        historyQueueList.addListener((ListChangeListener<TrackQueueRow>) change -> {
+            while (change.next()) {
                 change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
                     historyQueueList.remove(trackQueueRow);
                     LOG.debug("Removing track from history queue by clicking the button. History queue size: {}", historyQueueList.size());
-                })));
+                }));
+            }
+        });
 
         historyQueueButton.setId("historyQueueButton");
         queuesListView.setCellFactory(_ -> new TrackQueueListCell(() -> historyQueueButton.isSelected()));
