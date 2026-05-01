@@ -202,9 +202,17 @@ public class PlayerController {
             StackPane.setMargin(playQueueLayout, new Insets(0, 0, bottomMargin, 0));
         };
 
+        // hidePlayQueue removes playQueueLayout from its parent, so sceneProperty fires every time
+        // the popover toggles. Detach old listeners on each transition to prevent stacking.
+        javafx.beans.value.ChangeListener<Number> resizeListener = (o, ov, nv) -> apply.run();
         playQueueLayout.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (oldScene != null) {
+                oldScene.heightProperty().removeListener(resizeListener);
+                oldScene.widthProperty().removeListener(resizeListener);
+            }
             if (newScene != null) {
-                newScene.heightProperty().addListener((o, ov, nv) -> apply.run());
+                newScene.heightProperty().addListener(resizeListener);
+                newScene.widthProperty().addListener(resizeListener);
                 apply.run();
             }
         });
