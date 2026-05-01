@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
+import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
 import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
@@ -12,6 +13,7 @@ import net.rgielen.fxweaver.spring.SpringFxWeaver;
 import net.transgressoft.lirp.event.LirpEventPublisher;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.Artist;
+import net.transgressoft.musicott.events.SearchTextTypedEvent;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
@@ -87,6 +89,72 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
 
         // Artist list view remains accessible after artist selection
         assertThat(fxRobot.lookup("#artistsListView").tryQuery()).isPresent();
+    }
+
+    @Test
+    @DisplayName("ArtistViewController auto-selects the first filtered artist when search query matches")
+    void autoSelectsFirstFilteredArtistWhenSearchQueryMatches(FxRobot fxRobot) {
+        ArtistViewController controller = artistViewAndController.getController();
+        // Clear accumulated state from previous tests and reset the predicate.
+        Platform.runLater(() -> {
+            artistsProperty.clear();
+            controller.searchTextTypedEvent(new SearchTextTypedEvent("", this));
+        });
+        waitForFxEvents();
+
+        Platform.runLater(() -> {
+            artistsProperty.add(of("Abel"));
+            artistsProperty.add(of("Abba"));
+            artistsProperty.add(of("Beatles"));
+        });
+        waitForFxEvents();
+
+        // Direct invocation bypasses the mocked ApplicationEventPublisher bean — publishEvent(...)
+        // on a mock is a no-op, so the @EventListener method is driven directly here.
+        Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("Abe", this)));
+        waitForFxEvents();
+
+        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        assertThat(artistsListView.getItems()).hasSize(1);
+        assertThat(artistsListView.getItems().get(0).getName()).isEqualTo("Abel");
+
+        Artist selected = artistsListView.getSelectionModel().getSelectedItem();
+        assertThat(selected).isNotNull();
+        assertThat(selected).isSameAs(artistsListView.getItems().get(0));
+    }
+
+    @Test
+    @DisplayName("ArtistViewController restores the full artist list and selects the first artist when search query clears")
+    void restoresFullArtistListAndSelectsFirstArtistWhenSearchQueryClears(FxRobot fxRobot) {
+        ArtistViewController controller = artistViewAndController.getController();
+        // Clear accumulated state from previous tests and reset the predicate.
+        Platform.runLater(() -> {
+            artistsProperty.clear();
+            controller.searchTextTypedEvent(new SearchTextTypedEvent("", this));
+        });
+        waitForFxEvents();
+
+        Platform.runLater(() -> {
+            artistsProperty.add(of("Abel"));
+            artistsProperty.add(of("Abba"));
+            artistsProperty.add(of("Beatles"));
+        });
+        waitForFxEvents();
+
+        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+
+        // Filter to a single match.
+        Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("Abe", this)));
+        waitForFxEvents();
+        assertThat(artistsListView.getItems()).hasSize(1);
+
+        // Clear the query — emulates MainController publishing "" for length < 3 or empty input.
+        Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("", this)));
+        waitForFxEvents();
+
+        assertThat(artistsListView.getItems()).hasSize(3);
+        assertThat(artistsListView.getSelectionModel().getSelectedItem()).isNotNull();
+        assertThat(artistsListView.getSelectionModel().getSelectedItem()).isSameAs(artistsListView.getItems().get(0));
     }
 }
 

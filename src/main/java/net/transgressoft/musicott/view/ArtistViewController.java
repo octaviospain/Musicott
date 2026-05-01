@@ -112,9 +112,16 @@ public class ArtistViewController {
     }
 
     private void artistsListener(ListChangeListener.Change<? extends Artist> change) {
-        if (selectedArtistProperty.get().isEmpty() && !change.getList().isEmpty()) {
-            artistsListView.getSelectionModel().select(0);
-            artistsListView.getFocusModel().focus(0);
+        if (!change.getList().isEmpty()) {
+            // Defer selection until the SortedList (registered after this listener) has processed
+            // the same change. Only auto-select when nothing is selected yet — preserve the user's
+            // current selection across catalog updates that mutate the artist list.
+            Platform.runLater(() -> {
+                if (artistsListView.getSelectionModel().getSelectedItem() == null) {
+                    artistsListView.getSelectionModel().select(0);
+                    artistsListView.getFocusModel().focus(0);
+                }
+            });
         }
     }
 
@@ -243,6 +250,14 @@ public class ArtistViewController {
     }
 
     private Predicate<Artist> filterArtistsByQuery(String query) {
+        if (query == null || query.isEmpty()) {
+            return artist -> true;
+        }
+        // When the album map is not yet populated, fall back to matching on artist name alone.
+        // This keeps the predicate correct even before the user selects an artist for the first time.
+        if (albumListRowMap.isEmpty()) {
+            return artist -> artist.getName().toLowerCase().contains(query.toLowerCase());
+        }
         return artist ->
                 albumListRowMap.keySet().stream()
                         .flatMap(Collection::stream)
