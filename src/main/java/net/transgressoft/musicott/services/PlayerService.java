@@ -175,15 +175,15 @@ public class PlayerService {
     }
 
     public void next() {
+        currentTrack.ifPresent(track -> {
+            TrackQueueRow row = new TrackQueueRow(track);
+            historyQueueList.add(row);
+            enforceHistoryCap();
+            publishHistoryUpdatedEvent();
+        });
         if (playQueueList.isEmpty()) {
             stop();
         } else {
-            currentTrack.ifPresent(track -> {
-                TrackQueueRow row = new TrackQueueRow(track);
-                historyQueueList.add(row);
-                enforceHistoryCap();
-                publishHistoryUpdatedEvent();
-            });
             TrackQueueRow nextRow = playQueueList.remove(playQueueList.size() - 1);
             publishQueueUpdatedEvent();
             play(nextRow.getTrack());

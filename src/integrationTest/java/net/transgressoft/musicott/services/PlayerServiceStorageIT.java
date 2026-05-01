@@ -179,6 +179,26 @@ class PlayerServiceStorageIT {
     }
 
     @Test
+    @DisplayName("next appends finished track to historyQueueList when queue is empty")
+    void nextAppendsFinishedTrackToHistoryQueueListWhenQueueIsEmpty() throws Exception {
+        ObservableAudioItem item = newPlayableAudioItem("Solo");
+
+        // Simulate direct table double-click (no queue add): currentTrack populated, queue empty.
+        ReflectionTestUtils.setField(playerService, "currentTrack", Optional.of(item));
+
+        assertThat(playerService.getPlayQueueList()).isEmpty();
+        assertThat(playerService.getHistoryQueueList()).isEmpty();
+
+        // next() will hit the empty-queue branch — post-Task-1, the history append still runs.
+        // next() ends with stop() in this branch (no setPlayer/jfxmedia call).
+        playerService.next();
+
+        ObservableList<TrackQueueRow> history = playerService.getHistoryQueueList();
+        assertThat(history).hasSize(1);
+        assertThat(history.get(0).getTrack()).isSameAs(item);
+    }
+
+    @Test
     @DisplayName("enforceHistoryCap evicts oldest entries from index 0")
     void enforceHistoryCapEvictsOldestEntriesFromIndexZero() throws Exception {
         ObservableList<TrackQueueRow> history = playerService.getHistoryQueueList();
