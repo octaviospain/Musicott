@@ -1,11 +1,9 @@
 package net.transgressoft.musicott.view.custom.table;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
-@Scope("prototype")
 public class FullAudioItemTableView extends AudioItemTableViewBase {
 
     @SuppressWarnings ("unchecked")

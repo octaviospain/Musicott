@@ -55,8 +55,11 @@ public class ArtistViewController {
     private Button artistRandomButton;
 
     private ObservableMap<AlbumSet<ObservableAudioItem>, ArtistAlbumListRow> albumListRowMap;
+    private ObservableList<ArtistAlbumListRow> albumRowsBackingList;
+    private FilteredList<ArtistAlbumListRow> filteredAlbumRows;
     private ObjectProperty<Optional<Artist>> selectedArtistProperty;
     private FilteredList<Artist> filteredArtists;
+    private String currentSearchQuery = "";
 
     @Autowired
     public ArtistViewController(ObservableAudioLibrary audioLibrary, ApplicationContext applicationContext) {
@@ -77,6 +80,11 @@ public class ArtistViewController {
 
         albumListRowMap = FXCollections.observableMap(new TreeMap<>());
         albumListRowMap.addListener(this::artistAlbumListRowMapChangeListener);
+        // Backing list mirrors albumListRowMap insertions/removals; albumsListView shows a filtered
+        // view so the active search query can hide non-matching album rows entirely.
+        albumRowsBackingList = FXCollections.observableArrayList();
+        filteredAlbumRows = new FilteredList<>(albumRowsBackingList);
+        albumsListView.setItems(filteredAlbumRows);
 
         // TODO replace listener from artistsListView to selectedArtistProperty ?
         artistsListView.getSelectionModel().selectedItemProperty().addListener(this::selectedArtistListener);
@@ -129,9 +137,13 @@ public class ArtistViewController {
     private void artistAlbumListRowMapChangeListener(MapChangeListener.Change<? extends AlbumSet<ObservableAudioItem>, ? extends ArtistAlbumListRow> change) {
         Platform.runLater(() -> {
             if (change.wasAdded()) {
-                albumsListView.getItems().add(change.getValueAdded());
+                ArtistAlbumListRow added = change.getValueAdded();
+                // Newly-loaded rows must inherit the active query so reselecting an artist while a
+                // search is active doesn't surface unfiltered album content for a moment.
+                added.filterTracksByQuery(currentSearchQuery);
+                albumRowsBackingList.add(added);
             } else if (change.wasRemoved()) {
-                albumsListView.getItems().remove(change.getValueRemoved());
+                albumRowsBackingList.remove(change.getValueRemoved());
             }
             totalTracksLabel.setText(getTotalArtistTracksString());
             totalAlbumsLabel.setText(getAlbumString());
@@ -246,38 +258,67 @@ public class ArtistViewController {
 
     @EventListener
     public void searchTextTypedEvent(SearchTextTypedEvent event) {
-        filteredArtists.setPredicate(filterArtistsByQuery(event.searchText));
+        currentSearchQuery = event.searchText == null ? "" : event.searchText;
+        filteredArtists.setPredicate(filterArtistsByQuery(currentSearchQuery));
+        // Propagate to currently-loaded album rows: hide rows with no matching tracks and let each
+        // visible row narrow its embedded SimpleAudioItemTableView to the matching tracks.
+        albumRowsBackingList.forEach(row -> row.filterTracksByQuery(currentSearchQuery));
+        filteredAlbumRows.setPredicate(albumRowMatchesQuery(currentSearchQuery));
     }
 
     private Predicate<Artist> filterArtistsByQuery(String query) {
         if (query == null || query.isEmpty()) {
             return artist -> true;
         }
-        // When the album map is not yet populated, fall back to matching on artist name alone.
-        // This keeps the predicate correct even before the user selects an artist for the first time.
-        if (albumListRowMap.isEmpty()) {
-            return artist -> artist.getName().toLowerCase().contains(query.toLowerCase());
+        String q = query.toLowerCase();
+        // Walk the artist's own catalog instead of albumListRowMap (which only holds the currently
+        // selected artist's albums). Without this, queries by title/album/comments/label only ever
+        // match against the selected artist, so other artists with track-level matches stay hidden.
+        return artist -> {
+            if (artist.getName().toLowerCase().contains(q)) {
+                return true;
+            }
+            return audioRepository.getArtistCatalog(artist).stream()
+                    .flatMap(catalog -> catalog.getAlbums().stream())
+                    .flatMap(Collection::stream)
+                    .anyMatch(audioItem -> artistMatchesQuery(audioItem, artist, q));
+        };
+    }
+
+    private Predicate<ArtistAlbumListRow> albumRowMatchesQuery(String query) {
+        if (query == null || query.isEmpty()) {
+            return row -> true;
         }
-        return artist ->
-                albumListRowMap.keySet().stream()
-                        .flatMap(Collection::stream)
-                        .anyMatch(audioItem -> artistMatchesQuery(audioItem, artist, query.toLowerCase()));
+        return row -> row.hasTracksMatching(query);
     }
 
     private boolean artistMatchesQuery(ObservableAudioItem audioItem, Artist artist, String query) {
         if (query == null || query.isEmpty())
             return true;
 
-        var matchesName = artist.getName().toLowerCase().contains(query.toLowerCase());
-        var matchesArtist = audioItem.getArtist().equals(artist);
-        var matchesArtistName = audioItem.getArtist().getName().toLowerCase().contains(query);
-        var matchesAlbumArtist = audioItem.getAlbum().getAlbumArtist().getName().toLowerCase().contains(query);
+        // Guard each metadata access — partial catalogs can have null artist/album/album-artist
+        // or null name fields; one malformed track shouldn't NPE the entire artist filter.
+        var matchesName = artist.getName() != null && artist.getName().toLowerCase().contains(query);
+        var itemArtist = audioItem.getArtist();
+        var matchesArtist = itemArtist != null && itemArtist.equals(artist);
+        var matchesTitle = audioItem.getTitle() != null && audioItem.getTitle().toLowerCase().contains(query);
+        var matchesArtistName = itemArtist != null && itemArtist.getName() != null
+                && itemArtist.getName().toLowerCase().contains(query);
+        var album = audioItem.getAlbum();
+        var matchesAlbumArtist = album != null && album.getAlbumArtist() != null
+                && album.getAlbumArtist().getName() != null
+                && album.getAlbumArtist().getName().toLowerCase().contains(query);
         var matchesComments = audioItem.getComments() != null && audioItem.getComments().toLowerCase().contains(query);
-        var matchesAlbumName = audioItem.getAlbum().getName().toLowerCase().contains(query);
+        var matchesAlbumName = album != null && album.getName() != null
+                && album.getName().toLowerCase().contains(query);
+        var matchesLabel = album != null && album.getLabel() != null
+                && album.getLabel().getName() != null
+                && album.getLabel().getName().toLowerCase().contains(query);
 
         var containsMatchedTrack =
                 matchesArtist &&
-                (matchesName || matchesArtistName || matchesAlbumArtist || matchesComments || matchesAlbumName);
+                (matchesName || matchesTitle || matchesArtistName || matchesAlbumArtist
+                        || matchesComments || matchesAlbumName || matchesLabel);
 
         return matchesName || containsMatchedTrack;
     }

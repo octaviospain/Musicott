@@ -1,9 +1,11 @@
 package net.transgressoft.musicott.view.custom.table;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
@@ -35,6 +37,7 @@ public class ArtistAlbumListRow extends HBox {
     private final AlbumSet<ObservableAudioItem> albumSet;
     private final ListProperty<ObservableAudioItem> selectedAudioItemsProperty;
     private final ObservableList<ObservableAudioItem> containedAudioItems;
+    private final FilteredList<ObservableAudioItem> filteredAudioItems;
     private final ListProperty<ObservableAudioItem> containedAudioItemsProperty;
     private final SimpleAudioItemTableView audioItemsTableView;
 
@@ -52,6 +55,7 @@ public class ArtistAlbumListRow extends HBox {
         this.audioItemsTableView = audioItemsTableView;
         containedAudioItems = FXCollections.observableArrayList(albumSet);
         containedAudioItems.sort(this::audioItemComparator);
+        filteredAudioItems = new FilteredList<>(containedAudioItems);
         containedAudioItemsProperty = new SimpleListProperty<>(this, "contained tracks");
         containedAudioItemsProperty.bind(new SimpleObjectProperty<>(containedAudioItems));
 
@@ -61,7 +65,7 @@ public class ArtistAlbumListRow extends HBox {
         setMinWidth(0);
         setPrefHeight(USE_COMPUTED_SIZE);
         getStylesheets().add(getClass().getResource(BASE_STYLE).toExternalForm());
-        audioItemsTableView.setItems(containedAudioItems);
+        audioItemsTableView.setItems(filteredAudioItems);
         audioItemsTableView.sort();
         setRelatedArtistsLabel();
         updateAlbumLabelLabel();
@@ -181,10 +185,64 @@ public class ArtistAlbumListRow extends HBox {
     private void buildSimpleTableView() {
         audioItemsTableView.trackNumberCol.setCellValueFactory(cellData -> listenAudioItemChangesAndSort(cellData.getValue()));
 
-        var rows = map(containedAudioItemsProperty.sizeProperty(), s -> s.intValue() * 1.06);
-        audioItemsTableView.prefHeightProperty().bind(audioItemsTableView.fixedCellSizeProperty().multiply(rows.getValue()));
+        // Bind the table height to the FILTERED row count so the row collapses (or expands)
+        // as the search query narrows the visible tracks instead of leaving empty space behind.
+        var rowCount = Bindings.size(filteredAudioItems);
+        audioItemsTableView.prefHeightProperty().bind(
+                audioItemsTableView.fixedCellSizeProperty().multiply(Bindings.createDoubleBinding(
+                        () -> rowCount.intValue() * 1.06,
+                        rowCount)));
         audioItemsTableView.minHeightProperty().bind(audioItemsTableView.prefHeightProperty());
         audioItemsTableView.maxHeightProperty().bind(audioItemsTableView.prefHeightProperty());
+    }
+
+    /**
+     * Applies the global search query to the embedded track table. An empty or null query clears
+     * the filter; otherwise only tracks whose title, artist, album, album-artist, or comments
+     * contain the query (case-insensitive) remain visible.
+     */
+    public void filterTracksByQuery(String query) {
+        if (query == null || query.isEmpty()) {
+            filteredAudioItems.setPredicate(null);
+        } else {
+            String q = query.toLowerCase();
+            filteredAudioItems.setPredicate(item -> trackMatchesQuery(item, q));
+        }
+    }
+
+    /** True when at least one track in this album row matches the query (or the query is empty). */
+    public boolean hasTracksMatching(String query) {
+        if (query == null || query.isEmpty()) {
+            return true;
+        }
+        String q = query.toLowerCase();
+        return containedAudioItems.stream().anyMatch(item -> trackMatchesQuery(item, q));
+    }
+
+    private static boolean trackMatchesQuery(ObservableAudioItem item, String lowerCaseQuery) {
+        if (item.getTitle() != null && item.getTitle().toLowerCase().contains(lowerCaseQuery)) {
+            return true;
+        }
+        var artist = item.getArtist();
+        if (artist != null && artist.getName() != null
+                && artist.getName().toLowerCase().contains(lowerCaseQuery)) {
+            return true;
+        }
+        var album = item.getAlbum();
+        if (album != null) {
+            if (album.getName() != null && album.getName().toLowerCase().contains(lowerCaseQuery)) {
+                return true;
+            }
+            if (album.getAlbumArtist() != null && album.getAlbumArtist().getName() != null
+                    && album.getAlbumArtist().getName().toLowerCase().contains(lowerCaseQuery)) {
+                return true;
+            }
+            if (album.getLabel() != null && album.getLabel().getName() != null
+                    && album.getLabel().getName().toLowerCase().contains(lowerCaseQuery)) {
+                return true;
+            }
+        }
+        return item.getComments() != null && item.getComments().toLowerCase().contains(lowerCaseQuery);
     }
 
     /**
