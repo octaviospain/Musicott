@@ -9,8 +9,8 @@ spring-boot = "4.0.5"
 spring-dependency-management = "1.1.7"
 
 # Music ecosystem
-music-commons = "0.5.0"
-lirp = "2.4.0"
+music-commons = "0.5.1"
+lirp = "2.4.1"
 
 # JavaFX integration
 javafx-weaver = "2.0.1"

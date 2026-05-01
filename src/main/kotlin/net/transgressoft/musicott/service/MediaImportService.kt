@@ -60,6 +60,12 @@ class MediaImportService(
     private val musicLibrary: FXMusicLibrary,
     private val alertFactory: AlertFactory
 ) {
+    private companion object {
+        // Name of the synthetic top-level playlist directory the sidebar's PlaylistTreeView
+        // renders children of. iTunes-imported playlists with no iTunes parent are wired here.
+        const val ROOT_PLAYLIST_NAME = "ROOT_PLAYLIST"
+    }
+
     private val logger = KotlinLogging.logger {}
 
     private val importing = AtomicBoolean(false)
@@ -140,17 +146,45 @@ class MediaImportService(
         return library
     }
 
-    fun importSelectedPlaylists(selectedPlaylists: List<ItunesPlaylist>): CompletableFuture<ImportResult> {
+    /**
+     * Starts an asynchronous iTunes import of the supplied playlists using the supplied policy.
+     *
+     * The library must have been previously parsed via [parseLibrary]; otherwise this method
+     * throws [IllegalStateException]. The supplied [policy] is forwarded unchanged to the
+     * underlying iTunes import service; this method does not interpret it.
+     *
+     * Status updates are published via the application event publisher as
+     * [StatusProgressUpdateEvent] / [StatusMessageUpdateEvent] events for the application's
+     * status bar to consume.
+     *
+     * @param selectedPlaylists the iTunes playlists the user chose to import
+     * @param policy the metadata-source policy chosen by the user
+     * @return a future that completes with the import result, or `null` if another import is
+     *         already in progress
+     */
+    fun importSelectedPlaylists(
+        selectedPlaylists: List<ItunesPlaylist>,
+        policy: ItunesImportPolicy
+    ): CompletableFuture<ImportResult> {
         if (!tryStartImport()) return CompletableFuture.completedFuture(null)
 
         val library = lastParsedLibrary
             ?: run { finishImport(); throw IllegalStateException("No iTunes library parsed. Call parseLibrary() first.") }
-        val policy = buildPolicy()
         applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing from iTunes...", this))
 
-        val future = coreItunesImportService.importAsync(selectedPlaylists, library, policy) { progress ->
+        val future = coreItunesImportService.importAsync(
+            selectedPlaylists,
+            library,
+            policy,
+            rootDirectoryName = ROOT_PLAYLIST_NAME
+        ) { progress ->
             Platform.runLater {
-                val fraction = progress.itemsProcessed.toDouble() / progress.totalItems
+                // Guard against an empty import surfacing Infinity / NaN to the status bar.
+                val fraction = if (progress.totalItems > 0) {
+                    progress.itemsProcessed.toDouble() / progress.totalItems
+                } else {
+                    0.0
+                }
                 applicationEventPublisher.publishEvent(StatusProgressUpdateEvent(fraction, this))
                 applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing: ${progress.currentFile}", this))
             }
@@ -191,15 +225,6 @@ class MediaImportService(
     private fun finishImport() {
         importing.set(false)
     }
-
-    // Defaults stand in until the import wizard collects these values from the user at import time.
-    private fun buildPolicy(): ItunesImportPolicy =
-        ItunesImportPolicy(
-            useFileMetadata = true,
-            holdPlayCount = true,
-            writeMetadata = true,
-            acceptedFileTypes = AudioFileType.values().toSet()
-        )
 
     private fun findAcceptedFiles(directory: File, acceptedExtensions: Set<String>): List<Path> {
         val paths = try {

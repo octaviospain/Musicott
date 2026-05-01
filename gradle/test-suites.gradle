@@ -32,6 +32,7 @@ ext {
             '--add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED',
             '--add-opens=javafx.graphics/com.sun.javafx.util=ALL-UNNAMED',
             '--add-opens=javafx.graphics/javafx.scene.image=ALL-UNNAMED',
+            '--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED',
             '--add-opens=javafx.base/com.sun.javafx.reflect=ALL-UNNAMED',
             '--add-opens=javafx.base/com.sun.javafx.beans=ALL-UNNAMED',
             '--add-opens=javafx.base/com.sun.javafx.event=ALL-UNNAMED',

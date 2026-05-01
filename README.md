@@ -30,7 +30,7 @@ After years of this refactoring and redesign work, in April 2026 I moved the old
 ## Key Features
 
 - **Local-first music library** — your collection lives on your disk, persisted as plain JSON files under `~/.config/musicott/` (no database, no cloud sync)
-- **iTunes XML import** — bring your existing iTunes library across with playlists and metadata intact
+- **Guided iTunes import** — a four-step wizard walks you through picking the `iTunes Library.xml`, choosing which playlists to bring across, deciding how metadata is read (file tags vs the iTunes database) and whether play counts and tag write-back are preserved, then confirming before import starts
 - **Hierarchical playlists** — folders of playlists, drag-and-drop reordering, and full-text search across the library
 - **Waveform visualization** — generated once per track, cached locally, and used for visual seeking during playback
 - **Native installers** for Linux (AppImage / AUR), Windows, and macOS — no JDK install required by end users

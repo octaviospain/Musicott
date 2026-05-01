@@ -21,8 +21,6 @@ import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.stage.Stage;
-import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxmlView;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
@@ -36,6 +34,7 @@ import net.transgressoft.musicott.service.MediaImportService;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
 import net.transgressoft.musicott.view.custom.table.FullAudioItemTableView;
+import net.transgressoft.musicott.view.itunes.ItunesImportWizard;
 import org.apache.commons.io.FileUtils;
 import org.fxmisc.easybind.Subscription;
 import org.slf4j.Logger;
@@ -73,10 +72,8 @@ public class MainController {
     private final ArtistViewController artistViewController;
     private final AlertFactory alertFactory;
     private final MediaImportService mediaImportService;
+    private final ItunesImportWizard itunesImportWizard;
     private final ApplicationContext applicationContext;
-
-    @Autowired
-    private FxControllerAndView<ItunesPlaylistsPickerController, Parent> itunesPickerControllerAndView;
 
     private final ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty;
 
@@ -158,6 +155,7 @@ public class MainController {
                           ArtistViewController artistViewController,
                           AlertFactory alertFactory,
                           MediaImportService mediaImportService,
+                          ItunesImportWizard itunesImportWizard,
                           ApplicationContext applicationContext) {
         this.audioRepository = audioRepository;
         this.playlistRepository = playlistRepository;
@@ -166,6 +164,7 @@ public class MainController {
         this.artistViewController = artistViewController;
         this.alertFactory = alertFactory;
         this.mediaImportService = mediaImportService;
+        this.itunesImportWizard = itunesImportWizard;
         this.applicationContext = applicationContext;
         this.selectedPlaylistProperty = navigationController.selectedPlaylistProperty();
     }
@@ -639,23 +638,7 @@ public class MainController {
                 if (directory != null)
                     mediaImportService.importDirectory(directory);
             });
-            importItunesMenuItem.setOnAction(e -> {
-                FileChooser chooser = new FileChooser();
-                chooser.setTitle("Choose iTunes library XML");
-                chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("iTunes library", "*.xml"));
-                File file = chooser.showOpenDialog(rootBorderPane.getScene().getWindow());
-                if (file != null) {
-                    var library = mediaImportService.parseLibrary(file.toPath());
-                    var controller = itunesPickerControllerAndView.getController();
-                    controller.pickPlaylists(library.getPlaylists());
-
-                    var view = itunesPickerControllerAndView.getView().orElseThrow();
-                    var stage = new Stage();
-                    stage.setScene(new Scene(view));
-                    controller.setStage(stage);
-                    stage.showAndWait();
-                }
-            });
+            importItunesMenuItem.setOnAction(e -> itunesImportWizard.show(rootBorderPane.getScene().getWindow()));
             newPlaylistMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylist));
             newPlaylistFolderMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylistDirectory));
             closeMenuItem.setOnAction(e -> applicationContext.publishEvent(new StopApplicationEvent(this)));

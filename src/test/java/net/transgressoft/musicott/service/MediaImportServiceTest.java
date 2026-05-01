@@ -13,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
-import java.lang.reflect.Method;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,9 +20,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for {@link MediaImportService}, covering iTunes import lifecycle,
- * mutual exclusion state, cancellation behaviour, and the hardcoded
- * {@link ItunesImportPolicy} returned by the internal policy builder.
+ * Unit tests for {@link MediaImportService}, validating that the service:
+ *  - tracks parse-then-import ordering and rejects imports without a parsed library,
+ *  - correctly forwards cancellation to the underlying iTunes import service,
+ *  - exposes its in-progress state via {@link MediaImportService#isImporting()}.
  *
  * @author Octavio Calleya
  */
@@ -60,7 +60,8 @@ class MediaImportServiceTest {
     @Test
     @DisplayName("throws IllegalStateException on importSelectedPlaylists when no library has been parsed")
     void throwsWhenImportCalledBeforeParse() {
-        assertThatThrownBy(() -> service.importSelectedPlaylists(List.of()))
+        ItunesImportPolicy policy = new ItunesImportPolicy(true, true, true, Set.of(AudioFileType.values()));
+        assertThatThrownBy(() -> service.importSelectedPlaylists(List.of(), policy))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("No iTunes library parsed");
     }
@@ -76,19 +77,5 @@ class MediaImportServiceTest {
     @DisplayName("isImporting returns false initially")
     void isImportingReturnsFalseInitially() {
         assertThat(service.isImporting()).isFalse();
-    }
-
-    @Test
-    @DisplayName("applies hardcoded ItunesImportPolicy defaults — useFileMetadata, holdPlayCount, writeMetadata true and all 4 supported AudioFileTypes")
-    void appliesHardcodedItunesImportPolicyDefaults() throws Exception {
-        Method buildPolicy = MediaImportService.class.getDeclaredMethod("buildPolicy");
-        buildPolicy.setAccessible(true);
-        ItunesImportPolicy policy = (ItunesImportPolicy) buildPolicy.invoke(service);
-
-        assertThat(policy.getUseFileMetadata()).isTrue();
-        assertThat(policy.getHoldPlayCount()).isTrue();
-        assertThat(policy.getWriteMetadata()).isTrue();
-        assertThat(policy.getAcceptedFileTypes())
-            .containsExactlyInAnyOrder(AudioFileType.values());
     }
 }

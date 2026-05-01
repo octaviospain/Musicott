@@ -35,3 +35,58 @@
 .dialog-pane > .hyperlink .label {
     -fx-text-fill: white !important;
 }
+
+/* CheckTreeView styling inside the wizard. Scoped to .dialog-pane so the
+   sidebar's PlaylistTreeView keeps its own styling. */
+.dialog-pane .tree-view {
+    -fx-background-color: rgb(34, 34, 34);
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.dialog-pane .tree-view .tree-cell {
+    -fx-background-color: rgb(34, 34, 34);
+    -fx-text-fill: white;
+}
+
+.dialog-pane .tree-view .tree-cell:filled:hover {
+    -fx-background-color: rgb(50, 50, 50);
+}
+
+.dialog-pane .tree-view .tree-cell:filled:selected {
+    -fx-background-color: rgb(73, 73, 73);
+    -fx-text-fill: white;
+}
+
+/* Lighter checkbox fill so the checkbox is clearly visible on the dark
+   tree background. The default base.css .check-box .box uses rgb(73,73,73)
+   which blends into the selected-row hover color. */
+.dialog-pane .tree-view .tree-cell .check-box .box {
+    -fx-background-color: rgb(180, 180, 180);
+    -fx-border-color: rgb(220, 220, 220);
+}
+
+.dialog-pane .tree-view .tree-cell .check-box:selected .mark,
+.dialog-pane .tree-view .tree-cell .check-box:indeterminate .mark {
+    -fx-background-color: rgb(34, 34, 34);
+}
+
+.dialog-pane .tree-view .tree-cell .check-box:indeterminate > .box > .mark {
+    -fx-shape: "M0,4H8V6H0Z";
+    -fx-background-color: rgb(34, 34, 34);
+}
+
+/* Disclosure triangle (expand/collapse) — make visible on dark background. */
+.dialog-pane .tree-view .tree-cell > .tree-disclosure-node > .arrow {
+    -fx-background-color: rgb(200, 200, 200);
+}
+
+.dialog-pane .tree-view .tree-cell:selected > .tree-disclosure-node > .arrow {
+    -fx-background-color: white;
+}
+
+/* Empty rows below the last item — paint them dark too instead of leaving
+   the JavaFX modena default white. */
+.dialog-pane .tree-view .tree-cell:empty {
+    -fx-background-color: rgb(34, 34, 34);
+}

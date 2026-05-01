@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.VBox?>
+<?import org.controlsfx.control.ToggleSwitch?>
+<VBox spacing="10.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="net.transgressoft.musicott.view.itunes.ItunesWizardPolicyStepController">
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+    </padding>
+    <fx:define>
+        <ToggleGroup fx:id="metadataSourceGroup"/>
+    </fx:define>
+    <children>
+        <Label style="-fx-font-weight: bold;" text="Metadata source"/>
+        <RadioButton fx:id="useFileMetadataRadio" mnemonicParsing="false" text="Use file metadata"
+                     toggleGroup="$metadataSourceGroup"/>
+        <Label  text="Read tags directly from the audio files.">
+            <VBox.margin>
+                <Insets left="20.0"/>
+            </VBox.margin>
+        </Label>
+        <RadioButton fx:id="useItunesDbRadio" mnemonicParsing="false" text="Use iTunes database metadata"
+                     toggleGroup="$metadataSourceGroup"/>
+        <Label  text="Use the metadata recorded in the iTunes XML library.">
+            <VBox.margin>
+                <Insets left="20.0"/>
+            </VBox.margin>
+        </Label>
+        <ToggleSwitch fx:id="holdPlayCountSwitch" text="Preserve existing play counts">
+            <VBox.margin>
+                <Insets top="14.0"/>
+            </VBox.margin>
+        </ToggleSwitch>
+        <Label maxWidth="Infinity" wrapText="true"
+               text="Keep the play counts recorded in the iTunes library instead of resetting them on import.">
+            <VBox.margin>
+                <Insets left="20.0"/>
+            </VBox.margin>
+        </Label>
+        <ToggleSwitch fx:id="writeMetadataSwitch" text="Write metadata back to audio files"/>
+        <Label maxWidth="Infinity" wrapText="true"
+               text="Update the audio files on disk with the imported metadata. This rewrites tags in the file.">
+            <VBox.margin>
+                <Insets left="20.0"/>
+            </VBox.margin>
+        </Label>
+    </children>
+</VBox>

@@ -27,6 +27,7 @@ import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.view.custom.table.AudioItemTableViewBase;
 
 import javafx.beans.value.ChangeListener;
+import javafx.collections.SetChangeListener;
 import javafx.css.PseudoClass;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
@@ -103,6 +104,24 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
         var rootTreeVieItem = new PlaylistTreeViewItem(rootPlaylist);
 
         addPlaylistsToTreeViewRecursively(rootPlaylist.getPlaylists(), rootTreeVieItem);
+
+        // Reflect later changes to the root playlist's children — e.g. iTunes import wiring
+        // top-level playlists into ROOT_PLAYLIST after the tree is initially built.
+        rootPlaylist.getPlaylistsProperty().addListener((SetChangeListener<ObservablePlaylist>) change -> {
+            if (change.wasAdded()) {
+                ObservablePlaylist added = change.getElementAdded();
+                if (findPlaylistTreeItemRecursively(rootTreeVieItem, added) == null) {
+                    addPlaylistsToTreeViewRecursively(Set.of(added), rootTreeVieItem);
+                }
+            }
+            if (change.wasRemoved()) {
+                ObservablePlaylist removed = change.getElementRemoved();
+                PlaylistTreeViewItem item = findPlaylistTreeItemRecursively(rootTreeVieItem, removed);
+                if (item != null && item.getParent() != null) {
+                    item.getParent().getChildren().remove(item);
+                }
+            }
+        });
 
         return rootTreeVieItem;
     }
