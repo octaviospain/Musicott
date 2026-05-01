@@ -14,11 +14,14 @@
         <BorderPane prefHeight="467.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
                     AnchorPane.topAnchor="0.0">
             <center>
-                <ListView id="queuesListView" fx:id="queuesListView" BorderPane.alignment="CENTER">
-                    <BorderPane.margin>
-                        <Insets/>
-                    </BorderPane.margin>
-                </ListView>
+                <!-- Bottom-aligned list: empty space hangs at the top of the popover, items hug the
+                     bottom so the next-up track (storage size-1) sits closest to the play button. -->
+                <VBox alignment="BOTTOM_LEFT" BorderPane.alignment="CENTER">
+                    <children>
+                        <Region VBox.vgrow="ALWAYS"/>
+                        <ListView id="queuesListView" fx:id="queuesListView" maxHeight="-Infinity" VBox.vgrow="NEVER"/>
+                    </children>
+                </VBox>
             </center>
             <bottom>
                 <GridPane prefHeight="35.0" BorderPane.alignment="CENTER">

@@ -180,11 +180,11 @@ public class PlayerService {
         } else {
             currentTrack.ifPresent(track -> {
                 TrackQueueRow row = new TrackQueueRow(track);
-                historyQueueList.add(0, row);
+                historyQueueList.add(row);
                 enforceHistoryCap();
                 publishHistoryUpdatedEvent();
             });
-            TrackQueueRow nextRow = playQueueList.remove(0);
+            TrackQueueRow nextRow = playQueueList.remove(playQueueList.size() - 1);
             publishQueueUpdatedEvent();
             play(nextRow.getTrack());
         }
@@ -198,10 +198,10 @@ public class PlayerService {
                     playQueueList.remove(row);
                     publishQueueUpdatedEvent();
                 });
-                playQueueList.add(0, row);
+                playQueueList.add(row);
                 publishQueueUpdatedEvent();
             });
-            TrackQueueRow previousRow = historyQueueList.remove(0);
+            TrackQueueRow previousRow = historyQueueList.remove(historyQueueList.size() - 1);
             publishHistoryUpdatedEvent();
             setPlayer(previousRow.getTrack());
         } else {
@@ -218,7 +218,7 @@ public class PlayerService {
             playQueueList.clear();
             playingRandom = false;
         }
-        audioItems.stream()
+        var newRows = audioItems.stream()
                 .filter(JavaFxPlayer.Companion::isPlayable)
                 .map(item -> {
                     TrackQueueRow row = new TrackQueueRow(item);
@@ -228,19 +228,31 @@ public class PlayerService {
                     });
                     return row;
                 })
-                .forEach(playQueueList::add);
-        publishQueueUpdatedEvent();
+                .toList();
+        // Inverted storage: index size-1 is next-up, index 0 is farthest-out. The first input is
+        // next-up (bottom of the popover), the last input is farthest (top). Reverse the new rows
+        // and addAll at index 0 in one call, avoiding O(n²) repeated shifts and N change events.
+        if (!newRows.isEmpty()) {
+            var reversed = new java.util.ArrayList<>(newRows);
+            java.util.Collections.reverse(reversed);
+            playQueueList.addAll(0, reversed);
+            publishQueueUpdatedEvent();
+        }
     }
 
     public void playFromQueue(TrackQueueRow trackQueueRow) {
         ObservableAudioItem track = trackQueueRow.getTrack();
-        setPlayer(track);
-        TrackQueueRow historyRow = new TrackQueueRow(track);
-        historyQueueList.add(0, historyRow);
-        enforceHistoryCap();
-        publishHistoryUpdatedEvent();
+        // Append the previous current track to history (the one being LEFT). The selected
+        // track is what's about to start playing; it will be appended to history when it
+        // finishes naturally via next() — appending it here would duplicate it.
+        currentTrack.ifPresent(prev -> {
+            historyQueueList.add(new TrackQueueRow(prev));
+            enforceHistoryCap();
+            publishHistoryUpdatedEvent();
+        });
         playQueueList.remove(trackQueueRow);
         publishQueueUpdatedEvent();
+        setPlayer(track);
         logger.debug("Play from queue selected. Queue size {}, history queue size {}", playQueueList.size(), historyQueueList.size());
     }
 
@@ -281,7 +293,8 @@ public class PlayerService {
 
     private void enforceHistoryCap() {
         if (historyQueueList.size() > HISTORY_CAP) {
-            historyQueueList.remove(HISTORY_CAP, historyQueueList.size());
+            int overflow = historyQueueList.size() - HISTORY_CAP;
+            historyQueueList.remove(0, overflow);
         }
     }
 

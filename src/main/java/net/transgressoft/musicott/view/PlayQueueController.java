@@ -7,6 +7,7 @@ import net.transgressoft.musicott.view.custom.table.AudioItemTableViewBase;
 import net.transgressoft.musicott.view.custom.table.TrackQueueListCell;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 
+import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -36,6 +37,10 @@ import java.util.Objects;
 public class PlayQueueController {
 
     private static final String DRAG_OVER_STYLE = "-fx-border-color: rgb(99, 255, 109); -fx-border-width: 2px;";
+    // TrackQueueRow renders a 42px cover next to two label rows, plus the cell's own padding.
+    // Used as the fixed cell size so the ListView's intrinsic prefHeight = items * cellSize and
+    // the bottom-aligning VBox can shrink it to fit content with empty space at the top.
+    private static final double TRACK_QUEUE_ROW_CELL_HEIGHT = 54.0;
 
     private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
 
@@ -88,6 +93,17 @@ public class PlayQueueController {
         historyQueueButton.setId("historyQueueButton");
         queuesListView.setCellFactory(_ -> new TrackQueueListCell(() -> historyQueueButton.isSelected()));
         queuesListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        // Fixed cell size + height bound to current items lets the bottom-aligning VBox in the FXML
+        // shrink the list to its content so the rows hug the bottom of the popover.
+        queuesListView.setFixedCellSize(TRACK_QUEUE_ROW_CELL_HEIGHT);
+        queuesListView.prefHeightProperty().bind(Bindings.createDoubleBinding(
+                () -> queuesListView.getItems() == null
+                        ? 0.0
+                        : queuesListView.getItems().size() * TRACK_QUEUE_ROW_CELL_HEIGHT,
+                queuesListView.itemsProperty(),
+                Bindings.size(playQueueList),
+                Bindings.size(historyQueueList)));
+        queuesListView.maxHeightProperty().bind(queuesListView.prefHeightProperty());
         queuesListView.setItems(playQueueList);
         queuesListView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2)
