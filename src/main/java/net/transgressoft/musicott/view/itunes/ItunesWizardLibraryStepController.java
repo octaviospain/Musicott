@@ -67,6 +67,11 @@ public class ItunesWizardLibraryStepController {
      */
     void bind(ItunesImportDraft draft) {
         this.draft = draft;
+        // Reset before reading the draft: a fresh draft (no libraryPath) must clear any leftover
+        // label and re-arm the invalid flag, otherwise the step keeps the previous session's
+        // selection visible and the wizard skips validation.
+        selectedFileLabel.setText("");
+        invalid.set(true);
         if (draft.libraryPath != null) {
             selectedFileLabel.setText(draft.libraryPath.toString());
             invalid.set(draft.parsedLibrary == null);

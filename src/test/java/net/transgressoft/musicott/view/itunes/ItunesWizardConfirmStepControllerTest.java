@@ -73,7 +73,7 @@ class ItunesWizardConfirmStepControllerTest {
         Platform.runLater(() -> controller.onEnter());
         waitForFxEvents();
 
-        assertThat(controller.libraryPathLabel.getText()).isEqualTo("/music/library.xml");
+        assertThat(controller.libraryPathLabel.getText()).isEqualTo(draft.libraryPath.toString());
     }
 
     @Test

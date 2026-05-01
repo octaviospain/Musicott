@@ -61,17 +61,17 @@ public class ItunesWizardConfirmStepController {
             int count = playlist.getTrackIds().size();
             totalTracks += count;
             String tracksWord = count == 1 ? "track" : "tracks";
-            playlistsList.getChildren().add(new Label("• " + playlist.getName() + " — " + count + " " + tracksWord));
+            playlistsList.getChildren().add(wrappingLabel("• " + playlist.getName() + " — " + count + " " + tracksWord));
         }
 
         policyList.getChildren().clear();
-        policyList.getChildren().add(new Label(draft.useFileMetadata
+        policyList.getChildren().add(wrappingLabel(draft.useFileMetadata
                 ? "• Read metadata from the audio files"
                 : "• Use the metadata recorded in the iTunes library"));
-        policyList.getChildren().add(new Label(draft.holdPlayCount
+        policyList.getChildren().add(wrappingLabel(draft.holdPlayCount
                 ? "• Preserve existing play counts"
                 : "• Reset play counts on import"));
-        policyList.getChildren().add(new Label(draft.writeMetadata
+        policyList.getChildren().add(wrappingLabel(draft.writeMetadata
                 ? "• Write metadata back to audio files"
                 : "• Don't write metadata back to files"));
 
@@ -84,5 +84,13 @@ public class ItunesWizardConfirmStepController {
 
     public ReadOnlyBooleanProperty invalidProperty() {
         return invalid;
+    }
+
+    /** Builds a recap line label that wraps long playlist names or policy strings. */
+    private static Label wrappingLabel(String text) {
+        Label label = new Label(text);
+        label.setWrapText(true);
+        label.setMaxWidth(Double.MAX_VALUE);
+        return label;
     }
 }

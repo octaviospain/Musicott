@@ -179,7 +179,12 @@ class MediaImportService(
             rootDirectoryName = ROOT_PLAYLIST_NAME
         ) { progress ->
             Platform.runLater {
-                val fraction = progress.itemsProcessed.toDouble() / progress.totalItems
+                // Guard against an empty import surfacing Infinity / NaN to the status bar.
+                val fraction = if (progress.totalItems > 0) {
+                    progress.itemsProcessed.toDouble() / progress.totalItems
+                } else {
+                    0.0
+                }
                 applicationEventPublisher.publishEvent(StatusProgressUpdateEvent(fraction, this))
                 applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing: ${progress.currentFile}", this))
             }

@@ -82,6 +82,11 @@ public class ItunesWizardPlaylistsStepController {
      */
     void onEnter() {
         if (draft == null || draft.parsedLibrary == null) {
+            // Wipe any leftovers from a previous wizard session so re-entering the step with a
+            // fresh / cleared draft doesn't surface stale playlists or write them back into the
+            // new draft on onExit().
+            playlistsTree.getCheckModel().clearChecks();
+            playlistsTree.getRoot().getChildren().clear();
             return;
         }
         rebuildTree(draft.parsedLibrary.getPlaylists());
