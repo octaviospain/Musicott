@@ -1,4 +1,4 @@
-name: non-master build
+name: branch / PR build
 
 on:
     push:
@@ -9,12 +9,17 @@ on:
             - '.gitignore'
             - 'docs/**'
     pull_request:
+        types: [opened, synchronize, reopened]
         branches:
             - master
         paths-ignore:
             - "**.md"
             - '.gitignore'
             - 'docs/**'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+    cancel-in-progress: true
 
 jobs:
     build:
