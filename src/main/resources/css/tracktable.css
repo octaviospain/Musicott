@@ -40,17 +40,15 @@
     -fx-background-color: rgb(99, 255, 109);
 }
 
-.table-row-cell:notInDisk,
-.table-row-cell:notInDisk:unplayable {
-    -fx-border-color: red;
-    -fx-border-width: 0.5px;
-    -fx-border-style: solid inside;
+/* Unplayable rows: dimmed gray text, no row borders */
+.table-row-cell:unplayable .text {
+    -fx-fill: rgb(160, 160, 160);
 }
 
-.table-row-cell:unplayable {
-    -fx-border-color: orange;
-    -fx-border-width: 0.5px;
-    -fx-border-style: solid inside;
+/* Files missing from disk: muted red text (also covers notInDisk + unplayable combined) */
+.table-row-cell:notInDisk .text,
+.table-row-cell:notInDisk:unplayable .text {
+    -fx-fill: rgb(200, 110, 110);
 }
 
 .table-row-cell:selected .text,
@@ -70,4 +68,20 @@
 .table-row-cell:odd:hover .text,
 .table-row-cell:even:hover .text {
     -fx-fill: white;
+}
+
+/* Preserve dimmed-text indicators on hover so the visual cue isn't lost when the
+   pointer enters the row (the generic :hover .text rule above is later in the
+   file and would otherwise win over :unplayable .text and :notInDisk .text). */
+.table-row-cell:unplayable:hover .text,
+.table-row-cell:odd:unplayable:hover .text,
+.table-row-cell:even:unplayable:hover .text {
+    -fx-fill: rgb(160, 160, 160);
+}
+
+.table-row-cell:notInDisk:hover .text,
+.table-row-cell:odd:notInDisk:hover .text,
+.table-row-cell:even:notInDisk:hover .text,
+.table-row-cell:notInDisk:unplayable:hover .text {
+    -fx-fill: rgb(200, 110, 110);
 }
