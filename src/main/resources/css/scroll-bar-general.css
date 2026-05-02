@@ -4,6 +4,14 @@
     -fx-background-color: rgb(34, 34, 34);
 }
 
+.scroll-bar:horizontal {
+    -fx-pref-height: 12px;
+}
+
+.scroll-bar:vertical {
+    -fx-pref-width: 12px;
+}
+
 .scroll-pane > .viewport {
     -fx-background-color: transparent;
 }
