@@ -88,49 +88,62 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         setItems(sortedAudioItems);
     }
 
+    // Per-column setMinWidth(...) floors define readability lower bounds for each band:
+    // text columns (Title=120 / others=100), duration columns (100), numeric short columns (50–80).
+    // Their sum is the table-level setMinWidth(...) applied in FullAudioItemTableView,
+    // below which the enclosing ScrollPane in MainController.fxml engages its horizontal scrollbar.
     private void initColumns() {
         nameCol = new TableColumn<>("Title");
         nameCol.setCellValueFactory(cellData -> cellData.getValue().getTitleProperty());
+        nameCol.setMinWidth(120);
         nameCol.setPrefWidth(200);
 
         artistCol = new TableColumn<>("Artist");
         artistCol.setCellValueFactory(cellData -> cellData.getValue().getArtistProperty());
         artistCol.setCellFactory(ArtistNameTableCell::new);
+        artistCol.setMinWidth(100);
         artistCol.setPrefWidth(200);
 
         albumCol = new TableColumn<>("Album");
         albumCol.setCellValueFactory(cellData -> cellData.getValue().getAlbumProperty());
         albumCol.setCellFactory(AlbumNameTableCell::new);
+        albumCol.setMinWidth(100);
         albumCol.setPrefWidth(200);
 
         genreCol = new TableColumn<>("Genre");
         genreCol.setCellValueFactory(cellData -> cellData.getValue().getGenresProperty());
         genreCol.setCellFactory(GenreTableCell::new);
+        genreCol.setMinWidth(100);
         genreCol.setPrefWidth(120);
 
         commentsCol = new TableColumn<>("Comments");
         commentsCol.setCellValueFactory(cellData -> cellData.getValue().getCommentsProperty());
+        commentsCol.setMinWidth(100);
         commentsCol.setPrefWidth(150);
 
         albumArtistCol = new TableColumn<>("Album Artist");
         albumArtistCol.setCellValueFactory(cellData -> cellData.getValue().getAlbumProperty());
         albumArtistCol.setCellFactory(AlbumArtistTableCell::new);
+        albumArtistCol.setMinWidth(100);
         albumArtistCol.setPrefWidth(100);
 
         labelCol = new TableColumn<>("Label");
         labelCol.setCellValueFactory(cellData -> cellData.getValue().getAlbumProperty());
         labelCol.setCellFactory(AlbumLabelNameTableCell::new);
+        labelCol.setMinWidth(100);
         labelCol.setPrefWidth(120);
 
         dateModifiedCol = new TableColumn<>("Modified");
         dateModifiedCol.setCellValueFactory(cellData -> cellData.getValue().getLastDateModifiedProperty());
         dateModifiedCol.setCellFactory(DateTimeTableCell::new);
+        dateModifiedCol.setMinWidth(100);
         dateModifiedCol.setPrefWidth(150);
         dateModifiedCol.setStyle(CENTER_RIGHT_ALIGN);
 
         dateAddedCol = new TableColumn<>("Added");
         dateAddedCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getDateOfCreation()));
         dateAddedCol.setCellFactory(DateTimeTableCell::new);
+        dateAddedCol.setMinWidth(100);
         dateAddedCol.setPrefWidth(150);
         dateAddedCol.setStyle(CENTER_RIGHT_ALIGN);
         dateAddedCol.setSortType(TableColumn.SortType.DESCENDING);
@@ -138,22 +151,26 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         sizeCol = new TableColumn<>("Size");
         sizeCol.setCellValueFactory(cellData -> new SimpleLongProperty(cellData.getValue().getLength()));
         sizeCol.setCellFactory(ByteSizeTableCell::new);
+        sizeCol.setMinWidth(60);
         sizeCol.setPrefWidth(64);
         sizeCol.setStyle(CENTER_RIGHT_ALIGN);
 
         totalTimeCol = new TableColumn<>("Duration");
         totalTimeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getDuration()));
         totalTimeCol.setCellFactory(DurationTableCell::new);
+        totalTimeCol.setMinWidth(80);
         totalTimeCol.setPrefWidth(80);
         totalTimeCol.setStyle(CENTER_RIGHT_ALIGN);
 
         yearCol = new TableColumn<>("Year");
         yearCol.setCellValueFactory(cellData -> cellData.getValue().getAlbumProperty());
         yearCol.setCellFactory(AlbumYearTableCell::new);
+        yearCol.setMinWidth(60);
         yearCol.setPrefWidth(60);
         yearCol.setStyle(CENTER_RIGHT_ALIGN);
 
         playCountCol = new TableColumn<>("Plays");
+        playCountCol.setMinWidth(50);
         playCountCol.setPrefWidth(50);
         playCountCol.setCellValueFactory(cellData -> cellData.getValue().getPlayCountProperty());
         playCountCol.setStyle(CENTER_RIGHT_ALIGN);
@@ -161,18 +178,21 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         discNumberCol = new TableColumn<>("Disc Num");
         discNumberCol.setCellValueFactory(cellData -> cellData.getValue().getDiscNumberProperty());
         discNumberCol.setCellFactory(NumericTableCell::new);
+        discNumberCol.setMinWidth(80);
         discNumberCol.setPrefWidth(45);
         discNumberCol.setStyle(CENTER_RIGHT_ALIGN);
 
         trackNumberCol = new TableColumn<>("Track Num");
         trackNumberCol.setCellValueFactory(cellData -> cellData.getValue().getTrackNumberProperty());
         trackNumberCol.setCellFactory(NumericTableCell::new);
+        trackNumberCol.setMinWidth(80);
         trackNumberCol.setPrefWidth(45);
         trackNumberCol.setStyle(CENTER_RIGHT_ALIGN);
 
         bitRateCol = new TableColumn<>("BitRate");
         bitRateCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getBitRate()));
         bitRateCol.setCellFactory(BitRateTableCell::new);
+        bitRateCol.setMinWidth(70);
         bitRateCol.setPrefWidth(60);
         bitRateCol.setStyle(CENTER_RIGHT_ALIGN);
 
@@ -180,6 +200,7 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         bpmCol.setCellValueFactory(cellData -> cellData.getValue().getBpmProperty());
         bpmCol.setCellFactory(FloatTableCell::new);
         bpmCol.setStyle(CENTER_RIGHT_ALIGN);
+        bpmCol.setMinWidth(50);
         bpmCol.setPrefWidth(60);
     }
 
