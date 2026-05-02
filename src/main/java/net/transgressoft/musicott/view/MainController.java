@@ -370,27 +370,54 @@ public class MainController {
             if (playlistItemsSubscription != null)
                 playlistItemsSubscription.unsubscribe();
 
-            playlistCoverSubscription = subscribe(playlist.getCoverImageProperty(),
-                playlistCover -> playlistImageProperty.set(playlistCover.orElse(defaultPlaylistImage))
-            );
-
             tableStackPane.getChildren().remove(artistsLayout);
             replacePlaylistTextFieldByTitleLabel();
             playlistTitleLabel.textProperty().unbind();
             playlistTitleLabel.textProperty().bind(playlist.getNameProperty());
 
-            mainAudioItemTable.setSourceItems(playlist.getAudioItemsProperty());
-            boolean hasItems = ! playlist.getAudioItemsProperty().isEmpty();
-            miniatureCoverImageView.setVisible(hasItems);
-            playlistTracksNumberLabel.setVisible(hasItems);
-            playlistSizeLabel.setVisible(hasItems);
+            if (playlist.isDirectory()) {
+                var recursiveItems = playlist.getAudioItemsRecursiveProperty();
+                mainAudioItemTable.setSourceItems(recursiveItems);
 
-            playlistItemsSubscription = subscribe(playlist.getAudioItemsProperty(), audioItems -> {
-                boolean notEmpty = ! audioItems.isEmpty();
-                miniatureCoverImageView.setVisible(notEmpty);
-                playlistTracksNumberLabel.setVisible(notEmpty);
-                playlistSizeLabel.setVisible(notEmpty);
-            });
+                boolean hasItems = ! recursiveItems.isEmpty();
+                miniatureCoverImageView.setVisible(hasItems);
+                playlistTracksNumberLabel.setVisible(hasItems);
+                playlistSizeLabel.setVisible(hasItems);
+
+                playlistCoverSubscription = subscribe(recursiveItems, items -> {
+                    Image cover = items.stream()
+                            .map(item -> item.getCoverImageProperty().get())
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .findFirst()
+                            .orElse(defaultPlaylistImage);
+                    playlistImageProperty.set(cover);
+                });
+
+                playlistItemsSubscription = subscribe(recursiveItems, items -> {
+                    boolean notEmpty = ! items.isEmpty();
+                    miniatureCoverImageView.setVisible(notEmpty);
+                    playlistTracksNumberLabel.setVisible(notEmpty);
+                    playlistSizeLabel.setVisible(notEmpty);
+                });
+            } else {
+                playlistCoverSubscription = subscribe(playlist.getCoverImageProperty(),
+                    playlistCover -> playlistImageProperty.set(playlistCover.orElse(defaultPlaylistImage))
+                );
+
+                mainAudioItemTable.setSourceItems(playlist.getAudioItemsProperty());
+                boolean hasItems = ! playlist.getAudioItemsProperty().isEmpty();
+                miniatureCoverImageView.setVisible(hasItems);
+                playlistTracksNumberLabel.setVisible(hasItems);
+                playlistSizeLabel.setVisible(hasItems);
+
+                playlistItemsSubscription = subscribe(playlist.getAudioItemsProperty(), audioItems -> {
+                    boolean notEmpty = ! audioItems.isEmpty();
+                    miniatureCoverImageView.setVisible(notEmpty);
+                    playlistTracksNumberLabel.setVisible(notEmpty);
+                    playlistSizeLabel.setVisible(notEmpty);
+                });
+            }
 
             showTablePane();
         } else {
