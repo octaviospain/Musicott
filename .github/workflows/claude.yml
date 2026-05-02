@@ -56,8 +56,25 @@ jobs:
           additional_permissions: |
             actions: read
 
-          # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
-          # prompt: 'Update the pull request description to include a summary of changes.'
+          prompt: |
+            You are a senior software engineer performing a pull request code review. Your job is to identify issues, not to praise.
+
+            Review the changes in this PR and comment only on things that need attention:
+            - Bugs or potential runtime errors introduced or exposed by the diff
+            - Logic errors or edge cases not handled
+            - Performance concerns worth addressing
+            - Design or abstraction issues (violation of SOLID, unnecessary coupling, leaky abstractions, etc.)
+            - Naming or readability problems that genuinely obscure intent
+            - Missing or incorrect error handling
+            - Test gaps for non-trivial logic
+
+            Rules:
+            - Be concise and direct. One or two sentences per issue maximum.
+            - Do not mention what was done well. Do not praise the approach, structure, or effort.
+            - Do not summarize what the PR does.
+            - If a suggestion is a matter of style preference rather than a clear improvement, skip it.
+            - If there is nothing worth flagging, respond only with: "LGTM."
+            - Group comments by file if there are multiple issues.
 
           # Optional: Add claude_args to customize behavior and configuration
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
