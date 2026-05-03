@@ -84,6 +84,14 @@ group = 'net.transgressoft'
 version = scmVersion.version
 description = 'musicott'
 
+// Generate META-INF/build-info.properties at build time so Spring's BuildProperties
+// bean is autoconfigured. AboutWindowAlert reads buildProperties.getVersion() to
+// display the runtime version (sourced from scmVersion.version above) instead of
+// a hardcoded literal.
+springBoot {
+    buildInfo()
+}
+
 // Stabilise transitive kotlinx versions — Spring Boot's kotlin BOM and music-commons can
 // otherwise pull conflicting coroutines/serialization releases into the runtime classpath.
 // Also strip transitive org.openjfx:javafx-* JARs: with Liberica Full / 'jdk+fx' the JDK
