@@ -1,6 +1,8 @@
 package net.transgressoft.musicott.services;
 
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
+import net.transgressoft.commons.fx.music.player.JavaFxPlayer;
+import net.transgressoft.commons.music.player.AudioItemPlayer;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 
 import javafx.beans.property.SimpleIntegerProperty;
@@ -10,9 +12,9 @@ import javafx.collections.ObservableList;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedConstruction;
+import org.mockito.Mockito;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testfx.framework.junit5.ApplicationExtension;
@@ -69,12 +71,6 @@ class PlayerServiceStorageIT {
         // The size-1 == next-up storage contract IS the assertion that proves the inversion.
     }
 
-    // Windows Media Foundation crashes the JVM (STATUS_ACCESS_VIOLATION 0xC0000005) when
-    // JavaFxPlayer is constructed against the empty mp3 stub used here. Linux + macOS bundle
-    // codecs that fail with a Java exception we can swallow; Windows fails in native code where
-    // try/catch can't reach. Storage-contract coverage from the Linux + macOS CI legs is
-    // sufficient for the assertions below — the platform-independent list mutations.
-    @DisabledOnOs(value = OS.WINDOWS, disabledReason = "JavaFxPlayer construction crashes Windows headless JVM (jfxmedia native access violation)")
     @Test
     @DisplayName("previous appends to playQueueList end and pops historyQueueList from end")
     void previousAppendsToPlayQueueListEndAndPopsHistoryQueueListFromEnd() throws Exception {
@@ -90,13 +86,20 @@ class PlayerServiceStorageIT {
         // Seed currentTrack via reflection (private field).
         ReflectionTestUtils.setField(playerService, "currentTrack", Optional.of(itemCurrent));
 
-        // previous() ends with setPlayer(...) which constructs JavaFxPlayer — guard with try/catch.
-        // List mutations happen BEFORE setPlayer so assertions remain valid even if media fails.
-        // Catches Throwable because jfxmedia unavailability throws UnsatisfiedLinkError (an Error, not RuntimeException).
-        try {
+        // previous() ends with setPlayer(...) which constructs JavaFxPlayer — that constructor
+        // chains into javafx.scene.media.MediaPlayer and loads jfxmedia.dll, which crashes the
+        // Windows headless JVM with STATUS_ACCESS_VIOLATION 0xC0000005 (uncatchable native crash).
+        // Intercept `new JavaFxPlayer()` with Mockito.mockConstruction so the list mutations
+        // execute and the no-op `play(...)` returns immediately on every OS. setPlayer also
+        // calls bindMediaPlayer() → trackPlayer.getStatusProperty().addListener(...), so stub
+        // the status property too to avoid an NPE on the listener attach.
+        try (MockedConstruction<JavaFxPlayer> ignored = Mockito.mockConstruction(JavaFxPlayer.class,
+                (mock, context) -> {
+                    Mockito.doNothing().when(mock).play(Mockito.any());
+                    Mockito.when(mock.getStatusProperty())
+                            .thenReturn(new SimpleObjectProperty<>(AudioItemPlayer.Status.UNKNOWN));
+                })) {
             playerService.previous();
-        } catch (Throwable ignored) {
-            // Media subsystem may be unavailable headless; list mutations already occurred.
         }
 
         ObservableList<TrackQueueRow> queue = playerService.getPlayQueueList();
@@ -143,7 +146,6 @@ class PlayerServiceStorageIT {
         assertThat(queue.get(4).getTrack()).isSameAs(itemA);
     }
 
-    @DisabledOnOs(value = OS.WINDOWS, disabledReason = "JavaFxPlayer construction crashes Windows headless JVM (jfxmedia native access violation)")
     @Test
     @DisplayName("playFromQueue appends the previous current track to history (not the selected one)")
     void playFromQueueAppendsPreviousCurrentTrackToHistory() throws Exception {
@@ -159,13 +161,15 @@ class PlayerServiceStorageIT {
         ObservableList<TrackQueueRow> queue = playerService.getPlayQueueList();
         TrackQueueRow rowA = queue.get(0);
 
-        // playFromQueue calls setPlayer (jfxmedia) — guard with try/catch.
-        // List mutations (history-append + queue-remove) happen BEFORE setPlayer in the method body.
-        // Catches Throwable because jfxmedia unavailability throws UnsatisfiedLinkError (an Error, not RuntimeException).
-        try {
+        // playFromQueue calls setPlayer which `new`s JavaFxPlayer — see the rationale on the
+        // previous test for why we intercept the constructor on every OS.
+        try (MockedConstruction<JavaFxPlayer> ignored = Mockito.mockConstruction(JavaFxPlayer.class,
+                (mock, context) -> {
+                    Mockito.doNothing().when(mock).play(Mockito.any());
+                    Mockito.when(mock.getStatusProperty())
+                            .thenReturn(new SimpleObjectProperty<>(AudioItemPlayer.Status.UNKNOWN));
+                })) {
             playerService.playFromQueue(rowA);
-        } catch (Throwable ignored) {
-            // Media subsystem may be unavailable headless; list mutations already occurred.
         }
 
         // History should contain the LEFT track only — itemA is now currentTrack and goes to
