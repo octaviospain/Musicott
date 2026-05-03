@@ -744,6 +744,14 @@ public class MainController {
             // If the host is running an Apple OS, we need to set the menu bar in a different way using the native menu bar
             if (operativeSystemKeyModifier.equals(KeyCombination.META_DOWN)) {
                 MenuToolkit menuToolkit = MenuToolkit.toolkit();
+                // MenuToolkit.toolkit() returns null on macOS when the native Cocoa bridge is
+                // unavailable (headless Monocle CI runs, JLink runtimes that strip nsmenufx
+                // platform support). Fall back to the standard in-window menu bar so the
+                // application can still start.
+                if (menuToolkit == null) {
+                    headerVBox.getChildren().add(rootMenuBar);
+                    return;
+                }
                 Menu appMenu = new Menu("Musicott");
                 appMenu.getItems().add(menuToolkit.createQuitMenuItem("Musicott"));
                 Menu windowMenu = new Menu("Window");
