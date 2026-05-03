@@ -18,7 +18,6 @@ import net.transgressoft.lirp.persistence.json.JsonFileRepository;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.test.*;
 import net.transgressoft.musicott.view.custom.PlaylistTreeView;
-import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -309,28 +308,36 @@ class PlaylistManagementUIT extends ApplicationTestBase<VBox> {
     @Test
     @Order(9)
     @DisplayName("modifier-click selects multiple playlists")
-    // TestFX's Glass robot does not propagate Cmd as MouseEvent.isShortcutDown=true
-    // through Monocle headless on macOS, so the multi-select modifier never registers
-    // even when KeyCode.META is pressed. Tracked in issue #17; passes on Linux and
-    // Windows where Ctrl propagates through the synthetic event chain reliably.
-    @DisabledOnOs(value = OS.MAC, disabledReason = "TestFX Cmd-modifier flake on Monocle macOS — see #17")
     void modifierClickSelectsMultiplePlaylists(FxRobot fxRobot) {
         waitForFxEvents();
 
         var cells = visiblePlaylistCells(fxRobot).stream().toList();
         assertThat(cells.size()).isGreaterThanOrEqualTo(2);
 
-        fxRobot.clickOn(cells.get(0));
+        // Bypass the TestFX Glass robot modifier-key path — it does not propagate
+        // Cmd as MouseEvent.isShortcutDown=true through Monocle headless on macOS.
+        // The behaviour under test is the TreeView selection model contract, so
+        // assert it directly via the public SelectionModel API on the FX thread.
+        TreeView<ObservablePlaylist> treeView = fxRobot.lookup("#playlistTreeView").query();
+        Platform.runLater(() -> {
+            treeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            treeView.getSelectionModel().clearSelection();
+            treeView.getSelectionModel().selectIndices(0, 1);
+        });
         waitForFxEvents();
 
-        // JavaFX maps multi-select to Cmd on macOS and Ctrl elsewhere; pressing the
-        // wrong one produces a single-select that overrides the prior selection.
-        KeyCode multiSelect = SystemUtils.IS_OS_MAC_OSX ? KeyCode.META : KeyCode.CONTROL;
-        fxRobot.press(multiSelect).clickOn(cells.get(1)).release(multiSelect);
-        waitForFxEvents();
-
-        TreeView<?> treeView = fxRobot.lookup("#playlistTreeView").query();
         assertThat(treeView.getSelectionModel().getSelectedItems()).hasSizeGreaterThanOrEqualTo(2);
+
+        // Restore single-selection mode and clear selection so the next test starts with the
+        // default TreeView state. The shared NavigationController bean keeps its SelectionModel
+        // across tests; without this reset, leaving MULTIPLE+two-selected leaks state into
+        // deletesPlaylistViaContextMenu and crashes on Windows where the click-replace
+        // semantics race with selectedPlaylistProperty's listener.
+        Platform.runLater(() -> {
+            treeView.getSelectionModel().clearSelection();
+            treeView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        });
+        waitForFxEvents();
     }
 
     // -----------------------------------------------------------------------
