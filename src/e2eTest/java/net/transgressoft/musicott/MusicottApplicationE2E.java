@@ -6,8 +6,6 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.transgressoft.musicott.config.ApplicationPaths;
 import net.transgressoft.musicott.view.MainController;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +27,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @SpringBootTest(classes = {MusicottApplication.class, MusicottApplicationE2E.E2eTestPaths.class})
 @ActiveProfiles("e2e")
 @ExtendWith(ApplicationExtension.class)
-// FXMLLoader.load through FxWeaver throws IllegalAccessError on macOS Monocle when
-// JavaFX is loaded as platform modules from Liberica jdk+fx — likely a module/reflection
-// boundary not granted by JavaFX 24's macOS native bridge. Tracked in #17.
-@DisabledOnOs(value = OS.MAC, disabledReason = "FxWeaver/FXMLLoader IllegalAccessError on macOS Monocle — see #17")
 class MusicottApplicationE2E {
 
 	@TestConfiguration
