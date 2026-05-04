@@ -453,7 +453,7 @@ public class EditController {
        Artist artist = getEditionFieldResult(artistTextField) != null ? ImmutableArtist.of(getEditionFieldResult(artistTextField)) : null;
        String albumName = getEditionFieldResult(albumTextField);
        Artist albumArtist = getEditionFieldResult(albumArtistTextField) != null ? ImmutableArtist.of(getEditionFieldResult(albumArtistTextField)) : null;
-       boolean isCompilation = isCompilationCheckBox.isIndeterminate() ? null : isCompilationCheckBox.isSelected();
+       Boolean isCompilation = isCompilationCheckBox.isIndeterminate() ? null : isCompilationCheckBox.isSelected();
        Short year = getEditionFieldResult(yearTextField) != null ? Short.valueOf(getEditionFieldResult(yearTextField)) : null;
        net.transgressoft.commons.music.audio.Label label = getEditionFieldResult(labelTextField) != null ? ImmutableLabel.of(getEditionFieldResult(labelTextField)) : null;
        Set<Genre> genres = getEditionFieldResult(genreTextField) != null ? Genre.parseGenre(getEditionFieldResult(genreTextField)) : null;
@@ -485,7 +485,7 @@ public class EditController {
             Artist artist,
             String albumName,
             Artist albumArtist,
-            boolean isCompilation,
+            Boolean isCompilation,
             Short year,
             net.transgressoft.commons.music.audio.Label label,
             byte[] coverImageBytes,
@@ -494,5 +494,42 @@ public class EditController {
             Short trakNum,
             Short discNum,
             Float bpm) {
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof AudioItemMetadataChange other)) return false;
+            return java.util.Objects.equals(title, other.title)
+                    && java.util.Objects.equals(artist, other.artist)
+                    && java.util.Objects.equals(albumName, other.albumName)
+                    && java.util.Objects.equals(albumArtist, other.albumArtist)
+                    && java.util.Objects.equals(isCompilation, other.isCompilation)
+                    && java.util.Objects.equals(year, other.year)
+                    && java.util.Objects.equals(label, other.label)
+                    && java.util.Arrays.equals(coverImageBytes, other.coverImageBytes)
+                    && java.util.Objects.equals(genres, other.genres)
+                    && java.util.Objects.equals(comments, other.comments)
+                    && java.util.Objects.equals(trakNum, other.trakNum)
+                    && java.util.Objects.equals(discNum, other.discNum)
+                    && java.util.Objects.equals(bpm, other.bpm);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = java.util.Objects.hash(title, artist, albumName, albumArtist, isCompilation,
+                    year, label, genres, comments, trakNum, discNum, bpm);
+            result = 31 * result + java.util.Arrays.hashCode(coverImageBytes);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "AudioItemMetadataChange[title=" + title + ", artist=" + artist
+                    + ", albumName=" + albumName + ", albumArtist=" + albumArtist
+                    + ", isCompilation=" + isCompilation + ", year=" + year + ", label=" + label
+                    + ", coverImageBytes=" + java.util.Arrays.toString(coverImageBytes)
+                    + ", genres=" + genres + ", comments=" + comments
+                    + ", trakNum=" + trakNum + ", discNum=" + discNum + ", bpm=" + bpm + "]";
+        }
     }
 }
