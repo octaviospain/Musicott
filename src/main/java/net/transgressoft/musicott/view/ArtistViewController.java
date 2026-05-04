@@ -295,12 +295,16 @@ public class ArtistViewController {
         return row -> row.hasTracksMatching(query);
     }
 
+    // Guard each metadata access — partial catalogs can have null artist/album/album-artist
+    // or null name fields; one malformed track shouldn't NPE the entire artist filter.
+    // Sonar's flow analysis trusts the music-commons API's nominal non-null types and flags
+    // each guard as gratuitous; in practice imported tracks sometimes ship with nulls.
+    @SuppressWarnings("java:S2589")
     private boolean artistMatchesQuery(ObservableAudioItem audioItem, Artist artist, String query) {
         if (query == null || query.isEmpty())
             return true;
 
-        // Guard each metadata access — partial catalogs can have null artist/album/album-artist
-        // or null name fields; one malformed track shouldn't NPE the entire artist filter.
+
         var matchesName = artist.getName() != null && artist.getName().toLowerCase().contains(query);
         var itemArtist = audioItem.getArtist();
         var matchesArtist = itemArtist != null && itemArtist.equals(artist);

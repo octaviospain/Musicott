@@ -219,6 +219,11 @@ public class ArtistAlbumListRow extends HBox {
         return containedAudioItems.stream().anyMatch(item -> trackMatchesQuery(item, q));
     }
 
+    // Defensive null guards on title / artist / album metadata: imported tracks can ship with
+    // null fields (partial catalogs), and one malformed item must not NPE the whole query filter.
+    // Sonar's flow analysis trusts the music-commons API's nominal non-null types and flags
+    // each guard as gratuitous; in practice we hit them for real-world libraries.
+    @SuppressWarnings("java:S2589")
     private static boolean trackMatchesQuery(ObservableAudioItem item, String lowerCaseQuery) {
         if (item.getTitle() != null && item.getTitle().toLowerCase().contains(lowerCaseQuery)) {
             return true;
