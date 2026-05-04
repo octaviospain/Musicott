@@ -26,6 +26,8 @@ import org.springframework.context.ApplicationEvent;
  */
 public class AudioItemChangedEvent extends ApplicationEvent {
 
+    // ObservableAudioItem isn't Serializable; ApplicationEvent stays in-VM.
+    @SuppressWarnings("java:S1948")
     public final ObservableAudioItem currentTrack;
 
     public AudioItemChangedEvent(ObservableAudioItem currentTrack, Object source) {

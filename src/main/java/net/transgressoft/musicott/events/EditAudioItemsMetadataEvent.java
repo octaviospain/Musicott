@@ -13,7 +13,11 @@ import static net.transgressoft.musicott.view.EditController.AudioItemMetadataCh
  */
 public class EditAudioItemsMetadataEvent extends ApplicationEvent {
 
+    // ObservableAudioItem isn't Serializable; ApplicationEvent stays in-VM.
+    @SuppressWarnings("java:S1948")
     public final Set<ObservableAudioItem> audioItems;
+    // AudioItemMetadataChange holds JavaFX Observable references; ApplicationEvent stays in-VM.
+    @SuppressWarnings("java:S1948")
     public final AudioItemMetadataChange audioItemMetadataChange;
 
     public EditAudioItemsMetadataEvent(Set<ObservableAudioItem> audioItems, AudioItemMetadataChange audioItemMetadataChange, Object source) {

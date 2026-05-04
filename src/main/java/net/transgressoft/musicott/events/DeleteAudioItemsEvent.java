@@ -11,6 +11,8 @@ import java.util.Collection;
  */
 public class DeleteAudioItemsEvent extends ApplicationEvent {
 
+    // ObservableAudioItem isn't Serializable; ApplicationEvent stays in-VM.
+    @SuppressWarnings("java:S1948")
     public final Collection<ObservableAudioItem> audioItems;
 
     public DeleteAudioItemsEvent(Collection<ObservableAudioItem> audioItems, Object source) {
