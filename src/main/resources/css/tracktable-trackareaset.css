@@ -10,8 +10,5 @@
 
 .table-row-cell:filled .table-cell {
     -fx-border-color: rgb(73, 73, 73);
-}
-
-.table-row-cell:filled .table-cell {
     -fx-border-width: 1 0 0 0;
 }

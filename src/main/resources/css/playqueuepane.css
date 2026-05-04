@@ -16,16 +16,12 @@
 #deleteAllButton {
 	-fx-background-color: rgb(73, 73, 73);
 	-fx-text-fill: white;
+	-fx-padding: 2 2 2 2;
 }
 
 #deleteAllButton:hover {
 	-fx-background-color: rgb(201, 201, 201);
 	-fx-text-fill: black;
-	-fx-padding: 2 2 2 2;
-}
-
-
-#deleteAllButton {
 	-fx-padding: 2 2 2 2;
 }
 
