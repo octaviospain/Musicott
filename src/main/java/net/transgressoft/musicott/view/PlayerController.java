@@ -230,7 +230,7 @@ public class PlayerController {
             var resolvedItems = selectedTracksIds.stream()
                     .map(id -> audioLibrary.findById(id).orElse(null))
                     .filter(Objects::nonNull)
-                    .map(item -> (ObservableAudioItem) item)
+                    .map(ObservableAudioItem.class::cast)
                     .toList();
             if (!resolvedItems.isEmpty()) {
                 playerService.addToQueue(resolvedItems);
