@@ -42,7 +42,7 @@ public class PlayQueueController {
     // the bottom-aligning VBox can shrink it to fit content with empty space at the top.
     private static final double TRACK_QUEUE_ROW_CELL_HEIGHT = 54.0;
 
-    private final Logger LOG = LoggerFactory.getLogger(getClass().getName());
+    private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
     private final PlayerService playerService;
     private final ObservableAudioLibrary audioLibrary;
@@ -72,25 +72,8 @@ public class PlayQueueController {
         playQueueList = playerService.getPlayQueueList();
         historyQueueList = playerService.getHistoryQueueList();
 
-        playQueueList.addListener((ListChangeListener<TrackQueueRow>) change -> {
-            while (change.next()) {
-                change.getRemoved().forEach(TrackQueueRow::dispose);
-                change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
-                    playQueueList.remove(trackQueueRow);
-                    LOG.debug("Removing track from play queue by clicking the button. Queue size: {}", playQueueList.size());
-                }));
-            }
-        });
-
-        historyQueueList.addListener((ListChangeListener<TrackQueueRow>) change -> {
-            while (change.next()) {
-                change.getRemoved().forEach(TrackQueueRow::dispose);
-                change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
-                    historyQueueList.remove(trackQueueRow);
-                    LOG.debug("Removing track from history queue by clicking the button. History queue size: {}", historyQueueList.size());
-                }));
-            }
-        });
+        playQueueList.addListener(queueChangeListener(playQueueList, "play queue"));
+        historyQueueList.addListener(queueChangeListener(historyQueueList, "history queue"));
 
         historyQueueButton.setId("historyQueueButton");
         queuesListView.setCellFactory(_ -> new TrackQueueListCell(() -> historyQueueButton.isSelected()));
@@ -107,14 +90,7 @@ public class PlayQueueController {
                 Bindings.size(historyQueueList)));
         queuesListView.maxHeightProperty().bind(queuesListView.prefHeightProperty());
         queuesListView.setItems(playQueueList);
-        queuesListView.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2)
-                if (historyQueueButton.isSelected()) {
-                    playerService.playFromHistoryQueue(queuesListView.getSelectionModel().getSelectedItem());
-                } else {
-                    playerService.playFromQueue(queuesListView.getSelectionModel().getSelectedItem());
-                }
-        });
+        queuesListView.setOnMouseClicked(this::onQueueListClicked);
 
         queuesListView.setOnDragOver(this::onDragOverQueue);
         queuesListView.setOnDragDropped(this::onDragDroppedQueue);
@@ -132,6 +108,30 @@ public class PlayQueueController {
             else
                 showPlayQueue();
         });
+    }
+
+    private ListChangeListener<TrackQueueRow> queueChangeListener(ObservableList<TrackQueueRow> list, String label) {
+        return change -> {
+            while (change.next()) {
+                change.getRemoved().forEach(TrackQueueRow::dispose);
+                change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
+                    list.remove(trackQueueRow);
+                    logger.debug("Removing track from {} by clicking the button. Size: {}", label, list.size());
+                }));
+            }
+        };
+    }
+
+    private void onQueueListClicked(javafx.scene.input.MouseEvent event) {
+        if (event.getClickCount() != 2) {
+            return;
+        }
+        TrackQueueRow selected = queuesListView.getSelectionModel().getSelectedItem();
+        if (historyQueueButton.isSelected()) {
+            playerService.playFromHistoryQueue(selected);
+        } else {
+            playerService.playFromQueue(selected);
+        }
     }
 
     private void onDragOverQueue(DragEvent event) {
@@ -154,7 +154,7 @@ public class PlayQueueController {
                     .toList();
             if (!resolvedItems.isEmpty()) {
                 playerService.addToQueue(resolvedItems);
-                LOG.debug("Added {} tracks to queue from drag-drop", resolvedItems.size());
+                logger.debug("Added {} tracks to queue from drag-drop", resolvedItems.size());
             }
             event.setDropCompleted(true);
         }
@@ -169,25 +169,25 @@ public class PlayQueueController {
 
     private void clearHistoryQueue() {
         historyQueueList.clear();
-        LOG.trace("History queue cleared");
+        logger.trace("History queue cleared");
     }
 
     private void clearPlayQueue() {
         playQueueList.clear();
-        LOG.trace("Play queue cleared");
+        logger.trace("Play queue cleared");
     }
 
     private void showHistoryQueue() {
         queuesListView.setItems(historyQueueList);
         queuesListView.getSelectionModel().clearSelection();
         titleQueueLabel.setText("Recently played");
-        LOG.trace("Showing history queue on the pane");
+        logger.trace("Showing history queue on the pane");
     }
 
     private void showPlayQueue() {
         queuesListView.setItems(playQueueList);
         queuesListView.getSelectionModel().clearSelection();
         titleQueueLabel.setText("Play Queue");
-        LOG.trace("Showing play queue on the pane");
+        logger.trace("Showing play queue on the pane");
     }
 }
