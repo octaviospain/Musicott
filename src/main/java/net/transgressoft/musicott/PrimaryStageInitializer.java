@@ -1,6 +1,5 @@
 package net.transgressoft.musicott;
 
-import net.transgressoft.musicott.events.StageReadyEvent;
 import net.transgressoft.musicott.events.StopApplicationEvent;
 import net.transgressoft.musicott.view.EditController;
 import net.transgressoft.musicott.view.ErrorDialogController;
@@ -14,11 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Bootstraps the primary JavaFX stage once Spring publishes {@link StageReadyEvent}.
+ * Bootstraps the primary JavaFX stage once the splash orchestrator hands it off after
+ * Spring boot completes.
  *
  * <p>The initializer (1) prewarms the auxiliary FXML views via FxWeaver so the first user
  * interaction does not pay the FXML parsing cost on the FX thread, (2) builds the main
@@ -27,7 +26,7 @@ import org.springframework.stereotype.Component;
  * after the stage is shown.
  */
 @Component
-public class PrimaryStageInitializer implements ApplicationListener<StageReadyEvent> {
+public class PrimaryStageInitializer {
 
     private static final Logger logger = LoggerFactory.getLogger(PrimaryStageInitializer.class);
 
@@ -48,10 +47,15 @@ public class PrimaryStageInitializer implements ApplicationListener<StageReadyEv
         this.applicationEventPublisher = applicationEventPublisher;
     }
 
-    @Override
-    public void onApplicationEvent(StageReadyEvent event) {
-        Stage primaryStage = event.primaryStage;
-
+    /**
+     * Builds and installs the main scene on {@code primaryStage}. Does NOT call
+     * {@code primaryStage.show()} — the splash orchestrator coordinates the show
+     * timing so it can overlap with the splash's fade-out animation. The post-show
+     * chrome-compensation re-apply inside {@link #installSceneDrivenMinimumSize}
+     * still fires after the orchestrator calls {@code primaryStage.show()} because
+     * it is wired to {@link Stage#setOnShown(javafx.event.EventHandler)}.
+     */
+    public void initializePrimaryStage(Stage primaryStage) {
         prewarmAuxiliaryViews();
         Scene scene = new Scene(fxWeaver.loadView(MainController.class));
 
@@ -59,8 +63,6 @@ public class PrimaryStageInitializer implements ApplicationListener<StageReadyEv
         primaryStage.setScene(scene);
         primaryStage.getIcons().add(ApplicationImage.APP_ICON.get());
         installSceneDrivenMinimumSize(primaryStage, scene);
-
-        primaryStage.show();
     }
 
     /**

@@ -2,6 +2,7 @@ package net.transgressoft.musicott;
 
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.transgressoft.musicott.config.ApplicationPaths;
 import net.transgressoft.musicott.view.MainController;
@@ -79,8 +80,33 @@ class MusicottApplicationE2E {
 	}
 
 	@Test
-	@DisplayName("Application context loads with root border pane")
+	@DisplayName("Application context loads with root border pane and no splash stage exists")
 	void applicationStartupTest(FxRobot fxRobot) {
 		assertThat(fxRobot.lookup("#rootBorderPane").tryQuery()).isPresent();
+
+		// Defense in depth: gradle/test-suites.gradle sets -Dmusicott.splash.disabled=true
+		// for every test JVM. MusicottApplication.start() takes the synchronous bypass
+		// branch in that mode and never constructs a SplashController. A regression
+		// that removes the bypass property would surface here as a showing window whose
+		// scene root carries the splash-root style class. The TestFX harness installs
+		// its own UNDECORATED primary stage, so we cannot discriminate by StageStyle —
+		// splash-root is the only splash-specific signal in the scene graph.
+		long splashWindowCount = Window.getWindows().stream()
+				.map(Window::getScene)
+				.filter(scene -> scene != null)
+				.map(Scene::getRoot)
+				.filter(root -> root != null)
+				.filter(root -> root.getStyleClass().contains("splash-root"))
+				.count();
+
+		assertThat(splashWindowCount)
+				.as("no SplashController scene may be open under the bypass property")
+				.isEqualTo(0L);
+
+		// Also confirm the bypass property arrived in this JVM — protects against a
+		// silent revert of gradle/test-suites.gradle.
+		assertThat(System.getProperty("musicott.splash.disabled"))
+				.as("musicott.splash.disabled must reach the e2eTest JVM")
+				.isEqualTo("true");
 	}
 }

@@ -1,0 +1,31 @@
+@import url("base.css");
+
+/* Splash root: dark card with rounded corners. The Stage uses StageStyle.TRANSPARENT
+   and the Scene fill is Color.TRANSPARENT so the area outside the rounded background
+   does not paint the platform default white. */
+.splash-root {
+    -fx-background-color: rgb(34, 34, 34);
+    -fx-background-radius: 12;
+    -fx-padding: 32;
+    -fx-spacing: 16;
+    -fx-alignment: CENTER;
+}
+
+.splash-version {
+    -fx-font-size: 13px;
+    -fx-font-family: "Avenir", sans-serif;
+    -fx-text-fill: rgb(201, 201, 201);
+}
+
+.splash-status {
+    -fx-font-size: 12px;
+    -fx-font-family: "Avenir", sans-serif;
+    -fx-text-fill: white;
+}
+
+/* ProgressBar dimensions for the splash. Bar fill (rgb(99,255,109)) and track fill
+   (rgb(73,73,73)) are inherited from base.css. */
+.splash-root .progress-bar {
+    -fx-pref-width: 280;
+    -fx-min-width: 280;
+}
