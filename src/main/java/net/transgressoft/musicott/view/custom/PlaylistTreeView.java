@@ -332,8 +332,8 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
      */
     private class PlaylistTreeViewCell extends TreeCell<ObservablePlaylist> {
 
-        private static final String dragOverStyle = "-fx-effect: dropshadow(one-pass-box, rgb(99, 255, 109), 1, 1.0, 0, 0);";
-        private static final String dragOverRootPlaylistStyle = "-fx-border-color: rgb(99, 255, 109); -fx-border-width: 1px;";
+        private static final String DRAG_OVER_STYLE = "-fx-effect: dropshadow(one-pass-box, rgb(99, 255, 109), 1, 1.0, 0, 0);";
+        private static final String DRAG_OVER_ROOT_PLAYLIST_STYLE = "-fx-border-color: rgb(99, 255, 109); -fx-border-width: 1px;";
 
         private final PseudoClass playlist = PseudoClass.getPseudoClass("playlist");
         private final PseudoClass playlistSelected = PseudoClass.getPseudoClass("playlist-selected");
@@ -412,10 +412,10 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
         private void onDragOver(DragEvent event) {
             if (getItem() != null) {
                 event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
-                setStyle(dragOverStyle);
+                setStyle(DRAG_OVER_STYLE);
                 setOpacity(0.10);
             } else if (event.getDragboard().hasContent(PLAYLIST_DATA_FORMAT)) {
-                getTreeView().setStyle(dragOverRootPlaylistStyle);
+                getTreeView().setStyle(DRAG_OVER_ROOT_PLAYLIST_STYLE);
                 dragOnRoot = true;
             }
             event.consume();
@@ -441,13 +441,13 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
                     .toList();
                 getItem().addAudioItems(audioItems);
             } else if (dragBoard.hasContent(PLAYLIST_DATA_FORMAT)) {
-                var playlist = (ObservablePlaylist) dragBoard.getContent(PLAYLIST_DATA_FORMAT);
+                var droppedPlaylist = (ObservablePlaylist) dragBoard.getContent(PLAYLIST_DATA_FORMAT);
                 var isFolder = getItem() != null && ! getTreeItem().isLeaf();
 
-                if (isFolder && ! playlist.equals(getItem()))
-                    movePlaylist(playlist, getItem());
+                if (isFolder && ! droppedPlaylist.equals(getItem()))
+                    movePlaylist(droppedPlaylist, getItem());
                 else if (dragOnRoot)
-                    movePlaylistToFirstLevelHierarchy(playlist);
+                    movePlaylistToFirstLevelHierarchy(droppedPlaylist);
             }
             event.consume();
         }
