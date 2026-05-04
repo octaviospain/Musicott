@@ -86,7 +86,6 @@ public class ArtistViewController {
         filteredAlbumRows = new FilteredList<>(albumRowsBackingList);
         albumsListView.setItems(filteredAlbumRows);
 
-        // TODO replace listener from artistsListView to selectedArtistProperty ?
         artistsListView.getSelectionModel().selectedItemProperty().addListener(this::selectedArtistListener);
         artistsListView.setCellFactory(_ -> new ArtistCell());
         artistsListView.setOnMouseClicked(this::doubleClickOnArtistHandler);

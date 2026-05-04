@@ -916,7 +916,6 @@ public class MainController {
                     alert.showAndWait().ifPresent(response -> {
                         if (response == ButtonType.OK) {
                             var selectionSet = new HashSet<>(selection);
-                            // TODO spread removal throw places if necessary with an event
                             applicationContext.publishEvent(new DeleteAudioItemsEvent(selectionSet, this));
                             audioRepository.removeAll(selectionSet);
                         }

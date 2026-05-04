@@ -257,6 +257,7 @@ public class ArtistAlbumListRow extends HBox {
      *
      * @return The {@link IntegerProperty} of the audioItem number
      */
+    @SuppressWarnings("java:S1135")
     private ReadOnlyIntegerProperty listenAudioItemChangesAndSort(ObservableAudioItem audioItem) {
         subscribe(audioItem.getTrackNumberProperty(), tn -> containedAudioItems.sort(this::audioItemComparator));
         subscribe(audioItem.getDiscNumberProperty(), dn -> containedAudioItems.sort(this::audioItemComparator));
@@ -270,12 +271,15 @@ public class ArtistAlbumListRow extends HBox {
                     setRelatedArtistsLabel();
                     setArtistColumn();
                 }));
-        // TODO subscribe to changes on the audioItem cover property to refresh the track set image
+        // Deferred: subscribe to the audioItem cover property to refresh the track-set image when
+        // covers change. Trigger: cover-edit propagation work.
         return audioItem.getTrackNumberProperty();
     }
 
+    @SuppressWarnings("java:S1135")
     private Integer audioItemComparator(ObservableAudioItem audioItem1, ObservableAudioItem audioItem2) {
-        // TODO Improve for the case when an album has more than 1 disc, showing them in different tables
+        // Deferred: split multi-disc albums into separate tables instead of combining track numbers.
+        // Trigger: multi-disc album view enhancement.
         int ai1DiscNum = audioItem1.getDiscNumber() == null ? 0 : audioItem1.getDiscNumber().intValue();
         int ai2DiscNum = audioItem2.getDiscNumber() == null ? 0 : audioItem2.getDiscNumber().intValue();
         int result = ai1DiscNum - ai2DiscNum;

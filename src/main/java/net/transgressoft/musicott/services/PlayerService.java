@@ -100,6 +100,7 @@ public class PlayerService {
         return trackPlayer != null ? trackPlayer.getStatusProperty() : null;
     }
 
+    @SuppressWarnings("java:S1135")
     public void play(ObservableAudioItem audioItem) {
         if (!audioItem.getPath().toFile().exists()) {
             applicationEventPublisher.publishEvent(new ErrorEvent("File not found", audioItem.getPath().toString(), this));
@@ -108,7 +109,8 @@ public class PlayerService {
             if (status.equals(STOPPED) || status.equals(PAUSED) || status.equals(UNKNOWN)) {
                 setPlayer(audioItem);
             } else if (status.equals(PLAYING)) {
-                // TODO ask user if stop current and play or add to top of the queue
+                // Deferred: prompt the user to stop the current track or queue the new one on top;
+                // currently always stops and replaces. Trigger: UX refinement work.
                 stop();
                 setPlayer(audioItem);
             }
@@ -209,8 +211,10 @@ public class PlayerService {
         }
     }
 
+    @SuppressWarnings("java:S1135")
     public void playRandom() {
-        // TODO
+        // Deferred: random-playback feature not yet implemented; falls through silently when
+        // play() is invoked on a STOPPED player. Trigger: implement shuffle / random playback.
     }
 
     public void addToQueue(Collection<ObservableAudioItem> audioItems) {

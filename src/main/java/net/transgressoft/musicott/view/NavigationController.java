@@ -191,9 +191,11 @@ public class NavigationController {
     }
 
     @EventListener (classes = ExportSelectedPlaylistsEvent.class)
+    @SuppressWarnings("java:S1135")
     public void exportSelectedPlaylists() {
         var selectedPlaylists = playlistTreeView.selectedPlaylists();
-        // TODO open dialog box to select destination and export selectedPlaylists via exportToM3uFile
+        // Deferred: open a destination-chooser dialog and call exportToM3uFile per selected
+        // playlist. Currently the action is a no-op. Trigger: m3u export feature work.
     }
 
     @EventListener

@@ -7,7 +7,7 @@ import javafx.scene.image.Image;
  */
 public class DragBoardImage extends Image {
 
-    private static final String DRAG_BOARD_ICON_PATH = "/icons/dragboard-icon.png"; //TODO refactor
+    private static final String DRAG_BOARD_ICON_PATH = "/icons/dragboard-icon.png";
 
     public DragBoardImage() {
         super(DragBoardImage.class.getResourceAsStream(DRAG_BOARD_ICON_PATH));

@@ -222,10 +222,10 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
         var destinationPlaylistTreeItem = findPlaylistTreeItemGivenPlaylist(destinationPlaylist);
         if (destinationPlaylistTreeItem == null) {
             logger.error("Destination playlist tree item not found for: {}", destinationPlaylist);
-            throw new RuntimeException("Destination playlist tree item not found for:" + destinationPlaylist);   // TODO improve
+            throw new IllegalStateException("Destination playlist tree item not found for:" + destinationPlaylist);
         } else if (! destinationPlaylistTreeItem.getValue().isDirectory()) {
             logger.error("Destination playlist is not a directory: {}", destinationPlaylistTreeItem.getValue());
-            throw new RuntimeException("Destination playlist is not a directory: " + destinationPlaylistTreeItem.getValue());   // TODO improve
+            throw new IllegalArgumentException("Destination playlist is not a directory: " + destinationPlaylistTreeItem.getValue());
         } else {
             var oldPlaylistFolder = playlistRepository.findParentPlaylist(playlistToMove);
             oldPlaylistFolder.ifPresent(it -> {
