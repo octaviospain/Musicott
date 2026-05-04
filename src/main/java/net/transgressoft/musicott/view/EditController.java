@@ -10,7 +10,6 @@ import net.transgressoft.musicott.events.OpenAudioItemEditorView;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.alerts.MultipleEditionConfirmationAlert;
 
-import com.neovisionaries.i18n.CountryCode;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;

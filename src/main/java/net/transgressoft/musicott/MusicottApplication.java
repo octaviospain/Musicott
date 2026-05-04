@@ -1,7 +1,6 @@
 package net.transgressoft.musicott;
 
 import net.transgressoft.musicott.config.*;
-import net.transgressoft.musicott.config.*;
 import net.transgressoft.musicott.events.StopApplicationEvent;
 import net.transgressoft.musicott.splash.SplashOrchestrator;
 

@@ -27,8 +27,6 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
 import net.transgressoft.commons.music.audio.AudioFileType;
-import net.transgressoft.musicott.config.*;
-import net.transgressoft.musicott.config.*;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.service.MediaImportService;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
