@@ -187,12 +187,11 @@ public class PlayerService {
     public void previous() {
         if (!historyQueueList.isEmpty()) {
             currentTrack.ifPresent(track -> {
-                TrackQueueRow row = new TrackQueueRow(track);
-                row.setOnDeleteButtonClickedHandler(e -> {
-                    playQueueList.remove(row);
-                    publishQueueUpdatedEvent();
-                });
-                playQueueList.add(row);
+                // Delete-button handler is set by PlayQueueController.queueChangeListener
+                // when this row is observed entering playQueueList — keeping handler ownership
+                // in one place avoids the previous pattern where the controller silently
+                // overwrote a PlayerService-set handler.
+                playQueueList.add(new TrackQueueRow(track));
                 publishQueueUpdatedEvent();
             });
             TrackQueueRow previousRow = historyQueueList.remove(historyQueueList.size() - 1);
@@ -214,16 +213,11 @@ public class PlayerService {
             playQueueList.clear();
             playingRandom = false;
         }
+        // Delete-button handler is set by PlayQueueController.queueChangeListener when each
+        // row is observed entering playQueueList — see removeFromPlayQueue / removeFromHistoryQueue.
         var newRows = audioItems.stream()
                 .filter(JavaFxPlayer.Companion::isPlayable)
-                .map(item -> {
-                    TrackQueueRow row = new TrackQueueRow(item);
-                    row.setOnDeleteButtonClickedHandler(e -> {
-                        playQueueList.remove(row);
-                        publishQueueUpdatedEvent();
-                    });
-                    return row;
-                })
+                .map(TrackQueueRow::new)
                 .toList();
         // Inverted storage: index size-1 is next-up, index 0 is farthest-out. The first input is
         // next-up (bottom of the popover), the last input is farthest (top). Reverse the new rows
@@ -264,6 +258,18 @@ public class PlayerService {
         playQueueList.clear();
         publishQueueUpdatedEvent();
         logger.debug("Play queue cleared");
+    }
+
+    public void removeFromPlayQueue(TrackQueueRow row) {
+        if (playQueueList.remove(row)) {
+            publishQueueUpdatedEvent();
+        }
+    }
+
+    public void removeFromHistoryQueue(TrackQueueRow row) {
+        if (historyQueueList.remove(row)) {
+            publishHistoryUpdatedEvent();
+        }
     }
 
     public void increaseVolume() {

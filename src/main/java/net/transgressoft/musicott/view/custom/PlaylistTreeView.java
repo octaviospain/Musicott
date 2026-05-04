@@ -370,13 +370,6 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
                     disablePseudoClassesStates();
             });
 
-            setOnDragOver(event -> {
-                var isFolder = ! getTreeItem().isLeaf();
-                if (getItem() != null && ! isFolder) {
-                    event.acceptTransferModes(TransferMode.ANY);
-                    event.consume();
-                }
-            });
             setOnMouseClicked(event -> {
                 var thisPlaylist = getItem();
                 var isEmpty = thisPlaylist != null && thisPlaylist.getAudioItemsProperty().isEmpty();

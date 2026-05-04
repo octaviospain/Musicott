@@ -27,6 +27,7 @@ import org.testfx.framework.junit5.Start;
 import org.testfx.util.WaitForAsyncUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testfx.api.FxAssert.verifyThat;
@@ -56,6 +57,13 @@ class PlayQueueControllerIT {
         historyQueue = FXCollections.observableArrayList();
         when(playerService.getPlayQueueList()).thenReturn(playQueue);
         when(playerService.getHistoryQueueList()).thenReturn(historyQueue);
+        // Mirror the real PlayerService.removeFromPlayQueue / removeFromHistoryQueue side effect
+        // (the listener now delegates row removal through PlayerService so QueueUpdatedEvent /
+        // HistoryUpdatedEvent fires consistently — see PlayQueueController.queueChangeListener).
+        doAnswer(inv -> { playQueue.remove((TrackQueueRow) inv.getArgument(0)); return null; })
+                .when(playerService).removeFromPlayQueue(org.mockito.ArgumentMatchers.any());
+        doAnswer(inv -> { historyQueue.remove((TrackQueueRow) inv.getArgument(0)); return null; })
+                .when(playerService).removeFromHistoryQueue(org.mockito.ArgumentMatchers.any());
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PlayQueueController.fxml"));
         loader.setControllerFactory(type -> new PlayQueueController(playerService, audioLibrary));

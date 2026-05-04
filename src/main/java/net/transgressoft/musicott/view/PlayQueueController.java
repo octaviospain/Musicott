@@ -1,5 +1,6 @@
 package net.transgressoft.musicott.view;
 
+import javafx.scene.input.MouseEvent;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.musicott.services.PlayerService;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Controller;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Controller for the play queue and history queue pane. Uses {@link PlayerService} directly
@@ -72,8 +74,8 @@ public class PlayQueueController {
         playQueueList = playerService.getPlayQueueList();
         historyQueueList = playerService.getHistoryQueueList();
 
-        playQueueList.addListener(queueChangeListener(playQueueList, "play queue"));
-        historyQueueList.addListener(queueChangeListener(historyQueueList, "history queue"));
+        playQueueList.addListener(queueChangeListener(playQueueList, "play queue", playerService::removeFromPlayQueue));
+        historyQueueList.addListener(queueChangeListener(historyQueueList, "history queue", playerService::removeFromHistoryQueue));
 
         historyQueueButton.setId("historyQueueButton");
         queuesListView.setCellFactory(_ -> new TrackQueueListCell(() -> historyQueueButton.isSelected()));
@@ -110,23 +112,32 @@ public class PlayQueueController {
         });
     }
 
-    private ListChangeListener<TrackQueueRow> queueChangeListener(ObservableList<TrackQueueRow> list, String label) {
+    private ListChangeListener<TrackQueueRow> queueChangeListener(ObservableList<TrackQueueRow> list, String label,
+                                                                  Consumer<TrackQueueRow> remover) {
         return change -> {
             while (change.next()) {
                 change.getRemoved().forEach(TrackQueueRow::dispose);
+                // Route delete-button clicks through PlayerService so QueueUpdatedEvent /
+                // HistoryUpdatedEvent fires on every removal path consistently. Routing the
+                // PlayerService remover from here also preserves the previous behavior where
+                // PlayerService-set handlers in addToQueue() / previous() were silently
+                // overwritten on add.
                 change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
-                    list.remove(trackQueueRow);
+                    remover.accept(trackQueueRow);
                     logger.debug("Removing track from {} by clicking the button. Size: {}", label, list.size());
                 }));
             }
         };
     }
 
-    private void onQueueListClicked(javafx.scene.input.MouseEvent event) {
+    private void onQueueListClicked(MouseEvent event) {
         if (event.getClickCount() != 2) {
             return;
         }
         TrackQueueRow selected = queuesListView.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            return;
+        }
         if (historyQueueButton.isSelected()) {
             playerService.playFromHistoryQueue(selected);
         } else {

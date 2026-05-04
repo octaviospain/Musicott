@@ -180,7 +180,8 @@ public class ArtistViewController {
     }
 
     private void playRandomArtistTracks() {
-        // Only invoked from doubleClickOnArtistHandler after .ifPresent — the artist is provably present.
+        // All call sites (doubleClickOnArtistHandler via ifPresent, and artistRandomButton whose
+        // visibility is bound to nameLabel being non-empty) guarantee the artist is present.
         @SuppressWarnings("java:S3655")
         var selectedArtist = selectedArtistProperty.get().get();
         var randomAudioItemsFromArtist = audioRepository.getRandomAudioItemsFromArtist(selectedArtist, DEFAULT_RANDOM_PLAYLIST_SIZE);

@@ -447,7 +447,7 @@ public class EditController {
         Boolean isCommon = audioItemSelection.stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException(AUDIO_ITEM_SELECTION_EMPTY))
                 .getAlbum().isCompilation();
-        return audioItemSelection.stream().allMatch(t -> isCommon.equals(t.getAlbum().isCompilation()));
+        return audioItemSelection.stream().allMatch(t -> Objects.equals(isCommon, t.getAlbum().isCompilation()));
     }
 
     private AudioItemMetadataChange getEditionResult() {
@@ -507,24 +507,24 @@ public class EditController {
                     Boolean oIsCompilation, Short oYear, net.transgressoft.commons.music.audio.Label oLabel,
                     byte[] oCoverImageBytes, Set<Genre> oGenres, String oComments,
                     Short oTrakNum, Short oDiscNum, Float oBpm))) return false;
-            return java.util.Objects.equals(title, oTitle)
-                    && java.util.Objects.equals(artist, oArtist)
-                    && java.util.Objects.equals(albumName, oAlbumName)
-                    && java.util.Objects.equals(albumArtist, oAlbumArtist)
-                    && java.util.Objects.equals(isCompilation, oIsCompilation)
-                    && java.util.Objects.equals(year, oYear)
-                    && java.util.Objects.equals(label, oLabel)
+            return Objects.equals(title, oTitle)
+                    && Objects.equals(artist, oArtist)
+                    && Objects.equals(albumName, oAlbumName)
+                    && Objects.equals(albumArtist, oAlbumArtist)
+                    && Objects.equals(isCompilation, oIsCompilation)
+                    && Objects.equals(year, oYear)
+                    && Objects.equals(label, oLabel)
                     && java.util.Arrays.equals(coverImageBytes, oCoverImageBytes)
-                    && java.util.Objects.equals(genres, oGenres)
-                    && java.util.Objects.equals(comments, oComments)
-                    && java.util.Objects.equals(trakNum, oTrakNum)
-                    && java.util.Objects.equals(discNum, oDiscNum)
-                    && java.util.Objects.equals(bpm, oBpm);
+                    && Objects.equals(genres, oGenres)
+                    && Objects.equals(comments, oComments)
+                    && Objects.equals(trakNum, oTrakNum)
+                    && Objects.equals(discNum, oDiscNum)
+                    && Objects.equals(bpm, oBpm);
         }
 
         @Override
         public int hashCode() {
-            int result = java.util.Objects.hash(title, artist, albumName, albumArtist, isCompilation,
+            int result = Objects.hash(title, artist, albumName, albumArtist, isCompilation,
                     year, label, genres, comments, trakNum, discNum, bpm);
             result = 31 * result + java.util.Arrays.hashCode(coverImageBytes);
             return result;
@@ -535,7 +535,7 @@ public class EditController {
             return "AudioItemMetadataChange[title=" + title + ", artist=" + artist
                     + ", albumName=" + albumName + ", albumArtist=" + albumArtist
                     + ", isCompilation=" + isCompilation + ", year=" + year + ", label=" + label
-                    + ", coverImageBytes=" + java.util.Arrays.toString(coverImageBytes)
+                    + ", coverImageBytes=" + (coverImageBytes != null ? coverImageBytes.length + " bytes" : "null")
                     + ", genres=" + genres + ", comments=" + comments
                     + ", trakNum=" + trakNum + ", discNum=" + discNum + ", bpm=" + bpm + "]";
         }
