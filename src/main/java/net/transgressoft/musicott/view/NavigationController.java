@@ -192,8 +192,7 @@ public class NavigationController {
     @EventListener (classes = ExportSelectedPlaylistsEvent.class)
     public void exportSelectedPlaylists() {
         var selectedPlaylists = playlistTreeView.selectedPlaylists();
-        // TODO open dialog box to select destination
-        // selectedPlaylists.forEach(playlist -> playlist.exportToM3uFile(path));
+        // TODO open dialog box to select destination and export selectedPlaylists via exportToM3uFile
     }
 
     @EventListener

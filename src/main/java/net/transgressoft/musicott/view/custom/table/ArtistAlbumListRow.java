@@ -265,8 +265,7 @@ public class ArtistAlbumListRow extends HBox {
                     setRelatedArtistsLabel();
                     setArtistColumn();
                 }));
-        // TODO subscribe to changes on the audioItem cover property
-        //        subscribe(observableAudioItem.hasCoverProperty(), c -> updateTrackSetImage());
+        // TODO subscribe to changes on the audioItem cover property to refresh the track set image
         return audioItem.getTrackNumberProperty();
     }
 

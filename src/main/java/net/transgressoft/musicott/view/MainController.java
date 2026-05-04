@@ -352,7 +352,6 @@ public class MainController {
         miniatureCoverImageView.setVisible(false);
         tableStackPane.getChildren().remove(mainAudioItemTable);
         tableStackPane.getChildren().remove(miniatureCoverImageView);
-//        artistViewController.checkForNullSelectedArtist();
         if (!tableStackPane.getChildren().contains(artistsLayout)) {
             tableStackPane.getChildren().remove(tableBorderPane);
             tableStackPane.getChildren().add(artistsLayout);
