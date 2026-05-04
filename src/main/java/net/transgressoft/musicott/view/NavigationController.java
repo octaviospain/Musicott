@@ -89,7 +89,6 @@ public class NavigationController {
 
     private MenuItem newPlaylistMI;
     private MenuItem newFolderPlaylistMI;
-    private NavigationMenuListView navigationMenuListView;
     private Optional<ObservablePlaylist> currentPlayingPlaylist;
 
     @Autowired
@@ -103,7 +102,7 @@ public class NavigationController {
     @FXML
     public void initialize() {
         currentPlayingPlaylist = Optional.empty();
-        navigationMenuListView = new NavigationMenuListView();
+        NavigationMenuListView navigationMenuListView = new NavigationMenuListView();
 
         ContextMenu newPlaylistButtonContextMenu = new ContextMenu();
         newPlaylistMI = new MenuItem("New Playlist");
@@ -193,9 +192,9 @@ public class NavigationController {
     @EventListener (classes = ExportSelectedPlaylistsEvent.class)
     @SuppressWarnings("java:S1135")
     public void exportSelectedPlaylists() {
-        var selectedPlaylists = playlistTreeView.selectedPlaylists();
-        // Deferred: open a destination-chooser dialog and call exportToM3uFile per selected
-        // playlist. Currently the action is a no-op. Trigger: m3u export feature work.
+        // Deferred: read selected playlists via playlistTreeView.selectedPlaylists(), open a
+        // destination-chooser dialog and call exportToM3uFile per selected playlist. Currently
+        // the action is a no-op. Trigger: m3u export feature work.
     }
 
     @EventListener
