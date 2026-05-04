@@ -361,6 +361,8 @@ public class MainController {
 
     private void showPlaylistView() {
         if (selectedPlaylistProperty.get().isPresent()) {
+            // Guarded by isPresent above; Sonar's flow analysis loses the guard across the property accessor.
+            @SuppressWarnings("java:S3655")
             var playlist = selectedPlaylistProperty.get().get();
 
             if (playlistCoverSubscription != null)

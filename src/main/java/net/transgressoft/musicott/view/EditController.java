@@ -344,7 +344,10 @@ public class EditController {
         if (! commonCompilation())
             isCompilationCheckBox.setIndeterminate(true);
         else
-            isCompilationCheckBox.setSelected(audioItemSelection.stream().findFirst().get().getAlbum().isCompilation());
+            // editAudioItems guards audioItemSelection.isEmpty() before assigning; the set is non-empty here.
+            isCompilationCheckBox.setSelected(audioItemSelection.stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("audioItemSelection is empty"))
+                .getAlbum().isCompilation());
     }
 
     private String commonString(List<String> list) {
@@ -373,7 +376,10 @@ public class EditController {
                 .filter(audioItem -> ! audioItem.getAlbum().getName().isEmpty())
                 .map(audioItem -> audioItem.getAlbum().getName())
                 .collect(Collectors.toSet());
-        String firstAlbum = audioItemSelection.stream().findFirst().get().getAlbum().getName();
+        // editAudioItems guards audioItemSelection.isEmpty() before assigning; the set is non-empty here.
+        String firstAlbum = audioItemSelection.stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("audioItemSelection is empty"))
+                .getAlbum().getName();
         return changedAlbums.size() <= 1 ? firstAlbum : "-";
     }
 
@@ -435,7 +441,10 @@ public class EditController {
     }
 
     private boolean commonCompilation() {
-        Boolean isCommon = audioItemSelection.stream().findFirst().get().getAlbum().isCompilation();
+        // editAudioItems guards audioItemSelection.isEmpty() before assigning; the set is non-empty here.
+        Boolean isCommon = audioItemSelection.stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("audioItemSelection is empty"))
+                .getAlbum().isCompilation();
         return audioItemSelection.stream().allMatch(t -> isCommon.equals(t.getAlbum().isCompilation()));
     }
 

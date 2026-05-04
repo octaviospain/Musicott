@@ -181,6 +181,8 @@ public class ArtistViewController {
     }
 
     private void playRandomArtistTracks() {
+        // Only invoked from doubleClickOnArtistHandler after .ifPresent — the artist is provably present.
+        @SuppressWarnings("java:S3655")
         var selectedArtist = selectedArtistProperty.get().get();
         var randomAudioItemsFromArtist = audioRepository.getRandomAudioItemsFromArtist(selectedArtist, DEFAULT_RANDOM_PLAYLIST_SIZE);
         applicationContext.publishEvent(new PlayItemEvent(randomAudioItemsFromArtist, this));
@@ -231,7 +233,8 @@ public class ArtistViewController {
         Set<Artist> artistsInvolved = audioItem.getArtistsInvolved();
         Optional<Artist> selectedArtist = selectedArtistProperty.getValue();
         if (selectedArtist.isPresent() && !artistsInvolved.contains(selectedArtist.get())) {
-            var newArtist = artistsInvolved.stream().findFirst().get();
+            var newArtist = artistsInvolved.stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("AudioItem has no artists"));
             selectedArtistProperty.setValue(Optional.of(newArtist));
 
             artistsListView.getSelectionModel().select(newArtist);  // This should work
