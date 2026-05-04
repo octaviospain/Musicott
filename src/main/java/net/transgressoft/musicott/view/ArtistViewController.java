@@ -86,7 +86,6 @@ public class ArtistViewController {
         filteredAlbumRows = new FilteredList<>(albumRowsBackingList);
         albumsListView.setItems(filteredAlbumRows);
 
-        // TODO replace listener from artistsListView to selectedArtistProperty ?
         artistsListView.getSelectionModel().selectedItemProperty().addListener(this::selectedArtistListener);
         artistsListView.setCellFactory(_ -> new ArtistCell());
         artistsListView.setOnMouseClicked(this::doubleClickOnArtistHandler);
@@ -181,6 +180,9 @@ public class ArtistViewController {
     }
 
     private void playRandomArtistTracks() {
+        // All call sites (doubleClickOnArtistHandler via ifPresent, and artistRandomButton whose
+        // visibility is bound to nameLabel being non-empty) guarantee the artist is present.
+        @SuppressWarnings("java:S3655")
         var selectedArtist = selectedArtistProperty.get().get();
         var randomAudioItemsFromArtist = audioRepository.getRandomAudioItemsFromArtist(selectedArtist, DEFAULT_RANDOM_PLAYLIST_SIZE);
         applicationContext.publishEvent(new PlayItemEvent(randomAudioItemsFromArtist, this));
@@ -231,7 +233,8 @@ public class ArtistViewController {
         Set<Artist> artistsInvolved = audioItem.getArtistsInvolved();
         Optional<Artist> selectedArtist = selectedArtistProperty.getValue();
         if (selectedArtist.isPresent() && !artistsInvolved.contains(selectedArtist.get())) {
-            var newArtist = artistsInvolved.stream().findFirst().get();
+            var newArtist = artistsInvolved.stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("AudioItem has no artists"));
             selectedArtistProperty.setValue(Optional.of(newArtist));
 
             artistsListView.getSelectionModel().select(newArtist);  // This should work
@@ -292,12 +295,16 @@ public class ArtistViewController {
         return row -> row.hasTracksMatching(query);
     }
 
+    // Guard each metadata access — partial catalogs can have null artist/album/album-artist
+    // or null name fields; one malformed track shouldn't NPE the entire artist filter.
+    // Sonar's flow analysis trusts the music-commons API's nominal non-null types and flags
+    // each guard as gratuitous; in practice imported tracks sometimes ship with nulls.
+    @SuppressWarnings("java:S2589")
     private boolean artistMatchesQuery(ObservableAudioItem audioItem, Artist artist, String query) {
         if (query == null || query.isEmpty())
             return true;
 
-        // Guard each metadata access — partial catalogs can have null artist/album/album-artist
-        // or null name fields; one malformed track shouldn't NPE the entire artist filter.
+
         var matchesName = artist.getName() != null && artist.getName().toLowerCase().contains(query);
         var itemArtist = audioItem.getArtist();
         var matchesArtist = itemArtist != null && itemArtist.equals(artist);

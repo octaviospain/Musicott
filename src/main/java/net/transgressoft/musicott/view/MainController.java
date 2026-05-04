@@ -27,8 +27,6 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
 import net.transgressoft.commons.music.audio.AudioFileType;
-import net.transgressoft.musicott.config.*;
-import net.transgressoft.musicott.config.*;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.service.MediaImportService;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
@@ -117,8 +115,7 @@ public class MainController {
     @FXML
     private TextField searchTextField;
     
-    @Autowired
-    private KeyCombination.Modifier operativeSystemKeyModifier;
+    private final KeyCombination.Modifier operativeSystemKeyModifier;
 
     /**
      * The table where tracks are displayed
@@ -156,7 +153,8 @@ public class MainController {
                           AlertFactory alertFactory,
                           MediaImportService mediaImportService,
                           ItunesImportWizard itunesImportWizard,
-                          ApplicationContext applicationContext) {
+                          ApplicationContext applicationContext,
+                          KeyCombination.Modifier operativeSystemKeyModifier) {
         this.audioRepository = audioRepository;
         this.playlistRepository = playlistRepository;
         this.playerController = playerController;
@@ -166,6 +164,7 @@ public class MainController {
         this.mediaImportService = mediaImportService;
         this.itunesImportWizard = itunesImportWizard;
         this.applicationContext = applicationContext;
+        this.operativeSystemKeyModifier = operativeSystemKeyModifier;
         this.selectedPlaylistProperty = navigationController.selectedPlaylistProperty();
     }
 
@@ -354,7 +353,6 @@ public class MainController {
         miniatureCoverImageView.setVisible(false);
         tableStackPane.getChildren().remove(mainAudioItemTable);
         tableStackPane.getChildren().remove(miniatureCoverImageView);
-//        artistViewController.checkForNullSelectedArtist();
         if (!tableStackPane.getChildren().contains(artistsLayout)) {
             tableStackPane.getChildren().remove(tableBorderPane);
             tableStackPane.getChildren().add(artistsLayout);
@@ -363,6 +361,8 @@ public class MainController {
 
     private void showPlaylistView() {
         if (selectedPlaylistProperty.get().isPresent()) {
+            // Guarded by isPresent above; Sonar's flow analysis loses the guard across the property accessor.
+            @SuppressWarnings("java:S3655")
             var playlist = selectedPlaylistProperty.get().get();
 
             if (playlistCoverSubscription != null)
@@ -916,7 +916,6 @@ public class MainController {
                     alert.showAndWait().ifPresent(response -> {
                         if (response == ButtonType.OK) {
                             var selectionSet = new HashSet<>(selection);
-                            // TODO spread removal throw places if necessary with an event
                             applicationContext.publishEvent(new DeleteAudioItemsEvent(selectionSet, this));
                             audioRepository.removeAll(selectionSet);
                         }
@@ -933,9 +932,8 @@ public class MainController {
             deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
             deleteFromPlaylistMenuItem.setId("deleteFromPlaylistMenuItem");
             deleteFromPlaylistMenuItem.setOnAction(event ->
-                    selectedPlaylistProperty.get().ifPresent(audioPlaylist -> {
-                        audioPlaylist.getAudioItemsProperty().removeAll(selection);
-                    }));
+                    selectedPlaylistProperty.get().ifPresent(audioPlaylist ->
+                            audioPlaylist.getAudioItemsProperty().removeAll(selection)));
 
             getItems().addAll(playMenuItem, editMenuItem, deleteMenuItem, addToQueueMenuItem, new SeparatorMenuItem());
             getItems().addAll(deleteFromPlaylistMenuItem, addToPlaylistMenu);

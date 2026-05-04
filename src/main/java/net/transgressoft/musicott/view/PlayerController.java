@@ -28,9 +28,7 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -38,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
@@ -67,7 +64,6 @@ public class PlayerController {
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
     private final AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository;
-    private final ApplicationEventPublisher applicationEventPublisher;
     private final PlayerService playerService;
     private final ObservableAudioLibrary audioLibrary;
     private final Image defaultCoverImage = ApplicationImage.DEFAULT_COVER.get();
@@ -115,11 +111,9 @@ public class PlayerController {
 
     @Autowired
     public PlayerController(AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository,
-                            ApplicationEventPublisher applicationEventPublisher,
                             PlayerService playerService,
                             ObservableAudioLibrary audioLibrary) {
         this.waveformRepository = waveformRepository;
-        this.applicationEventPublisher = applicationEventPublisher;
         this.playerService = playerService;
         this.audioLibrary = audioLibrary;
     }
@@ -131,7 +125,7 @@ public class PlayerController {
         prevButton.setOnAction(_ -> previous());
         nextButton.setOnAction(_ -> next());
         subscribe(volumeSlider.valueChangingProperty(), changing -> {
-            if (!changing)
+            if (Boolean.FALSE.equals(changing))
                 volumeProgressBar.setProgress(volumeSlider.getValue());
         });
         subscribe(volumeSlider.valueProperty(), p -> volumeProgressBar.setProgress(p.doubleValue()));
@@ -157,7 +151,7 @@ public class PlayerController {
                 showPlayQueue();
         });
         playQueueLayout.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue)
+            if (Boolean.FALSE.equals(newValue))
                 hidePlayQueue();
         });
         playQueueLayout.setOnMouseExited(event -> hidePlayQueue());
@@ -232,7 +226,7 @@ public class PlayerController {
             var resolvedItems = selectedTracksIds.stream()
                     .map(id -> audioLibrary.findById(id).orElse(null))
                     .filter(Objects::nonNull)
-                    .map(item -> (ObservableAudioItem) item)
+                    .map(ObservableAudioItem.class::cast)
                     .toList();
             if (!resolvedItems.isEmpty()) {
                 playerService.addToQueue(resolvedItems);

@@ -28,6 +28,8 @@ import java.util.List;
  */
 public class HistoryUpdatedEvent extends ApplicationEvent {
 
+    // TrackQueueRow is a JavaFX cell wrapper, not Serializable; ApplicationEvent stays in-VM.
+    @SuppressWarnings("java:S1948")
     public final List<TrackQueueRow> historyItems;
 
     public HistoryUpdatedEvent(List<TrackQueueRow> historyItems, Object source) {

@@ -11,6 +11,8 @@ import java.util.Set;
  */
 public class OpenAudioItemEditorView extends ApplicationEvent {
 
+    // ObservableAudioItem isn't Serializable; ApplicationEvent stays in-VM.
+    @SuppressWarnings("java:S1948")
     public final Set<ObservableAudioItem> audioItems;
 
     public OpenAudioItemEditorView(Set<ObservableAudioItem> audioItems, Object source) {

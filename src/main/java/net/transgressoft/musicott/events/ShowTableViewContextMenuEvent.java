@@ -25,6 +25,8 @@ import org.springframework.context.ApplicationEvent;
 
 public class ShowTableViewContextMenuEvent extends ApplicationEvent {
 
+    // JavaFX ObservableList isn't Serializable; ApplicationEvent stays in-VM.
+    @SuppressWarnings("java:S1948")
     public final ObservableList<ObservableAudioItem> selectedAudioItems;
     public final double screenX;
     public final double screenY;

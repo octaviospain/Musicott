@@ -1,7 +1,6 @@
 package net.transgressoft.musicott;
 
 import net.transgressoft.musicott.config.*;
-import net.transgressoft.musicott.config.*;
 import net.transgressoft.musicott.events.StopApplicationEvent;
 import net.transgressoft.musicott.splash.SplashOrchestrator;
 
@@ -39,8 +38,6 @@ public class MusicottApplication {
 
     public static class SpringbootJavaFxApplication extends Application {
 
-        private ConfigurableApplicationContext context;
-
         @Override
         public void init() {
             // Empty by design. Spring boot moved to a background Task spawned from
@@ -55,7 +52,7 @@ public class MusicottApplication {
                 // Synchronous bypass path used by all four test source sets. Mirrors
                 // the previous init() + start() behavior without splash so tests do
                 // not pay the 800ms minimum display gate.
-                this.context = new SpringApplicationBuilder()
+                ConfigurableApplicationContext context = new SpringApplicationBuilder()
                         .sources(MusicottApplication.class)
                         .run();
                 PrimaryStageInitializer initializer = context.getBean(PrimaryStageInitializer.class);
@@ -85,7 +82,9 @@ public class MusicottApplication {
             PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer = new PropertySourcesPlaceholderConfigurer();
             YamlPropertiesFactoryBean yaml = new YamlPropertiesFactoryBean();
             yaml.setResources(new ClassPathResource("application.yml"));
-            propertySourcesPlaceholderConfigurer.setProperties(yaml.getObject());
+            java.util.Properties yamlProperties = java.util.Objects.requireNonNull(
+                    yaml.getObject(), "application.yml could not be parsed");
+            propertySourcesPlaceholderConfigurer.setProperties(yamlProperties);
             return propertySourcesPlaceholderConfigurer;
         }
 

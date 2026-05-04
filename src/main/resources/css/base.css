@@ -48,7 +48,6 @@
     -fx-effect: dropshadow(gaussian, rgb(99, 255, 109), 8, 0.4, 0, 0);
 }
 
-.text-area .scroll-pane .scroll-bar,
 .text-area .scroll-pane .scroll-bar {
     -fx-opacity: 0;
 }

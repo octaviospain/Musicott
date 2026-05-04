@@ -9,6 +9,8 @@ import org.springframework.context.ApplicationEvent;
  */
 public class PlayPlaylistRandomlyEvent extends ApplicationEvent {
 
+    // ObservablePlaylist isn't Serializable; ApplicationEvent stays in-VM.
+    @SuppressWarnings("java:S1948")
     public final ObservablePlaylist playlist;
 
     public PlayPlaylistRandomlyEvent(ObservablePlaylist playlist, Object source) {

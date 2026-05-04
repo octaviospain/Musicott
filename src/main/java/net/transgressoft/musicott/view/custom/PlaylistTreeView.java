@@ -31,7 +31,6 @@ import javafx.collections.SetChangeListener;
 import javafx.css.PseudoClass;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
-import org.jetbrains.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +41,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.fxmisc.easybind.EasyBind.subscribe;
 
@@ -63,17 +61,19 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
     private final ObservablePlaylistHierarchy playlistRepository;
     private final ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty;
 
-    @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    @Autowired
-    private ObservableAudioLibrary audioRepository;
+    private final ObservableAudioLibrary audioRepository;
 
     @Autowired
     public PlaylistTreeView(ObservablePlaylistHierarchy playlistRepository,
-                            ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty) {
+                            ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty,
+                            ApplicationEventPublisher applicationEventPublisher,
+                            ObservableAudioLibrary audioRepository) {
         this.playlistRepository = playlistRepository;
         this.selectedPlaylistProperty = selectedPlaylistProperty;
+        this.applicationEventPublisher = applicationEventPublisher;
+        this.audioRepository = audioRepository;
         setCellFactory(PlaylistTreeViewCell::new);
         setContextMenu(new PlaylistTreeViewContextMenu());
         setRoot(createRootPlaylistTreeViewItem());
@@ -222,10 +222,10 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
         var destinationPlaylistTreeItem = findPlaylistTreeItemGivenPlaylist(destinationPlaylist);
         if (destinationPlaylistTreeItem == null) {
             logger.error("Destination playlist tree item not found for: {}", destinationPlaylist);
-            throw new RuntimeException("Destination playlist tree item not found for:" + destinationPlaylist);   // TODO improve
+            throw new IllegalStateException("Destination playlist tree item not found for:" + destinationPlaylist);
         } else if (! destinationPlaylistTreeItem.getValue().isDirectory()) {
             logger.error("Destination playlist is not a directory: {}", destinationPlaylistTreeItem.getValue());
-            throw new RuntimeException("Destination playlist is not a directory: " + destinationPlaylistTreeItem.getValue());   // TODO improve
+            throw new IllegalArgumentException("Destination playlist is not a directory: " + destinationPlaylistTreeItem.getValue());
         } else {
             var oldPlaylistFolder = playlistRepository.findParentPlaylist(playlistToMove);
             oldPlaylistFolder.ifPresent(it -> {
@@ -261,7 +261,7 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
     public List<ObservablePlaylist> selectedPlaylists() {
         return getSelectionModel().getSelectedItems().stream()
                 .map(TreeItem::getValue)
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
     }
 
     public void selectPlaylist(ObservablePlaylist playlist) {
@@ -332,8 +332,8 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
      */
     private class PlaylistTreeViewCell extends TreeCell<ObservablePlaylist> {
 
-        private static final String dragOverStyle = "-fx-effect: dropshadow(one-pass-box, rgb(99, 255, 109), 1, 1.0, 0, 0);";
-        private static final String dragOverRootPlaylistStyle = "-fx-border-color: rgb(99, 255, 109); -fx-border-width: 1px;";
+        private static final String DRAG_OVER_STYLE = "-fx-effect: dropshadow(one-pass-box, rgb(99, 255, 109), 1, 1.0, 0, 0);";
+        private static final String DRAG_OVER_ROOT_PLAYLIST_STYLE = "-fx-border-color: rgb(99, 255, 109); -fx-border-width: 1px;";
 
         private final PseudoClass playlist = PseudoClass.getPseudoClass("playlist");
         private final PseudoClass playlistSelected = PseudoClass.getPseudoClass("playlist-selected");
@@ -370,13 +370,6 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
                     disablePseudoClassesStates();
             });
 
-            setOnDragOver(event -> {
-                var isFolder = ! getTreeItem().isLeaf();
-                if (getItem() != null && ! isFolder) {
-                    event.acceptTransferModes(TransferMode.ANY);
-                    event.consume();
-                }
-            });
             setOnMouseClicked(event -> {
                 var thisPlaylist = getItem();
                 var isEmpty = thisPlaylist != null && thisPlaylist.getAudioItemsProperty().isEmpty();
@@ -412,10 +405,10 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
         private void onDragOver(DragEvent event) {
             if (getItem() != null) {
                 event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
-                setStyle(dragOverStyle);
+                setStyle(DRAG_OVER_STYLE);
                 setOpacity(0.10);
             } else if (event.getDragboard().hasContent(PLAYLIST_DATA_FORMAT)) {
-                getTreeView().setStyle(dragOverRootPlaylistStyle);
+                getTreeView().setStyle(DRAG_OVER_ROOT_PLAYLIST_STYLE);
                 dragOnRoot = true;
             }
             event.consume();
@@ -435,19 +428,19 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
             if (dragBoard.hasContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT) && isValidAudioItemToDragAndDrop()) {
                 var selectedAudioItemIds = (List<Integer>) dragBoard.getContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT);
                 var audioItems = selectedAudioItemIds.stream()
-                    .map(id -> audioRepository.findById(id))
+                    .map(audioRepository::findById)
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .toList();
                 getItem().addAudioItems(audioItems);
             } else if (dragBoard.hasContent(PLAYLIST_DATA_FORMAT)) {
-                var playlist = (ObservablePlaylist) dragBoard.getContent(PLAYLIST_DATA_FORMAT);
+                var droppedPlaylist = (ObservablePlaylist) dragBoard.getContent(PLAYLIST_DATA_FORMAT);
                 var isFolder = getItem() != null && ! getTreeItem().isLeaf();
 
-                if (isFolder && ! playlist.equals(getItem()))
-                    movePlaylist(playlist, getItem());
+                if (isFolder && ! droppedPlaylist.equals(getItem()))
+                    movePlaylist(droppedPlaylist, getItem());
                 else if (dragOnRoot)
-                    movePlaylistToFirstLevelHierarchy(playlist);
+                    movePlaylistToFirstLevelHierarchy(droppedPlaylist);
             }
             event.consume();
         }

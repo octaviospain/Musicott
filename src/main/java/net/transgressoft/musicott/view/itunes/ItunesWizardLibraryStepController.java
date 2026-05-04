@@ -96,9 +96,9 @@ public class ItunesWizardLibraryStepController {
             selectedFileLabel.setText(xmlPath.toString());
             invalid.set(false);
         }
-        catch (Throwable t) {
-            logger.error("Failed to parse iTunes library at {}", xmlPath, t);
-            applicationEventPublisher.publishEvent(new ExceptionEvent(t, this));
+        catch (Exception e) {
+            logger.error("Failed to parse iTunes library at {}", xmlPath, e);
+            applicationEventPublisher.publishEvent(new ExceptionEvent(e, this));
             invalid.set(true);
         }
     }

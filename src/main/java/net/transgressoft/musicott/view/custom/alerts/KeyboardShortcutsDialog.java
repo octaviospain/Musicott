@@ -69,14 +69,9 @@ public class KeyboardShortcutsDialog extends Dialog<Void> {
      */
     private void collectFromMenu(Menu menu, List<ShortcutEntry> entries) {
         for (MenuItem item : menu.getItems()) {
-            if (item instanceof SeparatorMenuItem) {
-                continue;
-            }
             if (item instanceof Menu nested) {
                 collectFromMenu(nested, entries);
-                continue;
-            }
-            if (item.getAccelerator() != null) {
+            } else if (item.getAccelerator() != null) {
                 entries.add(new ShortcutEntry(item.getText(), item.getAccelerator().getDisplayText()));
             }
         }

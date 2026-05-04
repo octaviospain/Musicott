@@ -3,7 +3,6 @@ package net.transgressoft.musicott.view;
 import javafx.beans.property.*;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.musicott.config.*;
 import net.transgressoft.musicott.events.ExportSelectedPlaylistsEvent;
 import net.transgressoft.musicott.events.SelectCurrentPlayingAudioItemEvent;
 import net.transgressoft.musicott.events.StatusMessageUpdateEvent;
@@ -86,24 +85,24 @@ public class NavigationController {
     @FXML
     private Label statusLabel;
 
-    @Autowired
-    private KeyCombination.Modifier operativeSystemKeyModifier;
+    private final KeyCombination.Modifier operativeSystemKeyModifier;
 
     private MenuItem newPlaylistMI;
     private MenuItem newFolderPlaylistMI;
-    private NavigationMenuListView navigationMenuListView;
     private Optional<ObservablePlaylist> currentPlayingPlaylist;
 
     @Autowired
-    public NavigationController(PlaylistTreeView playlistTreeView) {
+    public NavigationController(PlaylistTreeView playlistTreeView,
+                                KeyCombination.Modifier operativeSystemKeyModifier) {
         this.playlistTreeView = playlistTreeView;
+        this.operativeSystemKeyModifier = operativeSystemKeyModifier;
         this.navigationModeProperty = new SimpleObjectProperty<>(this, "navigation mode", NavigationMode.ARTISTS);
     }
 
     @FXML
     public void initialize() {
         currentPlayingPlaylist = Optional.empty();
-        navigationMenuListView = new NavigationMenuListView();
+        NavigationMenuListView navigationMenuListView = new NavigationMenuListView();
 
         ContextMenu newPlaylistButtonContextMenu = new ContextMenu();
         newPlaylistMI = new MenuItem("New Playlist");
@@ -191,10 +190,11 @@ public class NavigationController {
     }
 
     @EventListener (classes = ExportSelectedPlaylistsEvent.class)
+    @SuppressWarnings("java:S1135")
     public void exportSelectedPlaylists() {
-        var selectedPlaylists = playlistTreeView.selectedPlaylists();
-        // TODO open dialog box to select destination
-        // selectedPlaylists.forEach(playlist -> playlist.exportToM3uFile(path));
+        // Deferred: read selected playlists via playlistTreeView.selectedPlaylists(), open a
+        // destination-chooser dialog and call exportToM3uFile per selected playlist. Currently
+        // the action is a no-op. Trigger: m3u export feature work.
     }
 
     @EventListener

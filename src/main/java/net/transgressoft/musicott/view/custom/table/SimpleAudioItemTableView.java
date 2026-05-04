@@ -22,7 +22,7 @@ public class SimpleAudioItemTableView extends AudioItemTableViewBase {
         getStylesheets().add(getClass().getResource(SIMPLE_TRACK_TABLE_STYLE).toExternalForm());
         getStyleClass().add("no-header");
         setFixedCellSize(25);
-        setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
+        setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
         nameCol.setStyle(CENTER_LEFT_ALIGN);
         artistCol.setPrefWidth(150);

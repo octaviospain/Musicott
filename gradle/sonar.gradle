@@ -11,7 +11,7 @@ sonar {
         property 'sonar.projectVersion', version
         property 'sonar.sources', 'src/main'
         property 'sonar.tests', 'src/test,src/integrationTest,src/uiTest,src/e2eTest'
-        property 'sonar.exclusions', 'src/test/**,src/integrationTest/**,src/uiTest/**,src/e2eTest/**'
+        property 'sonar.test.exclusions', 'src/test/**,src/integrationTest/**,src/uiTest/**,src/e2eTest/**'
         property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/test/jacocoTestReport.xml'
         property 'sonar.junit.reportPaths', [
                 'build/test-results/test',

@@ -10,7 +10,6 @@ import net.transgressoft.musicott.events.OpenAudioItemEditorView;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.alerts.MultipleEditionConfirmationAlert;
 
-import com.neovisionaries.i18n.CountryCode;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.CacheHint;
@@ -46,7 +45,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author Octavio Calleya
@@ -54,6 +52,8 @@ import static java.util.stream.Collectors.toList;
 @FxmlView ("/fxml/EditController.fxml")
 @Controller
 public class EditController {
+
+    private static final String AUDIO_ITEM_SELECTION_EMPTY = "audioItemSelection is empty";
 
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
@@ -264,7 +264,7 @@ public class EditController {
     public void editAudioItemsEventListener(OpenAudioItemEditorView event) {
         List<ObservableAudioItem> invalidAudioItems = event.audioItems.stream()
             .filter(track -> ! track.getPath().toFile().exists())
-            .collect(Collectors.toList());
+            .toList();
 
         if (! invalidAudioItems.isEmpty())
             applicationEventPublisher.publishEvent(new InvalidAudioItemsForEditionEvent(invalidAudioItems, this));
@@ -346,7 +346,10 @@ public class EditController {
         if (! commonCompilation())
             isCompilationCheckBox.setIndeterminate(true);
         else
-            isCompilationCheckBox.setSelected(audioItemSelection.stream().findFirst().get().getAlbum().isCompilation());
+            // editAudioItems guards audioItemSelection.isEmpty() before assigning; the set is non-empty here.
+            isCompilationCheckBox.setSelected(audioItemSelection.stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException(AUDIO_ITEM_SELECTION_EMPTY))
+                .getAlbum().isCompilation());
     }
 
     private String commonString(List<String> list) {
@@ -363,11 +366,11 @@ public class EditController {
     }
 
     private String commonTitle() {
-        return commonString(audioItemSelection.stream().map(ObservableAudioItem::getTitle).collect(toList()));
+        return commonString(audioItemSelection.stream().map(ObservableAudioItem::getTitle).toList());
     }
 
     private String commonArtist() {
-        return commonString(audioItemSelection.stream().map(t -> t.getArtist().getName()).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> t.getArtist().getName()).toList());
     }
 
     private String commonAlbum() {
@@ -375,7 +378,10 @@ public class EditController {
                 .filter(audioItem -> ! audioItem.getAlbum().getName().isEmpty())
                 .map(audioItem -> audioItem.getAlbum().getName())
                 .collect(Collectors.toSet());
-        String firstAlbum = audioItemSelection.stream().findFirst().get().getAlbum().getName();
+        // editAudioItems guards audioItemSelection.isEmpty() before assigning; the set is non-empty here.
+        String firstAlbum = audioItemSelection.stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException(AUDIO_ITEM_SELECTION_EMPTY))
+                .getAlbum().getName();
         return changedAlbums.size() <= 1 ? firstAlbum : "-";
     }
 
@@ -386,27 +392,27 @@ public class EditController {
     }
 
     private String commonComments() {
-        return commonString(audioItemSelection.stream().map(ObservableAudioItem::getComments).collect(toList()));
+        return commonString(audioItemSelection.stream().map(ObservableAudioItem::getComments).toList());
     }
 
     private String commonAlbumArtist() {
-        return commonString(audioItemSelection.stream().map(t -> t.getAlbum().getAlbumArtist().getName()).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> t.getAlbum().getAlbumArtist().getName()).toList());
     }
 
     private String commonLabel() {
-        return commonString(audioItemSelection.stream().map(t -> t.getAlbum().getLabel().getName()).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> t.getAlbum().getLabel().getName()).toList());
     }
 
     private String commonTrackNumber() {
-        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getTrackNumber())).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getTrackNumber())).toList());
     }
 
     private String commonDiscNumber() {
-        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getDiscNumber())).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getDiscNumber())).toList());
     }
 
     private String commonYear() {
-        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getAlbum().getYear())).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getAlbum().getYear())).toList());
     }
 
     private String commonBpm() {
@@ -414,7 +420,7 @@ public class EditController {
                 .map(t -> {
                     Float bpm = t.getBpm();
                     return bpm == null || bpm <= 0f ? null : bpm.toString();
-                }).collect(toList()));
+                }).toList());
     }
 
     // Track/disc/year are nullable Short on the music-commons API; when unset the getter returns
@@ -437,8 +443,11 @@ public class EditController {
     }
 
     private boolean commonCompilation() {
-        Boolean isCommon = audioItemSelection.stream().findFirst().get().getAlbum().isCompilation();
-        return audioItemSelection.stream().allMatch(t -> isCommon.equals(t.getAlbum().isCompilation()));
+        // editAudioItems guards audioItemSelection.isEmpty() before assigning; the set is non-empty here.
+        Boolean isCommon = audioItemSelection.stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException(AUDIO_ITEM_SELECTION_EMPTY))
+                .getAlbum().isCompilation();
+        return audioItemSelection.stream().allMatch(t -> Objects.equals(isCommon, t.getAlbum().isCompilation()));
     }
 
     private AudioItemMetadataChange getEditionResult() {
@@ -446,10 +455,12 @@ public class EditController {
        Artist artist = getEditionFieldResult(artistTextField) != null ? ImmutableArtist.of(getEditionFieldResult(artistTextField)) : null;
        String albumName = getEditionFieldResult(albumTextField);
        Artist albumArtist = getEditionFieldResult(albumArtistTextField) != null ? ImmutableArtist.of(getEditionFieldResult(albumArtistTextField)) : null;
-       boolean isCompilation = isCompilationCheckBox.isIndeterminate() ? null : isCompilationCheckBox.isSelected();
+       Boolean isCompilation = isCompilationCheckBox.isIndeterminate() ? null : isCompilationCheckBox.isSelected();
        Short year = getEditionFieldResult(yearTextField) != null ? Short.valueOf(getEditionFieldResult(yearTextField)) : null;
-       net.transgressoft.commons.music.audio.Label label = getEditionFieldResult(labelTextField) != null ? ImmutableLabel.of(getEditionFieldResult(labelTextField)) : null;
-       Set<Genre> genres = getEditionFieldResult(genreTextField) != null ? Genre.parseGenre(getEditionFieldResult(genreTextField)) : null;
+       String labelValue = getEditionFieldResult(labelTextField);
+       net.transgressoft.commons.music.audio.Label label = labelValue != null ? ImmutableLabel.of(labelValue) : null;
+       String genreValue = getEditionFieldResult(genreTextField);
+       Set<Genre> genres = genreValue != null ? Genre.parseGenre(genreValue) : null;
        String comments = getEditionFieldResult(commentsTextField);
        Short trackNum = getEditionFieldResult(trackNumTextField) != null ? Short.valueOf(getEditionFieldResult(trackNumTextField)) : null;
        Short discNum = getEditionFieldResult(discNumTextField) != null ? Short.valueOf(getEditionFieldResult(discNumTextField)) : null;
@@ -478,7 +489,7 @@ public class EditController {
             Artist artist,
             String albumName,
             Artist albumArtist,
-            boolean isCompilation,
+            Boolean isCompilation,
             Short year,
             net.transgressoft.commons.music.audio.Label label,
             byte[] coverImageBytes,
@@ -487,5 +498,46 @@ public class EditController {
             Short trakNum,
             Short discNum,
             Float bpm) {
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof AudioItemMetadataChange(
+                    String oTitle, Artist oArtist, String oAlbumName, Artist oAlbumArtist,
+                    Boolean oIsCompilation, Short oYear, net.transgressoft.commons.music.audio.Label oLabel,
+                    byte[] oCoverImageBytes, Set<Genre> oGenres, String oComments,
+                    Short oTrakNum, Short oDiscNum, Float oBpm))) return false;
+            return Objects.equals(title, oTitle)
+                    && Objects.equals(artist, oArtist)
+                    && Objects.equals(albumName, oAlbumName)
+                    && Objects.equals(albumArtist, oAlbumArtist)
+                    && Objects.equals(isCompilation, oIsCompilation)
+                    && Objects.equals(year, oYear)
+                    && Objects.equals(label, oLabel)
+                    && java.util.Arrays.equals(coverImageBytes, oCoverImageBytes)
+                    && Objects.equals(genres, oGenres)
+                    && Objects.equals(comments, oComments)
+                    && Objects.equals(trakNum, oTrakNum)
+                    && Objects.equals(discNum, oDiscNum)
+                    && Objects.equals(bpm, oBpm);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Objects.hash(title, artist, albumName, albumArtist, isCompilation,
+                    year, label, genres, comments, trakNum, discNum, bpm);
+            result = 31 * result + java.util.Arrays.hashCode(coverImageBytes);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "AudioItemMetadataChange[title=" + title + ", artist=" + artist
+                    + ", albumName=" + albumName + ", albumArtist=" + albumArtist
+                    + ", isCompilation=" + isCompilation + ", year=" + year + ", label=" + label
+                    + ", coverImageBytes=" + (coverImageBytes != null ? coverImageBytes.length + " bytes" : "null")
+                    + ", genres=" + genres + ", comments=" + comments
+                    + ", trakNum=" + trakNum + ", discNum=" + discNum + ", bpm=" + bpm + "]";
+        }
     }
 }
