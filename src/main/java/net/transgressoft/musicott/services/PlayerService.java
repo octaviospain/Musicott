@@ -60,8 +60,6 @@ public class PlayerService {
     private Optional<ObservableAudioItem> currentTrack = Optional.empty();
     private JavaFxPlayer trackPlayer;
     private boolean playingRandom = false;
-    private boolean played = false;
-    private boolean scrobbled = false;
 
     @Autowired
     public PlayerService(ApplicationEventPublisher applicationEventPublisher) {
@@ -118,8 +116,6 @@ public class PlayerService {
     }
 
     private void setPlayer(ObservableAudioItem audioItem) {
-        scrobbled = false;
-        played = false;
         trackPlayer = new JavaFxPlayer();
         trackPlayer.play(audioItem);
         currentTrack = Optional.of(audioItem);
@@ -139,9 +135,8 @@ public class PlayerService {
     private void bindMediaPlayer() {
         applicationEventPublisher.publishEvent(new PlaybackStatusChangedEvent(playerStatus(), this));
 
-        trackPlayer.getStatusProperty().addListener((obs, oldStatus, newStatus) -> {
-            applicationEventPublisher.publishEvent(new PlaybackStatusChangedEvent(newStatus, this));
-        });
+        trackPlayer.getStatusProperty().addListener((obs, oldStatus, newStatus) ->
+            applicationEventPublisher.publishEvent(new PlaybackStatusChangedEvent(newStatus, this)));
     }
 
     public void pause() {
