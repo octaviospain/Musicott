@@ -2,8 +2,8 @@ package net.transgressoft.musicott;
 
 import net.transgressoft.musicott.config.*;
 import net.transgressoft.musicott.config.*;
-import net.transgressoft.musicott.events.StageReadyEvent;
 import net.transgressoft.musicott.events.StopApplicationEvent;
+import net.transgressoft.musicott.splash.SplashOrchestrator;
 
 import javafx.application.Application;
 import javafx.application.HostServices;
@@ -43,14 +43,31 @@ public class MusicottApplication {
 
         @Override
         public void init() {
-            this.context = new SpringApplicationBuilder()
-                    .sources(MusicottApplication.class)
-                    .run();
+            // Empty by design. Spring boot moved to a background Task spawned from
+            // start() so the splash window can render before any blocking I/O runs.
+            // SplashOrchestrator owns the Task lifecycle and the post-boot scene
+            // initialization handoff to PrimaryStageInitializer.
         }
 
         @Override
         public void start(Stage primaryStage) {
-            context.publishEvent(new StageReadyEvent(primaryStage));
+            if (Boolean.getBoolean("musicott.splash.disabled")) {
+                // Synchronous bypass path used by all four test source sets. Mirrors
+                // the previous init() + start() behavior without splash so tests do
+                // not pay the 800ms minimum display gate.
+                this.context = new SpringApplicationBuilder()
+                        .sources(MusicottApplication.class)
+                        .run();
+                PrimaryStageInitializer initializer = context.getBean(PrimaryStageInitializer.class);
+                initializer.initializePrimaryStage(primaryStage);
+                primaryStage.show();
+                return;
+            }
+            // Splash path. Orchestrator spawns the boot Task on a background thread,
+            // dismisses the splash via fade once the main scene is laid out, and
+            // bifurcates failure handling between pre-Spring (hard exit) and
+            // post-Spring (ExceptionEvent) routes.
+            new SplashOrchestrator(MusicottApplication.class).orchestrate(primaryStage);
         }
 
         @Override

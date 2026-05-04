@@ -57,6 +57,11 @@ ext {
             task.systemProperty 'glass.platform', 'Gtk'
             task.systemProperty 'monocle.platform', 'Headless'
         }
+        // Disable the production startup splash for every test JVM. Production runs
+        // (gradle run, jpackage installers) leave this property unset so the splash
+        // appears. Single insertion here propagates to test, integrationTest, uiTest,
+        // and e2eTest because each task block reuses this closure.
+        task.systemProperty 'musicott.splash.disabled', 'true'
     }
 }
 

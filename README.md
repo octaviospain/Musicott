@@ -29,6 +29,7 @@ After years of this refactoring and redesign work, in April 2026 I moved the old
 
 ## Key Features
 
+- **Branded startup splash with progress text** — on launch, a window with the app logo, name, and version appears with a progress bar that ticks through loading the music library, playlists, and waveform cache, so the first thing you see is a clear signal that the app is working
 - **Local-first music library** — your collection lives on your disk, persisted as plain JSON files under `~/.config/musicott/` (no database, no cloud sync)
 - **Guided iTunes import** — a four-step wizard walks you through picking the `iTunes Library.xml`, choosing which playlists to bring across, deciding how metadata is read (file tags vs the iTunes database) and whether play counts and tag write-back are preserved, then confirming before import starts
 - **Hierarchical playlists** — folders of playlists, drag-and-drop reordering, and full-text search across the library
