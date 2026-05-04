@@ -98,7 +98,6 @@ public class PlayerService {
         return trackPlayer != null ? trackPlayer.getStatusProperty() : null;
     }
 
-    @SuppressWarnings("java:S1135")
     public void play(ObservableAudioItem audioItem) {
         if (!audioItem.getPath().toFile().exists()) {
             applicationEventPublisher.publishEvent(new ErrorEvent("File not found", audioItem.getPath().toString(), this));
@@ -107,8 +106,6 @@ public class PlayerService {
             if (status.equals(STOPPED) || status.equals(PAUSED) || status.equals(UNKNOWN)) {
                 setPlayer(audioItem);
             } else if (status.equals(PLAYING)) {
-                // Deferred: prompt the user to stop the current track or queue the new one on top;
-                // currently always stops and replaces. Trigger: UX refinement work.
                 stop();
                 setPlayer(audioItem);
             }

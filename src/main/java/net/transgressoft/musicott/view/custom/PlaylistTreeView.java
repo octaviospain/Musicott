@@ -435,7 +435,7 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
             if (dragBoard.hasContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT) && isValidAudioItemToDragAndDrop()) {
                 var selectedAudioItemIds = (List<Integer>) dragBoard.getContent(AudioItemTableViewBase.TRACKS_DATA_FORMAT);
                 var audioItems = selectedAudioItemIds.stream()
-                    .map(id -> audioRepository.findById(id))
+                    .map(audioRepository::findById)
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .toList();

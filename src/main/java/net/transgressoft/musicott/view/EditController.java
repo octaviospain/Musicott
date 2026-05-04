@@ -53,6 +53,8 @@ import java.util.stream.Collectors;
 @Controller
 public class EditController {
 
+    private static final String AUDIO_ITEM_SELECTION_EMPTY = "audioItemSelection is empty";
+
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
     private final Image defaultCoverImage = ApplicationImage.DEFAULT_COVER.get();
@@ -346,7 +348,7 @@ public class EditController {
         else
             // editAudioItems guards audioItemSelection.isEmpty() before assigning; the set is non-empty here.
             isCompilationCheckBox.setSelected(audioItemSelection.stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("audioItemSelection is empty"))
+                .orElseThrow(() -> new IllegalStateException(AUDIO_ITEM_SELECTION_EMPTY))
                 .getAlbum().isCompilation());
     }
 
@@ -378,7 +380,7 @@ public class EditController {
                 .collect(Collectors.toSet());
         // editAudioItems guards audioItemSelection.isEmpty() before assigning; the set is non-empty here.
         String firstAlbum = audioItemSelection.stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("audioItemSelection is empty"))
+                .orElseThrow(() -> new IllegalStateException(AUDIO_ITEM_SELECTION_EMPTY))
                 .getAlbum().getName();
         return changedAlbums.size() <= 1 ? firstAlbum : "-";
     }
@@ -443,7 +445,7 @@ public class EditController {
     private boolean commonCompilation() {
         // editAudioItems guards audioItemSelection.isEmpty() before assigning; the set is non-empty here.
         Boolean isCommon = audioItemSelection.stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("audioItemSelection is empty"))
+                .orElseThrow(() -> new IllegalStateException(AUDIO_ITEM_SELECTION_EMPTY))
                 .getAlbum().isCompilation();
         return audioItemSelection.stream().allMatch(t -> isCommon.equals(t.getAlbum().isCompilation()));
     }
@@ -455,8 +457,10 @@ public class EditController {
        Artist albumArtist = getEditionFieldResult(albumArtistTextField) != null ? ImmutableArtist.of(getEditionFieldResult(albumArtistTextField)) : null;
        Boolean isCompilation = isCompilationCheckBox.isIndeterminate() ? null : isCompilationCheckBox.isSelected();
        Short year = getEditionFieldResult(yearTextField) != null ? Short.valueOf(getEditionFieldResult(yearTextField)) : null;
-       net.transgressoft.commons.music.audio.Label label = getEditionFieldResult(labelTextField) != null ? ImmutableLabel.of(getEditionFieldResult(labelTextField)) : null;
-       Set<Genre> genres = getEditionFieldResult(genreTextField) != null ? Genre.parseGenre(getEditionFieldResult(genreTextField)) : null;
+       String labelValue = getEditionFieldResult(labelTextField);
+       net.transgressoft.commons.music.audio.Label label = labelValue != null ? ImmutableLabel.of(labelValue) : null;
+       String genreValue = getEditionFieldResult(genreTextField);
+       Set<Genre> genres = genreValue != null ? Genre.parseGenre(genreValue) : null;
        String comments = getEditionFieldResult(commentsTextField);
        Short trackNum = getEditionFieldResult(trackNumTextField) != null ? Short.valueOf(getEditionFieldResult(trackNumTextField)) : null;
        Short discNum = getEditionFieldResult(discNumTextField) != null ? Short.valueOf(getEditionFieldResult(discNumTextField)) : null;
@@ -498,20 +502,24 @@ public class EditController {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof AudioItemMetadataChange other)) return false;
-            return java.util.Objects.equals(title, other.title)
-                    && java.util.Objects.equals(artist, other.artist)
-                    && java.util.Objects.equals(albumName, other.albumName)
-                    && java.util.Objects.equals(albumArtist, other.albumArtist)
-                    && java.util.Objects.equals(isCompilation, other.isCompilation)
-                    && java.util.Objects.equals(year, other.year)
-                    && java.util.Objects.equals(label, other.label)
-                    && java.util.Arrays.equals(coverImageBytes, other.coverImageBytes)
-                    && java.util.Objects.equals(genres, other.genres)
-                    && java.util.Objects.equals(comments, other.comments)
-                    && java.util.Objects.equals(trakNum, other.trakNum)
-                    && java.util.Objects.equals(discNum, other.discNum)
-                    && java.util.Objects.equals(bpm, other.bpm);
+            if (!(o instanceof AudioItemMetadataChange(
+                    String oTitle, Artist oArtist, String oAlbumName, Artist oAlbumArtist,
+                    Boolean oIsCompilation, Short oYear, net.transgressoft.commons.music.audio.Label oLabel,
+                    byte[] oCoverImageBytes, Set<Genre> oGenres, String oComments,
+                    Short oTrakNum, Short oDiscNum, Float oBpm))) return false;
+            return java.util.Objects.equals(title, oTitle)
+                    && java.util.Objects.equals(artist, oArtist)
+                    && java.util.Objects.equals(albumName, oAlbumName)
+                    && java.util.Objects.equals(albumArtist, oAlbumArtist)
+                    && java.util.Objects.equals(isCompilation, oIsCompilation)
+                    && java.util.Objects.equals(year, oYear)
+                    && java.util.Objects.equals(label, oLabel)
+                    && java.util.Arrays.equals(coverImageBytes, oCoverImageBytes)
+                    && java.util.Objects.equals(genres, oGenres)
+                    && java.util.Objects.equals(comments, oComments)
+                    && java.util.Objects.equals(trakNum, oTrakNum)
+                    && java.util.Objects.equals(discNum, oDiscNum)
+                    && java.util.Objects.equals(bpm, oBpm);
         }
 
         @Override
