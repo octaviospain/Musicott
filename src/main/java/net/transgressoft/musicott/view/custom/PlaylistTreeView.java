@@ -41,7 +41,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.fxmisc.easybind.EasyBind.subscribe;
 
@@ -260,7 +259,7 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
     public List<ObservablePlaylist> selectedPlaylists() {
         return getSelectionModel().getSelectedItems().stream()
                 .map(TreeItem::getValue)
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
     }
 
     public void selectPlaylist(ObservablePlaylist playlist) {

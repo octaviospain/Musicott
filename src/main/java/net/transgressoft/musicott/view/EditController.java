@@ -45,7 +45,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author Octavio Calleya
@@ -263,7 +262,7 @@ public class EditController {
     public void editAudioItemsEventListener(OpenAudioItemEditorView event) {
         List<ObservableAudioItem> invalidAudioItems = event.audioItems.stream()
             .filter(track -> ! track.getPath().toFile().exists())
-            .collect(Collectors.toList());
+            .toList();
 
         if (! invalidAudioItems.isEmpty())
             applicationEventPublisher.publishEvent(new InvalidAudioItemsForEditionEvent(invalidAudioItems, this));
@@ -362,11 +361,11 @@ public class EditController {
     }
 
     private String commonTitle() {
-        return commonString(audioItemSelection.stream().map(ObservableAudioItem::getTitle).collect(toList()));
+        return commonString(audioItemSelection.stream().map(ObservableAudioItem::getTitle).toList());
     }
 
     private String commonArtist() {
-        return commonString(audioItemSelection.stream().map(t -> t.getArtist().getName()).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> t.getArtist().getName()).toList());
     }
 
     private String commonAlbum() {
@@ -385,27 +384,27 @@ public class EditController {
     }
 
     private String commonComments() {
-        return commonString(audioItemSelection.stream().map(ObservableAudioItem::getComments).collect(toList()));
+        return commonString(audioItemSelection.stream().map(ObservableAudioItem::getComments).toList());
     }
 
     private String commonAlbumArtist() {
-        return commonString(audioItemSelection.stream().map(t -> t.getAlbum().getAlbumArtist().getName()).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> t.getAlbum().getAlbumArtist().getName()).toList());
     }
 
     private String commonLabel() {
-        return commonString(audioItemSelection.stream().map(t -> t.getAlbum().getLabel().getName()).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> t.getAlbum().getLabel().getName()).toList());
     }
 
     private String commonTrackNumber() {
-        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getTrackNumber())).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getTrackNumber())).toList());
     }
 
     private String commonDiscNumber() {
-        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getDiscNumber())).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getDiscNumber())).toList());
     }
 
     private String commonYear() {
-        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getAlbum().getYear())).collect(toList()));
+        return commonString(audioItemSelection.stream().map(t -> formatPositiveShort(t.getAlbum().getYear())).toList());
     }
 
     private String commonBpm() {
@@ -413,7 +412,7 @@ public class EditController {
                 .map(t -> {
                     Float bpm = t.getBpm();
                     return bpm == null || bpm <= 0f ? null : bpm.toString();
-                }).collect(toList()));
+                }).toList());
     }
 
     // Track/disc/year are nullable Short on the music-commons API; when unset the getter returns

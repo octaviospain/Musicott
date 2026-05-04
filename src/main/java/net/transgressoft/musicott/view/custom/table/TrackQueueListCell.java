@@ -28,7 +28,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 
 import java.util.function.BooleanSupplier;
-import java.util.stream.Collectors;
 
 /**
  * Custom {@link ListCell} that defines the behaviour of the {@link TrackQueueRow} items
@@ -76,7 +75,7 @@ public class TrackQueueListCell extends ListCell<TrackQueueRow> {
             var selection = getListView().getSelectionModel().getSelectedItems();
             var selectionTracks = selection.stream()
                                                      .map(tqr -> tqr.getTrack().getId())
-                                                     .collect(Collectors.toList());
+                                                     .toList();
 
             var clipboardContent = new ClipboardContent();
             clipboardContent.put(AudioItemTableViewBase.TRACKS_DATA_FORMAT, selectionTracks);
