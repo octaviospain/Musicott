@@ -61,17 +61,19 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
     private final ObservablePlaylistHierarchy playlistRepository;
     private final ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty;
 
-    @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    @Autowired
-    private ObservableAudioLibrary audioRepository;
+    private final ObservableAudioLibrary audioRepository;
 
     @Autowired
     public PlaylistTreeView(ObservablePlaylistHierarchy playlistRepository,
-                            ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty) {
+                            ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty,
+                            ApplicationEventPublisher applicationEventPublisher,
+                            ObservableAudioLibrary audioRepository) {
         this.playlistRepository = playlistRepository;
         this.selectedPlaylistProperty = selectedPlaylistProperty;
+        this.applicationEventPublisher = applicationEventPublisher;
+        this.audioRepository = audioRepository;
         setCellFactory(PlaylistTreeViewCell::new);
         setContextMenu(new PlaylistTreeViewContextMenu());
         setRoot(createRootPlaylistTreeViewItem());

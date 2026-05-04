@@ -85,8 +85,7 @@ public class NavigationController {
     @FXML
     private Label statusLabel;
 
-    @Autowired
-    private KeyCombination.Modifier operativeSystemKeyModifier;
+    private final KeyCombination.Modifier operativeSystemKeyModifier;
 
     private MenuItem newPlaylistMI;
     private MenuItem newFolderPlaylistMI;
@@ -94,8 +93,10 @@ public class NavigationController {
     private Optional<ObservablePlaylist> currentPlayingPlaylist;
 
     @Autowired
-    public NavigationController(PlaylistTreeView playlistTreeView) {
+    public NavigationController(PlaylistTreeView playlistTreeView,
+                                KeyCombination.Modifier operativeSystemKeyModifier) {
         this.playlistTreeView = playlistTreeView;
+        this.operativeSystemKeyModifier = operativeSystemKeyModifier;
         this.navigationModeProperty = new SimpleObjectProperty<>(this, "navigation mode", NavigationMode.ARTISTS);
     }
 

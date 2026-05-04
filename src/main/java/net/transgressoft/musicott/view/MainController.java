@@ -115,8 +115,7 @@ public class MainController {
     @FXML
     private TextField searchTextField;
     
-    @Autowired
-    private KeyCombination.Modifier operativeSystemKeyModifier;
+    private final KeyCombination.Modifier operativeSystemKeyModifier;
 
     /**
      * The table where tracks are displayed
@@ -154,7 +153,8 @@ public class MainController {
                           AlertFactory alertFactory,
                           MediaImportService mediaImportService,
                           ItunesImportWizard itunesImportWizard,
-                          ApplicationContext applicationContext) {
+                          ApplicationContext applicationContext,
+                          KeyCombination.Modifier operativeSystemKeyModifier) {
         this.audioRepository = audioRepository;
         this.playlistRepository = playlistRepository;
         this.playerController = playerController;
@@ -164,6 +164,7 @@ public class MainController {
         this.mediaImportService = mediaImportService;
         this.itunesImportWizard = itunesImportWizard;
         this.applicationContext = applicationContext;
+        this.operativeSystemKeyModifier = operativeSystemKeyModifier;
         this.selectedPlaylistProperty = navigationController.selectedPlaylistProperty();
     }
 
