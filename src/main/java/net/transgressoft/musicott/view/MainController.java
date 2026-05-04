@@ -932,9 +932,8 @@ public class MainController {
             deleteFromPlaylistMenuItem = new MenuItem("Delete from playlist");
             deleteFromPlaylistMenuItem.setId("deleteFromPlaylistMenuItem");
             deleteFromPlaylistMenuItem.setOnAction(event ->
-                    selectedPlaylistProperty.get().ifPresent(audioPlaylist -> {
-                        audioPlaylist.getAudioItemsProperty().removeAll(selection);
-                    }));
+                    selectedPlaylistProperty.get().ifPresent(audioPlaylist ->
+                            audioPlaylist.getAudioItemsProperty().removeAll(selection)));
 
             getItems().addAll(playMenuItem, editMenuItem, deleteMenuItem, addToQueueMenuItem, new SeparatorMenuItem());
             getItems().addAll(deleteFromPlaylistMenuItem, addToPlaylistMenu);
