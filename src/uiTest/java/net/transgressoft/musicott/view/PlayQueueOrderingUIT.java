@@ -42,11 +42,14 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.testfx.api.FxRobot;
 import org.testfx.util.WaitForAsyncUtils;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.context.annotation.ComponentScan.Filter;
@@ -86,6 +89,13 @@ class PlayQueueOrderingUIT extends ApplicationTestBase<GridPane> {
      */
     ObservableAudioItem mockPlayableAudioItem(String title) {
         ObservableAudioItem item = mock(ObservableAudioItem.class);
+        try {
+            Path tempFile = Files.createTempFile("musicott-playqueue-uit-", ".mp3");
+            tempFile.toFile().deleteOnExit();
+            when(item.getPath()).thenReturn(tempFile);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
         when(item.getTitleProperty()).thenReturn(new SimpleStringProperty(title));
         Artist artist = mock(Artist.class);
         when(artist.getName()).thenReturn("Test Artist");
@@ -158,6 +168,29 @@ class PlayQueueOrderingUIT extends ApplicationTestBase<GridPane> {
                 assertThat(iv.getImage()).isSameAs(defaultCover);
             }
         }
+    }
+
+    @Test
+    @DisplayName("removes the played row without leaving an empty visible cell gap")
+    void removesThePlayedRowWithoutLeavingAnEmptyVisibleCellGap(FxRobot robot) {
+        ObservableAudioItem itemA = mockPlayableAudioItem("Song A");
+        ObservableAudioItem itemB = mockPlayableAudioItem("Song B");
+        ObservableAudioItem itemC = mockPlayableAudioItem("Song C");
+
+        Platform.runLater(() -> playerService.addToQueue(List.of(itemA, itemB, itemC)));
+        WaitForAsyncUtils.waitForFxEvents();
+
+        ToggleButton playQueueButton = robot.lookup("#playQueueButton").queryAs(ToggleButton.class);
+        robot.clickOn(playQueueButton);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        ListView<TrackQueueRow> queuesListView = robot.lookup("#queuesListView").queryListView();
+        TrackQueueRow nextUpRow = queuesListView.getItems().get(queuesListView.getItems().size() - 1);
+        Platform.runLater(() -> playerService.getPlayQueueList().remove(nextUpRow));
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertThat(queuesListView.getItems()).hasSize(2);
+        assertThat(queuesListView.getPrefHeight()).isCloseTo(110.0, within(2.5));
     }
 }
 

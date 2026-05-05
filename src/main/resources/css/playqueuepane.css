@@ -1,11 +1,32 @@
 @import url("scroll-bar-general.css");
 
+.play-queue-popover {
+	-fx-background-color: transparent;
+}
+
+.play-queue-popover.popover > .border {
+	-fx-stroke: rgba(255, 255, 255, 0.14);
+	-fx-stroke-width: 1;
+	-fx-fill: linear-gradient(to bottom, rgb(50, 50, 50), rgb(29, 29, 29));
+	-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 10, 0.18, 0, 2);
+}
+
+.play-queue-popover.popover > .content {
+	-fx-background-color: transparent;
+	-fx-padding: 0;
+}
+
+.play-queue-popover #queueFooter {
+	-fx-padding: 0;
+}
+
 .list-view {
 	-fx-focus-color: rgb(73, 73, 73);
 	-fx-faint-focus-color: transparent;
 	-fx-text-fill: white;
 	-fx-background-color: transparent;
 	-fx-background-radius: 10px;
+	-fx-padding: 0;
 }
 
 .label {
@@ -14,27 +35,29 @@
 }
 
 #deleteAllButton {
-	-fx-background-color: rgb(73, 73, 73);
+	-fx-background-color: rgba(255, 255, 255, 0.12);
+	-fx-background-radius: 8px;
+	-fx-border-color: rgba(255, 255, 255, 0.12);
+	-fx-border-radius: 8px;
 	-fx-text-fill: white;
-	-fx-padding: 2 2 2 2;
+	-fx-padding: 2 8 2 8;
 }
 
 #deleteAllButton:hover {
-	-fx-background-color: rgb(201, 201, 201);
-	-fx-text-fill: black;
-	-fx-padding: 2 2 2 2;
+	-fx-background-color: rgba(255, 255, 255, 0.24);
+	-fx-border-color: rgba(255, 255, 255, 0.18);
+	-fx-text-fill: white;
+	-fx-padding: 2 8 2 8;
 }
 
 #playQueuePane {
-	-fx-background-image: url('../images/playqueue-background-image.png');
-	-fx-background-repeat: no-repeat;
-	-fx-background-position: center;
 	-fx-background-color: transparent;
-	-fx-effect: dropshadow(gaussian, rgb(73, 73, 73), 15, 0.3, 0, 0);
+	-fx-effect: none;
 }
 
 .list-cell {
 	-fx-background-color: transparent;
+	-fx-padding: 0;
 }
 
 .list-cell:filled:selected {
@@ -66,4 +89,8 @@
 #historyQueueButton:selected{
 	-fx-graphic: url('../icons/historyqueue-button-black-icon.png');
  	-fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 9, 0.4, 0, 0);
+}
+
+#titleQueueLabel {
+	-fx-padding: 0;
 }

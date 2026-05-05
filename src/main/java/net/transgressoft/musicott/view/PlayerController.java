@@ -15,23 +15,30 @@ import net.transgressoft.musicott.view.custom.table.AudioItemTableViewBase;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 
 import jakarta.annotation.PreDestroy;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
+import javafx.geometry.Bounds;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import net.rgielen.fxweaver.core.FxmlView;
+import org.controlsfx.control.PopOver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +65,9 @@ import static org.fxmisc.easybind.EasyBind.subscribe;
 @Controller
 public class PlayerController {
 
+    private static final double PLAY_QUEUE_POPOVER_OFFSET = -10.0;
+    private static final double PLAY_QUEUE_DESIGNED_HEIGHT = 467.0;
+    private static final double PLAY_QUEUE_RESERVED_HEIGHT = 90.0;
     private static final double VOLUME_AMOUNT = 0.05;
     private static final String PLAY_QUEUE_BUTTON_STYLE = "-fx-effect: dropshadow(one-pass-box, rgb(99, 255, 109), 3, 0.2, 0, 0);";
 
@@ -106,8 +116,46 @@ public class PlayerController {
     private ReadOnlyBooleanProperty emptyLibraryProperty;
     private boolean muted = false;
     private double preMuteVolume = 0.0;
+    private boolean closingPlayQueuePopOver = false;
+    private boolean reanchoringPlayQueuePopOver = false;
+    private PopOver playQueuePopOver;
+    private Window playQueueOwnerWindow;
     private Subscription progressSubscription;
     private Subscription labelsSubscription;
+    private final PauseTransition playQueueFocusLossDelay = new PauseTransition(Duration.millis(150));
+    private final ChangeListener<Boolean> playQueueOwnerFocusListener = (observable, oldValue, focused) -> {
+        if (Boolean.TRUE.equals(focused)) {
+            playQueueFocusLossDelay.stop();
+        } else if (playQueueOwnerWindow != null) {
+            playQueueFocusLossDelay.playFromStart();
+        }
+    };
+    private final ChangeListener<Boolean> playQueueOwnerShowingListener = (observable, oldValue, showing) -> {
+        if (Boolean.FALSE.equals(showing))
+            hidePlayQueue();
+    };
+    private final ChangeListener<Boolean> playQueueOwnerIconifiedListener = (observable, oldValue, iconified) -> {
+        if (Boolean.TRUE.equals(iconified))
+            hidePlayQueue();
+    };
+    private final ChangeListener<Window> playQueueSceneWindowListener = (observable, oldWindow, newWindow) -> {
+        unbindPlayQueueOwnerWindow(oldWindow);
+        bindPlayQueueOwnerWindow(newWindow);
+    };
+    private final ChangeListener<Number> playQueuePopupResizeListener = (observable, oldValue, newValue) -> applyPlayQueuePopupSizing();
+    private final ChangeListener<Scene> playQueueSizingSceneListener = (observable, oldScene, newScene) -> {
+        configurePlayQueuePopupSizingForScene(oldScene, newScene);
+    };
+    private final ChangeListener<Scene> playQueueOwnerLifecycleSceneListener = (observable, oldScene, newScene) -> {
+        configurePlayQueueOwnerLifecycleForScene(oldScene, newScene);
+    };
+    private final javafx.event.EventHandler<MouseEvent> playQueuePopOverMousePressedHandler = event -> {
+        if (playQueuePopOver != null && playQueuePopOver.isShowing()
+                && isWithinPlayQueueButton(event.getScreenX(), event.getScreenY())) {
+            hidePlayQueue();
+            event.consume();
+        }
+    };
 
     @Autowired
     public PlayerController(AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository,
@@ -116,6 +164,13 @@ public class PlayerController {
         this.waveformRepository = waveformRepository;
         this.playerService = playerService;
         this.audioLibrary = audioLibrary;
+        playQueueFocusLossDelay.setOnFinished(_ -> {
+            if (playQueueOwnerWindow == null || playQueueOwnerWindow.isFocused())
+                return;
+            if (playQueueOwnerWindow instanceof Stage stage && stage.isIconified())
+                return;
+            hidePlayQueue();
+        });
     }
 
     @FXML
@@ -144,77 +199,174 @@ public class PlayerController {
             }
         });
 
+        playQueueLayout.setVisible(true);
+        playQueueStackPane.getChildren().remove(playQueueLayout);
+        playQueuePopOver = new PopOver(playQueueLayout);
+        playQueuePopOver.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
+        playQueuePopOver.setDetachable(false);
+        playQueuePopOver.setAnimated(false);
+        playQueuePopOver.setHeaderAlwaysVisible(false);
+        playQueuePopOver.setAutoHide(true);
+        playQueuePopOver.setAutoFix(true);
+        playQueuePopOver.setConsumeAutoHidingEvents(false);
+        playQueuePopOver.getStyleClass().add("play-queue-popover");
+        playQueuePopOver.getRoot().getStylesheets().add(Objects.requireNonNull(getClass()
+                .getResource("/css/playqueuepane.css")).toExternalForm());
+        playQueuePopOver.setOnAutoHide(_ -> playQueueButton.setSelected(false));
+        playQueuePopOver.setOnShown(_ -> {
+            if (playQueuePopOver.getScene() != null) {
+                playQueuePopOver.getScene().removeEventFilter(MouseEvent.MOUSE_PRESSED, playQueuePopOverMousePressedHandler);
+                playQueuePopOver.getScene().addEventFilter(MouseEvent.MOUSE_PRESSED, playQueuePopOverMousePressedHandler);
+            }
+        });
+        playQueuePopOver.setOnHidden(_ -> {
+            if (playQueuePopOver.getScene() != null)
+                playQueuePopOver.getScene().removeEventFilter(MouseEvent.MOUSE_PRESSED, playQueuePopOverMousePressedHandler);
+            if (!reanchoringPlayQueuePopOver)
+                restoreOrDeselectPlayQueueButton();
+        });
+        configurePlayQueuePopupSizing();
+        configurePlayQueuePopupOwnerLifecycle();
+
         playQueueButton.setOnAction(event -> {
-            if (playQueueLayout.isVisible())
+            if (playQueuePopOver.isShowing())
                 hidePlayQueue();
             else
                 showPlayQueue();
         });
-        playQueueLayout.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (Boolean.FALSE.equals(newValue))
-                hidePlayQueue();
-        });
-        playQueueLayout.setOnMouseExited(event -> hidePlayQueue());
-
-        playerGridPane.setOnMouseClicked(event -> hidePlayQueue());
-        playButton.setOnMouseClicked(event -> hidePlayQueue());
 
         playQueueButton.setOnDragDropped(this::onDragDroppedOnPlayQueueButton);
         playQueueButton.setOnDragOver(this::onDragOverOnPlayQueueButton);
         playQueueButton.setOnDragExited(this::onDragExitedOnPlayQueueButton);
 
-        subscribe(playQueueLayout.visibleProperty(), playQueueButton::setSelected);
-        configurePlayQueuePopupSizing();
         hidePlayQueue();
     }
 
     /**
-     * Sizes and positions the play-queue popup so it always fits within the current scene.
-     * The popup's height is capped to leave room for the menubar + player area, and the
-     * StackPane bottom margin is recomputed on every scene-height change so the popup
-     * tracks the available space instead of relying on a fixed offset that overflows the
-     * top of the window at small heights.
+     * Caps the queue content height so the popover can stay within smaller windows
+     * without relying on the old in-scene StackPane margin positioning.
      */
     private void configurePlayQueuePopupSizing() {
-        double designedHeight = playQueueLayout.getPrefHeight();   // 467 in PlayQueueController.fxml
-        double topReserved = 30.0;                                 // menubar + small gap
-        double bottomReserved = 60.0;                              // player area + small gap
+        playerGridPane.sceneProperty().addListener(playQueueSizingSceneListener);
+        configurePlayQueuePopupSizingForScene(null, playerGridPane.getScene());
+    }
 
-        Runnable apply = () -> {
-            var scene = playQueueLayout.getScene();
-            if (scene == null) return;
-            double sceneH = scene.getHeight();
-            if (sceneH <= 0) return;
-            double maxAllowed = Math.max(120.0, sceneH - topReserved - bottomReserved);
-            double popupH = Math.min(designedHeight, maxAllowed);
-            playQueueLayout.setPrefHeight(popupH);
-            playQueueLayout.setMaxHeight(popupH);
-            // Pin popup just above the player area; if the window is taller than the
-            // popup needs, push it up so it sits near the top of the window (preserves
-            // the original design intent of having the queue float above the table area).
-            double bottomMargin = Math.max(bottomReserved, sceneH - popupH - topReserved);
-            StackPane.setMargin(playQueueLayout, new Insets(0, 0, bottomMargin, 0));
-        };
+    private void configurePlayQueuePopupSizingForScene(Scene oldScene, Scene newScene) {
+        if (oldScene != null) {
+            oldScene.heightProperty().removeListener(playQueuePopupResizeListener);
+            oldScene.widthProperty().removeListener(playQueuePopupResizeListener);
+        }
+        if (newScene != null) {
+            newScene.heightProperty().addListener(playQueuePopupResizeListener);
+            newScene.widthProperty().addListener(playQueuePopupResizeListener);
+            applyPlayQueuePopupSizing();
+        }
+    }
 
-        // hidePlayQueue removes playQueueLayout from its parent, so sceneProperty fires every time
-        // the popover toggles. Detach old listeners on each transition to prevent stacking.
-        javafx.beans.value.ChangeListener<Number> resizeListener = (o, ov, nv) -> apply.run();
-        playQueueLayout.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (oldScene != null) {
-                oldScene.heightProperty().removeListener(resizeListener);
-                oldScene.widthProperty().removeListener(resizeListener);
-            }
-            if (newScene != null) {
-                newScene.heightProperty().addListener(resizeListener);
-                newScene.widthProperty().addListener(resizeListener);
-                apply.run();
-            }
+    private void applyPlayQueuePopupSizing() {
+        var scene = playerGridPane.getScene();
+        if (scene == null) return;
+        double sceneH = scene.getHeight();
+        if (sceneH <= 0) return;
+        double maxAllowed = Math.max(120.0, sceneH - PLAY_QUEUE_RESERVED_HEIGHT);
+        double popupH = Math.min(PLAY_QUEUE_DESIGNED_HEIGHT, maxAllowed);
+        playQueueLayout.setPrefHeight(popupH);
+        playQueueLayout.setMaxHeight(popupH);
+        boolean reopenAfterResize = playQueuePopOver != null
+                && (playQueuePopOver.isShowing() || playQueueButton.isSelected());
+        if (reopenAfterResize) {
+            Platform.runLater(() -> {
+                if (playQueuePopOver != null) {
+                    reanchoringPlayQueuePopOver = true;
+                    try {
+                        if (playQueuePopOver.isShowing())
+                            playQueuePopOver.hide();
+                        showPlayQueuePopOver();
+                        playQueueButton.setSelected(true);
+                    } finally {
+                        reanchoringPlayQueuePopOver = false;
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Keeps the queue popover tied to the primary stage lifecycle so it never stays
+     * visible after the application window loses desktop ownership.
+     */
+    private void configurePlayQueuePopupOwnerLifecycle() {
+        playerGridPane.sceneProperty().addListener(playQueueOwnerLifecycleSceneListener);
+        configurePlayQueueOwnerLifecycleForScene(null, playerGridPane.getScene());
+    }
+
+    private void configurePlayQueueOwnerLifecycleForScene(Scene oldScene, Scene newScene) {
+        if (oldScene != null)
+            oldScene.windowProperty().removeListener(playQueueSceneWindowListener);
+        unbindPlayQueueOwnerWindow(playQueueOwnerWindow);
+        if (newScene != null) {
+            newScene.windowProperty().addListener(playQueueSceneWindowListener);
+            bindPlayQueueOwnerWindow(newScene.getWindow());
+        }
+    }
+
+    private void bindPlayQueueOwnerWindow(Window window) {
+        if (window == null || window == playQueueOwnerWindow)
+            return;
+        playQueueOwnerWindow = window;
+        playQueueOwnerWindow.focusedProperty().addListener(playQueueOwnerFocusListener);
+        playQueueOwnerWindow.showingProperty().addListener(playQueueOwnerShowingListener);
+        if (playQueueOwnerWindow instanceof Stage stage)
+            stage.iconifiedProperty().addListener(playQueueOwnerIconifiedListener);
+    }
+
+    private void unbindPlayQueueOwnerWindow(Window window) {
+        if (window == null)
+            return;
+        window.focusedProperty().removeListener(playQueueOwnerFocusListener);
+        window.showingProperty().removeListener(playQueueOwnerShowingListener);
+        if (window instanceof Stage stage)
+            stage.iconifiedProperty().removeListener(playQueueOwnerIconifiedListener);
+        if (window == playQueueOwnerWindow)
+            playQueueOwnerWindow = null;
+    }
+
+    /**
+     * Restores the popover after owner-window geometry changes, but lets explicit
+     * dismissals clear the toggle state and keep the queue closed.
+     */
+    private void restoreOrDeselectPlayQueueButton() {
+        if (closingPlayQueuePopOver || !playQueueButton.isSelected()) {
+            playQueueButton.setSelected(false);
+            return;
+        }
+        if (playQueueOwnerWindow == null || !playQueueOwnerWindow.isShowing() || !playQueueOwnerWindow.isFocused()) {
+            playQueueButton.setSelected(false);
+            return;
+        }
+        Platform.runLater(() -> {
+            if (playQueuePopOver != null && !playQueuePopOver.isShowing() && playQueueButton.isSelected())
+                showPlayQueuePopOver();
         });
-        apply.run();
+    }
+
+    private boolean isWithinPlayQueueButton(double screenX, double screenY) {
+        Bounds bounds = playQueueButton.localToScreen(playQueueButton.getBoundsInLocal());
+        return bounds != null && bounds.contains(screenX, screenY);
     }
 
     @PreDestroy
     public void dispose() {
+        playerGridPane.sceneProperty().removeListener(playQueueSizingSceneListener);
+        playerGridPane.sceneProperty().removeListener(playQueueOwnerLifecycleSceneListener);
+        if (playerGridPane.getScene() != null) {
+            playerGridPane.getScene().heightProperty().removeListener(playQueuePopupResizeListener);
+            playerGridPane.getScene().widthProperty().removeListener(playQueuePopupResizeListener);
+            playerGridPane.getScene().windowProperty().removeListener(playQueueSceneWindowListener);
+        }
+        playQueueFocusLossDelay.stop();
+        unbindPlayQueueOwnerWindow(playQueueOwnerWindow);
+        hidePlayQueue();
         playableWaveformPane.dispose();
     }
 
@@ -276,17 +428,26 @@ public class PlayerController {
     }
 
     public void hidePlayQueue() {
-        if (playQueueStackPane.getChildren().contains(playQueueLayout)) {
-            playQueueStackPane.getChildren().remove(playQueueLayout);
-            playQueueLayout.setVisible(false);
+        if (playQueuePopOver != null && playQueuePopOver.isShowing()) {
+            closingPlayQueuePopOver = true;
+            try {
+                playQueuePopOver.hide();
+            } finally {
+                closingPlayQueuePopOver = false;
+            }
         }
+        playQueueButton.setSelected(false);
     }
 
     private void showPlayQueue() {
-        if (!playQueueStackPane.getChildren().contains(playQueueLayout)) {
-            playQueueStackPane.getChildren().add(0, playQueueLayout);
-            playQueueLayout.setVisible(true);
+        if (playQueuePopOver != null && !playQueuePopOver.isShowing()) {
+            showPlayQueuePopOver();
         }
+        playQueueButton.setSelected(true);
+    }
+
+    private void showPlayQueuePopOver() {
+        playQueuePopOver.show(playQueueButton, PLAY_QUEUE_POPOVER_OFFSET);
     }
 
     public void setStopped() {

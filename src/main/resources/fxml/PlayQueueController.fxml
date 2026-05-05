@@ -16,7 +16,7 @@
             <center>
                 <!-- Bottom-aligned list: empty space hangs at the top of the popover, items hug the
                      bottom so the next-up track (storage size-1) sits closest to the play button. -->
-                <VBox alignment="BOTTOM_LEFT" BorderPane.alignment="CENTER">
+                <VBox alignment="BOTTOM_LEFT" fillWidth="true" BorderPane.alignment="CENTER">
                     <children>
                         <Region VBox.vgrow="ALWAYS"/>
                         <ListView id="queuesListView" fx:id="queuesListView" maxHeight="-Infinity" VBox.vgrow="NEVER"/>
@@ -24,44 +24,27 @@
                 </VBox>
             </center>
             <bottom>
-                <GridPane prefHeight="35.0" BorderPane.alignment="CENTER">
-                    <columnConstraints>
-                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="175.0" minWidth="10.0" prefWidth="144.0"/>
-                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="244.0" minWidth="10.0" prefWidth="146.0"/>
-                    </columnConstraints>
-                    <rowConstraints>
-                        <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                    </rowConstraints>
+                <HBox id="queueFooter" alignment="CENTER_LEFT" spacing="8.0" BorderPane.alignment="CENTER">
                     <children>
                         <Label fx:id="titleQueueLabel" text="Play Queue">
                             <font>
                                 <Font size="15.0"/>
                             </font>
-                            <padding>
-                                <Insets bottom="8.0" left="10.0" top="5.0"/>
-                            </padding>
                         </Label>
-                        <Button fx:id="deleteAllButton" maxHeight="-Infinity" maxWidth="-Infinity" mnemonicParsing="false" prefHeight="18.0"
-                                prefWidth="38.0" text="Delete" GridPane.columnIndex="1" GridPane.halignment="RIGHT">
+                        <Pane HBox.hgrow="ALWAYS"/>
+                        <ToggleButton fx:id="historyQueueButton" cacheHint="QUALITY" maxHeight="-Infinity" maxWidth="-Infinity"
+                                      minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0"/>
+                        <Button fx:id="deleteAllButton" maxHeight="-Infinity" maxWidth="-Infinity" mnemonicParsing="false" prefHeight="22.0"
+                                prefWidth="60.0" text="Delete">
                             <font>
                                 <Font size="11.0"/>
                             </font>
-                            <GridPane.margin>
-                                <Insets bottom="2.0" right="10.0"/>
-                            </GridPane.margin>
                         </Button>
-                        <ToggleButton fx:id="historyQueueButton" cacheHint="QUALITY" maxHeight="-Infinity" maxWidth="-Infinity"
-                                      minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0"
-                                      GridPane.columnIndex="1" GridPane.halignment="CENTER">
-                            <GridPane.margin>
-                                <Insets bottom="2.0" right="30.0"/>
-                            </GridPane.margin>
-                        </ToggleButton>
                     </children>
                     <BorderPane.margin>
-                        <Insets bottom="26.0" left="20.0" right="20.0"/>
+                        <Insets bottom="10.0" left="14.0" right="14.0" top="8.0"/>
                     </BorderPane.margin>
-                </GridPane>
+                </HBox>
             </bottom>
         </BorderPane>
     </children>
