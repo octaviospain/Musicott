@@ -82,8 +82,24 @@ class PlayQueueControllerIT {
         verifyThat("#playQueuePane", isVisible());
         verifyThat("#queuesListView", isVisible());
         verifyThat("#titleQueueLabel", isVisible());
-        verifyThat("#deleteAllButton", isVisible());
         verifyThat("#historyQueueButton", isVisible());
+        Button deleteAllButton = lookupDeleteButton();
+        assertThat(deleteAllButton.isVisible()).isFalse();
+    }
+
+    @Test
+    @DisplayName("PlayQueueController hides delete button for empty queues and shows it when rows exist")
+    void hidesDeleteButtonForEmptyQueuesAndShowsItWhenRowsExist(FxRobot fxRobot) {
+        Button deleteAllButton = lookupDeleteButton();
+        assertThat(deleteAllButton.isVisible()).isFalse();
+
+        Platform.runLater(() -> historyQueue.add(mockTrackQueueRow("History Track")));
+        waitForFxEvents();
+        assertThat(deleteAllButton.isVisible()).isFalse();
+
+        fxRobot.clickOn("#historyQueueButton");
+        waitForFxEvents();
+        assertThat(deleteAllButton.isVisible()).isTrue();
     }
 
     @Test
@@ -144,5 +160,24 @@ class PlayQueueControllerIT {
         waitForFxEvents();
 
         assertThat(historyQueue).isEmpty();
+    }
+
+    private Button lookupDeleteButton() {
+        Parent pane = (Parent) ReflectionTestUtils.getField(controller, "playQueuePane");
+        assertThat(pane).isNotNull();
+        return (Button) pane.lookup("#deleteAllButton");
+    }
+
+    private TrackQueueRow mockTrackQueueRow(String title) {
+        ObservableAudioItem item = mock(ObservableAudioItem.class);
+        when(item.getTitleProperty()).thenReturn(new SimpleStringProperty(title));
+        var artist = mock(net.transgressoft.commons.music.audio.Artist.class);
+        when(artist.getName()).thenReturn("Test Artist");
+        when(item.getArtistProperty()).thenReturn(new SimpleObjectProperty<>(artist));
+        var album = mock(net.transgressoft.commons.music.audio.Album.class);
+        when(album.getName()).thenReturn("Test Album");
+        when(item.getAlbumProperty()).thenReturn(new SimpleObjectProperty<>(album));
+        when(item.getCoverImageProperty()).thenReturn(new SimpleObjectProperty<>(java.util.Optional.empty()));
+        return new TrackQueueRow(item);
     }
 }

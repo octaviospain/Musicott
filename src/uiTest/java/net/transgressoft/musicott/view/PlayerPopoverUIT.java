@@ -12,15 +12,20 @@ import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
+import org.controlsfx.control.PopOver;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.InjectionPoint;
@@ -60,85 +65,175 @@ class PlayerPopoverUIT extends ApplicationTestBase<GridPane> {
         return playerControllerAndView.getView().get();
     }
 
-    /**
-     * Returns the {@code playQueueLayout} field from the controller. Since the node is removed
-     * from the scene graph when hidden (see {@code PlayerController.hidePlayQueue}), CSS id lookup
-     * via robot cannot find it; we retrieve the reference directly via reflection.
-     */
-    AnchorPane playQueueLayout() {
+    private PopOver playQueuePopOver() {
         try {
-            Field field = PlayerController.class.getDeclaredField("playQueueLayout");
+            Field field = PlayerController.class.getDeclaredField("playQueuePopOver");
             field.setAccessible(true);
-            return (AnchorPane) field.get(playerControllerAndView.getController());
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Cannot access PlayerController.playQueueLayout", e);
+            return (PopOver) field.get(playerControllerAndView.getController());
+        } catch (ReflectiveOperationException ex) {
+            throw new AssertionError("Unable to inspect the play queue popover", ex);
         }
+    }
+
+    private Window playQueueWindow(FxRobot robot) {
+        Window primaryWindow = robot.window(0);
+        return Window.getWindows().stream()
+                .filter(Window::isShowing)
+                .filter(window -> window != primaryWindow)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Play queue popover window is not showing"));
+    }
+
+    private double buttonCenterX(ToggleButton playQueueButton) {
+        var bounds = playQueueButton.localToScreen(playQueueButton.getBoundsInLocal());
+        assertThat(bounds).isNotNull();
+        return bounds.getCenterX();
+    }
+
+    private double buttonCenterY(ToggleButton playQueueButton) {
+        var bounds = playQueueButton.localToScreen(playQueueButton.getBoundsInLocal());
+        assertThat(bounds).isNotNull();
+        return bounds.getCenterY();
+    }
+
+    private Optional<ScrollBar> verticalScrollBar(ListView<?> listView) {
+        return listView.lookupAll(".scroll-bar").stream()
+                .filter(ScrollBar.class::isInstance)
+                .map(ScrollBar.class::cast)
+                .filter(Node::isVisible)
+                .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
+                .findFirst();
+    }
+
+    @AfterEach
+    void closePopupWindows() {
+        Platform.runLater(() -> Window.getWindows().stream()
+                .filter(Window::isShowing)
+                .filter(window -> !(window instanceof Stage))
+                .toList()
+                .forEach(Window::hide));
+        waitForFxEvents();
     }
 
     @Test
     @DisplayName("anchors to play-queue button on initial show")
     void anchorsToPlayQueueButtonOnInitialShow(FxRobot robot) {
-        // playQueueLayout is removed from the scene by hidePlayQueue() during initialize();
-        // fire the toggle button first so showPlayQueue() re-adds it to the scene graph.
         ToggleButton playQueueButton = robot.lookup("#playQueueButton").queryAs(ToggleButton.class);
-        AnchorPane playQueueLayout = playQueueLayout();
         Platform.runLater(playQueueButton::fire);
         waitForFxEvents();
 
-        assertThat(playQueueLayout.isVisible()).isTrue();
-        double popoverCenterX = playQueueLayout.localToScene(playQueueLayout.getBoundsInLocal()).getCenterX();
-        double buttonCenterX = playQueueButton.localToScene(playQueueButton.getBoundsInLocal()).getCenterX();
-        assertThat(Math.abs(popoverCenterX - buttonCenterX)).isLessThan(2.0);
+        Window popupWindow = playQueueWindow(robot);
+        ListView<?> queuesListView = robot.lookup("#queuesListView").queryListView();
+
+        assertThat(playQueueButton.isSelected()).isTrue();
+        assertThat(popupWindow.isShowing()).isTrue();
+        assertThat(queuesListView.isVisible()).isTrue();
+        assertThat(Math.abs((popupWindow.getX() + popupWindow.getWidth() / 2.0) - buttonCenterX(playQueueButton))).isLessThan(12.0);
     }
 
     @Test
     @DisplayName("re-anchors to play-queue button after horizontal window resize")
     void reAnchorsToPlayQueueButtonAfterHorizontalWindowResize(FxRobot robot) {
         ToggleButton playQueueButton = robot.lookup("#playQueueButton").queryAs(ToggleButton.class);
-        AnchorPane playQueueLayout = playQueueLayout();
         Platform.runLater(playQueueButton::fire);
         waitForFxEvents();
-
-        assertThat(playQueueLayout.isVisible()).isTrue();
 
         Stage stage = (Stage) robot.window(0);
         double newWidth = stage.getWidth() + 100.0;
         Platform.runLater(() -> stage.setWidth(newWidth));
         waitForFxEvents();
 
-        double popoverCenterX = playQueueLayout.localToScene(playQueueLayout.getBoundsInLocal()).getCenterX();
-        double buttonCenterX = playQueueButton.localToScene(playQueueButton.getBoundsInLocal()).getCenterX();
-        assertThat(Math.abs(popoverCenterX - buttonCenterX)).isLessThan(2.0);
+        Window popupWindow = playQueueWindow(robot);
+        assertThat(playQueueButton.isSelected()).isTrue();
+        assertThat(Math.abs((popupWindow.getX() + popupWindow.getWidth() / 2.0) - buttonCenterX(playQueueButton))).isLessThan(12.0);
     }
 
     @Test
     @DisplayName("re-anchors to play-queue button after vertical window resize")
     void reAnchorsToPlayQueueButtonAfterVerticalWindowResize(FxRobot robot) {
         ToggleButton playQueueButton = robot.lookup("#playQueueButton").queryAs(ToggleButton.class);
-        AnchorPane playQueueLayout = playQueueLayout();
         Platform.runLater(playQueueButton::fire);
         waitForFxEvents();
 
-        assertThat(playQueueLayout.isVisible()).isTrue();
-
         Stage stage = (Stage) robot.window(0);
-        double popoverTopBefore = playQueueLayout.localToScene(playQueueLayout.getBoundsInLocal()).getMinY();
-
         double newHeight = stage.getHeight() + 100.0;
         Platform.runLater(() -> stage.setHeight(newHeight));
         waitForFxEvents();
 
-        var popoverBounds = playQueueLayout.localToScene(playQueueLayout.getBoundsInLocal());
-        var buttonBounds = playQueueButton.localToScene(playQueueButton.getBoundsInLocal());
-        assertThat(Math.abs(popoverBounds.getCenterX() - buttonBounds.getCenterX())).isLessThan(2.0);
+        Window popupWindow = playQueueWindow(robot);
+        assertThat(Math.abs((popupWindow.getX() + popupWindow.getWidth() / 2.0) - buttonCenterX(playQueueButton))).isLessThan(12.0);
+        assertThat(popupWindow.getY() + popupWindow.getHeight() / 2.0).isLessThan(buttonCenterY(playQueueButton));
+    }
 
-        // configurePlayQueuePopupSizing pins popover.minY ≈ topReserved (30px) regardless of scene
-        // height: bottomMargin = max(bottomReserved, sceneH - popupH - topReserved), so growing the
-        // scene grows bottomMargin in lockstep, keeping the popover top fixed near the top edge.
-        // Without the heightProperty listener firing, bottomMargin would stay stale and popover.minY
-        // would drift downward as the scene grows.
-        double popoverTopAfter = popoverBounds.getMinY();
-        assertThat(Math.abs(popoverTopAfter - popoverTopBefore)).isLessThan(5.0);
+    @Test
+    @DisplayName("closes the play-queue popover when the button is toggled again")
+    void closesThePlayQueuePopoverWhenTheButtonIsToggledAgain(FxRobot robot) {
+        robot.clickOn("#playQueueButton");
+        waitForFxEvents();
+
+        assertThat(playQueueWindow(robot).isShowing()).isTrue();
+
+        ToggleButton playQueueButton = robot.lookup("#playQueueButton").queryAs(ToggleButton.class);
+        robot.clickOn(buttonCenterX(playQueueButton), buttonCenterY(playQueueButton));
+        waitForFxEvents();
+
+        assertNoPopupWindowsShowing(robot);
+        assertThat(playQueueButton.isSelected()).isFalse();
+    }
+
+    private void assertNoPopupWindowsShowing(FxRobot robot) {
+        Window primaryWindow = robot.window(0);
+        assertThat(Window.getWindows().stream()
+                .filter(Window::isShowing)
+                .filter(window -> window != primaryWindow)
+                .toList())
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("uses auto-hide popover semantics without consuming dismissal clicks")
+    void usesAutoHidePopoverSemanticsWithoutConsumingDismissalClicks() {
+        PopOver popOver = playQueuePopOver();
+
+        assertThat(popOver.isAutoHide()).isTrue();
+        assertThat(popOver.getConsumeAutoHidingEvents()).isFalse();
+        assertThat(popOver.getStyleClass()).contains("play-queue-popover");
+    }
+
+    @Test
+    @DisplayName("closes the play-queue popover when clicking elsewhere in the player window")
+    void closesThePlayQueuePopoverWhenClickingElsewhereInThePlayerWindow(FxRobot robot) {
+        ToggleButton playQueueButton = robot.lookup("#playQueueButton").queryAs(ToggleButton.class);
+        Platform.runLater(playQueueButton::fire);
+        waitForFxEvents();
+
+        assertThat(playQueueWindow(robot).isShowing()).isTrue();
+
+        robot.clickOn("#songTitleLabel");
+        waitForFxEvents();
+
+        assertNoPopupWindowsShowing(robot);
+        assertThat(playQueueButton.isSelected()).isFalse();
+    }
+
+    @Test
+    @DisplayName("closes the play-queue popover when the owner window is hidden")
+    void closesThePlayQueuePopoverWhenTheOwnerWindowIsHidden(FxRobot robot) {
+        ToggleButton playQueueButton = robot.lookup("#playQueueButton").queryAs(ToggleButton.class);
+        Platform.runLater(playQueueButton::fire);
+        waitForFxEvents();
+
+        assertThat(playQueueWindow(robot).isShowing()).isTrue();
+
+        Stage stage = (Stage) robot.window(0);
+        Platform.runLater(stage::hide);
+        waitForFxEvents();
+
+        assertThat(Window.getWindows().stream()
+                .filter(Window::isShowing)
+                .filter(window -> !(window instanceof Stage))
+                .toList())
+                .isEmpty();
     }
 }
 

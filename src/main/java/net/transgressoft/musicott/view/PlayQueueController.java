@@ -1,5 +1,6 @@
 package net.transgressoft.musicott.view;
 
+import javafx.application.Platform;
 import javafx.scene.input.MouseEvent;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
@@ -8,7 +9,6 @@ import net.transgressoft.musicott.view.custom.table.AudioItemTableViewBase;
 import net.transgressoft.musicott.view.custom.table.TrackQueueListCell;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 
-import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -39,6 +39,7 @@ import java.util.function.Consumer;
 public class PlayQueueController {
 
     private static final String DRAG_OVER_STYLE = "-fx-border-color: rgb(99, 255, 109); -fx-border-width: 2px;";
+    private static final double LIST_VIEW_CHROME_HEIGHT = 2.0;
     // TrackQueueRow renders a 42px cover next to two label rows, plus the cell's own padding.
     // Used as the fixed cell size so the ListView's intrinsic prefHeight = items * cellSize and
     // the bottom-aligning VBox can shrink it to fit content with empty space at the top.
@@ -80,17 +81,7 @@ public class PlayQueueController {
         historyQueueButton.setId("historyQueueButton");
         queuesListView.setCellFactory(_ -> new TrackQueueListCell(() -> historyQueueButton.isSelected()));
         queuesListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        // Fixed cell size + height bound to current items lets the bottom-aligning VBox in the FXML
-        // shrink the list to its content so the rows hug the bottom of the popover.
         queuesListView.setFixedCellSize(TRACK_QUEUE_ROW_CELL_HEIGHT);
-        queuesListView.prefHeightProperty().bind(Bindings.createDoubleBinding(
-                () -> queuesListView.getItems() == null
-                        ? 0.0
-                        : queuesListView.getItems().size() * TRACK_QUEUE_ROW_CELL_HEIGHT,
-                queuesListView.itemsProperty(),
-                Bindings.size(playQueueList),
-                Bindings.size(historyQueueList)));
-        queuesListView.maxHeightProperty().bind(queuesListView.prefHeightProperty());
         queuesListView.setItems(playQueueList);
         queuesListView.setOnMouseClicked(this::onQueueListClicked);
 
@@ -110,12 +101,15 @@ public class PlayQueueController {
             else
                 showPlayQueue();
         });
+        refreshQueueListLayout();
     }
 
     private ListChangeListener<TrackQueueRow> queueChangeListener(ObservableList<TrackQueueRow> list, String label,
                                                                   Consumer<TrackQueueRow> remover) {
         return change -> {
+            boolean queueShapeChanged = false;
             while (change.next()) {
+                queueShapeChanged = queueShapeChanged || change.wasAdded() || change.wasRemoved() || change.wasReplaced();
                 change.getRemoved().forEach(TrackQueueRow::dispose);
                 // Route delete-button clicks through PlayerService so QueueUpdatedEvent /
                 // HistoryUpdatedEvent fires on every removal path consistently. Routing the
@@ -127,6 +121,8 @@ public class PlayQueueController {
                     logger.debug("Removing track from {} by clicking the button. Size: {}", label, list.size());
                 }));
             }
+            if (queueShapeChanged)
+                refreshQueueListLayout();
         };
     }
 
@@ -138,11 +134,13 @@ public class PlayQueueController {
         if (selected == null) {
             return;
         }
+        queuesListView.getSelectionModel().clearSelection();
         if (historyQueueButton.isSelected()) {
             playerService.playFromHistoryQueue(selected);
         } else {
             playerService.playFromQueue(selected);
         }
+        refreshQueueListLayout();
     }
 
     private void onDragOverQueue(DragEvent event) {
@@ -192,6 +190,7 @@ public class PlayQueueController {
         queuesListView.setItems(historyQueueList);
         queuesListView.getSelectionModel().clearSelection();
         titleQueueLabel.setText("Recently played");
+        refreshQueueListLayout();
         logger.trace("Showing history queue on the pane");
     }
 
@@ -199,6 +198,25 @@ public class PlayQueueController {
         queuesListView.setItems(playQueueList);
         queuesListView.getSelectionModel().clearSelection();
         titleQueueLabel.setText("Play Queue");
+        refreshQueueListLayout();
         logger.trace("Showing play queue on the pane");
+    }
+
+    private void refreshQueueListLayout() {
+        Platform.runLater(() -> {
+            boolean hasItems = queuesListView.getItems() != null && !queuesListView.getItems().isEmpty();
+            deleteAllButton.setVisible(hasItems);
+            deleteAllButton.setManaged(hasItems);
+            double targetHeight = hasItems
+                    ? queuesListView.getItems().size() * TRACK_QUEUE_ROW_CELL_HEIGHT + LIST_VIEW_CHROME_HEIGHT
+                    : 0.0;
+            queuesListView.setPrefHeight(targetHeight);
+            queuesListView.setMinHeight(0.0);
+            queuesListView.setMaxHeight(targetHeight);
+            queuesListView.refresh();
+            queuesListView.requestLayout();
+            queuesListView.autosize();
+            playQueuePane.requestLayout();
+        });
     }
 }

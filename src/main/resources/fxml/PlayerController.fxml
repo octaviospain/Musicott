@@ -89,7 +89,7 @@
             <children>
                 <ToggleButton fx:id="playQueueButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="20.0"
                               prefWidth="20.0" StackPane.alignment="CENTER"/>
-                <fx:include fx:id="playQueueLayout" source="PlayQueueController.fxml" visible="false"/>
+                <fx:include fx:id="playQueueLayout" source="PlayQueueController.fxml"/>
             </children>
         </StackPane>
     </children>
