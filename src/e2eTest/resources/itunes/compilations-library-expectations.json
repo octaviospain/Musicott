@@ -1,0 +1,63 @@
+{
+  "trackCount": 1173,
+  "playlistCount": 240,
+  "titleQuery": "Phase18 Title Sentinel",
+  "artistQuery": "Phase18 Primary Artist",
+  "artistInvolvedQuery": "Phase18 Guest Artist",
+  "albumQuery": "Phase18 Album Sentinel",
+  "relatedMetadataQuery": "Phase18 Related Metadata Sentinel",
+  "allTracksFilters": [
+    {
+      "name": "title",
+      "query": "Phase18 Title Sentinel",
+      "expectedCount": 1
+    },
+    {
+      "name": "artist",
+      "query": "Phase18 Primary Artist",
+      "expectedCount": 1
+    },
+    {
+      "name": "artistInvolved",
+      "query": "Phase18 Guest Artist",
+      "expectedCount": 1
+    },
+    {
+      "name": "album",
+      "query": "Phase18 Album Sentinel",
+      "expectedCount": 1
+    },
+    {
+      "name": "relatedMetadata",
+      "query": "Phase18 Related Metadata Sentinel",
+      "expectedCount": 1
+    }
+  ],
+  "artistsFilters": [
+    {
+      "name": "artist",
+      "query": "Phase18 Primary Artist",
+      "expectedCount": 1
+    },
+    {
+      "name": "title",
+      "query": "Phase18 Title Sentinel",
+      "expectedCount": 1
+    },
+    {
+      "name": "artistInvolved",
+      "query": "Phase18 Guest Artist",
+      "expectedCount": 2
+    },
+    {
+      "name": "album",
+      "query": "Phase18 Album Sentinel",
+      "expectedCount": 1
+    },
+    {
+      "name": "relatedMetadata",
+      "query": "Phase18 Related Metadata Sentinel",
+      "expectedCount": 1
+    }
+  ]
+}

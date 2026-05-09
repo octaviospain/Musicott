@@ -271,10 +271,38 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
     }
 
     private boolean audioItemContainsQuery(ObservableAudioItem audioItem, String query) {
-        return audioItem.getArtist().getName().toLowerCase().contains(query) ||
-            audioItem.getAlbum().getName().toLowerCase().contains(query) ||
-            audioItem.getAlbum().getAlbumArtist().getName().toLowerCase().contains(query) ||
-            audioItem.getTitle().toLowerCase().contains(query);
+        if (audioItem.getTitle() != null && audioItem.getTitle().toLowerCase().contains(query)) {
+            return true;
+        }
+
+        var artist = audioItem.getArtist();
+        if (artist != null && artist.getName() != null && artist.getName().toLowerCase().contains(query)) {
+            return true;
+        }
+
+        if (audioItem.getArtistsInvolved() != null && audioItem.getArtistsInvolved().stream()
+                .map(Artist::getName)
+                .filter(Objects::nonNull)
+                .anyMatch(name -> name.toLowerCase().contains(query))) {
+            return true;
+        }
+
+        var album = audioItem.getAlbum();
+        if (album != null) {
+            if (album.getName() != null && album.getName().toLowerCase().contains(query)) {
+                return true;
+            }
+            if (album.getAlbumArtist() != null && album.getAlbumArtist().getName() != null
+                    && album.getAlbumArtist().getName().toLowerCase().contains(query)) {
+                return true;
+            }
+            if (album.getLabel() != null && album.getLabel().getName() != null
+                    && album.getLabel().getName().toLowerCase().contains(query)) {
+                return true;
+            }
+        }
+
+        return audioItem.getComments() != null && audioItem.getComments().toLowerCase().contains(query);
     }
 
     public void selectFocusAndScroll(ObservableAudioItem audioItem) {

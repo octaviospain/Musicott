@@ -31,6 +31,7 @@ commons-io = "2.22.0"
 commons-lang3 = "3.20.0"
 kotlin-logging = "3.0.5"
 jakarta-annotation = "3.0.0"
+ddplist = "1.29"
 
 # Testing
 junit-bom = "6.0.3"
@@ -89,6 +90,7 @@ nv-i18n = { module = "com.neovisionaries:nv-i18n", version.ref = "nv-i18n" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 jakarta-annotation = { module = "jakarta.annotation:jakarta.annotation-api", version.ref = "jakarta-annotation" }
+dd-plist = { module = "com.googlecode.plist:dd-plist", version.ref = "ddplist" }
 
 # Testing
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }

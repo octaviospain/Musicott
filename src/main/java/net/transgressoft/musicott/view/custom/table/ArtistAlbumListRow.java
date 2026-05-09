@@ -18,6 +18,7 @@ import net.transgressoft.musicott.view.custom.ApplicationImage;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.fxmisc.easybind.EasyBind.map;
@@ -231,6 +232,11 @@ public class ArtistAlbumListRow extends HBox {
         var artist = item.getArtist();
         if (artist != null && artist.getName() != null
                 && artist.getName().toLowerCase().contains(lowerCaseQuery)) {
+            return true;
+        }
+        if (item.getArtistsInvolved() != null && item.getArtistsInvolved().stream()
+                .map(Artist::getName)
+                .anyMatch(name -> name.toLowerCase().contains(lowerCaseQuery))) {
             return true;
         }
         var album = item.getAlbum();
