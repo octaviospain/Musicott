@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.annotation.DirtiesContext;
 import org.testfx.api.FxRobot;
 import org.testfx.api.FxToolkit;
 import org.testfx.framework.junit5.ApplicationExtension;
@@ -22,12 +23,14 @@ import org.testfx.framework.junit5.ApplicationExtension;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest(classes = {MusicottApplication.class, MusicottApplicationE2E.E2eTestPaths.class})
 @ActiveProfiles("e2e")
 @ExtendWith(ApplicationExtension.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class MusicottApplicationE2E {
 
 	@TestConfiguration
@@ -76,7 +79,13 @@ class MusicottApplicationE2E {
 			if (testStage.isShowing()) {
 				testStage.hide();
 			}
+			testStage.setScene(null);
 		});
+	}
+
+	@AfterAll
+	static void afterAll() throws Exception {
+		FxToolkit.cleanupStages();
 	}
 
 	@Test
@@ -93,9 +102,9 @@ class MusicottApplicationE2E {
 		// splash-root is the only splash-specific signal in the scene graph.
 		long splashWindowCount = Window.getWindows().stream()
 				.map(Window::getScene)
-				.filter(scene -> scene != null)
+				.filter(Objects::nonNull)
 				.map(Scene::getRoot)
-				.filter(root -> root != null)
+				.filter(Objects::nonNull)
 				.filter(root -> root.getStyleClass().contains("splash-root"))
 				.count();
 

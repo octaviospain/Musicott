@@ -120,6 +120,7 @@ dependencies {
     testFixturesImplementation libs.mockito.core
     testFixturesImplementation libs.bundles.testfx
     testFixturesImplementation libs.spring.boot.starter.test
+    testFixturesImplementation libs.dd.plist
     testFixturesImplementation(platform(libs.junit.bom))
     testFixturesImplementation libs.kotlinx.coroutines.test
     testFixturesImplementation libs.junit.jupiter
@@ -177,6 +178,9 @@ tasks.register('e2eTest', Test) {
     classpath = sourceSets.e2eTest.runtimeClasspath
     useJUnitPlatform()
     shouldRunAfter tasks.named('uiTest')
+    // Full JavaFX application E2Es cannot reliably share one test JVM once TestFX tears down
+    // a class-level ApplicationExtension. Fork per class keeps JavaFX toolkit lifecycle isolated.
+    forkEvery = 1
     configureTestFxSystemProperties(it)
     testLogging { events "passed", "skipped", "failed" }
     jvmArgs = testJvmArgs

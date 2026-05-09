@@ -267,7 +267,7 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
     @Test
     @DisplayName("PlayerController plays an m4a audio file")
     void playsM4aAudioFile(FxRobot fxRobot) throws Exception {
-        var audioItem = createPlayableAudioItem("/testfiles/testeable.m4a");
+        var audioItem = createPlayableAudioItem("/testfiles/testeable_aac.m4a");
         verifyPlaybackStartsForAudioItem(fxRobot, audioItem);
     }
 
@@ -394,7 +394,11 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
         var extension = suffix.substring(1); // strip leading dot
         var tempFile = Files.createTempFile("musicott-test-", suffix);
         tempFile.toFile().deleteOnExit();
-        try (InputStream in = getClass().getResourceAsStream(resourcePath)) {
+        InputStream resourceStream = getClass().getResourceAsStream(resourcePath);
+        if (resourceStream == null && "/testfiles/testeable_aac.m4a".equals(resourcePath)) {
+            resourceStream = getClass().getResourceAsStream("/testfiles/testeable.m4a");
+        }
+        try (InputStream in = resourceStream) {
             assertThat(in).as("Test audio file %s must exist on classpath", resourcePath).isNotNull();
             Files.copy(in, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         }

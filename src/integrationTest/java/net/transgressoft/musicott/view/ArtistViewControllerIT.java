@@ -10,11 +10,13 @@ import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
-import net.transgressoft.lirp.event.LirpEventPublisher;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
+import net.transgressoft.lirp.event.LirpEventPublisher;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.musicott.events.SearchTextTypedEvent;
 import net.transgressoft.musicott.test.ApplicationTestBase;
+import net.transgressoft.musicott.test.ArtistViewTestFixtures;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
 import net.transgressoft.musicott.view.custom.table.ArtistAlbumListRow;
@@ -32,6 +34,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.testfx.api.FxRobot;
 import org.testfx.util.WaitForAsyncUtils;
 
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import static net.transgressoft.commons.music.audio.ImmutableArtist.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -48,6 +53,9 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
 
     @Autowired
     SetProperty<Artist> artistsProperty;
+
+    @Autowired
+    ListProperty<ObservableAudioItem> audioItemsProperty;
 
     @Autowired
     FxControllerAndView<ArtistViewController, SplitPane> artistViewAndController;
@@ -89,6 +97,44 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
 
         // Artist list view remains accessible after artist selection
         assertThat(fxRobot.lookup("#artistsListView").tryQuery()).isPresent();
+    }
+
+    @Test
+    @DisplayName("ArtistViewController displays tracks when selected artist only appears as involved artist")
+    void displaysTracksWhenSelectedArtistOnlyAppearsAsInvolvedArtist(FxRobot fxRobot) throws Exception {
+        Artist akkya = of("Akkya");
+        Artist triggerLive = of("Trigger Live");
+        Artist bonobo = of("Bonobo");
+        ObservableAudioItem bonoboTrack = ArtistViewTestFixtures.audioItem(
+                "Kiara",
+                bonobo,
+                ArtistViewTestFixtures.album("Black Sands", bonobo, "Ninja Tune"),
+                Set.of(bonobo),
+                1);
+        ObservableAudioItem akkyaTrack = ArtistViewTestFixtures.audioItem(
+                "Circle (Akkya Remix)",
+                triggerLive,
+                ArtistViewTestFixtures.album("Diffusion 7.0 - Electronic Arrangment of Techno", of(""), "Gastspiel Records"),
+                Set.of(triggerLive, akkya),
+                21);
+
+        Platform.runLater(() -> {
+            artistsProperty.clear();
+            audioItemsProperty.clear();
+            audioItemsProperty.addAll(bonoboTrack, akkyaTrack);
+            artistsProperty.addAll(Set.of(bonobo, triggerLive, akkya));
+        });
+        waitForFxEvents();
+
+        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        ListView<ArtistAlbumListRow> albumsListView = fxRobot.lookup("#albumsListView").queryAs(ListView.class);
+
+        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonobo));
+        waitForDisplayedTitle(albumsListView, "Kiara");
+
+        Platform.runLater(() -> artistsListView.getSelectionModel().select(akkya));
+        waitForDisplayedTitle(albumsListView, "Circle (Akkya Remix)");
+        assertThat(displayedTitles(albumsListView)).doesNotContain("Kiara");
     }
 
     @Test
@@ -156,6 +202,18 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         assertThat(artistsListView.getSelectionModel().getSelectedItem()).isNotNull();
         assertThat(artistsListView.getSelectionModel().getSelectedItem()).isSameAs(artistsListView.getItems().get(0));
     }
+
+    private static void waitForDisplayedTitle(ListView<ArtistAlbumListRow> albumsListView, String title) throws Exception {
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> displayedTitles(albumsListView).contains(title));
+        waitForFxEvents();
+    }
+
+    private static Set<String> displayedTitles(ListView<ArtistAlbumListRow> albumsListView) {
+        return albumsListView.getItems().stream()
+                .flatMap(row -> row.containedAudioItemsProperty().stream())
+                .map(ObservableAudioItem::getTitle)
+                .collect(java.util.stream.Collectors.toSet());
+    }
 }
 
 @JavaFxSpringTestConfiguration(includeFilters = {
@@ -173,10 +231,18 @@ class ArtistViewControllerITConfiguration {
     }
 
     @Bean
+    public ListProperty<ObservableAudioItem> audioItemsProperty() {
+        return new SimpleListProperty<>(FXCollections.observableArrayList());
+    }
+
+    @Bean
     @SuppressWarnings("unchecked")
-    public ObservableAudioLibrary audioRepository(ReadOnlySetProperty<Artist> artistsProperty) {
+    public ObservableAudioLibrary audioRepository(
+            ReadOnlySetProperty<Artist> artistsProperty,
+            ReadOnlyListProperty<ObservableAudioItem> audioItemsProperty) {
         var repository = mock(ObservableAudioLibrary.class);
         when(repository.getArtistsProperty()).thenReturn(artistsProperty);
+        when(repository.getAudioItemsProperty()).thenReturn(audioItemsProperty);
         when(repository.getArtistCatalogPublisher()).thenReturn(mock(LirpEventPublisher.class));
         return repository;
     }
