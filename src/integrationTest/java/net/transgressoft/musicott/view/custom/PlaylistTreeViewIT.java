@@ -7,10 +7,8 @@ import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import net.transgressoft.commons.fx.music.*;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
+import net.transgressoft.commons.fx.music.audio.*;
+import net.transgressoft.commons.fx.music.playlist.*;
 import net.transgressoft.musicott.test.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,8 +22,6 @@ import org.springframework.test.annotation.*;
 import org.testfx.api.FxRobot;
 import org.testfx.util.WaitForAsyncUtils;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -175,19 +171,9 @@ public class PlaylistTreeViewIT extends ApplicationTestBase<PlaylistTreeView> {
 ))
 class PlaylistTreeViewTestConfiguration {
 
-    File playlistsFile, audioItemsFile;
-
-    public PlaylistTreeViewTestConfiguration() throws IOException {
-        playlistsFile = Files.createTempFile("playlists-test", ".json").toFile();
-        audioItemsFile = Files.createTempFile("audio-items-test", ".json").toFile();
-    }
-
     @Bean
     public FXMusicLibrary musicLibrary() {
-        return FXMusicLibrary.builder()
-                .audioLibraryJsonFile(audioItemsFile)
-                .playlistHierarchyJsonFile(playlistsFile)
-                .build();
+        return FXMusicLibrary.builder().build();
     }
 
     // ├──Best hits

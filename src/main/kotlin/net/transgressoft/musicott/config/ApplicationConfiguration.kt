@@ -22,11 +22,17 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.input.KeyCombination
 import net.transgressoft.commons.fx.music.FXMusicLibrary
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItemMapSerializer
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy
+import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistMapSerializer
+import net.transgressoft.commons.media.waveform.AudioWaveformMapSerializer
+import net.transgressoft.commons.music.audio.AudioMetadataIO
+import net.transgressoft.commons.music.audio.JAudioTaggerMetadataIO
 import net.transgressoft.commons.music.waveform.AudioWaveform
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository
+import net.transgressoft.lirp.persistence.json.JsonFileRepository
 import org.apache.commons.lang3.SystemUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
@@ -79,11 +85,14 @@ class ApplicationConfiguration @Autowired constructor(private val applicationPat
         SimpleObjectProperty(null, "selected playlist", Optional.empty())
 
     @Bean
+    fun audioMetadataIO(): AudioMetadataIO = JAudioTaggerMetadataIO()
+
+    @Bean
     fun musicLibrary(): FXMusicLibrary =
         FXMusicLibrary.builder()
-            .audioLibraryJsonFile(applicationPaths.audioItemsPath.toFile())
-            .playlistHierarchyJsonFile(applicationPaths.playlistsPath.toFile())
-            .waveformRepositoryJsonFile(applicationPaths.waveformsPath.toFile())
+            .audioRepository(JsonFileRepository(applicationPaths.audioItemsPath.toFile(), ObservableAudioItemMapSerializer))
+            .playlistRepository(JsonFileRepository(applicationPaths.playlistsPath.toFile(), ObservablePlaylistMapSerializer, loadOnInit = false))
+            .waveformRepository(JsonFileRepository(applicationPaths.waveformsPath.toFile(), AudioWaveformMapSerializer))
             .build()
 
     @Bean

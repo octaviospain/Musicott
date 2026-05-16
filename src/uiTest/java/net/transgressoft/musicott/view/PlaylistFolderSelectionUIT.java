@@ -50,7 +50,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.testfx.api.FxRobot;
 import org.testfx.util.WaitForAsyncUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -151,20 +150,9 @@ class PlaylistFolderSelectionUIT extends ApplicationTestBase<BorderPane> {
 })
 class PlaylistFolderSelectionUITConfiguration {
 
-    File playlistsFile;
-    File audioItemsFile;
-
-    public PlaylistFolderSelectionUITConfiguration() throws IOException {
-        playlistsFile = Files.createTempFile("playlists-folder-uit", ".json").toFile();
-        audioItemsFile = Files.createTempFile("audio-items-folder-uit", ".json").toFile();
-    }
-
     @Bean
     public FXMusicLibrary musicLibrary() {
-        return FXMusicLibrary.builder()
-                .audioLibraryJsonFile(audioItemsFile)
-                .playlistHierarchyJsonFile(playlistsFile)
-                .build();
+        return FXMusicLibrary.builder().build();
     }
 
     @Bean
@@ -228,7 +216,7 @@ class PlaylistFolderSelectionUITConfiguration {
         org.mockito.Mockito.when(service.getPlayQueueList()).thenReturn(FXCollections.observableArrayList());
         org.mockito.Mockito.when(service.getHistoryQueueList()).thenReturn(FXCollections.observableArrayList());
         org.mockito.Mockito.when(service.currentTrack()).thenReturn(Optional.empty());
-        org.mockito.Mockito.when(service.getTotalDuration()).thenReturn(javafx.util.Duration.ZERO);
+        org.mockito.Mockito.when(service.getTotalDuration()).thenReturn(java.time.Duration.ZERO);
         return service;
     }
 

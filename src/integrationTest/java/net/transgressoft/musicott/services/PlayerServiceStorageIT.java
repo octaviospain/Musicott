@@ -1,8 +1,11 @@
 package net.transgressoft.musicott.services;
 
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.player.JavaFxPlayer;
+import net.transgressoft.commons.fx.music.player.FXAudioItemPlayer;
 import net.transgressoft.commons.music.player.AudioItemPlayer;
+import net.transgressoft.commons.music.player.UnsupportedAudioPlaybackException;
+import net.transgressoft.musicott.events.AudioItemChangedEvent;
+import net.transgressoft.musicott.events.ErrorEvent;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 
 import javafx.beans.property.SimpleIntegerProperty;
@@ -27,7 +30,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -86,14 +92,14 @@ class PlayerServiceStorageIT {
         // Seed currentTrack via reflection (private field).
         ReflectionTestUtils.setField(playerService, "currentTrack", Optional.of(itemCurrent));
 
-        // previous() ends with setPlayer(...) which constructs JavaFxPlayer — that constructor
-        // chains into javafx.scene.media.MediaPlayer and loads jfxmedia.dll, which crashes the
+        // previous() ends with setPlayer(...) which constructs FXAudioItemPlayer — that constructor
+        // chains into native playback setup, which crashes the
         // Windows headless JVM with STATUS_ACCESS_VIOLATION 0xC0000005 (uncatchable native crash).
-        // Intercept `new JavaFxPlayer()` with Mockito.mockConstruction so the list mutations
+        // Intercept `new FXAudioItemPlayer()` with Mockito.mockConstruction so the list mutations
         // execute and the no-op `play(...)` returns immediately on every OS. setPlayer also
         // calls bindMediaPlayer() → trackPlayer.getStatusProperty().addListener(...), so stub
         // the status property too to avoid an NPE on the listener attach.
-        try (MockedConstruction<JavaFxPlayer> ignored = Mockito.mockConstruction(JavaFxPlayer.class,
+        try (MockedConstruction<FXAudioItemPlayer> ignored = Mockito.mockConstruction(FXAudioItemPlayer.class,
                 (mock, context) -> {
                     Mockito.doNothing().when(mock).play(Mockito.any());
                     Mockito.when(mock.getStatusProperty())
@@ -161,9 +167,9 @@ class PlayerServiceStorageIT {
         ObservableList<TrackQueueRow> queue = playerService.getPlayQueueList();
         TrackQueueRow rowA = queue.get(0);
 
-        // playFromQueue calls setPlayer which `new`s JavaFxPlayer — see the rationale on the
+        // playFromQueue calls setPlayer which `new`s FXAudioItemPlayer — see the rationale on the
         // previous test for why we intercept the constructor on every OS.
-        try (MockedConstruction<JavaFxPlayer> ignored = Mockito.mockConstruction(JavaFxPlayer.class,
+        try (MockedConstruction<FXAudioItemPlayer> ignored = Mockito.mockConstruction(FXAudioItemPlayer.class,
                 (mock, context) -> {
                     Mockito.doNothing().when(mock).play(Mockito.any());
                     Mockito.when(mock.getStatusProperty())
@@ -223,10 +229,45 @@ class PlayerServiceStorageIT {
         assertThat(history.get(history.size() - 1).getTrack()).isSameAs(items[151]);
     }
 
+    @Test
+    @DisplayName("play publishes AudioItemChangedEvent once the player has been wired up")
+    void playPublishesAudioItemChangedEventOnceThePlayerHasBeenWiredUp() throws Exception {
+        ObservableAudioItem item = newPlayableAudioItem("Wired");
+
+        try (MockedConstruction<FXAudioItemPlayer> ignored = Mockito.mockConstruction(FXAudioItemPlayer.class,
+                (mockPlayer, context) -> {
+                    Mockito.doNothing().when(mockPlayer).play(Mockito.any());
+                    Mockito.when(mockPlayer.getStatusProperty())
+                            .thenReturn(new SimpleObjectProperty<>(AudioItemPlayer.Status.UNKNOWN));
+                })) {
+            playerService.play(item);
+        }
+
+        verify(applicationEventPublisher).publishEvent(Mockito.any(AudioItemChangedEvent.class));
+        assertThat(playerService.currentTrack()).contains(item);
+    }
+
+    @Test
+    @DisplayName("play publishes ErrorEvent and skips AudioItemChangedEvent when the player rejects the format")
+    void playPublishesErrorEventWhenPlayerRejectsTheFormat() throws Exception {
+        ObservableAudioItem item = newPlayableAudioItem("BrokenMp3");
+
+        try (MockedConstruction<FXAudioItemPlayer> ignored = Mockito.mockConstruction(FXAudioItemPlayer.class,
+                (mockPlayer, context) -> Mockito.doThrow(
+                        new UnsupportedAudioPlaybackException("unsupported format", null))
+                        .when(mockPlayer).play(Mockito.any()))) {
+            playerService.play(item);
+        }
+
+        verify(applicationEventPublisher).publishEvent(Mockito.any(ErrorEvent.class));
+        verify(applicationEventPublisher, never()).publishEvent(any(AudioItemChangedEvent.class));
+        assertThat(playerService.currentTrack()).isEmpty();
+    }
+
     @SuppressWarnings("unchecked")
     ObservableAudioItem newPlayableAudioItem(String title) throws Exception {
         ObservableAudioItem item = mock(ObservableAudioItem.class);
-        // Playable extension required by JavaFxPlayer.Companion.isPlayable
+        // Playable extension required by AudioItemPlayer.Companion.isPlayable
         Path tempFile = Files.createTempFile("musicott-storage-it-", ".mp3");
         tempFile.toFile().deleteOnExit();
         when(item.getPath()).thenReturn(tempFile);

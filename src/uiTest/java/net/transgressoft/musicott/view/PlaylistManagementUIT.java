@@ -14,7 +14,6 @@ import net.transgressoft.commons.fx.music.*;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
-import net.transgressoft.lirp.persistence.json.JsonFileRepository;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.test.*;
 import net.transgressoft.musicott.view.custom.PlaylistTreeView;
@@ -32,14 +31,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.test.annotation.DirtiesContext;
 import org.testfx.api.FxRobot;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static net.transgressoft.commons.fx.music.playlist.ObservablePlaylistSerializerKt.ObservablePlaylistMapSerializer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.not;
@@ -429,17 +424,9 @@ class PlaylistManagementUIT extends ApplicationTestBase<VBox> {
 })
 class PlaylistManagementUITConfiguration {
 
-    File playlistsFile;
-
-    public PlaylistManagementUITConfiguration() throws IOException {
-        playlistsFile = Files.createTempFile("playlists-ui-test", ".json").toFile();
-    }
-
     @Bean
     public FXMusicLibrary musicLibrary() {
-        return FXMusicLibrary.builder()
-                .playlistHierarchyJsonFile(playlistsFile)
-                .build();
+        return FXMusicLibrary.builder().build();
     }
 
     @Bean

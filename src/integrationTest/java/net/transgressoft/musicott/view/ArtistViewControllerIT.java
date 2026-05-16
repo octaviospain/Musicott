@@ -10,13 +10,15 @@ import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
+import net.transgressoft.commons.fx.music.FxAudioItemTestFactory;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
-import net.transgressoft.lirp.event.LirpEventPublisher;
 import net.transgressoft.commons.music.audio.Artist;
+import net.transgressoft.commons.music.audio.AudioItemTestFactory;
+import net.transgressoft.commons.music.audio.ImmutableLabel;
+import net.transgressoft.lirp.event.LirpEventPublisher;
 import net.transgressoft.musicott.events.SearchTextTypedEvent;
 import net.transgressoft.musicott.test.ApplicationTestBase;
-import net.transgressoft.musicott.test.ArtistViewTestFixtures;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
 import net.transgressoft.musicott.view.custom.table.ArtistAlbumListRow;
@@ -105,18 +107,20 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         Artist akkya = of("Akkya");
         Artist triggerLive = of("Trigger Live");
         Artist bonobo = of("Bonobo");
-        ObservableAudioItem bonoboTrack = ArtistViewTestFixtures.audioItem(
+        ObservableAudioItem bonoboTrack = audioItem(
                 "Kiara",
                 bonobo,
-                ArtistViewTestFixtures.album("Black Sands", bonobo, "Ninja Tune"),
-                Set.of(bonobo),
-                1);
-        ObservableAudioItem akkyaTrack = ArtistViewTestFixtures.audioItem(
+                "Black Sands",
+                bonobo,
+                1,
+                Set.of(bonobo));
+        ObservableAudioItem akkyaTrack = audioItem(
                 "Circle (Akkya Remix)",
                 triggerLive,
-                ArtistViewTestFixtures.album("Diffusion 7.0 - Electronic Arrangment of Techno", of(""), "Gastspiel Records"),
-                Set.of(triggerLive, akkya),
-                21);
+                "Diffusion 7.0 - Electronic Arrangment of Techno",
+                of(""),
+                21,
+                Set.of(triggerLive, akkya));
 
         Platform.runLater(() -> {
             artistsProperty.clear();
@@ -213,6 +217,27 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
                 .flatMap(row -> row.containedAudioItemsProperty().stream())
                 .map(ObservableAudioItem::getTitle)
                 .collect(java.util.stream.Collectors.toSet());
+    }
+
+    private static ObservableAudioItem audioItem(
+            String title,
+            Artist artist,
+            String albumName,
+            Artist albumArtist,
+            int trackNumber,
+            Set<Artist> artistsInvolved) {
+        return FxAudioItemTestFactory.createFxAudioItem(attributes -> {
+            attributes.setTitle(title);
+            attributes.setArtist(artist);
+            attributes.setAlbum(AudioItemTestFactory.createAlbum(
+                    albumName,
+                    albumArtist,
+                    false,
+                    null,
+                    ImmutableLabel.of("Test Label")));
+            attributes.setTrackNumber((short) trackNumber);
+            attributes.setDiscNumber((short) 1);
+        }, artistsInvolved);
     }
 }
 

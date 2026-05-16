@@ -10,12 +10,12 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.AudioFileType;
 import net.transgressoft.commons.music.itunes.ImportResult;
+import net.transgressoft.commons.music.itunes.ItunesLibraryTestFixture;
 import net.transgressoft.commons.music.itunes.ItunesImportPolicy;
 import net.transgressoft.commons.music.itunes.ItunesPlaylist;
 import net.transgressoft.musicott.config.ApplicationPaths;
 import net.transgressoft.musicott.service.MediaImportService;
 import net.transgressoft.musicott.test.itunes.CompilationsItunesLibraryExpectations;
-import net.transgressoft.musicott.test.itunes.CompilationsItunesLibraryFixture;
 import net.transgressoft.musicott.view.MainController;
 import net.transgressoft.musicott.view.NavigationController;
 import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
@@ -105,8 +105,11 @@ class ItunesCompilationsLibraryE2E {
     @Test
     @DisplayName("Musicott imports the Compilations iTunes library and filters All Tracks and Artists views")
     void importsCompilationsItunesLibraryAndFiltersAllTracksAndArtistsViews(FxRobot fxRobot) throws Exception {
-        var fixture = CompilationsItunesLibraryFixture.prepare(tempDir);
-        var expectations = fixture.expectations();
+        var fixture = ItunesLibraryTestFixture.prepare(
+                tempDir,
+                ItunesCompilationsLibraryE2E.class,
+                "/itunes/compilations-library.xml");
+        var expectations = CompilationsItunesLibraryExpectations.load();
         var parsedLibrary = mediaImportService.parseLibrary(fixture.xmlPath());
         List<ItunesPlaylist> selectedPlaylists = parsedLibrary.getPlaylists().stream()
                 .filter(playlist -> !playlist.isFolder())
@@ -119,8 +122,7 @@ class ItunesCompilationsLibraryE2E {
         assertThat(result.getUnresolved()).isEmpty();
         waitFor(30, TimeUnit.SECONDS, () -> audioLibrary.getAudioItemsProperty().size() == expectations.trackCount());
         assertThat(audioLibrary.getAudioItemsProperty()).hasSize(expectations.trackCount());
-        waitFor(30, TimeUnit.SECONDS, () -> audioLibrary.getAudioItemsProperty().stream()
-                .allMatch(item -> audioLibrary.getArtistCatalog(item.getArtist()).isPresent()));
+        waitForArtistCatalogs();
 
         selectNavigationMode(fxRobot, NavigationController.NavigationMode.ALL_AUDIO_ITEMS);
         FullAudioItemTableView table = visibleTrackTable(fxRobot);
@@ -137,6 +139,23 @@ class ItunesCompilationsLibraryE2E {
     private static ItunesImportPolicy importPolicy() {
         Set<AudioFileType> acceptedFileTypes = Set.copyOf(Arrays.asList(AudioFileType.values()));
         return new ItunesImportPolicy(false, true, false, acceptedFileTypes);
+    }
+
+    private void waitForArtistCatalogs() throws TimeoutException {
+        try {
+            waitFor(30, TimeUnit.SECONDS, () -> audioLibrary.getAudioItemsProperty().stream()
+                    .allMatch(item -> audioLibrary.getArtistCatalog(item.getArtist()).isPresent()));
+        } catch (TimeoutException e) {
+            long missingCount = audioLibrary.getAudioItemsProperty().stream()
+                    .filter(item -> audioLibrary.getArtistCatalog(item.getArtist()).isEmpty())
+                    .count();
+            var sample = audioLibrary.getAudioItemsProperty().stream()
+                    .filter(item -> audioLibrary.getArtistCatalog(item.getArtist()).isEmpty())
+                    .limit(10)
+                    .map(item -> item.getTitle() + " / " + item.getArtist().getName() + " / " + item.getUniqueId())
+                    .toList();
+            throw new AssertionError("Missing artist catalogs for " + missingCount + " audio items: " + sample, e);
+        }
     }
 
     private static void selectNavigationMode(FxRobot fxRobot, NavigationController.NavigationMode mode) {

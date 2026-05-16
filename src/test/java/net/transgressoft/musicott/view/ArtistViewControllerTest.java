@@ -2,10 +2,12 @@ package net.transgressoft.musicott.view;
 
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
+import net.transgressoft.commons.fx.music.FxAudioItemTestFactory;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.Artist;
-import net.transgressoft.musicott.test.ArtistViewTestFixtures;
+import net.transgressoft.commons.music.audio.AudioItemTestFactory;
+import net.transgressoft.commons.music.audio.ImmutableLabel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
@@ -29,18 +31,20 @@ class ArtistViewControllerTest {
         Artist akkya = of("Akkya");
         Artist triggerLive = of("Trigger Live");
         Artist bonobo = of("Bonobo");
-        ObservableAudioItem akkyaTrack = ArtistViewTestFixtures.audioItem(
+        ObservableAudioItem akkyaTrack = audioItem(
                 "Circle (Akkya Remix)",
                 triggerLive,
-                ArtistViewTestFixtures.album("Diffusion 7.0", of(""), "Gastspiel Records"),
-                Set.of(triggerLive, akkya),
-                21);
-        ObservableAudioItem bonoboTrack = ArtistViewTestFixtures.audioItem(
+                "Diffusion 7.0",
+                of(""),
+                21,
+                Set.of(triggerLive, akkya));
+        ObservableAudioItem bonoboTrack = audioItem(
                 "Kiara",
                 bonobo,
-                ArtistViewTestFixtures.album("Black Sands", bonobo, "Ninja Tune"),
-                Set.of(bonobo),
-                1);
+                "Black Sands",
+                bonobo,
+                1,
+                Set.of(bonobo));
 
         var audioItems = new SimpleListProperty<>(FXCollections.observableArrayList(akkyaTrack, bonoboTrack));
         var audioLibrary = mock(ObservableAudioLibrary.class);
@@ -55,5 +59,26 @@ class ArtistViewControllerTest {
                     assertThat(albumSet.getAlbumName()).isEqualTo("Diffusion 7.0");
                     assertThat((java.util.List<ObservableAudioItem>) albumSet).containsExactly(akkyaTrack);
                 });
+    }
+
+    private static ObservableAudioItem audioItem(
+            String title,
+            Artist artist,
+            String albumName,
+            Artist albumArtist,
+            int trackNumber,
+            Set<Artist> artistsInvolved) {
+        return FxAudioItemTestFactory.createFxAudioItem(attributes -> {
+            attributes.setTitle(title);
+            attributes.setArtist(artist);
+            attributes.setAlbum(AudioItemTestFactory.createAlbum(
+                    albumName,
+                    albumArtist,
+                    false,
+                    null,
+                    ImmutableLabel.of("Test Label")));
+            attributes.setTrackNumber((short) trackNumber);
+            attributes.setDiscNumber((short) 1);
+        }, artistsInvolved);
     }
 }

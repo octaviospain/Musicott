@@ -138,16 +138,16 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
                 .orElseThrow();
 
         // With Duration.ZERO (default mock), seek should NOT be called
-        when(playerService.getTotalDuration()).thenReturn(javafx.util.Duration.ZERO);
+        when(playerService.getTotalDuration()).thenReturn(java.time.Duration.ZERO);
         Platform.runLater(() -> Event.fireEvent(waveformPane, new SeekEvent(waveformPane, waveformPane, 0.5)));
         waitForFxEvents();
         verify(playerService, never()).seek(any());
 
         // With valid duration, seek SHOULD be called
-        when(playerService.getTotalDuration()).thenReturn(javafx.util.Duration.millis(10000));
+        when(playerService.getTotalDuration()).thenReturn(java.time.Duration.ofMillis(10000));
         Platform.runLater(() -> Event.fireEvent(waveformPane, new SeekEvent(waveformPane, waveformPane, 0.5)));
         waitForFxEvents();
-        verify(playerService).seek(javafx.util.Duration.millis(5000));
+        verify(playerService).seek(java.time.Duration.ofMillis(5000));
     }
 
     @Test
@@ -440,7 +440,7 @@ class PlayerControllerITConfiguration {
         when(service.getPlayQueueList()).thenReturn(FXCollections.observableArrayList());
         when(service.getHistoryQueueList()).thenReturn(FXCollections.observableArrayList());
         when(service.currentTrack()).thenReturn(Optional.empty());
-        when(service.getTotalDuration()).thenReturn(javafx.util.Duration.ZERO);
+        when(service.getTotalDuration()).thenReturn(java.time.Duration.ZERO);
         return service;
     }
 

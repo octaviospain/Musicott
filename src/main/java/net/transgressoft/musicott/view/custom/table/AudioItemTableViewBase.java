@@ -12,10 +12,10 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.*;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.player.JavaFxPlayer;
 import net.transgressoft.commons.music.audio.Album;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.Genre;
+import net.transgressoft.commons.music.player.*;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import org.apache.commons.io.FileUtils;
@@ -354,7 +354,7 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         private Consumer<ObservableAudioItem> onAudioItemChangedHandler() {
             return item -> {
                 if (item != null) {
-                    pseudoClassStateChanged(unplayableRow, ! JavaFxPlayer.Companion.isPlayable(getItem()));
+                    pseudoClassStateChanged(unplayableRow, ! AudioItemPlayer.Companion.isPlayable(getItem()));
                     pseudoClassStateChanged(notInDiskRow, ! item.getPath().toFile().exists());
                 } else {
                     pseudoClassStateChanged(notInDiskRow, false);

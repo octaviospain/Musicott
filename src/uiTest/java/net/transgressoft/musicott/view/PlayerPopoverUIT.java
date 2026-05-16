@@ -253,7 +253,7 @@ class PlayerPopoverUITConfiguration {
         when(service.getPlayQueueList()).thenReturn(FXCollections.observableArrayList());
         when(service.getHistoryQueueList()).thenReturn(FXCollections.observableArrayList());
         when(service.currentTrack()).thenReturn(Optional.empty());
-        when(service.getTotalDuration()).thenReturn(javafx.util.Duration.ZERO);
+        when(service.getTotalDuration()).thenReturn(java.time.Duration.ZERO);
         return service;
     }
 

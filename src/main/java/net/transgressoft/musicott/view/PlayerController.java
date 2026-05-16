@@ -193,9 +193,10 @@ public class PlayerController {
         playerStackPane.getChildren().add(0, playableWaveformPane);
 
         playableWaveformPane.addEventHandler(SeekEvent.Companion.getSEEK(), event -> {
-            Duration total = playerService.getTotalDuration();
-            if (total != null && total.toMillis() > 0) {
-                playerService.seek(Duration.millis(event.getSeekRatio() * total.toMillis()));
+            java.time.Duration total = playerService.getTotalDuration();
+            if (!total.isZero()) {
+                long seekMillis = Math.round(event.getSeekRatio() * total.toMillis());
+                playerService.seek(java.time.Duration.ofMillis(seekMillis));
             }
         });
 
@@ -635,15 +636,15 @@ public class PlayerController {
         var currentTimeProp = playerService.getCurrentTimeProperty();
         if (currentTimeProp != null) {
             progressSubscription = subscribe(currentTimeProp, time -> {
-                Duration total = playerService.getTotalDuration();
-                if (total != null && total.toMillis() > 0) {
+                java.time.Duration total = playerService.getTotalDuration();
+                if (!total.isZero()) {
                     playableWaveformPane.getProgressProperty().set(time.toMillis() / total.toMillis());
                 }
             });
 
             labelsSubscription = subscribe(currentTimeProp, t -> {
-                Duration total = playerService.getTotalDuration();
-                if (total != null) updateTrackLabels(t, total);
+                java.time.Duration total = playerService.getTotalDuration();
+                updateTrackLabels(t, Duration.millis(total.toMillis()));
             });
         }
     }
