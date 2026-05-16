@@ -1,10 +1,8 @@
 package net.transgressoft.musicott.view;
 
 import net.transgressoft.commons.fx.music.FXMusicLibrary;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
+import net.transgressoft.commons.fx.music.audio.*;
+import net.transgressoft.commons.fx.music.playlist.*;
 import net.transgressoft.commons.music.waveform.AudioWaveform;
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository;
 import net.transgressoft.musicott.service.MediaImportService;
@@ -21,11 +19,9 @@ import net.transgressoft.musicott.view.itunes.ItunesImportWizard;
 
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
-import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
@@ -50,7 +46,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.testfx.api.FxRobot;
 import org.testfx.util.WaitForAsyncUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -212,20 +207,9 @@ class MainControllerPlaylistFolderIT extends ApplicationTestBase<BorderPane> {
 })
 class MainControllerPlaylistFolderITConfiguration {
 
-    File playlistsFile;
-    File audioItemsFile;
-
-    public MainControllerPlaylistFolderITConfiguration() throws IOException {
-        playlistsFile = Files.createTempFile("playlists-mc-folder-it", ".json").toFile();
-        audioItemsFile = Files.createTempFile("audio-items-mc-folder-it", ".json").toFile();
-    }
-
     @Bean
     public FXMusicLibrary musicLibrary() {
-        return FXMusicLibrary.builder()
-                .audioLibraryJsonFile(audioItemsFile)
-                .playlistHierarchyJsonFile(playlistsFile)
-                .build();
+        return FXMusicLibrary.builder().build();
     }
 
     @Bean
@@ -291,7 +275,7 @@ class MainControllerPlaylistFolderITConfiguration {
         org.mockito.Mockito.when(service.getPlayQueueList()).thenReturn(FXCollections.observableArrayList());
         org.mockito.Mockito.when(service.getHistoryQueueList()).thenReturn(FXCollections.observableArrayList());
         org.mockito.Mockito.when(service.currentTrack()).thenReturn(Optional.empty());
-        org.mockito.Mockito.when(service.getTotalDuration()).thenReturn(javafx.util.Duration.ZERO);
+        org.mockito.Mockito.when(service.getTotalDuration()).thenReturn(java.time.Duration.ZERO);
         return service;
     }
 

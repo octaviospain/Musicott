@@ -1,10 +1,8 @@
 package net.transgressoft.musicott.view;
 
 import net.transgressoft.commons.fx.music.*;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
-import net.transgressoft.lirp.persistence.json.JsonFileRepository;
+import net.transgressoft.commons.fx.music.audio.*;
+import net.transgressoft.commons.fx.music.playlist.*;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
@@ -33,15 +31,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Scope;
 import org.testfx.api.FxRobot;
-import org.testfx.util.WaitForAsyncUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Optional;
 import java.util.Set;
 
-import static net.transgressoft.commons.fx.music.playlist.ObservablePlaylistSerializerKt.ObservablePlaylistMapSerializer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.springframework.context.annotation.ComponentScan.Filter;
@@ -138,17 +131,9 @@ class NavigationControllerIT extends ApplicationTestBase<VBox> {
 })
 class NavigationControllerITConfiguration {
 
-    File playlistsFile;
-
-    public NavigationControllerITConfiguration() throws IOException {
-        playlistsFile = Files.createTempFile("playlists-nav-test", ".json").toFile();
-    }
-
     @Bean
     public FXMusicLibrary musicLibrary() {
-        return FXMusicLibrary.builder()
-                .playlistHierarchyJsonFile(playlistsFile)
-                .build();
+        return FXMusicLibrary.builder().build();
     }
 
     @Bean

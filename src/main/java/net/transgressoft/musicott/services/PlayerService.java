@@ -18,9 +18,13 @@
 package net.transgressoft.musicott.services;
 
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.fx.music.player.JavaFxPlayer;
+import net.transgressoft.commons.fx.music.player.FXAudioItemPlayer;
+import net.transgressoft.commons.music.event.PlayedEventSubscriber;
+import net.transgressoft.commons.music.player.AudioItemPlayer;
 import net.transgressoft.commons.music.player.AudioItemPlayer.Status;
+import net.transgressoft.commons.music.player.UnsupportedAudioPlaybackException;
 import net.transgressoft.commons.music.player.event.AudioItemPlayerEvent;
+import net.transgressoft.commons.music.player.event.AudioItemPlayerEvent.*;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 
@@ -29,7 +33,6 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,8 +42,10 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.time.Duration;
 
 import static net.transgressoft.commons.music.player.AudioItemPlayer.Status.*;
+import static net.transgressoft.commons.music.player.event.AudioItemPlayerEvent.Type.PLAYED;
 
 /**
  * Manages audio playback state, play queue, and history queue.
@@ -58,7 +63,8 @@ public class PlayerService {
     private final ObservableList<TrackQueueRow> historyQueueList = FXCollections.observableArrayList();
 
     private Optional<ObservableAudioItem> currentTrack = Optional.empty();
-    private JavaFxPlayer trackPlayer;
+    private FXAudioItemPlayer trackPlayer;
+    private PlayedEventSubscriber playedEventSubscriber;
     private boolean playingRandom = false;
 
     @Autowired
@@ -86,7 +92,7 @@ public class PlayerService {
         return trackPlayer != null ? trackPlayer.getVolumeProperty() : null;
     }
 
-    public ReadOnlyObjectProperty<Duration> getCurrentTimeProperty() {
+    public ReadOnlyObjectProperty<javafx.util.Duration> getCurrentTimeProperty() {
         return trackPlayer != null ? trackPlayer.getCurrentTimeProperty() : null;
     }
 
@@ -113,17 +119,30 @@ public class PlayerService {
     }
 
     private void setPlayer(ObservableAudioItem audioItem) {
-        trackPlayer = new JavaFxPlayer();
-        trackPlayer.play(audioItem);
+        var newPlayer = new FXAudioItemPlayer();
+        // Bind to the AudioItemPlayer interface so Kotlin's @Throws on the interface method is
+        // visible to Java's checked-exception analysis (the concrete overrides do not carry it).
+        AudioItemPlayer playerView = newPlayer;
+        try {
+            playerView.play(audioItem);
+        } catch (UnsupportedAudioPlaybackException e) {
+            logger.error("Cannot play audio item {}", audioItem.getPath(), e);
+            newPlayer.dispose();
+            applicationEventPublisher.publishEvent(new ErrorEvent("Unsupported audio format", e.getMessage(), this));
+            return;
+        }
+        trackPlayer = newPlayer;
         currentTrack = Optional.of(audioItem);
         bindMediaPlayer();
-        trackPlayer.subscribe(event -> {
-            if (event.getType() == AudioItemPlayerEvent.Type.PLAYED) {
-                Platform.runLater(() ->
-                    currentTrack.ifPresent(track -> track.getPlayCountProperty().add(1))
-                );
-            }
-        });
+
+        if (playedEventSubscriber != null)
+            playedEventSubscriber.cancelSubscription();
+        playedEventSubscriber = new PlayedEventSubscriber();
+        playedEventSubscriber.addOnNextEventAction(
+            new Type[] { PLAYED }, _ -> Platform.runLater(() ->
+                currentTrack.ifPresent(track -> track.getPlayCountProperty().add(1))));
+        trackPlayer.subscribe(playedEventSubscriber);
+
         trackPlayer.onFinish(() -> Platform.runLater(this::next));
         applicationEventPublisher.publishEvent(new AudioItemChangedEvent(audioItem, this));
         logger.debug("Created new player for track {}", audioItem);
@@ -216,7 +235,7 @@ public class PlayerService {
         // Delete-button handler is set by PlayQueueController.queueChangeListener when each
         // row is observed entering playQueueList — see removeFromPlayQueue / removeFromHistoryQueue.
         var newRows = audioItems.stream()
-                .filter(JavaFxPlayer.Companion::isPlayable)
+                .filter(AudioItemPlayer.Companion::isPlayable)
                 .map(TrackQueueRow::new)
                 .toList();
         // Inverted storage: index size-1 is next-up, index 0 is farthest-out. The first input is
@@ -288,7 +307,7 @@ public class PlayerService {
 
     public void seek(Duration seekTime) {
         if (trackPlayer != null) {
-            trackPlayer.seek(seekTime.toMillis());
+            trackPlayer.seek(seekTime);
             logger.debug("Player seeked value {}", seekTime.toSeconds());
         }
     }

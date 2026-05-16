@@ -31,13 +31,7 @@ dependencies {
 
     implementation platform(libs.kotlin.bom)
 
-    // Exclude lirp-sql (transitive from music-commons-core but unused there — see
-    // upstream issue) — Musicott uses JSON persistence and never reaches SQL paths.
-    // JAVE stays in: ScalableAudioWaveform loads via Spring even when generation isn't
-    // exercised in tests, so excluding it would break waveform extraction at runtime.
-    implementation(libs.bundles.music.commons) {
-        exclude group: 'net.transgressoft', module: 'lirp-sql'
-    }
+    implementation(libs.bundles.music.commons)
     implementation libs.lirp.core
 
     implementation libs.spring.boot
@@ -103,10 +97,10 @@ configurations.configureEach {
 
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.group == 'org.jetbrains.kotlinx' && details.requested.name.startsWith('kotlinx-coroutines')) {
-            details.useVersion('1.10.1')
+            details.useVersion('1.11.0')
         }
         if (details.requested.group == 'org.jetbrains.kotlinx' && details.requested.name.startsWith('kotlinx-serialization')) {
-            details.useVersion('1.10.0')
+            details.useVersion('1.11.0')
         }
     }
 }

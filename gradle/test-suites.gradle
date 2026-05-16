@@ -65,6 +65,10 @@ ext {
     }
 }
 
+tasks.withType(Test).configureEach {
+    maxHeapSize = '2g'
+}
+
 sourceSets {
     integrationTest {
         java.srcDir 'src/integrationTest/java'
@@ -120,7 +124,6 @@ dependencies {
     testFixturesImplementation libs.mockito.core
     testFixturesImplementation libs.bundles.testfx
     testFixturesImplementation libs.spring.boot.starter.test
-    testFixturesImplementation libs.dd.plist
     testFixturesImplementation(platform(libs.junit.bom))
     testFixturesImplementation libs.kotlinx.coroutines.test
     testFixturesImplementation libs.junit.jupiter
@@ -176,6 +179,7 @@ tasks.register('e2eTest', Test) {
     group = 'verification'
     testClassesDirs = sourceSets.e2eTest.output.classesDirs
     classpath = sourceSets.e2eTest.runtimeClasspath
+    maxHeapSize = '4g'
     useJUnitPlatform()
     shouldRunAfter tasks.named('uiTest')
     // Full JavaFX application E2Es cannot reliably share one test JVM once TestFX tears down
