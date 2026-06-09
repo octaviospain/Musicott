@@ -2,6 +2,9 @@ package net.transgressoft.musicott.view;
 
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.beans.value.WritableObjectValue;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.ListView;
@@ -36,6 +39,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.testfx.api.FxRobot;
 import org.testfx.util.WaitForAsyncUtils;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -207,6 +213,105 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         assertThat(artistsListView.getSelectionModel().getSelectedItem()).isSameAs(artistsListView.getItems().get(0));
     }
 
+    @Test
+    @DisplayName("ArtistViewController refreshes album row cover image after track cover art is updated")
+    void refreshesAlbumRowCoverImageAfterTrackCoverArtIsUpdated(FxRobot fxRobot) throws Exception {
+        Artist bonobo = of("Bonobo");
+        ObservableAudioItem track = audioItem("Kiara", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo));
+
+        Platform.runLater(() -> {
+            artistsProperty.clear();
+            audioItemsProperty.clear();
+            audioItemsProperty.add(track);
+            artistsProperty.add(bonobo);
+        });
+        waitForFxEvents();
+
+        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        ListView<ArtistAlbumListRow> albumsListView = fxRobot.lookup("#albumsListView").queryAs(ListView.class);
+
+        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonobo));
+        waitForDisplayedTitle(albumsListView, "Kiara");
+
+        byte[] coverBytes = loadTestImageBytes();
+        // coverImageProperty is declared ReadOnlyObjectProperty but backed by a SimpleObjectProperty
+        // in TestObservableAudioItem — cast to WritableObjectValue to inject a cover image directly.
+        @SuppressWarnings("unchecked")
+        WritableObjectValue<Optional<Image>> writableCover =
+                (WritableObjectValue<Optional<Image>>) track.getCoverImageProperty();
+        Image coverImage = new Image(new ByteArrayInputStream(coverBytes));
+        Platform.runLater(() -> writableCover.set(Optional.of(coverImage)));
+
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () ->
+                track.getCoverImageProperty().get().isPresent());
+        waitForFxEvents();
+
+        ArtistAlbumListRow row = albumsListView.getItems().get(0);
+        Node coverNode = row.lookup("#coverImageView");
+        assertThat(coverNode).isInstanceOf(ImageView.class);
+        ImageView renderedCover = (ImageView) coverNode;
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> renderedCover.getImage() == coverImage);
+        assertThat(renderedCover.getImage()).isSameAs(coverImage);
+    }
+
+    @Test
+    @DisplayName("ArtistViewController creates one album row per disc for multi-disc albums")
+    void createsOneAlbumRowPerDiscForMultiDiscAlbums(FxRobot fxRobot) throws Exception {
+        Artist bonobo = of("Bonobo");
+        ObservableAudioItem disc1Track = audioItem("Kiara", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo), 1);
+        ObservableAudioItem disc2Track = audioItem("Stay the Same", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo), 2);
+
+        Platform.runLater(() -> {
+            artistsProperty.clear();
+            audioItemsProperty.clear();
+            audioItemsProperty.addAll(disc1Track, disc2Track);
+            artistsProperty.add(bonobo);
+        });
+        waitForFxEvents();
+
+        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        ListView<ArtistAlbumListRow> albumsListView = fxRobot.lookup("#albumsListView").queryAs(ListView.class);
+
+        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonobo));
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> albumsListView.getItems().size() == 2);
+        waitForFxEvents();
+
+        assertThat(albumsListView.getItems()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("ArtistViewController creates one album row for single-disc albums")
+    void createsOneAlbumRowForSingleDiscAlbums(FxRobot fxRobot) throws Exception {
+        Artist bonobo = of("Bonobo");
+        ObservableAudioItem track1 = audioItem("Kiara", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo), 1);
+        ObservableAudioItem track2 = audioItem("Kong", bonobo, "Black Sands", bonobo, 2, Set.of(bonobo), 1);
+
+        Platform.runLater(() -> {
+            artistsProperty.clear();
+            audioItemsProperty.clear();
+            audioItemsProperty.addAll(track1, track2);
+            artistsProperty.add(bonobo);
+        });
+        waitForFxEvents();
+
+        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        ListView<ArtistAlbumListRow> albumsListView = fxRobot.lookup("#albumsListView").queryAs(ListView.class);
+
+        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonobo));
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> albumsListView.getItems().size() == 1);
+        waitForFxEvents();
+
+        assertThat(albumsListView.getItems()).hasSize(1);
+    }
+
+    private static byte[] loadTestImageBytes() throws IOException {
+        try (var stream = ArtistViewControllerIT.class.getResourceAsStream("/images/default-cover-image.png")) {
+            if (stream == null)
+                throw new IOException("Missing test resource: /images/default-cover-image.png");
+            return stream.readAllBytes();
+        }
+    }
+
     private static void waitForDisplayedTitle(ListView<ArtistAlbumListRow> albumsListView, String title) throws Exception {
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> displayedTitles(albumsListView).contains(title));
         waitForFxEvents();
@@ -226,6 +331,17 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
             Artist albumArtist,
             int trackNumber,
             Set<Artist> artistsInvolved) {
+        return audioItem(title, artist, albumName, albumArtist, trackNumber, artistsInvolved, 1);
+    }
+
+    private static ObservableAudioItem audioItem(
+            String title,
+            Artist artist,
+            String albumName,
+            Artist albumArtist,
+            int trackNumber,
+            Set<Artist> artistsInvolved,
+            int discNumber) {
         return FxAudioItemTestFactory.createFxAudioItem(attributes -> {
             attributes.setTitle(title);
             attributes.setArtist(artist);
@@ -236,7 +352,7 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
                     null,
                     Label.of("Test Label")));
             attributes.setTrackNumber((short) trackNumber);
-            attributes.setDiscNumber((short) 1);
+            attributes.setDiscNumber((short) discNumber);
         }, artistsInvolved);
     }
 }

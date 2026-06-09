@@ -105,6 +105,33 @@ class ArtistViewControllerUIT extends ApplicationTestBase<SplitPane> {
         assertThat(fxRobot.lookup("Kiara").tryQuery()).isEmpty();
     }
 
+    @Test
+    @DisplayName("multi-disc album rows show a Disc N label for each disc section")
+    void multiDiscAlbumRowsShowDiscLabelForEachDiscSection(FxRobot fxRobot) throws Exception {
+        Artist bonobo = of("Bonobo");
+        ObservableAudioItem disc1Track = audioItem("Kiara", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo), 1);
+        ObservableAudioItem disc2Track = audioItem("Stay the Same", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo), 2);
+
+        Platform.runLater(() -> {
+            audioItemsProperty.clear();
+            artistsProperty.clear();
+            audioItemsProperty.addAll(disc1Track, disc2Track);
+            artistsProperty.add(bonobo);
+        });
+        waitForFxEvents();
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS,
+                () -> fxRobot.lookup("Bonobo").tryQuery().isPresent());
+
+        fxRobot.clickOn("Bonobo");
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS,
+                () -> fxRobot.lookup("Disc 1").tryQuery().isPresent()
+                        && fxRobot.lookup("Disc 2").tryQuery().isPresent());
+        waitForFxEvents();
+
+        assertThat(fxRobot.lookup("Disc 1").tryQuery()).isPresent();
+        assertThat(fxRobot.lookup("Disc 2").tryQuery()).isPresent();
+    }
+
     private static void waitForTrackText(FxRobot fxRobot, String title) throws Exception {
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> fxRobot.lookup(title).tryQuery().isPresent());
         waitForFxEvents();
@@ -117,6 +144,17 @@ class ArtistViewControllerUIT extends ApplicationTestBase<SplitPane> {
             Artist albumArtist,
             int trackNumber,
             Set<Artist> artistsInvolved) {
+        return audioItem(title, artist, albumName, albumArtist, trackNumber, artistsInvolved, 1);
+    }
+
+    private static ObservableAudioItem audioItem(
+            String title,
+            Artist artist,
+            String albumName,
+            Artist albumArtist,
+            int trackNumber,
+            Set<Artist> artistsInvolved,
+            int discNumber) {
         return FxAudioItemTestFactory.createFxAudioItem(attributes -> {
             attributes.setTitle(title);
             attributes.setArtist(artist);
@@ -127,7 +165,7 @@ class ArtistViewControllerUIT extends ApplicationTestBase<SplitPane> {
                     null,
                     Label.of("Test Label")));
             attributes.setTrackNumber((short) trackNumber);
-            attributes.setDiscNumber((short) 1);
+            attributes.setDiscNumber((short) discNumber);
         }, artistsInvolved);
     }
 }

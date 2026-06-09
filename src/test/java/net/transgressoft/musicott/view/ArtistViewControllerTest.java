@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -53,11 +54,11 @@ class ArtistViewControllerTest {
 
         var controller = new ArtistViewController(audioLibrary, mock(ApplicationContext.class));
 
-        assertThat(controller.albumSetsForArtist(akkya))
+        assertThat(controller.albumSetsForArtist(akkya).keySet())
                 .singleElement()
                 .satisfies(albumSet -> {
                     assertThat(albumSet.getAlbumName()).isEqualTo("Diffusion 7.0");
-                    assertThat((java.util.List<ObservableAudioItem>) albumSet).containsExactly(akkyaTrack);
+                    assertThat((List<ObservableAudioItem>) albumSet).containsExactly(akkyaTrack);
                 });
     }
 
