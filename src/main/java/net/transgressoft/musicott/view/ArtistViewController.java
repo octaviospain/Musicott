@@ -34,8 +34,6 @@ import static org.fxmisc.easybind.EasyBind.map;
 @Controller
 public class ArtistViewController {
 
-    private static final short DEFAULT_RANDOM_PLAYLIST_SIZE = 23;
-
     private final ObservableAudioLibrary audioRepository;
     private final ApplicationContext applicationContext;
 
@@ -72,7 +70,7 @@ public class ArtistViewController {
         totalAlbumsLabel.setText("0 albums");
         totalTracksLabel.setText("0 tracks");
         artistRandomButton.visibleProperty().bind(map(nameLabel.textProperty().isEmpty().not(), Function.identity()));
-        artistRandomButton.setOnAction(_ -> playRandomArtistTracks());
+        artistRandomButton.setOnAction(_ -> applicationContext.publishEvent(new PlayRandomFromContextEvent(this)));
         selectedArtistProperty = new SimpleObjectProperty<>(this, "selected artist", Optional.empty());
         nameLabel.textProperty().bind(Bindings.createStringBinding(() ->
                         selectedArtistProperty.get().isPresent() ? selectedArtistProperty.get().get().getName() : "",
@@ -247,18 +245,22 @@ public class ArtistViewController {
     private void doubleClickOnArtistHandler(MouseEvent event) {
         selectedArtistProperty.get().ifPresent(_ -> {
             if (event.getClickCount() == 2) {
-                playRandomArtistTracks();
+                applicationContext.publishEvent(new PlayRandomFromContextEvent(this));
             }
         });
     }
 
-    private void playRandomArtistTracks() {
-        // All call sites (doubleClickOnArtistHandler via ifPresent, and artistRandomButton whose
-        // visibility is bound to nameLabel being non-empty) guarantee the artist is present.
-        @SuppressWarnings("java:S3655")
-        var selectedArtist = selectedArtistProperty.get().get();
-        var randomAudioItemsFromArtist = audioRepository.getRandomAudioItemsFromArtist(selectedArtist, DEFAULT_RANDOM_PLAYLIST_SIZE);
-        applicationContext.publishEvent(new PlayItemEvent(randomAudioItemsFromArtist, this));
+    /**
+     * Returns every audio item involving the currently selected artist, or an empty list when no
+     * artist is selected. The pool mirrors what the artist view displays — it includes tracks where
+     * the artist appears in {@code artistsInvolved} (featured or album collaborations), not only
+     * tracks whose primary artist matches. {@link MainController} consumes this to resolve the
+     * random-playback pool for the {@code ARTISTS} navigation context.
+     */
+    public List<ObservableAudioItem> getSelectedArtistAudioItems() {
+        return selectedArtistProperty.getValue()
+                .map(artist -> audioItemsForArtist(artist).collect(Collectors.toList()))
+                .orElseGet(List::of);
     }
 
     private String getTotalArtistTracksString() {

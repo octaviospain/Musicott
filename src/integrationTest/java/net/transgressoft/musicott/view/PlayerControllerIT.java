@@ -7,6 +7,7 @@ import net.transgressoft.commons.fx.music.waveform.SeekEvent;
 import net.transgressoft.commons.music.waveform.AudioWaveform;
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository;
 import net.transgressoft.musicott.events.PlayItemEvent;
+import net.transgressoft.musicott.events.PlayRandomFromContextEvent;
 import net.transgressoft.musicott.services.PlayerService;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
@@ -421,6 +422,23 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
         when(audioItem.getPlayCountProperty()).thenReturn(new SimpleIntegerProperty(0));
         when(audioItem.getDuration()).thenReturn(Duration.ofSeconds(5));
         return audioItem;
+    }
+
+    @Test
+    @DisplayName("PlayerController play button with no current track publishes PlayRandomFromContextEvent")
+    void playButtonWithNoCurrentTrackPublishesPlayRandomFromContextEvent() {
+        when(playerService.currentTrack()).thenReturn(Optional.empty());
+
+        Platform.runLater(() -> {
+            ToggleButton playButton = playerControllerAndView.getView().get().lookup("#playButton") instanceof ToggleButton tb ? tb : null;
+            if (playButton != null) {
+                playButton.setSelected(true);
+            }
+            playerControllerAndView.getController().playPause();
+        });
+        waitForFxEvents();
+
+        verify(configuration.applicationEventPublisher()).publishEvent(any(PlayRandomFromContextEvent.class));
     }
 }
 

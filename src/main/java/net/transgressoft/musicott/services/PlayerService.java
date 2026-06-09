@@ -38,10 +38,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.time.Duration;
+import java.util.stream.Collectors;
 
 import static net.transgressoft.commons.music.player.AudioItemPlayer.Status.*;
 import static net.transgressoft.commons.music.player.event.AudioItemPlayerEvent.Type.PLAYED;
@@ -174,9 +177,6 @@ public class PlayerService {
             case PAUSED:
                 resume();
                 break;
-            case STOPPED:
-                playRandom();
-                break;
             default:
         }
     }
@@ -229,10 +229,31 @@ public class PlayerService {
         }
     }
 
-    @SuppressWarnings("java:S1135")
-    public void playRandom() {
-        // Deferred: random-playback feature not yet implemented; falls through silently when
-        // play() is invoked on a STOPPED player. Trigger: implement shuffle / random playback.
+    /**
+     * Shuffles the playable items from the given pool, fills the play queue, and starts playback.
+     *
+     * <p>If the pool contains no playable items, a {@link StatusMessageUpdateEvent} is published
+     * with the message "No playable tracks available" and the queue remains unchanged.
+     * The {@code playingRandom} flag is set to {@code true} after the queue is populated, so
+     * any subsequent explicit {@link #addToQueue} call will clear the random queue first.
+     *
+     * @param pool the collection of audio items to draw from; non-playable items are filtered out
+     */
+    public void playRandom(Collection<ObservableAudioItem> pool) {
+        var playable = pool.stream()
+                .filter(AudioItemPlayer.Companion::isPlayable)
+                .collect(Collectors.toCollection(ArrayList::new));
+        if (playable.isEmpty()) {
+            applicationEventPublisher.publishEvent(
+                    new StatusMessageUpdateEvent("No playable tracks available", this));
+            return;
+        }
+        Collections.shuffle(playable);
+        // playingRandom must be false when addToQueue is called; addToQueue clears the queue
+        // when the flag is true, which would discard the items we are about to enqueue.
+        addToQueue(playable);
+        playingRandom = true;
+        next();
     }
 
     public void addToQueue(Collection<ObservableAudioItem> audioItems) {
