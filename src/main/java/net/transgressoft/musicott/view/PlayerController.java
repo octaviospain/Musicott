@@ -47,8 +47,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -414,6 +412,11 @@ public class PlayerController {
                 playerService.resume();
             } else {
                 applicationEventPublisher.publishEvent(new PlayRandomFromContextEvent(this));
+                // If the context had no playable tracks, no playback started — keep the toggle in
+                // sync with the still-stopped player instead of leaving it showing the pause icon.
+                if (playerService.currentTrack().isEmpty()) {
+                    playButton.setSelected(false);
+                }
             }
         } else {
             playerService.pause();
@@ -613,10 +616,9 @@ public class PlayerController {
     @EventListener
     public void playPlaylistRandomlyEventListener(PlayPlaylistRandomlyEvent playPlaylistRandomlyEvent) {
         ObservablePlaylist playlist = playPlaylistRandomlyEvent.playlist;
-        var items = new ArrayList<>(playlist.getAudioItemsProperty());
-        Collections.shuffle(items);
-        playerService.addToQueue(items);
-        playerService.next();
+        // Delegate to the unified random path so shuffle, queue-replacement, empty-pool feedback,
+        // and the playingRandom lifecycle are handled in one place.
+        playerService.playRandom(playlist.getAudioItemsProperty());
     }
 
     @EventListener

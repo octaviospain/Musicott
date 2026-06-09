@@ -54,10 +54,15 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import org.mockito.ArgumentCaptor;
+
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -129,8 +134,15 @@ class MainControllerRandomPlaybackIT extends ApplicationTestBase<BorderPane> {
         waitForFxEvents();
     }
 
+    @SuppressWarnings("unchecked")
+    private void verifyPlayRandomCalledWith(Collection<ObservableAudioItem> expected) {
+        ArgumentCaptor<Collection<ObservableAudioItem>> captor = ArgumentCaptor.forClass(Collection.class);
+        verify(playerService).playRandom(captor.capture());
+        assertEquals(Set.copyOf(expected), Set.copyOf(captor.getValue()));
+    }
+
     @Test
-    @DisplayName("PlayRandomFromContextEvent with non-empty ALL_AUDIO_ITEMS library delegates to playerService.playRandom")
+    @DisplayName("PlayRandomFromContextEvent with non-empty ALL_AUDIO_ITEMS library delegates to playerService.playRandom with the full library")
     void playRandomFromContextWithNonEmptyLibraryCallsPlayRandom() {
         setNavigationMode(NavigationController.NavigationMode.ALL_AUDIO_ITEMS);
 
@@ -139,7 +151,7 @@ class MainControllerRandomPlaybackIT extends ApplicationTestBase<BorderPane> {
                         new PlayRandomFromContextEvent(this)));
         waitForFxEvents();
 
-        verify(playerService).playRandom(any(Collection.class));
+        verifyPlayRandomCalledWith(List.copyOf(audioLibrary.getAudioItemsProperty()));
     }
 
     @Test
@@ -147,7 +159,8 @@ class MainControllerRandomPlaybackIT extends ApplicationTestBase<BorderPane> {
     void playRandomFromContextWithPlaylistModeCallsPlayRandom() {
         // Ensure a non-empty playlist is selected before entering PLAYLIST mode
         var libraryItems = (ObservableList<ObservableAudioItem>) audioLibrary.getAudioItemsProperty();
-        var playlist = playlistRepository.createPlaylist("Test Playlist For Random", List.copyOf(libraryItems));
+        var expectedItems = List.copyOf(libraryItems);
+        var playlist = playlistRepository.createPlaylist("Test Playlist For Random", expectedItems);
         Platform.runLater(() -> selectedPlaylistProperty.set(Optional.of(playlist)));
         waitForFxEvents();
         setNavigationMode(NavigationController.NavigationMode.PLAYLIST);
@@ -157,7 +170,7 @@ class MainControllerRandomPlaybackIT extends ApplicationTestBase<BorderPane> {
                         new PlayRandomFromContextEvent(this)));
         waitForFxEvents();
 
-        verify(playerService).playRandom(any(Collection.class));
+        verifyPlayRandomCalledWith(expectedItems);
     }
 
     @Test
@@ -176,12 +189,16 @@ class MainControllerRandomPlaybackIT extends ApplicationTestBase<BorderPane> {
         waitForFxEvents();
         setNavigationMode(NavigationController.NavigationMode.ARTISTS);
 
+        var expectedItems = artistViewController.getSelectedArtistAudioItems();
+        assertEquals(List.copyOf(audioLibrary.getAudioItemsProperty()), expectedItems,
+                "the single-track fixture's only artist should resolve to the full library");
+
         Platform.runLater(() ->
                 mainControllerAndView.getController().onPlayRandomFromContext(
                         new PlayRandomFromContextEvent(this)));
         waitForFxEvents();
 
-        verify(playerService).playRandom(any(Collection.class));
+        verifyPlayRandomCalledWith(expectedItems);
     }
 
     @Test
@@ -228,8 +245,10 @@ class MainControllerRandomPlaybackITConfiguration {
         // Pre-populate with one track so ALL_AUDIO_ITEMS tests have a non-empty pool
         Path tempFile = Files.createTempFile("mc-rand-cfg-", ".mp3");
         tempFile.toFile().deleteOnExit();
-        try (InputStream in = MainControllerRandomPlaybackITConfiguration.class
-                .getResourceAsStream("/testfiles/testeable.mp3")) {
+        try (InputStream in = Objects.requireNonNull(
+                MainControllerRandomPlaybackITConfiguration.class
+                        .getResourceAsStream("/testfiles/testeable.mp3"),
+                "Missing test resource: /testfiles/testeable.mp3")) {
             Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
         }
         library.createFromFile(tempFile);

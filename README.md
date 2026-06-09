@@ -34,7 +34,7 @@ After years of this refactoring and redesign work, in April 2026 I moved the old
 - **Guided iTunes import** — a four-step wizard walks you through picking the `iTunes Library.xml`, choosing which playlists to bring across, deciding how metadata is read (file tags vs the iTunes database) and whether play counts and tag write-back are preserved, then confirming before import starts
 - **Player-bar queue popover** — the play queue opens from the player bar as a popover anchored to the queue button, keeping queue and history actions close to playback controls while dismissing itself when you click elsewhere or leave the app window
 - **Hierarchical playlists** — folders of playlists, drag-and-drop reordering, and full-text search across titles, artists, involved artists, albums, labels, and comments
-- **Contextual random playback** — pressing play with an empty queue or clicking the shuffle button starts random playback from whatever is in view: all tracks, the selected playlist, or no-op with a status message when no playable tracks exist
+- **Contextual random playback** — pressing play with an empty queue or clicking shuffle starts random playback from the active view (all tracks, the selected playlist, or the selected artist), with a status message when no playable tracks exist
 - **Waveform visualization** — generated once per track, cached locally, and used for visual seeking during playback
 - **Native installers** for Linux (AppImage / AUR), Windows, and macOS — no JDK install required by end users
 

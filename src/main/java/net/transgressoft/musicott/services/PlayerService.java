@@ -249,8 +249,12 @@ public class PlayerService {
             return;
         }
         Collections.shuffle(playable);
-        // playingRandom must be false when addToQueue is called; addToQueue clears the queue
-        // when the flag is true, which would discard the items we are about to enqueue.
+        // Random playback replaces any existing queue. Clear explicitly first (with the flag still
+        // false so addToQueue does not self-clear the items being enqueued), then mark the queue as
+        // random once it is populated.
+        playQueueList.clear();
+        publishQueueUpdatedEvent();
+        playingRandom = false;
         addToQueue(playable);
         playingRandom = true;
         next();
