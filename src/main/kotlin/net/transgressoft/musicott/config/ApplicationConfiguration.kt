@@ -33,6 +33,7 @@ import net.transgressoft.commons.music.audio.JAudioTaggerMetadataIO
 import net.transgressoft.commons.music.waveform.AudioWaveform
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository
 import net.transgressoft.lirp.persistence.json.JsonFileRepository
+import net.transgressoft.musicott.MusicottApplication
 import org.apache.commons.lang3.SystemUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
@@ -43,7 +44,7 @@ import java.nio.file.Path
 import java.util.Optional
 
 @Configuration
-class ApplicationConfiguration @Autowired constructor(private val applicationPaths: ApplicationPaths) {
+class ApplicationConfiguration @Autowired constructor(private val applicationPaths: MusicottApplication.ApplicationPaths) {
 
     init {
         initializeApplicationFiles()

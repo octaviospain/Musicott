@@ -452,13 +452,13 @@ public class EditController {
 
     private AudioItemMetadataChange getEditionResult() {
        String title = getEditionFieldResult(titleTextField);
-       Artist artist = getEditionFieldResult(artistTextField) != null ? ImmutableArtist.of(getEditionFieldResult(artistTextField)) : null;
+       Artist artist = getEditionFieldResult(artistTextField) != null ? Artist.of(getEditionFieldResult(artistTextField)) : null;
        String albumName = getEditionFieldResult(albumTextField);
-       Artist albumArtist = getEditionFieldResult(albumArtistTextField) != null ? ImmutableArtist.of(getEditionFieldResult(albumArtistTextField)) : null;
+       Artist albumArtist = getEditionFieldResult(albumArtistTextField) != null ? Artist.of(getEditionFieldResult(albumArtistTextField)) : null;
        Boolean isCompilation = isCompilationCheckBox.isIndeterminate() ? null : isCompilationCheckBox.isSelected();
        Short year = getEditionFieldResult(yearTextField) != null ? Short.valueOf(getEditionFieldResult(yearTextField)) : null;
        String labelValue = getEditionFieldResult(labelTextField);
-       net.transgressoft.commons.music.audio.Label label = labelValue != null ? ImmutableLabel.of(labelValue) : null;
+       net.transgressoft.commons.music.audio.Label label = labelValue != null ? net.transgressoft.commons.music.audio.Label.of(labelValue) : null;
        String genreValue = getEditionFieldResult(genreTextField);
        Set<Genre> genres = genreValue != null ? Genre.parseGenre(genreValue) : null;
        String comments = getEditionFieldResult(commentsTextField);

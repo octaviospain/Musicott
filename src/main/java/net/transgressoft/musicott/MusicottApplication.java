@@ -36,6 +36,9 @@ public class MusicottApplication {
         Application.launch(SpringbootJavaFxApplication.class, args);
     }
 
+    public record ApplicationPaths(Path audioItemsPath, Path playlistsPath, Path waveformsPath) {
+    }
+
     public static class SpringbootJavaFxApplication extends Application {
 
         @Override

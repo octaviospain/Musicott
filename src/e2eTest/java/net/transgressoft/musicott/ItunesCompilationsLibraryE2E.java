@@ -13,7 +13,6 @@ import net.transgressoft.commons.music.itunes.ImportResult;
 import net.transgressoft.commons.music.itunes.ItunesLibraryTestFixture;
 import net.transgressoft.commons.music.itunes.ItunesImportPolicy;
 import net.transgressoft.commons.music.itunes.ItunesPlaylist;
-import net.transgressoft.musicott.config.ApplicationPaths;
 import net.transgressoft.musicott.service.MediaImportService;
 import net.transgressoft.musicott.test.itunes.CompilationsItunesLibraryExpectations;
 import net.transgressoft.musicott.view.MainController;
@@ -241,10 +240,10 @@ class ItunesCompilationsLibraryE2E {
 
         @Bean
         @Primary
-        public ApplicationPaths applicationPaths() throws IOException {
+        public MusicottApplication.ApplicationPaths applicationPaths() throws IOException {
             Path tempDir = Files.createTempDirectory("musicott-itunes-e2e");
             tempDir.toFile().deleteOnExit();
-            return new ApplicationPaths(
+            return new MusicottApplication.ApplicationPaths(
                     tempDir.resolve("audioItems.json"),
                     tempDir.resolve("playlists.json"),
                     tempDir.resolve("waveforms.json")
