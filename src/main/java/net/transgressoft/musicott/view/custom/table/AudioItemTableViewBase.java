@@ -270,6 +270,10 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         };
     }
 
+    // Defensive null guards on title / artist / album metadata: imported tracks can ship with null
+    // fields (partial catalogs), and one malformed item must not NPE the whole query filter. Sonar
+    // trusts the music-commons API's nominal non-null types and flags each guard as gratuitous.
+    @SuppressWarnings("java:S2589")
     private boolean audioItemContainsQuery(ObservableAudioItem audioItem, String query) {
         if (audioItem.getTitle() != null && audioItem.getTitle().toLowerCase().contains(query)) {
             return true;
@@ -287,22 +291,27 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
             return true;
         }
 
-        var album = audioItem.getAlbum();
-        if (album != null) {
-            if (album.getName() != null && album.getName().toLowerCase().contains(query)) {
-                return true;
-            }
-            if (album.getAlbumArtist() != null && album.getAlbumArtist().getName() != null
-                    && album.getAlbumArtist().getName().toLowerCase().contains(query)) {
-                return true;
-            }
-            if (album.getLabel() != null && album.getLabel().getName() != null
-                    && album.getLabel().getName().toLowerCase().contains(query)) {
-                return true;
-            }
+        if (albumContainsQuery(audioItem.getAlbum(), query)) {
+            return true;
         }
 
         return audioItem.getComments() != null && audioItem.getComments().toLowerCase().contains(query);
+    }
+
+    @SuppressWarnings("java:S2589")
+    private static boolean albumContainsQuery(Album album, String query) {
+        if (album == null) {
+            return false;
+        }
+        if (album.getName() != null && album.getName().toLowerCase().contains(query)) {
+            return true;
+        }
+        if (album.getAlbumArtist() != null && album.getAlbumArtist().getName() != null
+                && album.getAlbumArtist().getName().toLowerCase().contains(query)) {
+            return true;
+        }
+        return album.getLabel() != null && album.getLabel().getName() != null
+                && album.getLabel().getName().toLowerCase().contains(query);
     }
 
     public void selectFocusAndScroll(ObservableAudioItem audioItem) {

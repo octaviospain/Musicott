@@ -23,7 +23,6 @@ import net.transgressoft.commons.music.event.PlayedEventSubscriber;
 import net.transgressoft.commons.music.player.AudioItemPlayer;
 import net.transgressoft.commons.music.player.AudioItemPlayer.Status;
 import net.transgressoft.commons.music.player.UnsupportedAudioPlaybackException;
-import net.transgressoft.commons.music.player.event.AudioItemPlayerEvent;
 import net.transgressoft.commons.music.player.event.AudioItemPlayerEvent.*;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;

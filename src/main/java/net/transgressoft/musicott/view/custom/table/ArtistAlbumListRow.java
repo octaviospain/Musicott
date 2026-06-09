@@ -236,24 +236,30 @@ public class ArtistAlbumListRow extends HBox {
         }
         if (item.getArtistsInvolved() != null && item.getArtistsInvolved().stream()
                 .map(Artist::getName)
+                .filter(Objects::nonNull)
                 .anyMatch(name -> name.toLowerCase().contains(lowerCaseQuery))) {
             return true;
         }
-        var album = item.getAlbum();
-        if (album != null) {
-            if (album.getName() != null && album.getName().toLowerCase().contains(lowerCaseQuery)) {
-                return true;
-            }
-            if (album.getAlbumArtist() != null && album.getAlbumArtist().getName() != null
-                    && album.getAlbumArtist().getName().toLowerCase().contains(lowerCaseQuery)) {
-                return true;
-            }
-            if (album.getLabel() != null && album.getLabel().getName() != null
-                    && album.getLabel().getName().toLowerCase().contains(lowerCaseQuery)) {
-                return true;
-            }
+        if (albumMatchesQuery(item.getAlbum(), lowerCaseQuery)) {
+            return true;
         }
         return item.getComments() != null && item.getComments().toLowerCase().contains(lowerCaseQuery);
+    }
+
+    @SuppressWarnings("java:S2589")
+    private static boolean albumMatchesQuery(Album album, String lowerCaseQuery) {
+        if (album == null) {
+            return false;
+        }
+        if (album.getName() != null && album.getName().toLowerCase().contains(lowerCaseQuery)) {
+            return true;
+        }
+        if (album.getAlbumArtist() != null && album.getAlbumArtist().getName() != null
+                && album.getAlbumArtist().getName().toLowerCase().contains(lowerCaseQuery)) {
+            return true;
+        }
+        return album.getLabel() != null && album.getLabel().getName() != null
+                && album.getLabel().getName().toLowerCase().contains(lowerCaseQuery);
     }
 
     /**
