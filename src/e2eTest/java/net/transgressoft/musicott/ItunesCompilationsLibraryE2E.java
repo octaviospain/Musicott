@@ -19,6 +19,7 @@ import net.transgressoft.musicott.view.MainController;
 import net.transgressoft.musicott.view.NavigationController;
 import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
 import net.transgressoft.musicott.view.custom.table.FullAudioItemTableView;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -101,6 +102,11 @@ class ItunesCompilationsLibraryE2E {
         });
     }
 
+    @AfterAll
+    static void afterAll() throws Exception {
+        FxToolkit.cleanupStages();
+    }
+
     @Test
     @DisplayName("Musicott imports the Compilations iTunes library and filters All Tracks and Artists views")
     void importsCompilationsItunesLibraryAndFiltersAllTracksAndArtistsViews(FxRobot fxRobot) throws Exception {
@@ -114,8 +120,11 @@ class ItunesCompilationsLibraryE2E {
                 .filter(playlist -> !playlist.isFolder())
                 .toList();
 
+        // Importing the full compilations library (~1170 tracks) is I/O-bound and runs several times
+        // slower on the Windows and macOS CI runners than on Linux; allow generous headroom so the
+        // import future completing late on a cold runner is not mistaken for a failure.
         ImportResult result = mediaImportService.importSelectedPlaylists(selectedPlaylists, importPolicy())
-                .get(60, TimeUnit.SECONDS);
+                .get(180, TimeUnit.SECONDS);
         waitForFxEvents();
 
         assertThat(result.getUnresolved()).isEmpty();

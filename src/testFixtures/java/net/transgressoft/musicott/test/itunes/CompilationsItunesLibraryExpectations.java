@@ -28,13 +28,29 @@ public record CompilationsItunesLibraryExpectations(
             }
             JsonNode root = OBJECT_MAPPER.readTree(input);
             return new CompilationsItunesLibraryExpectations(
-                    root.path("trackCount").asInt(),
-                    root.path("playlistCount").asInt(),
-                    readFilters(root.path("allTracksFilters")),
-                    readFilters(root.path("artistsFilters")));
+                    requiredInt(root, "trackCount"),
+                    requiredInt(root, "playlistCount"),
+                    readFilters(root, "allTracksFilters"),
+                    readFilters(root, "artistsFilters"));
         } catch (IOException ex) {
             throw new IllegalStateException("Could not read Compilations iTunes expectations", ex);
         }
+    }
+
+    private static int requiredInt(JsonNode parent, String field) {
+        JsonNode node = parent.get(field);
+        if (node == null || !node.isInt()) {
+            throw new IllegalStateException("Missing or non-integer expectations field: " + field);
+        }
+        return node.intValue();
+    }
+
+    private static String requiredText(JsonNode parent, String field) {
+        JsonNode node = parent.get(field);
+        if (node == null || !node.isTextual()) {
+            throw new IllegalStateException("Missing or non-textual expectations field: " + field);
+        }
+        return node.textValue();
     }
 
     public FilterExpectation allTracksFilter(String name) {
@@ -52,13 +68,17 @@ public record CompilationsItunesLibraryExpectations(
                 .orElseThrow(() -> new IllegalArgumentException("No filter expectation named " + name));
     }
 
-    private static List<FilterExpectation> readFilters(JsonNode filtersNode) {
+    private static List<FilterExpectation> readFilters(JsonNode parent, String field) {
+        JsonNode filtersNode = parent.get(field);
+        if (filtersNode == null || !filtersNode.isArray()) {
+            throw new IllegalStateException("Missing or non-array expectations field: " + field);
+        }
         List<FilterExpectation> filters = new ArrayList<>();
         for (JsonNode filterNode : filtersNode) {
             filters.add(new FilterExpectation(
-                    filterNode.path("name").asText(),
-                    filterNode.path("query").asText(),
-                    filterNode.path("expectedCount").asInt()));
+                    requiredText(filterNode, "name"),
+                    requiredText(filterNode, "query"),
+                    requiredInt(filterNode, "expectedCount")));
         }
         return List.copyOf(filters);
     }

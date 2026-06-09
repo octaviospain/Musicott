@@ -118,6 +118,17 @@ public class PlayerService {
     }
 
     private void setPlayer(ObservableAudioItem audioItem) {
+        // Release the previous player and its subscription before swapping in a new one — the
+        // direct callers (previous, playFromQueue, playFromHistoryQueue) do not stop it themselves.
+        if (trackPlayer != null) {
+            trackPlayer.stop();
+            trackPlayer.dispose();
+        }
+        if (playedEventSubscriber != null) {
+            playedEventSubscriber.cancelSubscription();
+            playedEventSubscriber = null;
+        }
+
         var newPlayer = new FXAudioItemPlayer();
         // Bind to the AudioItemPlayer interface so Kotlin's @Throws on the interface method is
         // visible to Java's checked-exception analysis (the concrete overrides do not carry it).
@@ -134,8 +145,6 @@ public class PlayerService {
         currentTrack = Optional.of(audioItem);
         bindMediaPlayer();
 
-        if (playedEventSubscriber != null)
-            playedEventSubscriber.cancelSubscription();
         playedEventSubscriber = new PlayedEventSubscriber();
         playedEventSubscriber.addOnNextEventAction(
             new Type[] { PLAYED }, _ -> Platform.runLater(() ->
