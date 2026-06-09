@@ -11,12 +11,15 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
 import net.transgressoft.commons.fx.music.*;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
+import net.transgressoft.commons.music.m3u.M3uImportService;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.test.*;
 import net.transgressoft.musicott.view.custom.PlaylistTreeView;
+import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -31,9 +34,13 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.test.annotation.DirtiesContext;
 import org.testfx.api.FxRobot;
 
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.emptyOrNullString;
@@ -449,6 +456,27 @@ class PlaylistManagementUITConfiguration {
     @Bean
     public ApplicationEventPublisher applicationEventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public AlertFactory alertFactory() {
+        return mock(AlertFactory.class);
+    }
+
+    @Bean
+    public Supplier<DirectoryChooser> directoryChooserSupplier() {
+        return () -> mock(DirectoryChooser.class);
+    }
+
+    @Bean
+    public Supplier<FileChooser> fileChooserSupplier() {
+        return () -> mock(FileChooser.class);
+    }
+
+    @Bean
+    @SuppressWarnings("unchecked")
+    public M3uImportService<ObservableAudioItem, ObservablePlaylist> m3uImportService() {
+        return mock(M3uImportService.class);
     }
 
     @Bean

@@ -3,6 +3,7 @@ package net.transgressoft.musicott.view;
 import net.transgressoft.commons.fx.music.*;
 import net.transgressoft.commons.fx.music.audio.*;
 import net.transgressoft.commons.fx.music.playlist.*;
+import net.transgressoft.commons.music.m3u.M3uImportService;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
@@ -32,8 +33,13 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Scope;
 import org.testfx.api.FxRobot;
 
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
+
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALBUMS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.GENRES;
@@ -220,6 +226,27 @@ class NavigationControllerITConfiguration {
     @Bean
     public ApplicationEventPublisher applicationEventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public AlertFactory alertFactory() {
+        return mock(AlertFactory.class);
+    }
+
+    @Bean
+    public Supplier<DirectoryChooser> directoryChooserSupplier() {
+        return () -> mock(DirectoryChooser.class);
+    }
+
+    @Bean
+    public Supplier<FileChooser> fileChooserSupplier() {
+        return () -> mock(FileChooser.class);
+    }
+
+    @Bean
+    @SuppressWarnings("unchecked")
+    public M3uImportService<ObservableAudioItem, ObservablePlaylist> m3uImportService() {
+        return mock(M3uImportService.class);
     }
 
     @Bean

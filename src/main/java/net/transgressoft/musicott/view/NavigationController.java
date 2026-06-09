@@ -1,13 +1,18 @@
 package net.transgressoft.musicott.view;
 
 import javafx.beans.property.*;
+import net.transgressoft.commons.fx.music.FXMusicLibrary;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
+import net.transgressoft.commons.music.m3u.M3uImportService;
+import net.transgressoft.musicott.events.ErrorEvent;
 import net.transgressoft.musicott.events.ExportSelectedPlaylistsEvent;
+import net.transgressoft.musicott.events.ImportPlaylistsFromM3uEvent;
 import net.transgressoft.musicott.events.SelectCurrentPlayingAudioItemEvent;
 import net.transgressoft.musicott.events.StatusMessageUpdateEvent;
 import net.transgressoft.musicott.events.StatusProgressUpdateEvent;
 import net.transgressoft.musicott.view.custom.PlaylistTreeView;
+import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
 
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -17,6 +22,8 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -28,12 +35,20 @@ import org.fxmisc.easybind.EasyBind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALBUMS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALL_AUDIO_ITEMS;
@@ -44,9 +59,9 @@ import static org.fxmisc.easybind.EasyBind.subscribe;
 
 /**
  * Controller for the application navigation sidebar, managing navigation modes (All Tracks,
- * Artists) and the playlist tree view. Keeps nav-mode selection and playlist-tree selection
- * mutually exclusive: selecting a playlist clears the nav list, and switching to a nav mode
- * clears the playlist tree.
+ * Artists, Albums, Genres) and the playlist tree view. Keeps nav-mode selection and playlist-tree
+ * selection mutually exclusive: selecting a playlist clears the nav list, and switching to a nav
+ * mode clears the playlist tree. Handles M3U playlist export and import via Spring application events.
  *
  * @author Octavio Calleya
  */
@@ -78,8 +93,8 @@ public class NavigationController {
 
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
-    private final PlaylistTreeView playlistTreeView;
-    private final ObjectProperty<NavigationMode> navigationModeProperty;
+    final PlaylistTreeView playlistTreeView;
+    final ObjectProperty<NavigationMode> navigationModeProperty;
 
     @FXML
     private VBox navigationPaneVBox;
@@ -94,7 +109,13 @@ public class NavigationController {
     @FXML
     private Label statusLabel;
 
-    private final KeyCombination.Modifier operativeSystemKeyModifier;
+    final KeyCombination.Modifier operativeSystemKeyModifier;
+    final ApplicationEventPublisher applicationEventPublisher;
+    final FXMusicLibrary musicLibrary;
+    final AlertFactory alertFactory;
+    final Supplier<DirectoryChooser> directoryChooserSupplier;
+    final Supplier<FileChooser> fileChooserSupplier;
+    final M3uImportService<ObservableAudioItem, ObservablePlaylist> m3uImportService;
 
     private MenuItem newPlaylistMI;
     private MenuItem newFolderPlaylistMI;
@@ -105,9 +126,21 @@ public class NavigationController {
 
     @Autowired
     public NavigationController(PlaylistTreeView playlistTreeView,
-                                KeyCombination.Modifier operativeSystemKeyModifier) {
+                                KeyCombination.Modifier operativeSystemKeyModifier,
+                                ApplicationEventPublisher applicationEventPublisher,
+                                FXMusicLibrary musicLibrary,
+                                AlertFactory alertFactory,
+                                Supplier<DirectoryChooser> directoryChooserSupplier,
+                                Supplier<FileChooser> fileChooserSupplier,
+                                M3uImportService<ObservableAudioItem, ObservablePlaylist> m3uImportService) {
         this.playlistTreeView = playlistTreeView;
         this.operativeSystemKeyModifier = operativeSystemKeyModifier;
+        this.applicationEventPublisher = applicationEventPublisher;
+        this.musicLibrary = musicLibrary;
+        this.alertFactory = alertFactory;
+        this.directoryChooserSupplier = directoryChooserSupplier;
+        this.fileChooserSupplier = fileChooserSupplier;
+        this.m3uImportService = m3uImportService;
         this.navigationModeProperty = new SimpleObjectProperty<>(this, "navigation mode", NavigationMode.ARTISTS);
     }
 
@@ -198,12 +231,115 @@ public class NavigationController {
         }
     }
 
-    @EventListener (classes = ExportSelectedPlaylistsEvent.class)
-    @SuppressWarnings("java:S1135")
+    /**
+     * Handles an {@link ExportSelectedPlaylistsEvent} by opening a {@link DirectoryChooser} on the
+     * FX thread (required — JavaFX dialogs must run on the Application Thread), then exporting
+     * each selected playlist to an M3U file in a {@link CompletableFuture} off the FX thread to
+     * keep the UI responsive.
+     *
+     * <p>File collisions are treated as per-playlist failures — the underlying
+     * {@code exportToM3uFile} throws {@link java.io.IOException} if the destination already exists,
+     * and this method surfaces that as a named failure rather than overwriting, preventing accidental
+     * data loss. All failures are aggregated into a single {@link ErrorEvent} rather than shown
+     * individually.
+     */
+    @EventListener(classes = ExportSelectedPlaylistsEvent.class)
     public void exportSelectedPlaylists() {
-        // Deferred: read selected playlists via playlistTreeView.selectedPlaylists(), open a
-        // destination-chooser dialog and call exportToM3uFile per selected playlist. Currently
-        // the action is a no-op. Trigger: m3u export feature work.
+        Platform.runLater(() -> {
+            var selected = playlistTreeView.selectedPlaylists();
+            if (selected.isEmpty()) {
+                applicationEventPublisher.publishEvent(
+                        new StatusMessageUpdateEvent("No playlists selected to export", this));
+                return;
+            }
+            DirectoryChooser chooser = directoryChooserSupplier.get();
+            chooser.setTitle("Export playlist(s) to folder");
+            File folder = chooser.showDialog(playlistTreeView.getScene().getWindow());
+            if (folder == null) {
+                return;
+            }
+            List<String> failures = Collections.synchronizedList(new ArrayList<>());
+            var futures = selected.stream()
+                    .map(pl -> CompletableFuture.runAsync(() -> {
+                        try {
+                            pl.exportToM3uFile(folder.toPath().resolve(toSafeFileName(pl.getName()) + ".m3u"));
+                        } catch (Exception ex) {
+                            throw new CompletionException(ex);
+                        }
+                    }).exceptionally(ex -> {
+                                Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+                                failures.add(pl.getName() + ": " + cause.getMessage());
+                                return null;
+                            }))
+                    .toList();
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                    .whenComplete((ignored, ex) -> Platform.runLater(() -> {
+                        if (failures.isEmpty()) {
+                            applicationEventPublisher.publishEvent(
+                                    new StatusMessageUpdateEvent("Exported " + selected.size() + " playlist(s)", this));
+                        } else {
+                            applicationEventPublisher.publishEvent(
+                                    new ErrorEvent("Export failed", String.join("\n", failures), this));
+                        }
+                    }));
+        });
+    }
+
+    /**
+     * Replaces path separators and filesystem-reserved characters in a playlist name with
+     * underscores so it can be resolved into the export folder without escaping it or producing
+     * an invalid path. A playlist name is user-controlled and validated only for non-emptiness and
+     * uniqueness, so it may legitimately contain characters that are illegal in a file name.
+     */
+    private static String toSafeFileName(String playlistName) {
+        return playlistName.replaceAll("[\\\\/:*?\"<>|]", "_");
+    }
+
+    /**
+     * Handles an {@link ImportPlaylistsFromM3uEvent} by opening a {@link FileChooser} on the FX thread
+     * (required — JavaFX dialogs must run on the Application Thread), importing the chosen M3U file
+     * asynchronously via {@link M3uImportService#importAsync}, and nesting the resulting playlist
+     * under {@code ROOT_PLAYLIST} so it becomes visible in the {@link PlaylistTreeView}.
+     *
+     * <p>The playlist is nested under {@code ROOT_PLAYLIST} via
+     * {@code playlistHierarchy().addPlaylistsToDirectory()} because imported playlists are not
+     * automatically inserted into the tree — they must be explicitly placed in a directory. Feedback
+     * is limited to the status-bar imported-count; skipped entries are not counted and no
+     * partial-import modal is shown.
+     *
+     * <p>Hard failures ({@link net.transgressoft.commons.music.m3u.M3uImportException},
+     * {@link net.transgressoft.commons.music.m3u.M3uParseException},
+     * {@link net.transgressoft.commons.music.m3u.M3uCycleException}) are surfaced as an
+     * {@link ErrorEvent} modal; no playlist is nested on failure.
+     */
+    @EventListener(classes = ImportPlaylistsFromM3uEvent.class)
+    public void importPlaylistFromM3u() {
+        Platform.runLater(() -> {
+            FileChooser chooser = fileChooserSupplier.get();
+            chooser.setTitle("Import playlist from M3U file");
+            if (chooser.getExtensionFilters() != null) {
+                chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("M3U Playlists", "*.m3u", "*.m3u8"));
+            }
+            File file = chooser.showOpenDialog(playlistTreeView.getScene().getWindow());
+            if (file == null) {
+                return;
+            }
+            m3uImportService.importAsync(file.toPath())
+                    .whenComplete((playlist, ex) -> Platform.runLater(() -> {
+                        if (ex != null) {
+                            logger.error("M3U import failed", ex);
+                            applicationEventPublisher.publishEvent(
+                                    new ErrorEvent("Import failed", ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage(), this));
+                        } else {
+                            musicLibrary.playlistHierarchy().addPlaylistsToDirectory(Set.of(playlist), PlaylistTreeView.ROOT_PLAYLIST_NAME);
+                            // Count tracks recursively: a folder playlist's direct audioItems exclude tracks
+                            // held by its nested playlists, so the total imported must span the whole subtree.
+                            applicationEventPublisher.publishEvent(
+                                    new StatusMessageUpdateEvent(
+                                            "Imported playlist '" + playlist.getName() + "' (" + playlist.getAudioItemsRecursive().size() + " tracks)", this));
+                        }
+                    }));
+        });
     }
 
     @EventListener
