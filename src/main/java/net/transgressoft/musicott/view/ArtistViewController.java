@@ -151,8 +151,8 @@ public class ArtistViewController {
     }
 
     private void refreshAlbumRowsForArtist(Artist artist) {
-        var albumSets = albumSetsForArtist(artist);
-        Runnable refresh = () -> replaceAlbumRowsForArtist(artist, albumSets);
+        var albumSetsWithDisc = albumSetsForArtist(artist);
+        Runnable refresh = () -> replaceAlbumRowsForArtist(artist, albumSetsWithDisc);
         if (Platform.isFxApplicationThread()) {
             refresh.run();
         } else {
@@ -160,12 +160,12 @@ public class ArtistViewController {
         }
     }
 
-    private void replaceAlbumRowsForArtist(Artist artist, Set<AlbumSet<ObservableAudioItem>> albumSets) {
+    private void replaceAlbumRowsForArtist(Artist artist, Map<AlbumSet<ObservableAudioItem>, Integer> albumSetsWithDisc) {
         albumListRowMap.clear();
         albumRowsBackingList.clear();
-        albumSets.forEach(albumSet -> {
+        albumSetsWithDisc.forEach((albumSet, discNum) -> {
             var audioItemsTableView = applicationContext.getBean(SimpleAudioItemTableView.class);
-            var artistListRow = applicationContext.getBean(ArtistAlbumListRow.class, artist, albumSet, audioItemsTableView);
+            var artistListRow = applicationContext.getBean(ArtistAlbumListRow.class, artist, albumSet, audioItemsTableView, discNum);
             artistListRow.filterTracksByQuery(currentSearchQuery);
             albumListRowMap.put(albumSet, artistListRow);
             albumRowsBackingList.add(artistListRow);
@@ -174,19 +174,56 @@ public class ArtistViewController {
         totalAlbumsLabel.setText(getAlbumString());
     }
 
-    Set<AlbumSet<ObservableAudioItem>> albumSetsForArtist(Artist artist) {
-        var albumAudioItems = audioItemsForArtist(artist)
-                .filter(audioItem -> audioItem.getAlbum() != null && audioItem.getAlbum().getName() != null)
-                .collect(Collectors.groupingBy(
-                        audioItem -> audioItem.getAlbum().getName(),
-                        TreeMap::new,
-                        Collectors.toList()));
-        if (!albumAudioItems.isEmpty()) {
-            return albumAudioItems.entrySet().stream()
-                    .map(entry -> new AlbumView<ObservableAudioItem>(entry.getKey(), entry.getValue()))
-                    .collect(Collectors.toCollection(TreeSet::new));
+    /**
+     * Builds an ordered map of album sets to disc numbers for the given artist. Multi-disc albums
+     * produce one entry per distinct disc number; single-disc albums produce one entry with disc
+     * number {@code 0} (no disc label rendered).
+     */
+    Map<AlbumSet<ObservableAudioItem>, Integer> albumSetsForArtist(Artist artist) {
+        record AlbumDiscKey(String albumName, int disc) implements Comparable<AlbumDiscKey> {
+            @Override
+            public int compareTo(AlbumDiscKey other) {
+                int cmp = albumName.compareTo(other.albumName);
+                return cmp != 0 ? cmp : Integer.compare(disc, other.disc);
+            }
         }
-        return Set.of();
+
+        var tracks = audioItemsForArtist(artist)
+                .filter(audioItem -> audioItem.getAlbum() != null && audioItem.getAlbum().getName() != null)
+                .collect(Collectors.toList());
+        if (tracks.isEmpty()) {
+            return Map.of();
+        }
+
+        // Detect which album names have more than one distinct normalized disc number
+        var multiDiscAlbums = tracks.stream()
+                .collect(Collectors.groupingBy(t -> t.getAlbum().getName()))
+                .entrySet().stream()
+                .filter(e -> e.getValue().stream()
+                        .map(t -> normalizeDisc(t.getDiscNumber()))
+                        .distinct().count() > 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+
+        // Group by composite (albumName, disc): multi-disc albums split per disc, single-disc use disc=0
+        var grouped = tracks.stream().collect(Collectors.groupingBy(
+                t -> new AlbumDiscKey(
+                        t.getAlbum().getName(),
+                        multiDiscAlbums.contains(t.getAlbum().getName()) ? normalizeDisc(t.getDiscNumber()) : 0),
+                TreeMap::new,
+                Collectors.toList()));
+
+        // Build result map preserving TreeMap order: AlbumSet → disc number (0 = no label)
+        var result = new LinkedHashMap<AlbumSet<ObservableAudioItem>, Integer>();
+        grouped.forEach((key, items) ->
+                result.put(new AlbumView<>(key.albumName(), items), key.disc()));
+        return result;
+    }
+
+    private static int normalizeDisc(Number discNumber) {
+        if (discNumber == null) return 1;
+        int v = discNumber.intValue();
+        return v <= 0 ? 1 : v;
     }
 
     // getAudioItemsProperty() is nominally non-null, but partial or mock-backed repositories can
@@ -233,9 +270,12 @@ public class ArtistViewController {
     }
 
     private String getAlbumString() {
-        int numberOfTrackSets = albumRowsBackingList.size();
-        var appendix = numberOfTrackSets == 1 ? " album" : " albums";
-        return numberOfTrackSets + appendix;
+        long numberOfAlbums = albumRowsBackingList.stream()
+                .map(row -> row.getAlbumSet().getAlbumName())
+                .distinct()
+                .count();
+        var appendix = numberOfAlbums == 1 ? " album" : " albums";
+        return numberOfAlbums + appendix;
     }
 
     /**
@@ -275,7 +315,9 @@ public class ArtistViewController {
             artistsListView.scrollTo(newArtist);
         } else {
             albumRowsBackingList.forEach(trackSet -> {
-                if (trackSet.getAlbumSet().getAlbumName().equals(audioItem.getAlbum().getName())) {
+                boolean sameAlbum = trackSet.getAlbumSet().getAlbumName().equals(audioItem.getAlbum().getName());
+                boolean containsItem = trackSet.getAlbumSet().stream().anyMatch(item -> item.equals(audioItem));
+                if (sameAlbum && containsItem) {
                     trackSet.selectAudioItem(audioItem);
                     albumsListView.scrollTo(trackSet);
                 } else {
@@ -400,9 +442,9 @@ public class ArtistViewController {
         protected void updateItem(Artist item, boolean empty) {
             super.updateItem(item, empty);
             if (empty || item == null)
-                Platform.runLater(() -> setGraphic(null));
+                setGraphic(null);
             else
-                Platform.runLater(() -> setGraphic(new Label(item.getName())));
+                setGraphic(new Label(item.getName()));
         }
     }
 }
