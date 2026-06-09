@@ -6,6 +6,7 @@ import net.transgressoft.commons.music.player.AudioItemPlayer;
 import net.transgressoft.commons.music.player.UnsupportedAudioPlaybackException;
 import net.transgressoft.musicott.events.AudioItemChangedEvent;
 import net.transgressoft.musicott.events.ErrorEvent;
+import net.transgressoft.musicott.events.StatusMessageUpdateEvent;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 
 import javafx.beans.property.SimpleIntegerProperty;
@@ -262,6 +263,65 @@ class PlayerServiceStorageIT {
         verify(applicationEventPublisher).publishEvent(Mockito.any(ErrorEvent.class));
         verify(applicationEventPublisher, never()).publishEvent(any(AudioItemChangedEvent.class));
         assertThat(playerService.currentTrack()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("playRandom populates the queue with shuffled playable items and starts playback")
+    void playRandomPopulatesQueueWithShuffledPlayableItemsAndStartsPlayback() throws Exception {
+        ObservableAudioItem itemA = newPlayableAudioItem("A");
+        ObservableAudioItem itemB = newPlayableAudioItem("B");
+        ObservableAudioItem itemC = newPlayableAudioItem("C");
+
+        // next() inside playRandom constructs FXAudioItemPlayer — intercept to avoid native media init.
+        try (MockedConstruction<FXAudioItemPlayer> ignored = Mockito.mockConstruction(FXAudioItemPlayer.class,
+                (mock, context) -> {
+                    Mockito.doNothing().when(mock).play(Mockito.any());
+                    Mockito.when(mock.getStatusProperty())
+                            .thenReturn(new SimpleObjectProperty<>(AudioItemPlayer.Status.UNKNOWN));
+                })) {
+            playerService.playRandom(List.of(itemA, itemB, itemC));
+        }
+
+        // All three playable items must be in the queue (one was popped by next() into currentTrack).
+        int queueSize = playerService.getPlayQueueList().size();
+        assertThat(queueSize).isEqualTo(2);
+        assertThat(playerService.currentTrack()).isPresent();
+    }
+
+    @Test
+    @DisplayName("playRandom publishes StatusMessageUpdateEvent when pool is empty")
+    void playRandomPublishesStatusMessageUpdateEventWhenPoolIsEmpty() {
+        playerService.playRandom(List.of());
+
+        verify(applicationEventPublisher).publishEvent(any(StatusMessageUpdateEvent.class));
+        assertThat(playerService.getPlayQueueList()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("playRandom marks the queue as random so next addToQueue clears it")
+    void playRandomMarksQueueAsRandomSoNextAddToQueueClearsIt() throws Exception {
+        ObservableAudioItem itemRandom = newPlayableAudioItem("Random");
+        ObservableAudioItem itemExplicit = newPlayableAudioItem("Explicit");
+
+        try (MockedConstruction<FXAudioItemPlayer> ignored = Mockito.mockConstruction(FXAudioItemPlayer.class,
+                (mock, context) -> {
+                    Mockito.doNothing().when(mock).play(Mockito.any());
+                    Mockito.when(mock.getStatusProperty())
+                            .thenReturn(new SimpleObjectProperty<>(AudioItemPlayer.Status.UNKNOWN));
+                })) {
+            playerService.playRandom(List.of(itemRandom));
+        }
+
+        // After playRandom the queue is empty (one item was popped by next()) and playingRandom=true.
+        assertThat(playerService.getPlayQueueList()).isEmpty();
+        assertThat((boolean) ReflectionTestUtils.getField(playerService, "playingRandom")).isTrue();
+
+        // An explicit addToQueue must clear the random state and replace the queue.
+        playerService.addToQueue(List.of(itemExplicit));
+
+        assertThat((boolean) ReflectionTestUtils.getField(playerService, "playingRandom")).isFalse();
+        assertThat(playerService.getPlayQueueList()).hasSize(1);
+        assertThat(playerService.getPlayQueueList().get(0).getTrack()).isSameAs(itemExplicit);
     }
 
     @SuppressWarnings("unchecked")

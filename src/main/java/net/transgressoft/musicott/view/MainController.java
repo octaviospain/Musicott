@@ -29,6 +29,7 @@ import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
 import net.transgressoft.commons.music.audio.AudioFileType;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.service.MediaImportService;
+import net.transgressoft.musicott.services.PlayerService;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
 import net.transgressoft.musicott.view.custom.table.FullAudioItemTableView;
@@ -48,6 +49,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALL_AUDIO_ITEMS;
+import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ARTISTS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.PLAYLIST;
 import static org.fxmisc.easybind.EasyBind.map;
 import static org.fxmisc.easybind.EasyBind.subscribe;
@@ -65,6 +67,7 @@ public class MainController {
     private final ObservableAudioLibrary audioRepository;
     private final ObservablePlaylistHierarchy playlistRepository;
 
+    private final PlayerService playerService;
     private final PlayerController playerController;
     private final NavigationController navigationController;
     private final ArtistViewController artistViewController;
@@ -147,6 +150,7 @@ public class MainController {
     @Autowired
     public MainController(ObservableAudioLibrary audioRepository,
                           ObservablePlaylistHierarchy playlistRepository,
+                          PlayerService playerService,
                           PlayerController playerController,
                           NavigationController navigationController,
                           ArtistViewController artistViewController,
@@ -157,6 +161,7 @@ public class MainController {
                           KeyCombination.Modifier operativeSystemKeyModifier) {
         this.audioRepository = audioRepository;
         this.playlistRepository = playlistRepository;
+        this.playerService = playerService;
         this.playerController = playerController;
         this.navigationController = navigationController;
         this.artistViewController = artistViewController;
@@ -244,8 +249,14 @@ public class MainController {
         playRandomButton.visibleProperty().bind(tableItemsProperty.emptyProperty().not());
         playlistTracksNumberLabel.textProperty().bind(map(tableItemsProperty.sizeProperty(), s -> s + " tracks"));
 
-        playRandomButton.setOnAction(e -> selectedPlaylistProperty.get().ifPresent(
-            playlist -> applicationContext.publishEvent(new PlayPlaylistRandomlyEvent(playlist, this))));
+        playRandomButton.setOnAction(e -> {
+            var items = currentContextItems();
+            if (items.isEmpty()) {
+                applicationContext.publishEvent(new StatusMessageUpdateEvent("No playable tracks available", this));
+            } else {
+                playerService.playRandom(items);
+            }
+        });
 
         playlistSizeLabel.textProperty().bind(map(tableItemsProperty, (ObservableList<ObservableAudioItem> audioItems) -> {
             var sizeSum = audioItems.stream().mapToLong(ObservableAudioItem::getLength).sum();
@@ -881,6 +892,41 @@ public class MainController {
     @EventListener
     public void showTableViewContextMenuEventListener(ShowTableViewContextMenuEvent event) {
         audioItemContextMenu.show(event.selectedAudioItems, (Node) event.getSource(), event.screenX, event.screenY);
+    }
+
+    /**
+     * Handles a request to start random playback from the active navigation context.
+     * Resolves the current context items and delegates to {@link PlayerService#playRandom(java.util.Collection)}.
+     * Publishes a {@link StatusMessageUpdateEvent} when no playable items are available.
+     */
+    @EventListener
+    public void onPlayRandomFromContext(PlayRandomFromContextEvent event) {
+        var items = currentContextItems();
+        if (items.isEmpty()) {
+            applicationContext.publishEvent(new StatusMessageUpdateEvent("No playable tracks available", this));
+        } else {
+            playerService.playRandom(items);
+        }
+    }
+
+    /**
+     * Returns the item pool for the currently active navigation context.
+     *
+     * <p>For {@code ALL_AUDIO_ITEMS}, returns the full library. For {@code PLAYLIST},
+     * returns the selected playlist's items (recursive for directory playlists). For
+     * {@code ARTISTS}, returns every track involving the artist currently shown in the
+     * artist view (empty when none is selected).
+     */
+    private List<ObservableAudioItem> currentContextItems() {
+        return switch (navigationController.navigationModeProperty().get()) {
+            case ALL_AUDIO_ITEMS -> List.copyOf(audioRepository.getAudioItemsProperty());
+            case PLAYLIST -> selectedPlaylistProperty.get()
+                    .map(p -> p.isDirectory()
+                            ? List.copyOf(p.getAudioItemsRecursiveProperty())
+                            : List.copyOf(p.getAudioItemsProperty()))
+                    .orElse(List.of());
+            case ARTISTS -> List.copyOf(artistViewController.getSelectedArtistAudioItems());
+        };
     }
 
     private class AudioItemTableViewContextMenu extends ContextMenu {

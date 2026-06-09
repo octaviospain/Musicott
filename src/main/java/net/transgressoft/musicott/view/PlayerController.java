@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
@@ -76,6 +77,7 @@ public class PlayerController {
     private final AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository;
     private final PlayerService playerService;
     private final ObservableAudioLibrary audioLibrary;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final Image defaultCoverImage = ApplicationImage.DEFAULT_COVER.get();
 
     @FXML
@@ -158,10 +160,12 @@ public class PlayerController {
     @Autowired
     public PlayerController(AudioWaveformRepository<AudioWaveform, ObservableAudioItem> waveformRepository,
                             PlayerService playerService,
-                            ObservableAudioLibrary audioLibrary) {
+                            ObservableAudioLibrary audioLibrary,
+                            ApplicationEventPublisher applicationEventPublisher) {
         this.waveformRepository = waveformRepository;
         this.playerService = playerService;
         this.audioLibrary = audioLibrary;
+        this.applicationEventPublisher = applicationEventPublisher;
         playQueueFocusLossDelay.setOnFinished(_ -> {
             if (playQueueOwnerWindow == null || playQueueOwnerWindow.isFocused())
                 return;
@@ -407,7 +411,12 @@ public class PlayerController {
             if (playerService.currentTrack().isPresent()) {
                 playerService.resume();
             } else {
-                playerService.playRandom();
+                applicationEventPublisher.publishEvent(new PlayRandomFromContextEvent(this));
+                // If the context had no playable tracks, no playback started — keep the toggle in
+                // sync with the still-stopped player instead of leaving it showing the pause icon.
+                if (playerService.currentTrack().isEmpty()) {
+                    playButton.setSelected(false);
+                }
             }
         } else {
             playerService.pause();
@@ -607,8 +616,9 @@ public class PlayerController {
     @EventListener
     public void playPlaylistRandomlyEventListener(PlayPlaylistRandomlyEvent playPlaylistRandomlyEvent) {
         ObservablePlaylist playlist = playPlaylistRandomlyEvent.playlist;
-        playerService.addToQueue(playlist.getAudioItemsProperty());
-        playerService.next();
+        // Delegate to the unified random path so shuffle, queue-replacement, empty-pool feedback,
+        // and the playingRandom lifecycle are handled in one place.
+        playerService.playRandom(playlist.getAudioItemsProperty());
     }
 
     @EventListener
