@@ -143,12 +143,10 @@ public class PlayerController {
         bindPlayQueueOwnerWindow(newWindow);
     };
     private final ChangeListener<Number> playQueuePopupResizeListener = (observable, oldValue, newValue) -> applyPlayQueuePopupSizing();
-    private final ChangeListener<Scene> playQueueSizingSceneListener = (observable, oldScene, newScene) -> {
-        configurePlayQueuePopupSizingForScene(oldScene, newScene);
-    };
-    private final ChangeListener<Scene> playQueueOwnerLifecycleSceneListener = (observable, oldScene, newScene) -> {
-        configurePlayQueueOwnerLifecycleForScene(oldScene, newScene);
-    };
+    private final ChangeListener<Scene> playQueueSizingSceneListener = (observable, oldScene, newScene) ->
+            configurePlayQueuePopupSizingForScene(oldScene, newScene);
+    private final ChangeListener<Scene> playQueueOwnerLifecycleSceneListener = (observable, oldScene, newScene) ->
+            configurePlayQueueOwnerLifecycleForScene(oldScene, newScene);
     private final javafx.event.EventHandler<MouseEvent> playQueuePopOverMousePressedHandler = event -> {
         if (playQueuePopOver != null && playQueuePopOver.isShowing()
                 && isWithinPlayQueueButton(event.getScreenX(), event.getScreenY())) {

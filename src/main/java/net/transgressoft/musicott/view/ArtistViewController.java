@@ -115,6 +115,9 @@ public class ArtistViewController {
         artistsListView.setItems(new SortedList<>(filteredArtists, Comparator.comparing(Artist::getName)));
     }
 
+    // JavaFX ListChangeListener's SAM requires the `? extends Artist` parametrization for the
+    // method reference to bind; narrowing to the final `Artist` type breaks compilation.
+    @SuppressWarnings("java:S4968")
     private void artistsListener(ListChangeListener.Change<? extends Artist> change) {
         if (!change.getList().isEmpty()) {
             // Defer selection until the SortedList (registered after this listener) has processed
@@ -129,6 +132,9 @@ public class ArtistViewController {
         }
     }
 
+    // JavaFX ChangeListener's SAM requires the `? extends Artist` parametrization for the
+    // method reference to bind; narrowing to the final `Artist` type breaks compilation.
+    @SuppressWarnings("java:S4968")
     private void selectedArtistListener(ObservableValue<? extends Artist> obs, Artist oldArtist, Artist newArtist) {
         if (newArtist != null) {
             // if the selected artistCatalog is not already selected
@@ -183,6 +189,9 @@ public class ArtistViewController {
         return Set.of();
     }
 
+    // getAudioItemsProperty() is nominally non-null, but partial or mock-backed repositories can
+    // return null; the fallback to the per-artist catalog keeps filtering working in those cases.
+    @SuppressWarnings("java:S2589")
     private Stream<ObservableAudioItem> audioItemsForArtist(Artist artist) {
         var audioItems = audioRepository.getAudioItemsProperty();
         if (audioItems != null) {
@@ -190,7 +199,7 @@ public class ArtistViewController {
         }
 
         var catalog = audioRepository.getArtistCatalog(artist);
-        if (catalog == null || catalog.isEmpty()) {
+        if (catalog.isEmpty()) {
             return Stream.empty();
         }
         return catalog.stream()
@@ -315,6 +324,10 @@ public class ArtistViewController {
         return row -> row.hasTracksMatching(query);
     }
 
+    // Defensive null guards — partial catalogs can ship tracks with null artist/album/album-artist.
+    // Sonar's flow analysis trusts the music-commons API's nominal non-null types and flags these
+    // guards as gratuitous; in practice imported tracks sometimes carry nulls.
+    @SuppressWarnings({"java:S2589", "java:S2583"})
     private static boolean audioItemBelongsToArtist(ObservableAudioItem audioItem, Artist artist) {
         var itemArtist = audioItem.getArtist();
         if (itemArtist != null && itemArtist.equals(artist)) {
@@ -322,12 +335,9 @@ public class ArtistViewController {
         }
         var album = audioItem.getAlbum();
         var albumArtist = album == null ? null : album.getAlbumArtist();
-        if (audioItem.getArtistsInvolved() != null
+        return audioItem.getArtistsInvolved() != null
                 && audioItem.getArtistsInvolved().contains(artist)
-                && !artist.equals(albumArtist)) {
-            return true;
-        }
-        return false;
+                && !artist.equals(albumArtist);
     }
 
     // Guard each metadata access — partial catalogs can have null artist/album/album-artist
@@ -375,10 +385,9 @@ public class ArtistViewController {
             return true;
         }
 
-        var matchesLabel = album != null && album.getLabel() != null
+        return album != null && album.getLabel() != null
                 && album.getLabel().getName() != null
                 && album.getLabel().getName().toLowerCase().contains(query);
-        return matchesLabel;
     }
 
     public ReadOnlyObjectProperty<Optional<Artist>> selectedArtistProperty() {

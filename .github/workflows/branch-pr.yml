@@ -8,15 +8,6 @@ on:
             - "**.md"
             - '.gitignore'
             - 'docs/**'
-    pull_request:
-        types: [opened, synchronize, reopened]
-        branches:
-            - master
-        paths-ignore:
-            - "**.md"
-            - '.gitignore'
-            - 'docs/**'
-
 concurrency:
     group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
     cancel-in-progress: true
@@ -30,14 +21,14 @@ jobs:
         runs-on: ${{ matrix.os }}
 
         steps:
-            -   uses: actions/checkout@v4
+            -   uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
                 with:
                     fetch-depth: 0
 
             -   name: Set up JDK 24 (Liberica + JavaFX)
-                uses: actions/setup-java@v4
+                uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
                 with:
-                    java-version: '24'
+                    java-version: 24
                     distribution: 'liberica'
                     java-package: 'jdk+fx'
 
@@ -64,7 +55,7 @@ jobs:
                     echo "DISPLAY=:99.0" >> $GITHUB_ENV
 
             -   name: Cache Gradle packages
-                uses: actions/cache@v4
+                uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
                 with:
                     path: |
                         ~/.gradle/caches

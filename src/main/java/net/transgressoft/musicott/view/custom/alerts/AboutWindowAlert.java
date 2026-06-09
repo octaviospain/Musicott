@@ -13,6 +13,7 @@ import javafx.stage.Stage;
 import org.springframework.boot.info.BuildProperties;
 
 import java.time.Year;
+import java.time.ZoneId;
 
 import static net.transgressoft.musicott.services.SimpleWebRedirectionService.GITHUB_URL;
 
@@ -37,7 +38,7 @@ public class AboutWindowAlert extends ApplicationAlertBase {
 
         String version = (buildProperties != null) ? buildProperties.getVersion() : "dev";
         String firstLine = "Version " + version + ".\nCopyright © 2015-"
-            + Year.now().getValue() + "\nOctavio Calleya.";
+            + Year.now(ZoneId.systemDefault()).getValue() + "\nOctavio Calleya.";
 
         Label aboutLabel1 = new Label(firstLine);
         Label aboutLabel2 = new Label(ABOUT_MUSICOTT_SECOND_LINE);
