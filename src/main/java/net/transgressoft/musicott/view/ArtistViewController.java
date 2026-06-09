@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
+import static java.util.stream.Collectors.*;
 import static org.fxmisc.easybind.EasyBind.map;
 
 /**
@@ -188,28 +189,28 @@ public class ArtistViewController {
 
         var tracks = audioItemsForArtist(artist)
                 .filter(audioItem -> audioItem.getAlbum() != null && audioItem.getAlbum().getName() != null)
-                .collect(Collectors.toList());
+                .toList();
         if (tracks.isEmpty()) {
             return Map.of();
         }
 
         // Detect which album names have more than one distinct normalized disc number
         var multiDiscAlbums = tracks.stream()
-                .collect(Collectors.groupingBy(t -> t.getAlbum().getName()))
+                .collect(groupingBy(t -> t.getAlbum().getName()))
                 .entrySet().stream()
                 .filter(e -> e.getValue().stream()
                         .map(t -> normalizeDisc(t.getDiscNumber()))
                         .distinct().count() > 1)
                 .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
+                .collect(toSet());
 
         // Group by composite (albumName, disc): multi-disc albums split per disc, single-disc use disc=0
-        var grouped = tracks.stream().collect(Collectors.groupingBy(
+        var grouped = tracks.stream().collect(groupingBy(
                 t -> new AlbumDiscKey(
                         t.getAlbum().getName(),
                         multiDiscAlbums.contains(t.getAlbum().getName()) ? normalizeDisc(t.getDiscNumber()) : 0),
                 TreeMap::new,
-                Collectors.toList()));
+                toList()));
 
         // Build result map preserving TreeMap order: AlbumSet → disc number (0 = no label)
         var result = new LinkedHashMap<AlbumSet<ObservableAudioItem>, Integer>();
@@ -259,7 +260,7 @@ public class ArtistViewController {
      */
     public List<ObservableAudioItem> getSelectedArtistAudioItems() {
         return selectedArtistProperty.getValue()
-                .map(artist -> audioItemsForArtist(artist).collect(Collectors.toList()))
+                .map(artist -> audioItemsForArtist(artist).toList())
                 .orElseGet(List::of);
     }
 
@@ -302,7 +303,7 @@ public class ArtistViewController {
     public ObservableList<ObservableAudioItem> getSelectedTracks() {
         return albumRowsBackingList.stream()
             .flatMap(entry -> entry.selectedAudioItemsProperty().stream())
-            .collect(Collectors.toCollection(FXCollections::observableArrayList));
+            .collect(toCollection(FXCollections::observableArrayList));
     }
 
     public void findAudioItemInArtistViewAndSelect(ObservableAudioItem audioItem) {
