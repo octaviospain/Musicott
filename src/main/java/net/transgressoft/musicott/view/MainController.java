@@ -49,7 +49,6 @@ import java.util.*;
 import java.util.function.Function;
 
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALL_AUDIO_ITEMS;
-import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ARTISTS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.PLAYLIST;
 import static org.fxmisc.easybind.EasyBind.map;
 import static org.fxmisc.easybind.EasyBind.subscribe;

@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.VBox?>
 <VBox spacing="6.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="net.transgressoft.musicott.view.itunes.ItunesWizardConfirmStepController">
@@ -17,7 +18,8 @@
                 <Insets top="10.0"/>
             </VBox.margin>
         </Label>
-        <VBox fx:id="playlistsList" spacing="2.0"/>
+        <TreeView fx:id="playlistsTree" showRoot="false" prefHeight="150.0" maxHeight="150.0"
+                  stylesheets="@../css/scroll-bar-general.css"/>
 
         <Label style="-fx-font-weight: bold;" text="Policy">
             <VBox.margin>

@@ -10,7 +10,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBoxTreeItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
-import javafx.scene.control.cell.CheckBoxTreeCell;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.controlsfx.control.CheckTreeView;
 import org.springframework.stereotype.Controller;
@@ -57,7 +56,7 @@ public class ItunesWizardPlaylistsStepController {
     public void initialize() {
         playlistsTree.setShowRoot(false);
         playlistsTree.setRoot(new TreeItem<>(null));
-        playlistsTree.setCellFactory(tv -> new ItunesPlaylistTreeCell());
+        playlistsTree.setCellFactory(tv -> new ItunesPlaylistCells.SelectionTreeCell());
         invalid.bind(Bindings.isEmpty(playlistsTree.getCheckModel().getCheckedItems()));
         selectionCountLabel.textProperty().bind(
                 Bindings.size(playlistsTree.getCheckModel().getCheckedItems()).asString().concat(" selected")
@@ -210,20 +209,4 @@ public class ItunesWizardPlaylistsStepController {
         }
     }
 
-    private static final class ItunesPlaylistTreeCell extends CheckBoxTreeCell<ItunesPlaylist> {
-
-        @Override
-        public void updateItem(ItunesPlaylist item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty || item == null) {
-                setText(null);
-            } else if (item.isFolder()) {
-                setText(item.getName());
-            } else {
-                int trackCount = item.getTrackIds().size();
-                String unit = trackCount == 1 ? "track" : "tracks";
-                setText(item.getName() + "  (" + trackCount + " " + unit + ")");
-            }
-        }
-    }
 }
