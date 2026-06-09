@@ -7,7 +7,7 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioItemTestFactory;
-import net.transgressoft.commons.music.audio.ImmutableLabel;
+import net.transgressoft.commons.music.audio.Label;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
@@ -15,7 +15,7 @@ import org.springframework.context.ApplicationContext;
 import java.util.Optional;
 import java.util.Set;
 
-import static net.transgressoft.commons.music.audio.ImmutableArtist.of;
+import static net.transgressoft.commons.music.audio.Artist.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -76,7 +76,7 @@ class ArtistViewControllerTest {
                     albumArtist,
                     false,
                     null,
-                    ImmutableLabel.of("Test Label")));
+                    Label.of("Test Label")));
             attributes.setTrackNumber((short) trackNumber);
             attributes.setDiscNumber((short) 1);
         }, artistsInvolved);

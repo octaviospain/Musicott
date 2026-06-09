@@ -15,7 +15,7 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioItemTestFactory;
-import net.transgressoft.commons.music.audio.ImmutableLabel;
+import net.transgressoft.commons.music.audio.Label;
 import net.transgressoft.lirp.event.LirpEventPublisher;
 import net.transgressoft.musicott.events.SearchTextTypedEvent;
 import net.transgressoft.musicott.test.ApplicationTestBase;
@@ -39,7 +39,7 @@ import org.testfx.util.WaitForAsyncUtils;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static net.transgressoft.commons.music.audio.ImmutableArtist.of;
+import static net.transgressoft.commons.music.audio.Artist.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.context.annotation.ComponentScan.Filter;
@@ -234,7 +234,7 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
                     albumArtist,
                     false,
                     null,
-                    ImmutableLabel.of("Test Label")));
+                    Label.of("Test Label")));
             attributes.setTrackNumber((short) trackNumber);
             attributes.setDiscNumber((short) 1);
         }, artistsInvolved);

@@ -4,11 +4,9 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import net.rgielen.fxweaver.core.FxWeaver;
-import net.transgressoft.musicott.config.ApplicationPaths;
 import net.transgressoft.musicott.view.MainController;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -38,10 +36,10 @@ class MusicottApplicationE2E {
 
 		@Bean
 		@Primary
-		public ApplicationPaths applicationPaths() throws IOException {
+		public MusicottApplication.ApplicationPaths applicationPaths() throws IOException {
 			Path tempDir = Files.createTempDirectory("musicott-e2e");
 			tempDir.toFile().deleteOnExit();
-			return new ApplicationPaths(
+			return new MusicottApplication.ApplicationPaths(
 					tempDir.resolve("audioItems.json"),
 					tempDir.resolve("playlists.json"),
 					tempDir.resolve("waveforms.json")

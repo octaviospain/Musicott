@@ -1,29 +1,27 @@
 [versions]
 # Languages & runtime
 kotlin = "2.3.21"
-kotlinx-coroutines = "1.10.1"
-kotlinx-serialization = "1.10.0"
+kotlinx-coroutines = "1.11.0"
+kotlinx-serialization = "1.11.0"
 
 # Frameworks
 spring-boot = "4.0.6"
 spring-dependency-management = "1.1.7"
 
 # Music ecosystem
-music-commons = "0.5.2"
-lirp = "2.4.2"
+music-commons = "0.6.0"
+lirp = "2.5.0"
 
 # JavaFX integration
 javafx-weaver = "2.0.1"
 controlsfx = "11.2.3"
 easybind = "1.0.3"
 nsmenufx = "2.1.7"
-
 # Audio / media
 jaudiotagger = "3.0.1"
-
 # Persistence / serialization
-jackson = "2.21.3"
-jackson-annotations = "2.21"
+jackson = "2.22.0"
+jackson-annotations = "2.22"
 
 # Utilities
 nv-i18n = "1.29"
@@ -31,10 +29,9 @@ commons-io = "2.22.0"
 commons-lang3 = "3.20.0"
 kotlin-logging = "3.0.5"
 jakarta-annotation = "3.0.0"
-ddplist = "1.29"
 
 # Testing
-junit-bom = "6.0.3"
+junit-bom = "6.1.0"
 mockito = "5.23.0"
 testfx = "4.0.18"
 monocle = "21.0.2"
@@ -42,8 +39,8 @@ hamcrest = "3.0"
 kotest = "5.9.1"
 
 # Build plugins
-sonarqube = "7.3.0.8198"
-axion-release = "1.21.1"
+sonarqube = "7.3.1.8318"
+axion-release = "1.21.2"
 beryx-runtime = "2.0.1"
 
 [libraries]
@@ -65,10 +62,12 @@ snakeyaml = { module = "org.yaml:snakeyaml" }
 # Music ecosystem
 music-commons-api = { module = "net.transgressoft:music-commons-api", version.ref = "music-commons" }
 music-commons-core = { module = "net.transgressoft:music-commons-core", version.ref = "music-commons" }
+music-commons-media = { module = "net.transgressoft:music-commons-media", version.ref = "music-commons" }
 music-commons-fx = { module = "net.transgressoft:music-commons-fx", version.ref = "music-commons" }
 music-commons-test = { module = "net.transgressoft:music-commons-test", version.ref = "music-commons" }
 music-commons-fx-test = { module = "net.transgressoft:music-commons-fx-test", version.ref = "music-commons" }
 lirp-core = { module = "net.transgressoft:lirp-core", version.ref = "lirp" }
+lirp-sql = { module = "net.transgressoft:lirp-sql", version.ref = "lirp" }
 
 # JavaFX UI
 javafx-weaver-core = { module = "net.rgielen:javafx-weaver-core", version.ref = "javafx-weaver" }
@@ -90,7 +89,6 @@ nv-i18n = { module = "com.neovisionaries:nv-i18n", version.ref = "nv-i18n" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 jakarta-annotation = { module = "jakarta.annotation:jakarta.annotation-api", version.ref = "jakarta-annotation" }
-dd-plist = { module = "com.googlecode.plist:dd-plist", version.ref = "ddplist" }
 
 # Testing
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
@@ -102,11 +100,30 @@ openjfx-monocle = { module = "org.testfx:openjfx-monocle", version.ref = "monocl
 hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
 
 [bundles]
-music-commons = ["music-commons-api", "music-commons-core", "music-commons-fx"]
-music-commons-test = ["music-commons-test", "music-commons-fx-test"]
-javafx-weaver = ["javafx-weaver-core", "javafx-weaver-spring"]
-jackson = ["jackson-core", "jackson-annotations", "jackson-databind"]
-testfx = ["testfx-core", "testfx-junit5", "openjfx-monocle"]
+music-commons = [
+    "music-commons-api",
+    "music-commons-core",
+    "music-commons-fx",
+    "music-commons-media",
+]
+music-commons-test = [
+    "music-commons-fx-test",
+    "music-commons-test",
+]
+javafx-weaver = [
+    "javafx-weaver-core",
+    "javafx-weaver-spring",
+]
+jackson = [
+    "jackson-annotations",
+    "jackson-core",
+    "jackson-databind",
+]
+testfx = [
+    "openjfx-monocle",
+    "testfx-core",
+    "testfx-junit5",
+]
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

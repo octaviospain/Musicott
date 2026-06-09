@@ -39,7 +39,7 @@ import org.testfx.api.FxRobot;
 
 import java.nio.file.Path;
 
-import static net.transgressoft.commons.music.audio.ImmutableArtist.of;
+import static net.transgressoft.commons.music.audio.Artist.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.context.annotation.ComponentScan.Filter;
