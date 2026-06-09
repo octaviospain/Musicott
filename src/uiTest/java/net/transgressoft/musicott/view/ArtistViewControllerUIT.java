@@ -113,6 +113,8 @@ class ArtistViewControllerUIT extends ApplicationTestBase<SplitPane> {
         ObservableAudioItem disc2Track = audioItem("Stay the Same", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo), 2);
 
         Platform.runLater(() -> {
+            audioItemsProperty.clear();
+            artistsProperty.clear();
             audioItemsProperty.addAll(disc1Track, disc2Track);
             artistsProperty.add(bonobo);
         });

@@ -315,7 +315,9 @@ public class ArtistViewController {
             artistsListView.scrollTo(newArtist);
         } else {
             albumRowsBackingList.forEach(trackSet -> {
-                boolean sameAlbum = trackSet.getAlbumSet().getAlbumName().equals(audioItem.getAlbum().getName());
+                var album = audioItem.getAlbum();
+                boolean sameAlbum = album != null
+                        && trackSet.getAlbumSet().getAlbumName().equals(album.getName());
                 boolean containsItem = trackSet.getAlbumSet().stream().anyMatch(item -> item.equals(audioItem));
                 if (sameAlbum && containsItem) {
                     trackSet.selectAudioItem(audioItem);

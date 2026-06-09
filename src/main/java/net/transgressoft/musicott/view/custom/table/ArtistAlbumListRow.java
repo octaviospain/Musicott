@@ -102,6 +102,7 @@ public class ArtistAlbumListRow extends HBox {
 
     private void placeLeftVBox() {
         coverImageView = new ImageView();
+        coverImageView.setId("coverImageView");
         coverImageView.setFitWidth(COVER_SIZE);
         coverImageView.setFitHeight(COVER_SIZE);
         updateAudioItemsImage();
@@ -193,7 +194,8 @@ public class ArtistAlbumListRow extends HBox {
     @SuppressWarnings("java:S2589")
     private void updateAlbumLabelLabel() {
         var labelString = containedAudioItems.stream()
-                .filter(entry -> entry.getAlbum().getLabel() != null
+                .filter(entry -> entry.getAlbum() != null
+                        && entry.getAlbum().getLabel() != null
                         && entry.getAlbum().getLabel().getName() != null
                         && !entry.getAlbum().getLabel().getName().isEmpty())
                 .map(entry -> entry.getAlbum().getLabel().getName())

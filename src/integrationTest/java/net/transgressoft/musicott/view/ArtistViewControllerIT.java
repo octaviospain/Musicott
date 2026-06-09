@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.beans.value.WritableObjectValue;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.ListView;
@@ -246,7 +247,11 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         waitForFxEvents();
 
         ArtistAlbumListRow row = albumsListView.getItems().get(0);
-        assertThat(track.getCoverImageProperty().get().isPresent()).isTrue();
+        Node coverNode = row.lookup("#coverImageView");
+        assertThat(coverNode).isInstanceOf(ImageView.class);
+        ImageView renderedCover = (ImageView) coverNode;
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> renderedCover.getImage() == coverImage);
+        assertThat(renderedCover.getImage()).isSameAs(coverImage);
     }
 
     @Test
@@ -301,6 +306,8 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
 
     private static byte[] loadTestImageBytes() throws IOException {
         try (var stream = ArtistViewControllerIT.class.getResourceAsStream("/images/default-cover-image.png")) {
+            if (stream == null)
+                throw new IOException("Missing test resource: /images/default-cover-image.png");
             return stream.readAllBytes();
         }
     }
