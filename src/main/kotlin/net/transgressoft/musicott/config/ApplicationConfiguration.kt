@@ -20,12 +20,15 @@ package net.transgressoft.musicott.config
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.input.KeyCombination
+import javafx.stage.DirectoryChooser
+import javafx.stage.FileChooser
 import net.transgressoft.commons.fx.music.FXMusicLibrary
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy
 import net.transgressoft.commons.media.persistence.waveform.AudioWaveformMapSerializer
+import net.transgressoft.commons.music.m3u.M3uImportService
 import net.transgressoft.commons.persistence.fx.music.audio.FXAudioItemSqlTableDef
 import net.transgressoft.commons.persistence.fx.music.playlist.ObservablePlaylistMapSerializer
 import net.transgressoft.commons.music.audio.AudioMetadataIO
@@ -44,6 +47,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Optional
+import java.util.function.Supplier
 
 @Configuration
 class ApplicationConfiguration @Autowired constructor(private val applicationPaths: MusicottApplication.ApplicationPaths) {
@@ -128,4 +132,28 @@ class ApplicationConfiguration @Autowired constructor(private val applicationPat
     @Bean
     fun waveformRepository(musicLibrary: FXMusicLibrary): AudioWaveformRepository<AudioWaveform, ObservableAudioItem> =
         musicLibrary.waveformRepository()
+
+    /**
+     * Provides a [DirectoryChooser] factory for production use. The [Supplier] indirection
+     * allows integration tests to inject a pre-configured mock without modifying production code.
+     */
+    @Bean
+    fun directoryChooserSupplier(): Supplier<DirectoryChooser> = Supplier { DirectoryChooser() }
+
+    /**
+     * Provides a [FileChooser] factory for production use. The [Supplier] indirection
+     * allows integration tests to inject a pre-configured mock without modifying production code.
+     */
+    @Bean
+    fun fileChooserSupplier(): Supplier<FileChooser> = Supplier { FileChooser() }
+
+    /**
+     * Creates the M3U import service bound to the application's FX music library.
+     *
+     * Registered with [destroyMethod] = "close" so that the backing [kotlinx.coroutines.CoroutineScope]
+     * is cancelled on Spring context shutdown, preventing resource leaks.
+     */
+    @Bean(destroyMethod = "close")
+    fun m3uImportService(musicLibrary: FXMusicLibrary): M3uImportService<ObservableAudioItem, ObservablePlaylist> =
+        M3uImportService(musicLibrary)
 }

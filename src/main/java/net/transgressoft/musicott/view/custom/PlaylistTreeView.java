@@ -54,6 +54,12 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
 
     private static final DataFormat PLAYLIST_DATA_FORMAT = new DataFormat("application/observable-playlist");
 
+    /**
+     * Name of the implicit top-level playlist directory that holds every user playlist. The tree
+     * hides this root node; playlists become visible in the tree by being nested under it.
+     */
+    public static final String ROOT_PLAYLIST_NAME = "ROOT_PLAYLIST";
+
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
     private final ObservablePlaylistHierarchy playlistRepository;
@@ -94,9 +100,9 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
 
     private PlaylistTreeViewItem createRootPlaylistTreeViewItem() {
         ObservablePlaylist rootPlaylist;
-        var maybeRootPlaylist = playlistRepository.findByName("ROOT_PLAYLIST");
+        var maybeRootPlaylist = playlistRepository.findByName(ROOT_PLAYLIST_NAME);
         if (maybeRootPlaylist.isEmpty()) {
-            rootPlaylist = playlistRepository.createPlaylistDirectory("ROOT_PLAYLIST");
+            rootPlaylist = playlistRepository.createPlaylistDirectory(ROOT_PLAYLIST_NAME);
         } else {
             rootPlaylist = maybeRootPlaylist.get();
         }
@@ -546,7 +552,10 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
 
             var exportPlaylistsMenuItem = new MenuItem("Export playlist(s) as m3u file(s)");
             exportPlaylistsMenuItem.setOnAction(e -> applicationEventPublisher.publishEvent(new ExportSelectedPlaylistsEvent(e.getSource())));
-            getItems().addAll(addPlaylistMenuItem, addPlaylistFolderMenuItem, deletePlaylistMenuItem, exportPlaylistsMenuItem);
+
+            var importPlaylistMenuItem = new MenuItem("Import playlist from m3u file...");
+            importPlaylistMenuItem.setOnAction(e -> applicationEventPublisher.publishEvent(new ImportPlaylistsFromM3uEvent(e.getSource())));
+            getItems().addAll(addPlaylistMenuItem, addPlaylistFolderMenuItem, deletePlaylistMenuItem, exportPlaylistsMenuItem, importPlaylistMenuItem);
         }
     }
 }

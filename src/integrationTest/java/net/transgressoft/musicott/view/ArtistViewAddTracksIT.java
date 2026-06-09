@@ -9,6 +9,8 @@ import javafx.scene.Node;
 import javafx.scene.control.ListView;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
@@ -20,6 +22,7 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
+import net.transgressoft.commons.music.m3u.M3uImportService;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import net.transgressoft.commons.music.waveform.AudioWaveform;
@@ -54,6 +57,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static net.transgressoft.commons.music.audio.Artist.of;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -244,6 +248,22 @@ class ArtistViewAddTracksITConfiguration {
     @Bean
     public AlertFactory alertFactory() {
         return mock(AlertFactory.class);
+    }
+
+    @Bean
+    public Supplier<DirectoryChooser> directoryChooserSupplier() {
+        return () -> mock(DirectoryChooser.class);
+    }
+
+    @Bean
+    public Supplier<FileChooser> fileChooserSupplier() {
+        return () -> mock(FileChooser.class);
+    }
+
+    @Bean
+    @SuppressWarnings("unchecked")
+    public M3uImportService<ObservableAudioItem, ObservablePlaylist> m3uImportService() {
+        return mock(M3uImportService.class);
     }
 
     @Bean

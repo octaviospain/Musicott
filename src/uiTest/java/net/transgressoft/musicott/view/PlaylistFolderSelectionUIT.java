@@ -5,6 +5,7 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
+import net.transgressoft.commons.music.m3u.M3uImportService;
 import net.transgressoft.commons.music.waveform.AudioWaveform;
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository;
 import net.transgressoft.musicott.service.MediaImportService;
@@ -53,11 +54,15 @@ import org.testfx.util.WaitForAsyncUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -231,6 +236,22 @@ class PlaylistFolderSelectionUITConfiguration {
     @Bean
     public ApplicationEventPublisher applicationEventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public Supplier<DirectoryChooser> directoryChooserSupplier() {
+        return () -> mock(DirectoryChooser.class);
+    }
+
+    @Bean
+    public Supplier<FileChooser> fileChooserSupplier() {
+        return () -> mock(FileChooser.class);
+    }
+
+    @Bean
+    @SuppressWarnings("unchecked")
+    public M3uImportService<ObservableAudioItem, ObservablePlaylist> m3uImportService() {
+        return mock(M3uImportService.class);
     }
 
     @Bean
