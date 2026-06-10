@@ -32,6 +32,7 @@ import net.transgressoft.musicott.service.MediaImportService;
 import net.transgressoft.musicott.services.PlayerService;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
+import net.transgressoft.musicott.view.custom.alerts.DeleteAudioItemsConfirmationAlert;
 import net.transgressoft.musicott.view.custom.table.FullAudioItemTableView;
 import net.transgressoft.musicott.view.itunes.ItunesImportWizard;
 import org.apache.commons.io.FileUtils;
@@ -957,8 +958,7 @@ public class MainController {
             MenuItem deleteMenuItem = new MenuItem("Delete");
             deleteMenuItem.setOnAction(event -> {
                 if (! selection.isEmpty()) {
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Delete selected track(s)?");
-                    alert.showAndWait().ifPresent(response -> {
+                    new DeleteAudioItemsConfirmationAlert().showAndWait().ifPresent(response -> {
                         if (response == ButtonType.OK) {
                             var selectionSet = new HashSet<>(selection);
                             applicationContext.publishEvent(new DeleteAudioItemsEvent(selectionSet, this));
@@ -985,7 +985,10 @@ public class MainController {
         }
 
         public void show(ObservableList<ObservableAudioItem> selection, Node anchor, double screenX, double screenY) {
-            this.selection = selection;
+            // In ARTISTS mode the main-table selection is always empty; use the artist-view selection instead.
+            this.selection = navigationController.navigationModeProperty().get() == NavigationController.NavigationMode.ARTISTS
+                    ? artistViewController.getSelectedTracks()
+                    : selection;
             playlistsInMenu.clear();
             addToPlaylistMenu.getItems().clear();
 

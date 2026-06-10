@@ -30,6 +30,7 @@ import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.slf4j.Logger;
@@ -66,6 +67,7 @@ public class PlayerService {
 
     private Optional<ObservableAudioItem> currentTrack = Optional.empty();
     private FXAudioItemPlayer trackPlayer;
+    private ChangeListener<Status> statusListener;
     private PlayedEventSubscriber playedEventSubscriber;
     private boolean playingRandom = false;
 
@@ -109,21 +111,29 @@ public class PlayerService {
     public void play(ObservableAudioItem audioItem) {
         if (!audioItem.getPath().toFile().exists()) {
             applicationEventPublisher.publishEvent(new ErrorEvent("File not found", audioItem.getPath().toString(), this));
-        } else {
-            Status status = playerStatus();
-            if (status.equals(STOPPED) || status.equals(PAUSED) || status.equals(UNKNOWN)) {
-                setPlayer(audioItem);
-            } else if (status.equals(PLAYING)) {
-                stop();
-                setPlayer(audioItem);
-            }
+            return;
         }
+        // After a natural end-of-track the core reports READY, which the old branch list
+        // did not handle — causing silent no-ops and broken auto-advance. Treat every
+        // non-PLAYING status as "idle": stop only when actively playing, then always start
+        // a fresh player. setPlayer() disposes any existing player before constructing the new one.
+        if (playerStatus() == PLAYING) {
+            stop();
+        }
+        setPlayer(audioItem);
     }
 
     private void setPlayer(ObservableAudioItem audioItem) {
         // Release the previous player and its subscription before swapping in a new one — the
         // direct callers (previous, playFromQueue, playFromHistoryQueue) do not stop it themselves.
         if (trackPlayer != null) {
+            // Detach the status listener before stopping/disposing the outgoing player. Otherwise
+            // the dispose-time STOPPED transition is delivered asynchronously and reaches the UI
+            // after the new track's labels are bound, clearing them for the rest of the session.
+            if (statusListener != null) {
+                trackPlayer.getStatusProperty().removeListener(statusListener);
+                statusListener = null;
+            }
             trackPlayer.stop();
             trackPlayer.dispose();
         }
@@ -162,8 +172,9 @@ public class PlayerService {
     private void bindMediaPlayer() {
         applicationEventPublisher.publishEvent(new PlaybackStatusChangedEvent(playerStatus(), this));
 
-        trackPlayer.getStatusProperty().addListener((obs, oldStatus, newStatus) ->
-            applicationEventPublisher.publishEvent(new PlaybackStatusChangedEvent(newStatus, this)));
+        statusListener = (obs, oldStatus, newStatus) ->
+            applicationEventPublisher.publishEvent(new PlaybackStatusChangedEvent(newStatus, this));
+        trackPlayer.getStatusProperty().addListener(statusListener);
     }
 
     public void pause() {

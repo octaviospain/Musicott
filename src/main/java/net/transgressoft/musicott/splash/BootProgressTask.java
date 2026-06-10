@@ -74,8 +74,9 @@ public class BootProgressTask extends Task<ConfigurableApplicationContext> {
         // Stage 1 — Spring boot. Per RESEARCH C-SPLASH-1: SpringApplicationBuilder.run()
         // triggers musicLibrary() bean which loads ALL THREE JSON files synchronously
         // inside FXMusicLibrary.builder().build() (audio + playlist + waveform).
+        // Show indeterminate progress while the long stage is running so the bar animates.
         updateMessage(STAGE_LIBRARY);
-        updateProgress(0.0, 1.0);
+        updateProgress(-1, 1);
         ConfigurableApplicationContext context = new SpringApplicationBuilder()
                 .sources(applicationClass)
                 .run();
@@ -92,11 +93,13 @@ public class BootProgressTask extends Task<ConfigurableApplicationContext> {
         // Stage 2 — playlists. The bean is already instantiated by Spring eager init;
         // the access is a no-op trip but the message change is the user-visible signal.
         updateMessage(STAGE_PLAYLISTS);
+        updateProgress(-1, 1);
         context.getBean(ObservablePlaylistHierarchy.class);
         updateProgress(0.5, 1.0);
 
         // Stage 3 — waveforms.
         updateMessage(STAGE_WAVEFORMS);
+        updateProgress(-1, 1);
         context.getBean(AudioWaveformRepository.class);
         updateProgress(0.75, 1.0);
 
@@ -104,6 +107,7 @@ public class BootProgressTask extends Task<ConfigurableApplicationContext> {
         // FX thread inside the orchestrator's setOnSucceeded handler (FxWeaver
         // loadView is not safe off the FX thread per RESEARCH Open Question 2).
         updateMessage(STAGE_UI);
+        updateProgress(-1, 1);
         // Audio library bean access (so the message-change is bracketed by a real bean
         // request, even though it is a no-op trip).
         context.getBean(ObservableAudioLibrary.class);
