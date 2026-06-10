@@ -20,6 +20,7 @@ public abstract class ApplicationAlertBase extends Alert {
         super(alertType);
         getDialogPane().getStylesheets().add(STYLE);
         initModality(Modality.APPLICATION_MODAL);
+        DialogIconHelper.attachAppIconOnShow(this);
         // Filter on DialogPane (not the scene) — getDialogPane().getScene() is unreliable across the dialog lifecycle.
         getDialogPane().addEventFilter(KeyEvent.KEY_PRESSED, ke -> {
             if (ke.getCode() == KeyCode.ESCAPE) {

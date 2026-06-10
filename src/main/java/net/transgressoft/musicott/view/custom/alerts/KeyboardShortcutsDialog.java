@@ -36,6 +36,7 @@ public class KeyboardShortcutsDialog extends Dialog<Void> {
     public KeyboardShortcutsDialog(MenuBar rootMenuBar) {
         getDialogPane().getStylesheets().add(DIALOG_STYLE);
         initModality(Modality.APPLICATION_MODAL);
+        DialogIconHelper.attachAppIconOnShow(this);
         setTitle("Keyboard Shortcuts");
         setResizable(false);
 

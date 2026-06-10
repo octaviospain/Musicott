@@ -41,6 +41,11 @@ import static org.fxmisc.easybind.EasyBind.map;
 import static org.fxmisc.easybind.EasyBind.subscribe;
 
 /**
+ * Controller for the application navigation sidebar, managing navigation modes (All Tracks,
+ * Artists) and the playlist tree view. Keeps nav-mode selection and playlist-tree selection
+ * mutually exclusive: selecting a playlist clears the nav list, and switching to a nav mode
+ * clears the playlist tree.
+ *
  * @author Octavio Calleya
  */
 @FxmlView ("/fxml/NavigationController.fxml")
@@ -65,7 +70,7 @@ public class NavigationController {
     }
 
     private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
-    private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(73, 73, 73);";
+    private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(170, 170, 170);";
 
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
@@ -91,6 +96,9 @@ public class NavigationController {
     private MenuItem newFolderPlaylistMI;
     private Optional<ObservablePlaylist> currentPlayingPlaylist;
 
+    // Held as a field so it is accessible to the navigationModeProperty subscriber for clearing.
+    private NavigationMenuListView navigationMenuListView;
+
     @Autowired
     public NavigationController(PlaylistTreeView playlistTreeView,
                                 KeyCombination.Modifier operativeSystemKeyModifier) {
@@ -102,7 +110,7 @@ public class NavigationController {
     @FXML
     public void initialize() {
         currentPlayingPlaylist = Optional.empty();
-        NavigationMenuListView navigationMenuListView = new NavigationMenuListView();
+        navigationMenuListView = new NavigationMenuListView();
 
         ContextMenu newPlaylistButtonContextMenu = new ContextMenu();
         newPlaylistMI = new MenuItem("New Playlist");
@@ -126,19 +134,16 @@ public class NavigationController {
         playlistsVBox.getChildren().add(1, playlistTreeView);
         VBox.setVgrow(playlistTreeView, Priority.ALWAYS);
 
+        // When a playlist is selected, switch navigation mode and clear the nav-list selection
+        // so re-clicking a nav mode always re-fires (no stale same-value skip).
         subscribe(selectedPlaylistProperty(),
-                  playlist -> playlist.ifPresent(
-                          p -> navigationModeProperty.set(NavigationMode.PLAYLIST))
+                  playlist -> playlist.ifPresent(p -> {
+                      navigationMenuListView.getSelectionModel().clearSelection();
+                      navigationModeProperty.set(NavigationMode.PLAYLIST);
+                  })
         );
 
-        subscribe(playlistTreeView.getSelectionModel().selectedItemProperty(), newItem -> {
-           if (newItem != null) {
-               selectedPlaylistProperty().set(Optional.of(newItem.getValue()));
-           } else {
-               selectedPlaylistProperty().set(Optional.empty());
-           }
-        });
-
+        // When switching to a non-playlist nav mode, clear the playlist tree.
         subscribe(navigationModeProperty, mode -> {
             if (mode == ALL_AUDIO_ITEMS || mode == ARTISTS) {
                 playlistTreeView.getSelectionModel().clearSelection();
@@ -256,7 +261,13 @@ public class NavigationController {
             NavigationMode[] navigationModes = { ALL_AUDIO_ITEMS, ARTISTS};
             setItems(FXCollections.observableArrayList(navigationModes));
             setCellFactory(listView -> new NavigationListCell());
-            EasyBind.subscribe(getSelectionModel().selectedItemProperty(), navigationModeProperty::set);
+            // Clear the nav-list selection first so re-clicking the same mode always
+            // re-fires the selectedItemProperty change (no dead same-value skip).
+            getSelectionModel().selectedItemProperty().addListener((obs, oldMode, newMode) -> {
+                if (newMode != null) {
+                    navigationModeProperty.set(newMode);
+                }
+            });
             getSelectionModel().select(ARTISTS);
         }
     }

@@ -299,7 +299,7 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
     }
 
     @SuppressWarnings("java:S2589")
-    private static boolean albumContainsQuery(Album album, String query) {
+    static boolean albumContainsQuery(Album album, String query) {
         if (album == null) {
             return false;
         }

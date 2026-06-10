@@ -42,8 +42,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.fxmisc.easybind.EasyBind.subscribe;
-
 /**
  * Class that extends from a {@link TreeView} representing a tree of
  * {@link ObservablePlaylist} items, which some of them are folders and could have other
@@ -82,7 +80,9 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
         setId("playlistTreeView");
         getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        subscribe(getSelectionModel().selectedItemProperty(), newItem -> {
+        // Single place where selectedPlaylistProperty is driven — NavigationController
+        // must NOT add a second listener for the same purpose.
+        getSelectionModel().selectedItemProperty().addListener((obs, oldItem, newItem) -> {
             if (newItem != null) {
                 selectedPlaylistProperty.set(Optional.of(newItem.getValue()));
             }
@@ -202,6 +202,11 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
      * @return The found {@link PlaylistTreeViewItem} or null otherwise
      */
     private PlaylistTreeViewItem findPlaylistTreeItemGivenPlaylist(ObservablePlaylist playlist) {
+        var rootItem = (PlaylistTreeViewItem) getRoot();
+        // The root node holds ROOT_PLAYLIST but is never one of its own children, so the recursive
+        // search below would miss it — match it explicitly so the root is a valid move destination.
+        if (rootItem != null && rootItem.getValue().equals(playlist))
+            return rootItem;
         return findPlaylistTreeItemRecursively(getRoot(), playlist);
     }
 
@@ -227,20 +232,49 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
             logger.error("Destination playlist is not a directory: {}", destinationPlaylistTreeItem.getValue());
             throw new IllegalArgumentException("Destination playlist is not a directory: " + destinationPlaylistTreeItem.getValue());
         } else {
-            var oldPlaylistFolder = playlistRepository.findParentPlaylist(playlistToMove);
-            oldPlaylistFolder.ifPresent(it -> {
+            var movingTreeItem = findPlaylistTreeItemGivenPlaylist(playlistToMove);
+            if (movingTreeItem == null) {
+                logger.warn("Playlist to move not present in the tree: {}", playlistToMove);
+                return;
+            }
+            if (playlistToMove.equals(destinationPlaylist) || isTreeAncestor(movingTreeItem, destinationPlaylistTreeItem)) {
+                logger.debug("Ignoring move of '{}' into itself or a descendant", playlistToMove);
+                return;
+            }
 
-                // The playlist folder where it was before should exist by forAudioPlaylistRepositoryExceptionce because it was included in some other one
-                var oldPlayListFolderTreeItem = findPlaylistTreeItemGivenPlaylist(it);
-                assert(oldPlayListFolderTreeItem != null);
+            // The repository move is authoritative: it removes the playlist from its current parent
+            // and re-parents it under the destination in one step. The tree is then mirrored from
+            // it — never via addNewPlaylist, which would issue a second, conflicting repository
+            // insert and corrupt the hierarchy (the playlist ending up under two parents at once).
+            playlistRepository.movePlaylist(playlistToMove.getName(), destinationPlaylist.getName());
 
-                oldPlayListFolderTreeItem.removePlaylistChild(playlistToMove);
-                addNewPlaylist(playlistToMove, destinationPlaylistTreeItem);
+            var oldParentTreeItem = (PlaylistTreeViewItem) movingTreeItem.getParent();
+            if (oldParentTreeItem != null)
+                oldParentTreeItem.getChildren().remove(movingTreeItem);
+            addPlaylistTreeItemRecursively(playlistToMove, destinationPlaylistTreeItem);
 
-                playlistRepository.movePlaylist(playlistToMove.getName(), destinationPlaylist.getName());
-                selectPlaylist(destinationPlaylist);
-            });
+            selectPlaylist(destinationPlaylist);
         }
+    }
+
+    private boolean isTreeAncestor(PlaylistTreeViewItem candidateAncestor, TreeItem<ObservablePlaylist> node) {
+        for (var parent = node.getParent(); parent != null; parent = parent.getParent()) {
+            if (parent == candidateAncestor)
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Mirrors a playlist (and, for a directory, its whole subtree) into the tree under the given
+     * parent item without touching the repository — used by {@link #movePlaylist} after the
+     * repository has already performed the authoritative data move.
+     */
+    private void addPlaylistTreeItemRecursively(ObservablePlaylist playlist, PlaylistTreeViewItem parentTreeItem) {
+        var treeItem = new PlaylistTreeViewItem(playlist);
+        parentTreeItem.getChildren().add(treeItem);
+        if (playlist.isDirectory())
+            playlist.getPlaylists().forEach(child -> addPlaylistTreeItemRecursively(child, treeItem));
     }
 
     /**
@@ -264,7 +298,14 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
                 .toList();
     }
 
+    /**
+     * Selects the given playlist in the tree, clearing any prior selection first so it becomes
+     * the sole selected item.
+     *
+     * @param playlist The {@link ObservablePlaylist} to select
+     */
     public void selectPlaylist(ObservablePlaylist playlist) {
+        getSelectionModel().clearSelection();
         getSelectionModel().select(findPlaylistTreeItemGivenPlaylist(playlist));
     }
 
@@ -408,6 +449,9 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
                 setStyle(DRAG_OVER_STYLE);
                 setOpacity(0.10);
             } else if (event.getDragboard().hasContent(PLAYLIST_DATA_FORMAT)) {
+                // Accept the transfer here too — without it JavaFX rejects the drop on the empty
+                // area and onDragDropped never fires, making "move to the root level" impossible.
+                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
                 getTreeView().setStyle(DRAG_OVER_ROOT_PLAYLIST_STYLE);
                 dragOnRoot = true;
             }
@@ -434,13 +478,19 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
                     .toList();
                 getItem().addAudioItems(audioItems);
             } else if (dragBoard.hasContent(PLAYLIST_DATA_FORMAT)) {
-                var droppedPlaylist = (ObservablePlaylist) dragBoard.getContent(PLAYLIST_DATA_FORMAT);
-                var isFolder = getItem() != null && ! getTreeItem().isLeaf();
+                var playlistId = (Integer) dragBoard.getContent(PLAYLIST_DATA_FORMAT);
+                var maybePlaylist = playlistRepository.findById(playlistId);
+                if (maybePlaylist.isPresent()) {
+                    var droppedPlaylist = maybePlaylist.get();
+                    var isFolder = getItem() != null && ! getTreeItem().isLeaf();
 
-                if (isFolder && ! droppedPlaylist.equals(getItem()))
-                    movePlaylist(droppedPlaylist, getItem());
-                else if (dragOnRoot)
-                    movePlaylistToFirstLevelHierarchy(droppedPlaylist);
+                    if (isFolder && ! droppedPlaylist.equals(getItem()))
+                        movePlaylist(droppedPlaylist, getItem());
+                    else if (dragOnRoot)
+                        movePlaylistToFirstLevelHierarchy(droppedPlaylist);
+                } else {
+                    logger.warn("Could not resolve dragged playlist from id: {}", playlistId);
+                }
             }
             event.consume();
         }
@@ -459,7 +509,9 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
                 var dragBoard = startDragAndDrop(TransferMode.MOVE);
                 dragBoard.setDragView(snapshot(null, null));
                 var clipboardContent = new ClipboardContent();
-                clipboardContent.put(PLAYLIST_DATA_FORMAT, getItem());
+                // Put the serializable integer id on the dragboard; the drop handler
+                // resolves it back to the playlist via the hierarchy.
+                clipboardContent.put(PLAYLIST_DATA_FORMAT, (Integer) getItem().getId());
                 dragBoard.setContent(clipboardContent);
             }
             event.consume();

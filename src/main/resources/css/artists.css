@@ -73,14 +73,12 @@
     -fx-padding: 0px 0px 10px 0px;
 }
 
-#albumLabelLabel {
-    -fx-font-size: 16px;
-    -fx-padding: 0px 0px 5px 0px;
-}
-
-#relatedArtistsLabel {
-    -fx-font-size: 15px;
-    -fx-padding: 0px 0px 5px 0px;
+/* Shared style for secondary album-info labels: disc, year, album-label, and related-artists.
+   Keeps them visually subordinate to the primary album and artist title labels. */
+.album-info-secondary {
+    -fx-font-size: 13px;
+    -fx-text-fill: rgb(145, 145, 145);
+    -fx-padding: 0px 0px 4px 0px;
 }
 
 #genresLabel {
