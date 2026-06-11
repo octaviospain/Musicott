@@ -15,6 +15,7 @@ plugins {
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.axion.release)
     alias(libs.plugins.beryx.runtime)
+    alias(libs.plugins.jmh)
 }
 
 // JavaFX is consumed as platform modules from the JDK (BellSoft Liberica Full /
@@ -33,6 +34,7 @@ dependencies {
 
     implementation(libs.bundles.music.commons)
     implementation libs.lirp.core
+    implementation libs.lirp.sql
 
     implementation libs.spring.boot
     implementation libs.spring.boot.starter.logging
@@ -120,6 +122,19 @@ tasks.withType(KotlinJvmCompile).configureEach {
         freeCompilerArgs.add('-Xjsr305=strict')
         freeCompilerArgs.add('-Xjvm-default=all')
     }
+}
+
+jmh {
+    jvmArgs        = ['-Xmx2g']
+    fork           = 1
+    warmupIterations = 1
+    iterations     = 3
+    resultFormat   = 'JSON'
+    resultsFile    = project.file("${project.buildDir}/reports/jmh/results.json")
+    // 'jfr' captures a per-benchmark flight recording alongside the gc profiler for
+    // allocation-hotspot analysis; results land under build/reports/jmh and a profile.jfr
+    // directory per benchmark.
+    profilers      = ['gc', 'jfr']
 }
 
 apply from: 'gradle/test-suites.gradle'

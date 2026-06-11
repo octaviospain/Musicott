@@ -253,7 +253,7 @@ class ItunesCompilationsLibraryE2E {
             Path tempDir = Files.createTempDirectory("musicott-itunes-e2e");
             tempDir.toFile().deleteOnExit();
             return new MusicottApplication.ApplicationPaths(
-                    tempDir.resolve("audioItems.json"),
+                    tempDir.resolve("audioItems.db"),
                     tempDir.resolve("playlists.json"),
                     tempDir.resolve("waveforms.json")
             );

@@ -21,8 +21,8 @@ import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.input.KeyCombination
 import net.transgressoft.commons.fx.music.FXMusicLibrary
+import net.transgressoft.commons.fx.music.audio.FXAudioItem_LirpTableDef
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItemMapSerializer
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy
@@ -33,6 +33,7 @@ import net.transgressoft.commons.music.audio.JAudioTaggerMetadataIO
 import net.transgressoft.commons.music.waveform.AudioWaveform
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository
 import net.transgressoft.lirp.persistence.json.JsonFileRepository
+import net.transgressoft.lirp.persistence.sql.SqliteRepository
 import net.transgressoft.musicott.MusicottApplication
 import org.apache.commons.lang3.SystemUtils
 import org.springframework.beans.factory.annotation.Autowired
@@ -52,9 +53,9 @@ class ApplicationConfiguration @Autowired constructor(private val applicationPat
 
     private fun initializeApplicationFiles() {
         try {
-            applicationPaths.audioItemsPath.parent?.let { Files.createDirectories(it) }
+            applicationPaths.audioItemsDatabasePath.parent?.let { Files.createDirectories(it) }
 
-            createFileIfNotExists(applicationPaths.audioItemsPath)
+            // The audio item SQLite database file is created by SqliteRepository on first connection.
             createFileIfNotExists(applicationPaths.playlistsPath)
             createFileIfNotExists(applicationPaths.waveformsPath)
         } catch (exception: IOException) {
@@ -91,7 +92,7 @@ class ApplicationConfiguration @Autowired constructor(private val applicationPat
     @Bean
     fun musicLibrary(): FXMusicLibrary =
         FXMusicLibrary.builder()
-            .audioRepository(JsonFileRepository(applicationPaths.audioItemsPath.toFile(), ObservableAudioItemMapSerializer))
+            .audioRepository(SqliteRepository.fileBacked(applicationPaths.audioItemsDatabasePath, FXAudioItem_LirpTableDef))
             .playlistRepository(JsonFileRepository(applicationPaths.playlistsPath.toFile(), ObservablePlaylistMapSerializer, loadOnInit = false))
             .waveformRepository(JsonFileRepository(applicationPaths.waveformsPath.toFile(), AudioWaveformMapSerializer))
             .build()

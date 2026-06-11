@@ -17,7 +17,9 @@ def hasBundledJavafx = providers.provider {
 
 ext {
     testJvmArgs = hasBundledJavafx ? [
-            '--enable-native-access=javafx.graphics',
+            // ALL-UNNAMED covers the SQLite JDBC driver (loaded from the classpath / unnamed
+            // module), which calls System::load for its native library during e2e tests.
+            '--enable-native-access=javafx.graphics,ALL-UNNAMED',
             '--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
             '--add-exports=javafx.graphics/com.sun.glass.utils=ALL-UNNAMED',
             '--add-exports=javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED',
@@ -188,6 +190,37 @@ tasks.register('e2eTest', Test) {
     configureTestFxSystemProperties(it)
     testLogging { events "passed", "skipped", "failed" }
     jvmArgs = testJvmArgs
+}
+
+tasks.register('e2eTestWithGcLog', Test) {
+    description = 'Runs E2E tests with GC logging enabled for baseline measurement'
+    group = 'verification'
+    testClassesDirs = sourceSets.e2eTest.output.classesDirs
+    classpath = sourceSets.e2eTest.runtimeClasspath
+    maxHeapSize = '4g'
+    useJUnitPlatform()
+    forkEvery = 1
+    configureTestFxSystemProperties(it)
+    testLogging { events "passed", "skipped", "failed" }
+    jvmArgs = testJvmArgs + [
+        '-Xlog:gc*:file=build/reports/gc/e2e-gc.log:tags,time,uptime,level'
+    ]
+}
+
+tasks.register('e2eTestWithJfr', Test) {
+    description = 'Runs E2E tests with JFR profiling for heap and CPU analysis'
+    group = 'verification'
+    testClassesDirs = sourceSets.e2eTest.output.classesDirs
+    classpath = sourceSets.e2eTest.runtimeClasspath
+    maxHeapSize = '4g'
+    useJUnitPlatform()
+    forkEvery = 1
+    configureTestFxSystemProperties(it)
+    testLogging { events "passed", "skipped", "failed" }
+    jvmArgs = testJvmArgs + [
+        "-XX:StartFlightRecording=filename=build/reports/jfr/musicott-import.jfr," +
+        "settings=profile,dumponexit=true"
+    ]
 }
 
 jacocoTestReport {
