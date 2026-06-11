@@ -12,12 +12,9 @@ import kotlin.Unit;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -141,18 +138,5 @@ public class MediaImportBenchmark {
     private static ItunesImportPolicy importPolicy() {
         Set<AudioFileType> acceptedFileTypes = Set.copyOf(Arrays.asList(AudioFileType.values()));
         return new ItunesImportPolicy(false, true, false, acceptedFileTypes);
-    }
-
-    private static void deleteDirectory(Path dir) throws IOException {
-        if (!Files.exists(dir)) return;
-        try (var stream = Files.walk(dir)) {
-            stream.sorted(Comparator.reverseOrder())
-                    .forEach(path -> {
-                        try {
-                            Files.deleteIfExists(path);
-                        } catch (IOException ignored) {
-                        }
-                    });
-        }
     }
 }

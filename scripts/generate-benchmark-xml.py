@@ -127,7 +127,7 @@ def write_track_entry(out, track_id: int, line: str) -> None:
     if len(fields) < 8:
         return
 
-    title, artist, album, path, year_raw, tracknr_raw, fmt, bitrate_raw = fields[:8]
+    title, artist, album, path, year_raw, tracknr_raw, _fmt, bitrate_raw = fields[:8]
 
     try:
         year = int(year_raw.strip()) if year_raw.strip() else 0
@@ -156,11 +156,11 @@ def write_track_entry(out, track_id: int, line: str) -> None:
         out.write(f"            <key>Year</key><integer>{year}</integer>\n")
     if track_number:
         out.write(f"            <key>Track Number</key><integer>{track_number}</integer>\n")
-    out.write(f"            <key>Total Time</key><integer>300000</integer>\n")
+    out.write("            <key>Total Time</key><integer>300000</integer>\n")
     if bitrate:
         out.write(f"            <key>Bit Rate</key><integer>{bitrate}</integer>\n")
-    out.write(f"            <key>Play Count</key><integer>0</integer>\n")
-    out.write(f"            <key>Date Added</key><date>2024-01-15T12:00:00Z</date>\n")
+    out.write("            <key>Play Count</key><integer>0</integer>\n")
+    out.write("            <key>Date Added</key><date>2024-01-15T12:00:00Z</date>\n")
     out.write(f"            <key>Location</key><string>{location}</string>\n")
     out.write("        </dict>\n")
 
