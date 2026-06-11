@@ -36,7 +36,7 @@ public class MusicottApplication {
         Application.launch(SpringbootJavaFxApplication.class, args);
     }
 
-    public record ApplicationPaths(Path audioItemsPath, Path playlistsPath, Path waveformsPath) {
+    public record ApplicationPaths(Path audioItemsDatabasePath, Path playlistsPath, Path waveformsPath) {
     }
 
     public static class SpringbootJavaFxApplication extends Application {
@@ -111,7 +111,7 @@ public class MusicottApplication {
         public ApplicationPaths applicationPaths() {
             Path defaultApplicationDirectory = Paths.get((System.getProperty("user.home")), ".config", "musicott");
             return new ApplicationPaths(
-                    defaultApplicationDirectory.resolve("audioItems.json"),
+                    defaultApplicationDirectory.resolve("audioItems.db"),
                     defaultApplicationDirectory.resolve("playlists.json"),
                     defaultApplicationDirectory.resolve("waveforms.json")
             );

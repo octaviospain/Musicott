@@ -42,6 +42,8 @@ kotest = "5.9.1"
 sonarqube = "7.3.1.8318"
 axion-release = "1.21.2"
 beryx-runtime = "2.0.1"
+jmh-plugin = "0.7.3"
+jmh = "1.37"
 
 [libraries]
 # Kotlin
@@ -98,6 +100,8 @@ testfx-core = { module = "org.testfx:testfx-core", version.ref = "testfx" }
 testfx-junit5 = { module = "org.testfx:testfx-junit5", version.ref = "testfx" }
 openjfx-monocle = { module = "org.testfx:openjfx-monocle", version.ref = "monocle" }
 hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
+jmh-core       = { module = "org.openjdk.jmh:jmh-core",                   version.ref = "jmh" }
+jmh-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess",   version.ref = "jmh" }
 
 [bundles]
 music-commons = [
@@ -134,3 +138,4 @@ spring-dependency-management = { id = "io.spring.dependency-management", version
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
 axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }
 beryx-runtime = { id = "org.beryx.runtime", version.ref = "beryx-runtime" }
+jmh           = { id = "me.champeau.jmh",   version.ref = "jmh-plugin" }
