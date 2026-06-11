@@ -130,7 +130,7 @@ jmh {
     warmupIterations = 1
     iterations     = 3
     resultFormat   = 'JSON'
-    resultsFile    = project.file("${project.buildDir}/reports/jmh/results.json")
+    resultsFile    = layout.buildDirectory.file("reports/jmh/results.json").get().asFile
     // 'jfr' captures a per-benchmark flight recording alongside the gc profiler for
     // allocation-hotspot analysis; results land under build/reports/jmh and a profile.jfr
     // directory per benchmark.

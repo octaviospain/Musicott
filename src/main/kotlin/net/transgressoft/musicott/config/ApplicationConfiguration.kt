@@ -32,6 +32,7 @@ import net.transgressoft.commons.music.audio.AudioMetadataIO
 import net.transgressoft.commons.music.audio.JAudioTaggerMetadataIO
 import net.transgressoft.commons.music.waveform.AudioWaveform
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository
+import net.transgressoft.lirp.persistence.Repository
 import net.transgressoft.lirp.persistence.json.JsonFileRepository
 import net.transgressoft.lirp.persistence.sql.SqliteRepository
 import net.transgressoft.musicott.MusicottApplication
@@ -89,12 +90,33 @@ class ApplicationConfiguration @Autowired constructor(private val applicationPat
     @Bean
     fun audioMetadataIO(): AudioMetadataIO = JAudioTaggerMetadataIO()
 
+    // The three persistence repositories are exposed as dedicated beans so the Spring
+    // container owns their lifecycle: each is AutoCloseable, so on context shutdown Spring
+    // invokes close() — flushing the JSON repositories and, for the SQLite audio repository,
+    // checkpointing the WAL and shutting down the connection pool. Spring Boot's shutdown
+    // hook runs on the application's System.exit path, so the close is deterministic.
     @Bean
-    fun musicLibrary(): FXMusicLibrary =
+    fun audioItemRepository(): Repository<Int, ObservableAudioItem> =
+        SqliteRepository.fileBacked(applicationPaths.audioItemsDatabasePath, FXAudioItem_LirpTableDef)
+
+    @Bean
+    fun playlistFileRepository(): Repository<Int, ObservablePlaylist> =
+        JsonFileRepository(applicationPaths.playlistsPath.toFile(), ObservablePlaylistMapSerializer, loadOnInit = false)
+
+    @Bean
+    fun waveformFileRepository(): Repository<Int, AudioWaveform> =
+        JsonFileRepository(applicationPaths.waveformsPath.toFile(), AudioWaveformMapSerializer)
+
+    @Bean
+    fun musicLibrary(
+        audioItemRepository: Repository<Int, ObservableAudioItem>,
+        playlistFileRepository: Repository<Int, ObservablePlaylist>,
+        waveformFileRepository: Repository<Int, AudioWaveform>
+    ): FXMusicLibrary =
         FXMusicLibrary.builder()
-            .audioRepository(SqliteRepository.fileBacked(applicationPaths.audioItemsDatabasePath, FXAudioItem_LirpTableDef))
-            .playlistRepository(JsonFileRepository(applicationPaths.playlistsPath.toFile(), ObservablePlaylistMapSerializer, loadOnInit = false))
-            .waveformRepository(JsonFileRepository(applicationPaths.waveformsPath.toFile(), AudioWaveformMapSerializer))
+            .audioRepository(audioItemRepository)
+            .playlistRepository(playlistFileRepository)
+            .waveformRepository(waveformFileRepository)
             .build()
 
     @Bean

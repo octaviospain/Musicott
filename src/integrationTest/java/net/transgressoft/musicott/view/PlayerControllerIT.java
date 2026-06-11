@@ -459,6 +459,11 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
         when(waveformRepo.getOrCreateWaveformAsync(any(), anyShort(), anyShort()))
                 .thenReturn(new CompletableFuture<>());
 
+        // Provide a non-null currentTime property so the consolidated subscription is actually
+        // created on each track change (the controller skips subscribing when it is null).
+        when(playerService.getCurrentTimeProperty())
+                .thenReturn(new javafx.beans.property.SimpleObjectProperty<>(javafx.util.Duration.ZERO));
+
         // Fire two successive track-change events on the FX thread
         Platform.runLater(() -> {
             controller.trackChangedEventListener(
@@ -469,6 +474,12 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
         // Clear any FX-thread exceptions from the null waveform future completing
         WaitForAsyncUtils.clearExceptions();
         waitForFxEvents();
+
+        // The consolidated subscription is active: exactly one progressSubscription is held
+        // after repeated track changes (the previous one is unsubscribed before re-binding).
+        assertThat(ReflectionTestUtils.getField(controller, "progressSubscription"))
+                .as("a single progressSubscription should be registered after track changes")
+                .isNotNull();
 
         // labelsSubscription field must no longer exist after the consolidation refactor
         assertThatThrownBy(() -> ReflectionTestUtils.getField(controller, "labelsSubscription"))
