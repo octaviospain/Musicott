@@ -92,7 +92,7 @@ class MediaImportService(
         val progressSubscription =
             audioLibrary.subscribe {
                 applicationEventPublisher.publishEvent(
-                    StatusProgressUpdateEvent(totalFiles.toDouble() / progress.getAndIncrement(), this)
+                    StatusProgressUpdateEvent(progress.getAndIncrement().toDouble() / totalFiles, this)
                 )
             }
 
@@ -111,7 +111,7 @@ class MediaImportService(
             audioLibrary.subscribe {
                 if (it.isCreate()) {
                     applicationEventPublisher.publishEvent(
-                        StatusProgressUpdateEvent(totalFiles.toDouble() / progress.getAndIncrement(), this)
+                        StatusProgressUpdateEvent(progress.getAndIncrement().toDouble() / totalFiles, this)
                     )
                 }
             }

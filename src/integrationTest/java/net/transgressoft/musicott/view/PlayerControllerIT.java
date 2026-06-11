@@ -64,12 +64,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.springframework.test.util.ReflectionTestUtils;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyShort;
 import static org.mockito.Mockito.when;
 import static org.springframework.context.annotation.ComponentScan.Filter;
 import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
@@ -439,6 +443,37 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
         waitForFxEvents();
 
         verify(configuration.applicationEventPublisher()).publishEvent(any(PlayRandomFromContextEvent.class));
+    }
+
+    @Test
+    @DisplayName("track change does not accumulate subscriptions — only a single progressSubscription is registered")
+    @SuppressWarnings("unchecked")
+    void trackChangeDoesNotAccumulateSubscriptions() throws Exception {
+        var controller = playerControllerAndView.getController();
+        var trackMock = createPlayableAudioItem("/testfiles/testeable.mp3");
+
+        // Stub waveform repository to avoid NPE in updatePlayerComponents
+        // (loadWaveform requires non-null; use a never-completing future so the callback never fires)
+        var waveformRepo = (AudioWaveformRepository<AudioWaveform, ObservableAudioItem>)
+                ReflectionTestUtils.getField(controller, "waveformRepository");
+        when(waveformRepo.getOrCreateWaveformAsync(any(), anyShort(), anyShort()))
+                .thenReturn(new CompletableFuture<>());
+
+        // Fire two successive track-change events on the FX thread
+        Platform.runLater(() -> {
+            controller.trackChangedEventListener(
+                    new net.transgressoft.musicott.events.AudioItemChangedEvent(trackMock, this));
+            controller.trackChangedEventListener(
+                    new net.transgressoft.musicott.events.AudioItemChangedEvent(trackMock, this));
+        });
+        // Clear any FX-thread exceptions from the null waveform future completing
+        WaitForAsyncUtils.clearExceptions();
+        waitForFxEvents();
+
+        // labelsSubscription field must no longer exist after the consolidation refactor
+        assertThatThrownBy(() -> ReflectionTestUtils.getField(controller, "labelsSubscription"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("labelsSubscription");
     }
 }
 

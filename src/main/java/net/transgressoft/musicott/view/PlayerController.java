@@ -123,7 +123,6 @@ public class PlayerController {
     private PopOver playQueuePopOver;
     private Window playQueueOwnerWindow;
     private Subscription progressSubscription;
-    private Subscription labelsSubscription;
     private final PauseTransition playQueueFocusLossDelay = new PauseTransition(Duration.millis(150));
     private final ChangeListener<Boolean> playQueueOwnerFocusListener = (observable, oldValue, focused) -> {
         if (Boolean.TRUE.equals(focused)) {
@@ -636,11 +635,11 @@ public class PlayerController {
             volumeProp.bindBidirectional(volumeSlider.valueProperty());
         }
 
-        // Unsubscribe previous track subscriptions to prevent listener accumulation
+        // Unsubscribe previous tick subscription before re-binding to the new track's currentTime
         if (progressSubscription != null) progressSubscription.unsubscribe();
-        if (labelsSubscription != null) labelsSubscription.unsubscribe();
 
-        // Re-subscribe to current time for progress binding and labels
+        // Single subscription updates both waveform progress and time labels per tick,
+        // calling getTotalDuration() once to avoid redundant player calls.
         var currentTimeProp = playerService.getCurrentTimeProperty();
         if (currentTimeProp != null) {
             progressSubscription = subscribe(currentTimeProp, time -> {
@@ -648,11 +647,7 @@ public class PlayerController {
                 if (!total.isZero()) {
                     playableWaveformPane.getProgressProperty().set(time.toMillis() / total.toMillis());
                 }
-            });
-
-            labelsSubscription = subscribe(currentTimeProp, t -> {
-                java.time.Duration total = playerService.getTotalDuration();
-                updateTrackLabels(t, Duration.millis(total.toMillis()));
+                updateTrackLabels(time, Duration.millis(total.toMillis()));
             });
         }
     }
