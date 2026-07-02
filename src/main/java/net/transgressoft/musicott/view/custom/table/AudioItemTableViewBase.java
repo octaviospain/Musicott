@@ -12,9 +12,10 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.*;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.music.audio.Album;
+import net.transgressoft.commons.music.audio.AlbumDetails;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.Genre;
+import net.transgressoft.commons.music.audio.GenreExtensionsKt;
 import net.transgressoft.commons.music.player.*;
 import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
@@ -54,13 +55,13 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
 
     protected TableColumn<ObservableAudioItem, String> nameCol;
     protected TableColumn<ObservableAudioItem, Artist> artistCol;
-    protected TableColumn<ObservableAudioItem, Album> albumCol;
+    protected TableColumn<ObservableAudioItem, AlbumDetails> albumCol;
     protected TableColumn<ObservableAudioItem, Set<Genre>> genreCol;
     protected TableColumn<ObservableAudioItem, String> commentsCol;
-    protected TableColumn<ObservableAudioItem, Album> albumArtistCol;
-    protected TableColumn<ObservableAudioItem, Album> labelCol;
+    protected TableColumn<ObservableAudioItem, AlbumDetails> albumArtistCol;
+    protected TableColumn<ObservableAudioItem, AlbumDetails> labelCol;
     protected TableColumn<ObservableAudioItem, Number> sizeCol;
-    protected TableColumn<ObservableAudioItem, Album> yearCol;
+    protected TableColumn<ObservableAudioItem, AlbumDetails> yearCol;
     protected TableColumn<ObservableAudioItem, Number> bitRateCol;
     protected TableColumn<ObservableAudioItem, Number> playCountCol;
     protected TableColumn<ObservableAudioItem, Number> discNumberCol;
@@ -299,7 +300,7 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
     }
 
     @SuppressWarnings("java:S2589")
-    static boolean albumContainsQuery(Album album, String query) {
+    static boolean albumContainsQuery(AlbumDetails album, String query) {
         if (album == null) {
             return false;
         }
@@ -390,14 +391,14 @@ class ArtistNameTableCell extends TableCell<ObservableAudioItem, Artist> {
     }
 }
 
-class AlbumNameTableCell extends TableCell<ObservableAudioItem, Album> {
+class AlbumNameTableCell extends TableCell<ObservableAudioItem, AlbumDetails> {
 
-    public AlbumNameTableCell(TableColumn<ObservableAudioItem, Album> column) {
+    public AlbumNameTableCell(TableColumn<ObservableAudioItem, AlbumDetails> column) {
         super();
     }
 
     @Override
-    protected void updateItem(Album album, boolean empty) {
+    protected void updateItem(AlbumDetails album, boolean empty) {
         super.updateItem(album, empty);
         if (empty || album == null)
             setText("");
@@ -406,14 +407,14 @@ class AlbumNameTableCell extends TableCell<ObservableAudioItem, Album> {
     }
 }
 
-class AlbumArtistTableCell extends TableCell<ObservableAudioItem, Album> {
+class AlbumArtistTableCell extends TableCell<ObservableAudioItem, AlbumDetails> {
 
-    public AlbumArtistTableCell(TableColumn<ObservableAudioItem, Album> column) {
+    public AlbumArtistTableCell(TableColumn<ObservableAudioItem, AlbumDetails> column) {
         super();
     }
 
     @Override
-    protected void updateItem(Album album, boolean empty) {
+    protected void updateItem(AlbumDetails album, boolean empty) {
         super.updateItem(album, empty);
         if (empty || album == null)
             setText("");
@@ -422,14 +423,14 @@ class AlbumArtistTableCell extends TableCell<ObservableAudioItem, Album> {
     }
 }
 
-class AlbumLabelNameTableCell extends TableCell<ObservableAudioItem, Album> {
+class AlbumLabelNameTableCell extends TableCell<ObservableAudioItem, AlbumDetails> {
 
-    public AlbumLabelNameTableCell(TableColumn<ObservableAudioItem, Album> column) {
+    public AlbumLabelNameTableCell(TableColumn<ObservableAudioItem, AlbumDetails> column) {
         super();
     }
 
     @Override
-    protected void updateItem(Album album, boolean empty) {
+    protected void updateItem(AlbumDetails album, boolean empty) {
         super.updateItem(album, empty);
         if (empty || album == null)
             setText("");
@@ -438,14 +439,14 @@ class AlbumLabelNameTableCell extends TableCell<ObservableAudioItem, Album> {
     }
 }
 
-class AlbumYearTableCell extends TableCell<ObservableAudioItem, Album> {
+class AlbumYearTableCell extends TableCell<ObservableAudioItem, AlbumDetails> {
 
-    public AlbumYearTableCell(TableColumn<ObservableAudioItem, Album> column) {
+    public AlbumYearTableCell(TableColumn<ObservableAudioItem, AlbumDetails> column) {
         super();
     }
 
     @Override
-    protected void updateItem(Album album, boolean empty) {
+    protected void updateItem(AlbumDetails album, boolean empty) {
         super.updateItem(album, empty);
         if (empty || album == null || album.getYear() == null)
             setText("");
@@ -581,6 +582,6 @@ class GenreTableCell extends TableCell<ObservableAudioItem, Set<Genre>> {
         if (empty || item == null || item.isEmpty())
             setText("");
         else
-            setText(Genre.joinGenres(item));
+            setText(GenreExtensionsKt.joinGenres(item));
     }
 }

@@ -44,7 +44,7 @@ public class ArtistAlbumListRow extends HBox {
     private static final double COVER_SIZE = 130.0;
 
     private final Artist artist;
-    private final AlbumSet<ObservableAudioItem> albumSet;
+    private final AlbumTrackGroup albumSet;
     private final int discNumber;
     private final ListProperty<ObservableAudioItem> selectedAudioItemsProperty;
     private final ObservableList<ObservableAudioItem> containedAudioItems;
@@ -65,18 +65,18 @@ public class ArtistAlbumListRow extends HBox {
      * Creates a new album list row.
      *
      * @param artist             the artist owning this album row
-     * @param albumSet           the set of audio items belonging to this album (or disc)
+     * @param albumSet           the group of audio items belonging to this album (or disc)
      * @param audioItemsTableView the embedded track table view
      * @param discNumber         the 1-based disc number for multi-disc albums; {@code 0} means
      *                           single-disc (no disc label rendered)
      */
-    public ArtistAlbumListRow(Artist artist, AlbumSet<ObservableAudioItem> albumSet, SimpleAudioItemTableView audioItemsTableView, int discNumber) {
+    public ArtistAlbumListRow(Artist artist, AlbumTrackGroup albumSet, SimpleAudioItemTableView audioItemsTableView, int discNumber) {
         super();
         this.artist = artist;
         this.albumSet = albumSet;
         this.audioItemsTableView = audioItemsTableView;
         this.discNumber = discNumber;
-        containedAudioItems = FXCollections.observableArrayList(albumSet);
+        containedAudioItems = FXCollections.observableArrayList(albumSet.tracks());
         containedAudioItems.sort(this::audioItemComparator);
         filteredAudioItems = new FilteredList<>(containedAudioItems);
         containedAudioItemsProperty = new SimpleListProperty<>(this, "contained tracks");
@@ -164,7 +164,7 @@ public class ArtistAlbumListRow extends HBox {
     }
 
     private String buildGenresString() {
-        return Genre.joinGenres(containedAudioItems.stream()
+        return GenreExtensionsKt.joinGenres(containedAudioItems.stream()
                 .flatMap(observableAudioItem -> observableAudioItem.getGenres().stream())
                 .collect(Collectors.toSet()));
     }
@@ -355,7 +355,7 @@ public class ArtistAlbumListRow extends HBox {
         audioItemsTableView.getSelectionModel().clearSelection();
     }
 
-    public AlbumSet<ObservableAudioItem> getAlbumSet() {
+    public AlbumTrackGroup getAlbumSet() {
         return albumSet;
     }
 

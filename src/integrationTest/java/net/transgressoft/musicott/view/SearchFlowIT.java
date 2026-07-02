@@ -11,12 +11,13 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
 import net.transgressoft.lirp.event.LirpEventPublisher;
+import net.transgressoft.commons.fx.music.audio.ObservableAlbum;
 import net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
-import net.transgressoft.commons.music.audio.Album;
-import net.transgressoft.commons.music.audio.AlbumSet;
+import net.transgressoft.commons.music.audio.AlbumDetails;
 import net.transgressoft.commons.music.audio.Artist;
+import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import net.transgressoft.commons.music.audio.Label;
 import net.transgressoft.musicott.events.SearchTextTypedEvent;
 import net.transgressoft.musicott.test.ApplicationTestBase;
@@ -62,7 +63,7 @@ import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 class SearchFlowIT extends ApplicationTestBase<SplitPane> {
 
     @Autowired
-    SetProperty<Artist> artistsProperty;
+    SetProperty<ObservableArtistCatalog> artistCatalogsProperty;
 
     @Autowired
     FxControllerAndView<ArtistViewController, SplitPane> artistViewAndController;
@@ -114,27 +115,28 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
     @DisplayName("ArtistViewController filters its predicate when SearchTextTypedEvent fires with a non-empty query")
     void filtersArtistListPredicateOnNonEmptyQuery(FxRobot fxRobot) {
         Platform.runLater(() -> {
-            artistsProperty.clear();
+            artistCatalogsProperty.clear();
             // Reset predicate to unfiltered state first
             applicationEventPublisher.publishEvent(new SearchTextTypedEvent("", this));
         });
         waitForFxEvents();
 
         Platform.runLater(() -> {
-            artistsProperty.add(of("Aphex Twin"));
-            artistsProperty.add(of("Bonobo"));
-            artistsProperty.add(of("Caribou"));
+            artistCatalogsProperty.add(mockCatalog(of("Aphex Twin")));
+            artistCatalogsProperty.add(mockCatalog(of("Bonobo")));
+            artistCatalogsProperty.add(mockCatalog(of("Caribou")));
         });
         waitForFxEvents();
 
-        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        @SuppressWarnings("unchecked")
+        ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
         assertThat(artistsListView.getItems()).hasSize(3);
 
         Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("Aph", this)));
         waitForFxEvents();
 
         assertThat(artistsListView.getItems()).hasSize(1);
-        assertThat(artistsListView.getItems().get(0).getName()).isEqualTo("Aphex Twin");
+        assertThat(artistsListView.getItems().get(0).getArtistName()).isEqualTo("Aphex Twin");
     }
 
     @Test
@@ -155,22 +157,23 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
 
         // --- Seed artist list ---
         Platform.runLater(() -> {
-            artistsProperty.clear();
+            artistCatalogsProperty.clear();
             applicationEventPublisher.publishEvent(new SearchTextTypedEvent("", this));
         });
         waitForFxEvents();
 
         Platform.runLater(() -> {
-            artistsProperty.add(of("Aphex Twin"));
-            artistsProperty.add(of("Bonobo"));
-            artistsProperty.add(of("Caribou"));
+            artistCatalogsProperty.add(mockCatalog(of("Aphex Twin")));
+            artistCatalogsProperty.add(mockCatalog(of("Bonobo")));
+            artistCatalogsProperty.add(mockCatalog(of("Caribou")));
         });
         waitForFxEvents();
 
         Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("Aph", this)));
         waitForFxEvents();
 
-        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        @SuppressWarnings("unchecked")
+        ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
         assertThat(artistsListView.getItems()).hasSize(1);
 
         // --- Clear the query — a single SearchTextTypedEvent("") on the bus reaches both subscribers. ---
@@ -186,7 +189,7 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
     @SuppressWarnings("unchecked")
     void matchesArtistsByTrackTitleAlbumAndLabelWhenArtistCatalogIsLoaded(FxRobot fxRobot) {
         Platform.runLater(() -> {
-            artistsProperty.clear();
+            artistCatalogsProperty.clear();
             applicationEventPublisher.publishEvent(new SearchTextTypedEvent("", this));
         });
         waitForFxEvents();
@@ -198,34 +201,34 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
         // selectedArtistListener with an empty catalog and skips ArtistAlbumListRow construction
         // (which would otherwise fail against the bare AlbumSet/ObservableArtistCatalog mocks below).
         Platform.runLater(() -> {
-            artistsProperty.add(aphexTwin);
-            artistsProperty.add(bonobo);
+            artistCatalogsProperty.add(mockCatalog(aphexTwin));
+            artistCatalogsProperty.add(mockCatalog(bonobo));
         });
         waitForFxEvents();
 
-        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        @SuppressWarnings("unchecked")
+        ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
         assertThat(artistsListView.getItems()).hasSize(2);
 
         // Now wire a populated catalog for aphexTwin so filterArtistsByQuery's catalog-walk branch
         // exercises the loaded path. selectedArtistListener won't refire because the selected
         // artist hasn't changed identity.
-        var labelMock = mock(Label.class);
-        when(labelMock.getName()).thenReturn("Warp Records");
-        var album = mock(Album.class);
-        when(album.getName()).thenReturn("Selected Ambient Works 85-92");
-        when(album.getAlbumArtist()).thenReturn(aphexTwin);
-        when(album.getLabel()).thenReturn(labelMock);
+        var album = AudioItemTestFactory.createAlbum("Selected Ambient Works 85-92", aphexTwin, false, null,
+                Label.of("Warp Records"));
         var item = mock(ObservableAudioItem.class);
         when(item.getTitle()).thenReturn("Xtal");
         when(item.getArtist()).thenReturn(aphexTwin);
         when(item.getAlbum()).thenReturn(album);
 
-        // AlbumSet extends List; stream() default impl returns null on a Mockito mock, so stub it
-        // with thenAnswer so the predicate can re-iterate across multiple search calls.
-        var albumSet = mock(AlbumSet.class);
-        when(albumSet.stream()).thenAnswer(inv -> java.util.stream.Stream.of(item));
+        // Stub catalog.getAlbumsProperty() to return the album details set; stub
+        // albumAudioItemsProperty so the catalog-walk predicate can iterate tracks.
+        var albumsSetProperty = new javafx.beans.property.SimpleSetProperty<>(
+                javafx.collections.FXCollections.observableSet(album));
+        var audioItemsListProperty = new javafx.beans.property.SimpleListProperty<>(
+                javafx.collections.FXCollections.observableArrayList(item));
         var catalog = mock(ObservableArtistCatalog.class);
-        when(catalog.getAlbums()).thenReturn(java.util.Set.of(albumSet));
+        when(catalog.getAlbumsProperty()).thenReturn(albumsSetProperty);
+        when(catalog.albumAudioItemsProperty(album.getName())).thenReturn(audioItemsListProperty);
         // doReturn instead of when().thenReturn() because the production signature is
         // Optional<out ObservableArtistCatalog> (Kotlin covariant) which the typed thenReturn rejects.
         doReturn(java.util.Optional.of(catalog)).when(audioRepository).getArtistCatalog(aphexTwin);
@@ -235,19 +238,19 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
         Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("Xtal", this)));
         waitForFxEvents();
         assertThat(artistsListView.getItems()).hasSize(1);
-        assertThat(artistsListView.getItems().get(0).getName()).isEqualTo("Aphex Twin");
+        assertThat(artistsListView.getItems().get(0).getArtistName()).isEqualTo("Aphex Twin");
 
         // Label-only query: confirms the new label-match branch in artistMatchesQuery.
         Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("Warp", this)));
         waitForFxEvents();
         assertThat(artistsListView.getItems()).hasSize(1);
-        assertThat(artistsListView.getItems().get(0).getName()).isEqualTo("Aphex Twin");
+        assertThat(artistsListView.getItems().get(0).getArtistName()).isEqualTo("Aphex Twin");
 
         // Album-only query.
         Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("Ambient Works", this)));
         waitForFxEvents();
         assertThat(artistsListView.getItems()).hasSize(1);
-        assertThat(artistsListView.getItems().get(0).getName()).isEqualTo("Aphex Twin");
+        assertThat(artistsListView.getItems().get(0).getArtistName()).isEqualTo("Aphex Twin");
 
         // Reset stubs back to empty so other tests in the class don't inherit a populated catalog
         // (Spring context is singleton-per-class — mock state leaks otherwise).
@@ -255,9 +258,16 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
         doReturn(java.util.Optional.empty()).when(audioRepository).getArtistCatalog(bonobo);
         Platform.runLater(() -> {
             applicationEventPublisher.publishEvent(new SearchTextTypedEvent("", this));
-            artistsProperty.clear();
+            artistCatalogsProperty.clear();
         });
         waitForFxEvents();
+    }
+
+    private static ObservableArtistCatalog mockCatalog(Artist artist) {
+        var catalog = mock(ObservableArtistCatalog.class);
+        when(catalog.getArtistName()).thenReturn(artist.getName());
+        when(catalog.getArtist()).thenReturn(artist);
+        return catalog;
     }
 
     /**
@@ -272,12 +282,7 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
         when(artist.getName()).thenReturn(artistName);
         when(item.getArtist()).thenReturn(artist);
 
-        var albumArtist = mock(Artist.class);
-        when(albumArtist.getName()).thenReturn(artistName);
-
-        var album = mock(Album.class);
-        when(album.getName()).thenReturn(albumName);
-        when(album.getAlbumArtist()).thenReturn(albumArtist);
+        var album = AudioItemTestFactory.createAlbum(albumName, Artist.of(artistName));
         when(item.getAlbum()).thenReturn(album);
 
         // Stub path and cover for any defensive null checks in other parts of the table internals
@@ -298,15 +303,23 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
 class SearchFlowITConfiguration {
 
     @Bean
-    public SetProperty<Artist> artistsProperty() {
+    public SetProperty<net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog> artistCatalogsProperty() {
+        return new SimpleSetProperty<>(FXCollections.observableSet());
+    }
+
+    @Bean
+    public SetProperty<ObservableAlbum> albumsProperty() {
         return new SimpleSetProperty<>(FXCollections.observableSet());
     }
 
     @Bean
     @SuppressWarnings("unchecked")
-    public ObservableAudioLibrary audioRepository(ReadOnlySetProperty<Artist> artistsProperty) {
+    public ObservableAudioLibrary audioRepository(
+            ReadOnlySetProperty<net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog> artistCatalogsProperty,
+            ReadOnlySetProperty<ObservableAlbum> albumsProperty) {
         var repository = mock(ObservableAudioLibrary.class);
-        when(repository.getArtistsProperty()).thenReturn(artistsProperty);
+        when(repository.getArtistCatalogsProperty()).thenReturn(artistCatalogsProperty);
+        when(repository.getAlbumsProperty()).thenReturn(albumsProperty);
         when(repository.getArtistCatalogPublisher()).thenReturn(mock(LirpEventPublisher.class));
         return repository;
     }

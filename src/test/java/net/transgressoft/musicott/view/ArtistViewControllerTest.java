@@ -58,7 +58,7 @@ class ArtistViewControllerTest {
                 .singleElement()
                 .satisfies(albumSet -> {
                     assertThat(albumSet.getAlbumName()).isEqualTo("Diffusion 7.0");
-                    assertThat((List<ObservableAudioItem>) albumSet).containsExactly(akkyaTrack);
+                    assertThat(albumSet.tracks()).containsExactly(akkyaTrack);
                 });
     }
 

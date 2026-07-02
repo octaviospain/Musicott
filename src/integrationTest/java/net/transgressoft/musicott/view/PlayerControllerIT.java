@@ -2,6 +2,7 @@ package net.transgressoft.musicott.view;
 
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
+import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import net.transgressoft.commons.fx.music.waveform.PlayableWaveformPane;
 import net.transgressoft.commons.fx.music.waveform.SeekEvent;
 import net.transgressoft.commons.music.waveform.AudioWaveform;
@@ -418,8 +419,7 @@ class PlayerControllerIT extends ApplicationTestBase<GridPane> {
         when(artist.getName()).thenReturn("Test Artist");
         when(audioItem.getArtistProperty()).thenReturn(new SimpleObjectProperty<>(artist));
 
-        var album = mock(net.transgressoft.commons.music.audio.Album.class);
-        when(album.getName()).thenReturn("Test Album");
+        var album = AudioItemTestFactory.createAlbum("Test Album");
         when(audioItem.getAlbumProperty()).thenReturn(new SimpleObjectProperty<>(album));
 
         when(audioItem.getCoverImageProperty()).thenReturn(new SimpleObjectProperty<>(Optional.empty()));

@@ -17,6 +17,14 @@
 	-fx-graphic: url('../icons/menuartist-black-icon.png');
 }
 
+#navigationModeListView .list-cell:albums {
+	-fx-graphic: url('../icons/menualbum-white-icon.png');
+}
+
+#navigationModeListView .list-cell:albums-selected {
+	-fx-graphic: url('../icons/menualbum-black-icon.png');
+}
+
 #navigationPaneVBox {
 	-fx-border-color: rgb(73, 73, 73);
 	-fx-border-width: 2px;

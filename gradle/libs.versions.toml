@@ -9,8 +9,8 @@ spring-boot = "4.0.6"
 spring-dependency-management = "1.1.7"
 
 # Music ecosystem
-music-commons = "0.6.0"
-lirp = "2.5.0"
+music-commons = "0.7.0"
+lirp = "3.2.0"
 
 # JavaFX integration
 javafx-weaver = "2.0.1"
@@ -66,6 +66,7 @@ music-commons-api = { module = "net.transgressoft:music-commons-api", version.re
 music-commons-core = { module = "net.transgressoft:music-commons-core", version.ref = "music-commons" }
 music-commons-media = { module = "net.transgressoft:music-commons-media", version.ref = "music-commons" }
 music-commons-fx = { module = "net.transgressoft:music-commons-fx", version.ref = "music-commons" }
+music-commons-persistence-fx = { module = "net.transgressoft:music-commons-persistence-fx", version.ref = "music-commons" }
 music-commons-test = { module = "net.transgressoft:music-commons-test", version.ref = "music-commons" }
 music-commons-fx-test = { module = "net.transgressoft:music-commons-fx-test", version.ref = "music-commons" }
 lirp-core = { module = "net.transgressoft:lirp-core", version.ref = "lirp" }
@@ -109,6 +110,7 @@ music-commons = [
     "music-commons-core",
     "music-commons-fx",
     "music-commons-media",
+    "music-commons-persistence-fx",
 ]
 music-commons-test = [
     "music-commons-fx-test",
