@@ -1,6 +1,7 @@
 package net.transgressoft.musicott.services;
 
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
+import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import net.transgressoft.commons.fx.music.player.FXAudioItemPlayer;
 import net.transgressoft.commons.music.player.AudioItemPlayer;
 import net.transgressoft.commons.music.player.UnsupportedAudioPlaybackException;
@@ -338,8 +339,7 @@ class PlayerServiceStorageIT {
         when(artist.getName()).thenReturn("Test Artist");
         when(item.getArtistProperty()).thenReturn(new SimpleObjectProperty<>(artist));
 
-        var album = mock(net.transgressoft.commons.music.audio.Album.class);
-        when(album.getName()).thenReturn("Test Album");
+        var album = AudioItemTestFactory.createAlbum("Test Album");
         when(item.getAlbumProperty()).thenReturn(new SimpleObjectProperty<>(album));
 
         when(item.getCoverImageProperty()).thenReturn(new SimpleObjectProperty<>(Optional.empty()));

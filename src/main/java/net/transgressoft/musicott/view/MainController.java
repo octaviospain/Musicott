@@ -71,6 +71,7 @@ public class MainController {
     private final PlayerController playerController;
     private final NavigationController navigationController;
     private final ArtistViewController artistViewController;
+    private final AlbumViewController albumViewController;
     private final AlertFactory alertFactory;
     private final MediaImportService mediaImportService;
     private final ItunesImportWizard itunesImportWizard;
@@ -111,6 +112,8 @@ public class MainController {
     private StackPane tableStackPane;
     @FXML
     private SplitPane artistsLayout;
+    @FXML
+    private StackPane albumsLayout;
     @FXML
     private VBox navigationLayout;
     @FXML
@@ -154,6 +157,7 @@ public class MainController {
                           PlayerController playerController,
                           NavigationController navigationController,
                           ArtistViewController artistViewController,
+                          AlbumViewController albumViewController,
                           AlertFactory alertFactory,
                           MediaImportService mediaImportService,
                           ItunesImportWizard itunesImportWizard,
@@ -165,6 +169,7 @@ public class MainController {
         this.playerController = playerController;
         this.navigationController = navigationController;
         this.artistViewController = artistViewController;
+        this.albumViewController = albumViewController;
         this.alertFactory = alertFactory;
         this.mediaImportService = mediaImportService;
         this.itunesImportWizard = itunesImportWizard;
@@ -192,6 +197,9 @@ public class MainController {
                     break;
                 case ARTISTS:
                     showArtistsView();
+                    break;
+                case ALBUMS:
+                    showAlbumsView();
                     break;
                 case PLAYLIST:
                     showPlaylistView();
@@ -225,6 +233,10 @@ public class MainController {
         });
 
         audioItemContextMenu = new AudioItemTableViewContextMenu();
+
+        // The albums layout is declared in the StackPane so FxWeaver instantiates its controller,
+        // but the default startup view is ARTISTS; remove it until the ALBUMS mode is selected.
+        tableStackPane.getChildren().remove(albumsLayout);
 
         hideTableInfoPane();
     }
@@ -345,6 +357,7 @@ public class MainController {
     private void showAllAudioItemsView() {
         mainAudioItemTable.setSourceItems(audioRepository.getAudioItemsProperty());
         tableStackPane.getChildren().remove(artistsLayout);
+        tableStackPane.getChildren().remove(albumsLayout);
         miniatureCoverImageView.setVisible(true);
         hideTableInfoPane();
         showTablePane();
@@ -364,9 +377,22 @@ public class MainController {
         miniatureCoverImageView.setVisible(false);
         tableStackPane.getChildren().remove(mainAudioItemTable);
         tableStackPane.getChildren().remove(miniatureCoverImageView);
+        tableStackPane.getChildren().remove(albumsLayout);
         if (!tableStackPane.getChildren().contains(artistsLayout)) {
             tableStackPane.getChildren().remove(tableBorderPane);
             tableStackPane.getChildren().add(artistsLayout);
+        }
+    }
+
+    private void showAlbumsView() {
+        hideTableInfoPane();
+        miniatureCoverImageView.setVisible(false);
+        tableStackPane.getChildren().remove(mainAudioItemTable);
+        tableStackPane.getChildren().remove(miniatureCoverImageView);
+        tableStackPane.getChildren().remove(artistsLayout);
+        if (!tableStackPane.getChildren().contains(albumsLayout)) {
+            tableStackPane.getChildren().remove(tableBorderPane);
+            tableStackPane.getChildren().add(albumsLayout);
         }
     }
 
@@ -382,6 +408,7 @@ public class MainController {
                 playlistItemsSubscription.unsubscribe();
 
             tableStackPane.getChildren().remove(artistsLayout);
+            tableStackPane.getChildren().remove(albumsLayout);
             replacePlaylistTextFieldByTitleLabel();
             playlistTitleLabel.textProperty().unbind();
             playlistTitleLabel.textProperty().bind(playlist.getNameProperty());
@@ -487,6 +514,7 @@ public class MainController {
     private void changeViewToPlaylistCreationMode(Function<String, ObservablePlaylist> playlistCreationFunction) {
         mainAudioItemTable.setSourceItems(FXCollections.observableArrayList());
         tableStackPane.getChildren().remove(artistsLayout);
+        tableStackPane.getChildren().remove(albumsLayout);
         replacePlaylistTitleLabelByTextField();
         playlistImageProperty.set(defaultPlaylistImage);
         miniatureCoverImageView.setVisible(false);
@@ -857,6 +885,7 @@ public class MainController {
             return switch (mode) {
                 case ALL_AUDIO_ITEMS, PLAYLIST -> Optional.ofNullable(mainAudioItemTable.getSelectionModel().getSelectedItems());
                 case ARTISTS -> Optional.ofNullable(artistViewController.getSelectedTracks());
+                case ALBUMS -> Optional.ofNullable(albumViewController.getSelectedTracks());
             };
         }
 
@@ -873,6 +902,9 @@ public class MainController {
                 case ARTISTS:
                     artistViewController.selectAllTracks();
                     break;
+                case ALBUMS:
+                    albumViewController.selectAllTracks();
+                    break;
             }
         }
 
@@ -884,6 +916,9 @@ public class MainController {
                     break;
                 case ARTISTS:
                     artistViewController.deselectAllTracks();
+                    break;
+                case ALBUMS:
+                    albumViewController.deselectAllTracks();
                     break;
             }
         }
@@ -926,6 +961,7 @@ public class MainController {
                             : List.copyOf(p.getAudioItemsProperty()))
                     .orElse(List.of());
             case ARTISTS -> List.copyOf(artistViewController.getSelectedArtistAudioItems());
+            case ALBUMS -> List.of();
         };
     }
 

@@ -14,6 +14,8 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
 import net.transgressoft.commons.fx.music.FxAudioItemTestFactory;
+import net.transgressoft.commons.fx.music.audio.ObservableAlbum;
+import net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.Artist;
@@ -60,7 +62,7 @@ import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
 
     @Autowired
-    SetProperty<Artist> artistsProperty;
+    SetProperty<ObservableArtistCatalog> artistCatalogsProperty;
 
     @Autowired
     ListProperty<ObservableAudioItem> audioItemsProperty;
@@ -87,17 +89,17 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
 
         var artist = of("Laurent Garnier");
 
-        Platform.runLater(() -> artistsProperty.add(artist));
+        Platform.runLater(() -> artistCatalogsProperty.add(mockCatalog(artist)));
         waitForFxEvents();
 
         assertThat(fxRobot.lookup("#artistsListView").tryQuery()).isPresent();
-        assertThat(artistsProperty).hasSize(1);
+        assertThat(artistCatalogsProperty).hasSize(1);
     }
 
     @Test
     @DisplayName("ArtistViewController validates album display when an artist is clicked")
     void validatesAlbumDisplayWhenArtistIsClicked(FxRobot fxRobot) {
-        Platform.runLater(() -> artistsProperty.add(of("Bonobo")));
+        Platform.runLater(() -> artistCatalogsProperty.add(mockCatalog(of("Bonobo"))));
         waitForFxEvents();
 
         fxRobot.clickOn("Bonobo");
@@ -128,21 +130,26 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
                 21,
                 Set.of(triggerLive, akkya));
 
+        ObservableArtistCatalog bonoboCatalog = mockCatalog(bonobo);
+        ObservableArtistCatalog triggerLiveCatalog = mockCatalog(triggerLive);
+        ObservableArtistCatalog akkyaCatalog = mockCatalog(akkya);
+
         Platform.runLater(() -> {
-            artistsProperty.clear();
+            artistCatalogsProperty.clear();
             audioItemsProperty.clear();
             audioItemsProperty.addAll(bonoboTrack, akkyaTrack);
-            artistsProperty.addAll(Set.of(bonobo, triggerLive, akkya));
+            artistCatalogsProperty.addAll(Set.of(bonoboCatalog, triggerLiveCatalog, akkyaCatalog));
         });
         waitForFxEvents();
 
-        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        @SuppressWarnings("unchecked")
+        ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
         ListView<ArtistAlbumListRow> albumsListView = fxRobot.lookup("#albumsListView").queryAs(ListView.class);
 
-        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonobo));
+        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonoboCatalog));
         waitForDisplayedTitle(albumsListView, "Kiara");
 
-        Platform.runLater(() -> artistsListView.getSelectionModel().select(akkya));
+        Platform.runLater(() -> artistsListView.getSelectionModel().select(akkyaCatalog));
         waitForDisplayedTitle(albumsListView, "Circle (Akkya Remix)");
         assertThat(displayedTitles(albumsListView)).doesNotContain("Kiara");
     }
@@ -153,15 +160,15 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         ArtistViewController controller = artistViewAndController.getController();
         // Clear accumulated state from previous tests and reset the predicate.
         Platform.runLater(() -> {
-            artistsProperty.clear();
+            artistCatalogsProperty.clear();
             controller.searchTextTypedEvent(new SearchTextTypedEvent("", this));
         });
         waitForFxEvents();
 
         Platform.runLater(() -> {
-            artistsProperty.add(of("Abel"));
-            artistsProperty.add(of("Abba"));
-            artistsProperty.add(of("Beatles"));
+            artistCatalogsProperty.add(mockCatalog(of("Abel")));
+            artistCatalogsProperty.add(mockCatalog(of("Abba")));
+            artistCatalogsProperty.add(mockCatalog(of("Beatles")));
         });
         waitForFxEvents();
 
@@ -170,11 +177,12 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("Abe", this)));
         waitForFxEvents();
 
-        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        @SuppressWarnings("unchecked")
+        ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
         assertThat(artistsListView.getItems()).hasSize(1);
-        assertThat(artistsListView.getItems().get(0).getName()).isEqualTo("Abel");
+        assertThat(artistsListView.getItems().get(0).getArtistName()).isEqualTo("Abel");
 
-        Artist selected = artistsListView.getSelectionModel().getSelectedItem();
+        ObservableArtistCatalog selected = artistsListView.getSelectionModel().getSelectedItem();
         assertThat(selected).isNotNull();
         assertThat(selected).isSameAs(artistsListView.getItems().get(0));
     }
@@ -185,19 +193,20 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         ArtistViewController controller = artistViewAndController.getController();
         // Clear accumulated state from previous tests and reset the predicate.
         Platform.runLater(() -> {
-            artistsProperty.clear();
+            artistCatalogsProperty.clear();
             controller.searchTextTypedEvent(new SearchTextTypedEvent("", this));
         });
         waitForFxEvents();
 
         Platform.runLater(() -> {
-            artistsProperty.add(of("Abel"));
-            artistsProperty.add(of("Abba"));
-            artistsProperty.add(of("Beatles"));
+            artistCatalogsProperty.add(mockCatalog(of("Abel")));
+            artistCatalogsProperty.add(mockCatalog(of("Abba")));
+            artistCatalogsProperty.add(mockCatalog(of("Beatles")));
         });
         waitForFxEvents();
 
-        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        @SuppressWarnings("unchecked")
+        ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
 
         // Filter to a single match.
         Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("Abe", this)));
@@ -219,18 +228,20 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         Artist bonobo = of("Bonobo");
         ObservableAudioItem track = audioItem("Kiara", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo));
 
+        ObservableArtistCatalog bonoboCatalog = mockCatalog(bonobo);
         Platform.runLater(() -> {
-            artistsProperty.clear();
+            artistCatalogsProperty.clear();
             audioItemsProperty.clear();
             audioItemsProperty.add(track);
-            artistsProperty.add(bonobo);
+            artistCatalogsProperty.add(bonoboCatalog);
         });
         waitForFxEvents();
 
-        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        @SuppressWarnings("unchecked")
+        ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
         ListView<ArtistAlbumListRow> albumsListView = fxRobot.lookup("#albumsListView").queryAs(ListView.class);
 
-        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonobo));
+        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonoboCatalog));
         waitForDisplayedTitle(albumsListView, "Kiara");
 
         byte[] coverBytes = loadTestImageBytes();
@@ -261,18 +272,20 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         ObservableAudioItem disc1Track = audioItem("Kiara", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo), 1);
         ObservableAudioItem disc2Track = audioItem("Stay the Same", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo), 2);
 
+        ObservableArtistCatalog bonoboCatalog = mockCatalog(bonobo);
         Platform.runLater(() -> {
-            artistsProperty.clear();
+            artistCatalogsProperty.clear();
             audioItemsProperty.clear();
             audioItemsProperty.addAll(disc1Track, disc2Track);
-            artistsProperty.add(bonobo);
+            artistCatalogsProperty.add(bonoboCatalog);
         });
         waitForFxEvents();
 
-        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        @SuppressWarnings("unchecked")
+        ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
         ListView<ArtistAlbumListRow> albumsListView = fxRobot.lookup("#albumsListView").queryAs(ListView.class);
 
-        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonobo));
+        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonoboCatalog));
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> albumsListView.getItems().size() == 2);
         waitForFxEvents();
 
@@ -286,22 +299,31 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         ObservableAudioItem track1 = audioItem("Kiara", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo), 1);
         ObservableAudioItem track2 = audioItem("Kong", bonobo, "Black Sands", bonobo, 2, Set.of(bonobo), 1);
 
+        ObservableArtistCatalog bonoboCatalog = mockCatalog(bonobo);
         Platform.runLater(() -> {
-            artistsProperty.clear();
+            artistCatalogsProperty.clear();
             audioItemsProperty.clear();
             audioItemsProperty.addAll(track1, track2);
-            artistsProperty.add(bonobo);
+            artistCatalogsProperty.add(bonoboCatalog);
         });
         waitForFxEvents();
 
-        ListView<Artist> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        @SuppressWarnings("unchecked")
+        ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
         ListView<ArtistAlbumListRow> albumsListView = fxRobot.lookup("#albumsListView").queryAs(ListView.class);
 
-        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonobo));
+        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonoboCatalog));
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> albumsListView.getItems().size() == 1);
         waitForFxEvents();
 
         assertThat(albumsListView.getItems()).hasSize(1);
+    }
+
+    private static ObservableArtistCatalog mockCatalog(Artist artist) {
+        var catalog = mock(ObservableArtistCatalog.class);
+        when(catalog.getArtistName()).thenReturn(artist.getName());
+        when(catalog.getArtist()).thenReturn(artist);
+        return catalog;
     }
 
     private static byte[] loadTestImageBytes() throws IOException {
@@ -367,7 +389,7 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
 class ArtistViewControllerITConfiguration {
 
     @Bean
-    public SetProperty<Artist> artistsProperty() {
+    public SetProperty<net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog> artistCatalogsProperty() {
         return new SimpleSetProperty<>(FXCollections.observableSet());
     }
 
@@ -377,13 +399,20 @@ class ArtistViewControllerITConfiguration {
     }
 
     @Bean
+    public SetProperty<ObservableAlbum> albumsProperty() {
+        return new SimpleSetProperty<>(FXCollections.observableSet());
+    }
+
+    @Bean
     @SuppressWarnings("unchecked")
     public ObservableAudioLibrary audioRepository(
-            ReadOnlySetProperty<Artist> artistsProperty,
-            ReadOnlyListProperty<ObservableAudioItem> audioItemsProperty) {
+            ReadOnlySetProperty<net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog> artistCatalogsProperty,
+            ReadOnlyListProperty<ObservableAudioItem> audioItemsProperty,
+            ReadOnlySetProperty<ObservableAlbum> albumsProperty) {
         var repository = mock(ObservableAudioLibrary.class);
-        when(repository.getArtistsProperty()).thenReturn(artistsProperty);
+        when(repository.getArtistCatalogsProperty()).thenReturn(artistCatalogsProperty);
         when(repository.getAudioItemsProperty()).thenReturn(audioItemsProperty);
+        when(repository.getAlbumsProperty()).thenReturn(albumsProperty);
         when(repository.getArtistCatalogPublisher()).thenReturn(mock(LirpEventPublisher.class));
         return repository;
     }

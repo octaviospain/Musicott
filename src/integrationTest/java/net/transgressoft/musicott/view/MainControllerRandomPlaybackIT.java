@@ -1,6 +1,7 @@
 package net.transgressoft.musicott.view;
 
 import net.transgressoft.commons.fx.music.FXMusicLibrary;
+import net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.Artist;
@@ -63,6 +64,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -179,13 +182,14 @@ class MainControllerRandomPlaybackIT extends ApplicationTestBase<BorderPane> {
     void playRandomFromContextWithArtistsModeCallsPlayRandom() {
         // Select the shown artist directly so the ARTISTS context resolves a non-empty pool,
         // independent of list auto-selection timing.
-        var artist = audioLibrary.getArtistsProperty().iterator().next();
+        var artistCatalog = audioLibrary.getArtistCatalogsProperty().iterator().next();
         Object artistViewTarget = AopUtils.isAopProxy(artistViewController)
                 ? AopTestUtils.getTargetObject(artistViewController)
                 : artistViewController;
-        var selectedArtistProp = (ObjectProperty<Optional<Artist>>)
+        @SuppressWarnings("unchecked")
+        var selectedArtistProp = (ObjectProperty<Optional<ObservableArtistCatalog>>)
                 ReflectionTestUtils.getField(artistViewTarget, "selectedArtistProperty");
-        Platform.runLater(() -> selectedArtistProp.set(Optional.of(artist)));
+        Platform.runLater(() -> selectedArtistProp.set(Optional.of(artistCatalog)));
         waitForFxEvents();
         setNavigationMode(NavigationController.NavigationMode.ARTISTS);
 
@@ -199,6 +203,28 @@ class MainControllerRandomPlaybackIT extends ApplicationTestBase<BorderPane> {
         waitForFxEvents();
 
         verifyPlayRandomCalledWith(expectedItems);
+    }
+
+    @Test
+    @DisplayName("MainController keeps the player controller fully on-screen in every navigation mode when the window is short")
+    void keepsPlayerVisibleAcrossNavModesWhenWindowIsShort() {
+        var view = mainControllerAndView.getView().get();
+        for (var mode : NavigationController.NavigationMode.values()) {
+            setNavigationMode(mode);
+            waitForFxEvents();
+
+            Node player = view.lookup("#playerGridPane");
+            assertNotNull(player, "player region must be present in mode " + mode);
+            double sceneHeight = view.getScene().getHeight();
+            double playerBottom = player.localToScene(player.getBoundsInLocal()).getMaxY();
+            double playerHeight = player.getBoundsInLocal().getHeight();
+
+            assertTrue(playerBottom <= sceneHeight + 0.5,
+                    "player bottom (" + playerBottom + ") must stay within the "
+                            + sceneHeight + "px scene in mode " + mode);
+            assertTrue(playerHeight >= 50.0,
+                    "player must keep its full height (>=50) in mode " + mode + " but was " + playerHeight);
+        }
     }
 
     @Test
@@ -223,6 +249,7 @@ class MainControllerRandomPlaybackIT extends ApplicationTestBase<BorderPane> {
                 PlayerController.class,
                 PlayQueueController.class,
                 ArtistViewController.class,
+                AlbumViewController.class,
                 PlaylistTreeView.class,
                 FullAudioItemTableView.class,
                 SimpleAudioItemTableView.class,

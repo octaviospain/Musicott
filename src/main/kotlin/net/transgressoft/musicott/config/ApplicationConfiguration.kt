@@ -21,13 +21,13 @@ import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.input.KeyCombination
 import net.transgressoft.commons.fx.music.FXMusicLibrary
-import net.transgressoft.commons.fx.music.audio.FXAudioItem_LirpTableDef
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy
-import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistMapSerializer
-import net.transgressoft.commons.media.waveform.AudioWaveformMapSerializer
+import net.transgressoft.commons.media.persistence.waveform.AudioWaveformMapSerializer
+import net.transgressoft.commons.persistence.fx.music.audio.FXAudioItemSqlTableDef
+import net.transgressoft.commons.persistence.fx.music.playlist.ObservablePlaylistMapSerializer
 import net.transgressoft.commons.music.audio.AudioMetadataIO
 import net.transgressoft.commons.music.audio.JAudioTaggerMetadataIO
 import net.transgressoft.commons.music.waveform.AudioWaveform
@@ -97,7 +97,7 @@ class ApplicationConfiguration @Autowired constructor(private val applicationPat
     // hook runs on the application's System.exit path, so the close is deterministic.
     @Bean
     fun audioItemRepository(): Repository<Int, ObservableAudioItem> =
-        SqliteRepository.fileBacked(applicationPaths.audioItemsDatabasePath, FXAudioItem_LirpTableDef)
+        SqliteRepository.fileBacked(applicationPaths.audioItemsDatabasePath, FXAudioItemSqlTableDef)
 
     @Bean
     fun playlistFileRepository(): Repository<Int, ObservablePlaylist> =

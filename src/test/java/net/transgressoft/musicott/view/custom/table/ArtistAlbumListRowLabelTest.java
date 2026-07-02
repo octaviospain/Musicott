@@ -4,7 +4,6 @@ import javafx.scene.control.Label;
 import javafx.stage.Stage;
 import net.transgressoft.commons.fx.music.FxAudioItemTestFactory;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
-import net.transgressoft.commons.music.audio.AlbumSet;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import org.junit.jupiter.api.*;
@@ -97,18 +96,8 @@ class ArtistAlbumListRowLabelTest {
         assertThat(albumLabelLabel.getText()).isEqualTo("Ninja Tune");
     }
 
-    @SuppressWarnings("unchecked")
-    private static AlbumSet<ObservableAudioItem> albumSet(String albumName, ObservableAudioItem... tracks) {
-        var list = List.of(tracks);
-        AlbumSet<ObservableAudioItem> albumSet = mock(AlbumSet.class);
-        lenient().when(albumSet.getAlbumName()).thenReturn(albumName);
-        lenient().when(albumSet.stream()).thenAnswer(inv -> list.stream());
-        lenient().when(albumSet.iterator()).thenAnswer(inv -> list.iterator());
-        lenient().when(albumSet.size()).thenReturn(list.size());
-        lenient().when(albumSet.isEmpty()).thenReturn(list.isEmpty());
-        lenient().when(albumSet.toArray()).thenReturn(list.toArray());
-        lenient().when(albumSet.toArray(any(ObservableAudioItem[].class))).thenAnswer(inv -> list.toArray(inv.<ObservableAudioItem[]>getArgument(0)));
-        return albumSet;
+    private static AlbumTrackGroup albumSet(String albumName, ObservableAudioItem... tracks) {
+        return new AlbumTrackGroup(albumName, List.of(tracks));
     }
 
     private static ObservableAudioItem audioItem(

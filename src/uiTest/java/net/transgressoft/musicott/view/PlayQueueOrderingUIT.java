@@ -2,7 +2,7 @@ package net.transgressoft.musicott.view;
 
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
-import net.transgressoft.commons.music.audio.Album;
+import net.transgressoft.commons.music.audio.AlbumDetails;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.waveform.AudioWaveform;
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository;
@@ -100,9 +100,9 @@ class PlayQueueOrderingUIT extends ApplicationTestBase<GridPane> {
         Artist artist = mock(Artist.class);
         when(artist.getName()).thenReturn("Test Artist");
         when(item.getArtistProperty()).thenReturn(new SimpleObjectProperty<>(artist));
-        Album album = mock(Album.class);
-        when(album.getName()).thenReturn("Test Album");
-        when(item.getAlbumProperty()).thenReturn(new SimpleObjectProperty<>(album));
+        AlbumDetails albumDetails = mock(AlbumDetails.class);
+        when(albumDetails.getName()).thenReturn("Test Album");
+        when(item.getAlbumProperty()).thenReturn(new SimpleObjectProperty<>(albumDetails));
         when(item.getCoverImageProperty()).thenReturn(new SimpleObjectProperty<>(Optional.empty()));
         // Required by JavaFxPlayer.isPlayable: extension must be a supported type,
         // encoding and encoder must be null to avoid the Apple/iTunes exclusion.

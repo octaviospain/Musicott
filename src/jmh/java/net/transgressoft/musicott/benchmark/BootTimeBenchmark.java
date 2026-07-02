@@ -1,8 +1,8 @@
 package net.transgressoft.musicott.benchmark;
 
 import net.transgressoft.commons.fx.music.FXMusicLibrary;
-import net.transgressoft.commons.fx.music.audio.FXAudioItem_LirpTableDef;
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItemSerializerKt;
+import net.transgressoft.commons.persistence.fx.music.audio.FXAudioItemSqlTableDef;
+import net.transgressoft.commons.persistence.fx.music.audio.ObservableAudioItemMapSerializerKt;
 import net.transgressoft.commons.music.audio.AudioFileType;
 import net.transgressoft.commons.music.itunes.ItunesImportPolicy;
 import net.transgressoft.commons.music.itunes.ItunesImportService;
@@ -174,12 +174,12 @@ public class BootTimeBenchmark {
         if ("json".equals(backend)) {
             var repo = new JsonFileRepository<>(
                     iterationPath.toFile(),
-                    ObservableAudioItemSerializerKt.ObservableAudioItemMapSerializer()
+                    ObservableAudioItemMapSerializerKt.ObservableAudioItemMapSerializer()
             );
             loadedRepo = repo;
             bh.consume(repo);
         } else {
-            var repo = SqliteRepository.fileBacked(iterationPath, FXAudioItem_LirpTableDef.INSTANCE);
+            var repo = SqliteRepository.fileBacked(iterationPath, FXAudioItemSqlTableDef.INSTANCE);
             loadedRepo = repo;
             bh.consume(repo);
         }
@@ -207,7 +207,7 @@ public class BootTimeBenchmark {
         FXMusicLibrary seedLibrary = FXMusicLibrary.builder()
                 .audioRepository(new JsonFileRepository<>(
                         seedAudioItemsJson.toFile(),
-                        ObservableAudioItemSerializerKt.ObservableAudioItemMapSerializer()
+                        ObservableAudioItemMapSerializerKt.ObservableAudioItemMapSerializer()
                 ))
                 .build();
 
@@ -226,7 +226,7 @@ public class BootTimeBenchmark {
         Path seedSourceDb = tempDir.resolve("seed-source-audioItems.db");
 
         FXMusicLibrary seedLibrary = FXMusicLibrary.builder()
-                .audioRepository(SqliteRepository.fileBacked(seedSourceDb, FXAudioItem_LirpTableDef.INSTANCE))
+                .audioRepository(SqliteRepository.fileBacked(seedSourceDb, FXAudioItemSqlTableDef.INSTANCE))
                 .build();
 
         try {

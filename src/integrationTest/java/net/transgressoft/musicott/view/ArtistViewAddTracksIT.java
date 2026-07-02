@@ -15,6 +15,7 @@ import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
 import net.transgressoft.commons.fx.music.FXMusicLibrary;
 import net.transgressoft.commons.fx.music.FxAudioItemTestFactory;
+import net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
@@ -115,13 +116,27 @@ class ArtistViewAddTracksIT extends ApplicationTestBase<BorderPane> {
         // Switch to ARTISTS mode
         setNavigationMode(NavigationController.NavigationMode.ARTISTS);
 
-        // Select the artist so album rows are rendered
+        // The artistsListView now holds ObservableArtistCatalog items. Since the track was added
+        // directly to the audio items list (bypassing the library's catalog machinery), the catalog
+        // property is empty. Drive artist selection and album-row construction via reflection so the
+        // album rows are built from the audioItemsProperty path (which contains the track).
+        ObservableArtistCatalog bonoboMockCatalog = mock(ObservableArtistCatalog.class);
+        when(bonoboMockCatalog.getArtistName()).thenReturn("Bonobo");
+        when(bonoboMockCatalog.getArtist()).thenReturn(bonobo);
+
+        Object artistViewTarget = AopUtils.isAopProxy(artistViewController)
+                ? AopTestUtils.getTargetObject(artistViewController)
+                : artistViewController;
         @SuppressWarnings("unchecked")
-        ListView<Artist> artistsListView = lookup("#artistsListView").queryAs(ListView.class);
+        var selectedArtistProp = (ObjectProperty<Optional<ObservableArtistCatalog>>)
+                ReflectionTestUtils.getField(artistViewTarget, "selectedArtistProperty");
+        Platform.runLater(() -> {
+            selectedArtistProp.set(Optional.of(bonoboMockCatalog));
+            ReflectionTestUtils.invokeMethod(artistViewTarget, "refreshAlbumRowsForArtist", bonobo);
+        });
+
         @SuppressWarnings("unchecked")
         ListView<ArtistAlbumListRow> albumsListView = lookup("#albumsListView").queryAs(ListView.class);
-
-        Platform.runLater(() -> artistsListView.getSelectionModel().select(bonobo));
         waitFor(5, TimeUnit.SECONDS, () -> !albumsListView.getItems().isEmpty());
         waitForFxEvents();
 
@@ -176,6 +191,7 @@ class ArtistViewAddTracksIT extends ApplicationTestBase<BorderPane> {
                 PlayerController.class,
                 PlayQueueController.class,
                 ArtistViewController.class,
+                AlbumViewController.class,
                 PlaylistTreeView.class,
                 FullAudioItemTableView.class,
                 SimpleAudioItemTableView.class,

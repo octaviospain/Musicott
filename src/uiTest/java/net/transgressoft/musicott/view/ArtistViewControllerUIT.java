@@ -10,6 +10,8 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
 import net.transgressoft.commons.fx.music.FxAudioItemTestFactory;
+import net.transgressoft.commons.fx.music.audio.ObservableAlbum;
+import net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.Artist;
@@ -54,7 +56,7 @@ import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 class ArtistViewControllerUIT extends ApplicationTestBase<SplitPane> {
 
     @Autowired
-    SetProperty<Artist> artistsProperty;
+    SetProperty<ObservableArtistCatalog> artistCatalogsProperty;
 
     @Autowired
     ListProperty<ObservableAudioItem> audioItemsProperty;
@@ -90,7 +92,7 @@ class ArtistViewControllerUIT extends ApplicationTestBase<SplitPane> {
 
         Platform.runLater(() -> {
             audioItemsProperty.addAll(bonoboTrack, akkyaTrack);
-            artistsProperty.addAll(Set.of(bonobo, triggerLive, akkya));
+            artistCatalogsProperty.addAll(Set.of(mockCatalog(bonobo), mockCatalog(triggerLive), mockCatalog(akkya)));
         });
         waitForFxEvents();
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS,
@@ -114,9 +116,9 @@ class ArtistViewControllerUIT extends ApplicationTestBase<SplitPane> {
 
         Platform.runLater(() -> {
             audioItemsProperty.clear();
-            artistsProperty.clear();
+            artistCatalogsProperty.clear();
             audioItemsProperty.addAll(disc1Track, disc2Track);
-            artistsProperty.add(bonobo);
+            artistCatalogsProperty.add(mockCatalog(bonobo));
         });
         waitForFxEvents();
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS,
@@ -130,6 +132,13 @@ class ArtistViewControllerUIT extends ApplicationTestBase<SplitPane> {
 
         assertThat(fxRobot.lookup("Disc 1").tryQuery()).isPresent();
         assertThat(fxRobot.lookup("Disc 2").tryQuery()).isPresent();
+    }
+
+    private static ObservableArtistCatalog mockCatalog(Artist artist) {
+        var catalog = mock(ObservableArtistCatalog.class);
+        when(catalog.getArtistName()).thenReturn(artist.getName());
+        when(catalog.getArtist()).thenReturn(artist);
+        return catalog;
     }
 
     private static void waitForTrackText(FxRobot fxRobot, String title) throws Exception {
@@ -180,23 +189,30 @@ class ArtistViewControllerUIT extends ApplicationTestBase<SplitPane> {
 class ArtistViewControllerUITConfiguration {
 
     @Bean
-    public SetProperty<Artist> artistsProperty() {
-        return new SimpleSetProperty<>(FXCollections.observableSet());
-    }
-
-    @Bean
     public ListProperty<ObservableAudioItem> audioItemsProperty() {
         return new SimpleListProperty<>(FXCollections.observableArrayList());
     }
 
     @Bean
+    public SetProperty<ObservableArtistCatalog> artistCatalogsProperty() {
+        return new SimpleSetProperty<>(FXCollections.observableSet());
+    }
+
+    @Bean
+    public SetProperty<ObservableAlbum> albumsProperty() {
+        return new SimpleSetProperty<>(FXCollections.observableSet());
+    }
+
+    @Bean
     @SuppressWarnings("unchecked")
     public ObservableAudioLibrary audioRepository(
-            ReadOnlySetProperty<Artist> artistsProperty,
-            ReadOnlyListProperty<ObservableAudioItem> audioItemsProperty) {
+            ReadOnlySetProperty<ObservableArtistCatalog> artistCatalogsProperty,
+            ReadOnlyListProperty<ObservableAudioItem> audioItemsProperty,
+            ReadOnlySetProperty<ObservableAlbum> albumsProperty) {
         var repository = mock(ObservableAudioLibrary.class);
-        when(repository.getArtistsProperty()).thenReturn(artistsProperty);
+        when(repository.getArtistCatalogsProperty()).thenReturn(artistCatalogsProperty);
         when(repository.getAudioItemsProperty()).thenReturn(audioItemsProperty);
+        when(repository.getAlbumsProperty()).thenReturn(albumsProperty);
         when(repository.getArtistCatalogPublisher()).thenReturn(mock(LirpEventPublisher.class));
         return repository;
     }

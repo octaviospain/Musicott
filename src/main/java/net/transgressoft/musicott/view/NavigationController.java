@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALBUMS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALL_AUDIO_ITEMS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ARTISTS;
 import static org.fxmisc.easybind.EasyBind.map;
@@ -55,6 +56,7 @@ public class NavigationController {
     public enum NavigationMode {
         ALL_AUDIO_ITEMS("All tracks"),
         ARTISTS("Artists"),
+        ALBUMS("Albums"),
         PLAYLIST("Playlists");
 
         final String name;
@@ -145,7 +147,7 @@ public class NavigationController {
 
         // When switching to a non-playlist nav mode, clear the playlist tree.
         subscribe(navigationModeProperty, mode -> {
-            if (mode == ALL_AUDIO_ITEMS || mode == ARTISTS) {
+            if (mode == ALL_AUDIO_ITEMS || mode == ARTISTS || mode == ALBUMS) {
                 playlistTreeView.getSelectionModel().clearSelection();
             }
         });
@@ -258,7 +260,7 @@ public class NavigationController {
             setPrefHeight(USE_COMPUTED_SIZE);
             setPrefWidth(USE_COMPUTED_SIZE);
 
-            NavigationMode[] navigationModes = { ALL_AUDIO_ITEMS, ARTISTS};
+            NavigationMode[] navigationModes = { ALL_AUDIO_ITEMS, ARTISTS, ALBUMS};
             setItems(FXCollections.observableArrayList(navigationModes));
             setCellFactory(listView -> new NavigationListCell());
             // Clear the nav-list selection first so re-clicking the same mode always
@@ -282,6 +284,8 @@ public class NavigationController {
         private final PseudoClass audioItemsSelected = PseudoClass.getPseudoClass("tracks-selected");
         private final PseudoClass artists = PseudoClass.getPseudoClass("artists");
         private final PseudoClass artistsSelected = PseudoClass.getPseudoClass("artists-selected");
+        private final PseudoClass albums = PseudoClass.getPseudoClass("albums");
+        private final PseudoClass albumsSelected = PseudoClass.getPseudoClass("albums-selected");
 
         public NavigationListCell() {
             super();
@@ -311,6 +315,8 @@ public class NavigationController {
             pseudoClassStateChanged(audioItemsSelected, mode.equals(ALL_AUDIO_ITEMS) && isSelected);
             pseudoClassStateChanged(artists, mode.equals(ARTISTS) && ! isSelected);
             pseudoClassStateChanged(artistsSelected, mode.equals(ARTISTS) && isSelected);
+            pseudoClassStateChanged(albums, mode.equals(ALBUMS) && ! isSelected);
+            pseudoClassStateChanged(albumsSelected, mode.equals(ALBUMS) && isSelected);
         }
 
         private void disablePseudoClassesStates() {
@@ -318,6 +324,8 @@ public class NavigationController {
             pseudoClassStateChanged(audioItemsSelected, false);
             pseudoClassStateChanged(artists, false);
             pseudoClassStateChanged(artistsSelected, false);
+            pseudoClassStateChanged(albums, false);
+            pseudoClassStateChanged(albumsSelected, false);
         }
     }
 }

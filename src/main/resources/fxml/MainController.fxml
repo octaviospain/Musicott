@@ -6,7 +6,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
-<BorderPane fx:id="rootBorderPane" minHeight="-Infinity" minWidth="-Infinity" prefWidth="1200.0" stylesheets="@../css/base.css"
+<BorderPane fx:id="rootBorderPane" minHeight="0.0" minWidth="-Infinity" prefWidth="1200.0" stylesheets="@../css/base.css"
             xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="net.transgressoft.musicott.view.MainController">
     <top>
@@ -26,6 +26,7 @@
                                 <StackPane fx:id="tableStackPane">
                                     <children>
                                         <fx:include fx:id="artistsLayout" source="ArtistViewController.fxml"/>
+                                        <fx:include fx:id="albumsLayout" source="AlbumViewController.fxml"/>
                                     </children>
                                 </StackPane>
                             </center>
@@ -90,7 +91,7 @@
                 </BorderPane>
             </center>
             <bottom>
-                <HBox>
+                <HBox minHeight="50.0">
                     <children>
                         <fx:include fx:id="playerLayout" source="PlayerController.fxml" HBox.hgrow="ALWAYS"/>
                         <TextField fx:id="searchTextField" maxWidth="300.0" prefWidth="250.0" GridPane.columnIndex="4"

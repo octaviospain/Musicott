@@ -142,6 +142,7 @@ class PlaylistFolderSelectionUIT extends ApplicationTestBase<BorderPane> {
                 PlayerController.class,
                 PlayQueueController.class,
                 ArtistViewController.class,
+                AlbumViewController.class,
                 PlaylistTreeView.class,
                 FullAudioItemTableView.class,
                 SimpleAudioItemTableView.class,

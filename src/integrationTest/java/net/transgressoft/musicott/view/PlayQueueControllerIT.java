@@ -2,6 +2,7 @@ package net.transgressoft.musicott.view;
 
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
+import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import net.transgressoft.musicott.services.PlayerService;
 import net.transgressoft.musicott.view.custom.table.TrackQueueRow;
 
@@ -131,8 +132,7 @@ class PlayQueueControllerIT {
         var artist = mock(net.transgressoft.commons.music.audio.Artist.class);
         when(artist.getName()).thenReturn("Test Artist");
         when(item.getArtistProperty()).thenReturn(new SimpleObjectProperty<>(artist));
-        var album = mock(net.transgressoft.commons.music.audio.Album.class);
-        when(album.getName()).thenReturn("Test Album");
+        var album = AudioItemTestFactory.createAlbum("Test Album");
         when(item.getAlbumProperty()).thenReturn(new SimpleObjectProperty<>(album));
         when(item.getCoverImageProperty()).thenReturn(new SimpleObjectProperty<>(java.util.Optional.empty()));
 
@@ -174,8 +174,7 @@ class PlayQueueControllerIT {
         var artist = mock(net.transgressoft.commons.music.audio.Artist.class);
         when(artist.getName()).thenReturn("Test Artist");
         when(item.getArtistProperty()).thenReturn(new SimpleObjectProperty<>(artist));
-        var album = mock(net.transgressoft.commons.music.audio.Album.class);
-        when(album.getName()).thenReturn("Test Album");
+        var album = AudioItemTestFactory.createAlbum("Test Album");
         when(item.getAlbumProperty()).thenReturn(new SimpleObjectProperty<>(album));
         when(item.getCoverImageProperty()).thenReturn(new SimpleObjectProperty<>(java.util.Optional.empty()));
         return new TrackQueueRow(item);

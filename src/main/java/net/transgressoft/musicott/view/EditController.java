@@ -387,7 +387,7 @@ public class EditController {
 
     private String commonGenre() {
         return commonString(audioItemSelection.stream()
-                .map(it -> Genre.joinGenres(it.getGenres()))
+                .map(it -> GenreExtensionsKt.joinGenres(it.getGenres()))
                 .toList());
     }
 
@@ -460,7 +460,7 @@ public class EditController {
        String labelValue = getEditionFieldResult(labelTextField);
        net.transgressoft.commons.music.audio.Label label = labelValue != null ? net.transgressoft.commons.music.audio.Label.of(labelValue) : null;
        String genreValue = getEditionFieldResult(genreTextField);
-       Set<Genre> genres = genreValue != null ? Genre.parseGenre(genreValue) : null;
+       Set<Genre> genres = genreValue != null ? GenreExtensionsKt.parseGenre(genreValue) : null;
        String comments = getEditionFieldResult(commentsTextField);
        Short trackNum = getEditionFieldResult(trackNumTextField) != null ? Short.valueOf(getEditionFieldResult(trackNumTextField)) : null;
        Short discNum = getEditionFieldResult(discNumTextField) != null ? Short.valueOf(getEditionFieldResult(discNumTextField)) : null;
