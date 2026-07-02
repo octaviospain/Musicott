@@ -35,6 +35,8 @@ import org.testfx.api.FxRobot;
 import java.util.Optional;
 import java.util.Set;
 
+import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALBUMS;
+import static net.transgressoft.musicott.view.NavigationController.NavigationMode.GENRES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.springframework.context.annotation.ComponentScan.Filter;
@@ -120,6 +122,66 @@ class NavigationControllerIT extends ApplicationTestBase<VBox> {
         var selectedProperty = navigationControllerAndView.getController().selectedPlaylistProperty();
         assertThat(selectedProperty.get()).isPresent();
         assertThat(selectedProperty.get().get().getName()).isEqualTo("Test Playlist");
+    }
+
+    @Test
+    @DisplayName("NavigationController GENRES enum value exists and toString equals Genres")
+    void genresNavigationModeEnumValueExistsWithCorrectToString() {
+        assertThat(GENRES).isNotNull();
+        assertThat(GENRES.toString()).isEqualTo("Genres");
+    }
+
+    @Test
+    @DisplayName("NavigationController displays Genres entry in the navigation mode list")
+    void displaysGenresEntryInNavigationModeList(FxRobot fxRobot) {
+        waitForFxEvents();
+
+        assertThat(fxRobot.lookup("#navigationModeListView").tryQuery()).isPresent();
+        assertThat(fxRobot.lookup("Genres").tryQuery()).isPresent();
+    }
+
+    @Test
+    @DisplayName("NavigationController clears playlist selection when switching to GENRES mode")
+    void clearsPlaylistSelectionOnGenresNavigationModeSwitch(FxRobot fxRobot) {
+        waitForFxEvents();
+
+        assertThat(fxRobot.lookup("#navigationModeListView").tryQuery()).isPresent();
+
+        // Click the "Genres" navigation entry
+        fxRobot.clickOn("Genres");
+        waitForFxEvents();
+
+        // Verify navigation mode property is GENRES
+        var navigationMode = navigationControllerAndView.getController().navigationModeProperty().get();
+        assertThat(navigationMode).isEqualTo(GENRES);
+
+        // Verify playlist tree has no selection
+        TreeView<?> treeView = fxRobot.lookup("#playlistTreeView").query();
+        assertThat(treeView.getSelectionModel().getSelectedItem()).isNull();
+    }
+
+    @Test
+    @DisplayName("NavigationController ALBUMS enum value exists and toString equals Albums")
+    void albumsNavigationModeEnumValueExistsWithCorrectToString() {
+        assertThat(ALBUMS).isNotNull();
+        assertThat(ALBUMS.toString()).isEqualTo("Albums");
+    }
+
+    @Test
+    @DisplayName("NavigationController clears playlist selection when switching to ALBUMS mode")
+    void clearsPlaylistSelectionOnAlbumsNavigationModeSwitch(FxRobot fxRobot) {
+        waitForFxEvents();
+
+        assertThat(fxRobot.lookup("#navigationModeListView").tryQuery()).isPresent();
+
+        fxRobot.clickOn("Albums");
+        waitForFxEvents();
+
+        var navigationMode = navigationControllerAndView.getController().navigationModeProperty().get();
+        assertThat(navigationMode).isEqualTo(ALBUMS);
+
+        TreeView<?> treeView = fxRobot.lookup("#playlistTreeView").query();
+        assertThat(treeView.getSelectionModel().getSelectedItem()).isNull();
     }
 }
 

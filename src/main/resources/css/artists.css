@@ -73,6 +73,25 @@
     -fx-padding: 0px 0px 10px 0px;
 }
 
+/* Header label of the overlay tracks drawer (genre name + track count). Left padding lines the text
+   up with the left edge of the row cover art below it (the rows inset their cover by 20px), and the
+   vertical padding keeps the header off the drawer's top border. */
+.drawer-header {
+    -fx-font-size: 20px;
+    -fx-text-fill: rgb(230, 230, 230);
+    -fx-padding: 16px 20px 12px 20px;
+}
+
+/* Drag strip on the drawer's left edge for resizing its width. Transparent at rest with a faint
+   highlight on hover so it reads as grabbable without competing with the content. */
+.drawer-resize-handle {
+    -fx-background-color: transparent;
+}
+
+.drawer-resize-handle:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+}
+
 /* Shared style for secondary album-info labels: disc, year, album-label, and related-artists.
    Keeps them visually subordinate to the primary album and artist title labels. */
 .album-info-secondary {

@@ -72,6 +72,7 @@ public class MainController {
     private final NavigationController navigationController;
     private final ArtistViewController artistViewController;
     private final AlbumViewController albumViewController;
+    private final GenreViewController genreViewController;
     private final AlertFactory alertFactory;
     private final MediaImportService mediaImportService;
     private final ItunesImportWizard itunesImportWizard;
@@ -114,6 +115,8 @@ public class MainController {
     private SplitPane artistsLayout;
     @FXML
     private StackPane albumsLayout;
+    @FXML
+    private StackPane genresLayout;
     @FXML
     private VBox navigationLayout;
     @FXML
@@ -158,6 +161,7 @@ public class MainController {
                           NavigationController navigationController,
                           ArtistViewController artistViewController,
                           AlbumViewController albumViewController,
+                          GenreViewController genreViewController,
                           AlertFactory alertFactory,
                           MediaImportService mediaImportService,
                           ItunesImportWizard itunesImportWizard,
@@ -170,6 +174,7 @@ public class MainController {
         this.navigationController = navigationController;
         this.artistViewController = artistViewController;
         this.albumViewController = albumViewController;
+        this.genreViewController = genreViewController;
         this.alertFactory = alertFactory;
         this.mediaImportService = mediaImportService;
         this.itunesImportWizard = itunesImportWizard;
@@ -200,6 +205,9 @@ public class MainController {
                     break;
                 case ALBUMS:
                     showAlbumsView();
+                    break;
+                case GENRES:
+                    showGenresView();
                     break;
                 case PLAYLIST:
                     showPlaylistView();
@@ -234,9 +242,11 @@ public class MainController {
 
         audioItemContextMenu = new AudioItemTableViewContextMenu();
 
-        // The albums layout is declared in the StackPane so FxWeaver instantiates its controller,
-        // but the default startup view is ARTISTS; remove it until the ALBUMS mode is selected.
+        // The albums and genres layouts are declared in the StackPane so FxWeaver instantiates their
+        // controllers, but the default startup view is ARTISTS; remove them until their mode is
+        // selected.
         tableStackPane.getChildren().remove(albumsLayout);
+        tableStackPane.getChildren().remove(genresLayout);
 
         hideTableInfoPane();
     }
@@ -358,6 +368,7 @@ public class MainController {
         mainAudioItemTable.setSourceItems(audioRepository.getAudioItemsProperty());
         tableStackPane.getChildren().remove(artistsLayout);
         tableStackPane.getChildren().remove(albumsLayout);
+        tableStackPane.getChildren().remove(genresLayout);
         miniatureCoverImageView.setVisible(true);
         hideTableInfoPane();
         showTablePane();
@@ -378,6 +389,7 @@ public class MainController {
         tableStackPane.getChildren().remove(mainAudioItemTable);
         tableStackPane.getChildren().remove(miniatureCoverImageView);
         tableStackPane.getChildren().remove(albumsLayout);
+        tableStackPane.getChildren().remove(genresLayout);
         if (!tableStackPane.getChildren().contains(artistsLayout)) {
             tableStackPane.getChildren().remove(tableBorderPane);
             tableStackPane.getChildren().add(artistsLayout);
@@ -390,9 +402,23 @@ public class MainController {
         tableStackPane.getChildren().remove(mainAudioItemTable);
         tableStackPane.getChildren().remove(miniatureCoverImageView);
         tableStackPane.getChildren().remove(artistsLayout);
+        tableStackPane.getChildren().remove(genresLayout);
         if (!tableStackPane.getChildren().contains(albumsLayout)) {
             tableStackPane.getChildren().remove(tableBorderPane);
             tableStackPane.getChildren().add(albumsLayout);
+        }
+    }
+
+    private void showGenresView() {
+        hideTableInfoPane();
+        miniatureCoverImageView.setVisible(false);
+        tableStackPane.getChildren().remove(mainAudioItemTable);
+        tableStackPane.getChildren().remove(miniatureCoverImageView);
+        tableStackPane.getChildren().remove(artistsLayout);
+        tableStackPane.getChildren().remove(albumsLayout);
+        if (!tableStackPane.getChildren().contains(genresLayout)) {
+            tableStackPane.getChildren().remove(tableBorderPane);
+            tableStackPane.getChildren().add(genresLayout);
         }
     }
 
@@ -409,6 +435,7 @@ public class MainController {
 
             tableStackPane.getChildren().remove(artistsLayout);
             tableStackPane.getChildren().remove(albumsLayout);
+            tableStackPane.getChildren().remove(genresLayout);
             replacePlaylistTextFieldByTitleLabel();
             playlistTitleLabel.textProperty().unbind();
             playlistTitleLabel.textProperty().bind(playlist.getNameProperty());
@@ -515,6 +542,7 @@ public class MainController {
         mainAudioItemTable.setSourceItems(FXCollections.observableArrayList());
         tableStackPane.getChildren().remove(artistsLayout);
         tableStackPane.getChildren().remove(albumsLayout);
+        tableStackPane.getChildren().remove(genresLayout);
         replacePlaylistTitleLabelByTextField();
         playlistImageProperty.set(defaultPlaylistImage);
         miniatureCoverImageView.setVisible(false);
@@ -886,6 +914,7 @@ public class MainController {
                 case ALL_AUDIO_ITEMS, PLAYLIST -> Optional.ofNullable(mainAudioItemTable.getSelectionModel().getSelectedItems());
                 case ARTISTS -> Optional.ofNullable(artistViewController.getSelectedTracks());
                 case ALBUMS -> Optional.ofNullable(albumViewController.getSelectedTracks());
+                case GENRES -> Optional.ofNullable(genreViewController.getSelectedTracks());
             };
         }
 
@@ -905,6 +934,9 @@ public class MainController {
                 case ALBUMS:
                     albumViewController.selectAllTracks();
                     break;
+                case GENRES:
+                    genreViewController.selectAllTracks();
+                    break;
             }
         }
 
@@ -919,6 +951,9 @@ public class MainController {
                     break;
                 case ALBUMS:
                     albumViewController.deselectAllTracks();
+                    break;
+                case GENRES:
+                    genreViewController.deselectAllTracks();
                     break;
             }
         }
@@ -961,7 +996,7 @@ public class MainController {
                             : List.copyOf(p.getAudioItemsProperty()))
                     .orElse(List.of());
             case ARTISTS -> List.copyOf(artistViewController.getSelectedArtistAudioItems());
-            case ALBUMS -> List.of();
+            case ALBUMS, GENRES -> List.of();
         };
     }
 

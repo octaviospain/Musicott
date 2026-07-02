@@ -5,6 +5,7 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import net.rgielen.fxweaver.core.FxControllerAndView;
@@ -46,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 import static net.transgressoft.commons.music.audio.Artist.of;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.context.annotation.ComponentScan.Filter;
@@ -276,7 +278,7 @@ class AlbumViewControllerUIT extends ApplicationTestBase<StackPane> {
         waitForFxEvents();
 
         // The drawer is the last child added; find it by style class.
-        VBox drawer = (VBox) root.getChildren().stream()
+        Region drawer = (Region) root.getChildren().stream()
                 .filter(n -> n.getStyleClass().contains("album-drawer"))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No album-drawer found"));
@@ -287,6 +289,55 @@ class AlbumViewControllerUIT extends ApplicationTestBase<StackPane> {
         // Drawer must not exceed 80% of root width, subject to a minimum-width floor for narrow
         // windows (plus a small rounding tolerance).
         assertThat(drawerWidth).isLessThanOrEqualTo(Math.max(rootWidth * 0.8, 280.0) + 1.0);
+    }
+
+    @Test
+    @DisplayName("dragging the resize handle clamps the drawer width between the minimum and the maximum")
+    void draggingResizeHandleClampsDrawerWidth(FxRobot fxRobot) throws Exception {
+        Artist bonobo = of("Bonobo");
+        ObservableAudioItem track = audioItem("Kiara", bonobo, "Black Sands", bonobo, 1, Set.of(bonobo));
+        ObservableAlbum album = mockAlbum("Black Sands", bonobo, List.of(track));
+
+        AlbumViewController controller = albumViewAndController.getController();
+        StackPane root = albumViewAndController.getView().get();
+
+        Platform.runLater(() -> controller.openDrawer(album));
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> root.getChildren().size() > 1);
+        waitForFxEvents();
+
+        Region drawer = (Region) root.getChildren().stream()
+                .filter(n -> n.getStyleClass().contains("album-drawer"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No album-drawer found"));
+        Node handle = drawer.lookup(".drawer-resize-handle");
+        assertThat(handle).as("resize handle present on the drawer").isNotNull();
+
+        double maxWidth = Math.max(root.getWidth() * 0.8, 280.0);
+        assertThat(drawer.getPrefWidth()).isCloseTo(maxWidth, within(1.0));
+
+        // Press on the handle, then drag far to the right: the drawer narrows but clamps at the
+        // minimum (210px) that keeps the row cover art visible. Firing synthetic events with explicit
+        // scene coordinates is deterministic in headless Monocle, unlike robot-driven drags.
+        Platform.runLater(() -> {
+            handle.fireEvent(dragEvent(javafx.scene.input.MouseEvent.MOUSE_PRESSED, 1000));
+            handle.fireEvent(dragEvent(javafx.scene.input.MouseEvent.MOUSE_DRAGGED, 4000));
+        });
+        waitForFxEvents();
+        assertThat(drawer.getPrefWidth()).isCloseTo(210.0, within(1.0));
+
+        // Drag far to the left from the same press: the drawer widens but clamps back at the maximum.
+        Platform.runLater(() -> handle.fireEvent(dragEvent(javafx.scene.input.MouseEvent.MOUSE_DRAGGED, -5000)));
+        waitForFxEvents();
+        assertThat(drawer.getPrefWidth()).isCloseTo(maxWidth, within(1.0));
+    }
+
+    private static javafx.scene.input.MouseEvent dragEvent(
+            javafx.event.EventType<javafx.scene.input.MouseEvent> type, double sceneX) {
+        return new javafx.scene.input.MouseEvent(
+                type,
+                sceneX, 0, sceneX, 0,
+                javafx.scene.input.MouseButton.PRIMARY, 1,
+                false, false, false, false, true, false, false, true, false, false, null);
     }
 
     @Test

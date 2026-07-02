@@ -25,10 +25,34 @@
 	-fx-graphic: url('../icons/menualbum-black-icon.png');
 }
 
+#navigationModeListView .list-cell:genres {
+	-fx-graphic: url('../icons/menugenres-white-icon.png');
+}
+
+#navigationModeListView .list-cell:genres-selected {
+	-fx-graphic: url('../icons/menugenres-black-icon.png');
+}
+
 #navigationPaneVBox {
 	-fx-border-color: rgb(73, 73, 73);
 	-fx-border-width: 2px;
 	-fx-border-insets: -2 0 0 -2;
+}
+
+/* Fixed four-mode menu: never scrolls. Drop the control padding so the rows fit the pinned height
+   exactly, and hide the scroll bars so no residual 1px overflow renders one. */
+#navigationModeListView {
+	-fx-padding: 0;
+	-fx-background-insets: 0;
+}
+
+#navigationModeListView .scroll-bar:vertical,
+#navigationModeListView .scroll-bar:horizontal {
+	-fx-pref-width: 0;
+	-fx-pref-height: 0;
+	-fx-min-width: 0;
+	-fx-min-height: 0;
+	-fx-opacity: 0;
 }
 
 #newPlaylistButton {

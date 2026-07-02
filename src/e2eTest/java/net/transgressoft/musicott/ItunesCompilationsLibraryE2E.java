@@ -151,7 +151,10 @@ class ItunesCompilationsLibraryE2E {
 
     private void waitForArtistCatalogs() throws TimeoutException {
         try {
-            waitFor(30, TimeUnit.SECONDS, () -> audioLibrary.getAudioItemsProperty().stream()
+            // Building artist catalogs for ~1170 imported tracks runs several times slower on the
+            // Windows and macOS CI runners than on Linux; allow the same order of headroom the import
+            // itself gets so a late-but-completing catalog build is not mistaken for a failure.
+            waitFor(120, TimeUnit.SECONDS, () -> audioLibrary.getAudioItemsProperty().stream()
                     .allMatch(item -> audioLibrary.getArtistCatalog(item.getArtist()).isPresent()));
         } catch (TimeoutException e) {
             long missingCount = audioLibrary.getAudioItemsProperty().stream()

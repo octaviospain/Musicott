@@ -262,6 +262,7 @@ class MainControllerRandomPlaybackIT extends ApplicationTestBase<BorderPane> {
                 PlayQueueController.class,
                 ArtistViewController.class,
                 AlbumViewController.class,
+                GenreViewController.class,
                 PlaylistTreeView.class,
                 FullAudioItemTableView.class,
                 SimpleAudioItemTableView.class,
