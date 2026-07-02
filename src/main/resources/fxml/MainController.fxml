@@ -27,6 +27,7 @@
                                     <children>
                                         <fx:include fx:id="artistsLayout" source="ArtistViewController.fxml"/>
                                         <fx:include fx:id="albumsLayout" source="AlbumViewController.fxml"/>
+                                        <fx:include fx:id="genresLayout" source="GenreViewController.fxml"/>
                                     </children>
                                 </StackPane>
                             </center>

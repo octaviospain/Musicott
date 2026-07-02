@@ -1,6 +1,5 @@
 package net.transgressoft.musicott.view;
 
-import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -12,25 +11,19 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.util.Duration;
 import net.rgielen.fxweaver.core.FxmlView;
 import net.transgressoft.commons.fx.music.audio.ObservableAlbum;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
-import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
+import net.transgressoft.musicott.view.custom.OverlayTracksDrawer;
 import net.transgressoft.musicott.view.custom.table.AlbumTrackGroup;
-import net.transgressoft.musicott.view.custom.table.ArtistAlbumListRow;
+import net.transgressoft.musicott.view.custom.table.AudioItemQueryMatcher;
 import net.transgressoft.musicott.events.SearchTextTypedEvent;
-import net.transgressoft.musicott.view.custom.table.SimpleAudioItemTableView;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.slf4j.Logger;
@@ -43,7 +36,6 @@ import org.springframework.stereotype.Controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Predicate;
@@ -73,10 +65,6 @@ public class AlbumViewController {
     private static final double CELL_WIDTH = 170.0;
     private static final double CELL_HEIGHT = 210.0;
     private static final double COVER_SIZE = 150.0;
-    /** Minimum drawer width so it stays usable on small windows. */
-    private static final double DRAWER_MIN_WIDTH = 280.0;
-    /** Drawer width as a fraction of the albums area, leaving the remainder for the grid. */
-    private static final double DRAWER_WIDTH_FRACTION = 0.8;
 
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
@@ -90,29 +78,14 @@ public class AlbumViewController {
     private ObservableList<ObservableAlbum> albumsBacking;
     private FilteredList<ObservableAlbum> filteredAlbums;
 
-    private Pane dimPane;
-    private VBox drawerPane;
-
-    /** The {@link ArtistAlbumListRow} disc sections currently rendered inside the open drawer. */
-    private final List<ArtistAlbumListRow> drawerRows = new ArrayList<>();
+    /** The shared overlay drawer showing the selected album's tracks. */
+    private OverlayTracksDrawer drawer;
 
     /** Lower-cased active search query, or empty when no filter is applied. */
     private String currentSearchQuery = "";
 
     /** The album whose drawer is currently open; {@code null} when no drawer is shown. */
     ObservableAlbum selectedAlbum;
-
-    /**
-     * Closes the overlay drawer when Esc is pressed. Consumes the event so it does not propagate to
-     * other components. Attached to the scene as a KEY_PRESSED filter — not a handler — so it fires
-     * regardless of which node has focus.
-     */
-    private final javafx.event.EventHandler<KeyEvent> escHandler = event -> {
-        if (event.getCode() == KeyCode.ESCAPE && drawerPane != null) {
-            closeDrawer();
-            event.consume();
-        }
-    };
 
     @Autowired
     public AlbumViewController(ObservableAudioLibrary audioLibrary, ApplicationContext applicationContext) {
@@ -141,22 +114,9 @@ public class AlbumViewController {
         albumGridView.maxHeightProperty().bind(albumsRootPane.heightProperty());
         albumsRootPane.getChildren().add(albumGridView);
 
-        // Attach or detach the Esc key filter as this view enters or leaves a scene, preventing the
-        // filter from leaking into other navigation modes when the Albums view is not visible.
-        albumsRootPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene != null) {
-                newScene.addEventFilter(KeyEvent.KEY_PRESSED, escHandler);
-            }
-            if (oldScene != null) {
-                oldScene.removeEventFilter(KeyEvent.KEY_PRESSED, escHandler);
-                // A navigation-mode switch removes this view from the scene graph while a drawer may
-                // still be open. The dim and drawer are children of albumsRootPane, so without an
-                // explicit teardown they would persist as a stuck, non-dismissable overlay on return,
-                // and the open guard would then permanently block reopening. Dispose immediately —
-                // an animated close is neither visible nor able to complete off-scene.
-                disposeDrawer();
-            }
-        });
+        // The shared drawer owns the overlay lifecycle (dim, slide, Esc, dispose-on-detach) so the
+        // Albums and Genres views do not each reimplement it.
+        drawer = new OverlayTracksDrawer(albumsRootPane, applicationContext);
     }
 
     /**
@@ -185,135 +145,35 @@ public class AlbumViewController {
     }
 
     /**
-     * Opens the right overlay drawer for the given album. If the drawer is already open (e.g., the
-     * user clicked a second cell before the first drawer closed), the call is ignored.
-     *
-     * <p>A full-size dim {@link Pane} is layered above the grid and intercepts mouse clicks to close
-     * the drawer. The drawer itself is a responsive-width {@link VBox} aligned to the right edge of
-     * the root pane: its width is bound to 40% of the root pane width (with a sensible minimum) so
-     * it never occupies the full grid even on narrow windows. It slides in from the right via a
-     * {@link TranslateTransition}.
-     *
-     * <p>Album tracks are rendered by one {@link ArtistAlbumListRow} per disc section, obtained as
-     * prototype Spring beans. Rows are added to the drawer before the drawer is attached to the root
-     * pane so that the row's scene-attachment subscription wiring fires correctly.
-     *
-     * <p>{@code artists.css} is scoped to the drawer node so that the {@link ArtistAlbumListRow}
-     * labels ({@code #albumTitleLabel}, {@code .album-info-secondary}, etc.) render with the same
-     * visual treatment they have in the artist view, without leaking those rules into the grid.
+     * Opens the shared overlay drawer for the given album, computing its disc sections via
+     * {@link #buildAlbumSections(ObservableAlbum)}. The header is left empty so the Albums drawer
+     * appearance is preserved (the album title is rendered by the first row's own header label).
+     * Ignored when a drawer is already open.
      *
      * @param album the album whose tracks are shown in the drawer
      */
     void openDrawer(ObservableAlbum album) {
-        if (drawerPane != null) {
+        if (drawer.isOpen()) {
             return;
         }
-
-        dimPane = new Pane();
-        dimPane.getStyleClass().add("album-drawer-dim");
-        dimPane.prefWidthProperty().bind(albumsRootPane.widthProperty());
-        dimPane.prefHeightProperty().bind(albumsRootPane.heightProperty());
-        dimPane.setOnMouseClicked(_ -> closeDrawer());
-
-        var sections = buildAlbumSections(album);
-        var sectionsVBox = new VBox(8);
-        drawerRows.clear();
-        for (var entry : sections) {
-            var tableView = applicationContext.getBean(SimpleAudioItemTableView.class);
-            var row = applicationContext.getBean(ArtistAlbumListRow.class,
-                    Artist.UNKNOWN, entry.getKey(), tableView, entry.getValue());
-            drawerRows.add(row);
-            sectionsVBox.getChildren().add(row);
-        }
-        // Honor an active search query: narrow each section to matching tracks and hide sections
-        // (discs) that contain none, so the drawer mirrors the same filter as the grid.
-        applyDrawerQuery();
-
-        var scrollPane = new ScrollPane(sectionsVBox);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        // Prevent the inner scroll content from forcing the drawer wider than its bound width.
-        scrollPane.maxWidthProperty().bind(albumsRootPane.widthProperty().multiply(DRAWER_WIDTH_FRACTION)
-                .map(w -> Math.max(w.doubleValue(), DRAWER_MIN_WIDTH)));
-
-        // The drawer and its rows must be constructed before adding to the root pane so that the
-        // ArtistAlbumListRow scene-attachment subscription fires with a non-null scene, wiring up
-        // the EasyBind subscriptions that keep the row's content reactive.
-        drawerPane = new VBox(scrollPane);
-        drawerPane.getStyleClass().add("album-drawer");
-        // Scope artists.css to the drawer subtree so ArtistAlbumListRow labels (album title,
-        // genres, related-artists) match the visual treatment from the artist view.
-        drawerPane.getStylesheets().add(getClass().getResource("/css/artists.css").toExternalForm());
-        // Cap the drawer at 40% of the available area with a minimum floor so it is usable at
-        // any window size; the grid remains visible in the remaining 60%.
-        drawerPane.prefWidthProperty().bind(albumsRootPane.widthProperty().multiply(DRAWER_WIDTH_FRACTION)
-                .map(w -> Math.max(w.doubleValue(), DRAWER_MIN_WIDTH)));
-        drawerPane.maxWidthProperty().bind(drawerPane.prefWidthProperty());
-        drawerPane.setMinWidth(DRAWER_MIN_WIDTH);
-        StackPane.setAlignment(drawerPane, Pos.CENTER_RIGHT);
-
-        // Start off-screen to the right by the drawer's current resolved width before the slide-in.
-        double initialOffset = Math.max(albumsRootPane.getWidth() * DRAWER_WIDTH_FRACTION, DRAWER_MIN_WIDTH);
-        drawerPane.setTranslateX(initialOffset);
-
-        albumsRootPane.getChildren().addAll(dimPane, drawerPane);
-
-        // Update the selected album and refresh grid cells so the previously selected cell deselects
-        // and this one gains the selected pseudo-class.
         ObservableAlbum previouslySelected = selectedAlbum;
         selectedAlbum = album;
+        drawer.open(buildAlbumSections(album), "", this::onDrawerClosed);
+        drawer.applyQuery(currentSearchQuery);
         refreshCellSelection(previouslySelected);
         refreshCellSelection(album);
-
-        var slideIn = new TranslateTransition(Duration.millis(220), drawerPane);
-        slideIn.setToX(0);
-        slideIn.play();
     }
 
-    /**
-     * Closes the overlay drawer with a slide-out animation. The dim pane and drawer pane are removed
-     * from the root pane when the animation finishes. The fields are nulled immediately so the
-     * close guard and the Esc handler see the closed state without waiting for the animation to end.
-     */
-    void closeDrawer() {
-        if (drawerPane == null) {
-            return;
-        }
-        // Null the fields immediately so re-entrant calls (e.g. Esc fired twice) see closed state.
-        var localDim = dimPane;
-        var localDrawer = drawerPane;
-        dimPane = null;
-        drawerPane = null;
-        drawerRows.clear();
-
-        // Slide out by the current resolved drawer width so the animation exactly reverses the slide-in.
-        double slideOutOffset = Math.max(albumsRootPane.getWidth() * DRAWER_WIDTH_FRACTION, DRAWER_MIN_WIDTH);
-        var slideOut = new TranslateTransition(Duration.millis(180), localDrawer);
-        slideOut.setToX(slideOutOffset);
-        slideOut.setOnFinished(_ -> albumsRootPane.getChildren().removeAll(localDim, localDrawer));
-        slideOut.play();
-
+    /** Clears the selection highlight when the drawer closes. Invoked by the drawer on close/dispose. */
+    private void onDrawerClosed() {
         ObservableAlbum deselected = selectedAlbum;
         selectedAlbum = null;
         refreshCellSelection(deselected);
     }
 
-    /**
-     * Tears the drawer down synchronously, clearing its state and detaching the overlay nodes without
-     * a slide-out animation. Used when the view leaves the scene graph, where an animated close cannot
-     * complete and leaving the overlay attached would block reopening on return.
-     */
-    private void disposeDrawer() {
-        if (drawerPane == null) {
-            return;
-        }
-        var localDim = dimPane;
-        var localDrawer = drawerPane;
-        dimPane = null;
-        drawerPane = null;
-        selectedAlbum = null;
-        drawerRows.clear();
-        albumsRootPane.getChildren().removeAll(localDim, localDrawer);
+    /** Closes the open drawer, if any. Package-private entry point used by UI tests. */
+    void closeDrawer() {
+        drawer.close();
     }
 
     /**
@@ -345,22 +205,12 @@ public class AlbumViewController {
         if (filteredAlbums != null) {
             filteredAlbums.setPredicate(albumMatchesQuery(currentSearchQuery));
         }
-        if (drawerPane != null && selectedAlbum != null) {
+        if (drawer.isOpen() && selectedAlbum != null) {
             if (albumMatchesQuery(currentSearchQuery).test(selectedAlbum)) {
-                applyDrawerQuery();
+                drawer.applyQuery(currentSearchQuery);
             } else {
-                closeDrawer();
+                drawer.close();
             }
-        }
-    }
-
-    /** Narrows each open drawer section to tracks matching the active query and hides empty sections. */
-    private void applyDrawerQuery() {
-        for (var row : drawerRows) {
-            row.filterTracksByQuery(currentSearchQuery);
-            boolean hasMatch = row.hasTracksMatching(currentSearchQuery);
-            row.setVisible(hasMatch);
-            row.setManaged(hasMatch);
         }
     }
 
@@ -370,74 +220,23 @@ public class AlbumViewController {
         }
         return album -> {
             var tracks = album.getTracks();
-            return tracks != null && tracks.stream().anyMatch(track -> audioItemMatchesQuery(track, query));
+            return tracks != null && tracks.stream().anyMatch(track -> AudioItemQueryMatcher.matches(track, query));
         };
     }
 
     /** Selects every track across all sections of the open drawer. No-op when no drawer is shown. */
     public void selectAllTracks() {
-        drawerRows.forEach(ArtistAlbumListRow::selectAllAudioItems);
+        drawer.selectAll();
     }
 
     /** Clears the track selection across all sections of the open drawer. No-op when no drawer is shown. */
     public void deselectAllTracks() {
-        drawerRows.forEach(ArtistAlbumListRow::deselectAllAudioItems);
+        drawer.deselectAll();
     }
 
     /** The tracks selected across the open drawer's sections; empty when no drawer is shown. */
     public ObservableList<ObservableAudioItem> getSelectedTracks() {
-        var selected = FXCollections.<ObservableAudioItem>observableArrayList();
-        drawerRows.forEach(row -> selected.addAll(row.selectedAudioItemsProperty()));
-        return selected;
-    }
-
-    // Defensive null guards — imported tracks from partial catalogs can carry null artist/album/
-    // album-artist or null name fields; one malformed track must not NPE the whole album filter.
-    // Mirrors the artist-view matching so search behaves identically across navigation modes.
-    @SuppressWarnings("java:S2589")
-    private static boolean audioItemMatchesQuery(ObservableAudioItem audioItem, String query) {
-        var matchesTitle = audioItem.getTitle() != null && audioItem.getTitle().toLowerCase().contains(query);
-        if (matchesTitle) {
-            return true;
-        }
-
-        var itemArtist = audioItem.getArtist();
-        var matchesArtistName = itemArtist != null && itemArtist.getName() != null
-                && itemArtist.getName().toLowerCase().contains(query);
-        if (matchesArtistName) {
-            return true;
-        }
-
-        var matchesArtistInvolved = audioItem.getArtistsInvolved() != null && audioItem.getArtistsInvolved().stream()
-                .map(Artist::getName)
-                .filter(Objects::nonNull)
-                .anyMatch(name -> name.toLowerCase().contains(query));
-        if (matchesArtistInvolved) {
-            return true;
-        }
-
-        var album = audioItem.getAlbum();
-        var matchesAlbumArtist = album != null && album.getAlbumArtist() != null
-                && album.getAlbumArtist().getName() != null
-                && album.getAlbumArtist().getName().toLowerCase().contains(query);
-        if (matchesAlbumArtist) {
-            return true;
-        }
-
-        var matchesComments = audioItem.getComments() != null && audioItem.getComments().toLowerCase().contains(query);
-        if (matchesComments) {
-            return true;
-        }
-
-        var matchesAlbumName = album != null && album.getName() != null
-                && album.getName().toLowerCase().contains(query);
-        if (matchesAlbumName) {
-            return true;
-        }
-
-        return album != null && album.getLabel() != null
-                && album.getLabel().getName() != null
-                && album.getLabel().getName().toLowerCase().contains(query);
+        return drawer.getSelectedTracks();
     }
 
     /**
@@ -478,7 +277,7 @@ public class AlbumViewController {
                 .toList();
     }
 
-    private static int normalizeDisc(Number discNumber) {
+    static int normalizeDisc(Number discNumber) {
         if (discNumber == null) return 1;
         int v = discNumber.intValue();
         return v <= 0 ? 1 : v;

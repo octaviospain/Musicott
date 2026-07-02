@@ -1,0 +1,81 @@
+@import url("scroll-bar-general.css");
+
+.grid-view {
+    -fx-background-color: rgb(34, 34, 34);
+    -fx-padding: 8;
+}
+
+.grid-view .scroll-bar:vertical,
+.grid-view .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.grid-view .scroll-bar:vertical .increment-button,
+.grid-view .scroll-bar:vertical .decrement-button,
+.grid-view .scroll-bar:horizontal .increment-button,
+.grid-view .scroll-bar:horizontal .decrement-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0em;
+    -fx-padding: 0;
+}
+
+.grid-view .scroll-bar:vertical .increment-arrow,
+.grid-view .scroll-bar:vertical .decrement-arrow,
+.grid-view .scroll-bar:horizontal .increment-arrow,
+.grid-view .scroll-bar:horizontal .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+.grid-view .scroll-bar .track {
+    -fx-background-color: transparent;
+    -fx-opacity: 0;
+}
+
+.grid-view .scroll-bar .thumb {
+    -fx-background-color: rgb(99, 99, 99);
+    -fx-background-radius: 2em;
+}
+
+.grid-view .grid-cell {
+    -fx-background-color: transparent;
+}
+
+.genre-cell-name {
+    -fx-text-fill: rgb(225, 225, 225);
+    -fx-font-size: 12px;
+}
+
+.genre-cell-count {
+    -fx-text-fill: rgb(150, 150, 150);
+    -fx-font-size: 11px;
+}
+
+.album-drawer-dim {
+    -fx-background-color: rgba(0, 0, 0, 0.45);
+}
+
+.album-drawer {
+    -fx-background-color: rgb(40, 40, 40);
+    -fx-border-color: rgb(73, 73, 73);
+    -fx-border-width: 0 0 0 1;
+    -fx-padding: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 12, 0, -4, 0);
+}
+
+/* Hover: soft gray halo around the cover art only (not the name/count labels). Uses -fx-effect
+   (a dropshadow) because on these grid cells the effect is the reliably visible hover cue — a
+   border/background sits behind the opaque cover and does not read. Kept gray, small-radius and
+   low-spread so it reads as a subtle glow. Distinct from the green selection border. */
+.genre-cell:hover .album-cover {
+    -fx-effect: dropshadow(gaussian, rgb(180, 180, 180), 10, 0.25, 0, 0);
+}
+
+/* Selected: persistent solid green border — visually distinct from hover glow */
+.genre-cell:selected {
+    -fx-border-color: rgb(99, 255, 109);
+    -fx-border-width: 2;
+    -fx-border-radius: 3;
+    -fx-background-color: rgba(99, 255, 109, 0.04);
+    -fx-background-radius: 3;
+}

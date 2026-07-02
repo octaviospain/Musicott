@@ -8,6 +8,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.geometry.VPos;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.fxmisc.easybind.Subscription;
@@ -108,6 +110,9 @@ public class ArtistAlbumListRow extends HBox {
         updateAudioItemsImage();
         var sizeLabel = new Label();
         sizeLabel.setId("sizeLabel");
+        // Share the secondary style with the year label so both carry the same font size and
+        // padding; otherwise the two sit on different baselines under the cover (misaligned).
+        sizeLabel.getStyleClass().add("album-info-secondary");
         sizeLabel.textProperty().bind(map(containedAudioItemsProperty.sizeProperty(), this::getAlbumSizeString));
         yearLabel = new Label(buildYearsString());
         yearLabel.setId("yearLabel");
@@ -121,6 +126,9 @@ public class ArtistAlbumListRow extends HBox {
         underImageGridPane.add(yearLabel, 1, 0);
         GridPane.setHalignment(sizeLabel, HPos.LEFT);
         GridPane.setHalignment(yearLabel, HPos.RIGHT);
+        // Pin both to the same vertical line so the track count and year read as one aligned row.
+        GridPane.setValignment(sizeLabel, VPos.CENTER);
+        GridPane.setValignment(yearLabel, VPos.CENTER);
 
         var coverBorderPane = new BorderPane();
         coverBorderPane.setTop(coverImageView);
@@ -134,13 +142,14 @@ public class ArtistAlbumListRow extends HBox {
     private void placeRightVBox() {
         var albumTitleLabel = new Label(albumSet.getAlbumName());
         albumTitleLabel.setId("albumTitleLabel");
-        albumTitleLabel.setMaxWidth(480);
+        // No fixed width cap: the title takes as much horizontal space as it needs, up to the row
+        // width (the drawer can be far wider than the artist view, where a 480px cap truncated it).
         relatedArtistsLabel = new Label();
         relatedArtistsLabel.setId("relatedArtistsLabel");
         relatedArtistsLabel.getStyleClass().add("album-info-secondary");
-        relatedArtistsLabel.setWrapText(true);
-        relatedArtistsLabel.setMaxWidth(480);
-        relatedArtistsLabel.setPrefWidth(USE_COMPUTED_SIZE);
+        // Single line that truncates with an ellipsis rather than wrapping — squeezing the drawer
+        // must not grow the row vertically. No fixed width cap so it uses the full available width.
+        relatedArtistsLabel.setWrapText(false);
         genresLabel = new Label(buildGenresString());
         genresLabel.setId("genresLabel");
         genresLabel.setWrapText(true);
@@ -266,6 +275,20 @@ public class ArtistAlbumListRow extends HBox {
         }
         String q = query.toLowerCase();
         return containedAudioItems.stream().anyMatch(item -> trackMatchesQuery(item, q));
+    }
+
+    /**
+     * Narrows the embedded track table to tracks matching {@code predicate}. A {@code null} predicate
+     * clears the filter. Lets a caller supply its own match rule (e.g. the cover-grid views' shared
+     * matcher) instead of this row's default query matching.
+     */
+    public void filterTracks(Predicate<ObservableAudioItem> predicate) {
+        filteredAudioItems.setPredicate(predicate == null ? null : predicate::test);
+    }
+
+    /** True when at least one track matches {@code predicate} (or the predicate is {@code null}). */
+    public boolean hasTracksMatching(Predicate<ObservableAudioItem> predicate) {
+        return predicate == null || containedAudioItems.stream().anyMatch(predicate);
     }
 
     // Defensive null guards on title / artist / album metadata: imported tracks can ship with

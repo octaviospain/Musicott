@@ -38,6 +38,7 @@ import java.util.function.Function;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALBUMS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALL_AUDIO_ITEMS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ARTISTS;
+import static net.transgressoft.musicott.view.NavigationController.NavigationMode.GENRES;
 import static org.fxmisc.easybind.EasyBind.map;
 import static org.fxmisc.easybind.EasyBind.subscribe;
 
@@ -57,6 +58,7 @@ public class NavigationController {
         ALL_AUDIO_ITEMS("All tracks"),
         ARTISTS("Artists"),
         ALBUMS("Albums"),
+        GENRES("Genres"),
         PLAYLIST("Playlists");
 
         final String name;
@@ -147,7 +149,7 @@ public class NavigationController {
 
         // When switching to a non-playlist nav mode, clear the playlist tree.
         subscribe(navigationModeProperty, mode -> {
-            if (mode == ALL_AUDIO_ITEMS || mode == ARTISTS || mode == ALBUMS) {
+            if (mode == ALL_AUDIO_ITEMS || mode == ARTISTS || mode == ALBUMS || mode == GENRES) {
                 playlistTreeView.getSelectionModel().clearSelection();
             }
         });
@@ -254,13 +256,22 @@ public class NavigationController {
      */
     private class NavigationMenuListView extends ListView<NavigationMode> {
 
+        // Row height for the navigation modes. Large enough for the nav icons with comfortable
+        // padding; the list is pinned to exactly one row per mode so no empty rows appear below the
+        // last mode (which would otherwise read as a gap before the playlist tree).
+        private static final double NAV_CELL_HEIGHT = 30.0;
+
         public NavigationMenuListView() {
             super();
             setId("navigationModeListView");
-            setPrefHeight(USE_COMPUTED_SIZE);
             setPrefWidth(USE_COMPUTED_SIZE);
 
-            NavigationMode[] navigationModes = { ALL_AUDIO_ITEMS, ARTISTS, ALBUMS};
+            NavigationMode[] navigationModes = { ALL_AUDIO_ITEMS, ARTISTS, ALBUMS, GENRES};
+            double listHeight = navigationModes.length * NAV_CELL_HEIGHT;
+            setFixedCellSize(NAV_CELL_HEIGHT);
+            setMinHeight(listHeight);
+            setPrefHeight(listHeight);
+            setMaxHeight(listHeight);
             setItems(FXCollections.observableArrayList(navigationModes));
             setCellFactory(listView -> new NavigationListCell());
             // Clear the nav-list selection first so re-clicking the same mode always
@@ -286,6 +297,8 @@ public class NavigationController {
         private final PseudoClass artistsSelected = PseudoClass.getPseudoClass("artists-selected");
         private final PseudoClass albums = PseudoClass.getPseudoClass("albums");
         private final PseudoClass albumsSelected = PseudoClass.getPseudoClass("albums-selected");
+        private final PseudoClass genres = PseudoClass.getPseudoClass("genres");
+        private final PseudoClass genresSelected = PseudoClass.getPseudoClass("genres-selected");
 
         public NavigationListCell() {
             super();
@@ -317,6 +330,8 @@ public class NavigationController {
             pseudoClassStateChanged(artistsSelected, mode.equals(ARTISTS) && isSelected);
             pseudoClassStateChanged(albums, mode.equals(ALBUMS) && ! isSelected);
             pseudoClassStateChanged(albumsSelected, mode.equals(ALBUMS) && isSelected);
+            pseudoClassStateChanged(genres, mode.equals(GENRES) && ! isSelected);
+            pseudoClassStateChanged(genresSelected, mode.equals(GENRES) && isSelected);
         }
 
         private void disablePseudoClassesStates() {
@@ -326,6 +341,8 @@ public class NavigationController {
             pseudoClassStateChanged(artistsSelected, false);
             pseudoClassStateChanged(albums, false);
             pseudoClassStateChanged(albumsSelected, false);
+            pseudoClassStateChanged(genres, false);
+            pseudoClassStateChanged(genresSelected, false);
         }
     }
 }
