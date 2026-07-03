@@ -19,26 +19,29 @@ import net.rgielen.fxweaver.core.FxmlView;
 import net.transgressoft.commons.fx.music.audio.ObservableAlbum;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
+import net.transgressoft.musicott.search.SearchCoordinator;
+import net.transgressoft.musicott.search.Searchable;
+import net.transgressoft.musicott.view.NavigationController.NavigationMode;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.OverlayTracksDrawer;
 import net.transgressoft.musicott.view.custom.table.AlbumTrackGroup;
 import net.transgressoft.musicott.view.custom.table.AudioItemQueryMatcher;
-import net.transgressoft.musicott.events.SearchTextTypedEvent;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Controller for the Albums navigation view. Renders the audio library's album catalog as a grid of
@@ -60,7 +63,7 @@ import java.util.function.Predicate;
  */
 @FxmlView("/fxml/AlbumViewController.fxml")
 @Controller
-public class AlbumViewController {
+public class AlbumViewController implements Searchable<String> {
 
     private static final double CELL_WIDTH = 170.0;
     private static final double CELL_HEIGHT = 210.0;
@@ -70,12 +73,22 @@ public class AlbumViewController {
 
     private final ObservableAudioLibrary audioRepository;
     private final ApplicationContext applicationContext;
+    private final SearchCoordinator searchCoordinator;
 
     @FXML
     private StackPane albumsRootPane;
 
     private GridView<ObservableAlbum> albumGridView;
     private FilteredList<ObservableAlbum> filteredAlbums;
+
+    /** Ordered mirror of the repository's album projection; the source of {@link #filteredAlbums}. */
+    private ObservableList<ObservableAlbum> albumsBacking;
+
+    /**
+     * Immutable snapshot of {@link #albumsBacking} taken on the FX thread by {@link #prepareSnapshot()}
+     * before the background scan begins. Read-only from {@link #computeMatchIds}.
+     */
+    private List<ObservableAlbum> albumsSnapshot = List.of();
 
     /** The shared overlay drawer showing the selected album's tracks. */
     private OverlayTracksDrawer drawer;
@@ -87,9 +100,11 @@ public class AlbumViewController {
     ObservableAlbum selectedAlbum;
 
     @Autowired
-    public AlbumViewController(ObservableAudioLibrary audioLibrary, ApplicationContext applicationContext) {
+    public AlbumViewController(ObservableAudioLibrary audioLibrary, ApplicationContext applicationContext,
+                               SearchCoordinator searchCoordinator) {
         this.audioRepository = audioLibrary;
         this.applicationContext = applicationContext;
+        this.searchCoordinator = searchCoordinator;
     }
 
     @FXML
@@ -116,6 +131,8 @@ public class AlbumViewController {
         // The shared drawer owns the overlay lifecycle (dim, slide, Esc, dispose-on-detach) so the
         // Albums and Genres views do not each reimplement it.
         drawer = new OverlayTracksDrawer(albumsRootPane, applicationContext);
+
+        searchCoordinator.register(NavigationMode.ALBUMS, this);
     }
 
     /**
@@ -126,7 +143,7 @@ public class AlbumViewController {
      * routed through {@link Platform#runLater} defensively so the grid never mutates off-thread.
      */
     private void configureGridBacking() {
-        ObservableList<ObservableAlbum> albumsBacking = FXCollections.observableArrayList(audioRepository.getAlbumsProperty());
+        albumsBacking = FXCollections.observableArrayList(audioRepository.getAlbumsProperty());
         logger.info("Albums view initialised with {} albums", albumsBacking.size());
 
         // Mirror the ordered projection wholesale on every change so the grid preserves its
@@ -193,19 +210,50 @@ public class AlbumViewController {
     }
 
     /**
-     * Filters the albums view to the current search query, mirroring the artist view. Only albums
-     * with at least one track matching the query stay in the grid; an open drawer is narrowed to the
-     * album's matching tracks and closed if the selected album has no match. An empty query restores
-     * the full view.
+     * Captures an immutable snapshot of {@link #albumsBacking} on the FX thread. The snapshot is
+     * consumed by {@link #computeMatchIds} running on the background dispatcher, preventing data
+     * races with concurrent FX-thread mutations (album add/remove during import).
      */
-    @EventListener
-    public void searchTextTypedEvent(SearchTextTypedEvent event) {
-        currentSearchQuery = event.searchText == null ? "" : event.searchText.toLowerCase();
+    @Override
+    public void prepareSnapshot() {
+        albumsSnapshot = List.copyOf(albumsBacking);
+    }
+
+    /**
+     * Scans the album snapshot (captured on the FX thread by {@link #prepareSnapshot}) for albums
+     * with at least one track matching the query. Must not touch any JavaFX observable or
+     * {@link FilteredList} predicate.
+     *
+     * @param query the lower-cased search text
+     * @return set of album names that have at least one matching track
+     */
+    @Override
+    public Set<String> computeMatchIds(String query) {
+        return albumsSnapshot.stream()
+                .filter(albumMatchesQuery(query)::test)
+                .map(ObservableAlbum::getAlbumName)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Applies the pre-computed album name set to the filtered list and updates the open drawer on the
+     * JavaFX Application Thread. A blank {@code query} resets the view to show every album; for a
+     * non-blank query only albums whose name is in {@code ids} are shown, so an empty {@code ids}
+     * hides all albums. An open drawer is narrowed to the album's matching tracks and closed if the
+     * selected album has no match.
+     *
+     * @param query the lower-cased search text (forwarded to the open drawer)
+     * @param ids   the set of matching album names produced by {@link #computeMatchIds}
+     */
+    @Override
+    public void applyMatchIds(String query, Set<String> ids) {
+        currentSearchQuery = query == null ? "" : query;
+        boolean reset = currentSearchQuery.isBlank();
         if (filteredAlbums != null) {
-            filteredAlbums.setPredicate(albumMatchesQuery(currentSearchQuery));
+            filteredAlbums.setPredicate(reset ? null : album -> ids.contains(album.getAlbumName()));
         }
         if (drawer.isOpen() && selectedAlbum != null) {
-            if (albumMatchesQuery(currentSearchQuery).test(selectedAlbum)) {
+            if (reset || ids.contains(selectedAlbum.getAlbumName())) {
                 drawer.applyQuery(currentSearchQuery);
             } else {
                 drawer.close();

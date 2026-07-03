@@ -15,10 +15,12 @@ import net.transgressoft.lirp.event.*;
 import net.transgressoft.commons.fx.music.audio.*;
 import net.transgressoft.commons.music.audio.*;
 import net.transgressoft.musicott.events.*;
+import net.transgressoft.musicott.search.SearchCoordinator;
+import net.transgressoft.musicott.search.Searchable;
+import net.transgressoft.musicott.view.NavigationController.NavigationMode;
 import net.transgressoft.musicott.view.custom.table.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.context.*;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.*;
 
 import java.util.*;
@@ -33,10 +35,11 @@ import static org.fxmisc.easybind.EasyBind.map;
  */
 @FxmlView("/fxml/ArtistViewController.fxml")
 @Controller
-public class ArtistViewController {
+public class ArtistViewController implements Searchable<String> {
 
     private final ObservableAudioLibrary audioRepository;
     private final ApplicationContext applicationContext;
+    private final SearchCoordinator searchCoordinator;
 
     @FXML
     private SplitPane artistsViewSplitPane;
@@ -60,10 +63,45 @@ public class ArtistViewController {
     private FilteredList<ObservableArtistCatalog> filteredArtists;
     private String currentSearchQuery = "";
 
+    /**
+     * Immutable snapshot of the artists backing list taken on the FX thread by {@link #prepareSnapshot()}
+     * before the background scan begins. Read-only from {@link #computeMatchIds}.
+     */
+    private List<ObservableArtistCatalog> artistsSnapshot = List.of();
+
+    /**
+     * Immutable snapshot of the current album row list taken on the FX thread by {@link #prepareSnapshot()}
+     * before the background scan begins. Read-only from {@link #computeMatchIds}.
+     */
+    private List<ArtistAlbumListRow> albumRowsSnapshot = List.of();
+
+    /**
+     * Precomputed result of the off-thread album-row scan: maps each row to the set of track IDs
+     * that match the search query. Written by {@link #computeMatchIds} and read by
+     * {@link #applyMatchIds} on the FX thread after the coroutine context switch.
+     */
+    private Map<ArtistAlbumListRow, Set<Integer>> matchingTrackIdsByRow = Map.of();
+
+    /**
+     * Immutable snapshot of each artist's tracks taken on the FX thread by {@link #prepareSnapshot()}
+     * via {@link #audioItemsForArtist}. Consumed by {@link #computeMatchIds} for track-content
+     * matching so the scan never iterates a live observable list off-thread.
+     */
+    private Map<Artist, List<ObservableAudioItem>> artistTracksSnapshot = Map.of();
+
+    /**
+     * Immutable snapshot of each album row's contained tracks taken on the FX thread by
+     * {@link #prepareSnapshot()}. Consumed by {@link #computeMatchIds} so the per-row scan never
+     * iterates a live {@code containedAudioItemsProperty} off-thread.
+     */
+    private Map<ArtistAlbumListRow, List<ObservableAudioItem>> rowTracksSnapshot = Map.of();
+
     @Autowired
-    public ArtistViewController(ObservableAudioLibrary audioLibrary, ApplicationContext applicationContext) {
+    public ArtistViewController(ObservableAudioLibrary audioLibrary, ApplicationContext applicationContext,
+                                SearchCoordinator searchCoordinator) {
         this.audioRepository = audioLibrary;
         this.applicationContext = applicationContext;
+        this.searchCoordinator = searchCoordinator;
     }
 
     @FXML
@@ -76,6 +114,8 @@ public class ArtistViewController {
         nameLabel.textProperty().bind(Bindings.createStringBinding(() ->
                         selectedArtistProperty.get().isPresent() ? selectedArtistProperty.get().get().getArtistName() : "",
                 selectedArtistProperty));
+
+        searchCoordinator.register(NavigationMode.ARTISTS, this);
 
         albumListRowMap = FXCollections.observableMap(new LinkedHashMap<>());
         albumRowsBackingList = FXCollections.observableArrayList();
@@ -167,10 +207,30 @@ public class ArtistViewController {
         albumSetsWithDisc.forEach((albumSet, discNum) -> {
             var audioItemsTableView = applicationContext.getBean(SimpleAudioItemTableView.class);
             var artistListRow = applicationContext.getBean(ArtistAlbumListRow.class, artist, albumSet, audioItemsTableView, discNum);
-            artistListRow.filterTracksByQuery(currentSearchQuery);
             albumListRowMap.put(albumSet, artistListRow);
             albumRowsBackingList.add(artistListRow);
         });
+
+        // When a search query is active, re-apply per-row filtering for the newly loaded rows.
+        // This is a bounded per-artist scan (acceptable on the FX thread) that mirrors the same
+        // name-match-shows-all rule used in computeMatchIds: if the artist name matches the query,
+        // every track in each row is shown; otherwise only tracks matching the query content are shown.
+        if (!currentSearchQuery.isBlank()) {
+            String q = currentSearchQuery;
+            boolean artistNameMatches = artist.getName() != null
+                    && artist.getName().toLowerCase().contains(q);
+            if (artistNameMatches) {
+                // Artist matched by name: show all tracks in all rows, keep rows visible
+                albumRowsBackingList.forEach(row -> row.filterTracks(null));
+                filteredAlbumRows.setPredicate(null);
+            } else {
+                // Artist matched only via track content: filter each row to matching tracks only
+                albumRowsBackingList.forEach(row ->
+                        row.filterTracks(item -> audioItemMatchesQuery(item, q)));
+                filteredAlbumRows.setPredicate(row -> row.hasTracksMatching(item -> audioItemMatchesQuery(item, q)));
+            }
+        }
+
         totalTracksLabel.setText(getTotalArtistTracksString());
         totalAlbumsLabel.setText(getAlbumString());
     }
@@ -352,14 +412,122 @@ public class ArtistViewController {
         albumRowsBackingList.forEach(ArtistAlbumListRow::deselectAllAudioItems);
     }
 
-    @EventListener
-    public void searchTextTypedEvent(SearchTextTypedEvent event) {
-        currentSearchQuery = event.searchText == null ? "" : event.searchText;
-        filteredArtists.setPredicate(filterArtistsByQuery(currentSearchQuery));
-        // Propagate to currently-loaded album rows: hide rows with no matching tracks and let each
-        // visible row narrow its embedded SimpleAudioItemTableView to the matching tracks.
-        albumRowsBackingList.forEach(row -> row.filterTracksByQuery(currentSearchQuery));
-        filteredAlbumRows.setPredicate(albumRowMatchesQuery(currentSearchQuery));
+    /**
+     * Captures immutable snapshots of the artists and album-row backing lists, the repository
+     * audio-item pool, and each row's contained tracks on the FX thread. All snapshots are consumed
+     * by {@link #computeMatchIds} on the background dispatcher, preventing data races with concurrent
+     * FX-thread structural mutations of any of these live observable collections.
+     */
+    @Override
+    public void prepareSnapshot() {
+        artistsSnapshot = List.copyOf(filteredArtists.getSource());
+        albumRowsSnapshot = List.copyOf(albumRowsBackingList);
+        // Resolve each artist's tracks on the FX thread via audioItemsForArtist, which handles the
+        // null-property fallback to per-artist catalogs; the off-thread scan then reads these copies.
+        Map<Artist, List<ObservableAudioItem>> artistTracks = new HashMap<>();
+        for (var catalog : artistsSnapshot) {
+            var artist = catalog.getArtist();
+            artistTracks.computeIfAbsent(artist, a -> audioItemsForArtist(a).toList());
+        }
+        artistTracksSnapshot = Map.copyOf(artistTracks);
+        Map<ArtistAlbumListRow, List<ObservableAudioItem>> rowTracks = new HashMap<>();
+        for (var row : albumRowsSnapshot) {
+            rowTracks.put(row, List.copyOf(row.containedAudioItemsProperty()));
+        }
+        rowTracksSnapshot = Map.copyOf(rowTracks);
+    }
+
+    /**
+     * Scans the artist and album-row snapshots (captured on the FX thread by {@link #prepareSnapshot})
+     * for matching entries. Both the artist-level scan (name and track metadata) and the per-row
+     * track scan run entirely off the FX thread. Precomputed results are stored in
+     * {@link #matchingTrackIdsByRow} for cheap application in {@link #applyMatchIds}.
+     *
+     * <p>For each row the precomputed track-ID set depends on how the artist matched: if the row's
+     * artist name matches the query directly (name-only match), every track in the row is included so
+     * the user sees the full album when they select that artist; if the artist matched only via track
+     * content, only the query-matching track IDs are included.
+     *
+     * @param query the lower-cased search text
+     * @return set of artist names whose catalog has at least one match
+     */
+    @Override
+    public Set<String> computeMatchIds(String query) {
+        // First, build the set of artist names that match the query by name alone. This is used below
+        // to decide whether a row should show all its tracks (name match) or only the matching subset.
+        Set<String> artistNameMatches = artistsSnapshot.stream()
+                .filter(catalog -> catalog.getArtistName() != null
+                        && catalog.getArtistName().toLowerCase().contains(query))
+                .map(ObservableArtistCatalog::getArtistName)
+                .collect(toSet());
+
+        // Precompute which track IDs match per album row so applyMatchIds can apply
+        // cheap membership predicates without any substring scanning on the FX thread.
+        // If the row belongs to a name-matched artist, include ALL track IDs so selecting that
+        // artist reveals its full track list rather than an empty one.
+        Map<ArtistAlbumListRow, Set<Integer>> rowMatchIds = new HashMap<>();
+        for (var row : albumRowsSnapshot) {
+            boolean artistNameMatched = row.getArtist() != null
+                    && artistNameMatches.contains(row.getArtist().getName());
+            List<ObservableAudioItem> rowTracks = rowTracksSnapshot.getOrDefault(row, List.of());
+            Set<Integer> ids;
+            if (artistNameMatched) {
+                ids = rowTracks.stream()
+                        .map(ObservableAudioItem::getId)
+                        .collect(toSet());
+            } else {
+                ids = rowTracks.stream()
+                        .filter(item -> audioItemMatchesQuery(item, query))
+                        .map(ObservableAudioItem::getId)
+                        .collect(toSet());
+            }
+            rowMatchIds.put(row, ids);
+        }
+        matchingTrackIdsByRow = Map.copyOf(rowMatchIds);
+
+        return artistsSnapshot.stream()
+                .filter(filterArtistsByQuery(query)::test)
+                .map(ObservableArtistCatalog::getArtistName)
+                .collect(toSet());
+    }
+
+    /**
+     * Applies the pre-computed results to the artist view on the JavaFX Application Thread.
+     * All three collections are updated using the precomputed ID sets from {@link #computeMatchIds}:
+     * the artist predicate uses a name-membership check, the per-row track tables apply precomputed
+     * track-ID predicates, and the album-row predicate shows only rows with at least one visible track.
+     * No substring scanning is performed in this method.
+     *
+     * <p>A blank {@code query} signals a reset: all predicates are cleared and every artist and row
+     * becomes visible again. For a non-blank query, rows whose artist matched by name show all their
+     * tracks (the precomputed set for that row contains every track ID); rows that matched only by
+     * track content show only the matching subset; rows with no match are hidden.
+     *
+     * @param query the lower-cased search text; blank signals a reset (show all)
+     * @param ids   the set of matching artist names produced by {@link #computeMatchIds}
+     */
+    @Override
+    public void applyMatchIds(String query, Set<String> ids) {
+        currentSearchQuery = query == null ? "" : query;
+        boolean reset = currentSearchQuery.isBlank();
+        filteredArtists.setPredicate(reset ? null : catalog -> ids.contains(catalog.getArtistName()));
+        if (reset) {
+            // Reset: clear all row-level filters
+            albumRowsBackingList.forEach(row -> row.filterTracks(null));
+            filteredAlbumRows.setPredicate(null);
+        } else {
+            // Apply precomputed per-row track-ID sets — no substring scanning.
+            // matchingTrackIdsByRow contains ALL track IDs for name-matched artist rows, and only the
+            // query-matching subset for track-content-only matches. Rows with no matching tracks are hidden.
+            albumRowsBackingList.forEach(row -> {
+                Set<Integer> trackIds = matchingTrackIdsByRow.getOrDefault(row, Set.of());
+                row.filterTracks(item -> trackIds.contains(item.getId()));
+            });
+            filteredAlbumRows.setPredicate(row -> {
+                Set<Integer> trackIds = matchingTrackIdsByRow.getOrDefault(row, Set.of());
+                return !trackIds.isEmpty();
+            });
+        }
     }
 
     private Predicate<ObservableArtistCatalog> filterArtistsByQuery(String query) {
@@ -371,16 +539,11 @@ public class ArtistViewController {
             if (artistCatalog.getArtistName() != null && artistCatalog.getArtistName().toLowerCase().contains(q)) {
                 return true;
             }
-            return audioItemsForArtist(artistCatalog.getArtist())
+            // Scan the FX-thread per-artist track snapshot rather than the live repository list:
+            // this predicate runs off-thread inside computeMatchIds.
+            return artistTracksSnapshot.getOrDefault(artistCatalog.getArtist(), List.of()).stream()
                     .anyMatch(audioItem -> audioItemMatchesQuery(audioItem, q));
         };
-    }
-
-    private Predicate<ArtistAlbumListRow> albumRowMatchesQuery(String query) {
-        if (query == null || query.isEmpty()) {
-            return row -> true;
-        }
-        return row -> row.hasTracksMatching(query);
     }
 
     // Defensive null guards — partial catalogs can ship tracks with null artist/album/album-artist.

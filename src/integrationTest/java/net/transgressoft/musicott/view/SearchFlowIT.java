@@ -2,6 +2,7 @@ package net.transgressoft.musicott.view;
 
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.beans.property.ObjectProperty;
 import javafx.collections.*;
 import javafx.scene.Node;
 import javafx.scene.control.ListView;
@@ -19,10 +20,11 @@ import net.transgressoft.commons.music.audio.AlbumDetails;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import net.transgressoft.commons.music.audio.Label;
-import net.transgressoft.musicott.events.SearchTextTypedEvent;
+import net.transgressoft.musicott.search.SearchCoordinator;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
+import net.transgressoft.musicott.view.NavigationController;
 import net.transgressoft.musicott.view.custom.table.ArtistAlbumListRow;
 import net.transgressoft.musicott.view.custom.table.FullAudioItemTableView;
 import net.transgressoft.musicott.view.custom.table.SimpleAudioItemTableView;
@@ -39,25 +41,38 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.testfx.api.FxRobot;
 
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 import static net.transgressoft.commons.music.audio.Artist.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.context.annotation.ComponentScan.Filter;
 import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
+import static org.testfx.util.WaitForAsyncUtils.waitFor;
 
 /**
  * Integration test verifying that the global search field triggers live filtering across all
  * subscriber views — the audio item table ({@link FullAudioItemTableView}) and the artist list
- * ({@link ArtistViewController}) — and that clearing the query restores each view to its
- * full unfiltered state.
+ * ({@link ArtistViewController}) — through the {@link SearchCoordinator} async pipeline, and
+ * that clearing the query restores each view to its full unfiltered state.
  *
- * <p>Events are dispatched through the real Spring {@link ApplicationEventPublisher} so the
- * test exercises the production wire: the multicaster, the {@code @EventListener} method
- * resolution, and the bean scope of each subscriber. Direct method invocation would mask
- * scope bugs (e.g. a prototype-scoped table view never registering with the multicaster).
+ * <p>The real {@link SearchCoordinator} is wired so the test exercises the full production path:
+ * nav-mode gating, off-thread ID computation, and FX-thread predicate application.
+ * The coordinator is configured with zero debounce delay (see {@link SearchFlowITCoordinatorSupplier})
+ * to eliminate timing races, while still exercising the full Dispatchers.Default → Dispatchers.JavaFx
+ * coroutine thread-hop.
+ *
+ * <p>Each assertion follows the pattern:
+ * <ol>
+ *   <li>{@code Platform.runLater(() -> searchCoordinator.onQuery(...))} — submit the query on the FX thread</li>
+ *   <li>{@code waitForFxEvents()} — drain the FX queue so the query runs and the new job is assigned</li>
+ *   <li>{@code waitFor(5s, coordinator::isIdle)} — await job completion; the volatile {@code currentJob}
+ *       field provides a happens-before guarantee so any subsequent read on the test thread sees the
+ *       predicate that the FX thread wrote</li>
+ *   <li>Directly assert collection sizes — safe because of the happens-before from step 3</li>
+ * </ol>
  */
-@JavaFxSpringTest(classes = SearchFlowITConfiguration.class)
+@JavaFxSpringTest(classes = {SearchFlowITConfiguration.class, SearchFlowITCoordinatorSupplier.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @DisplayName("Search flow")
 class SearchFlowIT extends ApplicationTestBase<SplitPane> {
@@ -75,7 +90,10 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
     ObservableAudioLibrary audioRepository;
 
     @Autowired
-    ApplicationEventPublisher applicationEventPublisher;
+    SearchCoordinator searchCoordinator;
+
+    @Autowired
+    ObjectProperty<NavigationController.NavigationMode> navigationModeProperty;
 
     @Override
     protected SplitPane javaFxComponent() {
@@ -86,11 +104,50 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
     @BeforeEach
     protected void beforeEach() {
         super.beforeEach();
+        // Reset filters, source items, and navigation mode between tests.
+        Platform.runLater(() -> {
+            navigationModeProperty.set(NavigationController.NavigationMode.ALL_AUDIO_ITEMS);
+            audioItemTableView.setSourceItems(javafx.collections.FXCollections.observableArrayList());
+            artistCatalogsProperty.clear();
+            // onQuery("") cancels any in-flight job and enqueues a blank-reset coroutine on Default.
+            searchCoordinator.onQuery("");
+        });
+        // Drain: ensures onQuery("") has run on the FX thread, assigning the new job to currentJob.
+        waitForFxEvents();
+        // Wait for the reset coroutine to complete its FX-thread applyMatchIds calls.
+        try {
+            waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+        } catch (java.util.concurrent.TimeoutException e) {
+            throw new IllegalStateException("SearchCoordinator did not become idle within 5s in beforeEach", e);
+        }
+        // Extra drain rounds to flush cascading FX tasks (e.g. SetChangeListener → Platform.runLater
+        // from ArtistViewController's reactive backing list).
+        waitForFxEvents();
+        waitForFxEvents();
+        waitForFxEvents();
+    }
+
+    @AfterEach
+    void afterEach() {
+        // Cancel any in-flight search coroutine so no job leaks into subsequent tests or classes.
+        Platform.runLater(() -> {
+            artistCatalogsProperty.clear();
+            searchCoordinator.onQuery("");
+        });
+        waitForFxEvents();
+        try {
+            waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+        } catch (java.util.concurrent.TimeoutException e) {
+            throw new IllegalStateException("SearchCoordinator did not become idle within 5s in afterEach", e);
+        }
+        waitForFxEvents();
+        waitForFxEvents();
+        waitForFxEvents();
     }
 
     @Test
-    @DisplayName("AudioItemTableViewBase filters its predicate when SearchTextTypedEvent fires with a non-empty query")
-    void filtersAudioItemTablePredicateOnNonEmptyQuery(FxRobot fxRobot) {
+    @DisplayName("AudioItemTableViewBase filters its predicate when a qualifying query is submitted")
+    void filtersAudioItemTablePredicateOnNonEmptyQuery() throws Exception {
         ObservableList<ObservableAudioItem> items = FXCollections.observableArrayList(
                 mockAudioItem("Apple", "Artist A", "Album A"),
                 mockAudioItem("Banana", "Artist B", "Album B"),
@@ -102,26 +159,22 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
 
         assertThat(audioItemTableView.getItems()).hasSize(3);
 
-        // Publish through the real Spring multicaster so the test catches scope/registration bugs
-        // that would silently drop the event before reaching the table's @EventListener.
-        Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("App", this)));
+        // Submit query and await quiescence; the volatile currentJob provides happens-before so
+        // the assertion below reads the predicate written by the FX thread.
+        Platform.runLater(() -> searchCoordinator.onQuery("App"));
         waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
 
         assertThat(audioItemTableView.getItems()).hasSize(1);
         assertThat(audioItemTableView.getItems().get(0).getTitle()).isEqualTo("Apple");
     }
 
     @Test
-    @DisplayName("ArtistViewController filters its predicate when SearchTextTypedEvent fires with a non-empty query")
-    void filtersArtistListPredicateOnNonEmptyQuery(FxRobot fxRobot) {
+    @DisplayName("ArtistViewController filters its predicate when a qualifying query is submitted")
+    void filtersArtistListPredicateOnNonEmptyQuery(FxRobot fxRobot) throws Exception {
         Platform.runLater(() -> {
+            navigationModeProperty.set(NavigationController.NavigationMode.ARTISTS);
             artistCatalogsProperty.clear();
-            // Reset predicate to unfiltered state first
-            applicationEventPublisher.publishEvent(new SearchTextTypedEvent("", this));
-        });
-        waitForFxEvents();
-
-        Platform.runLater(() -> {
             artistCatalogsProperty.add(mockCatalog(of("Aphex Twin")));
             artistCatalogsProperty.add(mockCatalog(of("Bonobo")));
             artistCatalogsProperty.add(mockCatalog(of("Caribou")));
@@ -132,52 +185,93 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
         ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
         assertThat(artistsListView.getItems()).hasSize(3);
 
-        Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("Aph", this)));
+        Platform.runLater(() -> searchCoordinator.onQuery("Aph"));
         waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
 
         assertThat(artistsListView.getItems()).hasSize(1);
         assertThat(artistsListView.getItems().get(0).getArtistName()).isEqualTo("Aphex Twin");
     }
 
     @Test
-    @DisplayName("All three views restore to full state when SearchTextTypedEvent fires with empty query")
-    void restoresAllViewsToFullStateOnEmptyQuery(FxRobot fxRobot) {
-        // --- Seed audio table ---
+    @DisplayName("A single query filters every registered view at once so switching modes shows an already-filtered view")
+    void singleQueryFiltersAllViewsSimultaneously(FxRobot fxRobot) throws Exception {
+        ObservableList<ObservableAudioItem> items = FXCollections.observableArrayList(
+                mockAudioItem("Aphelion", "Artist A", "Album A"),
+                mockAudioItem("Banana", "Artist B", "Album B")
+        );
+        Platform.runLater(() -> {
+            audioItemTableView.setSourceItems(items);
+            artistCatalogsProperty.clear();
+            artistCatalogsProperty.add(mockCatalog(of("Aphex Twin")));
+            artistCatalogsProperty.add(mockCatalog(of("Bonobo")));
+        });
+        waitForFxEvents();
+
+        @SuppressWarnings("unchecked")
+        ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        assertThat(audioItemTableView.getItems()).hasSize(2);
+        assertThat(artistsListView.getItems()).hasSize(2);
+
+        // One query submitted without switching modes must filter BOTH views, so navigating to
+        // either view afterward shows it already filtered.
+        Platform.runLater(() -> searchCoordinator.onQuery("Aph"));
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+
+        assertThat(audioItemTableView.getItems()).hasSize(1);
+        assertThat(audioItemTableView.getItems().get(0).getTitle()).isEqualTo("Aphelion");
+        assertThat(artistsListView.getItems()).hasSize(1);
+        assertThat(artistsListView.getItems().get(0).getArtistName()).isEqualTo("Aphex Twin");
+    }
+
+    @Test
+    @DisplayName("All views restore to full state when the query is cleared")
+    void restoresAllViewsToFullStateOnClearedQuery(FxRobot fxRobot) throws Exception {
+        // Seed audio table
         ObservableList<ObservableAudioItem> items = FXCollections.observableArrayList(
                 mockAudioItem("Apple", "Artist A", "Album A"),
                 mockAudioItem("Banana", "Artist B", "Album B"),
                 mockAudioItem("Cherry", "Artist C", "Album C")
         );
-        Platform.runLater(() -> {
-            audioItemTableView.setSourceItems(items);
-            applicationEventPublisher.publishEvent(new SearchTextTypedEvent("App", this));
-        });
+        Platform.runLater(() -> audioItemTableView.setSourceItems(items));
         waitForFxEvents();
-        assertThat(audioItemTableView.getItems()).hasSize(1);
 
-        // --- Seed artist list ---
+        // Seed artist list
         Platform.runLater(() -> {
             artistCatalogsProperty.clear();
-            applicationEventPublisher.publishEvent(new SearchTextTypedEvent("", this));
-        });
-        waitForFxEvents();
-
-        Platform.runLater(() -> {
             artistCatalogsProperty.add(mockCatalog(of("Aphex Twin")));
             artistCatalogsProperty.add(mockCatalog(of("Bonobo")));
             artistCatalogsProperty.add(mockCatalog(of("Caribou")));
         });
         waitForFxEvents();
 
-        Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("Aph", this)));
-        waitForFxEvents();
-
         @SuppressWarnings("unchecked")
         ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+
+        // Filter the artist list (ARTISTS mode)
+        Platform.runLater(() -> {
+            navigationModeProperty.set(NavigationController.NavigationMode.ARTISTS);
+            searchCoordinator.onQuery("Aph");
+        });
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
         assertThat(artistsListView.getItems()).hasSize(1);
 
-        // --- Clear the query — a single SearchTextTypedEvent("") on the bus reaches both subscribers. ---
-        Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("", this)));
+        // Filter the audio table (ALL_AUDIO_ITEMS mode)
+        Platform.runLater(() -> {
+            navigationModeProperty.set(NavigationController.NavigationMode.ALL_AUDIO_ITEMS);
+            searchCoordinator.onQuery("App");
+        });
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+        assertThat(audioItemTableView.getItems()).hasSize(1);
+
+        // Clearing the query triggers immediate reset across ALL registered views
+        Platform.runLater(() -> searchCoordinator.onQuery(""));
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+        waitForFxEvents();
         waitForFxEvents();
 
         assertThat(audioItemTableView.getItems()).hasSize(3);
@@ -185,13 +279,139 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
     }
 
     @Test
+    @DisplayName("AudioItemTableViewBase shows zero items when query matches nothing")
+    void audioTableShowsZeroItemsWhenQueryMatchesNothing() throws Exception {
+        ObservableList<ObservableAudioItem> items = FXCollections.observableArrayList(
+                mockAudioItem("Apple", "Artist A", "Album A"),
+                mockAudioItem("Banana", "Artist B", "Album B")
+        );
+        Platform.runLater(() -> {
+            navigationModeProperty.set(NavigationController.NavigationMode.ALL_AUDIO_ITEMS);
+            audioItemTableView.setSourceItems(items);
+        });
+        waitForFxEvents();
+
+        // A query that matches nothing should produce an empty table, not show all items
+        Platform.runLater(() -> searchCoordinator.onQuery("zzqqxx"));
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+
+        assertThat(audioItemTableView.getItems()).isEmpty();
+
+        // Clearing the query must restore all items
+        Platform.runLater(() -> searchCoordinator.onQuery(""));
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+        waitForFxEvents();
+
+        assertThat(audioItemTableView.getItems()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("AudioItemTableViewBase shows only the matching track and hides non-matching tracks in ALL_AUDIO_ITEMS mode")
+    void audioTableFiltersToExactlyOneMatchingTrack() throws Exception {
+        ObservableList<ObservableAudioItem> items = FXCollections.observableArrayList(
+                mockAudioItem("Unique Track Title", "Artist A", "Album A"),
+                mockAudioItem("Banana", "Artist B", "Album B"),
+                mockAudioItem("Cherry", "Artist C", "Album C")
+        );
+        Platform.runLater(() -> {
+            navigationModeProperty.set(NavigationController.NavigationMode.ALL_AUDIO_ITEMS);
+            audioItemTableView.setSourceItems(items);
+        });
+        waitForFxEvents();
+
+        assertThat(audioItemTableView.getItems()).hasSize(3);
+
+        Platform.runLater(() -> searchCoordinator.onQuery("Unique"));
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+
+        assertThat(audioItemTableView.getItems()).hasSize(1);
+        assertThat(audioItemTableView.getItems().get(0).getTitle()).isEqualTo("Unique Track Title");
+
+        // Non-matching items must be absent
+        boolean nonMatchingVisible = audioItemTableView.getItems().stream()
+                .anyMatch(item -> !"Unique Track Title".equals(item.getTitle()));
+        assertThat(nonMatchingVisible).isFalse();
+    }
+
+    @Test
+    @DisplayName("ArtistViewController shows zero artists when query matches nothing")
+    void artistViewShowsZeroArtistsWhenQueryMatchesNothing(FxRobot fxRobot) throws Exception {
+        Platform.runLater(() -> {
+            navigationModeProperty.set(NavigationController.NavigationMode.ARTISTS);
+            artistCatalogsProperty.clear();
+            artistCatalogsProperty.add(mockCatalog(of("Aphex Twin")));
+            artistCatalogsProperty.add(mockCatalog(of("Bonobo")));
+        });
+        waitForFxEvents();
+
+        @SuppressWarnings("unchecked")
+        ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
+        assertThat(artistsListView.getItems()).hasSize(2);
+
+        // A query matching no artist should show zero results
+        Platform.runLater(() -> searchCoordinator.onQuery("zzqqxx"));
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+
+        assertThat(artistsListView.getItems()).isEmpty();
+
+        // Clearing the query restores all artists
+        Platform.runLater(() -> searchCoordinator.onQuery(""));
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+        waitForFxEvents();
+
+        assertThat(artistsListView.getItems()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("AudioItemTableViewBase triggers search immediately with a single-character query")
+    void singleCharQueryTriggersImmediateSearch() throws Exception {
+        // Use artist names with clearly distinct first letters so a 1-char prefix unambiguously
+        // selects exactly one item.
+        ObservableList<ObservableAudioItem> items = FXCollections.observableArrayList(
+                mockAudioItem("Track X", "Zeppelin", "Album Z"),
+                mockAudioItem("Track Y", "Beethoven", "Album B")
+        );
+        Platform.runLater(() -> {
+            navigationModeProperty.set(NavigationController.NavigationMode.ALL_AUDIO_ITEMS);
+            audioItemTableView.setSourceItems(items);
+        });
+        waitForFxEvents();
+
+        assertThat(audioItemTableView.getItems()).hasSize(2);
+
+        // "Z" (single char) matches only "Zeppelin" — single-char search must fire, not be treated as a reset.
+        // waitForFxEvents() ensures onQuery("Z") ran on FX so the new job is assigned before isIdle() is polled.
+        Platform.runLater(() -> searchCoordinator.onQuery("Z"));
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+
+        assertThat(audioItemTableView.getItems()).hasSize(1);
+        assertThat(audioItemTableView.getItems().get(0).getTitle()).isEqualTo("Track X");
+
+        // Beethoven's track must be absent
+        boolean beethovenVisible = audioItemTableView.getItems().stream()
+                .anyMatch(item -> "Track Y".equals(item.getTitle()));
+        assertThat(beethovenVisible).isFalse();
+
+        // Clearing the query resets to all items
+        Platform.runLater(() -> searchCoordinator.onQuery(""));
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
+        waitForFxEvents();
+
+        assertThat(audioItemTableView.getItems()).hasSize(2);
+    }
+
+    @Test
     @DisplayName("ArtistViewController matches artists by track title, album, and label when the artist catalog is loaded")
     @SuppressWarnings("unchecked")
-    void matchesArtistsByTrackTitleAlbumAndLabelWhenArtistCatalogIsLoaded(FxRobot fxRobot) {
-        Platform.runLater(() -> {
-            artistCatalogsProperty.clear();
-            applicationEventPublisher.publishEvent(new SearchTextTypedEvent("", this));
-        });
+    void matchesArtistsByTrackTitleAlbumAndLabelWhenArtistCatalogIsLoaded(FxRobot fxRobot) throws Exception {
+        Platform.runLater(() -> artistCatalogsProperty.clear());
         waitForFxEvents();
 
         var aphexTwin = of("Aphex Twin");
@@ -201,6 +421,7 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
         // selectedArtistListener with an empty catalog and skips ArtistAlbumListRow construction
         // (which would otherwise fail against the bare AlbumSet/ObservableArtistCatalog mocks below).
         Platform.runLater(() -> {
+            navigationModeProperty.set(NavigationController.NavigationMode.ARTISTS);
             artistCatalogsProperty.add(mockCatalog(aphexTwin));
             artistCatalogsProperty.add(mockCatalog(bonobo));
         });
@@ -210,7 +431,7 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
         ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
         assertThat(artistsListView.getItems()).hasSize(2);
 
-        // Now wire a populated catalog for aphexTwin so filterArtistsByQuery's catalog-walk branch
+        // Wire a populated catalog for aphexTwin so filterArtistsByQuery's catalog-walk branch
         // exercises the loaded path. selectedArtistListener won't refire because the selected
         // artist hasn't changed identity.
         var album = AudioItemTestFactory.createAlbum("Selected Ambient Works 85-92", aphexTwin, false, null,
@@ -220,8 +441,6 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
         when(item.getArtist()).thenReturn(aphexTwin);
         when(item.getAlbum()).thenReturn(album);
 
-        // Stub catalog.getAlbumsProperty() to return the album details set; stub
-        // albumAudioItemsProperty so the catalog-walk predicate can iterate tracks.
         var albumsSetProperty = new javafx.beans.property.SimpleSetProperty<>(
                 javafx.collections.FXCollections.observableSet(album));
         var audioItemsListProperty = new javafx.beans.property.SimpleListProperty<>(
@@ -235,20 +454,23 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
         doReturn(java.util.Optional.empty()).when(audioRepository).getArtistCatalog(bonobo);
 
         // Title-only query: matches Aphex Twin via track title; Bonobo has no matching catalog item.
-        Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("Xtal", this)));
+        Platform.runLater(() -> searchCoordinator.onQuery("Xtal"));
         waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
         assertThat(artistsListView.getItems()).hasSize(1);
         assertThat(artistsListView.getItems().get(0).getArtistName()).isEqualTo("Aphex Twin");
 
-        // Label-only query: confirms the new label-match branch in artistMatchesQuery.
-        Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("Warp", this)));
+        // Label-only query: confirms the label-match branch in artistMatchesQuery.
+        Platform.runLater(() -> searchCoordinator.onQuery("Warp"));
         waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
         assertThat(artistsListView.getItems()).hasSize(1);
         assertThat(artistsListView.getItems().get(0).getArtistName()).isEqualTo("Aphex Twin");
 
         // Album-only query.
-        Platform.runLater(() -> applicationEventPublisher.publishEvent(new SearchTextTypedEvent("Ambient Works", this)));
+        Platform.runLater(() -> searchCoordinator.onQuery("Ambient Works"));
         waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
         assertThat(artistsListView.getItems()).hasSize(1);
         assertThat(artistsListView.getItems().get(0).getArtistName()).isEqualTo("Aphex Twin");
 
@@ -257,9 +479,11 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
         doReturn(java.util.Optional.empty()).when(audioRepository).getArtistCatalog(aphexTwin);
         doReturn(java.util.Optional.empty()).when(audioRepository).getArtistCatalog(bonobo);
         Platform.runLater(() -> {
-            applicationEventPublisher.publishEvent(new SearchTextTypedEvent("", this));
             artistCatalogsProperty.clear();
+            searchCoordinator.onQuery("");
         });
+        waitForFxEvents();
+        waitFor(5, TimeUnit.SECONDS, () -> searchCoordinator.isIdle());
         waitForFxEvents();
     }
 
@@ -270,22 +494,36 @@ class SearchFlowIT extends ApplicationTestBase<SplitPane> {
         return catalog;
     }
 
+    private static int nextId = 1;
+
     /**
      * Creates a mock {@link ObservableAudioItem} suitable for audio table predicate testing.
-     * Stubs only the fields examined by {@code AudioItemTableViewBase.audioItemContainsQuery}.
+     * Stubs only the fields examined by {@code AudioItemTableViewBase.audioItemContainsQuery},
+     * and assigns a unique ID so that ID-based predicate filtering is deterministic.
+     *
+     * <p>All album metadata is fully controlled via mocks to prevent random values generated by
+     * {@code AudioItemTestFactory} from contaminating search-match assertions (e.g. a randomly
+     * generated label whose name happens to contain the single-char search query).
      */
     private ObservableAudioItem mockAudioItem(String title, String artistName, String albumName) {
         var item = mock(ObservableAudioItem.class);
+        when(item.getId()).thenReturn(nextId++);
         when(item.getTitle()).thenReturn(title);
 
         var artist = mock(Artist.class);
         when(artist.getName()).thenReturn(artistName);
         when(item.getArtist()).thenReturn(artist);
 
-        var album = AudioItemTestFactory.createAlbum(albumName, Artist.of(artistName));
+        // Mock AlbumDetails directly so label/albumArtist/year are deterministic and do not
+        // contain random strings that could accidentally match the search query under test.
+        var album = mock(AlbumDetails.class);
+        when(album.getName()).thenReturn(albumName);
+        var albumArtistObj = mock(Artist.class);
+        when(albumArtistObj.getName()).thenReturn(artistName);
+        when(album.getAlbumArtist()).thenReturn(albumArtistObj);
+        when(album.getLabel()).thenReturn(null);  // no label → label branch in audioItemContainsQuery returns false
         when(item.getAlbum()).thenReturn(album);
 
-        // Stub path and cover for any defensive null checks in other parts of the table internals
         when(item.getPath()).thenReturn(Path.of("/mock/path/" + title + ".mp3"));
 
         return item;
@@ -322,6 +560,18 @@ class SearchFlowITConfiguration {
         when(repository.getAlbumsProperty()).thenReturn(albumsProperty);
         when(repository.getArtistCatalogPublisher()).thenReturn(mock(LirpEventPublisher.class));
         return repository;
+    }
+
+    @Bean
+    public ObjectProperty<NavigationController.NavigationMode> navigationModeProperty() {
+        return new javafx.beans.property.SimpleObjectProperty<>(NavigationController.NavigationMode.ALL_AUDIO_ITEMS);
+    }
+
+    @Bean
+    public NavigationController navigationController(ObjectProperty<NavigationController.NavigationMode> navigationModeProperty) {
+        var mock = mock(NavigationController.class);
+        when(mock.navigationModeProperty()).thenReturn(navigationModeProperty);
+        return mock;
     }
 
     // No @Bean for ApplicationEventPublisher — the test relies on the real Spring multicaster so

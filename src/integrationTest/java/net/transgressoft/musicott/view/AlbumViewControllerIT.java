@@ -16,7 +16,7 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import net.transgressoft.commons.music.audio.Label;
-import net.transgressoft.musicott.events.SearchTextTypedEvent;
+import java.util.Collections;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
@@ -77,7 +77,7 @@ class AlbumViewControllerIT extends ApplicationTestBase<StackPane> {
         // filter before each test so methods stay independent regardless of execution order.
         Platform.runLater(() -> {
             albumsProperty.clear();
-            albumViewAndController.getController().searchTextTypedEvent(new SearchTextTypedEvent("", this));
+            albumViewAndController.getController().applyMatchIds("", Collections.emptySet());
         });
         waitForFxEvents();
         super.beforeEach();
@@ -174,13 +174,13 @@ class AlbumViewControllerIT extends ApplicationTestBase<StackPane> {
         waitForFxEvents();
 
         // Query matches only the "Black Sands" album (by its album name); "Melt!" has no matching track.
-        Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("black sands", this)));
+        Platform.runLater(() -> controller.applyMatchIds("black sands", Set.of("Black Sands")));
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> grid.getItems().size() == 1);
         waitForFxEvents();
         assertThat(grid.getItems()).containsExactly(blackSands);
 
         // Clearing the query restores every album.
-        Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("", this)));
+        Platform.runLater(() -> controller.applyMatchIds("", Collections.emptySet()));
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> grid.getItems().size() == 2);
         waitForFxEvents();
         assertThat(grid.getItems()).hasSize(2);
@@ -250,6 +250,11 @@ class AlbumViewControllerITConfiguration {
     @Bean
     public ApplicationEventPublisher applicationEventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public net.transgressoft.musicott.search.SearchCoordinator searchCoordinator() {
+        return mock(net.transgressoft.musicott.search.SearchCoordinator.class);
     }
 
     // destroyMethod = "" prevents Spring from auto-inferring the shutdown() method as the destroy callback,

@@ -18,11 +18,11 @@ import net.transgressoft.commons.music.audio.Genre;
 import net.transgressoft.commons.music.audio.GenreExtensionsKt;
 import net.transgressoft.commons.music.player.*;
 import net.transgressoft.musicott.events.*;
+import net.transgressoft.musicott.search.Searchable;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import org.apache.commons.io.FileUtils;
 import org.fxmisc.easybind.EasyBind;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -30,11 +30,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * @author Octavio Calleya
  */
-public abstract class AudioItemTableViewBase extends TableView<ObservableAudioItem> {
+public abstract class AudioItemTableViewBase extends TableView<ObservableAudioItem> implements Searchable<Integer> {
 
     public static final DataFormat TRACKS_DATA_FORMAT = new DataFormat("application/x-java-tracks-id");
 
@@ -52,6 +53,12 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
 
     private ListChangeListener<ObservableAudioItem> sourceItemsListener;
     private ObservableList<ObservableAudioItem> currentSourceItems;
+
+    /**
+     * Immutable snapshot of the backing source list taken on the FX thread by {@link #prepareSnapshot()}
+     * before the background scan begins. Read-only from {@link #computeMatchIds}.
+     */
+    private List<ObservableAudioItem> audioItemsSnapshot = List.of();
 
     protected TableColumn<ObservableAudioItem, String> nameCol;
     protected TableColumn<ObservableAudioItem, Artist> artistCol;
@@ -225,9 +232,49 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         };
     }
 
-    @EventListener
-    public void searchTextTypedEvent(SearchTextTypedEvent event) {
-        filteredAudioItems.setPredicate(filterAudioItemPredicate(event.searchText));
+    /**
+     * Captures an immutable snapshot of the backing source list on the JavaFX Application Thread.
+     * The snapshot is consumed by {@link #computeMatchIds} on the background dispatcher, preventing
+     * data races with concurrent FX-thread mutations of the source list (view switches and imports
+     * both call {@link #setSourceItems} on the FX thread).
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public void prepareSnapshot() {
+        audioItemsSnapshot = List.copyOf((ObservableList<ObservableAudioItem>) filteredAudioItems.getSource());
+    }
+
+    /**
+     * Scans the snapshot captured by {@link #prepareSnapshot} (not the filtered view) and returns the
+     * IDs of items that match the query. Must not touch any JavaFX observable or {@link FilteredList}
+     * predicate.
+     *
+     * @param query the lower-cased search text
+     * @return set of matching audio item IDs
+     */
+    @Override
+    public Set<Integer> computeMatchIds(String query) {
+        return audioItemsSnapshot.stream()
+                .filter(item -> audioItemContainsQuery(item, query))
+                .map(ObservableAudioItem::getId)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Applies the pre-computed ID set to the filtered list on the JavaFX Application Thread.
+     * A blank query signals a reset and removes the predicate so all items are visible; a non-blank
+     * query with an empty {@code ids} set means nothing matched and the list is cleared to zero items.
+     *
+     * @param query the search text; blank signals a reset (show all)
+     * @param ids   the set of matching item IDs produced by {@link #computeMatchIds}
+     */
+    @Override
+    public void applyMatchIds(String query, Set<Integer> ids) {
+        if (query == null || query.isBlank()) {
+            filteredAudioItems.setPredicate(null);
+        } else {
+            filteredAudioItems.setPredicate(item -> ids.contains(item.getId()));
+        }
     }
 
     /**

@@ -20,7 +20,9 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.audio.ObservableGenreIndex;
 import net.transgressoft.musicott.events.PlayItemEvent;
-import net.transgressoft.musicott.events.SearchTextTypedEvent;
+import net.transgressoft.musicott.search.SearchCoordinator;
+import net.transgressoft.musicott.search.Searchable;
+import net.transgressoft.musicott.view.NavigationController.NavigationMode;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 import net.transgressoft.musicott.view.custom.OverlayTracksDrawer;
 import net.transgressoft.musicott.view.custom.table.AlbumTrackGroup;
@@ -31,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
@@ -69,7 +71,7 @@ import static java.util.stream.Collectors.toSet;
  */
 @FxmlView("/fxml/GenreViewController.fxml")
 @Controller
-public class GenreViewController {
+public class GenreViewController implements Searchable<String> {
 
     private static final double CELL_WIDTH = 170.0;
     private static final double CELL_HEIGHT = 210.0;
@@ -86,12 +88,22 @@ public class GenreViewController {
 
     private final ObservableAudioLibrary audioRepository;
     private final ApplicationContext applicationContext;
+    private final SearchCoordinator searchCoordinator;
 
     @FXML
     private StackPane genresRootPane;
 
     private GridView<ObservableGenreIndex> genreGridView;
     private FilteredList<ObservableGenreIndex> filteredGenres;
+
+    /** Ordered mirror of the repository's genre-index projection; the source of {@link #filteredGenres}. */
+    private ObservableList<ObservableGenreIndex> genresBacking;
+
+    /**
+     * Immutable snapshot of {@link #genresBacking} taken on the FX thread by {@link #prepareSnapshot()}
+     * before the background scan begins. Read-only from {@link #computeMatchIds}.
+     */
+    private List<ObservableGenreIndex> genresSnapshot = List.of();
 
     /** Lower-cased active search query, or empty when no filter is applied. */
     private String currentSearchQuery = "";
@@ -127,9 +139,11 @@ public class GenreViewController {
     }
 
     @Autowired
-    public GenreViewController(ObservableAudioLibrary audioLibrary, ApplicationContext applicationContext) {
+    public GenreViewController(ObservableAudioLibrary audioLibrary, ApplicationContext applicationContext,
+                               SearchCoordinator searchCoordinator) {
         this.audioRepository = audioLibrary;
         this.applicationContext = applicationContext;
+        this.searchCoordinator = searchCoordinator;
     }
 
     @FXML
@@ -156,6 +170,8 @@ public class GenreViewController {
         // The shared drawer owns the overlay lifecycle (dim, slide, Esc, dispose-on-detach) so the
         // Genres and Albums views do not each reimplement it.
         drawer = new OverlayTracksDrawer(genresRootPane, applicationContext);
+
+        searchCoordinator.register(NavigationMode.GENRES, this);
     }
 
     /**
@@ -166,7 +182,7 @@ public class GenreViewController {
      * still routed through {@link Platform#runLater} defensively so the grid never mutates off-thread.
      */
     private void configureGridBacking() {
-        ObservableList<ObservableGenreIndex> genresBacking = FXCollections.observableArrayList(audioRepository.getGenreIndexesProperty());
+        genresBacking = FXCollections.observableArrayList(audioRepository.getGenreIndexesProperty());
         logger.info("Genres view initialised with {} genre buckets", genresBacking.size());
 
         // Mirror the ordered projection wholesale on every change so the grid preserves its bucket
@@ -245,19 +261,52 @@ public class GenreViewController {
     }
 
     /**
-     * Filters the genres view to the current search query, mirroring the album view. Only genres with
-     * at least one track matching the query stay in the grid; an open drawer is narrowed to the
-     * genre's matching tracks and closed if the selected genre has no match. An empty query restores
-     * the full view.
+     * Captures an immutable snapshot of {@link #genresBacking} on the FX thread. The snapshot is
+     * consumed by {@link #computeMatchIds} running on the background dispatcher, preventing data
+     * races with concurrent FX-thread mutations (genre bucket add/remove during import).
      */
-    @EventListener
-    public void searchTextTypedEvent(SearchTextTypedEvent event) {
-        currentSearchQuery = event.searchText == null ? "" : event.searchText.toLowerCase();
+    @Override
+    public void prepareSnapshot() {
+        genresSnapshot = List.copyOf(genresBacking);
+    }
+
+    /**
+     * Scans the genre snapshot (captured on the FX thread by {@link #prepareSnapshot}) for genres
+     * with at least one track matching the query. Must not touch any JavaFX observable or
+     * {@link FilteredList} predicate.
+     *
+     * @param query the lower-cased search text
+     * @return set of genre names that have at least one matching track
+     */
+    @Override
+    public Set<String> computeMatchIds(String query) {
+        return genresSnapshot.stream()
+                .filter(genreMatchesQuery(query)::test)
+                .map(g -> g.getGenreProperty().get().getName())
+                .collect(toSet());
+    }
+
+    /**
+     * Applies the pre-computed genre name set to the filtered list and updates the open drawer on the
+     * JavaFX Application Thread. A blank {@code query} resets the view to show every genre; for a
+     * non-blank query only genres whose name is in {@code ids} are shown, so an empty {@code ids}
+     * hides all genres. An open drawer is narrowed to the genre's matching tracks and closed if the
+     * selected genre has no match.
+     *
+     * @param query the lower-cased search text (forwarded to the open drawer)
+     * @param ids   the set of matching genre names produced by {@link #computeMatchIds}
+     */
+    @Override
+    public void applyMatchIds(String query, Set<String> ids) {
+        currentSearchQuery = query == null ? "" : query;
+        boolean reset = currentSearchQuery.isBlank();
         if (filteredGenres != null) {
-            filteredGenres.setPredicate(genreMatchesQuery(currentSearchQuery));
+            filteredGenres.setPredicate(reset ? null
+                    : g -> ids.contains(g.getGenreProperty().get().getName()));
         }
         if (drawer.isOpen() && selectedGenre != null) {
-            if (genreMatchesQuery(currentSearchQuery).test(selectedGenre)) {
+            String selectedGenreName = selectedGenre.getGenreProperty().get().getName();
+            if (reset || ids.contains(selectedGenreName)) {
                 drawer.applyQuery(currentSearchQuery);
             } else {
                 drawer.close();
@@ -270,7 +319,8 @@ public class GenreViewController {
             return genre -> true;
         }
         return genre -> {
-            var tracks = genre.getTracksProperty();
+            // getTracks() returns the immutable backing list, safe to read off the FX thread.
+            var tracks = genre.getTracks();
             return tracks != null && tracks.stream().anyMatch(track -> AudioItemQueryMatcher.matches(track, query));
         };
     }

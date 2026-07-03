@@ -8,6 +8,7 @@ import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
 import net.transgressoft.commons.music.m3u.M3uImportService;
 import net.transgressoft.commons.music.waveform.AudioWaveform;
 import net.transgressoft.commons.music.waveform.AudioWaveformRepository;
+import net.transgressoft.musicott.search.SearchCoordinator;
 import net.transgressoft.musicott.service.MediaImportService;
 import net.transgressoft.musicott.services.PlayerService;
 import net.transgressoft.musicott.test.ApplicationTestBase;
@@ -257,6 +258,11 @@ class PlaylistFolderSelectionUITConfiguration {
     @Bean
     public KeyCombination.Modifier operativeSystemKeyModifier() {
         return KeyCombination.CONTROL_DOWN;
+    }
+
+    @Bean
+    public SearchCoordinator searchCoordinator() {
+        return mock(SearchCoordinator.class);
     }
 
     @Bean(destroyMethod = "")

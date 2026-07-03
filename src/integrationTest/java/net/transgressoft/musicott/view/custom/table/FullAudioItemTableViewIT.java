@@ -4,6 +4,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
+import net.transgressoft.musicott.search.SearchCoordinator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +32,7 @@ class FullAudioItemTableViewIT {
     @Start
     void start(Stage stage) {
         ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
-        tableView = new FullAudioItemTableView(publisher);
+        tableView = new FullAudioItemTableView(publisher, mock(SearchCoordinator.class));
         stage.setScene(new Scene(tableView, 800, 600));
         stage.show();
     }

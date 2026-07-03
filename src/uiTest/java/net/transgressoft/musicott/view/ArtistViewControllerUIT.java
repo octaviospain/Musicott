@@ -18,6 +18,7 @@ import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import net.transgressoft.commons.music.audio.Label;
 import net.transgressoft.lirp.event.LirpEventPublisher;
+import net.transgressoft.musicott.search.SearchCoordinator;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
@@ -220,6 +221,11 @@ class ArtistViewControllerUITConfiguration {
     @Bean
     public ApplicationEventPublisher applicationEventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public SearchCoordinator searchCoordinator() {
+        return mock(SearchCoordinator.class);
     }
 
     @Bean(destroyMethod = "")

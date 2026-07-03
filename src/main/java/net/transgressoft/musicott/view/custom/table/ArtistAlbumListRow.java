@@ -383,6 +383,10 @@ public class ArtistAlbumListRow extends HBox {
         return albumSet;
     }
 
+    public Artist getArtist() {
+        return artist;
+    }
+
     public ListProperty<ObservableAudioItem> selectedAudioItemsProperty() {
         return selectedAudioItemsProperty;
     }
