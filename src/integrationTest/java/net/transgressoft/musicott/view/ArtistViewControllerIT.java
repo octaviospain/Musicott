@@ -22,7 +22,7 @@ import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import net.transgressoft.commons.music.audio.Label;
 import net.transgressoft.lirp.event.LirpEventPublisher;
-import net.transgressoft.musicott.events.SearchTextTypedEvent;
+import java.util.Collections;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
@@ -164,7 +164,7 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         // Clear accumulated state from previous tests and reset the predicate.
         Platform.runLater(() -> {
             artistCatalogsProperty.clear();
-            controller.searchTextTypedEvent(new SearchTextTypedEvent("", this));
+            controller.applyMatchIds("", Collections.emptySet());
         });
         waitForFxEvents();
 
@@ -175,9 +175,8 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         });
         waitForFxEvents();
 
-        // Direct invocation bypasses the mocked ApplicationEventPublisher bean — publishEvent(...)
-        // on a mock is a no-op, so the @EventListener method is driven directly here.
-        Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("Abe", this)));
+        // Drive applyMatchIds directly — only "Abel" matches "abe".
+        Platform.runLater(() -> controller.applyMatchIds("abe", Set.of("Abel")));
         waitForFxEvents();
 
         @SuppressWarnings("unchecked")
@@ -197,7 +196,7 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         // Clear accumulated state from previous tests and reset the predicate.
         Platform.runLater(() -> {
             artistCatalogsProperty.clear();
-            controller.searchTextTypedEvent(new SearchTextTypedEvent("", this));
+            controller.applyMatchIds("", Collections.emptySet());
         });
         waitForFxEvents();
 
@@ -211,13 +210,13 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         @SuppressWarnings("unchecked")
         ListView<ObservableArtistCatalog> artistsListView = fxRobot.lookup("#artistsListView").queryAs(ListView.class);
 
-        // Filter to a single match.
-        Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("Abe", this)));
+        // Filter to a single match — drive applyMatchIds directly.
+        Platform.runLater(() -> controller.applyMatchIds("abe", Set.of("Abel")));
         waitForFxEvents();
         assertThat(artistsListView.getItems()).hasSize(1);
 
-        // Clear the query — emulates MainController publishing "" for length < 3 or empty input.
-        Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("", this)));
+        // Clear the query — empty ids resets the predicate immediately.
+        Platform.runLater(() -> controller.applyMatchIds("", Collections.emptySet()));
         waitForFxEvents();
 
         assertThat(artistsListView.getItems()).hasSize(3);
@@ -423,6 +422,11 @@ class ArtistViewControllerITConfiguration {
     @Bean
     public ApplicationEventPublisher applicationEventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public net.transgressoft.musicott.search.SearchCoordinator searchCoordinator() {
+        return mock(net.transgressoft.musicott.search.SearchCoordinator.class);
     }
 
     // destroyMethod = "" prevents Spring from auto-inferring the shutdown() method as the destroy callback,

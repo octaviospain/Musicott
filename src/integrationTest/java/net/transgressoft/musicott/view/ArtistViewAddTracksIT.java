@@ -286,6 +286,11 @@ class ArtistViewAddTracksITConfiguration {
         return KeyCombination.CONTROL_DOWN;
     }
 
+    @Bean
+    public net.transgressoft.musicott.search.SearchCoordinator searchCoordinator() {
+        return mock(net.transgressoft.musicott.search.SearchCoordinator.class);
+    }
+
     @Bean(destroyMethod = "")
     public FxWeaver fxWeaver(ConfigurableApplicationContext applicationContext) {
         return new SpringFxWeaver(applicationContext);

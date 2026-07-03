@@ -38,7 +38,7 @@ class AlbumViewControllerTest {
         when(album.getTracks()).thenReturn(List.of(track1, track2));
         when(album.getAlbumName()).thenReturn("Black Sands");
 
-        var controller = new AlbumViewController(mock(ObservableAudioLibrary.class), mock(ApplicationContext.class));
+        var controller = new AlbumViewController(mock(ObservableAudioLibrary.class), mock(ApplicationContext.class), mock(net.transgressoft.musicott.search.SearchCoordinator.class));
         List<Map.Entry<AlbumTrackGroup, Integer>> sections = controller.buildAlbumSections(album);
 
         assertThat(sections).hasSize(1);
@@ -58,7 +58,7 @@ class AlbumViewControllerTest {
         when(album.getTracks()).thenReturn(List.of(disc1Track, disc2Track));
         when(album.getAlbumName()).thenReturn("Black Sands");
 
-        var controller = new AlbumViewController(mock(ObservableAudioLibrary.class), mock(ApplicationContext.class));
+        var controller = new AlbumViewController(mock(ObservableAudioLibrary.class), mock(ApplicationContext.class), mock(net.transgressoft.musicott.search.SearchCoordinator.class));
         List<Map.Entry<AlbumTrackGroup, Integer>> sections = controller.buildAlbumSections(album);
 
         assertThat(sections).hasSize(2);
@@ -80,7 +80,7 @@ class AlbumViewControllerTest {
         when(album.getTracks()).thenReturn(List.of(zeroDiscTrack, nullDiscTrack));
         when(album.getAlbumName()).thenReturn("Black Sands");
 
-        var controller = new AlbumViewController(mock(ObservableAudioLibrary.class), mock(ApplicationContext.class));
+        var controller = new AlbumViewController(mock(ObservableAudioLibrary.class), mock(ApplicationContext.class), mock(net.transgressoft.musicott.search.SearchCoordinator.class));
         List<Map.Entry<AlbumTrackGroup, Integer>> sections = controller.buildAlbumSections(album);
 
         // Both tracks normalize to disc 1 → single-disc album → one section with disc key 0

@@ -31,6 +31,7 @@ import net.transgressoft.musicott.events.*;
 import net.transgressoft.musicott.service.MediaImportService;
 import net.transgressoft.musicott.services.PlayerService;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
+import net.transgressoft.musicott.search.SearchCoordinator;
 import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
 import net.transgressoft.musicott.view.custom.alerts.DeleteAudioItemsConfirmationAlert;
 import net.transgressoft.musicott.view.custom.table.FullAudioItemTableView;
@@ -77,6 +78,7 @@ public class MainController {
     private final MediaImportService mediaImportService;
     private final ItunesImportWizard itunesImportWizard;
     private final ApplicationContext applicationContext;
+    private final SearchCoordinator searchCoordinator;
 
     private final ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty;
 
@@ -166,7 +168,8 @@ public class MainController {
                           MediaImportService mediaImportService,
                           ItunesImportWizard itunesImportWizard,
                           ApplicationContext applicationContext,
-                          KeyCombination.Modifier operativeSystemKeyModifier) {
+                          KeyCombination.Modifier operativeSystemKeyModifier,
+                          SearchCoordinator searchCoordinator) {
         this.audioRepository = audioRepository;
         this.playlistRepository = playlistRepository;
         this.playerService = playerService;
@@ -180,6 +183,7 @@ public class MainController {
         this.itunesImportWizard = itunesImportWizard;
         this.applicationContext = applicationContext;
         this.operativeSystemKeyModifier = operativeSystemKeyModifier;
+        this.searchCoordinator = searchCoordinator;
         this.selectedPlaylistProperty = navigationController.selectedPlaylistProperty();
     }
 
@@ -232,13 +236,8 @@ public class MainController {
             }
         });
 
-        searchTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.length() >= 3) {
-                applicationContext.publishEvent(new SearchTextTypedEvent(newValue, this));
-            } else if (newValue.isEmpty() || newValue.length() < 3) {
-                applicationContext.publishEvent(new SearchTextTypedEvent("", this));
-            }
-        });
+        searchTextField.textProperty().addListener((observable, oldValue, newValue) ->
+                searchCoordinator.onQuery(newValue));
 
         audioItemContextMenu = new AudioItemTableViewContextMenu();
 
@@ -1063,7 +1062,7 @@ public class MainController {
             playlistsInMenu.clear();
             addToPlaylistMenu.getItems().clear();
 
-            // Populate "Add to Playlist" submenu unconditionally in all navigation views (D-07)
+            // Populate "Add to Playlist" submenu unconditionally in all navigation views
             navigationController.playlistsProperty().stream()
                     .filter(p -> ! p.isDirectory())
                     .forEach(this::addPlaylistToMenuList);

@@ -1,5 +1,6 @@
 package net.transgressoft.musicott.view.custom.table;
 
+import net.transgressoft.musicott.search.SearchCoordinator;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
@@ -133,6 +134,11 @@ class FullAudioItemTableViewLayoutUITConfiguration {
     @Bean
     public ApplicationEventPublisher applicationEventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public SearchCoordinator searchCoordinator() {
+        return mock(SearchCoordinator.class);
     }
 
     // destroyMethod = "" prevents Spring from auto-inferring shutdown() as the destroy callback,

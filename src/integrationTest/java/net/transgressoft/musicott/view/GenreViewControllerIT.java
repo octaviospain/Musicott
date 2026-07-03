@@ -14,7 +14,8 @@ import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.fx.music.audio.ObservableGenreIndex;
 import net.transgressoft.commons.music.audio.Genre;
-import net.transgressoft.musicott.events.SearchTextTypedEvent;
+import java.util.Collections;
+import java.util.Set;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
@@ -73,7 +74,7 @@ class GenreViewControllerIT extends ApplicationTestBase<StackPane> {
             genreIndexesProperty.clear();
             // Also reset any search predicate a prior test may have left active on this shared
             // singleton, so an earlier assertion failure cannot leak a narrowed grid into later tests.
-            genreViewAndController.getController().searchTextTypedEvent(new SearchTextTypedEvent("", this));
+            genreViewAndController.getController().applyMatchIds("", Collections.emptySet());
         });
         waitForFxEvents();
         super.beforeEach();
@@ -169,13 +170,13 @@ class GenreViewControllerIT extends ApplicationTestBase<StackPane> {
         GenreViewController controller = genreViewAndController.getController();
 
         // A query matching only the Techno track's title narrows the grid to that genre.
-        Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("strobe", this)));
+        Platform.runLater(() -> controller.applyMatchIds("strobe", Set.of("Techno")));
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> grid.getItems().size() == 1);
         waitForFxEvents();
         assertThat(grid.getItems()).containsExactly(techno);
 
         // Clearing the query restores every genre.
-        Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("", this)));
+        Platform.runLater(() -> controller.applyMatchIds("", Collections.emptySet()));
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> grid.getItems().size() == 2);
         waitForFxEvents();
         assertThat(grid.getItems()).hasSize(2);
@@ -246,6 +247,11 @@ class GenreViewControllerITConfiguration {
     @Bean
     public ApplicationEventPublisher applicationEventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public net.transgressoft.musicott.search.SearchCoordinator searchCoordinator() {
+        return mock(net.transgressoft.musicott.search.SearchCoordinator.class);
     }
 
     // destroyMethod = "" prevents Spring from auto-inferring the shutdown() method as the destroy callback,

@@ -52,7 +52,7 @@ class ArtistViewControllerTest {
         when(audioLibrary.getAudioItemsProperty()).thenReturn(audioItems);
         when(audioLibrary.getArtistCatalog(akkya)).thenReturn(Optional.empty());
 
-        var controller = new ArtistViewController(audioLibrary, mock(ApplicationContext.class));
+        var controller = new ArtistViewController(audioLibrary, mock(ApplicationContext.class), mock(net.transgressoft.musicott.search.SearchCoordinator.class));
 
         assertThat(controller.albumSetsForArtist(akkya).keySet())
                 .singleElement()

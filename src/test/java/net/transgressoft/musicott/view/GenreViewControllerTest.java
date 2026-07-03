@@ -2,6 +2,7 @@ package net.transgressoft.musicott.view;
 
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
+import net.transgressoft.musicott.search.SearchCoordinator;
 import net.transgressoft.musicott.test.FxAudioItems;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
@@ -36,7 +37,7 @@ class GenreViewControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new GenreViewController(mock(ObservableAudioLibrary.class), mock(ApplicationContext.class));
+        controller = new GenreViewController(mock(ObservableAudioLibrary.class), mock(ApplicationContext.class), mock(SearchCoordinator.class));
     }
 
     @Test

@@ -1,6 +1,8 @@
 package net.transgressoft.musicott.view.custom.table;
 
 import javafx.scene.control.TableColumn;
+import net.transgressoft.musicott.search.SearchCoordinator;
+import net.transgressoft.musicott.view.NavigationController.NavigationMode;
 import org.jspecify.annotations.*;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -12,8 +14,13 @@ import java.util.function.*;
 public class FullAudioItemTableView extends AudioItemTableViewBase {
 
     @SuppressWarnings ("unchecked")
-    public FullAudioItemTableView(ApplicationEventPublisher applicationEventPublisher) {
+    public FullAudioItemTableView(ApplicationEventPublisher applicationEventPublisher,
+                                  SearchCoordinator searchCoordinator) {
         super(applicationEventPublisher);
+        // Register this table as the Searchable for both the full-library and playlist navigation
+        // modes — the same table view is shown in both contexts.
+        searchCoordinator.register(NavigationMode.ALL_AUDIO_ITEMS, this);
+        searchCoordinator.register(NavigationMode.PLAYLIST, this);
         // Title-first column order — Title is the column the user reads most often.
         getColumns().addAll(nameCol, artistCol, albumCol, genreCol, labelCol, bpmCol, totalTimeCol);
         getColumns().addAll(yearCol, sizeCol, trackNumberCol, discNumberCol, albumArtistCol, commentsCol);

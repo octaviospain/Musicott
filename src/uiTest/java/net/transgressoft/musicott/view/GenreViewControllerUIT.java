@@ -19,7 +19,9 @@ import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import net.transgressoft.commons.music.audio.Genre;
 import net.transgressoft.commons.music.audio.Label;
 import net.transgressoft.musicott.events.PlayItemEvent;
-import net.transgressoft.musicott.events.SearchTextTypedEvent;
+import java.util.Collections;
+
+import net.transgressoft.musicott.search.SearchCoordinator;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
@@ -90,7 +92,7 @@ class GenreViewControllerUIT extends ApplicationTestBase<StackPane> {
             controller.closeDrawer();
             // The controller singleton is reused across tests; clear any search query a prior test
             // set so it does not filter this test's freshly opened drawer.
-            controller.searchTextTypedEvent(new SearchTextTypedEvent("", this));
+            controller.applyMatchIds("", Collections.emptySet());
             if (root.getChildren().size() > 1) {
                 root.getChildren().subList(1, root.getChildren().size()).clear();
             }
@@ -148,15 +150,20 @@ class GenreViewControllerUIT extends ApplicationTestBase<StackPane> {
                 () -> fxRobot.from(root).lookup("Kiara").tryQuery().isPresent());
         waitForFxEvents();
 
+        // getSelectedTracks() iterates the live JavaFX selection model, which is only safe on the FX
+        // thread — read it via asyncFx so the poll never races the FX-thread selection mutation.
         Platform.runLater(controller::selectAllTracks);
-        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> controller.getSelectedTracks().size() == 2);
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS,
+                () -> WaitForAsyncUtils.asyncFx(() -> controller.getSelectedTracks().size()).get() == 2);
         waitForFxEvents();
-        assertThat(controller.getSelectedTracks()).containsExactlyInAnyOrder(track1, track2);
+        assertThat(WaitForAsyncUtils.asyncFx(() -> List.copyOf(controller.getSelectedTracks())).get())
+                .containsExactlyInAnyOrder(track1, track2);
 
         Platform.runLater(controller::deselectAllTracks);
-        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> controller.getSelectedTracks().isEmpty());
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS,
+                () -> WaitForAsyncUtils.asyncFx(() -> controller.getSelectedTracks().isEmpty()).get());
         waitForFxEvents();
-        assertThat(controller.getSelectedTracks()).isEmpty();
+        assertThat(WaitForAsyncUtils.asyncFx(() -> List.copyOf(controller.getSelectedTracks())).get()).isEmpty();
     }
 
     @Test
@@ -172,8 +179,8 @@ class GenreViewControllerUIT extends ApplicationTestBase<StackPane> {
         StackPane root = genreViewAndController.getView().get();
         GenreViewController controller = genreViewAndController.getController();
 
-        // Type a query matching only "Strobe" before opening — the drawer applies it on open.
-        Platform.runLater(() -> controller.searchTextTypedEvent(new SearchTextTypedEvent("strobe", this)));
+        // Apply a query matching only "Strobe" before opening — the drawer applies it on open.
+        Platform.runLater(() -> controller.applyMatchIds("strobe", Set.of("TECHNO")));
         waitForFxEvents();
         Platform.runLater(() -> controller.openDrawer(genre));
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> root.getChildren().size() > 1);
@@ -484,6 +491,11 @@ class GenreViewControllerUITConfiguration {
     @Bean
     public ApplicationEventPublisher applicationEventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public SearchCoordinator searchCoordinator() {
+        return mock(SearchCoordinator.class);
     }
 
     // destroyMethod = "" prevents Spring from auto-inferring the shutdown() method as the destroy callback,

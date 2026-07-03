@@ -20,6 +20,7 @@ import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import net.transgressoft.commons.music.audio.Label;
 import net.transgressoft.musicott.events.PlayItemEvent;
+import net.transgressoft.musicott.search.SearchCoordinator;
 import net.transgressoft.musicott.test.ApplicationTestBase;
 import net.transgressoft.musicott.test.JavaFxSpringTest;
 import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
@@ -476,6 +477,11 @@ class AlbumViewControllerUITConfiguration {
     @Bean
     public ApplicationEventPublisher applicationEventPublisher() {
         return mock(ApplicationEventPublisher.class);
+    }
+
+    @Bean
+    public SearchCoordinator searchCoordinator() {
+        return mock(SearchCoordinator.class);
     }
 
     // destroyMethod = "" prevents Spring from auto-inferring the shutdown() method as the destroy callback,

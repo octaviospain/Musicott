@@ -74,6 +74,7 @@ tasks.withType(Test).configureEach {
 sourceSets {
     integrationTest {
         java.srcDir 'src/integrationTest/java'
+        kotlin.srcDir 'src/integrationTest/kotlin'
         resources.srcDir 'src/integrationTest/resources'
         compileClasspath += sourceSets.main.output
         runtimeClasspath += sourceSets.main.output
