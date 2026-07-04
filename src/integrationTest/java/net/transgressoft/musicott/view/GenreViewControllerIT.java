@@ -53,7 +53,7 @@ import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 class GenreViewControllerIT extends ApplicationTestBase<StackPane> {
 
     @Autowired
-    SetProperty<ObservableGenreIndex> genreIndexesProperty;
+    ListProperty<ObservableGenreIndex> genreIndexesProperty;
 
     @Autowired
     FxControllerAndView<GenreViewController, StackPane> genreViewAndController;
@@ -231,13 +231,13 @@ class GenreViewControllerIT extends ApplicationTestBase<StackPane> {
 class GenreViewControllerITConfiguration {
 
     @Bean
-    public SetProperty<ObservableGenreIndex> genreIndexesProperty() {
-        return new SimpleSetProperty<>(FXCollections.observableSet());
+    public ListProperty<ObservableGenreIndex> genreIndexesProperty() {
+        return new SimpleListProperty<>(FXCollections.observableArrayList());
     }
 
     @Bean
     @SuppressWarnings("unchecked")
-    public ObservableAudioLibrary audioRepository(ReadOnlySetProperty<ObservableGenreIndex> genreIndexesProperty) {
+    public ObservableAudioLibrary audioRepository(ReadOnlyListProperty<ObservableGenreIndex> genreIndexesProperty) {
         var repository = mock(ObservableAudioLibrary.class);
         when(repository.getGenreIndexesProperty()).thenReturn(genreIndexesProperty);
         return repository;

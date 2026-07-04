@@ -3,10 +3,9 @@ package net.transgressoft.musicott.view;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.collections.SetChangeListener;
 import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -36,7 +35,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -162,46 +160,35 @@ public class GenreViewController {
     }
 
     /**
-     * Keeps the grid backed by the repository's {@code genreIndexesProperty}. The genre index is a
-     * {@code ReadOnlySetProperty} (set semantics guarantee one bucket per distinct genre), so set
-     * changes are mirrored into an {@link ObservableList} the grid can sort and display. The
-     * projection dispatches its mutations on the JavaFX Application Thread; updates are still routed
-     * through {@link Platform#runLater} defensively so the grid never mutates off-thread.
+     * Keeps the grid backed by the repository's {@code genreIndexesProperty}, an ordered
+     * {@code ReadOnlyListProperty} whose buckets are already sorted by the projection. Its contents
+     * are mirrored into an {@link ObservableList} the grid displays, preserving the projection's
+     * order. The projection dispatches its mutations on the JavaFX Application Thread; updates are
+     * still routed through {@link Platform#runLater} defensively so the grid never mutates off-thread.
      */
     private void configureGridBacking() {
         genresBacking = FXCollections.observableArrayList(audioRepository.getGenreIndexesProperty());
         logger.info("Genres view initialised with {} genre buckets", genresBacking.size());
 
-        audioRepository.getGenreIndexesProperty().addListener((SetChangeListener<ObservableGenreIndex>) change -> {
-            if (change.wasAdded()) {
-                var added = change.getElementAdded();
+        // Mirror the ordered projection wholesale on every change so the grid preserves its bucket
+        // ordering out of the box, rather than imposing a view-side sort.
+        audioRepository.getGenreIndexesProperty().addListener((ListChangeListener<ObservableGenreIndex>) change ->
                 Platform.runLater(() -> {
-                    if (!genresBacking.contains(added)) {
-                        genresBacking.add(added);
-                    }
-                    logger.trace("Genre bucket added: '{}' ({} tracks) — backing now {}",
-                            added.getGenreProperty().get(), added.getSizeProperty().get(), genresBacking.size());
-                });
-            }
-            if (change.wasRemoved()) {
-                var removed = change.getElementRemoved();
-                Platform.runLater(() -> {
-                    genresBacking.remove(removed);
-                    // If the removed bucket is the one whose drawer is open, auto-close (signal a).
-                    if (removed == selectedGenre && drawer.isOpen()) {
+                    genresBacking.setAll(audioRepository.getGenreIndexesProperty());
+                    // Drop cover pools for genre buckets that no longer exist so their decoded
+                    // Image instances become eligible for GC over long editing sessions.
+                    coverPools.keySet().retainAll(genresBacking);
+                    // If the bucket whose drawer is open no longer exists, auto-close it.
+                    if (selectedGenre != null && drawer.isOpen() && !genresBacking.contains(selectedGenre)) {
                         drawer.close();
                     }
-                    logger.trace("Genre bucket removed: '{}' — backing now {}",
-                            removed.getGenreProperty().get(), genresBacking.size());
-                });
-            }
-        });
+                    logger.trace("Genres projection changed — backing now {}", genresBacking.size());
+                }));
 
-        // Filter layer (search) sits under the natural-order sort. The predicate keeps genres that
-        // have at least one track matching the active query; an empty query shows every genre.
+        // Filter layer (search) preserves the projection's order — no view-imposed sort. The
+        // predicate keeps genres with at least one track matching the active query; empty shows all.
         filteredGenres = new FilteredList<>(genresBacking);
-        var sortedGenres = new SortedList<>(filteredGenres, Comparator.naturalOrder());
-        genreGridView.setItems(sortedGenres);
+        genreGridView.setItems(filteredGenres);
     }
 
     /**
