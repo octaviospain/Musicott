@@ -59,6 +59,7 @@ public class ArtistAlbumListRow extends HBox {
 
     private ImageView coverImageView;
     private VBox albumInfoVBox;
+    private Label albumTitleLabel;
     private Label genresLabel;
     private Label albumLabelLabel;
     private Label yearLabel;
@@ -141,7 +142,7 @@ public class ArtistAlbumListRow extends HBox {
     }
 
     private void placeRightVBox() {
-        var albumTitleLabel = new Label(albumSet.getAlbumName());
+        albumTitleLabel = new Label(buildAlbumNameString());
         albumTitleLabel.setId("albumTitleLabel");
         // No fixed width cap: the title takes as much horizontal space as it needs, up to the row
         // width (the drawer can be far wider than the artist view, where a 480px cap truncated it).
@@ -171,6 +172,18 @@ public class ArtistAlbumListRow extends HBox {
         HBox.setHgrow(albumInfoVBox, Priority.SOMETIMES);
         HBox.setMargin(albumInfoVBox, new Insets(20, 20, 5, 0));
         getChildren().add(albumInfoVBox);
+    }
+
+    // Derives the album title from the live tracks so an in-place album-name edit refreshes the row.
+    // Falls back to the album-set's captured name for synthetic groupings (e.g. the genre view's
+    // "Unknown Album" section) whose tracks carry no album name.
+    @SuppressWarnings("java:S2589")
+    private String buildAlbumNameString() {
+        return containedAudioItems.stream()
+                .map(item -> item.getAlbum() == null ? null : item.getAlbum().getName())
+                .filter(name -> name != null && !name.isEmpty())
+                .findFirst()
+                .orElseGet(albumSet::getAlbumName);
     }
 
     private String buildGenresString() {
@@ -330,6 +343,7 @@ public class ArtistAlbumListRow extends HBox {
         subscriptions.add(subscribe(audioItem.getDiscNumberProperty(), _ -> containedAudioItems.sort(this::audioItemComparator)));
         subscriptions.add(subscribe(audioItem.getGenresProperty(), _ -> genresLabel.setText(buildGenresString())));
         subscriptions.add(subscribe(audioItem.getAlbumProperty(), _ -> {
+            albumTitleLabel.setText(buildAlbumNameString());
             yearLabel.setText(buildYearsString());
             updateAlbumLabelLabel();
         }));

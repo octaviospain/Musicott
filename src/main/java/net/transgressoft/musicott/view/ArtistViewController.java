@@ -555,11 +555,18 @@ public class ArtistViewController implements Searchable<String> {
         if (itemArtist != null && itemArtist.equals(artist)) {
             return true;
         }
+        var artistsInvolved = audioItem.getArtistsInvolved();
+        if (artistsInvolved == null || !artistsInvolved.contains(artist)) {
+            return false;
+        }
+        // A track surfaces under every artist it involves — including its album artist — so editing
+        // the artist or album artist moves the track between artist rows. The one exception is a
+        // compilation's album artist (e.g. "Various Artists"): individual compilation tracks must not
+        // collapse under that grouping, only under their own performing artist.
         var album = audioItem.getAlbum();
         var albumArtist = album == null ? null : album.getAlbumArtist();
-        return audioItem.getArtistsInvolved() != null
-                && audioItem.getArtistsInvolved().contains(artist)
-                && !artist.equals(albumArtist);
+        boolean isCompilation = album != null && album.isCompilation();
+        return !isCompilation || !artist.equals(albumArtist);
     }
 
     // Guard each metadata access — partial catalogs can have null artist/album/album-artist

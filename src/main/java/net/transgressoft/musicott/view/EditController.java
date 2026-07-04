@@ -106,6 +106,13 @@ public class EditController {
     private Set<ObservableAudioItem> audioItemSelection;
     private byte[] newCoverImageBytes;
     private Optional<byte[]> commonCover = Optional.empty();
+
+    // Common field values shown when the dialog opened, captured so an empty clearable field can be
+    // told apart from a field that was already blank and left untouched (both render as "").
+    private String initialArtistText;
+    private String initialAlbumText;
+    private String initialAlbumArtistText;
+    private String initialGenreText;
     private Alert multipleEditionConfirmationAlert;
 
     @FXML
@@ -326,11 +333,11 @@ public class EditController {
         newCoverImageBytes = null;
 
         titleTextField.textProperty().set(commonTitle());
-        artistTextField.textProperty().set(commonArtist());
-        albumTextField.textProperty().set(commonAlbum());
-        genreTextField.textProperty().set(commonGenre());
+        artistTextField.textProperty().set(initialArtistText = commonArtist());
+        albumTextField.textProperty().set(initialAlbumText = commonAlbum());
+        genreTextField.textProperty().set(initialGenreText = commonGenre());
         commentsTextField.textProperty().set(commonComments());
-        albumArtistTextField.textProperty().set(commonAlbumArtist());
+        albumArtistTextField.textProperty().set(initialAlbumArtistText = commonAlbumArtist());
         labelTextField.textProperty().set(commonLabel());
         trackNumTextField.textProperty().set(commonTrackNumber());
         discNumTextField.textProperty().set(commonDiscNumber());
@@ -452,15 +459,16 @@ public class EditController {
 
     private AudioItemMetadataChange getEditionResult() {
        String title = getEditionFieldResult(titleTextField);
-       Artist artist = getEditionFieldResult(artistTextField) != null ? Artist.of(getEditionFieldResult(artistTextField)) : null;
-       String albumName = getEditionFieldResult(albumTextField);
-       Artist albumArtist = getEditionFieldResult(albumArtistTextField) != null ? Artist.of(getEditionFieldResult(albumArtistTextField)) : null;
+       String artistName = getClearableFieldResult(artistTextField, initialArtistText);
+       Artist artist = artistName != null ? Artist.of(artistName) : null;
+       String albumName = getClearableFieldResult(albumTextField, initialAlbumText);
+       String albumArtistName = getClearableFieldResult(albumArtistTextField, initialAlbumArtistText);
+       Artist albumArtist = albumArtistName != null ? Artist.of(albumArtistName) : null;
        Boolean isCompilation = isCompilationCheckBox.isIndeterminate() ? null : isCompilationCheckBox.isSelected();
        Short year = getEditionFieldResult(yearTextField) != null ? Short.valueOf(getEditionFieldResult(yearTextField)) : null;
        String labelValue = getEditionFieldResult(labelTextField);
        net.transgressoft.commons.music.audio.Label label = labelValue != null ? net.transgressoft.commons.music.audio.Label.of(labelValue) : null;
-       String genreValue = getEditionFieldResult(genreTextField);
-       Set<Genre> genres = genreValue != null ? GenreExtensionsKt.parseGenre(genreValue) : null;
+       Set<Genre> genres = getEditionGenres(initialGenreText);
        String comments = getEditionFieldResult(commentsTextField);
        Short trackNum = getEditionFieldResult(trackNumTextField) != null ? Short.valueOf(getEditionFieldResult(trackNumTextField)) : null;
        Short discNum = getEditionFieldResult(discNumTextField) != null ? Short.valueOf(getEditionFieldResult(discNumTextField)) : null;
@@ -475,6 +483,44 @@ public class EditController {
         // unset metadata with empty strings.
         String value = textField.getText();
         return value == null || value.isEmpty() || value.equals("-") ? null : value;
+    }
+
+    /**
+     * Resolves a text field whose backing metadata always has a value (album name, artist, album
+     * artist), distinguishing a deliberate clear from a skip: {@code null} for the {@code "-"}
+     * multi-value sentinel (leave untouched) and for a field that was already blank on open and left
+     * untouched, otherwise the field text — an empty string that had prior content is an explicit
+     * clear that is applied. Unlike {@link #getEditionFieldResult(TextInputControl)}, emptying a
+     * field that had content is not swallowed, so clearing e.g. the album artist takes effect; but
+     * an unrelated edit (e.g. BPM) on an untagged track no longer forces a spurious clear.
+     */
+    private String getClearableFieldResult(TextInputControl textField, String initialValue) {
+        String value = textField.getText();
+        if (value == null || value.equals("-")) {
+            return null;
+        }
+        // Already blank on open and still blank: nothing to clear, skip instead of forcing a write.
+        return value.isEmpty() && (initialValue == null || initialValue.isEmpty()) ? null : value;
+    }
+
+    /**
+     * Resolves the genre edition into three outcomes the change record distinguishes: {@code null}
+     * to leave genres untouched (the {@code "-"} multi-value sentinel, or a field that was already
+     * blank on open and left untouched), an empty set when the user cleared a previously populated
+     * field (the track moves to the no-genre bucket), and the parsed set otherwise. Unlike
+     * {@link #getEditionFieldResult(TextInputControl)}, emptying a genre field that had content is an
+     * explicit clear rather than a skip.
+     */
+    private Set<Genre> getEditionGenres(String initialValue) {
+        String value = genreTextField.getText();
+        if (value == null || value.equals("-")) {
+            return null;
+        }
+        if (value.isEmpty()) {
+            // Already blank on open and still blank: leave untouched rather than force the no-genre bucket.
+            return initialValue == null || initialValue.isEmpty() ? null : Set.of();
+        }
+        return GenreExtensionsKt.parseGenre(value);
     }
 
     private void close() {

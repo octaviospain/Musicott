@@ -1,9 +1,12 @@
 package net.transgressoft.musicott.view.custom.table;
 
+import javafx.application.Platform;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 import net.transgressoft.musicott.test.FxAudioItems;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
+import net.transgressoft.commons.music.audio.AlbumDetails;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioItemTestFactory;
 import org.junit.jupiter.api.*;
@@ -19,6 +22,7 @@ import java.util.Set;
 import static net.transgressoft.commons.music.audio.Artist.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
 /**
  * Unit tests for the album-info label logic in {@link ArtistAlbumListRow}: related-artists,
@@ -29,9 +33,12 @@ import static org.mockito.Mockito.*;
 class ArtistAlbumListRowLabelTest {
 
     SimpleAudioItemTableView tableView;
+    Stage stage;
 
     @Start
-    void start(Stage stage) {}
+    void start(Stage stage) {
+        this.stage = stage;
+    }
 
     @BeforeEach
     void setUp() {
@@ -94,6 +101,34 @@ class ArtistAlbumListRowLabelTest {
         assertThat(albumLabelLabel).isNotNull();
         assertThat(albumLabelLabel.getText()).doesNotContain(",");
         assertThat(albumLabelLabel.getText()).isEqualTo("Ninja Tune");
+    }
+
+    @Test
+    @DisplayName("album title label updates live when a track's album name is edited in place")
+    void albumTitleLabelUpdatesWhenAlbumNameEditedInPlace() {
+        Artist bonobo = of("Bonobo");
+        ObservableAudioItem track = audioItem("Kiara", bonobo, "Black Sands", bonobo, Set.of(bonobo));
+        var row = new ArtistAlbumListRow(bonobo, albumSet("Black Sands", track), tableView, 0);
+
+        // Render the row so the embedded table's cell value factory registers the per-track album
+        // subscription that drives the live title refresh.
+        Platform.runLater(() -> {
+            stage.setScene(new Scene(row, 640, 480));
+            stage.show();
+        });
+        waitForFxEvents();
+
+        Label albumTitleLabel = (Label) row.lookup("#albumTitleLabel");
+        assertThat(albumTitleLabel).isNotNull();
+        assertThat(albumTitleLabel.getText()).isEqualTo("Black Sands");
+
+        // Editing the album name in place must refresh the drawer/row title, not leave the stale name.
+        Platform.runLater(() -> track.setAlbum(
+                new AlbumDetails("Migration", bonobo, false, null,
+                        net.transgressoft.commons.music.audio.Label.UNKNOWN)));
+        waitForFxEvents();
+
+        assertThat(albumTitleLabel.getText()).isEqualTo("Migration");
     }
 
     private static AlbumTrackGroup albumSet(String albumName, ObservableAudioItem... tracks) {
