@@ -475,8 +475,8 @@ class GenreViewControllerUITConfiguration {
     @SuppressWarnings("unchecked")
     public ObservableAudioLibrary audioRepository() {
         var repository = mock(ObservableAudioLibrary.class);
-        ReadOnlySetProperty<ObservableGenreIndex> emptyGenresProperty =
-                new ReadOnlySetWrapper<>(FXCollections.<ObservableGenreIndex>observableSet()).getReadOnlyProperty();
+        ReadOnlyListProperty<ObservableGenreIndex> emptyGenresProperty =
+                new ReadOnlyListWrapper<>(FXCollections.<ObservableGenreIndex>observableArrayList()).getReadOnlyProperty();
         when(repository.getGenreIndexesProperty()).thenReturn(emptyGenresProperty);
         return repository;
     }
