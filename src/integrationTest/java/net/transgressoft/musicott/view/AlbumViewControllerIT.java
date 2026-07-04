@@ -59,7 +59,7 @@ import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 class AlbumViewControllerIT extends ApplicationTestBase<StackPane> {
 
     @Autowired
-    SetProperty<ObservableAlbum> albumsProperty;
+    ListProperty<ObservableAlbum> albumsProperty;
 
     @Autowired
     FxControllerAndView<AlbumViewController, StackPane> albumViewAndController;
@@ -235,13 +235,13 @@ class AlbumViewControllerIT extends ApplicationTestBase<StackPane> {
 class AlbumViewControllerITConfiguration {
 
     @Bean
-    public SetProperty<ObservableAlbum> albumsProperty() {
-        return new SimpleSetProperty<>(FXCollections.observableSet());
+    public ListProperty<ObservableAlbum> albumsProperty() {
+        return new SimpleListProperty<>(FXCollections.observableArrayList());
     }
 
     @Bean
     @SuppressWarnings("unchecked")
-    public ObservableAudioLibrary audioRepository(ReadOnlySetProperty<ObservableAlbum> albumsProperty) {
+    public ObservableAudioLibrary audioRepository(ReadOnlyListProperty<ObservableAlbum> albumsProperty) {
         var repository = mock(ObservableAudioLibrary.class);
         when(repository.getAlbumsProperty()).thenReturn(albumsProperty);
         return repository;

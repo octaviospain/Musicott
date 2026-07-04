@@ -4,10 +4,9 @@ import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.collections.SetChangeListener;
 import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -42,7 +41,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Controller;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -162,40 +160,28 @@ public class AlbumViewController {
     }
 
     /**
-     * Keeps the grid backed by the repository's {@code albumsProperty}. The album catalog is a
-     * {@code ReadOnlySetProperty} (set semantics guarantee one bucket per distinct album), so set
-     * changes are mirrored into an {@link ObservableList} the grid can sort and display. The
-     * projection dispatches its mutations on the JavaFX Application Thread; updates are still routed
-     * through {@link Platform#runLater} defensively so the grid never mutates off-thread.
+     * Keeps the grid backed by the repository's {@code albumsProperty}, an ordered
+     * {@code ReadOnlyListProperty} whose entries are already sorted by album title. Its contents are
+     * mirrored into an {@link ObservableList} the grid displays, preserving the projection's order.
+     * The projection dispatches its mutations on the JavaFX Application Thread; updates are still
+     * routed through {@link Platform#runLater} defensively so the grid never mutates off-thread.
      */
     private void configureGridBacking() {
         albumsBacking = FXCollections.observableArrayList(audioRepository.getAlbumsProperty());
         logger.info("Albums view initialised with {} albums", albumsBacking.size());
 
-        audioRepository.getAlbumsProperty().addListener((SetChangeListener<ObservableAlbum>) change -> {
-            if (change.wasAdded()) {
-                var added = change.getElementAdded();
+        // Mirror the ordered projection wholesale on every change so the grid preserves its
+        // album-title ordering out of the box, rather than imposing a view-side sort.
+        audioRepository.getAlbumsProperty().addListener((ListChangeListener<ObservableAlbum>) change ->
                 Platform.runLater(() -> {
-                    if (!albumsBacking.contains(added)) {
-                        albumsBacking.add(added);
-                    }
-                    logger.trace("Album added: '{}' — backing now {}", added.getAlbumName(), albumsBacking.size());
-                });
-            }
-            if (change.wasRemoved()) {
-                var removed = change.getElementRemoved();
-                Platform.runLater(() -> {
-                    albumsBacking.remove(removed);
-                    logger.trace("Album removed: '{}' — backing now {}", removed.getAlbumName(), albumsBacking.size());
-                });
-            }
-        });
+                    albumsBacking.setAll(audioRepository.getAlbumsProperty());
+                    logger.trace("Albums projection changed — backing now {}", albumsBacking.size());
+                }));
 
-        // Filter layer (search) sits under the natural-order sort. The predicate keeps albums that
-        // have at least one track matching the active query; an empty query shows every album.
+        // Filter layer (search) preserves the projection's order — no view-imposed sort. The
+        // predicate keeps albums with at least one track matching the active query; empty shows all.
         filteredAlbums = new FilteredList<>(albumsBacking);
-        var sortedAlbums = new SortedList<>(filteredAlbums, Comparator.naturalOrder());
-        albumGridView.setItems(sortedAlbums);
+        albumGridView.setItems(filteredAlbums);
     }
 
     /**

@@ -308,15 +308,15 @@ class SearchFlowITConfiguration {
     }
 
     @Bean
-    public SetProperty<ObservableAlbum> albumsProperty() {
-        return new SimpleSetProperty<>(FXCollections.observableSet());
+    public ListProperty<ObservableAlbum> albumsProperty() {
+        return new SimpleListProperty<>(FXCollections.observableArrayList());
     }
 
     @Bean
     @SuppressWarnings("unchecked")
     public ObservableAudioLibrary audioRepository(
             ReadOnlySetProperty<net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog> artistCatalogsProperty,
-            ReadOnlySetProperty<ObservableAlbum> albumsProperty) {
+            ReadOnlyListProperty<ObservableAlbum> albumsProperty) {
         var repository = mock(ObservableAudioLibrary.class);
         when(repository.getArtistCatalogsProperty()).thenReturn(artistCatalogsProperty);
         when(repository.getAlbumsProperty()).thenReturn(albumsProperty);

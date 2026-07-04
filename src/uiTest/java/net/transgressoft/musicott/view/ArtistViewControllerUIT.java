@@ -199,8 +199,8 @@ class ArtistViewControllerUITConfiguration {
     }
 
     @Bean
-    public SetProperty<ObservableAlbum> albumsProperty() {
-        return new SimpleSetProperty<>(FXCollections.observableSet());
+    public ListProperty<ObservableAlbum> albumsProperty() {
+        return new SimpleListProperty<>(FXCollections.observableArrayList());
     }
 
     @Bean
@@ -208,7 +208,7 @@ class ArtistViewControllerUITConfiguration {
     public ObservableAudioLibrary audioRepository(
             ReadOnlySetProperty<ObservableArtistCatalog> artistCatalogsProperty,
             ReadOnlyListProperty<ObservableAudioItem> audioItemsProperty,
-            ReadOnlySetProperty<ObservableAlbum> albumsProperty) {
+            ReadOnlyListProperty<ObservableAlbum> albumsProperty) {
         var repository = mock(ObservableAudioLibrary.class);
         when(repository.getArtistCatalogsProperty()).thenReturn(artistCatalogsProperty);
         when(repository.getAudioItemsProperty()).thenReturn(audioItemsProperty);
