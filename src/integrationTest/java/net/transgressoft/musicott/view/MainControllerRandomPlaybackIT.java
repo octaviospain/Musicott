@@ -209,21 +209,33 @@ class MainControllerRandomPlaybackIT extends ApplicationTestBase<BorderPane> {
     @DisplayName("MainController keeps the player controller fully on-screen in every navigation mode when the window is short")
     void keepsPlayerVisibleAcrossNavModesWhenWindowIsShort() {
         var view = mainControllerAndView.getView().get();
-        for (var mode : NavigationController.NavigationMode.values()) {
-            setNavigationMode(mode);
+        // Shrink the window well below the default 800x600 mount so the "short window" the layout
+        // must survive is actually exercised; restored afterwards so later tests keep a full stage.
+        Platform.runLater(() -> testStage.setHeight(360));
+        waitForFxEvents();
+        try {
+            for (var mode : NavigationController.NavigationMode.values()) {
+                setNavigationMode(mode);
+                waitForFxEvents();
+
+                Node player = view.lookup("#playerGridPane");
+                assertNotNull(player, "player region must be present in mode " + mode);
+                double sceneHeight = view.getScene().getHeight();
+                assertTrue(sceneHeight <= 400.0,
+                        "window must actually be short (<=400px) to exercise this case in mode "
+                                + mode + " but scene was " + sceneHeight + "px");
+                double playerBottom = player.localToScene(player.getBoundsInLocal()).getMaxY();
+                double playerHeight = player.getBoundsInLocal().getHeight();
+
+                assertTrue(playerBottom <= sceneHeight + 0.5,
+                        "player bottom (" + playerBottom + ") must stay within the "
+                                + sceneHeight + "px scene in mode " + mode);
+                assertTrue(playerHeight >= 50.0,
+                        "player must keep its full height (>=50) in mode " + mode + " but was " + playerHeight);
+            }
+        } finally {
+            Platform.runLater(() -> testStage.setHeight(600));
             waitForFxEvents();
-
-            Node player = view.lookup("#playerGridPane");
-            assertNotNull(player, "player region must be present in mode " + mode);
-            double sceneHeight = view.getScene().getHeight();
-            double playerBottom = player.localToScene(player.getBoundsInLocal()).getMaxY();
-            double playerHeight = player.getBoundsInLocal().getHeight();
-
-            assertTrue(playerBottom <= sceneHeight + 0.5,
-                    "player bottom (" + playerBottom + ") must stay within the "
-                            + sceneHeight + "px scene in mode " + mode);
-            assertTrue(playerHeight >= 50.0,
-                    "player must keep its full height (>=50) in mode " + mode + " but was " + playerHeight);
         }
     }
 

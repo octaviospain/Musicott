@@ -14,7 +14,7 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
 import net.transgressoft.commons.fx.music.FXMusicLibrary;
-import net.transgressoft.commons.fx.music.FxAudioItemTestFactory;
+import net.transgressoft.musicott.test.FxAudioItems;
 import net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
@@ -99,7 +99,7 @@ class ArtistViewAddTracksIT extends ApplicationTestBase<BorderPane> {
     @DisplayName("add-to-play-queue context action in ARTISTS mode uses the artist-view selection, not the empty main-table selection")
     void addToPlayQueueInArtistsModeUsesArtistViewSelection() throws Exception {
         Artist bonobo = of("Bonobo");
-        ObservableAudioItem track = FxAudioItemTestFactory.createFxAudioItem(attributes -> {
+        ObservableAudioItem track = FxAudioItems.createFxAudioItem(attributes -> {
             attributes.setTitle("Kiara");
             attributes.setArtist(bonobo);
             attributes.setAlbum(AudioItemTestFactory.createAlbum("Black Sands", bonobo));
