@@ -1,6 +1,6 @@
 package net.transgressoft.musicott.view;
 
-import net.transgressoft.commons.fx.music.FxAudioItemTestFactory;
+import net.transgressoft.musicott.test.FxAudioItems;
 import net.transgressoft.commons.fx.music.audio.ObservableAlbum;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
@@ -97,7 +97,7 @@ class AlbumViewControllerTest {
             int trackNumber,
             Set<Artist> artistsInvolved,
             int discNumber) {
-        return FxAudioItemTestFactory.createFxAudioItem(attributes -> {
+        return FxAudioItems.createFxAudioItem(attributes -> {
             attributes.setTitle(title);
             attributes.setArtist(artist);
             attributes.setAlbum(AudioItemTestFactory.createAlbum(

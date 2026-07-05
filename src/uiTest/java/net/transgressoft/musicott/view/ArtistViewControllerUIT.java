@@ -9,7 +9,7 @@ import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
 import net.rgielen.fxweaver.spring.SpringFxWeaver;
-import net.transgressoft.commons.fx.music.FxAudioItemTestFactory;
+import net.transgressoft.musicott.test.FxAudioItems;
 import net.transgressoft.commons.fx.music.audio.ObservableAlbum;
 import net.transgressoft.commons.fx.music.audio.ObservableArtistCatalog;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
@@ -164,7 +164,7 @@ class ArtistViewControllerUIT extends ApplicationTestBase<SplitPane> {
             int trackNumber,
             Set<Artist> artistsInvolved,
             int discNumber) {
-        return FxAudioItemTestFactory.createFxAudioItem(attributes -> {
+        return FxAudioItems.createFxAudioItem(attributes -> {
             attributes.setTitle(title);
             attributes.setArtist(artist);
             attributes.setAlbum(AudioItemTestFactory.createAlbum(

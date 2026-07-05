@@ -2,7 +2,7 @@ package net.transgressoft.musicott.view;
 
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
-import net.transgressoft.commons.fx.music.FxAudioItemTestFactory;
+import net.transgressoft.musicott.test.FxAudioItems;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 import net.transgressoft.commons.music.audio.Artist;
@@ -69,7 +69,7 @@ class ArtistViewControllerTest {
             Artist albumArtist,
             int trackNumber,
             Set<Artist> artistsInvolved) {
-        return FxAudioItemTestFactory.createFxAudioItem(attributes -> {
+        return FxAudioItems.createFxAudioItem(attributes -> {
             attributes.setTitle(title);
             attributes.setArtist(artist);
             attributes.setAlbum(AudioItemTestFactory.createAlbum(

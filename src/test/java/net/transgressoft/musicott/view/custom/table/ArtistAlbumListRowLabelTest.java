@@ -2,7 +2,7 @@ package net.transgressoft.musicott.view.custom.table;
 
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
-import net.transgressoft.commons.fx.music.FxAudioItemTestFactory;
+import net.transgressoft.musicott.test.FxAudioItems;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioItemTestFactory;
@@ -106,7 +106,7 @@ class ArtistAlbumListRowLabelTest {
             String albumName,
             Artist albumArtist,
             Set<Artist> artistsInvolved) {
-        return FxAudioItemTestFactory.createFxAudioItem(attributes -> {
+        return FxAudioItems.createFxAudioItem(attributes -> {
             attributes.setTitle(title);
             attributes.setArtist(artist);
             attributes.setAlbum(AudioItemTestFactory.createAlbum(albumName, albumArtist));
@@ -120,7 +120,7 @@ class ArtistAlbumListRowLabelTest {
             Artist artist,
             String albumName,
             short year) {
-        return FxAudioItemTestFactory.createFxAudioItem(attributes -> {
+        return FxAudioItems.createFxAudioItem(attributes -> {
             attributes.setTitle(title);
             attributes.setArtist(artist);
             attributes.setAlbum(AudioItemTestFactory.createAlbum(albumName, artist, false, year));
@@ -134,7 +134,7 @@ class ArtistAlbumListRowLabelTest {
             Artist artist,
             String albumName,
             String labelName) {
-        return FxAudioItemTestFactory.createFxAudioItem(attributes -> {
+        return FxAudioItems.createFxAudioItem(attributes -> {
             attributes.setTitle(title);
             attributes.setArtist(artist);
             attributes.setAlbum(AudioItemTestFactory.createAlbum(
