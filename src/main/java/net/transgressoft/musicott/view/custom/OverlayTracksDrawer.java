@@ -385,6 +385,6 @@ public class OverlayTracksDrawer {
     }
 
     private static double clamp(double value, double low, double high) {
-        return Math.max(low, Math.min(high, value));
+        return Math.clamp(value, low, high);
     }
 }

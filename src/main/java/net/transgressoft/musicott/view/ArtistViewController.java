@@ -322,11 +322,12 @@ public class ArtistViewController {
         if (selectedArtistCatalog.isPresent() && !artistsInvolved.contains(selectedArtistCatalog.get().getArtist())) {
             var newArtist = artistsInvolved.stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException("AudioItem has no artists"));
-            var artistCatalog = audioRepository.getArtistCatalog(newArtist);
-            selectedArtistProperty.setValue((Optional<ObservableArtistCatalog>) artistCatalog);
-
-            artistsListView.getSelectionModel().select(artistCatalog.get());
-            artistsListView.scrollTo(artistCatalog.get());
+            Optional<ObservableArtistCatalog> artistCatalog = (Optional<ObservableArtistCatalog>) audioRepository.getArtistCatalog(newArtist);
+            selectedArtistProperty.setValue(artistCatalog);
+            artistCatalog.ifPresent(catalog -> {
+                artistsListView.getSelectionModel().select(catalog);
+                artistsListView.scrollTo(catalog);
+            });
         } else {
             albumRowsBackingList.forEach(trackSet -> {
                 var album = audioItem.getAlbum();

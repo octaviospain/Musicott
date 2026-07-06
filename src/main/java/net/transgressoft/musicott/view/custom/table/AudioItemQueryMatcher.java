@@ -25,7 +25,7 @@ public final class AudioItemQueryMatcher {
      */
     // Defensive null guards — imported tracks from partial catalogs can carry null artist/album or
     // null name fields; one malformed track must not NPE the whole filter.
-    @SuppressWarnings("java:S2589")
+    @SuppressWarnings({"java:S2589", "java:S2583"})
     public static boolean matches(ObservableAudioItem audioItem, String query) {
         if (contains(audioItem.getTitle(), query)) {
             return true;

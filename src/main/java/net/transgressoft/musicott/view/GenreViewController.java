@@ -91,7 +91,6 @@ public class GenreViewController {
     private StackPane genresRootPane;
 
     private GridView<ObservableGenreIndex> genreGridView;
-    private ObservableList<ObservableGenreIndex> genresBacking;
     private FilteredList<ObservableGenreIndex> filteredGenres;
 
     /** Lower-cased active search query, or empty when no filter is applied. */
@@ -167,7 +166,7 @@ public class GenreViewController {
      * still routed through {@link Platform#runLater} defensively so the grid never mutates off-thread.
      */
     private void configureGridBacking() {
-        genresBacking = FXCollections.observableArrayList(audioRepository.getGenreIndexesProperty());
+        ObservableList<ObservableGenreIndex> genresBacking = FXCollections.observableArrayList(audioRepository.getGenreIndexesProperty());
         logger.info("Genres view initialised with {} genre buckets", genresBacking.size());
 
         // Mirror the ordered projection wholesale on every change so the grid preserves its bucket
@@ -402,6 +401,9 @@ public class GenreViewController {
      * so a genre with real cover variety always has enough to cycle; tracks with no embedded art never
      * contribute. {@code onCoverArrived} runs on the JavaFX thread each time a cover joins the pool.
      */
+    // Coordinates controller-scoped state (the shared cover-pool cache), not solely the genre
+    // parameter, so it belongs in the controller rather than in a single grid cell.
+    @SuppressWarnings("java:S3398")
     private void resolveCoverPool(ObservableGenreIndex genre, Runnable onCoverArrived) {
         CoverPool pool = coverPools.computeIfAbsent(genre, g -> new CoverPool());
         if (pool.started) {
@@ -453,6 +455,9 @@ public class GenreViewController {
      * covers resolve so the default placeholder is replaced by a real cover on the visible cell,
      * regardless of which cell first triggered the pool resolution.
      */
+    // Iterates every cell of the controller's grid view, not solely the genre parameter, so it
+    // belongs in the controller rather than in a single grid cell.
+    @SuppressWarnings("java:S3398")
     private void refreshGenreCover(ObservableGenreIndex genre) {
         genreGridView.lookupAll(".grid-cell").forEach(node -> {
             if (node instanceof GenreGridCell cell && genre.equals(cell.getItem())) {
@@ -593,6 +598,10 @@ public class GenreViewController {
         }
     }
 
+    // Publishes through the controller's application event bus, not solely the genre parameter, so
+    // it belongs in the controller rather than in a single grid cell. The null guard is defensive:
+    // a mock or partial genre index can return a null track list despite the non-null contract.
+    @SuppressWarnings({"java:S3398", "java:S2589"})
     private void playGenre(ObservableGenreIndex genre) {
         var tracks = genre.getTracksProperty();
         if (tracks != null && !tracks.isEmpty()) {

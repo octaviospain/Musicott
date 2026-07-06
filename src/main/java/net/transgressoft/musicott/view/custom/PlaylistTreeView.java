@@ -517,7 +517,7 @@ public class PlaylistTreeView extends TreeView<ObservablePlaylist> {
                 var clipboardContent = new ClipboardContent();
                 // Put the serializable integer id on the dragboard; the drop handler
                 // resolves it back to the playlist via the hierarchy.
-                clipboardContent.put(PLAYLIST_DATA_FORMAT, (Integer) getItem().getId());
+                clipboardContent.put(PLAYLIST_DATA_FORMAT, getItem().getId());
                 dragBoard.setContent(clipboardContent);
             }
             event.consume();

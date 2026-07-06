@@ -31,7 +31,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import net.rgielen.fxweaver.core.FxmlView;
-import org.fxmisc.easybind.EasyBind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,9 +120,6 @@ public class NavigationController {
     private MenuItem newFolderPlaylistMI;
     private Optional<ObservablePlaylist> currentPlayingPlaylist;
 
-    // Held as a field so it is accessible to the navigationModeProperty subscriber for clearing.
-    private NavigationMenuListView navigationMenuListView;
-
     @Autowired
     public NavigationController(PlaylistTreeView playlistTreeView,
                                 KeyCombination.Modifier operativeSystemKeyModifier,
@@ -147,7 +143,7 @@ public class NavigationController {
     @FXML
     public void initialize() {
         currentPlayingPlaylist = Optional.empty();
-        navigationMenuListView = new NavigationMenuListView();
+        NavigationMenuListView navigationMenuListView = new NavigationMenuListView();
 
         ContextMenu newPlaylistButtonContextMenu = new ContextMenu();
         newPlaylistMI = new MenuItem("New Playlist");
@@ -260,29 +256,40 @@ public class NavigationController {
             }
             List<String> failures = Collections.synchronizedList(new ArrayList<>());
             var futures = selected.stream()
-                    .map(pl -> CompletableFuture.runAsync(() -> {
-                        try {
-                            pl.exportToM3uFile(folder.toPath().resolve(toSafeFileName(pl.getName()) + ".m3u"));
-                        } catch (Exception ex) {
-                            throw new CompletionException(ex);
-                        }
-                    }).exceptionally(ex -> {
-                                Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-                                failures.add(pl.getName() + ": " + cause.getMessage());
-                                return null;
-                            }))
+                    .map(pl -> exportPlaylistAsync(pl, folder, failures))
                     .toList();
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .whenComplete((ignored, ex) -> Platform.runLater(() -> {
-                        if (failures.isEmpty()) {
-                            applicationEventPublisher.publishEvent(
-                                    new StatusMessageUpdateEvent("Exported " + selected.size() + " playlist(s)", this));
-                        } else {
-                            applicationEventPublisher.publishEvent(
-                                    new ErrorEvent("Export failed", String.join("\n", failures), this));
-                        }
-                    }));
+                    .whenComplete((ignored, ex) -> Platform.runLater(() -> publishExportOutcome(selected.size(), failures)));
         });
+    }
+
+    /**
+     * Exports a single playlist to an {@code .m3u} file under {@code folder} off the FX thread,
+     * recording a {@code "<name>: <reason>"} entry in {@code failures} if the write fails rather
+     * than propagating the error, so one failure does not abort the sibling exports.
+     */
+    private CompletableFuture<Void> exportPlaylistAsync(ObservablePlaylist playlist, File folder, List<String> failures) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                playlist.exportToM3uFile(folder.toPath().resolve(toSafeFileName(playlist.getName()) + ".m3u"));
+            } catch (Exception ex) {
+                throw new CompletionException(ex);
+            }
+        }).exceptionally(ex -> {
+            Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+            failures.add(playlist.getName() + ": " + cause.getMessage());
+            return null;
+        });
+    }
+
+    private void publishExportOutcome(int exportedCount, List<String> failures) {
+        if (failures.isEmpty()) {
+            applicationEventPublisher.publishEvent(
+                    new StatusMessageUpdateEvent("Exported " + exportedCount + " playlist(s)", this));
+        } else {
+            applicationEventPublisher.publishEvent(
+                    new ErrorEvent("Export failed", String.join("\n", failures), this));
+        }
     }
 
     /**

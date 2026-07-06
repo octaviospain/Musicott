@@ -130,7 +130,7 @@ dependencies {
     testFixturesImplementation libs.kotlinx.coroutines.test
     testFixturesImplementation libs.junit.jupiter
 
-    testImplementation testFixtures(project)
+    testImplementation testFixtures(project(':'))
     testImplementation libs.bundles.music.commons.test
     testImplementation libs.hamcrest
     testImplementation libs.mockito.core
@@ -140,9 +140,9 @@ dependencies {
     testImplementation libs.kotlinx.coroutines.test
     testImplementation libs.junit.jupiter
 
-    integrationTestImplementation testFixtures(project)
-    uiTestImplementation testFixtures(project)
-    e2eTestImplementation testFixtures(project)
+    integrationTestImplementation testFixtures(project(':'))
+    uiTestImplementation testFixtures(project(':'))
+    e2eTestImplementation testFixtures(project(':'))
 }
 
 test {

@@ -19,5 +19,13 @@ sonar {
                 'build/test-results/uiTest',
                 'build/test-results/e2eTest'
         ].join(',')
+
+        // The CSS analyzer validates against W3C CSS, but these are JavaFX stylesheets. JavaFX
+        // defines its own pseudo-classes (:vertical, :horizontal, :selected) and supports custom
+        // ones set programmatically via PseudoClass (:albums, :genres, ...), so S4659
+        // "unknown pseudo-class selector" does not apply here.
+        property 'sonar.issue.ignore.multicriteria', 'javafxCssPseudoClasses'
+        property 'sonar.issue.ignore.multicriteria.javafxCssPseudoClasses.ruleKey', 'css:S4659'
+        property 'sonar.issue.ignore.multicriteria.javafxCssPseudoClasses.resourceKey', '**/*.css'
     }
 }
