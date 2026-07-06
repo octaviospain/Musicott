@@ -75,7 +75,6 @@ public class AlbumViewController {
     private StackPane albumsRootPane;
 
     private GridView<ObservableAlbum> albumGridView;
-    private ObservableList<ObservableAlbum> albumsBacking;
     private FilteredList<ObservableAlbum> filteredAlbums;
 
     /** The shared overlay drawer showing the selected album's tracks. */
@@ -127,7 +126,7 @@ public class AlbumViewController {
      * routed through {@link Platform#runLater} defensively so the grid never mutates off-thread.
      */
     private void configureGridBacking() {
-        albumsBacking = FXCollections.observableArrayList(audioRepository.getAlbumsProperty());
+        ObservableList<ObservableAlbum> albumsBacking = FXCollections.observableArrayList(audioRepository.getAlbumsProperty());
         logger.info("Albums view initialised with {} albums", albumsBacking.size());
 
         // Mirror the ordered projection wholesale on every change so the grid preserves its
@@ -251,6 +250,9 @@ public class AlbumViewController {
      * @param album the album to section
      * @return ordered list of {@code (AlbumTrackGroup, discNumber)} pairs
      */
+    // Defensive null guard — a mock or partially-built album can return a null track list despite
+    // the non-null domain contract; this must not NPE.
+    @SuppressWarnings("java:S2589")
     List<Map.Entry<AlbumTrackGroup, Integer>> buildAlbumSections(ObservableAlbum album) {
         var tracks = album.getTracks();
         if (tracks == null || tracks.isEmpty()) {
@@ -381,6 +383,9 @@ public class AlbumViewController {
      * Resolves the artist line shown under an album title: the album artist when set, "Various
      * Artists" for compilations, otherwise the primary artist of the album's first track.
      */
+    // Defensive null guards — a mock or partially-built album can return a null album artist, track
+    // list, or per-track artist/name despite the non-null domain contract; this must not NPE.
+    @SuppressWarnings("java:S2589")
     private static String displayArtist(ObservableAlbum album) {
         var albumArtist = album.getAlbumArtist();
         if (albumArtist != null && albumArtist.getName() != null && !albumArtist.getName().isBlank()) {

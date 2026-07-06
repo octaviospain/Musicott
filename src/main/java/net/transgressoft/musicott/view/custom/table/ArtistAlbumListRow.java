@@ -43,6 +43,7 @@ import static org.fxmisc.easybind.EasyBind.subscribe;
 public class ArtistAlbumListRow extends HBox {
 
     private static final String BASE_STYLE = "/css/base.css";
+    private static final String SECONDARY_INFO_STYLE_CLASS = "album-info-secondary";
     private static final double COVER_SIZE = 130.0;
 
     private final Artist artist;
@@ -112,11 +113,11 @@ public class ArtistAlbumListRow extends HBox {
         sizeLabel.setId("sizeLabel");
         // Share the secondary style with the year label so both carry the same font size and
         // padding; otherwise the two sit on different baselines under the cover (misaligned).
-        sizeLabel.getStyleClass().add("album-info-secondary");
+        sizeLabel.getStyleClass().add(SECONDARY_INFO_STYLE_CLASS);
         sizeLabel.textProperty().bind(map(containedAudioItemsProperty.sizeProperty(), this::getAlbumSizeString));
         yearLabel = new Label(buildYearsString());
         yearLabel.setId("yearLabel");
-        yearLabel.getStyleClass().add("album-info-secondary");
+        yearLabel.getStyleClass().add(SECONDARY_INFO_STYLE_CLASS);
 
         var underImageGridPane = new GridPane();
         var cc1 = new ColumnConstraints(COVER_SIZE / 2);
@@ -146,7 +147,7 @@ public class ArtistAlbumListRow extends HBox {
         // width (the drawer can be far wider than the artist view, where a 480px cap truncated it).
         relatedArtistsLabel = new Label();
         relatedArtistsLabel.setId("relatedArtistsLabel");
-        relatedArtistsLabel.getStyleClass().add("album-info-secondary");
+        relatedArtistsLabel.getStyleClass().add(SECONDARY_INFO_STYLE_CLASS);
         // Single line that truncates with an ellipsis rather than wrapping — squeezing the drawer
         // must not grow the row vertically. No fixed width cap so it uses the full available width.
         relatedArtistsLabel.setWrapText(false);
@@ -156,14 +157,14 @@ public class ArtistAlbumListRow extends HBox {
         genresLabel.setMaxWidth(480);
         albumLabelLabel = new Label();
         albumLabelLabel.setId("albumLabelLabel");
-        albumLabelLabel.getStyleClass().add("album-info-secondary");
+        albumLabelLabel.getStyleClass().add(SECONDARY_INFO_STYLE_CLASS);
         buildSimpleTableView();
 
         albumInfoVBox = new VBox(albumTitleLabel, genresLabel, audioItemsTableView);
         if (discNumber > 0) {
             var discLabel = new Label("Disc " + discNumber);
             discLabel.setId("discLabel");
-            discLabel.getStyleClass().add("album-info-secondary");
+            discLabel.getStyleClass().add(SECONDARY_INFO_STYLE_CLASS);
             albumInfoVBox.getChildren().add(1, discLabel);
         }
         VBox.setVgrow(audioItemsTableView, Priority.ALWAYS);
