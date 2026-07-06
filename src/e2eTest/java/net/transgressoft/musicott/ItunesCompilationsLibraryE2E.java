@@ -23,6 +23,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,6 +63,9 @@ import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 @ActiveProfiles("e2e")
 @ExtendWith(ApplicationExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@Disabled("Temporarily disabled: the artist-catalog projection does not converge under import load "
+        + "on slower CI runners due to music-commons #176 (FXAudioLibrary rebuilds all catalog "
+        + "collections wholesale per tick). Re-enable once #176/#177 is released — see Musicott #75.")
 class ItunesCompilationsLibraryE2E {
 
     static Stage testStage;
