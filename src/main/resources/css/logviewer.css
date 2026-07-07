@@ -1,0 +1,105 @@
+@import url("base.css");
+
+.root {
+    -fx-background-color: rgb(28, 28, 28);
+    -fx-font-family: "Avenir", sans-serif;
+}
+
+/* Top toolbar bar */
+.h-box {
+    -fx-background-color: rgb(40, 40, 40);
+    -fx-border-color: rgb(60, 60, 60);
+    -fx-border-width: 0 0 1 0;
+}
+
+/* Monospace log text area */
+.text-area {
+    -fx-font-family: "Monospaced", "Courier New", monospace;
+    -fx-font-size: 12px;
+    -fx-background-color: rgb(22, 22, 22);
+    -fx-text-fill: rgb(220, 220, 220);
+    -fx-control-inner-background: rgb(22, 22, 22);
+    -fx-border-color: transparent;
+}
+
+.text-area .content {
+    -fx-background-color: rgb(22, 22, 22);
+}
+
+.text-area:focused {
+    -fx-border-color: transparent;
+}
+
+/* Scrollbars — the default theme renders them invisibly against the dark text area */
+.text-area .scroll-bar:horizontal,
+.text-area .scroll-bar:vertical {
+    -fx-background-color: rgb(30, 30, 30);
+}
+
+.text-area .scroll-bar .track {
+    -fx-background-color: rgb(30, 30, 30);
+    -fx-background-radius: 0;
+}
+
+.text-area .scroll-bar .thumb {
+    -fx-background-color: rgb(90, 90, 90);
+    -fx-background-radius: 4;
+}
+
+.text-area .scroll-bar .thumb:hover {
+    -fx-background-color: rgb(120, 120, 120);
+}
+
+.text-area .scroll-bar .increment-button,
+.text-area .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.text-area .scroll-bar .increment-arrow,
+.text-area .scroll-bar .decrement-arrow {
+    -fx-background-color: rgb(150, 150, 150);
+}
+
+/* Combo box */
+.combo-box {
+    -fx-background-color: rgb(55, 55, 55);
+    -fx-text-fill: white;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: rgb(55, 55, 55);
+    -fx-text-fill: white;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: rgb(50, 50, 50);
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: rgb(50, 50, 50);
+    -fx-text-fill: white;
+}
+
+.combo-box-popup .list-view .list-cell:filled:hover {
+    -fx-background-color: rgb(73, 73, 73);
+}
+
+.combo-box-popup .list-view .list-cell:filled:selected {
+    -fx-background-color: rgb(73, 73, 73);
+}
+
+/* Export button */
+.button {
+    -fx-background-color: rgb(73, 73, 73);
+    -fx-text-fill: white;
+    -fx-font-family: "Avenir", sans-serif;
+}
+
+.button:hover {
+    -fx-background-color: rgb(100, 100, 100);
+}
+
+.button:pressed {
+    -fx-background-color: rgb(50, 50, 50);
+}

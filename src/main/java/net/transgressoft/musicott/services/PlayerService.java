@@ -110,6 +110,7 @@ public class PlayerService {
 
     public void play(ObservableAudioItem audioItem) {
         if (!audioItem.getPath().toFile().exists()) {
+            logger.error("File not found: {}", audioItem.getPath());
             applicationEventPublisher.publishEvent(new ErrorEvent("File not found", audioItem.getPath().toString(), this));
             return;
         }

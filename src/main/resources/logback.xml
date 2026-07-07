@@ -2,15 +2,35 @@
 <configuration>
     <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
 
+    <!-- Console stays at INFO+ even though application loggers are at DEBUG (so the in-app log
+         viewer can capture DEBUG). The ThresholdFilter keeps the terminal readable while the
+         RING_BUFFER appender still receives the full DEBUG stream. -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%-5level %logger{36} - %msg%n</pattern>
         </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+
+    <!-- In-memory ring buffer appender — captures DEBUG+ application records for the in-app
+         log viewer. The ThresholdFilter at DEBUG allows the level filter combo to be useful.
+         Keep root at INFO so Spring and other framework loggers are not captured at DEBUG. -->
+    <appender name="RING_BUFFER" class="net.transgressoft.musicott.logging.RingBufferAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
     </appender>
 
     <logger name="org.springframework" level="INFO"/>
     <logger name="org.jaudiotagger" level="ERROR"/>
-    <logger name="net.transgressoft" level="INFO"/>
+    <!-- Lowered to DEBUG so application debug records appear in the in-app log viewer.
+         Spring and other framework loggers remain at INFO via the root logger. -->
+    <logger name="net.transgressoft" level="DEBUG"/>
     <!-- JavaFX's PrismImageLoader emits empty WARN messages via JUL when constructing
          Image instances (one per FXML <Image> + the Stage icon). Images render
          correctly — but the bridged JUL log messages have no payload. Suppress. -->
@@ -18,5 +38,6 @@
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="RING_BUFFER"/>
     </root>
 </configuration>

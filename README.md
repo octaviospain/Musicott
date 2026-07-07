@@ -37,6 +37,7 @@ After years of this refactoring and redesign work, in April 2026 I moved the old
 - **Cover-grid browsing modes** — browse your library visually through the **Artists**, **Albums**, and **Genres** navigation modes, each presenting a grid of cover art. In the **Genres** mode each genre cell shows a cover drawn from that genre's tracks and cycles through a different cover on hover; clicking a genre cell opens a right overlay drawer that lists the genre's tracks grouped by album, with a textual header showing the genre name and track count. An album may appear with only a subset of its tracks when just some of them carry that genre. Tracks with no album metadata collect under an "Unknown Album" section at the bottom. Double-click a track in the drawer to play it; press Esc or click outside the drawer to close it.
 - **Contextual random playback** — pressing play with an empty queue or clicking shuffle starts random playback from the active view (all tracks, the selected playlist, or the selected artist), with a status message when no playable tracks exist
 - **Waveform visualization** — generated once per track, cached locally, and used for visual seeking during playback
+- **In-app log viewer** — a "Show Application Logs" item in the View menu opens a resizable, modeless window showing the most recent application log lines (read-only, selectable, scrollable). A level-filter combo box (TRACE / DEBUG / INFO / WARN / ERROR, defaulting to INFO) limits the visible lines; an export button saves the full current buffer to a `.log` file of your choice. When a completed operation (import, metadata edit, export) produces warnings or errors, the status bar label turns amber and becomes clickable — clicking it opens the log viewer directly so you can inspect what happened without digging through the file system
 - **Native installers** for Linux (AppImage / AUR), Windows, and macOS — no JDK install required by end users
 
 ## Download
@@ -59,6 +60,7 @@ WIP documentation lives in the **[GitHub wiki](https://github.com/octaviospain/M
 - [Playback](https://github.com/octaviospain/Musicott/wiki/Playback)
 - [Playlists](https://github.com/octaviospain/Musicott/wiki/Playlists)
 - [Search](https://github.com/octaviospain/Musicott/wiki/Search)
+- [Application logs](https://github.com/octaviospain/Musicott/wiki/Logs)
 
 ## Build from source
 

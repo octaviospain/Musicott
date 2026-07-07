@@ -33,6 +33,7 @@ import net.transgressoft.lirp.event.LirpEventSubscription
 import net.transgressoft.musicott.events.ExceptionEvent
 import net.transgressoft.musicott.events.StatusMessageUpdateEvent
 import net.transgressoft.musicott.events.StatusProgressUpdateEvent
+import net.transgressoft.musicott.logging.RingBufferHolder
 import net.transgressoft.musicott.view.custom.alerts.AlertFactory
 import org.jetbrains.annotations.UnknownNullability
 import org.springframework.context.ApplicationEventPublisher
@@ -84,6 +85,7 @@ class MediaImportService(
     fun importFiles(filesToOpen: List<File>) {
         if (!tryStartImport()) return
 
+        val mark = RingBufferHolder.INSTANCE.warnErrorCount()
         applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing files...", this))
 
         val paths = filesToOpen.map(File::toPath)
@@ -97,12 +99,13 @@ class MediaImportService(
             }
 
         audioLibrary.createFromFileBatchAsync(paths)
-            .whenComplete(completeImport(progressSubscription))
+            .whenComplete(completeImport(progressSubscription, mark))
     }
 
     fun importDirectory(directory: File) {
         if (!tryStartImport()) return
 
+        val mark = RingBufferHolder.INSTANCE.warnErrorCount()
         applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing files...", this))
         applicationEventPublisher.publishEvent(StatusProgressUpdateEvent(-1.0, this))
 
@@ -122,11 +125,12 @@ class MediaImportService(
 
         CompletableFuture.supplyAsync { findAcceptedFiles(directory, extensions) }
             .thenCompose(audioLibrary::createFromFileBatchAsync)
-            .whenComplete(completeImport(progressSubscription))
+            .whenComplete(completeImport(progressSubscription, mark))
     }
 
     private fun completeImport(
-        progressSubscription: LirpEventSubscription<in LirpEntity, CrudEvent.Type, CrudEvent<Int, ObservableAudioItem>>):
+        progressSubscription: LirpEventSubscription<in LirpEntity, CrudEvent.Type, CrudEvent<Int, ObservableAudioItem>>,
+        mark: Long):
             BiConsumer<in @UnknownNullability List<ObservableAudioItem>, in @UnknownNullability Throwable?> =
         { _, ex ->
             progressSubscription.cancel()
@@ -134,7 +138,8 @@ class MediaImportService(
                 logger.error(ex.message, ex)
                 applicationEventPublisher.publishEvent(ExceptionEvent(ex, this))
             }
-            applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Import process completed", this))
+            val delta = (RingBufferHolder.INSTANCE.warnErrorCount() - mark).toInt()
+            applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Import process completed", delta, this))
             finishImport()
         }
 
@@ -170,6 +175,7 @@ class MediaImportService(
 
         val library = lastParsedLibrary
             ?: run { finishImport(); throw IllegalStateException("No iTunes library parsed. Call parseLibrary() first.") }
+        val mark = RingBufferHolder.INSTANCE.warnErrorCount()
         applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing from iTunes...", this))
 
         val future = coreItunesImportService.importAsync(
@@ -196,7 +202,8 @@ class MediaImportService(
                 } else if (result != null) {
                     alertFactory.itunesImportResultAlert(result).showAndWait()
                 }
-                applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("iTunes import completed", this))
+                val delta = (RingBufferHolder.INSTANCE.warnErrorCount() - mark).toInt()
+                applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("iTunes import completed", delta, this))
                 applicationEventPublisher.publishEvent(StatusProgressUpdateEvent(0.0, this))
                 finishImport()
             }

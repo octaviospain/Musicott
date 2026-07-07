@@ -8,9 +8,11 @@ import net.transgressoft.commons.music.m3u.M3uImportService;
 import net.transgressoft.musicott.events.ErrorEvent;
 import net.transgressoft.musicott.events.ExportSelectedPlaylistsEvent;
 import net.transgressoft.musicott.events.ImportPlaylistsFromM3uEvent;
+import net.transgressoft.musicott.events.OpenLogViewerEvent;
 import net.transgressoft.musicott.events.SelectCurrentPlayingAudioItemEvent;
 import net.transgressoft.musicott.events.StatusMessageUpdateEvent;
 import net.transgressoft.musicott.events.StatusProgressUpdateEvent;
+import net.transgressoft.musicott.logging.RingBufferHolder;
 import net.transgressoft.musicott.view.custom.PlaylistTreeView;
 import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
 
@@ -21,6 +23,7 @@ import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.scene.Cursor;
 import javafx.scene.control.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -89,6 +92,7 @@ public class NavigationController {
 
     private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
     private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(170, 170, 170);";
+    private static final String ORANGE_STATUS_COLOUR = "-fx-text-fill: rgb(255, 160, 50);";
 
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
@@ -255,11 +259,12 @@ public class NavigationController {
                 return;
             }
             List<String> failures = Collections.synchronizedList(new ArrayList<>());
+            long exportMark = RingBufferHolder.INSTANCE.warnErrorCount();
             var futures = selected.stream()
                     .map(pl -> exportPlaylistAsync(pl, folder, failures))
                     .toList();
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .whenComplete((ignored, ex) -> Platform.runLater(() -> publishExportOutcome(selected.size(), failures)));
+                    .whenComplete((ignored, ex) -> Platform.runLater(() -> publishExportOutcome(selected.size(), failures, exportMark)));
         });
     }
 
@@ -282,11 +287,13 @@ public class NavigationController {
         });
     }
 
-    private void publishExportOutcome(int exportedCount, List<String> failures) {
+    private void publishExportOutcome(int exportedCount, List<String> failures, long warnErrorMark) {
         if (failures.isEmpty()) {
+            int delta = (int) (RingBufferHolder.INSTANCE.warnErrorCount() - warnErrorMark);
             applicationEventPublisher.publishEvent(
-                    new StatusMessageUpdateEvent("Exported " + exportedCount + " playlist(s)", this));
+                    new StatusMessageUpdateEvent("Exported " + exportedCount + " playlist(s)", delta, this));
         } else {
+            logger.error("Playlist export failed: {}", String.join("; ", failures));
             applicationEventPublisher.publishEvent(
                     new ErrorEvent("Export failed", String.join("\n", failures), this));
         }
@@ -331,6 +338,7 @@ public class NavigationController {
             if (file == null) {
                 return;
             }
+            long m3uMark = RingBufferHolder.INSTANCE.warnErrorCount();
             m3uImportService.importAsync(file.toPath())
                     .whenComplete((playlist, ex) -> Platform.runLater(() -> {
                         if (ex != null) {
@@ -341,22 +349,32 @@ public class NavigationController {
                             musicLibrary.playlistHierarchy().addPlaylistsToDirectory(Set.of(playlist), PlaylistTreeView.ROOT_PLAYLIST_NAME);
                             // Count tracks recursively: a folder playlist's direct audioItems exclude tracks
                             // held by its nested playlists, so the total imported must span the whole subtree.
+                            int delta = (int) (RingBufferHolder.INSTANCE.warnErrorCount() - m3uMark);
                             applicationEventPublisher.publishEvent(
                                     new StatusMessageUpdateEvent(
-                                            "Imported playlist '" + playlist.getName() + "' (" + playlist.getAudioItemsRecursive().size() + " tracks)", this));
+                                            "Imported playlist '" + playlist.getName() + "' (" + playlist.getAudioItemsRecursive().size() + " tracks)", delta, this));
                         }
                     }));
         });
     }
 
     @EventListener
-    public void setStatusMessage(StatusMessageUpdateEvent statusMessageUpdateEvent) {
+    public void setStatusMessage(StatusMessageUpdateEvent event) {
         Platform.runLater(() -> {
-            if (Double.isNaN(taskProgressBar.getProgress()))
-                statusLabel.setStyle(GREEN_STATUS_COLOUR);
-            else
-                statusLabel.setStyle(GRAY_STATUS_COLOUR);
-            statusLabel.setText(String.valueOf(statusMessageUpdateEvent.statusMessage));
+            if (event.warnErrorDelta > 0) {
+                statusLabel.setStyle(ORANGE_STATUS_COLOUR);
+                statusLabel.setText(event.statusMessage + " — " + event.warnErrorDelta + " warning(s)/error(s)");
+                statusLabel.setOnMouseClicked(e -> applicationEventPublisher.publishEvent(new OpenLogViewerEvent(this)));
+                statusLabel.setCursor(Cursor.HAND);
+            } else {
+                if (Double.isNaN(taskProgressBar.getProgress()))
+                    statusLabel.setStyle(GREEN_STATUS_COLOUR);
+                else
+                    statusLabel.setStyle(GRAY_STATUS_COLOUR);
+                statusLabel.setText(String.valueOf(event.statusMessage));
+                statusLabel.setOnMouseClicked(null);
+                statusLabel.setCursor(Cursor.DEFAULT);
+            }
         });
     }
 
