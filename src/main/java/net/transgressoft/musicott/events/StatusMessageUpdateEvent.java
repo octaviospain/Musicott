@@ -59,4 +59,19 @@ public class StatusMessageUpdateEvent extends ApplicationEvent {
         this.statusMessage = statusMessage;
         this.warnErrorDelta = warnErrorDelta;
     }
+
+    /**
+     * Whether this message belongs to the sidebar progress surface rather than the notification
+     * banner. Sidebar-bound messages are transient or in-progress states — blank/cleared resets,
+     * the search {@code "Searching..."} string, and import-in-progress messages (those beginning
+     * with {@code "Importing"}); every other message is a discrete outcome shown in the banner.
+     *
+     * <p>Both the banner consumer and the sidebar consumer route on this single predicate so the
+     * two surfaces stay in lockstep — no message is ever shown on both or dropped from both.
+     *
+     * @return {@code true} if this message should be handled by the sidebar progress surface
+     */
+    public boolean isSidebarBound() {
+        return statusMessage.isBlank() || statusMessage.equals("Searching...") || statusMessage.startsWith("Importing");
+    }
 }

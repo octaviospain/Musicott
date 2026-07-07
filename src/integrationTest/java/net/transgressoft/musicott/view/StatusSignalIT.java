@@ -7,6 +7,7 @@ import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
 import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
 import net.transgressoft.commons.music.m3u.M3uImportService;
 import net.transgressoft.musicott.events.StatusMessageUpdateEvent;
+import net.transgressoft.musicott.events.StatusProgressUpdateEvent;
 import net.transgressoft.musicott.logging.RingBufferHolder;
 
 import ch.qos.logback.classic.Level;
@@ -19,6 +20,7 @@ import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
@@ -178,6 +180,34 @@ class StatusSignalIT extends ApplicationTestBase<VBox> {
                 argThat(event -> event instanceof StatusMessageUpdateEvent &&
                         ((StatusMessageUpdateEvent) event).statusMessage.contains("WarnImport") &&
                         ((StatusMessageUpdateEvent) event).warnErrorDelta > 0));
+    }
+
+    @Test
+    @DisplayName("status progress update reveals the sidebar progress bar and sets its progress")
+    void statusProgressUpdateDrivesSidebarProgressBar() {
+        waitForFxEvents();
+
+        NavigationController controller = navigationControllerAndView.getController();
+        ProgressBar sidebarProgressBar = (ProgressBar) navigationControllerAndView.getView().get()
+                .lookup("#taskProgressBar");
+        assertThat(sidebarProgressBar)
+                .as("the sidebar progress bar must be mounted in the navigation scene")
+                .isNotNull();
+
+        controller.onStatusProgress(new StatusProgressUpdateEvent(0.5, this));
+        waitForFxEvents();
+
+        assertThat(sidebarProgressBar.getProgress()).isEqualTo(0.5);
+        assertThat(sidebarProgressBar.isVisible())
+                .as("progress bar must be visible while a task is in progress")
+                .isTrue();
+
+        controller.onStatusProgress(new StatusProgressUpdateEvent(0, this));
+        waitForFxEvents();
+
+        assertThat(sidebarProgressBar.isVisible())
+                .as("progress bar must hide when progress returns to zero")
+                .isFalse();
     }
 }
 

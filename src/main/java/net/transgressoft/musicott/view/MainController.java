@@ -1,6 +1,8 @@
 package net.transgressoft.musicott.view;
 
 import de.codecentric.centerdevice.MenuToolkit;
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -21,6 +23,7 @@ import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.util.Duration;
 import net.rgielen.fxweaver.core.FxmlView;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
@@ -37,6 +40,8 @@ import net.transgressoft.musicott.view.custom.alerts.DeleteAudioItemsConfirmatio
 import net.transgressoft.musicott.view.custom.table.FullAudioItemTableView;
 import net.transgressoft.musicott.view.itunes.ItunesImportWizard;
 import org.apache.commons.io.FileUtils;
+import org.controlsfx.control.NotificationPane;
+import org.controlsfx.control.action.Action;
 import org.fxmisc.easybind.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +92,11 @@ public class MainController {
 
     private MenuBarController menuBarController;
 
+    private NotificationPane notificationPane;
+
+    /** Auto-dismiss timer for clean-outcome banners; restarted on each successful outcome. */
+    private final PauseTransition autoDismissTransition = new PauseTransition(Duration.seconds(5));
+
     @FXML
     private BorderPane rootBorderPane;
     @FXML
@@ -125,7 +135,7 @@ public class MainController {
     private GridPane playerLayout;
     @FXML
     private TextField searchTextField;
-    
+
     private final KeyCombination.Modifier operativeSystemKeyModifier;
 
     /**
@@ -246,6 +256,18 @@ public class MainController {
         // selected.
         tableStackPane.getChildren().remove(albumsLayout);
         tableStackPane.getChildren().remove(genresLayout);
+
+        // Wrap the whole content area (contentBorderPane) in a NotificationPane so outcome banners
+        // dock directly under the menu bar, above the playlist info header, in every navigation
+        // mode. Wrapping only contentBorderPane's center would let the playlist info header push the
+        // banner down in playlist mode. The wrap is done after the StackPane child removals above so
+        // those manipulations are complete before the scene graph is restructured around the center
+        // node.
+        Node contentCenter = wrapperBorderPane.getCenter();
+        notificationPane = new NotificationPane(contentCenter);
+        notificationPane.setShowFromTop(true);
+        wrapperBorderPane.setCenter(notificationPane);
+        autoDismissTransition.setOnFinished(e -> notificationPane.hide());
 
         hideTableInfoPane();
     }
@@ -970,10 +992,87 @@ public class MainController {
     }
 
     /**
-     * Handles a request to start random playback from the active navigation context.
-     * Resolves the current context items and delegates to {@link PlayerService#playRandom(java.util.Collection)}.
-     * Publishes a {@link StatusMessageUpdateEvent} when no playable items are available.
+     * Routes a {@link StatusMessageUpdateEvent} to the notification banner. The banner owns discrete
+     * outcome messages (import completions, metadata saves, playlist exports/imports) so their full
+     * text is always readable. Transient and in-progress messages — blank resets, search-state text,
+     * and every import-in-progress string — are owned by {@link NavigationController}'s sidebar
+     * progress bar and are ignored here so the two listeners partition the message space with
+     * nothing double-shown.
+     *
+     * <p>For outcome messages with {@code warnErrorDelta > 0}, the banner is sticky with an
+     * "Open Log Viewer" action; for clean outcomes ({@code warnErrorDelta == 0}), it auto-dismisses.
      */
+    @EventListener
+    public void onStatusMessage(StatusMessageUpdateEvent event) {
+        if (event.isSidebarBound()) {
+            return;
+        }
+        String msg = event.statusMessage;
+        Platform.runLater(() -> {
+            autoDismissTransition.stop();
+            if (event.warnErrorDelta > 0) {
+                showWarnErrorBanner(msg + " — " + event.warnErrorDelta + " warning(s)/error(s)");
+            } else {
+                showOutcomeBanner(msg);
+            }
+        });
+    }
+
+    private void showOutcomeBanner(String message) {
+        notificationPane.getStyleClass().removeAll("warning", "success");
+        notificationPane.getStyleClass().add("success");
+        notificationPane.getActions().clear();
+        Label icon = new Label("✓");
+        icon.setStyle("-fx-text-fill: rgb(99, 255, 109); -fx-font-weight: bold;");
+        notificationPane.show(message, icon);
+        autoDismissTransition.playFromStart();
+    }
+
+    private void showWarnErrorBanner(String message) {
+        notificationPane.getStyleClass().removeAll("success", "warning");
+        notificationPane.getStyleClass().add("warning");
+        Action openLogAction = new Action("Open Log Viewer",
+                ae -> applicationContext.publishEvent(new OpenLogViewerEvent(this)));
+        Label icon = new Label("⚠");
+        icon.setStyle("-fx-text-fill: rgb(255, 160, 50); -fx-font-weight: bold;");
+        notificationPane.getActions().setAll(openLogAction);
+        notificationPane.show(message, icon);
+        // No auto-dismiss — WARN/ERROR banners are sticky until the user dismisses them
+    }
+
+    /**
+     * Returns whether the notification banner pane is currently showing.
+     *
+     * @return {@code true} if the notification banner is visible
+     */
+    boolean isNotificationPaneShowing() {
+        return notificationPane != null && notificationPane.isShowing();
+    }
+
+    /**
+     * Returns the text currently displayed in the notification banner, or an empty string
+     * if the banner is not showing.
+     *
+     * @return the banner label text, or an empty string
+     */
+    String getNotificationBannerText() {
+        if (notificationPane == null || !notificationPane.isShowing()) {
+            return "";
+        }
+        return notificationPane.getText();
+    }
+
+    /**
+     * Programmatically invokes the banner's primary action, equivalent to clicking the
+     * "Open Log Viewer" button inside the notification bar. Used by integration tests to
+     * verify that the action publishes {@link OpenLogViewerEvent}.
+     */
+    void invokeBannerAction() {
+        if (notificationPane != null && !notificationPane.getActions().isEmpty()) {
+            notificationPane.getActions().getFirst().handle(null);
+        }
+    }
+
     @EventListener
     public void onPlayRandomFromContext(PlayRandomFromContextEvent event) {
         var items = currentContextItems();
