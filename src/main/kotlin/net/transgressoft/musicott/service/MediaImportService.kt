@@ -85,6 +85,7 @@ class MediaImportService(
     fun importFiles(filesToOpen: List<File>) {
         if (!tryStartImport()) return
 
+        logger.info { "Importing ${filesToOpen.size} file(s)" }
         val mark = RingBufferHolder.INSTANCE.warnErrorCount()
         applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing files...", this))
 
@@ -98,6 +99,7 @@ class MediaImportService(
                 )
             }
 
+        logger.debug { "Dispatching async file batch import: ${paths.size} file(s)" }
         audioLibrary.createFromFileBatchAsync(paths)
             .whenComplete(completeImport(progressSubscription, mark))
     }
@@ -105,6 +107,7 @@ class MediaImportService(
     fun importDirectory(directory: File) {
         if (!tryStartImport()) return
 
+        logger.info { "Importing directory ${directory.path}" }
         val mark = RingBufferHolder.INSTANCE.warnErrorCount()
         applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing files...", this))
         applicationEventPublisher.publishEvent(StatusProgressUpdateEvent(-1.0, this))
@@ -132,11 +135,14 @@ class MediaImportService(
         progressSubscription: LirpEventSubscription<in LirpEntity, CrudEvent.Type, CrudEvent<Int, ObservableAudioItem>>,
         mark: Long):
             BiConsumer<in @UnknownNullability List<ObservableAudioItem>, in @UnknownNullability Throwable?> =
-        { _, ex ->
+        { result, ex ->
+            logger.debug { "Import async pipeline completing" }
             progressSubscription.cancel()
             if (ex != null) {
                 logger.error(ex.message, ex)
                 applicationEventPublisher.publishEvent(ExceptionEvent(ex, this))
+            } else {
+                logger.info { "Import finished: ${result?.size ?: 0} item(s) added" }
             }
             val delta = (RingBufferHolder.INSTANCE.warnErrorCount() - mark).toInt()
             applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Import process completed", delta, this))
@@ -200,6 +206,7 @@ class MediaImportService(
                     logger.error(ex.message, ex)
                     applicationEventPublisher.publishEvent(ExceptionEvent(ex, this))
                 } else if (result != null) {
+                    logger.info { "iTunes import finished: ${result.imported.size} track(s) imported, ${result.unresolved.size} unresolved" }
                     alertFactory.itunesImportResultAlert(result).showAndWait()
                 }
                 val delta = (RingBufferHolder.INSTANCE.warnErrorCount() - mark).toInt()
@@ -246,6 +253,7 @@ class MediaImportService(
             return emptyList()
         }
 
+        logger.debug { "Directory scan found ${paths.size} accepted audio file(s)" }
         val message = if (paths.isEmpty()) {
             "No supported audio files found"
         } else {

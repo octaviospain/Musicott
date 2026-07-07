@@ -2,6 +2,7 @@ package net.transgressoft.musicott.splash;
 
 import net.transgressoft.musicott.PrimaryStageInitializer;
 import net.transgressoft.musicott.events.ExceptionEvent;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
@@ -79,6 +80,10 @@ public class SplashOrchestrator {
                 context.publishEvent(new ExceptionEvent(ex, this));
                 return;
             }
+            String version = BuildVersionReader.read();
+            int trackCount = context.getBean(ObservableAudioLibrary.class).getAudioItemsProperty().size();
+            long loadMs = System.currentTimeMillis() - splashShownAt;
+            logger.info("Musicott {} started — {} track(s) loaded in {} ms", version, trackCount, loadMs);
             scheduleDismiss(splash, primaryStage, splashShownAt);
         });
 

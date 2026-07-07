@@ -516,7 +516,7 @@ public class PlayerController {
      * the cover image, or the waveform image; with the given current {@link ObservableAudioItem}.
      */
     public void updatePlayerComponents(ObservableAudioItem currentTrack) {
-        logger.debug("Setting up player and view for track {}", currentTrack);
+        logger.trace("Setting up player and view for track {}", currentTrack);
 
         waveformRepository.getOrCreateWaveformAsync(currentTrack,
                         (short) playableWaveformPane.getWidth(),

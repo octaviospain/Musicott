@@ -24,15 +24,18 @@ class MusicLibraryEventSubscriber(
     fun editAudioItemsListener(editAudioItemsMetadataEvent: EditAudioItemsMetadataEvent) {
         val mark = RingBufferHolder.INSTANCE.warnErrorCount()
         val change = editAudioItemsMetadataEvent.audioItemMetadataChange
+        var savedCount = 0
         editAudioItemsMetadataEvent.audioItems.forEach { updatedAudioItem ->
             try {
                 applyMetadataChange(updatedAudioItem, change)
                 audioMetadataIO.writeMetadata(updatedAudioItem)
+                savedCount++
             } catch (exception: AudioItemManipulationException) {
                 logger.error("Error during audio metadata edition", exception)
                 applicationEventPublisher.publishEvent(ExceptionEvent(exception, this))
             }
         }
+        logger.info { "Saved metadata for $savedCount item(s)" }
         val delta = (RingBufferHolder.INSTANCE.warnErrorCount() - mark).toInt()
         applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Metadata updated", delta, this))
     }

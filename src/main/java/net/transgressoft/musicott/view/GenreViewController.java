@@ -183,7 +183,7 @@ public class GenreViewController implements Searchable<String> {
      */
     private void configureGridBacking() {
         genresBacking = FXCollections.observableArrayList(audioRepository.getGenreIndexesProperty());
-        logger.info("Genres view initialised with {} genre buckets", genresBacking.size());
+        logger.debug("Genres view initialised with {} genre buckets", genresBacking.size());
 
         // Mirror the ordered projection wholesale on every change so the grid preserves its bucket
         // ordering out of the box, rather than imposing a view-side sort.
