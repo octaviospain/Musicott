@@ -144,7 +144,7 @@ public class AlbumViewController implements Searchable<String> {
      */
     private void configureGridBacking() {
         albumsBacking = FXCollections.observableArrayList(audioRepository.getAlbumsProperty());
-        logger.info("Albums view initialised with {} albums", albumsBacking.size());
+        logger.debug("Albums view initialised with {} albums", albumsBacking.size());
 
         // Mirror the ordered projection wholesale on every change so the grid preserves its
         // album-title ordering out of the box, rather than imposing a view-side sort.

@@ -260,6 +260,7 @@ public class NavigationController {
             }
             List<String> failures = Collections.synchronizedList(new ArrayList<>());
             long exportMark = RingBufferHolder.INSTANCE.warnErrorCount();
+            logger.debug("Dispatching async export for {} playlist(s)", selected.size());
             var futures = selected.stream()
                     .map(pl -> exportPlaylistAsync(pl, folder, failures))
                     .toList();
@@ -289,11 +290,12 @@ public class NavigationController {
 
     private void publishExportOutcome(int exportedCount, List<String> failures, long warnErrorMark) {
         if (failures.isEmpty()) {
+            logger.info("Exported {} playlist(s)", exportedCount);
             int delta = (int) (RingBufferHolder.INSTANCE.warnErrorCount() - warnErrorMark);
             applicationEventPublisher.publishEvent(
                     new StatusMessageUpdateEvent("Exported " + exportedCount + " playlist(s)", delta, this));
         } else {
-            logger.error("Playlist export failed: {}", String.join("; ", failures));
+            logger.warn("Playlist export failed for {} playlist(s): {}", failures.size(), String.join("; ", failures));
             applicationEventPublisher.publishEvent(
                     new ErrorEvent("Export failed", String.join("\n", failures), this));
         }
@@ -339,6 +341,7 @@ public class NavigationController {
                 return;
             }
             long m3uMark = RingBufferHolder.INSTANCE.warnErrorCount();
+            logger.debug("Dispatching async M3U import for file: {}", file.getName());
             m3uImportService.importAsync(file.toPath())
                     .whenComplete((playlist, ex) -> Platform.runLater(() -> {
                         if (ex != null) {
@@ -347,6 +350,7 @@ public class NavigationController {
                                     new ErrorEvent("Import failed", ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage(), this));
                         } else {
                             musicLibrary.playlistHierarchy().addPlaylistsToDirectory(Set.of(playlist), PlaylistTreeView.ROOT_PLAYLIST_NAME);
+                            logger.info("Imported playlist '{}' from M3U file", playlist.getName());
                             // Count tracks recursively: a folder playlist's direct audioItems exclude tracks
                             // held by its nested playlists, so the total imported must span the whole subtree.
                             int delta = (int) (RingBufferHolder.INSTANCE.warnErrorCount() - m3uMark);

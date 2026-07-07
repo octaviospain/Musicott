@@ -118,7 +118,7 @@ public class PlayQueueController {
                 // overwritten on add.
                 change.getAddedSubList().forEach(trackQueueRow -> trackQueueRow.setOnDeleteButtonClickedHandler(event -> {
                     remover.accept(trackQueueRow);
-                    logger.debug("Removing track from {} by clicking the button. Size: {}", label, list.size());
+                    logger.trace("Removing track from {} by clicking the button. Size: {}", label, list.size());
                 }));
             }
             if (queueShapeChanged)

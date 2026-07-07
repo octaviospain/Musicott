@@ -167,7 +167,7 @@ public class PlayerService {
 
         trackPlayer.onFinish(() -> Platform.runLater(this::next));
         applicationEventPublisher.publishEvent(new AudioItemChangedEvent(audioItem, this));
-        logger.debug("Created new player for track {}", audioItem);
+        logger.trace("Created new player for track {}", audioItem);
     }
 
     private void bindMediaPlayer() {
@@ -307,7 +307,7 @@ public class PlayerService {
         playQueueList.remove(trackQueueRow);
         publishQueueUpdatedEvent();
         setPlayer(track);
-        logger.debug("Play from queue selected. Queue size {}, history queue size {}", playQueueList.size(), historyQueueList.size());
+        logger.trace("Play from queue selected. Queue size {}, history queue size {}", playQueueList.size(), historyQueueList.size());
     }
 
     public void playFromHistoryQueue(TrackQueueRow trackQueueRow) {
@@ -315,7 +315,7 @@ public class PlayerService {
         setPlayer(track);
         historyQueueList.remove(trackQueueRow);
         publishHistoryUpdatedEvent();
-        logger.debug("Play from history selected. History queue size {}", historyQueueList.size());
+        logger.trace("Play from history selected. History queue size {}", historyQueueList.size());
     }
 
     public void clearQueue() {
@@ -353,7 +353,7 @@ public class PlayerService {
     public void seek(Duration seekTime) {
         if (trackPlayer != null) {
             trackPlayer.seek(seekTime);
-            logger.debug("Player seeked value {}", seekTime.toSeconds());
+            logger.trace("Player seeked value {}", seekTime.toSeconds());
         }
     }
 

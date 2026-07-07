@@ -121,7 +121,7 @@ public class PrimaryStageInitializer {
             double chromeHeight = Math.max(0, stage.getHeight() - scene.getHeight());
             stage.setMinWidth(sceneMinWidth + chromeWidth);
             stage.setMinHeight(Math.max(sceneMinHeight + chromeHeight, MIN_HEIGHT_FLOOR));
-            logger.info("Stage min size set: width={} (scene {} + chrome {}), height={} (scene {} + chrome {}, floor {})",
+            logger.debug("Stage min size set: width={} (scene {} + chrome {}), height={} (scene {} + chrome {}, floor {})",
                 stage.getMinWidth(), sceneMinWidth, chromeWidth,
                 stage.getMinHeight(), sceneMinHeight, chromeHeight, MIN_HEIGHT_FLOOR);
         });
