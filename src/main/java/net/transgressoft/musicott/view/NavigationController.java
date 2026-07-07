@@ -8,7 +8,6 @@ import net.transgressoft.commons.music.m3u.M3uImportService;
 import net.transgressoft.musicott.events.ErrorEvent;
 import net.transgressoft.musicott.events.ExportSelectedPlaylistsEvent;
 import net.transgressoft.musicott.events.ImportPlaylistsFromM3uEvent;
-import net.transgressoft.musicott.events.OpenLogViewerEvent;
 import net.transgressoft.musicott.events.SelectCurrentPlayingAudioItemEvent;
 import net.transgressoft.musicott.events.StatusMessageUpdateEvent;
 import net.transgressoft.musicott.events.StatusProgressUpdateEvent;
@@ -23,7 +22,6 @@ import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.Cursor;
 import javafx.scene.control.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -49,14 +47,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALBUMS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ALL_AUDIO_ITEMS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.ARTISTS;
 import static net.transgressoft.musicott.view.NavigationController.NavigationMode.GENRES;
-import static org.fxmisc.easybind.EasyBind.map;
 import static org.fxmisc.easybind.EasyBind.subscribe;
 
 /**
@@ -90,10 +86,6 @@ public class NavigationController {
         }
     }
 
-    private static final String GREEN_STATUS_COLOUR = "-fx-text-fill: rgb(99, 255, 109);";
-    private static final String GRAY_STATUS_COLOUR = "-fx-text-fill: rgb(170, 170, 170);";
-    private static final String ORANGE_STATUS_COLOUR = "-fx-text-fill: rgb(255, 160, 50);";
-
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
     final PlaylistTreeView playlistTreeView;
@@ -109,8 +101,6 @@ public class NavigationController {
     private Button newPlaylistButton;
     @FXML
     private ProgressBar taskProgressBar;
-    @FXML
-    private Label statusLabel;
 
     final KeyCombination.Modifier operativeSystemKeyModifier;
     final ApplicationEventPublisher applicationEventPublisher;
@@ -163,8 +153,6 @@ public class NavigationController {
         });
 
         navigationVBox.getChildren().add(1, navigationMenuListView);
-        taskProgressBar.visibleProperty().bind(map(taskProgressBar.progressProperty().isEqualTo(0).not(), Function.identity()));
-        taskProgressBar.setProgress(0);
 
         VBox.setVgrow(navigationVBox, Priority.ALWAYS);
 
@@ -229,6 +217,43 @@ public class NavigationController {
                 logger.warn("Attempt to select current playlist of an Audio Item played from a playlist unsuccessful");
             }
         }
+    }
+
+    /**
+     * Reflects task progress on the sidebar progress bar, shown in the fixed row to the right of the
+     * new-playlist button. The bar is revealed only while a task is in progress (non-zero progress)
+     * and hidden when idle; because the bar stays {@code managed}, toggling its visibility never
+     * shifts the surrounding layout.
+     */
+    @EventListener
+    public void onStatusProgress(StatusProgressUpdateEvent event) {
+        Platform.runLater(() -> {
+            taskProgressBar.setProgress(event.statusProgress);
+            taskProgressBar.setVisible(event.statusProgress != 0);
+        });
+    }
+
+    /**
+     * Owns the sidebar-bound transient status messages: blank resets, the search-coordination
+     * "Searching..." string, and any import-in-progress message (those that begin with "Importing").
+     * The message is surfaced as the progress bar's tooltip; a blank message clears the tooltip and
+     * hides the bar. All other messages are discrete outcomes owned by {@link MainController}'s
+     * banner and are ignored here so the two listeners partition the message space exactly.
+     */
+    @EventListener
+    public void onStatusMessage(StatusMessageUpdateEvent event) {
+        if (!event.isSidebarBound()) {
+            return;
+        }
+        String msg = event.statusMessage;
+        Platform.runLater(() -> {
+            if (msg.isBlank()) {
+                taskProgressBar.setTooltip(null);
+                taskProgressBar.setVisible(false);
+            } else {
+                taskProgressBar.setTooltip(new Tooltip(msg));
+            }
+        });
     }
 
     /**
@@ -360,31 +385,6 @@ public class NavigationController {
                         }
                     }));
         });
-    }
-
-    @EventListener
-    public void setStatusMessage(StatusMessageUpdateEvent event) {
-        Platform.runLater(() -> {
-            if (event.warnErrorDelta > 0) {
-                statusLabel.setStyle(ORANGE_STATUS_COLOUR);
-                statusLabel.setText(event.statusMessage + " — " + event.warnErrorDelta + " warning(s)/error(s)");
-                statusLabel.setOnMouseClicked(e -> applicationEventPublisher.publishEvent(new OpenLogViewerEvent(this)));
-                statusLabel.setCursor(Cursor.HAND);
-            } else {
-                if (Double.isNaN(taskProgressBar.getProgress()))
-                    statusLabel.setStyle(GREEN_STATUS_COLOUR);
-                else
-                    statusLabel.setStyle(GRAY_STATUS_COLOUR);
-                statusLabel.setText(String.valueOf(event.statusMessage));
-                statusLabel.setOnMouseClicked(null);
-                statusLabel.setCursor(Cursor.DEFAULT);
-            }
-        });
-    }
-
-    @EventListener
-    public void setStatusProgress(StatusProgressUpdateEvent statusProgressUpdateEvent) {
-        Platform.runLater(() -> taskProgressBar.setProgress(statusProgressUpdateEvent.statusProgress));
     }
 
     public boolean containsPlaylistName(String name) {

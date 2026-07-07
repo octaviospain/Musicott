@@ -60,12 +60,15 @@
 	-fx-background-color: transparent;
 }
 
-#newPlaylistButton:pressed {
-	-fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 15, 0.3, 0, 0);
-}
-
+/* Sidebar task-progress bar sits in the new-playlist button row. Its track uses the dark base
+   colour so it stays invisible against the sidebar when the bar is hidden and reads cleanly
+   against the panel gray of the bar fill when a task is in progress. */
 #taskProgressBar .track {
 	-fx-background-color: rgb(34, 34, 34);
+}
+
+#newPlaylistButton:pressed {
+	-fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 15, 0.3, 0, 0);
 }
 
 .tree-cell, .list-cell, #navigationPaneVBox {
@@ -115,8 +118,4 @@
 
 #playlistsLabel, #libraryLabel {
 	-fx-font-size: 12px;
-}
-
-#statusLabel {
-	-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 1, 0.0, 0, 1);
 }

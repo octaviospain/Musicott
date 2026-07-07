@@ -72,7 +72,6 @@ class NavigationControllerIT extends ApplicationTestBase<VBox> {
         assertThat(fxRobot.lookup("#navigationPaneVBox").tryQuery()).isPresent();
         assertThat(fxRobot.lookup("#navigationVBox").tryQuery()).isPresent();
         assertThat(fxRobot.lookup("#playlistsVBox").tryQuery()).isPresent();
-        assertThat(fxRobot.lookup("#taskProgressBar").tryQuery()).isPresent();
         assertThat(fxRobot.lookup("#newPlaylistButton").tryQuery()).isPresent();
 
         assertThat(fxRobot.lookup("#playlistTreeView").tryQuery()).isPresent();

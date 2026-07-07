@@ -89,3 +89,44 @@
 .random-button:pressed {
     -fx-effect: dropshadow(gaussian, rgb(201, 201, 201), 15, 0.3, 0, 0);
 }
+
+/* NotificationPane banner styling. The painted surface lives on the inner ".pane" node, so the
+   readable panel-gray background must target it directly; the severity accent is driven by the
+   severity style class placed on the ".notification-pane" ancestor, which reliably matches. */
+.notification-bar > .pane {
+    -fx-background-color: rgb(73, 73, 73);
+}
+
+.notification-bar .label {
+    -fx-text-fill: white;
+    -fx-font-family: "Avenir", sans-serif;
+}
+
+/* Banner action button: a solid accent-green fill with dark text so it reads as an obviously
+   clickable control against the panel-gray banner surface, rather than near-invisible white text. */
+.notification-bar > .pane .button {
+    -fx-background-color: rgb(99, 255, 109);
+    -fx-text-fill: rgb(34, 34, 34);
+    -fx-font-weight: bold;
+    -fx-background-radius: 4;
+    -fx-padding: 3 12 3 12;
+}
+
+.notification-bar > .pane .button:hover {
+    -fx-background-color: rgb(120, 255, 128);
+}
+
+/* Keep the close (✕) glyph legible white; it is a graphic, not text, so tint its background fill. */
+.notification-bar .close-button .graphic {
+    -fx-background-color: white;
+}
+
+.notification-pane.success .notification-bar > .pane {
+    -fx-border-color: rgb(99, 255, 109);
+    -fx-border-width: 0 0 0 3px;
+}
+
+.notification-pane.warning .notification-bar > .pane {
+    -fx-border-color: rgb(255, 160, 50);
+    -fx-border-width: 0 0 0 3px;
+}
