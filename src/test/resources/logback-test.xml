@@ -6,10 +6,20 @@
         </encoder>
     </appender>
 
+    <appender name="RING_BUFFER" class="net.transgressoft.musicott.logging.RingBufferAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+    </appender>
+
     <logger name="org.springframework" level="INFO"/>
-    <logger name="net.transgressoft" level="INFO"/>
+    <logger name="net.transgressoft" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="RING_BUFFER"/>
     </root>
 </configuration>

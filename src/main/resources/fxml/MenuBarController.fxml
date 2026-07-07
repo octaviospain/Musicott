@@ -43,6 +43,8 @@
             <items>
                 <MenuItem fx:id="showHideNavigationPaneMenuItem" mnemonicParsing="false" text="Hide navigation panel"/>
                 <MenuItem fx:id="showHideTableInfoPaneMenuItem" mnemonicParsing="false" text="Hide table info panel"/>
+                <SeparatorMenuItem mnemonicParsing="false"/>
+                <MenuItem fx:id="showApplicationLogsMenuItem" mnemonicParsing="false" text="Show Application Logs"/>
             </items>
         </Menu>
         <Menu fx:id="aboutMenu" mnemonicParsing="false" text="About">

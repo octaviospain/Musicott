@@ -3,6 +3,7 @@ package net.transgressoft.musicott;
 import net.transgressoft.musicott.events.StopApplicationEvent;
 import net.transgressoft.musicott.view.EditController;
 import net.transgressoft.musicott.view.ErrorDialogController;
+import net.transgressoft.musicott.view.LogViewerController;
 import net.transgressoft.musicott.view.MainController;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 
@@ -69,10 +70,16 @@ public class PrimaryStageInitializer {
      * Pre-loads the auxiliary FXML views so their controllers and node trees are cached
      * by FxWeaver before the user can trigger them. Without this, the first error-dialog
      * raise would block on FXML parsing and node construction on the FX thread.
+     *
+     * <p>This is also the point at which each auxiliary controller's {@code @FXML} fields are
+     * injected into its Spring-managed singleton. Windows opened later purely in response to an
+     * application event (e.g. the log viewer) rely on this: without a prior {@code loadView} the
+     * controller's root node is {@code null} and building its scene fails.
      */
     private void prewarmAuxiliaryViews() {
         fxWeaver.loadView(ErrorDialogController.class);
         fxWeaver.loadView(EditController.class);
+        fxWeaver.loadView(LogViewerController.class);
     }
 
     /**

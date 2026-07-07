@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -12,6 +13,7 @@ import org.testfx.api.FxToolkit;
 import org.testfx.framework.junit5.ApplicationTest;
 import org.testfx.util.WaitForAsyncUtils;
 
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -65,6 +67,32 @@ public abstract class ApplicationTestBase<T extends Parent> extends ApplicationT
     }
 
     protected abstract T javaFxComponent();
+
+    /**
+     * Polls the open windows for up to five seconds for a showing {@link Stage} whose title
+     * matches {@code title}, pumping the FX event queue between polls. Returns the stage once it
+     * appears, or {@code null} if it never shows within the deadline.
+     *
+     * @param title the exact stage title to match
+     * @return the matching showing stage, or {@code null} if none appears within the deadline
+     */
+    protected Stage waitForDialogStage(String title) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(5);
+        while (System.currentTimeMillis() < deadline) {
+            waitForFxEvents();
+            Optional<Stage> match = Window.getWindows().stream()
+                    .filter(Stage.class::isInstance)
+                    .map(Stage.class::cast)
+                    .filter(s -> title.equals(s.getTitle()))
+                    .filter(Stage::isShowing)
+                    .findFirst();
+            if (match.isPresent()) {
+                return match.get();
+            }
+            Thread.sleep(50);
+        }
+        return null;
+    }
 
     @AfterEach
     void tearDown() {

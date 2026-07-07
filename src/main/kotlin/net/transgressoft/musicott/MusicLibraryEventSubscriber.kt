@@ -7,6 +7,8 @@ import net.transgressoft.commons.music.audio.AudioItemManipulationException
 import net.transgressoft.commons.music.audio.AudioMetadataIO
 import net.transgressoft.musicott.events.EditAudioItemsMetadataEvent
 import net.transgressoft.musicott.events.ExceptionEvent
+import net.transgressoft.musicott.events.StatusMessageUpdateEvent
+import net.transgressoft.musicott.logging.RingBufferHolder
 import net.transgressoft.musicott.view.EditController.AudioItemMetadataChange
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.event.EventListener
@@ -20,6 +22,7 @@ class MusicLibraryEventSubscriber(
 
     @EventListener
     fun editAudioItemsListener(editAudioItemsMetadataEvent: EditAudioItemsMetadataEvent) {
+        val mark = RingBufferHolder.INSTANCE.warnErrorCount()
         val change = editAudioItemsMetadataEvent.audioItemMetadataChange
         editAudioItemsMetadataEvent.audioItems.forEach { updatedAudioItem ->
             try {
@@ -30,6 +33,8 @@ class MusicLibraryEventSubscriber(
                 applicationEventPublisher.publishEvent(ExceptionEvent(exception, this))
             }
         }
+        val delta = (RingBufferHolder.INSTANCE.warnErrorCount() - mark).toInt()
+        applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Metadata updated", delta, this))
     }
 
     /**

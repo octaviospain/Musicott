@@ -1,0 +1,269 @@
+package net.transgressoft.musicott.view;
+
+import net.transgressoft.commons.fx.music.FXMusicLibrary;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
+import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
+import net.transgressoft.commons.fx.music.playlist.ObservablePlaylist;
+import net.transgressoft.commons.fx.music.playlist.ObservablePlaylistHierarchy;
+import net.transgressoft.commons.music.m3u.M3uImportService;
+import net.transgressoft.musicott.events.StatusMessageUpdateEvent;
+import net.transgressoft.musicott.logging.RingBufferHolder;
+import net.transgressoft.musicott.test.ApplicationTestBase;
+import net.transgressoft.musicott.test.JavaFxSpringTest;
+import net.transgressoft.musicott.test.JavaFxSpringTestConfiguration;
+import net.transgressoft.musicott.view.custom.PlaylistTreeView;
+import net.transgressoft.musicott.view.custom.alerts.AlertFactory;
+
+import ch.qos.logback.classic.Level;
+import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.scene.Node;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import net.rgielen.fxweaver.core.FxControllerAndView;
+import net.rgielen.fxweaver.core.FxWeaver;
+import net.rgielen.fxweaver.spring.InjectionPointLazyFxControllerAndViewResolver;
+import net.rgielen.fxweaver.spring.SpringFxWeaver;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.InjectionPoint;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Scope;
+import org.springframework.test.annotation.DirtiesContext;
+import org.testfx.api.FxRobot;
+
+import java.util.Optional;
+import java.util.function.Supplier;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.springframework.context.annotation.ComponentScan.Filter;
+import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
+
+/**
+ * UI test proving the end-to-end flow where a warning status signal in the navigation bar
+ * opens the "Application Logs" window. When a completed operation produces warnings or errors,
+ * the status label turns amber and becomes clickable; clicking it publishes
+ * {@link net.transgressoft.musicott.events.OpenLogViewerEvent} which the
+ * {@link LogViewerController} handles to open the viewer stage.
+ *
+ * @author Octavio Calleya
+ */
+@JavaFxSpringTest(classes = LogViewerWindowUITConfiguration.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@DisplayName("Application log viewer window")
+class LogViewerWindowUIT extends ApplicationTestBase<VBox> {
+
+    @Autowired
+    FxControllerAndView<NavigationController, VBox> navigationControllerAndView;
+
+    @Autowired
+    FxControllerAndView<LogViewerController, ?> logViewerControllerAndView;
+
+    @Autowired
+    ApplicationEventPublisher applicationEventPublisher;
+
+    @Override
+    protected VBox javaFxComponent() {
+        return navigationControllerAndView.getView().get();
+    }
+
+    @Override
+    @BeforeEach
+    protected void beforeEach() {
+        RingBufferHolder.INSTANCE.resetForTest();
+        // Trigger FXML loading for LogViewerController before any test interacts with it.
+        // The FxControllerAndView is prototype-scoped and lazy; accessing the controller here
+        // causes FxWeaver to load the FXML and inject @FXML fields into the singleton @Controller
+        // bean, so showWindow() can construct the Scene without a NullPointerException on root.
+        logViewerControllerAndView.getController();
+        super.beforeEach();
+    }
+
+    @AfterEach
+    void closeLogViewerStage() {
+        LogViewerController controller = logViewerControllerAndView.getController();
+        Platform.runLater(() -> {
+            if (controller.stage != null && controller.stage.isShowing()) {
+                controller.stage.hide();
+            }
+            controller.stage = null;
+        });
+        waitForFxEvents();
+    }
+
+    @Test
+    @DisplayName("clicking the amber warning status label opens the Application Logs window")
+    void clickingAmberWarningLabelOpensLogViewerWindow(FxRobot fxRobot) throws Exception {
+        waitForFxEvents();
+
+        // Add a WARN record so the amber signal can appear when a completion event is published
+        RingBufferHolder.INSTANCE.add("WARN  net.transgressoft.test - import warning\n", Level.WARN);
+
+        // Drive setStatusMessage directly on the NavigationController to set the amber state —
+        // this avoids the Spring event dispatch indirection and makes the test deterministic.
+        NavigationController navController = navigationControllerAndView.getController();
+        StatusMessageUpdateEvent warnEvent = new StatusMessageUpdateEvent("Import finished", 1, this);
+        // setStatusMessage internally calls Platform.runLater; call it from the test thread so
+        // the outer scheduling + the inner label update both drain within two waitForFxEvents pumps.
+        navController.setStatusMessage(warnEvent);
+        // First pump: schedules the inner Platform.runLater inside setStatusMessage.
+        waitForFxEvents();
+        // Second pump: executes the inner Platform.runLater that updates statusLabel style.
+        waitForFxEvents();
+
+        // Find the amber status label by its fx:id via the NavigationController's scene
+        Label statusLabel = (Label) navigationControllerAndView.getView().get().lookup("#statusLabel");
+        assertThat(statusLabel).as("amber status label").isNotNull();
+        assertThat(statusLabel.getStyle()).as("amber style").contains("255, 160, 50");
+        assertThat(statusLabel.getText()).contains("warning");
+
+        fxRobot.clickOn(statusLabel);
+        waitForFxEvents();
+
+        // Poll for the Application Logs stage to appear
+        Stage logStage = waitForDialogStage("Application Logs");
+        assertThat(logStage).as("Application Logs stage").isNotNull();
+        assertThat(logStage.isShowing()).isTrue();
+
+        // Verify the viewer's controls are rendered inside the opened stage
+        TextArea textArea = (TextArea) logStage.getScene().getRoot().lookup(".text-area");
+        assertThat(textArea).as("log text area").isNotNull();
+        assertThat(textArea.isEditable()).isFalse();
+
+        @SuppressWarnings("unchecked")
+        ComboBox<String> levelCombo = (ComboBox<String>) logStage.getScene().getRoot().lookup(".combo-box");
+        assertThat(levelCombo).as("level filter combo").isNotNull();
+        assertThat(levelCombo.getItems()).containsExactly("TRACE", "DEBUG", "INFO", "WARN", "ERROR");
+    }
+
+    @Test
+    @DisplayName("opening log viewer via menu item shows the Application Logs window with log content")
+    void openingLogViewerViaEventShowsWindowWithContent(FxRobot fxRobot) throws Exception {
+        waitForFxEvents();
+
+        // Pre-populate the buffer so there is content to show when the window opens
+        RingBufferHolder.INSTANCE.add("INFO  net.transgressoft.test - application started\n", Level.INFO);
+        RingBufferHolder.INSTANCE.add("WARN  net.transgressoft.test - configuration warning\n", Level.WARN);
+
+        // Open the viewer directly via the event (same path as the menu item)
+        LogViewerController controller = logViewerControllerAndView.getController();
+        Platform.runLater(controller::showWindow);
+        waitForFxEvents();
+
+        Stage logStage = waitForDialogStage("Application Logs");
+        assertThat(logStage).as("Application Logs stage").isNotNull();
+        assertThat(logStage.isShowing()).isTrue();
+
+        // The text area should show the pre-open buffer content at INFO+ level
+        TextArea textArea = (TextArea) logStage.getScene().getRoot().lookup(".text-area");
+        assertThat(textArea).isNotNull();
+        assertThat(textArea.getText()).contains("application started");
+        assertThat(textArea.getText()).contains("configuration warning");
+    }
+
+}
+
+/**
+ * Spring test configuration for {@link LogViewerWindowUIT}. Mounts both
+ * {@link NavigationController} (which owns the amber status label and publishes
+ * {@link net.transgressoft.musicott.events.OpenLogViewerEvent} on click) and
+ * {@link LogViewerController} (which handles that event and opens the viewer stage).
+ * Both beans must be in the same application context for the event listener to fire.
+ */
+@JavaFxSpringTestConfiguration(includeFilters = {
+        @Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
+                NavigationController.class,
+                PlaylistTreeView.class,
+                LogViewerController.class
+        })
+})
+class LogViewerWindowUITConfiguration {
+
+    @Bean
+    public FXMusicLibrary musicLibrary() {
+        return FXMusicLibrary.builder().build();
+    }
+
+    @Bean
+    public ObservablePlaylistHierarchy playlistRepository(FXMusicLibrary musicLibrary) {
+        var repository = musicLibrary.playlistHierarchy();
+        repository.createPlaylistDirectory("ROOT_PLAYLIST");
+        return repository;
+    }
+
+    @Bean
+    public ObjectProperty<Optional<ObservablePlaylist>> selectedPlaylistProperty() {
+        return new SimpleObjectProperty<>(this, "selected log viewer uit playlist", Optional.empty());
+    }
+
+    @Bean
+    public ObservableAudioLibrary audioRepository() {
+        return mock(ObservableAudioLibrary.class);
+    }
+
+    @Bean
+    public ApplicationEventPublisher applicationEventPublisher(ConfigurableApplicationContext applicationContext) {
+        // Delegate to the real context publisher so @EventListener on LogViewerController fires
+        // when NavigationController's amber label click publishes OpenLogViewerEvent.
+        // Wrapping avoids Spring trying to stop/destroy the context itself as a Lifecycle bean.
+        return applicationContext::publishEvent;
+    }
+
+    @Bean
+    public AlertFactory alertFactory() {
+        return mock(AlertFactory.class);
+    }
+
+    @Bean
+    public Supplier<DirectoryChooser> directoryChooserSupplier() {
+        return () -> mock(DirectoryChooser.class);
+    }
+
+    @Bean
+    public Supplier<FileChooser> fileChooserSupplier() {
+        return () -> mock(FileChooser.class);
+    }
+
+    @Bean
+    @SuppressWarnings("unchecked")
+    public M3uImportService<ObservableAudioItem, ObservablePlaylist> m3uImportService() {
+        return mock(M3uImportService.class);
+    }
+
+    @Bean
+    public KeyCombination.Modifier operativeSystemKeyModifier() {
+        return KeyCombination.CONTROL_DOWN;
+    }
+
+    @Bean
+    public Supplier<Stage> stageSupplier() {
+        return Stage::new;
+    }
+
+    @Bean(destroyMethod = "")
+    public FxWeaver fxWeaver(ConfigurableApplicationContext applicationContext) {
+        return new SpringFxWeaver(applicationContext);
+    }
+
+    @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    public <C, V extends Node> FxControllerAndView<C, V> controllerAndView(FxWeaver fxWeaver, InjectionPoint injectionPoint) {
+        return new InjectionPointLazyFxControllerAndViewResolver(fxWeaver).resolve(injectionPoint);
+    }
+}

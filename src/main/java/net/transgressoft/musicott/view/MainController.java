@@ -674,6 +674,8 @@ public class MainController {
         @FXML
         private MenuItem showHideTableInfoPaneMenuItem;
         @FXML
+        private MenuItem showApplicationLogsMenuItem;
+        @FXML
         private Menu aboutMenu;
         @FXML
         private MenuItem aboutMenuItem;
@@ -799,6 +801,9 @@ public class MainController {
                     hideTableInfoPane();
                 }
             });
+
+            showApplicationLogsMenuItem.setOnAction(e ->
+                applicationContext.publishEvent(new OpenLogViewerEvent(this)));
         }
 
         private void bindShowHideTableInfo() {
@@ -854,6 +859,7 @@ public class MainController {
             newPlaylistFolderMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.N, operativeSystemKeyModifier, shiftDown));
             showHideNavigationPaneMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.R, operativeSystemKeyModifier, shiftDown));
             showHideTableInfoPaneMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.U, operativeSystemKeyModifier, shiftDown));
+            showApplicationLogsMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.L, operativeSystemKeyModifier, shiftDown));
             selectAllMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemKeyModifier));
             unselectMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.A, operativeSystemKeyModifier, shiftDown));
             findMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.F, operativeSystemKeyModifier));

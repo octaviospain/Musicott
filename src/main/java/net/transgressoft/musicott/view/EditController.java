@@ -201,8 +201,8 @@ public class EditController {
                 optionalImage.ifPresent(coverImage::setImage);
             }
             catch (IOException exception) {
-                applicationEventPublisher.publishEvent(new ExceptionEvent(exception, this));
                 logger.error("Error changing cover image", exception);
+                applicationEventPublisher.publishEvent(new ExceptionEvent(exception, this));
             }
         }
     }
@@ -225,8 +225,8 @@ public class EditController {
         catch (IOException exception) {
             image = Optional.empty();
             newCoverImageBytes = null;
-            applicationEventPublisher.publishEvent(new ExceptionEvent(exception, this));
             logger.error("Error trying to set image", exception);
+            applicationEventPublisher.publishEvent(new ExceptionEvent(exception, this));
         }
         return image;
     }
