@@ -20,6 +20,9 @@
                     <Label text="Level:"/>
                     <ComboBox fx:id="levelFilterCombo" prefWidth="100.0"/>
                     <Button fx:id="exportButton" mnemonicParsing="false" text="Export…"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button fx:id="decreaseFontButton" mnemonicParsing="false" text="A-"/>
+                    <Button fx:id="increaseFontButton" mnemonicParsing="false" text="A+"/>
                 </HBox>
             </top>
             <center>

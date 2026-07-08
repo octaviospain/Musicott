@@ -13,6 +13,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -63,6 +66,11 @@ public class LogViewerController {
 
     private static final List<String> LEVELS = Arrays.asList("TRACE", "DEBUG", "INFO", "WARN", "ERROR");
 
+    static final int DEFAULT_FONT_SIZE = 12;
+    static final int MIN_FONT_SIZE = 8;
+    static final int MAX_FONT_SIZE = 24;
+    static final int FONT_SIZE_STEP = 2;
+
     private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
     @FXML
@@ -73,12 +81,18 @@ public class LogViewerController {
     ComboBox<String> levelFilterCombo;
     @FXML
     Button exportButton;
+    @FXML
+    Button decreaseFontButton;
+    @FXML
+    Button increaseFontButton;
 
     private final Supplier<Stage> stageSupplier;
     private final Supplier<FileChooser> fileChooserSupplier;
     private final ApplicationEventPublisher eventPublisher;
+    private final KeyCombination.Modifier operativeSystemKeyModifier;
 
     Stage stage;
+    int currentFontSize = DEFAULT_FONT_SIZE;
 
     /**
      * Currently selected log level filter; retained across opens (singleton controller).
@@ -98,10 +112,12 @@ public class LogViewerController {
     @Autowired
     public LogViewerController(Supplier<Stage> stageSupplier,
                                 Supplier<FileChooser> fileChooserSupplier,
-                                ApplicationEventPublisher eventPublisher) {
+                                ApplicationEventPublisher eventPublisher,
+                                KeyCombination.Modifier operativeSystemKeyModifier) {
         this.stageSupplier = stageSupplier;
         this.fileChooserSupplier = fileChooserSupplier;
         this.eventPublisher = eventPublisher;
+        this.operativeSystemKeyModifier = operativeSystemKeyModifier;
     }
 
     @FXML
@@ -120,6 +136,10 @@ public class LogViewerController {
         });
 
         exportButton.setOnAction(e -> exportLogs());
+        decreaseFontButton.setOnAction(e -> decreaseFontSize());
+        increaseFontButton.setOnAction(e -> increaseFontSize());
+
+        applyFontSize();
     }
 
     /**
@@ -138,12 +158,62 @@ public class LogViewerController {
             stage.getScene().getStylesheets().add("/css/logviewer.css");
             stage.getIcons().add(ApplicationImage.APP_ICON.get());
             stage.setOnHidden(e -> detachLiveTail());
+            registerFontSizeAccelerators(stage.getScene());
         }
         if (!stage.isShowing()) {
             reseed();
             stage.show();
         }
         stage.toFront();
+    }
+
+    /**
+     * Registers Ctrl/Cmd +/- keyboard accelerators on the viewer scene so font size can be
+     * adjusted regardless of which node has focus. EQUALS covers the unshifted "+" on most
+     * keyboard layouts; ADD and SUBTRACT cover the numeric keypad.
+     *
+     * @param scene the viewer scene to register accelerators on
+     */
+    private void registerFontSizeAccelerators(Scene scene) {
+        scene.getAccelerators().put(
+                new KeyCodeCombination(KeyCode.EQUALS, operativeSystemKeyModifier), this::increaseFontSize);
+        scene.getAccelerators().put(
+                new KeyCodeCombination(KeyCode.PLUS, operativeSystemKeyModifier), this::increaseFontSize);
+        scene.getAccelerators().put(
+                new KeyCodeCombination(KeyCode.ADD, operativeSystemKeyModifier), this::increaseFontSize);
+        scene.getAccelerators().put(
+                new KeyCodeCombination(KeyCode.MINUS, operativeSystemKeyModifier), this::decreaseFontSize);
+        scene.getAccelerators().put(
+                new KeyCodeCombination(KeyCode.SUBTRACT, operativeSystemKeyModifier), this::decreaseFontSize);
+    }
+
+    /**
+     * Increases the log text font size by {@link #FONT_SIZE_STEP} pixels, clamped at
+     * {@link #MAX_FONT_SIZE}. The new size is applied as an inline style so it takes
+     * precedence over the stylesheet's fixed {@code -fx-font-size} rule.
+     */
+    void increaseFontSize() {
+        currentFontSize = Math.min(currentFontSize + FONT_SIZE_STEP, MAX_FONT_SIZE);
+        applyFontSize();
+    }
+
+    /**
+     * Decreases the log text font size by {@link #FONT_SIZE_STEP} pixels, clamped at
+     * {@link #MIN_FONT_SIZE}. The new size is applied as an inline style so it takes
+     * precedence over the stylesheet's fixed {@code -fx-font-size} rule.
+     */
+    void decreaseFontSize() {
+        currentFontSize = Math.max(currentFontSize - FONT_SIZE_STEP, MIN_FONT_SIZE);
+        applyFontSize();
+    }
+
+    /**
+     * Applies the current font size as an inline style on the log text area. Inline style
+     * has higher specificity than stylesheet rules, so this overrides the 12px baseline
+     * declared in logviewer.css for per-session adjustments.
+     */
+    private void applyFontSize() {
+        logTextArea.setStyle("-fx-font-size: " + currentFontSize + "px;");
     }
 
     /**

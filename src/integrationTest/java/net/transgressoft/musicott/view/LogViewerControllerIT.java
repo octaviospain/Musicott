@@ -11,6 +11,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -230,6 +231,70 @@ class LogViewerControllerIT extends ApplicationTestBase<AnchorPane> {
         String text = controller.logTextArea.getText();
         assertThat(text).contains("simulated error-dialog error");
     }
+
+    @Test
+    @DisplayName("applies a default font size on initialize")
+    void appliesADefaultFontSizeOnInitialize() {
+        LogViewerController controller = logViewerControllerAndView.getController();
+
+        assertThat(controller.logTextArea.getStyle())
+                .as("default 12px inline style applied at initialize")
+                .contains("-fx-font-size: " + LogViewerController.DEFAULT_FONT_SIZE + "px");
+    }
+
+    @Test
+    @DisplayName("increases the log font size up to the maximum and clamps")
+    void increasesTheLogFontSizeUpToTheMaximumAndClamps() {
+        LogViewerController controller = logViewerControllerAndView.getController();
+
+        // Reset to default first so the test is order-independent
+        Platform.runLater(() -> {
+            controller.currentFontSize = LogViewerController.DEFAULT_FONT_SIZE;
+            controller.logTextArea.setStyle("-fx-font-size: " + LogViewerController.DEFAULT_FONT_SIZE + "px;");
+        });
+        waitForFxEvents();
+
+        // Call increase enough times to reach and exceed MAX
+        int callsNeeded = (LogViewerController.MAX_FONT_SIZE - LogViewerController.DEFAULT_FONT_SIZE)
+                / LogViewerController.FONT_SIZE_STEP + 2;
+        for (int i = 0; i < callsNeeded; i++) {
+            Platform.runLater(controller::increaseFontSize);
+            waitForFxEvents();
+        }
+
+        assertThat(controller.currentFontSize)
+                .as("font size must not exceed MAX after extra increase calls")
+                .isEqualTo(LogViewerController.MAX_FONT_SIZE);
+        assertThat(controller.logTextArea.getStyle())
+                .contains("-fx-font-size: " + LogViewerController.MAX_FONT_SIZE + "px");
+    }
+
+    @Test
+    @DisplayName("decreases the log font size down to the minimum and clamps")
+    void decreasesTheLogFontSizeDownToTheMinimumAndClamps() {
+        LogViewerController controller = logViewerControllerAndView.getController();
+
+        // Reset to default first so the test is order-independent
+        Platform.runLater(() -> {
+            controller.currentFontSize = LogViewerController.DEFAULT_FONT_SIZE;
+            controller.logTextArea.setStyle("-fx-font-size: " + LogViewerController.DEFAULT_FONT_SIZE + "px;");
+        });
+        waitForFxEvents();
+
+        // Call decrease enough times to reach and exceed MIN
+        int callsNeeded = (LogViewerController.DEFAULT_FONT_SIZE - LogViewerController.MIN_FONT_SIZE)
+                / LogViewerController.FONT_SIZE_STEP + 2;
+        for (int i = 0; i < callsNeeded; i++) {
+            Platform.runLater(controller::decreaseFontSize);
+            waitForFxEvents();
+        }
+
+        assertThat(controller.currentFontSize)
+                .as("font size must not go below MIN after extra decrease calls")
+                .isEqualTo(LogViewerController.MIN_FONT_SIZE);
+        assertThat(controller.logTextArea.getStyle())
+                .contains("-fx-font-size: " + LogViewerController.MIN_FONT_SIZE + "px");
+    }
 }
 
 /**
@@ -273,6 +338,11 @@ class LogViewerControllerITConfiguration {
     @Bean
     public Supplier<FileChooser> fileChooserSupplier(LogViewerFileChooserHolder holder) {
         return () -> holder.mock;
+    }
+
+    @Bean
+    public KeyCombination.Modifier operativeSystemKeyModifier() {
+        return KeyCombination.CONTROL_DOWN;
     }
 
     // destroyMethod = "" prevents Spring from auto-inferring shutdown(), which would call
