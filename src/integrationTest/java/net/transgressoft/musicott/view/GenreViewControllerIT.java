@@ -173,7 +173,9 @@ class GenreViewControllerIT extends ApplicationTestBase<StackPane> {
         Platform.runLater(() -> controller.applyMatchIds("strobe", Set.of("Techno")));
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> grid.getItems().size() == 1);
         waitForFxEvents();
-        assertThat(grid.getItems()).containsExactly(techno);
+        // containsExactly walks the grid's FX-backed list; snapshot it on the FX thread to avoid
+        // racing the filter predicate's concurrent mutation.
+        assertThat(queryFx(() -> List.copyOf(grid.getItems()))).containsExactly(techno);
 
         // Clearing the query restores every genre.
         Platform.runLater(() -> controller.applyMatchIds("", Collections.emptySet()));

@@ -341,11 +341,13 @@ class ArtistViewControllerIT extends ApplicationTestBase<SplitPane> {
         waitForFxEvents();
     }
 
+    // Iterates two nested FX observable collections (the album rows and each row's contained items),
+    // so the read must run on the FX thread to avoid racing concurrent mutation from the selection change.
     private static Set<String> displayedTitles(ListView<ArtistAlbumListRow> albumsListView) {
-        return albumsListView.getItems().stream()
+        return queryFx(() -> albumsListView.getItems().stream()
                 .flatMap(row -> row.containedAudioItemsProperty().stream())
                 .map(ObservableAudioItem::getTitle)
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(java.util.stream.Collectors.toSet()));
     }
 
     private static ObservableAudioItem audioItem(
