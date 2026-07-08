@@ -11,6 +11,9 @@
                 <SeparatorMenuItem mnemonicParsing="false"/>
                 <MenuItem fx:id="newPlaylistMenuItem" mnemonicParsing="false" text="Add new playlist"/>
                 <MenuItem fx:id="newPlaylistFolderMenuItem" mnemonicParsing="false" text="Add new playlist folder"/>
+                <MenuItem fx:id="deletePlaylistMenuItem" mnemonicParsing="false" text="Delete playlist"/>
+                <MenuItem fx:id="exportPlaylistsMenuItem" mnemonicParsing="false" text="Export playlist(s) as m3u file(s)"/>
+                <MenuItem fx:id="importPlaylistMenuItem" mnemonicParsing="false" text="Import playlist from m3u file..."/>
                 <SeparatorMenuItem mnemonicParsing="false"/>
                 <MenuItem fx:id="closeMenuItem" mnemonicParsing="false" text="Close"/>
             </items>

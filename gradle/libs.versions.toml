@@ -44,6 +44,7 @@ axion-release = "1.21.2"
 beryx-runtime = "2.0.1"
 jmh-plugin = "0.7.3"
 jmh = "1.37"
+spotless = "8.8.0"
 
 [libraries]
 # Kotlin
@@ -141,3 +142,4 @@ sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
 axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }
 beryx-runtime = { id = "org.beryx.runtime", version.ref = "beryx-runtime" }
 jmh           = { id = "me.champeau.jmh",   version.ref = "jmh-plugin" }
+spotless      = { id = "com.diffplug.spotless", version.ref = "spotless" }

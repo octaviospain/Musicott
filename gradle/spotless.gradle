@@ -1,0 +1,36 @@
+// Code formatting via Spotless. One umbrella for the mixed Java/Kotlin codebase:
+// Eclipse JDT for Java (the only Spotless Java formatter that leaves imports — and thus
+// the project's wildcard-import convention — untouched) and ktlint for Kotlin.
+//
+// Adoption is incremental: `ratchetFrom` limits every check/apply to files that differ
+// from origin/master, so no repo-wide reformat commit is created and `git blame` stays
+// intact. Run `gradle spotlessApply` to format your working changes, `gradle spotlessCheck`
+// (wired into `check`) to verify them.
+spotless {
+    ratchetFrom 'origin/master'
+
+    java {
+        target 'src/**/*.java'
+        // Eclipse JDT formats whitespace, braces and wrapping only — it never reorders,
+        // expands or removes imports, so the wildcard-import and static-imports-last
+        // conventions survive untouched.
+        eclipse().configFile("${rootDir}/config/spotless/eclipse-java-formatter.xml")
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    kotlin {
+        target 'src/**/*.kt'
+        // ktlint reads .editorconfig for rule configuration (4-space indent, 140-column
+        // width, and the disabled no-wildcard-imports rule that preserves the project's
+        // wildcard-import convention).
+        ktlint()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    kotlinGradle {
+        target '*.gradle.kts', 'gradle/*.gradle.kts'
+        ktlint()
+    }
+}

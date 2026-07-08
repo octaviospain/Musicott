@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# Pre-commit hook: format staged Java/Kotlin files with Spotless, then re-stage them.
+#
+# Enable in a clone with:
+#     git config core.hooksPath .githooks
+#
+# Only the files staged for this commit are passed to Spotless (via -PspotlessFiles),
+# so unrelated working-tree edits are left untouched. Note: if a file is *partially*
+# staged (some hunks staged, others not), Spotless formats the whole working-tree copy
+# and the re-stage below will include those other hunks — stage whole files to avoid this.
+
+set -e
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(java|kt|kts)$' || true)
+if [ -z "$staged" ]; then
+    exit 0
+fi
+
+# Prefer the global gradle (fast with a warm daemon); fall back to the wrapper.
+if command -v gradle >/dev/null 2>&1; then
+    GRADLE="gradle"
+elif [ -x "./gradlew" ]; then
+    GRADLE="./gradlew"
+else
+    echo "pre-commit: neither 'gradle' nor './gradlew' found — cannot run Spotless." >&2
+    exit 1
+fi
+
+# Build a regex of the staged paths for Spotless's spotlessFiles filter. Escape regex
+# metacharacters and join with '|'; Spotless matches these against absolute file paths.
+pattern=$(printf '%s\n' "$staged" | sed 's/[][\\.*^$(){}?+|/]/\\&/g' | paste -sd '|' -)
+
+echo "pre-commit: running spotlessApply on staged files..."
+"$GRADLE" spotlessApply -PspotlessFiles="$pattern" --quiet
+
+# Re-stage the files that were staged; Spotless may have reformatted them.
+printf '%s\n' "$staged" | xargs git add
+
+exit 0

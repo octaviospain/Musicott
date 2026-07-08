@@ -1,10 +1,13 @@
-# Musicott
+![Musicott](/src/main/resources/images/musicott-about-logo.png)
 
-![build](https://img.shields.io/github/actions/workflow/status/octaviospain/musicott/.github%2Fworkflows%2Fmaster.yml?logo=github)
-[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=octaviospain_musicott&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=octaviospain_musicott)
-[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=octaviospain_musicott&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=octaviospain_musicott)
 [![license](https://img.shields.io/badge/license-GPLv3-brightgreen.svg)](https://github.com/octaviospain/Musicott/blob/master/LICENSE)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/octaviospain/Musicott)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=octaviospain_musicott&metric=bugs)](https://sonarcloud.io/summary/new_code?id=octaviospain_musicott)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=octaviospain_musicott&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=octaviospain_musicott)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=octaviospain_musicott&metric=coverage)](https://sonarcloud.io/summary/new_code?id=octaviospain_musicott)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=octaviospain_musicott&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=octaviospain_musicott)
 [![Latest release](https://img.shields.io/github/v/release/octaviospain/Musicott)](https://github.com/octaviospain/Musicott/releases/latest)
+![build](https://img.shields.io/github/actions/workflow/status/octaviospain/musicott/.github%2Fworkflows%2Fmaster.yml?logo=github)
 
 A cross-platform desktop music player built with JavaFX and Spring Boot, on top of [music-commons](https://github.com/octaviospain/music-commons) and [lirp persistence](https://github.com/octaviospain/lirp). Manage your local music library, organize playlists, play tracks with waveform visualization, and import from iTunes.
 

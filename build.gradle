@@ -16,6 +16,7 @@ plugins {
     alias(libs.plugins.axion.release)
     alias(libs.plugins.beryx.runtime)
     alias(libs.plugins.jmh)
+    alias(libs.plugins.spotless)
 }
 
 // JavaFX is consumed as platform modules from the JDK (BellSoft Liberica Full /
@@ -140,3 +141,4 @@ jmh {
 apply from: 'gradle/test-suites.gradle'
 apply from: 'gradle/packaging.gradle'
 apply from: 'gradle/sonar.gradle'
+apply from: 'gradle/spotless.gradle'

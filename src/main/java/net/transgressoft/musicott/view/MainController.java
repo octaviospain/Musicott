@@ -668,6 +668,12 @@ public class MainController {
         @FXML
         private MenuItem newPlaylistFolderMenuItem;
         @FXML
+        private MenuItem deletePlaylistMenuItem;
+        @FXML
+        private MenuItem exportPlaylistsMenuItem;
+        @FXML
+        private MenuItem importPlaylistMenuItem;
+        @FXML
         private MenuItem closeMenuItem;
         @FXML
         private Menu editMenu;
@@ -766,6 +772,10 @@ public class MainController {
             importItunesMenuItem.setOnAction(e -> itunesImportWizard.show(rootBorderPane.getScene().getWindow()));
             newPlaylistMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylist));
             newPlaylistFolderMenuItem.setOnAction(e -> changeViewToPlaylistCreationMode(playlistRepository::createPlaylistDirectory));
+            deletePlaylistMenuItem.setOnAction(e -> applicationContext.publishEvent(new DeleteSelectedPlaylistEvent(this)));
+            deletePlaylistMenuItem.disableProperty().bind(map(selectedPlaylistProperty, Optional::isEmpty));
+            exportPlaylistsMenuItem.setOnAction(e -> applicationContext.publishEvent(new ExportSelectedPlaylistsEvent(this)));
+            importPlaylistMenuItem.setOnAction(e -> applicationContext.publishEvent(new ImportPlaylistsFromM3uEvent(this)));
             closeMenuItem.setOnAction(e -> applicationContext.publishEvent(new StopApplicationEvent(this)));
         }
 

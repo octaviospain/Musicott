@@ -1,0 +1,23 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{yml,yaml,json,xml,fxml}]
+indent_size = 2
+
+[*.{kt,kts}]
+max_line_length = 140
+# The codebase uses wildcard imports by convention; keep ktlint from expanding them.
+ktlint_standard_no-wildcard-imports = disabled
+# Trailing-comma rules churn existing call sites; leave commas as authored.
+ktlint_standard_trailing-comma-on-call-site = disabled
+ktlint_standard_trailing-comma-on-declaration-site = disabled
+
+[*.md]
+trim_trailing_whitespace = false

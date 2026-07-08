@@ -113,6 +113,17 @@ Alternatives considered:
   keep correct.
 ```
 
+### Code formatting
+
+Formatting is enforced with [Spotless](https://github.com/diffplug/spotless) — Eclipse JDT for Java, ktlint for Kotlin, driven by `.editorconfig`.
+
+```bash
+gradle spotlessApply    # Format your changes
+gradle spotlessCheck    # Verify formatting (also runs as part of `gradle check`)
+```
+
+Only files that differ from `origin/master` are checked (`ratchetFrom`), so existing code is not reformatted wholesale — formatting is applied incrementally as files are touched.
+
 ### Build and Test
 
 Musicott uses gradle and targets **JDK 24** with JavaFX modules. Common commands:
