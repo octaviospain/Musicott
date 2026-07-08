@@ -30,6 +30,15 @@
     -fx-border-color: transparent;
 }
 
+/* base.css hides all TextArea scrollbars globally via:
+ *   .text-area .scroll-pane .scroll-bar { -fx-opacity: 0; }
+ * That selector is more specific than plain .text-area .scroll-bar rules, so the
+ * hide wins even when those rules are present. Override it here at equal specificity
+ * so source order puts this stylesheet's rule after the imported base.css rule. */
+.text-area .scroll-pane .scroll-bar {
+    -fx-opacity: 1;
+}
+
 /* Scrollbars — the default theme renders them invisibly against the dark text area */
 .text-area .scroll-bar:horizontal,
 .text-area .scroll-bar:vertical {

@@ -184,6 +184,12 @@ class LogViewerWindowUIT extends ApplicationTestBase<BorderPane> {
         assertThat(textArea).isNotNull();
         assertThat(textArea.getText()).contains("application started");
         assertThat(textArea.getText()).contains("configuration warning");
+
+        // A-/A+ font-size buttons must be present in the opened stage
+        javafx.scene.Node decreaseFontButton = logStage.getScene().getRoot().lookup("#decreaseFontButton");
+        javafx.scene.Node increaseFontButton = logStage.getScene().getRoot().lookup("#increaseFontButton");
+        assertThat(decreaseFontButton).as("A- font-size button").isNotNull();
+        assertThat(increaseFontButton).as("A+ font-size button").isNotNull();
     }
 
 }
