@@ -392,15 +392,19 @@ class AlbumViewControllerUIT extends ApplicationTestBase<StackPane> {
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> fxRobot.lookup("Kiara").tryQuery().isPresent());
         waitForFxEvents();
 
+        // getSelectedTracks() iterates the drawer rows and each row's selected-items FX collection,
+        // so every read of it must run on the FX thread — both the waitFor predicates and the
+        // final assertions read a snapshot taken via queryFx.
         Platform.runLater(controller::selectAllTracks);
-        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> controller.getSelectedTracks().size() == 2);
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> queryFx(() -> controller.getSelectedTracks().size()) == 2);
         waitForFxEvents();
-        assertThat(controller.getSelectedTracks()).containsExactlyInAnyOrder(track1, track2);
+        assertThat(queryFx(() -> List.copyOf(controller.getSelectedTracks())))
+                .containsExactlyInAnyOrder(track1, track2);
 
         Platform.runLater(controller::deselectAllTracks);
-        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> controller.getSelectedTracks().isEmpty());
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> queryFx(() -> controller.getSelectedTracks().isEmpty()));
         waitForFxEvents();
-        assertThat(controller.getSelectedTracks()).isEmpty();
+        assertThat(queryFx(() -> List.copyOf(controller.getSelectedTracks()))).isEmpty();
     }
 
     private static ObservableAlbum mockAlbum(String albumName, Artist artist, List<ObservableAudioItem> tracks) {

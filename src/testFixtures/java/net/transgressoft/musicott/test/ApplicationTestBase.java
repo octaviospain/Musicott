@@ -14,8 +14,11 @@ import org.testfx.framework.junit5.ApplicationTest;
 import org.testfx.util.WaitForAsyncUtils;
 
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 
@@ -67,6 +70,29 @@ public abstract class ApplicationTestBase<T extends Parent> extends ApplicationT
     }
 
     protected abstract T javaFxComponent();
+
+    /**
+     * Evaluates {@code query} on the JavaFX Application Thread and returns its result. JavaFX
+     * observable collections must only be iterated on the FX thread: reading one off-thread
+     * (streaming, {@code forEach}, snapshotting into a list/set, or an AssertJ assertion that walks
+     * the collection) while the FX thread concurrently mutates it throws {@link IndexOutOfBoundsException}
+     * or {@link java.util.NoSuchElementException}. Routing every iterating read through this helper
+     * removes that race by hopping the read onto the thread that owns the collection.
+     *
+     * @param query the read to evaluate on the FX thread
+     * @param <T>   the result type
+     * @return the value produced by {@code query}
+     */
+    protected static <T> T queryFx(Callable<T> query) {
+        try {
+            return WaitForAsyncUtils.asyncFx(query).get(5, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted reading FX state", ex);
+        } catch (ExecutionException | TimeoutException ex) {
+            throw new IllegalStateException("Failed to read FX state on the Application Thread", ex);
+        }
+    }
 
     /**
      * Polls the open windows for up to five seconds for a showing {@link Stage} whose title

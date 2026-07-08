@@ -177,7 +177,9 @@ class AlbumViewControllerIT extends ApplicationTestBase<StackPane> {
         Platform.runLater(() -> controller.applyMatchIds("black sands", Set.of("Black Sands")));
         WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> grid.getItems().size() == 1);
         waitForFxEvents();
-        assertThat(grid.getItems()).containsExactly(blackSands);
+        // containsExactly walks the grid's FX-backed list; snapshot it on the FX thread to avoid
+        // racing the filter predicate's concurrent mutation.
+        assertThat(queryFx(() -> List.copyOf(grid.getItems()))).containsExactly(blackSands);
 
         // Clearing the query restores every album.
         Platform.runLater(() -> controller.applyMatchIds("", Collections.emptySet()));
