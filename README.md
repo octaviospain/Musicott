@@ -3,7 +3,7 @@
 ![build](https://img.shields.io/github/actions/workflow/status/octaviospain/musicott/.github%2Fworkflows%2Fmaster.yml?logo=github)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=octaviospain_musicott&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=octaviospain_musicott)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=octaviospain_musicott&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=octaviospain_musicott)
-[![license](https://img.shields.io/badge/license-GPL3v2-brightgreen.svg)](https://github.com/octaviospain/Musicott/blob/master/license/gpl.txt)
+[![license](https://img.shields.io/badge/license-GPLv3-brightgreen.svg)](https://github.com/octaviospain/Musicott/blob/master/LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/octaviospain/Musicott)](https://github.com/octaviospain/Musicott/releases/latest)
 
 A cross-platform desktop music player built with JavaFX and Spring Boot, on top of [music-commons](https://github.com/octaviospain/music-commons) and [lirp persistence](https://github.com/octaviospain/lirp). Manage your local music library, organize playlists, play tracks with waveform visualization, and import from iTunes.
@@ -25,7 +25,9 @@ That was 9 years ago and since then I decided to refactor and redesign its archi
 
 After years of this refactoring and redesign work, in April 2026 I moved the old code to the `master-legacy` branch and I will start releasing again.
 
-![Musicott main window](docs/images/hero-screenshot.png)
+For a deeper look at how the three projects fit together, the Spring Boot + JavaFX wiring, and the event-driven design — with diagrams — see the [Architecture wiki page](https://github.com/octaviospain/Musicott/wiki/Architecture).
+
+![Musicott main window](https://github.com/octaviospain/Musicott/wiki/screenshots/hero.png)
 
 ## Key Features
 
@@ -99,6 +101,21 @@ gradle check              # All of the above + JaCoCo coverage
 ```
 
 Pass `-Dtestfx.headless=false` on any test task to watch the UI execute against a real screen.
+
+## More in the wiki
+
+Features and topics covered in depth in the wiki rather than here:
+
+| Topic | Wiki page |
+|---|---|
+| Browsing by all tracks, artists, albums, and genres | [Browsing](https://github.com/octaviospain/Musicott/wiki/Browsing) |
+| The four-step iTunes import wizard | [Import](https://github.com/octaviospain/Musicott/wiki/Import) |
+| Play queue, history, and contextual random playback | [Playback](https://github.com/octaviospain/Musicott/wiki/Playback) |
+| Playlists and folder hierarchy | [Playlists](https://github.com/octaviospain/Musicott/wiki/Playlists) |
+| Full-text search across metadata | [Search](https://github.com/octaviospain/Musicott/wiki/Search) |
+| In-app log viewer and the amber warning signal | [Logs](https://github.com/octaviospain/Musicott/wiki/Logs) |
+| Ecosystem, Spring/JavaFX wiring, startup lifecycle | [Architecture](https://github.com/octaviospain/Musicott/wiki/Architecture) |
+| Terminology reference | [Glossary](https://github.com/octaviospain/Musicott/wiki/Glossary) |
 
 ## Contributing
 

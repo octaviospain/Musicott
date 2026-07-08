@@ -49,6 +49,15 @@ import java.nio.file.Path
 import java.util.Optional
 import java.util.function.Supplier
 
+/**
+ * Central Spring bean definitions for the domain and persistence layer.
+ *
+ * Creates the application data directory and files on startup, then exposes the
+ * music-commons repositories as beans: the audio library backed by a lirp SQLite
+ * repository, and the playlist hierarchy and waveform cache backed by lirp JSON file
+ * repositories. Also provides supporting beans such as the metadata I/O service, the
+ * m3u import service, file/directory choosers, and the OS-appropriate key modifier.
+ */
 @Configuration
 class ApplicationConfiguration @Autowired constructor(private val applicationPaths: MusicottApplication.ApplicationPaths) {
 

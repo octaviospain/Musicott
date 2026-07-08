@@ -14,6 +14,15 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 
+/**
+ * Applies metadata edits to the music library in response to edit events.
+ *
+ * Listens for [EditAudioItemsMetadataEvent], writes the resolved changes onto each live
+ * audio item so the reactive projections (all-tracks table, genre/album/artist views)
+ * re-key, and persists the new tags back to the audio files via [AudioMetadataIO].
+ * Per-item failures are logged and republished as [ExceptionEvent] without aborting the
+ * batch, and a [StatusMessageUpdateEvent] reports the outcome with any warning count.
+ */
 @Component
 class MusicLibraryEventSubscriber(
     private val audioMetadataIO: AudioMetadataIO,

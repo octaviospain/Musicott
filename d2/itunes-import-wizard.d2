@@ -1,0 +1,55 @@
+# iTunes import: four-step wizard flow into the media import service.
+# Render: d2 d2/itunes-import-wizard.d2 ../Musicott.wiki/images/itunes-import-wizard.svg
+
+title: |md
+  # iTunes import wizard
+| {
+  near: top-center
+  style.font-size: 26
+  style.bold: true
+}
+
+direction: right
+
+user: User {shape: person; style.fill: "#eef6ff"}
+
+s1: 1. Choose library {
+  style.fill: "#ffffff"
+  tooltip: Pick iTunes Library.xml; parsed in place; Next stays disabled until valid
+}
+s2: 2. Choose playlists {
+  style.fill: "#ffffff"
+  tooltip: Move playlists into the import list; Next disabled until at least one is selected
+}
+s3: 3. Metadata policy {
+  style.fill: "#ffffff"
+  tooltip: File vs iTunes metadata source; preserve play counts; write tags back to files
+}
+s4: 4. Review & import {
+  style.fill: "#ffffff"
+  tooltip: Read-only recap with total track/playlist count
+}
+
+draft: ItunesImportDraft {
+  shape: cylinder
+  style.fill: "#fef9c3"
+  style.stroke: "#eab308"
+}
+
+service: MediaImportService {
+  style.fill: "#f0fdf4"
+  style.stroke: "#22c55e"
+}
+
+library: ObservableAudioLibrary {
+  shape: cylinder
+  style.fill: "#f0fdf4"
+  style.stroke: "#22c55e"
+}
+
+user -> s1 -> s2 -> s3 -> s4
+s1 -> draft: library file
+s2 -> draft: selected playlists
+s3 -> draft: import policy
+s4 -> service: FINISH → importSelectedPlaylists(playlists, policy)
+service -> library: add tracks + playlists

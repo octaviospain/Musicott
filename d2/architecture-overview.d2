@@ -1,0 +1,61 @@
+# Musicott architecture and its three-project ecosystem.
+# Render: d2 d2/architecture-overview.d2 ../Musicott.wiki/images/architecture-overview.svg
+
+direction: down
+
+title: |md
+  # Musicott architecture
+| {
+  near: top-center
+  style.font-size: 28
+  style.bold: true
+}
+
+musicott: Musicott (this project) {
+  style.fill: "#eef6ff"
+  style.stroke: "#3b82f6"
+
+  view: View layer\n(JavaFX FXML controllers) {
+    style.fill: "#ffffff"
+  }
+  events: Event bus\n(Spring ApplicationEvent) {
+    style.fill: "#ffffff"
+  }
+  services: Services\n(import, playback, search) {
+    style.fill: "#ffffff"
+  }
+  config: Configuration\n(Spring beans, paths) {
+    style.fill: "#ffffff"
+  }
+
+  view -> events: publish / listen
+  services -> events: publish / listen
+  config -> services: wire
+}
+
+commons: music-commons {
+  style.fill: "#f0fdf4"
+  style.stroke: "#22c55e"
+  tooltip: Persistence-agnostic music domain — audio items, playlists, artists, waveforms, and their JavaFX-observable wrappers
+  domain: Domain model\nObservableAudioLibrary\nObservablePlaylistHierarchy
+}
+
+lirp: lirp {
+  style.fill: "#fef9c3"
+  style.stroke: "#eab308"
+  tooltip: Lightweight Reactive Persistence — event-sourced JSON and SQLite repositories
+  repos: Repositories\nSqliteRepository\nJsonFileRepository
+}
+
+storage: Local storage (~/.config/musicott) {
+  style.fill: "#f8fafc"
+  style.stroke: "#94a3b8"
+  db: audioItems.db\n(SQLite)
+  json: playlists.json\nwaveforms.json
+}
+
+musicott.services -> commons.domain: read / mutate
+musicott.config -> commons.domain: instantiate beans
+commons.domain -> lirp.repos: persist reactively
+lirp.repos -> storage.db: audio library
+lirp.repos -> storage.json: playlists + waveforms

@@ -1,0 +1,41 @@
+# Application startup sequence: splash, background boot, scene handoff.
+# Render: d2 d2/startup-lifecycle.d2 ../Musicott.wiki/images/startup-lifecycle.svg
+
+title: |md
+  # Startup lifecycle
+| {
+  near: top-center
+  style.font-size: 26
+  style.bold: true
+}
+
+shape: sequence_diagram
+
+main: MusicottApplication
+orch: SplashOrchestrator
+splash: SplashController
+boot: BootProgressTask\n(background thread)
+init: PrimaryStageInitializer
+stage: Primary Stage
+
+main -> orch: orchestrate(primaryStage)
+orch -> splash: bindToTask() + show()
+orch -> boot: start thread
+boot -> boot: Spring boot +\nlibrary/playlist/waveform load
+boot -> splash: progress updates
+
+success: {
+  boot -> orch: onSucceeded(context)
+  orch -> init: initializePrimaryStage(stage)
+  init -> init: prewarm auxiliary views\nbuild main scene
+  orch -> orch: 800ms minimum display gate
+  orch -> stage: show()
+  orch -> splash: fade out (250ms) + hide()
+}
+
+failure: {
+  style.stroke: "#ef4444"
+  boot -> orch: onFailed(throwable)
+  orch -> splash: hide()
+  orch -> stage: pre-Spring: exit JVM\npost-Spring: publish ExceptionEvent
+}

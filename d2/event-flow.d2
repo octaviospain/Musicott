@@ -1,0 +1,53 @@
+# Event-driven communication between Musicott components.
+# Render: d2 d2/event-flow.d2 ../Musicott.wiki/images/event-flow.svg
+
+direction: right
+
+title: |md
+  # Event-driven communication
+| {
+  near: top-center
+  style.font-size: 26
+  style.bold: true
+}
+
+publishers: Publishers {
+  style.fill: "#eef6ff"
+  controllers: Controllers\n(Main, Player, Navigation, Edit)
+  services: Services\n(MediaImportService, PlayerService)
+}
+
+bus: Spring ApplicationEventPublisher {
+  shape: hexagon
+  style.fill: "#dbeafe"
+  style.stroke: "#3b82f6"
+  style.bold: true
+}
+
+events: ApplicationEvent subclasses {
+  style.fill: "#ffffff"
+  style.stroke: "#94a3b8"
+  grid-columns: 2
+  play: PlayItemEvent
+  queue: AddToPlayQueueEvent
+  search: SearchTextTypedEvent
+  edit: EditAudioItemsMetadataEvent
+  status: StatusMessageUpdateEvent
+  error: ExceptionEvent / ErrorEvent
+}
+
+listeners: "@EventListener subscribers" {
+  style.fill: "#f0fdf4"
+  library: MusicLibraryEventSubscriber
+  player: PlayerController
+  error_dialog: ErrorDialogController
+  status_bar: MainController (status banner)
+}
+
+publishers.controllers -> bus: publishEvent()
+publishers.services -> bus: publishEvent()
+bus -> events: carries
+events -> listeners.library
+events -> listeners.player
+events -> listeners.error_dialog
+events -> listeners.status_bar

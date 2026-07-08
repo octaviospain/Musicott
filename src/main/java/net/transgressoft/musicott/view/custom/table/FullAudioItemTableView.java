@@ -10,6 +10,16 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.function.*;
 
+/**
+ * The full-column audio-item table shown in the all-tracks and playlist navigation modes.
+ *
+ * <p>Extends {@link AudioItemTableViewBase} with the complete set of metadata columns
+ * (title, artist, album, genre, BPM, times, counts, and dates) and registers itself as
+ * the {@link net.transgressoft.musicott.search.Searchable} for both modes. Column widths
+ * use an unconstrained resize policy with a custom slack-redistribution strategy so the
+ * long-text columns absorb extra horizontal space and the native scrollbar engages only
+ * when the window is narrower than the columns can shrink to.</p>
+ */
 @Component
 public class FullAudioItemTableView extends AudioItemTableViewBase {
 

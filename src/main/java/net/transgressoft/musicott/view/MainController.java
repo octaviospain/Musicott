@@ -60,6 +60,14 @@ import static net.transgressoft.musicott.view.NavigationController.NavigationMod
 import static org.fxmisc.easybind.EasyBind.map;
 import static org.fxmisc.easybind.EasyBind.subscribe;
 
+/**
+ * Root controller for the main application window.
+ *
+ * <p>Owns the top-level layout — menu bar, sidebar navigation, the audio-item table,
+ * the search field, and the status/notification banner — and mediates between them and
+ * the rest of the application through Spring {@code ApplicationEvent}s. It also hosts
+ * the cover-hover preview and coordinates file/folder import triggered from the menu.</p>
+ */
 @FxmlView("/fxml/MainController.fxml")
 @Controller
 public class MainController {

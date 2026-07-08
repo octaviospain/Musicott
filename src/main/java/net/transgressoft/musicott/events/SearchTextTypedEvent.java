@@ -19,6 +19,10 @@ package net.transgressoft.musicott.events;
 
 import org.springframework.context.ApplicationEvent;
 
+/**
+ * Published on every keystroke in the global search field, carrying the current
+ * query text so the active view filters its contents in real time.
+ */
 public class SearchTextTypedEvent extends ApplicationEvent {
 
     public final String searchText;

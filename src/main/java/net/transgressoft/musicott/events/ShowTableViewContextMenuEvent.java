@@ -23,6 +23,10 @@ import javafx.scene.input.MouseEvent;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioItem;
 import org.springframework.context.ApplicationEvent;
 
+/**
+ * Published to display the audio-item context menu at the given screen
+ * coordinates, carrying the currently selected items the menu acts upon.
+ */
 public class ShowTableViewContextMenuEvent extends ApplicationEvent {
 
     // JavaFX ObservableList isn't Serializable; ApplicationEvent stays in-VM.

@@ -27,6 +27,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Supplier;
 
+/**
+ * Application entry point and root Spring configuration.
+ *
+ * <p>{@link #main(String[])} launches the JavaFX runtime via the nested
+ * {@link SpringbootJavaFxApplication}, which boots Spring Boot in non-web mode and
+ * wires the JavaFX/Spring beans (FxWeaver, host services, application paths). Two
+ * startup paths are supported: a splash-driven background boot for the packaged app
+ * and a synchronous no-splash path used by the test source sets.</p>
+ */
 @Configuration
 @Import(ApplicationConfiguration.class)
 @ComponentScan

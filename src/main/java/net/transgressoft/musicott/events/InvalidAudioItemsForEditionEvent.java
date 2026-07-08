@@ -6,6 +6,10 @@ import org.springframework.context.ApplicationEvent;
 
 import java.util.List;
 
+/**
+ * Published when a metadata-edit request contains items that cannot be edited,
+ * carrying the rejected items so the UI can inform the user.
+ */
 public class InvalidAudioItemsForEditionEvent extends ApplicationEvent {
 
     // ObservableAudioItem isn't Serializable; ApplicationEvent stays in-VM.
