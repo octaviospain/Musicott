@@ -71,3 +71,25 @@ jobs:
             -   name: Build
                 shell: bash
                 run: ./gradlew check
+
+            -   name: Cross-check verification metadata against Maven Central
+                # Re-resolves every dependency with --refresh-dependencies (bypasses the
+                # cache restored above) and writes a fresh dependency-verification report
+                # to verification-metadata.dryrun.xml. Two outcomes:
+                #   1. Gradle's own dependency-verification rejects a freshly-downloaded
+                #      artifact whose SHA does not match the committed metadata — fails here.
+                #   2. The dry-run output diverges from the committed file (new components,
+                #      reordering, missing entries) — flagged by the diff below.
+                # Together these prove the committed metadata matches what Maven Central
+                # currently serves, defeating a poisoned-local-cache attack at regen time.
+                # --dry-run resolves dependencies without executing tests, so this stays cheap.
+                shell: bash
+                run: |
+                    ./gradlew --write-verification-metadata sha256 build cyclonedxBom \
+                        --dry-run --no-parallel --refresh-dependencies
+                    if ! diff -q gradle/verification-metadata.xml gradle/verification-metadata.dryrun.xml > /dev/null; then
+                        echo "::error::verification-metadata.xml diverges from Maven Central. Regenerate locally and recommit."
+                        diff gradle/verification-metadata.xml gradle/verification-metadata.dryrun.xml || true
+                        exit 1
+                    fi
+                    rm gradle/verification-metadata.dryrun.xml

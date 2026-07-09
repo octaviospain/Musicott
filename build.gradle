@@ -17,6 +17,7 @@ plugins {
     alias(libs.plugins.beryx.runtime)
     alias(libs.plugins.jmh)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.cyclonedx)
 }
 
 // JavaFX is consumed as platform modules from the JDK (BellSoft Liberica Full /
@@ -136,6 +137,49 @@ jmh {
     // allocation-hotspot analysis; results land under build/reports/jmh and a profile.jfr
     // directory per benchmark.
     profilers      = ['gc', 'jfr']
+}
+
+// Scope the CycloneDX SBOM to the runtime classpath — the set of artifacts that actually
+// ship in the application. Scanning that (rather than the whole repo) keeps OSV findings
+// focused on shipped dependencies and avoids false positives from build-tooling transitives
+// that live only in the Gradle daemon.
+tasks.named('cyclonedxDirectBom') {
+    includeConfigs = ['runtimeClasspath']
+    skipConfigs = ['compileClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
+}
+
+/**
+ * Regenerates the dependency-verification ledger from a clean slate so stale/superseded artifact entries are pruned.
+ *
+ * Gradle merges `--write-verification-metadata` output into the existing `gradle/verification-metadata.xml` file,
+ * so an append-then-prune approach leaves stale entries in place. Emptying only the `<components>` element first
+ * (while preserving `<configuration>`, including `verify-metadata` and `trusted-artifacts`) guarantees the
+ * resulting ledger contains exactly the currently-resolved set — nothing more, nothing less.
+ *
+ * Run with: `gradle regenerateVerificationMetadata`
+ */
+tasks.register('regenerateVerificationMetadata', Exec) {
+    group = 'verification'
+    description = 'Regenerates the dependency-verification ledger from a clean slate so stale/superseded artifact entries are pruned.'
+
+    doFirst {
+        def xmlFile = rootProject.file('gradle/verification-metadata.xml')
+        if (!xmlFile.exists()) {
+            logger.lifecycle('verification-metadata.xml not found — skipping component clear.')
+            return
+        }
+        def content = xmlFile.text
+        // Remove all children of <components> while leaving the element itself, then replace with empty tag.
+        // This preserves the <configuration> block (verify-metadata / trusted-artifacts) intact.
+        def cleared = content.replaceAll(/(?s)<components>.*?<\/components>/, '<components/>')
+        xmlFile.text = cleared
+        logger.lifecycle('Cleared <components> in verification-metadata.xml; <configuration> block preserved.')
+    }
+
+    commandLine 'gradle', 'clean', 'build', 'cyclonedxBom',
+            '--write-verification-metadata', 'sha256',
+            '--refresh-dependencies',
+            '--no-parallel'
 }
 
 apply from: 'gradle/test-suites.gradle'

@@ -1,0 +1,122 @@
+name: OSV-Scanner
+
+on:
+    schedule:
+        # Mondays 06:00 UTC
+        -   cron: '0 6 * * 1'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    security-events: write
+    actions: read
+
+env:
+    # Pin the OSV-Scanner CLI version. Bump together with renovate-tracked
+    # action SHAs; the binary itself is fetched over HTTPS from GitHub Releases.
+    OSV_SCANNER_VERSION: v2.3.8
+
+jobs:
+    scan:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+            -   name: Set up JDK 24 (Liberica + JavaFX)
+                uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
+                with:
+                    java-version: 24
+                    distribution: 'liberica'
+                    java-package: 'jdk+fx'
+
+            -   name: Cache Gradle packages
+                uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+                with:
+                    path: |
+                        ~/.gradle/caches
+                        ~/.gradle/wrapper
+                    key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                    restore-keys: |
+                        ${{ runner.os }}-gradle-
+
+            # The SBOM is scoped to runtimeClasspath via
+            # `tasks.named('cyclonedxDirectBom') { includeConfigs = ['runtimeClasspath'] }`
+            # in build.gradle — the set of artifacts that actually ship. Scanning it
+            # instead of the repo avoids false positives from plugin-classpath
+            # transitives that live only in the Gradle daemon and never ship.
+            -   name: Generate CycloneDX SBOM
+                run: ./gradlew cyclonedxDirectBom --no-parallel
+
+            -   name: Install OSV-Scanner CLI
+                # Verify the downloaded binary against the upstream-published
+                # SHA-256 sums before executing it. Fetching SHA256SUMS over
+                # the same HTTPS channel matches Google's own installation guide;
+                # a future hardening step could pin the digest inline.
+                run: |
+                    set -euo pipefail
+                    base="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}"
+                    # Save under the canonical asset filename so `sha256sum --check`
+                    # can match the entry in osv-scanner_SHA256SUMS.
+                    curl --proto '=https' --tlsv1.2 -fsSL \
+                        "${base}/osv-scanner_linux_amd64" -o /tmp/osv-scanner_linux_amd64
+                    curl --proto '=https' --tlsv1.2 -fsSL \
+                        "${base}/osv-scanner_SHA256SUMS" -o /tmp/osv-scanner_SHA256SUMS
+                    ( cd /tmp && grep ' osv-scanner_linux_amd64$' osv-scanner_SHA256SUMS \
+                        | sha256sum --check --strict - )
+                    chmod +x /tmp/osv-scanner_linux_amd64
+                    /tmp/osv-scanner_linux_amd64 --version
+
+            -   name: Scan SBOM
+                # OSV-Scanner exits non-zero on findings; keep going so the
+                # SARIF still gets uploaded to Code Scanning.
+                continue-on-error: true
+                run: |
+                    /tmp/osv-scanner_linux_amd64 \
+                        --sbom=build/reports/cyclonedx-direct/bom.json \
+                        --format=sarif \
+                        --output=results.sarif
+
+            -   name: Upload SARIF to Code Scanning
+                uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+                with:
+                    sarif_file: results.sarif
+
+    # Advisory job: surfaces build-time/plugin-classpath transitive vulnerabilities
+    # for visibility on dev/CI machines without failing the gate. Both scan and
+    # upload steps use continue-on-error so this job is strictly non-blocking.
+    scan-build-tooling:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+            -   name: Install OSV-Scanner CLI
+                run: |
+                    set -euo pipefail
+                    base="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}"
+                    curl --proto '=https' --tlsv1.2 -fsSL \
+                        "${base}/osv-scanner_linux_amd64" -o /tmp/osv-scanner_linux_amd64
+                    curl --proto '=https' --tlsv1.2 -fsSL \
+                        "${base}/osv-scanner_SHA256SUMS" -o /tmp/osv-scanner_SHA256SUMS
+                    ( cd /tmp && grep ' osv-scanner_linux_amd64$' osv-scanner_SHA256SUMS \
+                        | sha256sum --check --strict - )
+                    chmod +x /tmp/osv-scanner_linux_amd64
+                    /tmp/osv-scanner_linux_amd64 --version
+
+            -   name: Scan build tooling
+                # Scans gradle/verification-metadata.xml to surface build-time/plugin-classpath
+                # transitive vulnerabilities that never ship to consumers. Advisory only —
+                # findings are visible in Code Scanning under the 'build-tooling' category
+                # without blocking the merge gate.
+                continue-on-error: true
+                run: |
+                    /tmp/osv-scanner_linux_amd64 \
+                        --lockfile=gradle/verification-metadata.xml \
+                        --format=sarif \
+                        --output=results-build-tooling.sarif
+
+            -   name: Upload SARIF to Code Scanning
+                continue-on-error: true
+                uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+                with:
+                    sarif_file: results-build-tooling.sarif
+                    category: build-tooling

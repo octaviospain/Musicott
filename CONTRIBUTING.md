@@ -157,6 +157,41 @@ gradle run
 gradle test --tests "net.transgressoft.musicott.view.custom.alerts.KeyboardShortcutsDialogTest"
 ```
 
+### Dependency verification
+
+Musicott commits `gradle/verification-metadata.xml`, which locks every resolved artifact
+to a SHA-256 checksum. Gradle enforces these checksums on every invocation, defeating
+compromised-mirror and typosquat-at-resolution attacks.
+
+Whenever you change `gradle/libs.versions.toml`, a plugin version in `build.gradle`, or
+`gradle/wrapper/gradle-wrapper.properties`, regenerate the ledger **in the same commit**
+as the dependency change:
+
+```bash
+gradle regenerateVerificationMetadata
+```
+
+This clears the `<components>` block and rebuilds it from a clean, refreshed resolution,
+so stale entries are pruned rather than accumulated. Review the diff — it should contain
+only entries for the bumped artifact and its transitives — then commit both files together:
+
+```bash
+git add gradle/libs.versions.toml gradle/verification-metadata.xml
+```
+
+The branch/PR build re-runs this resolution against Maven Central and fails if the
+committed ledger diverges, so an out-of-date `verification-metadata.xml` is caught in CI.
+
+**Poisoned-cache warning.** If checksums change for artifacts you did not bump, your
+local Gradle cache may be compromised (a downloaded jar was tampered with at rest). Wipe
+the cache and regenerate against a fresh download:
+
+```bash
+gradle --stop
+rm -rf ~/.gradle/caches/modules-2
+gradle regenerateVerificationMetadata
+```
+
 ### Test Source Sets
 
 Musicott separates tests by intent into four Gradle source sets. Each set is gated by a class-name suffix and runs in its own task:

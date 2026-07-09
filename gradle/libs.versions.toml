@@ -45,6 +45,7 @@ beryx-runtime = "2.0.1"
 jmh-plugin = "0.7.3"
 jmh = "1.37"
 spotless = "8.8.0"
+cyclonedx = "3.2.4"
 
 [libraries]
 # Kotlin
@@ -143,3 +144,4 @@ axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axi
 beryx-runtime = { id = "org.beryx.runtime", version.ref = "beryx-runtime" }
 jmh           = { id = "me.champeau.jmh",   version.ref = "jmh-plugin" }
 spotless      = { id = "com.diffplug.spotless", version.ref = "spotless" }
+cyclonedx     = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }

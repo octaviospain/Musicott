@@ -52,3 +52,19 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Build with Gradle
         run: ./gradlew build
+      - name: Cross-check verification metadata against Maven Central
+        # Re-resolves every dependency with --refresh-dependencies (bypasses the cache
+        # restored above) and writes a fresh report to verification-metadata.dryrun.xml.
+        # Fails if Gradle rejects a freshly-downloaded artifact whose SHA does not match
+        # the committed metadata, or if the dry-run output diverges from the committed file.
+        # --dry-run resolves dependencies without executing tests, so this stays cheap.
+        shell: bash
+        run: |
+          ./gradlew --write-verification-metadata sha256 build cyclonedxBom \
+              --dry-run --no-parallel --refresh-dependencies
+          if ! diff -q gradle/verification-metadata.xml gradle/verification-metadata.dryrun.xml > /dev/null; then
+              echo "::error::verification-metadata.xml diverges from Maven Central. Regenerate locally and recommit."
+              diff gradle/verification-metadata.xml gradle/verification-metadata.dryrun.xml || true
+              exit 1
+          fi
+          rm gradle/verification-metadata.dryrun.xml
