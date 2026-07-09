@@ -1,11 +1,10 @@
 [versions]
 # Languages & runtime
-kotlin = "2.3.21"
+kotlin = "2.4.0"
 kotlinx-coroutines = "1.11.0"
 kotlinx-serialization = "1.11.0"
-
 # Frameworks
-spring-boot = "4.0.6"
+spring-boot = "4.1.0"
 spring-dependency-management = "1.1.7"
 
 # Music ecosystem
@@ -20,7 +19,7 @@ nsmenufx = "2.1.7"
 # Audio / media
 jaudiotagger = "3.0.1"
 # Persistence / serialization
-jackson = "2.22.0"
+jackson = "2.22.1"
 jackson-annotations = "2.22"
 
 # Utilities
@@ -31,7 +30,7 @@ kotlin-logging = "3.0.5"
 jakarta-annotation = "3.0.0"
 
 # Testing
-junit-bom = "6.1.0"
+junit-bom = "6.1.1"
 mockito = "5.23.0"
 testfx = "4.0.18"
 monocle = "21.0.2"
@@ -103,8 +102,8 @@ testfx-core = { module = "org.testfx:testfx-core", version.ref = "testfx" }
 testfx-junit5 = { module = "org.testfx:testfx-junit5", version.ref = "testfx" }
 openjfx-monocle = { module = "org.testfx:openjfx-monocle", version.ref = "monocle" }
 hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
-jmh-core       = { module = "org.openjdk.jmh:jmh-core",                   version.ref = "jmh" }
-jmh-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess",   version.ref = "jmh" }
+jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
+jmh-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 
 [bundles]
 music-commons = [
@@ -142,6 +141,6 @@ spring-dependency-management = { id = "io.spring.dependency-management", version
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
 axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }
 beryx-runtime = { id = "org.beryx.runtime", version.ref = "beryx-runtime" }
-jmh           = { id = "me.champeau.jmh",   version.ref = "jmh-plugin" }
-spotless      = { id = "com.diffplug.spotless", version.ref = "spotless" }
-cyclonedx     = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }
+jmh = { id = "me.champeau.jmh", version.ref = "jmh-plugin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+cyclonedx = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }

@@ -16,7 +16,12 @@ def hasBundledJavafx = providers.provider {
 }.get()
 
 ext {
-    testJvmArgs = hasBundledJavafx ? [
+    // Compact object headers (JEP 519, product flag on JDK 25+) — always on so the suites
+    // validate the app under the same object layout the packaged runtime uses. Independent
+    // of the JavaFX flags below, which only apply when the toolchain bundles JavaFX modules.
+    def compactHeadersArgs = ['-XX:+UseCompactObjectHeaders']
+
+    testJvmArgs = compactHeadersArgs + (hasBundledJavafx ? [
             // ALL-UNNAMED covers the SQLite JDBC driver (loaded from the classpath / unnamed
             // module), which calls System::load for its native library during e2e tests.
             '--enable-native-access=javafx.graphics,ALL-UNNAMED',
@@ -44,7 +49,7 @@ ext {
             '--add-opens=javafx.base/javafx.collections=ALL-UNNAMED',
             '--add-opens=javafx.fxml/com.sun.javafx.fxml=ALL-UNNAMED',
             '--add-exports=javafx.graphics/com.sun.javafx.tk=ALL-UNNAMED',
-    ] : []
+    ] : [])
 
     configureTestFxSystemProperties = { Test task ->
         if (System.getProperty('testfx.headless') == 'false') {

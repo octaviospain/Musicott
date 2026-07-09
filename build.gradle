@@ -17,7 +17,27 @@ plugins {
     alias(libs.plugins.beryx.runtime)
     alias(libs.plugins.jmh)
     alias(libs.plugins.spotless)
-    alias(libs.plugins.cyclonedx)
+    alias(libs.plugins.cyclonedx) apply false
+}
+
+// CycloneDX 3.2.4 leaves its internal `cyclonedxDirectBom` configuration consumable, which
+// collides with variant-aware classpath resolution while the `check`/`build` task graph is
+// configured on Gradle 9 (CycloneDX/cyclonedx-gradle-plugin#821: the configuration is
+// "consumed as a variant" before the plugin adds its artifact → "Cannot mutate"). The SBOM
+// is only ever produced by an explicit `cyclonedxBom` invocation (CI + the dependency-
+// verification regen), so the plugin is applied only when such a task is requested, keeping
+// `check`/`build` free of the collision.
+if (gradle.startParameter.taskNames.any { it.toLowerCase().contains('cyclonedx') }) {
+    apply plugin: 'org.cyclonedx.bom'
+
+    // Scope the SBOM to the runtime classpath — the artifacts that actually ship in the
+    // application. Scanning that (rather than every configuration) keeps OSV findings focused
+    // on shipped dependencies and avoids false positives from build-tooling transitives that
+    // live only in the Gradle daemon.
+    tasks.named('cyclonedxDirectBom') {
+        includeConfigs = ['runtimeClasspath']
+        skipConfigs = ['compileClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
+    }
 }
 
 // JavaFX is consumed as platform modules from the JDK (BellSoft Liberica Full /
@@ -25,7 +45,11 @@ plugins {
 // trimmed runtime — see gradle/packaging.gradle. No org.openjfx classpath JARs.
 
 repositories {
-    mavenLocal()
+    // No mavenLocal() here: local snapshot testing of net.transgressoft libraries is provided
+    // by a scoped `mavenLocal { content { includeGroup 'net.transgressoft' } }` in the developer
+    // init script. An unscoped mavenLocal() would shadow Maven Central for third-party deps and
+    // make locally-generated dependency-verification metadata diverge from CI (mavenLocal serves
+    // .pom but not .module, so .module entries and transitive versions would differ).
     mavenCentral()
 }
 
@@ -66,7 +90,7 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(24)
+    jvmToolchain(25)
 }
 
 scmVersion {
@@ -120,14 +144,14 @@ tasks.withType(ProcessResources).configureEach {
 
 tasks.withType(KotlinJvmCompile).configureEach {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_24)
+        jvmTarget.set(JvmTarget.JVM_25)
         freeCompilerArgs.add('-Xjsr305=strict')
         freeCompilerArgs.add('-Xjvm-default=all')
     }
 }
 
 jmh {
-    jvmArgs        = ['-Xmx2g']
+    jvmArgs        = ['-Xmx2g', '-XX:+UseCompactObjectHeaders']
     fork           = 1
     warmupIterations = 1
     iterations     = 3
@@ -137,15 +161,6 @@ jmh {
     // allocation-hotspot analysis; results land under build/reports/jmh and a profile.jfr
     // directory per benchmark.
     profilers      = ['gc', 'jfr']
-}
-
-// Scope the CycloneDX SBOM to the runtime classpath — the set of artifacts that actually
-// ship in the application. Scanning that (rather than the whole repo) keeps OSV findings
-// focused on shipped dependencies and avoids false positives from build-tooling transitives
-// that live only in the Gradle daemon.
-tasks.named('cyclonedxDirectBom') {
-    includeConfigs = ['runtimeClasspath']
-    skipConfigs = ['compileClasspath', 'testCompileClasspath', 'testRuntimeClasspath']
 }
 
 /**

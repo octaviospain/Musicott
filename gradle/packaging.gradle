@@ -9,6 +9,10 @@ application {
     mainClass = 'net.transgressoft.musicott.MusicottApplication'
 
     applicationDefaultJvmArgs = [
+            // Compact object headers (JEP 519, product flag on JDK 25+): shrinks the object
+            // header from 12/16 to 8 bytes, reducing heap footprint and improving cache
+            // locality. Mirrored into the Beryx launcher and jpackage installer below.
+            '-XX:+UseCompactObjectHeaders',
             '--enable-native-access=javafx.graphics,ALL-UNNAMED',
             '--add-opens=javafx.controls/javafx.scene.control=ALL-UNNAMED',
             '--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED',

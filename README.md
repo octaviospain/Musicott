@@ -71,7 +71,7 @@ WIP documentation lives in the **[GitHub wiki](https://github.com/octaviospain/M
 
 ### Requirements
 
-- **JDK 24+** with JavaFX modules (Liberica Full or Azul Zulu FX bundle the SDK; alternatively install JavaFX SDK separately and pass it on the module path)
+- **JDK 25+** with JavaFX modules (Liberica Full or Azul Zulu FX bundle the SDK; alternatively install JavaFX SDK separately and pass it on the module path). The application, tests, and benchmarks run with [compact object headers](https://openjdk.org/jeps/519) (`-XX:+UseCompactObjectHeaders`) enabled to shrink heap footprint — a JDK 25 product feature
 - **Gradle 9.4+** — the system `gradle` binary is recommended; the bundled wrapper also works
 - **Linux only:** GTK and the Monocle native bits are required for headless tests in CI; on a desktop you already have them
 
