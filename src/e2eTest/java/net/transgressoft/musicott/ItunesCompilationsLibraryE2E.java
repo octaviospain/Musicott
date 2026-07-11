@@ -8,6 +8,7 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.transgressoft.commons.fx.music.audio.ObservableAudioLibrary;
+import net.transgressoft.commons.music.audio.Artist;
 import net.transgressoft.commons.music.audio.AudioFileType;
 import net.transgressoft.commons.music.itunes.ImportResult;
 import net.transgressoft.commons.music.itunes.ItunesLibraryTestFixture;
@@ -39,6 +40,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.testfx.api.FxRobot;
 import org.testfx.api.FxToolkit;
 import org.testfx.framework.junit5.ApplicationExtension;
+import org.testfx.util.WaitForAsyncUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,6 +48,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.IntSupplier;
@@ -135,13 +139,7 @@ class ItunesCompilationsLibraryE2E {
         assertThat(result.getUnresolved()).isEmpty();
         waitFor(30, TimeUnit.SECONDS, () -> audioLibrary.getAudioItemsProperty().size() == expectations.trackCount());
         assertThat(audioLibrary.getAudioItemsProperty()).hasSize(expectations.trackCount());
-
-        // We do NOT gate on full artist-catalog convergence (every item's catalog present). At this
-        // import scale the catalog projection converges reliably on Linux but races on the CI
-        // Windows/macOS runners — a music-commons projection-timing concern tracked separately, not a
-        // Musicott defect. The behavior under test is covered instead by the All Tracks table + search
-        // filters (backed by the imported items) and the Artists view populating and filtering below,
-        // whose waits tolerate partial/late convergence.
+        waitForArtistCatalogs();
 
         selectNavigationMode(fxRobot, NavigationController.NavigationMode.ALL_AUDIO_ITEMS);
         FullAudioItemTableView table = visibleTrackTable(fxRobot);
@@ -151,7 +149,7 @@ class ItunesCompilationsLibraryE2E {
 
         selectNavigationMode(fxRobot, NavigationController.NavigationMode.ARTISTS);
         ListView<?> artistsList = fxRobot.lookup("#artistsListView").queryListView();
-        waitFor(30, TimeUnit.SECONDS, () -> !artistsList.getItems().isEmpty());
+        waitFor(10, TimeUnit.SECONDS, () -> !artistsList.getItems().isEmpty());
         assertArtistsFilters(fxRobot, artistsList, expectations);
     }
 
@@ -160,9 +158,56 @@ class ItunesCompilationsLibraryE2E {
         return new ItunesImportPolicy(false, true, false, acceptedFileTypes);
     }
 
+    private void waitForArtistCatalogs() throws TimeoutException {
+        try {
+            // Building artist catalogs for ~1170 imported tracks runs several times slower on the
+            // Windows and macOS CI runners than on Linux; allow the same order of headroom the import
+            // itself gets so a late-but-completing catalog build is not mistaken for a failure. The
+            // catalog projection is read on the JavaFX Application Thread because the library rebuilds
+            // it there — a background read can otherwise observe a torn, mid-refresh snapshot. The gate
+            // covers every involved artist of each item (not just the primary artist) because the
+            // Artists view resolves catalogs from the full involved-artist set.
+            waitFor(120, TimeUnit.SECONDS, () -> {
+                try {
+                    return queryFx(this::allInvolvedArtistCatalogsPresent);
+                } catch (RuntimeException transientFxReadFailure) {
+                    // A slow FX read (queryFx's own 10s cap) must not abort the 120s convergence
+                    // poll: treat it as "not converged yet" so polling continues until the real
+                    // budget elapses and the catalog-missing assertion below can run.
+                    return false;
+                }
+            });
+        } catch (TimeoutException e) {
+            var missingNames = queryFx(() -> audioLibrary.getAudioItemsProperty().stream()
+                    .flatMap(item -> item.getArtistsInvolved().stream())
+                    .filter(artist -> audioLibrary.getArtistCatalog(artist).isEmpty())
+                    .map(Artist::getName)
+                    .distinct()
+                    .limit(15)
+                    .toList());
+            throw new AssertionError("Involved artists without a catalog after import: " + missingNames, e);
+        }
+    }
+
+    private boolean allInvolvedArtistCatalogsPresent() {
+        return audioLibrary.getAudioItemsProperty().stream()
+                .allMatch(item -> item.getArtistsInvolved().stream()
+                        .allMatch(artist -> audioLibrary.getArtistCatalog(artist).isPresent()));
+    }
+
+    private static <T> T queryFx(Callable<T> query) {
+        try {
+            return WaitForAsyncUtils.asyncFx(query).get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted reading FX state", ex);
+        } catch (ExecutionException | TimeoutException ex) {
+            throw new IllegalStateException("Failed to read FX state on the Application Thread", ex);
+        }
+    }
+
     private static void selectNavigationMode(FxRobot fxRobot, NavigationController.NavigationMode mode) {
-        ListView<NavigationController.NavigationMode> navigation =
-                fxRobot.lookup("#navigationModeListView").queryListView();
+        ListView<NavigationController.NavigationMode> navigation = fxRobot.lookup("#navigationModeListView").queryListView();
         Platform.runLater(() -> navigation.getSelectionModel().select(mode));
         waitForFxEvents();
     }
@@ -249,8 +294,7 @@ class ItunesCompilationsLibraryE2E {
             return new MusicottApplication.ApplicationPaths(
                     tempDir.resolve("audioItems.db"),
                     tempDir.resolve("playlists.json"),
-                    tempDir.resolve("waveforms.json")
-            );
+                    tempDir.resolve("waveforms.json"));
         }
 
         @Bean

@@ -1,14 +1,5 @@
 package net.transgressoft.musicott.test
 
-import net.transgressoft.commons.fx.music.audio.ObservableAudioItem
-import net.transgressoft.commons.music.audio.AlbumDetails
-import net.transgressoft.commons.music.audio.Artist
-import net.transgressoft.commons.music.audio.AudioItemMetadata
-import net.transgressoft.commons.music.audio.AudioItemTestAttributes
-import net.transgressoft.commons.music.audio.Genre
-import net.transgressoft.commons.music.audio.audioAttributes
-import net.transgressoft.commons.music.audio.audioItemTrackDiscNumberComparator
-import net.transgressoft.lirp.entity.ReactiveEntityBase
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.next
 import javafx.beans.property.FloatProperty
@@ -16,7 +7,6 @@ import javafx.beans.property.IntegerProperty
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.ReadOnlyIntegerProperty
 import javafx.beans.property.ReadOnlyObjectProperty
-import javafx.beans.property.ReadOnlyProperty
 import javafx.beans.property.ReadOnlySetProperty
 import javafx.beans.property.SimpleFloatProperty
 import javafx.beans.property.SimpleIntegerProperty
@@ -26,6 +16,15 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
 import javafx.collections.FXCollections
 import javafx.scene.image.Image
+import net.transgressoft.commons.fx.music.audio.ObservableAudioItem
+import net.transgressoft.commons.music.audio.AlbumDetails
+import net.transgressoft.commons.music.audio.Artist
+import net.transgressoft.commons.music.audio.AudioItemMetadata
+import net.transgressoft.commons.music.audio.AudioItemTestAttributes
+import net.transgressoft.commons.music.audio.Genre
+import net.transgressoft.commons.music.audio.audioAttributes
+import net.transgressoft.commons.music.audio.audioItemTrackDiscNumberComparator
+import net.transgressoft.lirp.entity.ReactiveEntityBase
 import java.nio.file.Path
 import java.time.Duration
 import java.time.LocalDateTime
@@ -43,7 +42,6 @@ import java.util.function.Consumer
  * `artistsInvolved` is exactly the supplied set.
  */
 object FxAudioItems {
-
     /**
      * Creates an observable audio item with an explicit involved-artist set.
      *
@@ -52,7 +50,10 @@ object FxAudioItems {
      * @return observable audio item with real JavaFX properties
      */
     @JvmStatic
-    fun createFxAudioItem(attributes: Consumer<AudioItemTestAttributes>, artistsInvolved: Set<Artist>): ObservableAudioItem {
+    fun createFxAudioItem(
+        attributes: Consumer<AudioItemTestAttributes>,
+        artistsInvolved: Set<Artist>
+    ): ObservableAudioItem {
         val generated = Arb.audioAttributes().next()
         attributes.accept(generated)
         return TestObservableAudioItem(generated, artistsInvolved)
@@ -61,10 +62,9 @@ object FxAudioItems {
     private class TestObservableAudioItem(
         attributes: AudioItemTestAttributes,
         override val artistsInvolved: Set<Artist>
-    ) : ObservableAudioItem,
-        Comparable<ObservableAudioItem>,
-        ReactiveEntityBase<Int, ObservableAudioItem>() {
-
+    ) : ReactiveEntityBase<Int, ObservableAudioItem>(),
+        ObservableAudioItem,
+        Comparable<ObservableAudioItem> {
         private val metadata = attributes.metadata
 
         override val id: Int = attributes.id
@@ -129,7 +129,7 @@ object FxAudioItems {
         override val lastDateModifiedProperty: ReadOnlyObjectProperty<LocalDateTime> =
             SimpleObjectProperty(this, "last date modified", attributes.lastDateModified)
 
-        override val dateOfCreationProperty: ReadOnlyProperty<LocalDateTime> =
+        override val dateOfCreationProperty: ReadOnlyObjectProperty<LocalDateTime> =
             SimpleObjectProperty(this, "date of creation", dateOfCreation)
 
         override val playCountProperty: ReadOnlyIntegerProperty =
@@ -137,8 +137,7 @@ object FxAudioItems {
 
         override var coverImageBytes: ByteArray? = metadata.coverBytes
 
-        override fun setPlayCount(count: Short): Unit =
-            throw UnsupportedOperationException("play count is immutable on this test fixture")
+        override fun setPlayCount(count: Short): Unit = throw UnsupportedOperationException("play count is immutable on this test fixture")
 
         override fun mutate(action: ObservableAudioItem.() -> Unit) = mutateAndPublish { action() }
 
