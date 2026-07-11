@@ -78,8 +78,11 @@ runtime {
     jpackage {
         imageName = 'Musicott'
         installerName = 'Musicott'
+        // The release CI passes -PreleaseVersion (the tag job's resolved version) so every OS leg
+        // stamps the same installer version; without it each leg re-derives the version from
+        // axion-release, which can diverge per-platform. Falls back to project.version for local builds.
         // jpackage rejects -SNAPSHOT in appVersion; strip it for dry-run / local builds.
-        appVersion = project.version.toString().replaceAll(/-SNAPSHOT$/, '')
+        appVersion = (project.findProperty('releaseVersion') ?: project.version).toString().replaceAll(/-SNAPSHOT$/, '')
 
         jvmArgs = application.applicationDefaultJvmArgs.toList()
 

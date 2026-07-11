@@ -6,7 +6,9 @@
 
 project:
   name: musicott
-  version: '{{ Env.JRELEASER_PROJECT_VERSION }}'
+  # version is resolved automatically from the JRELEASER_PROJECT_VERSION environment variable.
+  # Do NOT set project.version to a '{{ ... }}' template — this field is parsed verbatim before the
+  # template engine runs, so a handlebars expression here fails semver validation.
   description: A JavaFX desktop music player
   longDescription: |
     Musicott is a cross-platform desktop music player built with JavaFX and Spring Boot.
@@ -15,10 +17,11 @@ project:
     - Octavio Calleya
   license: GPL-3.0
   inceptionYear: '2015'
-  java:
-    version: '24'
-    groupId: net.transgressoft
-    artifactId: musicott
+  languages:
+    java:
+      version: '25'
+      groupId: net.transgressoft
+      artifactId: musicott
   links:
     homepage: https://github.com/octaviospain/Musicott
     documentation: https://github.com/octaviospain/Musicott/wiki
@@ -27,6 +30,9 @@ release:
   github:
     owner: octaviospain
     name: Musicott
+    # Default branch is 'master' (there is no 'main'); JReleaser otherwise defaults to 'main'
+    # and fails release creation with "Could not checkout branch main".
+    branch: master
     overwrite: false
     # Draft = true so the human flips Release public after manually verifying installs on Mac/Windows hardware.
     draft: true

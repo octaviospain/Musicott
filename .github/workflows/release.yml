@@ -211,10 +211,15 @@ jobs:
           # In real runs the matrix has the v<X.Y.Z> tag checked out and axion ignores
           # the incrementer.
           INCREMENTER="-Prelease.versionIncrementer=${{ inputs.increment }}"
+          # Force the installer version from the tag job's resolved version — the single source of
+          # truth across all OS legs. Without it each leg re-derives the version from axion-release,
+          # which can diverge per-platform (e.g. a Windows on-tag detection miss stamping 2.0.0
+          # instead of 1.0.0). packaging.gradle strips any -SNAPSHOT suffix for dry-run builds.
+          REL_VERSION="-PreleaseVersion=${{ needs.tag.outputs.version }}"
           if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            gradle --no-daemon jpackageImage $INCREMENTER
+            gradle --no-daemon jpackageImage $INCREMENTER $REL_VERSION
           else
-            gradle --no-daemon jpackage $INCREMENTER
+            gradle --no-daemon jpackage $INCREMENTER $REL_VERSION
           fi
           # Use the version computed by the tag job — single source of truth across legs.
           echo "MUSICOTT_VERSION=${{ needs.tag.outputs.version }}" >> $GITHUB_ENV
@@ -403,8 +408,8 @@ jobs:
         with:
           pkgname: musicott
           pkgbuild: aur-staging/PKGBUILD
-          commit_username: ${{ vars.AUR_MAINTAINER_NAME }}
-          commit_email: ${{ vars.AUR_MAINTAINER_EMAIL }}
+          commit_username: ${{ secrets.AUR_MAINTAINER_NAME }}
+          commit_email: ${{ secrets.AUR_MAINTAINER_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
           commit_message: 'Update to ${{ needs.tag.outputs.version }}'
           force_push: 'false'
