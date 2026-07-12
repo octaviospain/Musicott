@@ -21,17 +21,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.test.annotation.DirtiesContext;
 import org.testfx.api.FxRobot;
 
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -41,7 +37,8 @@ import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
  * Integration test verifying the full rendered state of {@link AboutWindowAlert}: the logo
  * sits on top of a FlowPane carrying the version line, GitHub hyperlink, and license line; no
  * stray "Message" content-text label leaks from {@link Alert.AlertType#INFORMATION}; the version
- * string is sourced from Spring's {@link BuildProperties} bean; and the dialog window carries
+ * string is rendered from the value supplied to the alert (in production this comes from
+ * {@link net.transgressoft.musicott.splash.BuildVersionReader}); and the dialog window carries
  * the application icon.
  */
 @JavaFxSpringTest(classes = AboutWindowAlertITConfiguration.class)
@@ -49,7 +46,7 @@ import static org.testfx.util.WaitForAsyncUtils.waitForFxEvents;
 class AboutWindowAlertIT extends ApplicationTestBase<Pane> {
 
     @Autowired
-    AlertFactory alertFactory;
+    SimpleWebRedirectionService webRedirectionService;
 
     Alert aboutAlert;
 
@@ -65,7 +62,9 @@ class AboutWindowAlertIT extends ApplicationTestBase<Pane> {
     protected void beforeEach() {
         super.beforeEach();
         Platform.runLater(() -> {
-            aboutAlert = (Alert) alertFactory.aboutWindowAlert();
+            // Construct directly with a fixed version so the rendered version line is deterministic;
+            // production sources this from BuildVersionReader.read(), exercised by SplashVersionIT.
+            aboutAlert = new AboutWindowAlert(webRedirectionService, "1.0.0-test");
             aboutAlert.initOwner(testStage);
             aboutAlert.show();
         });
@@ -146,21 +145,5 @@ class AboutWindowAlertITConfiguration {
         // under headless TestFX. The IT never clicks the hyperlink, so a Mockito mock is sufficient.
         // Pattern precedent: ErrorDialogControllerTest.java.
         return mock(SimpleWebRedirectionService.class);
-    }
-
-    @Bean
-    BuildProperties buildProperties() {
-        Properties props = new Properties();
-        props.setProperty("group", "net.transgressoft");
-        props.setProperty("artifact", "musicott");
-        props.setProperty("name", "musicott");
-        props.setProperty("version", "1.0.0-test");
-        return new BuildProperties(props);
-    }
-
-    @Bean
-    AlertFactory alertFactory(SimpleWebRedirectionService webRedirectionService,
-                              ObjectProvider<BuildProperties> buildPropertiesProvider) {
-        return new AlertFactory(webRedirectionService, buildPropertiesProvider);
     }
 }

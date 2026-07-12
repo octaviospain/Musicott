@@ -1,6 +1,7 @@
 package net.transgressoft.musicott.view.custom.alerts;
 
 import net.transgressoft.musicott.services.SimpleWebRedirectionService;
+import net.transgressoft.musicott.splash.BuildVersionReader;
 import net.transgressoft.musicott.view.custom.ApplicationImage;
 
 import javafx.geometry.Pos;
@@ -10,7 +11,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.springframework.boot.info.BuildProperties;
 
 import java.time.Year;
 import java.time.ZoneId;
@@ -23,22 +23,29 @@ import static net.transgressoft.musicott.services.SimpleWebRedirectionService.GI
 public class AboutWindowAlert extends ApplicationAlertBase {
 
     private static final String ABOUT_MUSICOTT_SECOND_LINE = "\nLicensed under GNU GPLv3. This product includes "
-        + "software developed by other open source projects.";
+            + "software developed by other open source projects.";
 
     /**
      * @param webRedirectionService service used by the GitHub hyperlink action
-     * @param buildProperties Spring's BuildProperties bean — may be null when the
-     *                        bootBuildInfo task did not run (e.g. an IDE invocation
-     *                        that bypassed Gradle resource processing). Falls back
-     *                        to "dev" as the displayed version string.
      */
-    public AboutWindowAlert(SimpleWebRedirectionService webRedirectionService, BuildProperties buildProperties) {
+    public AboutWindowAlert(SimpleWebRedirectionService webRedirectionService) {
+        this(webRedirectionService, BuildVersionReader.read());
+    }
+
+    /**
+     * @param webRedirectionService service used by the GitHub hyperlink action
+     * @param version               already-resolved version string ("dev" when the
+     *                              build-info resource is absent); the app uses the
+     *                              single-argument constructor, which sources this from
+     *                              {@link BuildVersionReader#read()} — the same reader the
+     *                              splash uses, so both screens always agree
+     */
+    AboutWindowAlert(SimpleWebRedirectionService webRedirectionService, String version) {
         super(AlertType.INFORMATION);
         setHeaderText(null);
 
-        String version = (buildProperties != null) ? buildProperties.getVersion() : "dev";
         String firstLine = "Version " + version + ".\nCopyright © 2015-"
-            + Year.now(ZoneId.systemDefault()).getValue() + "\nOctavio Calleya.";
+                + Year.now(ZoneId.systemDefault()).getValue() + "\nOctavio Calleya.";
 
         Label aboutLabel1 = new Label(firstLine);
         Label aboutLabel2 = new Label(ABOUT_MUSICOTT_SECOND_LINE);
