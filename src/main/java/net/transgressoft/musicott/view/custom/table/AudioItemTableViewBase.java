@@ -29,7 +29,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -225,7 +224,7 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         return event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 ObservableList<ObservableAudioItem> selection = getSelectionModel().getSelectedItems();
-                if (selection != null && ! selection.isEmpty())
+                if (selection != null && !selection.isEmpty())
                     applicationEventPublisher.publishEvent(new PlayItemEvent(selection, event.getSource()));
             } else if (event.getCode() == KeyCode.SPACE)
                 applicationEventPublisher.publishEvent(new PauseEvent(event.getSource()));
@@ -302,22 +301,6 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         currentSourceItems = sourceItems;
     }
 
-    /**
-     * Returns a {@link Predicate} that evaluates the match of a given {@code String} to a given {@link ObservableAudioItem}
-     *
-     * @param query The {@code String} to match against the audio item
-     *
-     * @return The {@code Predicate}
-     */
-    private Predicate<ObservableAudioItem> filterAudioItemPredicate(String query) {
-        return audioItem -> {
-            var result = query == null || query.isEmpty();
-            if (! result)
-                result = audioItemContainsQuery(audioItem, query.toLowerCase());
-            return result;
-        };
-    }
-
     // Defensive null guards on title / artist / album metadata: imported tracks can ship with null
     // fields (partial catalogs), and one malformed item must not NPE the whole query filter. Sonar
     // trusts the music-commons API's nominal non-null types and flags each guard as gratuitous.
@@ -383,12 +366,12 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         }
 
         private void playAudioItemOnMouseClickedHandler(MouseEvent event) {
-            if (! isEmpty() && getItem() != null && event.getClickCount() == 2)
+            if (!isEmpty() && getItem() != null && event.getClickCount() == 2)
                 applicationEventPublisher.publishEvent(new PlayItemEvent(Collections.singletonList(getItem()), event.getSource()));
         }
 
         private void onDragDetectedMovingAudioItemHandler(MouseEvent event) {
-            if (! isEmpty()) {
+            if (!isEmpty()) {
                 var dragBoard = startDragAndDrop(TransferMode.COPY);
                 dragBoard.setDragView(DRAGBOARD_IMAGE);
 
@@ -411,8 +394,8 @@ public abstract class AudioItemTableViewBase extends TableView<ObservableAudioIt
         private Consumer<ObservableAudioItem> onAudioItemChangedHandler() {
             return item -> {
                 if (item != null) {
-                    pseudoClassStateChanged(unplayableRow, ! AudioItemPlayer.Companion.isPlayable(getItem()));
-                    pseudoClassStateChanged(notInDiskRow, ! item.getPath().toFile().exists());
+                    pseudoClassStateChanged(unplayableRow, !AudioItemPlayer.Companion.isPlayable(getItem()));
+                    pseudoClassStateChanged(notInDiskRow, !item.getPath().toFile().exists());
                 } else {
                     pseudoClassStateChanged(notInDiskRow, false);
                     pseudoClassStateChanged(unplayableRow, false);

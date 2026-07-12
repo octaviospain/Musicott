@@ -25,7 +25,6 @@ package net.transgressoft.musicott.search
  *           (e.g. [Int] for audio items, [String] for album or genre names)
  */
 interface Searchable<ID : Any> {
-
     /**
      * Captures an immutable snapshot of the backing collection on the JavaFX Application Thread.
      *
@@ -36,7 +35,9 @@ interface Searchable<ID : Any> {
      * The default implementation is a no-op; views whose backing data is not a live observable list
      * (or is replaced atomically via `setAll`) do not need to override this method.
      */
-    fun prepareSnapshot() {}
+    fun prepareSnapshot() {
+        // No-op default: views whose backing data is not a live observable list have nothing to snapshot.
+    }
 
     /**
      * Computes the set of item identifiers that match [query].
@@ -63,5 +64,8 @@ interface Searchable<ID : Any> {
      * @param query the search text that produced [ids]; a blank string signals a reset (show all)
      * @param ids the set of identifiers computed by [computeMatchIds]; empty means no matches when query is non-blank
      */
-    fun applyMatchIds(query: String, ids: @JvmSuppressWildcards Set<ID>)
+    fun applyMatchIds(
+        query: String,
+        ids: @JvmSuppressWildcards Set<ID>
+    )
 }

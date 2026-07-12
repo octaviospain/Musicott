@@ -6,6 +6,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
@@ -51,14 +52,16 @@ public final class RingBufferHolder {
     private final AtomicLong warnErrorCount = new AtomicLong(0);
 
     /**
-     * Live-tail listener called for each new record; {@code volatile} so the appender thread
-     * always sees the latest assignment without holding the buffer lock. Registered and cleared
-     * under {@link #lock} so it stays consistent with the seed snapshot returned by
-     * {@link #attachAndSnapshot}.
+     * Live-tail listener called for each new record, held in an {@link AtomicReference} for safe
+     * reference publication across threads. Every access happens under {@link #lock}, which provides
+     * the visibility and atomicity: {@link #add} reads the reference under the lock so it stays
+     * consistent with the seed snapshot returned by {@link #attachAndSnapshot}, then invokes the
+     * listener outside the lock to avoid deadlocking with a concurrent registration.
      */
-    private volatile Consumer<LogRecord> liveTailListener;
+    private final AtomicReference<Consumer<LogRecord>> liveTailListener = new AtomicReference<>();
 
-    private RingBufferHolder() {}
+    private RingBufferHolder() {
+    }
 
     /**
      * A single captured log record: the pre-encoded, newline-terminated text together with the
@@ -67,7 +70,8 @@ public final class RingBufferHolder {
      * @param text  the encoded log line, always ending in a newline
      * @param level the logback level of the originating event
      */
-    public record LogRecord(String text, Level level) {}
+    public record LogRecord(String text, Level level) {
+    }
 
     /**
      * Appends {@code line} to the buffer, evicting the oldest record if the buffer is already
@@ -84,22 +88,22 @@ public final class RingBufferHolder {
             warnErrorCount.incrementAndGet();
         }
         String normalised = line.endsWith("\n") ? line : line + "\n";
-        LogRecord record = new LogRecord(normalised, level);
+        LogRecord logRecord = new LogRecord(normalised, level);
         Consumer<LogRecord> listener;
         lock.lock();
         try {
             if (buffer.size() == MAX_RECORDS) {
                 buffer.pollFirst();
             }
-            buffer.addLast(record);
-            listener = liveTailListener;
+            buffer.addLast(logRecord);
+            listener = liveTailListener.get();
         } finally {
             lock.unlock();
         }
         // Invoke listener outside the lock to prevent deadlock if the FX thread
         // attempts a snapshot() while the listener is dispatching.
         if (listener != null) {
-            listener.accept(record);
+            listener.accept(logRecord);
         }
     }
 
@@ -113,8 +117,8 @@ public final class RingBufferHolder {
         lock.lock();
         try {
             List<String> texts = new ArrayList<>(buffer.size());
-            for (LogRecord record : buffer) {
-                texts.add(record.text());
+            for (LogRecord logRecord : buffer) {
+                texts.add(logRecord.text());
             }
             return texts;
         } finally {
@@ -151,7 +155,7 @@ public final class RingBufferHolder {
     public List<LogRecord> attachAndSnapshot(Consumer<LogRecord> listener) {
         lock.lock();
         try {
-            this.liveTailListener = listener;
+            this.liveTailListener.set(listener);
             return new ArrayList<>(buffer);
         } finally {
             lock.unlock();
@@ -181,9 +185,7 @@ public final class RingBufferHolder {
     public void removeLiveTailListener(Consumer<LogRecord> listener) {
         lock.lock();
         try {
-            if (this.liveTailListener == listener) {
-                this.liveTailListener = null;
-            }
+            this.liveTailListener.compareAndSet(listener, null);
         } finally {
             lock.unlock();
         }
@@ -199,7 +201,7 @@ public final class RingBufferHolder {
         try {
             buffer.clear();
             warnErrorCount.set(0);
-            liveTailListener = null;
+            liveTailListener.set(null);
         } finally {
             lock.unlock();
         }

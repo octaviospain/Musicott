@@ -111,9 +111,9 @@ public class LogViewerController {
 
     @Autowired
     public LogViewerController(Supplier<Stage> stageSupplier,
-                                Supplier<FileChooser> fileChooserSupplier,
-                                ApplicationEventPublisher eventPublisher,
-                                KeyCombination.Modifier operativeSystemKeyModifier) {
+            Supplier<FileChooser> fileChooserSupplier,
+            ApplicationEventPublisher eventPublisher,
+            KeyCombination.Modifier operativeSystemKeyModifier) {
         this.stageSupplier = stageSupplier;
         this.fileChooserSupplier = fileChooserSupplier;
         this.eventPublisher = eventPublisher;
@@ -235,7 +235,7 @@ public class LogViewerController {
      */
     private void renderFull(List<LogRecord> records) {
         String filtered = records.stream()
-                .filter(record -> passesFilter(record.level()))
+                .filter(logRecord -> passesFilter(logRecord.level()))
                 .map(LogRecord::text)
                 .collect(Collectors.joining());
         logTextArea.setText(filtered);
@@ -247,8 +247,8 @@ public class LogViewerController {
      * a single FX-thread flush per burst; filtering is deferred to the flush so the level filter
      * is only ever read on the FX thread.
      */
-    private void onLiveTailRecord(LogRecord record) {
-        pendingRecords.offer(record);
+    private void onLiveTailRecord(LogRecord logRecord) {
+        pendingRecords.offer(logRecord);
         if (flushScheduled.compareAndSet(false, true)) {
             Platform.runLater(this::flushPending);
         }
@@ -258,10 +258,10 @@ public class LogViewerController {
     private void flushPending() {
         flushScheduled.set(false);
         StringBuilder sb = new StringBuilder();
-        LogRecord record;
-        while ((record = pendingRecords.poll()) != null) {
-            if (passesFilter(record.level())) {
-                sb.append(record.text());
+        LogRecord logRecord;
+        while ((logRecord = pendingRecords.poll()) != null) {
+            if (passesFilter(logRecord.level())) {
+                sb.append(logRecord.text());
             }
         }
         if (!sb.isEmpty()) {
@@ -350,7 +350,8 @@ public class LogViewerController {
      * @return {@code true} if a record at {@code level} should be shown given the current filter
      */
     boolean passesFilter(Level level) {
-        if (level == null) return false;
+        if (level == null)
+            return false;
         Level threshold = Level.toLevel(currentLevelFilter, Level.INFO);
         return level.isGreaterOrEqual(threshold);
     }

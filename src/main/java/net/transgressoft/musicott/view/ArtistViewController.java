@@ -98,7 +98,7 @@ public class ArtistViewController implements Searchable<String> {
 
     @Autowired
     public ArtistViewController(ObservableAudioLibrary audioLibrary, ApplicationContext applicationContext,
-                                SearchCoordinator searchCoordinator) {
+            SearchCoordinator searchCoordinator) {
         this.audioRepository = audioLibrary;
         this.applicationContext = applicationContext;
         this.searchCoordinator = searchCoordinator;
@@ -111,9 +111,10 @@ public class ArtistViewController implements Searchable<String> {
         artistRandomButton.visibleProperty().bind(map(nameLabel.textProperty().isEmpty().not(), Function.identity()));
         artistRandomButton.setOnAction(_ -> applicationContext.publishEvent(new PlayRandomFromContextEvent(this)));
         selectedArtistProperty = new SimpleObjectProperty<>(this, "selected artist", Optional.empty());
-        nameLabel.textProperty().bind(Bindings.createStringBinding(() ->
-                        selectedArtistProperty.get().isPresent() ? selectedArtistProperty.get().get().getArtistName() : "",
-                selectedArtistProperty));
+        nameLabel.textProperty()
+                .bind(Bindings.createStringBinding(
+                        () -> selectedArtistProperty.get().isPresent() ? selectedArtistProperty.get().get().getArtistName() : "",
+                        selectedArtistProperty));
 
         searchCoordinator.register(NavigationMode.ARTISTS, this);
 
@@ -175,11 +176,11 @@ public class ArtistViewController implements Searchable<String> {
     // method reference to bind; narrowing to the final `Artist` type breaks compilation.
     @SuppressWarnings("java:S4968")
     private void selectedArtistListener(ObservableValue<? extends ObservableArtistCatalog> obs,
-                                        ObservableArtistCatalog oldArtistCatalog,
-                                        ObservableArtistCatalog newArtistCatalog) {
+            ObservableArtistCatalog oldArtistCatalog,
+            ObservableArtistCatalog newArtistCatalog) {
         if (newArtistCatalog != null) {
             // if the selected artistCatalog is not already selected
-            if (! nameLabel.getText().equals(newArtistCatalog.getArtistName())) {
+            if (!nameLabel.getText().equals(newArtistCatalog.getArtistName())) {
                 selectedArtistProperty.set(Optional.of(newArtistCatalog));
                 refreshAlbumRowsForArtist(newArtistCatalog.getArtist());
             }
@@ -201,6 +202,10 @@ public class ArtistViewController implements Searchable<String> {
         }
     }
 
+    // Defensive null guard on artist.getName(): Sonar trusts the music-commons API's nominal non-null
+    // type and flags the guard as always-true, but imported/partial catalogs can carry a null name and
+    // one such artist must not NPE the search filter. Same rationale as AudioItemTableViewBase.
+    @SuppressWarnings("java:S2589")
     private void replaceAlbumRowsForArtist(Artist artist, Map<AlbumTrackGroup, Integer> albumSetsWithDisc) {
         albumListRowMap.clear();
         albumRowsBackingList.clear();
@@ -225,8 +230,7 @@ public class ArtistViewController implements Searchable<String> {
                 filteredAlbumRows.setPredicate(null);
             } else {
                 // Artist matched only via track content: filter each row to matching tracks only
-                albumRowsBackingList.forEach(row ->
-                        row.filterTracks(item -> audioItemMatchesQuery(item, q)));
+                albumRowsBackingList.forEach(row -> row.filterTracks(item -> audioItemMatchesQuery(item, q)));
                 filteredAlbumRows.setPredicate(row -> row.hasTracksMatching(item -> audioItemMatchesQuery(item, q)));
             }
         }
@@ -276,13 +280,13 @@ public class ArtistViewController implements Searchable<String> {
 
         // Build result map preserving TreeMap order: album group → disc number (0 = no label)
         var result = new LinkedHashMap<AlbumTrackGroup, Integer>();
-        grouped.forEach((key, items) ->
-                result.put(new AlbumTrackGroup(key.albumName(), items), key.disc()));
+        grouped.forEach((key, items) -> result.put(new AlbumTrackGroup(key.albumName(), items), key.disc()));
         return result;
     }
 
     private static int normalizeDisc(Number discNumber) {
-        if (discNumber == null) return 1;
+        if (discNumber == null)
+            return 1;
         int v = discNumber.intValue();
         return v <= 0 ? 1 : v;
     }
@@ -337,8 +341,8 @@ public class ArtistViewController implements Searchable<String> {
 
     private String getTotalArtistTracksString() {
         int totalArtistTracks = albumRowsBackingList.stream()
-            .mapToInt(trackSet -> trackSet.containedAudioItemsProperty().size())
-            .sum();
+                .mapToInt(trackSet -> trackSet.containedAudioItemsProperty().size())
+                .sum();
         String appendix = totalArtistTracks == 1 ? " track" : " tracks";
         return totalArtistTracks + appendix;
     }
@@ -372,8 +376,8 @@ public class ArtistViewController implements Searchable<String> {
 
     public ObservableList<ObservableAudioItem> getSelectedTracks() {
         return albumRowsBackingList.stream()
-            .flatMap(entry -> entry.selectedAudioItemsProperty().stream())
-            .collect(toCollection(FXCollections::observableArrayList));
+                .flatMap(entry -> entry.selectedAudioItemsProperty().stream())
+                .collect(toCollection(FXCollections::observableArrayList));
     }
 
     public void findAudioItemInArtistViewAndSelect(ObservableAudioItem audioItem) {
@@ -381,8 +385,9 @@ public class ArtistViewController implements Searchable<String> {
         Optional<ObservableArtistCatalog> selectedArtistCatalog = selectedArtistProperty.getValue();
         if (selectedArtistCatalog.isPresent() && !artistsInvolved.contains(selectedArtistCatalog.get().getArtist())) {
             var newArtist = artistsInvolved.stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("AudioItem has no artists"));
-            Optional<ObservableArtistCatalog> artistCatalog = (Optional<ObservableArtistCatalog>) audioRepository.getArtistCatalog(newArtist);
+                    .orElseThrow(() -> new IllegalStateException("AudioItem has no artists"));
+            Optional<ObservableArtistCatalog> artistCatalog = (Optional<ObservableArtistCatalog>) audioRepository
+                    .getArtistCatalog(newArtist);
             selectedArtistProperty.setValue(artistCatalog);
             artistCatalog.ifPresent(catalog -> {
                 artistsListView.getSelectionModel().select(catalog);
