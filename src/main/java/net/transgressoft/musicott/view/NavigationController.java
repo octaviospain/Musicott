@@ -63,16 +63,12 @@ import static org.fxmisc.easybind.EasyBind.subscribe;
  *
  * @author Octavio Calleya
  */
-@FxmlView ("/fxml/NavigationController.fxml")
+@FxmlView("/fxml/NavigationController.fxml")
 @Controller
 public class NavigationController {
 
     public enum NavigationMode {
-        ALL_AUDIO_ITEMS("All tracks"),
-        ARTISTS("Artists"),
-        ALBUMS("Albums"),
-        GENRES("Genres"),
-        PLAYLIST("Playlists");
+        ALL_AUDIO_ITEMS("All tracks"), ARTISTS("Artists"), ALBUMS("Albums"), GENRES("Genres"), PLAYLIST("Playlists");
 
         final String name;
 
@@ -116,13 +112,13 @@ public class NavigationController {
 
     @Autowired
     public NavigationController(PlaylistTreeView playlistTreeView,
-                                KeyCombination.Modifier operativeSystemKeyModifier,
-                                ApplicationEventPublisher applicationEventPublisher,
-                                FXMusicLibrary musicLibrary,
-                                AlertFactory alertFactory,
-                                Supplier<DirectoryChooser> directoryChooserSupplier,
-                                Supplier<FileChooser> fileChooserSupplier,
-                                M3uImportService<ObservableAudioItem, ObservablePlaylist> m3uImportService) {
+            KeyCombination.Modifier operativeSystemKeyModifier,
+            ApplicationEventPublisher applicationEventPublisher,
+            FXMusicLibrary musicLibrary,
+            AlertFactory alertFactory,
+            Supplier<DirectoryChooser> directoryChooserSupplier,
+            Supplier<FileChooser> fileChooserSupplier,
+            M3uImportService<ObservableAudioItem, ObservablePlaylist> m3uImportService) {
         this.playlistTreeView = playlistTreeView;
         this.operativeSystemKeyModifier = operativeSystemKeyModifier;
         this.applicationEventPublisher = applicationEventPublisher;
@@ -162,11 +158,10 @@ public class NavigationController {
         // When a playlist is selected, switch navigation mode and clear the nav-list selection
         // so re-clicking a nav mode always re-fires (no stale same-value skip).
         subscribe(selectedPlaylistProperty(),
-                  playlist -> playlist.ifPresent(p -> {
-                      navigationMenuListView.getSelectionModel().clearSelection();
-                      navigationModeProperty.set(NavigationMode.PLAYLIST);
-                  })
-        );
+                playlist -> playlist.ifPresent(p -> {
+                    navigationMenuListView.getSelectionModel().clearSelection();
+                    navigationModeProperty.set(NavigationMode.PLAYLIST);
+                }));
 
         // When switching to a non-playlist nav mode, clear the playlist tree.
         subscribe(navigationModeProperty, mode -> {
@@ -320,7 +315,9 @@ public class NavigationController {
             applicationEventPublisher.publishEvent(
                     new StatusMessageUpdateEvent("Exported " + exportedCount + " playlist(s)", delta, this));
         } else {
-            logger.warn("Playlist export failed for {} playlist(s): {}", failures.size(), String.join("; ", failures));
+            if (logger.isWarnEnabled()) {
+                logger.warn("Playlist export failed for {} playlist(s): {}", failures.size(), String.join("; ", failures));
+            }
             applicationEventPublisher.publishEvent(
                     new ErrorEvent("Export failed", String.join("\n", failures), this));
         }
@@ -372,7 +369,8 @@ public class NavigationController {
                         if (ex != null) {
                             logger.error("M3U import failed", ex);
                             applicationEventPublisher.publishEvent(
-                                    new ErrorEvent("Import failed", ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage(), this));
+                                    new ErrorEvent("Import failed", ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage(),
+                                            this));
                         } else {
                             musicLibrary.playlistHierarchy().addPlaylistsToDirectory(Set.of(playlist), PlaylistTreeView.ROOT_PLAYLIST_NAME);
                             logger.info("Imported playlist '{}' from M3U file", playlist.getName());
@@ -381,7 +379,9 @@ public class NavigationController {
                             int delta = (int) (RingBufferHolder.INSTANCE.warnErrorCount() - m3uMark);
                             applicationEventPublisher.publishEvent(
                                     new StatusMessageUpdateEvent(
-                                            "Imported playlist '" + playlist.getName() + "' (" + playlist.getAudioItemsRecursive().size() + " tracks)", delta, this));
+                                            "Imported playlist '" + playlist.getName() + "' (" + playlist.getAudioItemsRecursive().size()
+                                                    + " tracks)",
+                                            delta, this));
                         }
                     }));
         });
@@ -431,7 +431,7 @@ public class NavigationController {
             setId("navigationModeListView");
             setPrefWidth(USE_COMPUTED_SIZE);
 
-            NavigationMode[] navigationModes = { ALL_AUDIO_ITEMS, ARTISTS, ALBUMS, GENRES};
+            NavigationMode[] navigationModes = {ALL_AUDIO_ITEMS, ARTISTS, ALBUMS, GENRES};
             double listHeight = navigationModes.length * NAV_CELL_HEIGHT;
             setFixedCellSize(NAV_CELL_HEIGHT);
             setMinHeight(listHeight);
@@ -489,13 +489,13 @@ public class NavigationController {
         }
 
         private void updatePseudoClassStates(NavigationMode mode, boolean isSelected) {
-            pseudoClassStateChanged(audioItems, mode.equals(ALL_AUDIO_ITEMS) && ! isSelected);
+            pseudoClassStateChanged(audioItems, mode.equals(ALL_AUDIO_ITEMS) && !isSelected);
             pseudoClassStateChanged(audioItemsSelected, mode.equals(ALL_AUDIO_ITEMS) && isSelected);
-            pseudoClassStateChanged(artists, mode.equals(ARTISTS) && ! isSelected);
+            pseudoClassStateChanged(artists, mode.equals(ARTISTS) && !isSelected);
             pseudoClassStateChanged(artistsSelected, mode.equals(ARTISTS) && isSelected);
-            pseudoClassStateChanged(albums, mode.equals(ALBUMS) && ! isSelected);
+            pseudoClassStateChanged(albums, mode.equals(ALBUMS) && !isSelected);
             pseudoClassStateChanged(albumsSelected, mode.equals(ALBUMS) && isSelected);
-            pseudoClassStateChanged(genres, mode.equals(GENRES) && ! isSelected);
+            pseudoClassStateChanged(genres, mode.equals(GENRES) && !isSelected);
             pseudoClassStateChanged(genresSelected, mode.equals(GENRES) && isSelected);
         }
 

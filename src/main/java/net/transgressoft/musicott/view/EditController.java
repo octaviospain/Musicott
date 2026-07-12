@@ -45,11 +45,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 /**
  * @author Octavio Calleya
  */
-@FxmlView ("/fxml/EditController.fxml")
+@FxmlView("/fxml/EditController.fxml")
 @Controller
 public class EditController {
 
@@ -162,7 +161,7 @@ public class EditController {
 
     private void setNumericValidationFilters() {
         EventHandler<KeyEvent> nonNumericFilter = event -> {
-            if (! event.getCharacter().matches("\\d"))
+            if (!event.getCharacter().matches("\\d"))
                 event.consume();
         };
         trackNumTextField.addEventFilter(KeyEvent.KEY_TYPED, nonNumericFilter);
@@ -191,7 +190,8 @@ public class EditController {
         logger.debug("Choosing cover image");
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Open file(s)...");
-        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("Image files (*.png, *.jpg, *.jpeg)", "*.png", "*.jpg", "*.jpeg");
+        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("Image files (*.png, *.jpg, *.jpeg)", "*.png", "*.jpg",
+                "*.jpeg");
         chooser.getExtensionFilters().addAll(filter);
         File newCoverImageFile = chooser.showOpenDialog(stage);
         if (newCoverImageFile != null) {
@@ -199,8 +199,7 @@ public class EditController {
                 newCoverImageBytes = Files.readAllBytes(Paths.get(newCoverImageFile.getPath()));
                 Optional<Image> optionalImage = Optional.of(new Image(new ByteArrayInputStream(newCoverImageBytes)));
                 optionalImage.ifPresent(coverImage::setImage);
-            }
-            catch (IOException exception) {
+            } catch (IOException exception) {
                 logger.error("Error changing cover image", exception);
                 applicationEventPublisher.publishEvent(new ExceptionEvent(exception, this));
             }
@@ -221,8 +220,7 @@ public class EditController {
         try {
             newCoverImageBytes = Files.readAllBytes(Paths.get(draggedImage.getPath()));
             image = Optional.of(new Image(new ByteArrayInputStream(newCoverImageBytes)));
-        }
-        catch (IOException exception) {
+        } catch (IOException exception) {
             image = Optional.empty();
             newCoverImageBytes = null;
             logger.error("Error trying to set image", exception);
@@ -270,10 +268,10 @@ public class EditController {
     @EventListener
     public void editAudioItemsEventListener(OpenAudioItemEditorView event) {
         List<ObservableAudioItem> invalidAudioItems = event.audioItems.stream()
-            .filter(track -> ! track.getPath().toFile().exists())
-            .toList();
+                .filter(track -> !track.getPath().toFile().exists())
+                .toList();
 
-        if (! invalidAudioItems.isEmpty())
+        if (!invalidAudioItems.isEmpty())
             applicationEventPublisher.publishEvent(new InvalidAudioItemsForEditionEvent(invalidAudioItems, this));
         else
             editAudioItems(event.audioItems);
@@ -286,7 +284,7 @@ public class EditController {
      * @param audioItemSelection The audio items to edit
      */
     public void editAudioItems(Set<ObservableAudioItem> audioItemSelection) {
-        if (! audioItemSelection.isEmpty()) {
+        if (!audioItemSelection.isEmpty()) {
             this.audioItemSelection = audioItemSelection;
             if (audioItemSelection.size() > 1) {
                 if (multipleEditionConfirmationAlert == null) {
@@ -333,11 +331,15 @@ public class EditController {
         newCoverImageBytes = null;
 
         titleTextField.textProperty().set(commonTitle());
-        artistTextField.textProperty().set(initialArtistText = commonArtist());
-        albumTextField.textProperty().set(initialAlbumText = commonAlbum());
-        genreTextField.textProperty().set(initialGenreText = commonGenre());
+        initialArtistText = commonArtist();
+        artistTextField.textProperty().set(initialArtistText);
+        initialAlbumText = commonAlbum();
+        albumTextField.textProperty().set(initialAlbumText);
+        initialGenreText = commonGenre();
+        genreTextField.textProperty().set(initialGenreText);
         commentsTextField.textProperty().set(commonComments());
-        albumArtistTextField.textProperty().set(initialAlbumArtistText = commonAlbumArtist());
+        initialAlbumArtistText = commonAlbumArtist();
+        albumArtistTextField.textProperty().set(initialAlbumArtistText);
         labelTextField.textProperty().set(commonLabel());
         trackNumTextField.textProperty().set(commonTrackNumber());
         discNumTextField.textProperty().set(commonDiscNumber());
@@ -347,16 +349,15 @@ public class EditController {
         commonCover = commonCoverImage();
         commonCover.ifPresentOrElse(
                 coverBytes -> coverImage.setImage(new Image(new ByteArrayInputStream(coverBytes))),
-                () -> coverImage.setImage(defaultCoverImage)
-        );
+                () -> coverImage.setImage(defaultCoverImage));
 
-        if (! commonCompilation())
+        if (!commonCompilation())
             isCompilationCheckBox.setIndeterminate(true);
         else
             // editAudioItems guards audioItemSelection.isEmpty() before assigning; the set is non-empty here.
             isCompilationCheckBox.setSelected(audioItemSelection.stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException(AUDIO_ITEM_SELECTION_EMPTY))
-                .getAlbum().isCompilation());
+                    .orElseThrow(() -> new IllegalStateException(AUDIO_ITEM_SELECTION_EMPTY))
+                    .getAlbum().isCompilation());
     }
 
     private String commonString(List<String> list) {
@@ -382,7 +383,7 @@ public class EditController {
 
     private String commonAlbum() {
         Set<String> changedAlbums = audioItemSelection.stream()
-                .filter(audioItem -> ! audioItem.getAlbum().getName().isEmpty())
+                .filter(audioItem -> !audioItem.getAlbum().getName().isEmpty())
                 .map(audioItem -> audioItem.getAlbum().getName())
                 .collect(Collectors.toSet());
         // editAudioItems guards audioItemSelection.isEmpty() before assigning; the set is non-empty here.
@@ -439,7 +440,7 @@ public class EditController {
 
     private Optional<byte[]> commonCoverImage() {
         Optional<byte[]> optionalCoverBytes = Optional.empty();
-        if (! commonAlbum().isEmpty()) {
+        if (!commonAlbum().isEmpty()) {
             Optional<ObservableAudioItem> audioItem = audioItemSelection.stream()
                     .filter(t -> t.getCoverImageProperty().get().isPresent())
                     .findFirst();
@@ -458,23 +459,26 @@ public class EditController {
     }
 
     private AudioItemMetadataChange getEditionResult() {
-       String title = getEditionFieldResult(titleTextField);
-       String artistName = getClearableFieldResult(artistTextField, initialArtistText);
-       Artist artist = artistName != null ? Artist.of(artistName) : null;
-       String albumName = getClearableFieldResult(albumTextField, initialAlbumText);
-       String albumArtistName = getClearableFieldResult(albumArtistTextField, initialAlbumArtistText);
-       Artist albumArtist = albumArtistName != null ? Artist.of(albumArtistName) : null;
-       Boolean isCompilation = isCompilationCheckBox.isIndeterminate() ? null : isCompilationCheckBox.isSelected();
-       Short year = getEditionFieldResult(yearTextField) != null ? Short.valueOf(getEditionFieldResult(yearTextField)) : null;
-       String labelValue = getEditionFieldResult(labelTextField);
-       net.transgressoft.commons.music.audio.Label label = labelValue != null ? net.transgressoft.commons.music.audio.Label.of(labelValue) : null;
-       Set<Genre> genres = getEditionGenres(initialGenreText);
-       String comments = getEditionFieldResult(commentsTextField);
-       Short trackNum = getEditionFieldResult(trackNumTextField) != null ? Short.valueOf(getEditionFieldResult(trackNumTextField)) : null;
-       Short discNum = getEditionFieldResult(discNumTextField) != null ? Short.valueOf(getEditionFieldResult(discNumTextField)) : null;
-       Float bpm = getEditionFieldResult(bpmTextField) != null ? Float.valueOf(getEditionFieldResult(bpmTextField)) : null;
+        String title = getEditionFieldResult(titleTextField);
+        String artistName = getClearableFieldResult(artistTextField, initialArtistText);
+        Artist artist = artistName != null ? Artist.of(artistName) : null;
+        String albumName = getClearableFieldResult(albumTextField, initialAlbumText);
+        String albumArtistName = getClearableFieldResult(albumArtistTextField, initialAlbumArtistText);
+        Artist albumArtist = albumArtistName != null ? Artist.of(albumArtistName) : null;
+        Boolean isCompilation = isCompilationCheckBox.isIndeterminate() ? null : isCompilationCheckBox.isSelected();
+        Short year = getEditionFieldResult(yearTextField) != null ? Short.valueOf(getEditionFieldResult(yearTextField)) : null;
+        String labelValue = getEditionFieldResult(labelTextField);
+        net.transgressoft.commons.music.audio.Label label = labelValue != null
+                ? net.transgressoft.commons.music.audio.Label.of(labelValue)
+                : null;
+        Set<Genre> genres = getEditionGenres(initialGenreText);
+        String comments = getEditionFieldResult(commentsTextField);
+        Short trackNum = getEditionFieldResult(trackNumTextField) != null ? Short.valueOf(getEditionFieldResult(trackNumTextField)) : null;
+        Short discNum = getEditionFieldResult(discNumTextField) != null ? Short.valueOf(getEditionFieldResult(discNumTextField)) : null;
+        Float bpm = getEditionFieldResult(bpmTextField) != null ? Float.valueOf(getEditionFieldResult(bpmTextField)) : null;
 
-       return new AudioItemMetadataChange(title, artist, albumName, albumArtist, isCompilation, year, label, newCoverImageBytes, genres, comments, trackNum, discNum, bpm);
+        return new AudioItemMetadataChange(title, artist, albumName, albumArtist, isCompilation, year, label, newCoverImageBytes, genres,
+                comments, trackNum, discNum, bpm);
     }
 
     private String getEditionFieldResult(TextInputControl textField) {
@@ -511,6 +515,9 @@ public class EditController {
      * {@link #getEditionFieldResult(TextInputControl)}, emptying a genre field that had content is an
      * explicit clear rather than a skip.
      */
+    // False positive: null is a meaningful sentinel ("leave genres untouched") that the change record
+    // distinguishes from an empty set ("clear genres"). Returning an empty collection would conflate them.
+    @SuppressWarnings("java:S1168")
     private Set<Genre> getEditionGenres(String initialValue) {
         String value = genreTextField.getText();
         if (value == null || value.equals("-")) {
@@ -547,12 +554,10 @@ public class EditController {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof AudioItemMetadataChange(
-                    String oTitle, Artist oArtist, String oAlbumName, Artist oAlbumArtist,
-                    Boolean oIsCompilation, Short oYear, net.transgressoft.commons.music.audio.Label oLabel,
-                    byte[] oCoverImageBytes, Set<Genre> oGenres, String oComments,
-                    Short oTrakNum, Short oDiscNum, Float oBpm))) return false;
+            if (this == o)
+                return true;
+            if (!(o instanceof AudioItemMetadataChange(String oTitle, Artist oArtist, String oAlbumName, Artist oAlbumArtist, Boolean oIsCompilation, Short oYear, net.transgressoft.commons.music.audio.Label oLabel, byte[] oCoverImageBytes, Set<Genre> oGenres, String oComments, Short oTrakNum, Short oDiscNum, Float oBpm)))
+                return false;
             return Objects.equals(title, oTitle)
                     && Objects.equals(artist, oArtist)
                     && Objects.equals(albumName, oAlbumName)

@@ -1,18 +1,18 @@
-/******************************************************************************
- * Copyright (C) 2025  Octavio Calleya Garcia                                 *
- * *
- * This program is free software: you can redistribute it and/or modify       *
- * it under the terms of the GNU General Public License as published by       *
- * the Free Software Foundation, either version 3 of the License, or          *
- * (at your option) any later version.                                        *
- * *
- * This program is distributed in the hope that it will be useful,            *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of             *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              *
- * GNU General Public License for more details.                               *
- * *
- * You should have received a copy of the GNU General Public License          *
- * along with this program.  If not, see <https:></https:>//www.gnu.org/licenses/>.     *
+/*
+ * Copyright (C) 2025  Octavio Calleya Garcia
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package net.transgressoft.musicott.service
 
@@ -100,7 +100,8 @@ class MediaImportService(
             }
 
         logger.debug { "Dispatching async file batch import: ${paths.size} file(s)" }
-        audioLibrary.createFromFileBatchAsync(paths)
+        audioLibrary
+            .createFromFileBatchAsync(paths)
             .whenComplete(completeImport(progressSubscription, mark))
     }
 
@@ -122,19 +123,22 @@ class MediaImportService(
                 }
             }
 
-        val extensions = AudioFileType.values()
-            .map(AudioFileType::extension)
-            .toSet()
+        val extensions =
+            AudioFileType
+                .values()
+                .map(AudioFileType::extension)
+                .toSet()
 
-        CompletableFuture.supplyAsync { findAcceptedFiles(directory, extensions) }
+        CompletableFuture
+            .supplyAsync { findAcceptedFiles(directory, extensions) }
             .thenCompose(audioLibrary::createFromFileBatchAsync)
             .whenComplete(completeImport(progressSubscription, mark))
     }
 
     private fun completeImport(
         progressSubscription: LirpEventSubscription<in LirpEntity, CrudEvent.Type, CrudEvent<Int, ObservableAudioItem>>,
-        mark: Long):
-            BiConsumer<in @UnknownNullability List<ObservableAudioItem>, in @UnknownNullability Throwable?> =
+        mark: Long
+    ): BiConsumer<in @UnknownNullability List<ObservableAudioItem>, in @UnknownNullability Throwable?> =
         { result, ex ->
             logger.debug { "Import async pipeline completing" }
             progressSubscription.cancel()
@@ -142,7 +146,7 @@ class MediaImportService(
                 logger.error(ex.message, ex)
                 applicationEventPublisher.publishEvent(ExceptionEvent(ex, this))
             } else {
-                logger.info { "Import finished: ${result?.size ?: 0} item(s) added" }
+                logger.info { "Import finished: ${result.size} item(s) added" }
             }
             val delta = (RingBufferHolder.INSTANCE.warnErrorCount() - mark).toInt()
             applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Import process completed", delta, this))
@@ -179,42 +183,51 @@ class MediaImportService(
     ): CompletableFuture<ImportResult> {
         if (!tryStartImport()) return CompletableFuture.completedFuture(null)
 
-        val library = lastParsedLibrary
-            ?: run { finishImport(); throw IllegalStateException("No iTunes library parsed. Call parseLibrary() first.") }
+        val library =
+            lastParsedLibrary
+                ?: run {
+                    finishImport()
+                    throw IllegalStateException("No iTunes library parsed. Call parseLibrary() first.")
+                }
         val mark = RingBufferHolder.INSTANCE.warnErrorCount()
         applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing from iTunes...", this))
 
-        val future = coreItunesImportService.importAsync(
-            selectedPlaylists,
-            library,
-            policy
-        ) { progress ->
-            Platform.runLater {
-                // Guard against an empty import surfacing Infinity / NaN to the status bar.
-                val fraction = if (progress.totalItems > 0) {
-                    progress.itemsProcessed.toDouble() / progress.totalItems
-                } else {
-                    0.0
+        val future =
+            coreItunesImportService
+                .importAsync(
+                    selectedPlaylists,
+                    library,
+                    policy
+                ) { progress ->
+                    Platform.runLater {
+                        // Guard against an empty import surfacing Infinity / NaN to the status bar.
+                        val fraction =
+                            if (progress.totalItems > 0) {
+                                progress.itemsProcessed.toDouble() / progress.totalItems
+                            } else {
+                                0.0
+                            }
+                        applicationEventPublisher.publishEvent(StatusProgressUpdateEvent(fraction, this))
+                        applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing: ${progress.currentFile}", this))
+                    }
+                }.whenComplete { result, ex ->
+                    Platform.runLater {
+                        currentImportFuture = null
+                        if (ex != null) {
+                            logger.error(ex.message, ex)
+                            applicationEventPublisher.publishEvent(ExceptionEvent(ex, this))
+                        } else if (result != null) {
+                            logger.info {
+                                "iTunes import finished: ${result.imported.size} track(s) imported, ${result.unresolved.size} unresolved"
+                            }
+                            alertFactory.itunesImportResultAlert(result).showAndWait()
+                        }
+                        val delta = (RingBufferHolder.INSTANCE.warnErrorCount() - mark).toInt()
+                        applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("iTunes import completed", delta, this))
+                        applicationEventPublisher.publishEvent(StatusProgressUpdateEvent(0.0, this))
+                        finishImport()
+                    }
                 }
-                applicationEventPublisher.publishEvent(StatusProgressUpdateEvent(fraction, this))
-                applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("Importing: ${progress.currentFile}", this))
-            }
-        }.whenComplete { result, ex ->
-            Platform.runLater {
-                currentImportFuture = null
-                if (ex != null) {
-                    logger.error(ex.message, ex)
-                    applicationEventPublisher.publishEvent(ExceptionEvent(ex, this))
-                } else if (result != null) {
-                    logger.info { "iTunes import finished: ${result.imported.size} track(s) imported, ${result.unresolved.size} unresolved" }
-                    alertFactory.itunesImportResultAlert(result).showAndWait()
-                }
-                val delta = (RingBufferHolder.INSTANCE.warnErrorCount() - mark).toInt()
-                applicationEventPublisher.publishEvent(StatusMessageUpdateEvent("iTunes import completed", delta, this))
-                applicationEventPublisher.publishEvent(StatusProgressUpdateEvent(0.0, this))
-                finishImport()
-            }
-        }
 
         currentImportFuture = future
         return future
@@ -239,26 +252,31 @@ class MediaImportService(
         importing.set(false)
     }
 
-    private fun findAcceptedFiles(directory: File, acceptedExtensions: Set<String>): List<Path> {
-        val paths = try {
-            Files.walk(directory.toPath()).use { pathStream ->
-                pathStream
-                    .filter(Files::isRegularFile)
-                    .filter { it.extension.lowercase() in acceptedExtensions }
-                    .toList()
+    private fun findAcceptedFiles(
+        directory: File,
+        acceptedExtensions: Set<String>
+    ): List<Path> {
+        val paths =
+            try {
+                Files.walk(directory.toPath()).use { pathStream ->
+                    pathStream
+                        .filter(Files::isRegularFile)
+                        .filter { it.extension.lowercase() in acceptedExtensions }
+                        .toList()
+                }
+            } catch (exception: IOException) {
+                logger.error("Error scanning directory: {}", exception.message, exception)
+                applicationEventPublisher.publishEvent(ExceptionEvent(exception, this))
+                return emptyList()
             }
-        } catch (exception: IOException) {
-            logger.error("Error scanning directory: {}", exception.message, exception)
-            applicationEventPublisher.publishEvent(ExceptionEvent(exception, this))
-            return emptyList()
-        }
 
         logger.debug { "Directory scan found ${paths.size} accepted audio file(s)" }
-        val message = if (paths.isEmpty()) {
-            "No supported audio files found"
-        } else {
-            "Found ${paths.size} audio files"
-        }
+        val message =
+            if (paths.isEmpty()) {
+                "No supported audio files found"
+            } else {
+                "Found ${paths.size} audio files"
+            }
         applicationEventPublisher.publishEvent(StatusMessageUpdateEvent(message, this))
 
         totalFiles = paths.size
