@@ -5,9 +5,7 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.MenuBar;
 import net.transgressoft.commons.music.itunes.ImportResult;
 import net.transgressoft.musicott.services.SimpleWebRedirectionService;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,17 +17,14 @@ import org.springframework.stereotype.Component;
 public class AlertFactory {
 
     private final SimpleWebRedirectionService webRedirectionService;
-    private final ObjectProvider<BuildProperties> buildPropertiesProvider;
 
     @Autowired
-    public AlertFactory(SimpleWebRedirectionService webRedirectionService,
-                        ObjectProvider<BuildProperties> buildPropertiesProvider) {
+    public AlertFactory(SimpleWebRedirectionService webRedirectionService) {
         this.webRedirectionService = webRedirectionService;
-        this.buildPropertiesProvider = buildPropertiesProvider;
     }
 
     public Alert aboutWindowAlert() {
-        return new AboutWindowAlert(webRedirectionService, buildPropertiesProvider.getIfAvailable());
+        return new AboutWindowAlert(webRedirectionService);
     }
 
     /**
